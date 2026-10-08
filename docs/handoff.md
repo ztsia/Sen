@@ -26,10 +26,9 @@ Rewritten 8 Oct 2026 by the session that closed `S3` and published this repo. Th
 
 ## Open with the owner
 
-- **B01 needs, first:**
-  - a Vercel project linked to `ztsia/Sen`
-  - the `DENYLIST` Actions secret
-  - secret scanning and push protection turned on (`docs/local.md`)
+- **B01 can start now.** Before its PR is reviewed, the owner links Vercel, using the settings B01
+  writes into `docs/local.md`, and adds the `DENYLIST` secret. Secret scanning and push protection
+  can be turned on any time (`docs/local.md`).
 - **The laptop ESS capture** (D110) hadn't been done. It matters only for B34; until then, Q29 stays
   open.
 - **The other four defaults** in the map's *Defaults the briefs chose* stand unless the owner changes

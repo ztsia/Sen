@@ -64,8 +64,7 @@ follow on a phone, and commit.
       - [ ] a Grab payment made by card, if Grab and the bank app both notify it
 
 - [ ] **Turn on GitHub's protections for `ztsia/Sen`** (D85): Settings → *Code security* → **secret
-      scanning** and **push protection**. And keep *Keep my email addresses private* ticked in your
-      GitHub email settings.
+      scanning** and **push protection**.
 - [ ] **Never make `ztsia/finance-tracker` public.** It's the private design archive: its history
       holds the claim values removed on 7 Oct, and GitHub keeps old PR pages.
 
