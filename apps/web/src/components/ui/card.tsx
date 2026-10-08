@@ -1,4 +1,4 @@
-// Sen: shadcn/ui's card, changed in place for the phone (CLAUDE.md, shadcn first): the look's --radius-card; a `card` class each look's material styles; px-4/py-4 for a phone.
+// Sen: shadcn/ui's card, changed in place for the phone (CLAUDE.md, shadcn first): the look's --radius-card, 16px where the look sets none (as engine.css draws it); a `card` class each look's material styles; px-4/py-4 for a phone.
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
@@ -7,7 +7,7 @@ function Card({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="card"
       className={cn(
-        'card flex flex-col gap-4 rounded-[var(--radius-card)] border bg-card py-4 text-card-foreground',
+        'card flex flex-col gap-4 rounded-[var(--radius-card,16px)] border bg-card py-4 text-card-foreground',
         className,
       )}
       {...props}

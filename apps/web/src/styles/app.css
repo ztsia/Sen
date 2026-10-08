@@ -50,8 +50,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --radius-card: var(--radius-card, 16px);
-  --radius-btn: var(--radius-btn, 999px);
   --font-sans: var(--font-ui);
   --font-display: var(--font-display);
   --font-num: var(--font-num);

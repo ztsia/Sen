@@ -162,7 +162,7 @@ export default function Gallery() {
           {AVATAR_STATES.map((s) => (
             <div
               key={s}
-              className="card flex items-center gap-3 rounded-[var(--radius-card)] border border-border bg-card p-3"
+              className="card flex items-center gap-3 rounded-[var(--radius-card,16px)] border border-border bg-card p-3"
               data-testid={`avatar-${s}`}
             >
               <Avatar state={s} size={56} />

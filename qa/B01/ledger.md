@@ -102,3 +102,23 @@ and format clean.
 
 `evidence/run2-fixes.png`, at 390×844: the lost page, status cards and the health bar (Minted light),
 Groceries' Undo toast, and the same cards in Copper dark.
+
+## Owner, 8 Oct: "why are the buttons all squares?"
+
+Neither QA run caught this. Buttons and toggles read `--radius-btn`, and cards `--radius-card`. Only
+Instrument and Copper set `--radius-btn` (10 px). The design's default for the rest is a pill
+(`engine.css`: `var(--radius-btn, 999px)`), but `app.css` wrote that fallback as
+`--radius-btn: var(--radius-btn, 999px)`, which refers to itself. The browser drops a self-reference,
+so Minted, Firefly, Line and Mercury drew square buttons (0 px). Cards were saved only because every
+look sets `--radius-card`.
+
+Fix: the shadcn files carry the design's defaults where they read the tokens
+(`rounded-[var(--radius-btn,999px)]` in `button.tsx` and `toggle.tsx`, `var(--radius-card,16px)` in
+`card.tsx`), and the self-referring lines are gone. Line's square cards are its design (`line.css`)
+and stay. Tier 3 (`components/ui/`), verified by the implementer as the owner asked.
+
+- **Red:** `gallery.spec.ts` *buttons and toggles have the look's corners*: minted, firefly, line and
+  mercury fail (`0px`, expected `999px`); instrument and copper pass.
+- **Green:** 6/6. After the fix: unit 135/135, the slice's e2e 88/88, QA's specs 76/76, typecheck and
+  lint clean.
+- **Screenshot:** `evidence/button-corners.png` (Minted, Firefly, Line, Mercury, and the dev panel).

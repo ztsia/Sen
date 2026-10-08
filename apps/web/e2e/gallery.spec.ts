@@ -65,3 +65,24 @@ test('at text scale 1.5×, nothing in the gallery clips and amounts wrap rather 
     expect(problems, `${look}: ${problems.join('\n')}`).toEqual([]);
   }
 });
+
+// Each look's button corners, as its design draws them (docs/ui/directions/src/engine.css): a pill
+// unless the look sets --radius-btn. A self-referring fallback once left four looks square.
+const BUTTON_RADIUS = {
+  minted: '999px',
+  instrument: '10px',
+  firefly: '999px',
+  line: '999px',
+  mercury: '999px',
+  copper: '10px',
+} as const;
+for (const look of LOOKS)
+  test(`${look}: buttons and toggles have the look's corners`, async ({ page }) => {
+    await open(page, '/dev/gallery', look);
+    const main = page.getByRole('button', { name: 'Main action' });
+    await expect(main).toHaveCSS('border-top-left-radius', BUTTON_RADIUS[look]);
+    await expect(page.getByRole('button', { name: 'Show a toast' })).toHaveCSS(
+      'border-top-left-radius',
+      BUTTON_RADIUS[look],
+    );
+  });
