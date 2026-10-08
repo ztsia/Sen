@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { LOOKS, MODES, open, watchErrors } from './helpers';
+import { LOOKS, MODES, open, smallTargets, watchErrors } from './helpers';
 
 // B01 done-when 1, 2 and 5: the gallery shows every building block in all six looks, light and dark;
 // axe passes contrast and labels in all twelve; every interactive element is at least 48 px; and at
@@ -25,22 +25,7 @@ for (const look of LOOKS)
 
       test('every interactive element is at least 48 px', async ({ page }) => {
         await open(page, '/dev/gallery', look, mode);
-        const small = await page.evaluate(() => {
-          const sel =
-            'a[href], button, input, select, textarea, [role="switch"], [role="button"], [role="link"], [tabindex]:not([tabindex="-1"])';
-          return [...document.querySelectorAll<HTMLElement>(sel)]
-            .filter((el) => {
-              const r = el.getBoundingClientRect();
-              const cs = getComputedStyle(el);
-              if (r.width === 0 || r.height === 0 || cs.visibility === 'hidden') return false;
-              if (el.closest('.sr-only, [aria-hidden="true"]')) return false;
-              return r.width < 47.5 || r.height < 47.5;
-            })
-            .map(
-              (el) =>
-                `${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30)}" ${Math.round(el.getBoundingClientRect().width)}×${Math.round(el.getBoundingClientRect().height)}`,
-            );
-        });
+        const small = await smallTargets(page);
         expect(small, small.join('\n')).toEqual([]);
       });
     });

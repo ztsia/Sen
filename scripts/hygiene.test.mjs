@@ -82,6 +82,40 @@ describe('the hygiene check', () => {
     expect(r.problems.join(' ')).not.toMatch(/employer/i);
   });
 
+  // QA B01 run 2, finding 2: a commit message, a binary file and a UTF-16 file are just as public.
+  it('fails on a denylist string in a binary or UTF-16 file, and never prints it', () => {
+    fs.writeFileSync(
+      path.join(dir, 'shot.png'),
+      Buffer.from('PNG\0\x01binary-ish Example-Employer inside\0', 'latin1'),
+    );
+    fs.writeFileSync(path.join(dir, 'notes.txt'), Buffer.from('\ufeffhost: ess.example-employer.test\n', 'utf16le'));
+    git('add', '.');
+    const r = check(dir, 'example-employer');
+    expect(r.problems).toEqual([
+      'A denylisted string is in notes.txt (UTF-16)',
+      'A denylisted string is in shot.png (binary)',
+    ]);
+    expect(r.problems.join(' ')).not.toMatch(/employer/i);
+  });
+
+  it("fails on a denylist string in a commit message in the PR's range", () => {
+    const commit = (m) => git('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', m);
+    commit('base');
+    const base = git('rev-parse', 'HEAD').trim();
+    commit('Fix the claim for Example-Employer travel');
+    const bad = git('rev-parse', '--short', 'HEAD').trim();
+    commit('tidy');
+    const r = check(dir, 'example-employer', { base, head: 'HEAD' });
+    expect(r.problems).toEqual([`A denylisted string is in the message of ${bad}`]);
+    expect(r.problems.join(' ')).not.toMatch(/employer/i);
+  });
+
+  it('says so when a denylist term is too short to check, rather than that the secret is unset', () => {
+    const r = check(dir, 'MY\nnot-in-the-repo');
+    expect(r.notes.join(' ')).toMatch(/1 denylist term is under 3 characters and was ignored/);
+    expect(r.notes.join(' ')).not.toMatch(/not set/);
+  });
+
   it('passes when the denylist is set and nothing matches', () => {
     expect(check(dir, 'not-in-the-repo').problems).toEqual([]);
   });

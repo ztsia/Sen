@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { LOOKS, MODES, open, watchErrors } from './helpers';
+import { LOOKS, MODES, open, smallTargets, watchErrors } from './helpers';
 
 // B01 done-when 3 and 4: the tab bar in each look on the shared outlines, aria-current, the badge to
 // 99+, Scan's tap and long-press; the avatar in its eight states, still under reduced motion; and back
@@ -138,3 +138,34 @@ test('Mercury and Copper draw a still fallback where WebGL is missing', async ({
     expect(drawn, `${look}'s fallback figure has ink`).toBeGreaterThan(500);
   }
 });
+
+// The gallery has no tab bar, so the frame is measured here: the tab bar and Sen's button on a tab
+// screen, the sheets they open, and the dev panel, in every look (QA B01 run 2, finding 1).
+for (const look of LOOKS)
+  test(`${look}: every target in the frame, its sheets and the dev panel is at least 48 px`, async ({ page }) => {
+    await open(page, '/', look);
+    const tabSizes = await tabs(page)
+      .locator('a, button')
+      .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)));
+    expect(tabSizes).toHaveLength(5);
+    const small: string[] = (await smallTargets(page)).map((s) => `home: ${s}`);
+
+    await page.getByRole('button', { name: 'Ask Sen' }).click();
+    await expect(page.getByRole('dialog', { name: 'Sen' })).toBeVisible();
+    small.push(...(await smallTargets(page)).map((s) => `sen sheet: ${s}`));
+    await page.goBack();
+
+    const box = (await tabs(page).getByRole('button', { name: 'Scan a receipt' }).boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(650);
+    await page.mouse.up();
+    await expect(page.getByRole('dialog', { name: 'Add a payment' })).toBeVisible();
+    small.push(...(await smallTargets(page)).map((s) => `scan sheet: ${s}`));
+    await page.goBack();
+
+    await page.getByRole('button', { name: 'Dev panel' }).click();
+    await expect(page.getByRole('dialog', { name: 'Dev panel' })).toBeVisible();
+    small.push(...(await smallTargets(page)).map((s) => `dev panel: ${s}`));
+    expect(small, `tab heights ${tabSizes.join(', ')}\n${small.join('\n')}`).toEqual([]);
+  });

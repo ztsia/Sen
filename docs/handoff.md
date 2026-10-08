@@ -43,7 +43,7 @@ Rewritten 8 Oct 2026 by the second B01 session, which fixed QA's findings. The p
 
 - If the fresh QA run's report isn't in `qa/B01/report.md` yet (dated after this handoff), run the
   `qa` skill again: a fresh full run, the batch was tier 3. Commit its record and publish its report
-  to the same artifact (https://claude.ai/artifact/5Fecg9iXRig3LpcogMy8B9).
+  to the same artifact.
 - Fix what it finds, sorted into tiers in `qa/B01/ledger.md`. **Owner, 8 Oct: after these fixes, no
   further QA run.** Verify each fix yourself: reproduce the finding first (red), fix, show it green,
   and re-run the slice's and QA's suites. Record the evidence in the ledger. Then open the PR, titled

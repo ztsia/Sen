@@ -29,3 +29,22 @@ export function watchErrors(page: Page) {
   });
   return errors;
 }
+
+/** Every visible interactive element under 48 px on either side, as "tag "name" w×h" (patterns.md §8). */
+export const smallTargets = (page: Page) =>
+  page.evaluate(() => {
+    const sel =
+      'a[href], button, input, select, textarea, [role="switch"], [role="radio"], [role="button"], [role="link"], [tabindex]:not([tabindex="-1"])';
+    return [...document.querySelectorAll<HTMLElement>(sel)]
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        const cs = getComputedStyle(el);
+        if (r.width === 0 || r.height === 0 || cs.visibility === 'hidden') return false;
+        if (el.closest('.sr-only, [aria-hidden="true"]')) return false;
+        return r.width < 47.5 || r.height < 47.5;
+      })
+      .map(
+        (el) =>
+          `${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30)}" ${Math.round(el.getBoundingClientRect().width)}×${Math.round(el.getBoundingClientRect().height)}`,
+      );
+  });
