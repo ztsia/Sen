@@ -15,6 +15,18 @@ test('answering a Review row clears it at once, and Undo brings it back', async 
   await expect(rows.getByText('ROTI BAKAR 88')).toBeVisible();
 });
 
+test('a change made right after Undo still gets its own toast, with Undo', async ({ page }) => {
+  await open(page, '/dev/gallery');
+  const overlays = page.getByTestId('gallery-overlays');
+  await overlays.getByRole('button', { name: 'Show a toast' }).click();
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByText('Undone')).toBeVisible();
+  await overlays.getByRole('button', { name: 'Show a toast' }).click();
+  await page.waitForTimeout(1000);
+  await expect(page.getByText('Attached to RM58.30 on Ryt')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
+});
+
 test('the money input parses text into sen, says what is wrong, and keeps what was typed', async ({ page }) => {
   await open(page, '/dev/gallery');
   const forms = page.getByTestId('gallery-forms');

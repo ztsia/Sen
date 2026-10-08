@@ -1,4 +1,4 @@
-// Sen: shadcn/ui's toggle-group, changed in place for the phone (CLAUDE.md, shadcn first): items wrap instead of overflowing; spaced so each keeps its 48 px target.
+// Sen: shadcn/ui's toggle-group, changed in place for the phone (CLAUDE.md, shadcn first): items wrap instead of overflowing; spaced so each keeps its 48 px target; an item is never narrower than 48 px (shadcn's min-w-0 let a one-digit item shrink to 35).
 
 import * as React from 'react';
 import { type VariantProps } from 'class-variance-authority';
@@ -63,7 +63,7 @@ function ToggleGroupItem({
           variant: context.variant || variant,
           size: context.size || size,
         }),
-        'w-auto min-w-0 shrink-0 px-3 focus:z-10 focus-visible:z-10',
+        'w-auto min-w-12 shrink-0 px-3 focus:z-10 focus-visible:z-10',
         'data-[spacing=0]:rounded-none data-[spacing=0]:shadow-none data-[spacing=0]:first:rounded-l-md data-[spacing=0]:last:rounded-r-md data-[spacing=0]:data-[variant=outline]:border-l-0 data-[spacing=0]:data-[variant=outline]:first:border-l',
         className,
       )}

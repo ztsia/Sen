@@ -69,7 +69,8 @@ Every later screen is assembled from what this slice builds, so nothing here may
   policy).
 - **Port the six looks as `DIR` objects** (`patterns.md` §1): `id`, `name`, `tokens`, `extra`,
   `radius`, `fonts`, `icons`, `icon`, `wordmark`, `heroFigure`, `strip`, `avatar.draw` in all eight
-  states, and `tabs`. Leave `reveal` empty, for B14.
+  states, and `tabs`. Leave `reveal` empty, for B14. (As built: `tokens`, `extra` and `fonts` are
+  CSS generated from `theme.css`, not fields; `patterns.md` §1 says why.)
   - Port from `src/<look>.js` and `engine.js`, and use the saved assets, not the pages.
   - Keep each look's drawing in its own module, loaded lazily.
   - Mercury and Copper use WebGL. Give each a still fallback where WebGL is missing, and settle to

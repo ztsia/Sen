@@ -274,3 +274,23 @@ function hexByte(two: string): number {
   const d = (c: string) => '0123456789abcdef'.indexOf(c.toLowerCase());
   return d(two[0]) * 16 + d(two[1]);
 }
+
+// ---------- off screen, nothing draws ----------
+// A look's live drawing (a figure or wordmark on a canvas) skips any canvas scrolled out of view, as the
+// avatars do, so a long screen doesn't spend frames on what nobody sees. Unknown counts as on screen.
+const onScreen = new WeakMap<Element, boolean>();
+const screenIo =
+  typeof IntersectionObserver !== 'undefined'
+    ? new IntersectionObserver((es) => es.forEach((e) => onScreen.set(e.target, e.isIntersecting)), {
+        rootMargin: '80px',
+      })
+    : null;
+/** Starts following whether `el` is on screen. */
+export const watchOnScreen = (el: Element) => screenIo?.observe(el);
+/** Stops following `el`. */
+export const unwatchOnScreen = (el: Element) => {
+  screenIo?.unobserve(el);
+  onScreen.delete(el);
+};
+/** True only when `el` is known to be off screen. */
+export const offScreen = (el: Element) => onScreen.get(el) === false;

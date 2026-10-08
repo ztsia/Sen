@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { Outlet, useMatches, useNavigate } from '@tanstack/react-router';
+import { OfflineBanner } from '@/blocks/states';
 import { Toaster } from '@/components/ui/sonner';
+import { useOnline } from '@/lib/online';
 import { screenById, showsSenButton, showsTabBar, type ScreenDef } from '@/screens/registry';
 import { LookProvider } from '@/theme/look';
 import { SenButton } from './sen-button';
@@ -34,6 +36,7 @@ function useLost(): boolean {
 export function AppShell() {
   const screen = useCurrentScreen();
   const lost = useLost();
+  const online = useOnline();
   const navigate = useNavigate();
   const { reviewCount, senState, setSenOpen, setScanMoreOpen } = useUi();
   // Lost, the tab bar stays, with no tab active, so there's always a way back.
@@ -42,6 +45,7 @@ export function AppShell() {
   return (
     <LookProvider>
       <div className="relative mx-auto flex h-dvh w-full max-w-[480px] flex-col overflow-hidden bg-background">
+        {online ? null : <OfflineBanner />}
         <Outlet />
         {tabs ? (
           <div className="relative z-[var(--z-index-tabbar)] shrink-0">

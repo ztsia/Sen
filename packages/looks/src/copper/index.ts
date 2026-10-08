@@ -2,7 +2,19 @@
 // coin was copper. Copper browns, then greens, as it wears, and a polish brings it back. Here the patina
 // is the money: the figure tarnishes as the cycle's money is spent and is green all over once it's
 // overspent. Sen is a coin, and the flip is its gesture. Without WebGL, a painted coin and a typeset figure.
-import { TAB_SK, TAU, dpr, f2, fontsReady, reduced, rmParts, svgTag } from '../engine';
+import {
+  TAB_SK,
+  TAU,
+  dpr,
+  f2,
+  fontsReady,
+  reduced,
+  rmParts,
+  svgTag,
+  offScreen,
+  unwatchOnScreen,
+  watchOnScreen,
+} from '../engine';
 import type { AvatarState, FigureState, IconTab, Look, Mode } from '../types';
 import './look.css';
 
@@ -421,6 +433,7 @@ function cuMount(root: HTMLElement) {
     if (cv._m) return;
     cv._m = true;
     CF.set.add(cv);
+    watchOnScreen(cv);
     mine.push(cv);
     void fontsReady(`600 56px ${CU_FAM}`, `700 80px ${CU_FAM}`).then(() => {
       if (!cv.isConnected) return;
@@ -454,6 +467,7 @@ function cuMount(root: HTMLElement) {
             CF.set.delete(cv);
             continue;
           }
+          if (offScreen(cv)) continue;
           if (!reduced() && !cv._cu?.fallback) cuDrawFig(cv, t);
         }
       }
@@ -464,6 +478,7 @@ function cuMount(root: HTMLElement) {
   return () => {
     for (const cv of mine) {
       CF.set.delete(cv);
+      unwatchOnScreen(cv);
       cv._m = false;
     }
   };

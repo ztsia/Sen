@@ -2,7 +2,19 @@
 // instruments. Sen is a drop of it, rendered live: it splits into droplets when it sends out helpers
 // and runs back together when they report. The figure that matters is poured in it. Where WebGL is
 // missing, a painted 2D fallback draws a still drop and a typeset figure.
-import { TAB_SK, TAU, dpr, f2, fontsReady, reduced, rmParts, svgTag } from '../engine';
+import {
+  TAB_SK,
+  TAU,
+  dpr,
+  f2,
+  fontsReady,
+  reduced,
+  rmParts,
+  svgTag,
+  offScreen,
+  unwatchOnScreen,
+  watchOnScreen,
+} from '../engine';
 import type { AvatarState, IconTab, Look, Mode } from '../types';
 import './look.css';
 
@@ -380,6 +392,7 @@ function mqMount(root: HTMLElement) {
     if (cv._m) return;
     cv._m = true;
     MQ.set.add(cv);
+    watchOnScreen(cv);
     mine.push(cv);
     void fontsReady(`600 60px ${MQ_FAM}`).then(() => {
       if (!cv.isConnected) return;
@@ -399,6 +412,7 @@ function mqMount(root: HTMLElement) {
             MQ.set.delete(cv);
             continue;
           }
+          if (offScreen(cv)) continue;
           if (!reduced() && !cv._mq?.fallback) mqDraw(cv, t);
         }
       }
@@ -409,6 +423,7 @@ function mqMount(root: HTMLElement) {
   return () => {
     for (const cv of mine) {
       MQ.set.delete(cv);
+      unwatchOnScreen(cv);
       cv._m = false;
     }
   };

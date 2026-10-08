@@ -16,6 +16,9 @@ import {
   svgTag,
   tabPolys,
   type Pt,
+  offScreen,
+  unwatchOnScreen,
+  watchOnScreen,
 } from '../engine';
 import type { IconTab, Look, Mode } from '../types';
 import './look.css';
@@ -667,6 +670,7 @@ function penMount(root: HTMLElement) {
     if (cv._m) return;
     cv._m = true;
     PEN.set.add(cv);
+    watchOnScreen(cv);
     mine.push(cv);
     void fontsReady().then(() => {
       if (cv.isConnected) penPrepare(cv);
@@ -682,6 +686,7 @@ function penMount(root: HTMLElement) {
             PEN.set.delete(cv);
             continue;
           }
+          if (offScreen(cv)) continue;
           penDraw(cv, now);
         }
       }
@@ -692,6 +697,7 @@ function penMount(root: HTMLElement) {
   return () => {
     for (const cv of mine) {
       PEN.set.delete(cv);
+      unwatchOnScreen(cv);
       cv._m = false;
     }
   };

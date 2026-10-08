@@ -34,6 +34,10 @@ pages in `directions/` are the working contract; the app ports it. Everything in
 Everything a look draws is also saved as files in `directions/assets/<look>/` (theme, tokens, icons,
 tab bar, marks, data), so the app uses the files, not the pages.
 
+In the app (B01), `tokens`, `extra` and `fonts` aren't fields of the ported `DIR`: they're CSS, generated
+from each look's saved `theme.css` into `looks.gen.css` by `pnpm looks` and switched by `data-look`, so
+there's one source and a look's colours never wait on its drawing code. Every other part is a field.
+
 ### What never varies
 
 | Thing | Same in every look |

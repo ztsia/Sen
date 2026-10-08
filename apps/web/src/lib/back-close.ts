@@ -1,13 +1,18 @@
 import { useEffect, useId, useRef } from 'react';
 import { useRouter } from '@tanstack/react-router';
 
+// A reload keeps the history entries, sheet steps included, and React's ids repeat from one load to
+// the next. So each sheet's step is marked with this load's own token too: a step left from an earlier
+// load never passes for a sheet open now.
+const LOAD = Math.random().toString(36).slice(2, 8);
+
 /**
  * A sheet adds a history step while it's open, so the back gesture (or the browser's back) closes it
  * before it leaves the screen (patterns.md §6, §10). Closing it any other way takes the step back off.
  */
 export function useBackClose(open: boolean, close: () => void) {
   const { history } = useRouter();
-  const id = useId();
+  const id = `${LOAD}${useId()}`;
   const pushed = useRef(false);
   const closeRef = useRef(close);
   useEffect(() => {

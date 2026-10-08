@@ -15,6 +15,9 @@ import {
   svgTag,
   tabPolys,
   type Pt,
+  offScreen,
+  unwatchOnScreen,
+  watchOnScreen,
 } from '../engine';
 import type { IconTab, Look, Mode } from '../types';
 import './look.css';
@@ -284,6 +287,7 @@ function ffMount(root: HTMLElement) {
     if (cv._m) return;
     cv._m = true;
     FFT.set.add(cv);
+    watchOnScreen(cv);
     mine.push(cv);
     void fontsReady(`500 58px ${FF_FAM}`, `400 21px ${FF_FAM}`).then(() => {
       if (!cv.isConnected) return;
@@ -303,6 +307,7 @@ function ffMount(root: HTMLElement) {
             FFT.set.delete(cv);
             continue;
           }
+          if (offScreen(cv)) continue;
           if (!reduced()) ffDraw(cv, t);
         }
       }
@@ -313,6 +318,7 @@ function ffMount(root: HTMLElement) {
   return () => {
     for (const cv of mine) {
       FFT.set.delete(cv);
+      unwatchOnScreen(cv);
       cv._m = false;
     }
   };
