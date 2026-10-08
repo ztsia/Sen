@@ -133,7 +133,8 @@ Every later screen is assembled from what this slice builds, so nothing here may
    planted `parseFloat`.
 7. The hygiene check fails on a planted `private/` file, and on a planted denylist string in a
    fixture run.
-8. CI is green, the preview deploys, and `main` deploys to production showing *Not built yet*.
+8. CI is green. Once the owner has linked Vercel, the preview deploys and `main` deploys to
+   production, showing *Not built yet*.
 9. Mercury's and Copper's frame times are measured in Chromium at 390×844 with CPU throttling, and
    recorded in the PR.
 
@@ -142,12 +143,17 @@ Every later screen is assembled from what this slice builds, so nothing here may
 - [ ] Open the preview link. Switch the six looks, and light and dark, in the dev panel.
 - [ ] Scroll the gallery. Does anything feel slow, especially Mercury and Copper?
 
-## Needs from you first
+## Needs from you
 
-- `ztsia/Sen` published (`docs/local.md`, *Publish Sen*).
-- A Vercel project linked to `ztsia/Sen`, with production from `main` and previews on.
-- The `DENYLIST` Actions secret on `ztsia/Sen`: one string per line, such as the employer's name and
-  ESS's host. Never written anywhere else.
+Nothing before it starts. **Before its PR is reviewed:**
+- **A Vercel project linked to `ztsia/Sen`,** with production from `main` and previews on. This
+  slice writes the exact settings (root directory, build command, output) into `docs/local.md` once
+  the workspace exists, so the import is done on the phone at vercel.com, with no laptop. Linking
+  before the workspace exists would only build an empty repo. Sessions never deploy: Vercel's GitHub
+  integration does it on every push, and no session holds a Vercel token (`docs/cloud.md` §3).
+- **The `DENYLIST` Actions secret** on `ztsia/Sen`: one string per line, such as the employer's name
+  and ESS's host, never written anywhere else. Until it's set, the hygiene check still blocks
+  `private/` paths and says plainly that the denylist part was skipped.
 
 ## Notes
 
