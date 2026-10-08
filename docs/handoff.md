@@ -10,7 +10,7 @@ The protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite
 - QA ran twice. Run 1 (9 failed criteria) and run 2 (3 failed, 2 Majors about the guards themselves)
   are both fixed. `qa/B01/ledger.md` has each fix, its tier, and its red and green evidence. Run 2's
   report: https://claude.ai/artifact/3tyzFqm3v81jS1GDM4sYSe.
-- **Verified:** unit 135/135; the slice's e2e 82/82; QA's specs 76/76; typecheck, lint, format,
+- **Verified:** unit 135/135; the slice's e2e 88/88; QA's specs 76/76; typecheck, lint, format,
   `looks.gen.css` and hygiene clean.
 - **Not verified yet:** CI on GitHub (it runs on the PR), the Vercel deploys, the phone.
 
@@ -28,6 +28,9 @@ The protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite
   the health bar uses the warn pair through `warning` variants on shadcn's alert and button.
 - **A Review row raises its own Undo**: an answer returns what it said and how to undo it.
 - `tokens`, `extra` and `fonts` are CSS, not `DIR` fields (patterns.md §1).
+- **Buttons are pills unless the look sets `--radius-btn`** (Instrument and Copper: 10 px), as
+  `engine.css` draws them. The shadcn files carry that default; a self-referring fallback once made
+  four looks square.
 
 ## Open with the owner
 
