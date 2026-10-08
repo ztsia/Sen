@@ -1,0 +1,201 @@
+/* The frame every look draws on: the tab bar, Sen's button and the large figure, ported from
+   docs/ui/directions/src/engine.css. These class names are the contract each look's own CSS styles
+   (packages/looks/src/<look>/look.css), so they stay as the design pages named them. Sizes are in rem
+   where text lives, so they grow with the text scale (patterns.md §8). */
+
+/* ---------- the large figure ---------- */
+.hero {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 2px 0 0;
+  position: relative;
+  text-align: left;
+}
+.hero-lbl {
+  font-size: 0.9375rem;
+  color: var(--muted-foreground);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.hero-fig {
+  font: var(--hero-weight, 300) var(--hero-size, 54px) / 1.05 var(--font-num);
+  letter-spacing: var(--hero-track, -0.015em);
+  color: var(--foreground);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.hero-fig .cur {
+  font-size: 0.4em;
+  letter-spacing: 0.02em;
+}
+.hero.over .hero-fig,
+.hero.over .hero-lbl {
+  color: var(--money-warning);
+}
+.hero-sub {
+  font-size: 0.9375rem;
+  color: var(--muted-foreground);
+}
+.hero .strip {
+  margin-top: 8px;
+  width: 100%;
+  height: 22px;
+  display: block;
+}
+.hero .strip svg {
+  display: block;
+}
+
+/* ---------- Sen's button ---------- */
+.fab {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--fab-shadow, 0 8px 22px -6px rgba(0, 0, 0, 0.45));
+}
+.fab canvas {
+  border-radius: 50%;
+  display: block;
+}
+
+/* ---------- the tab bar ---------- */
+.tabbar {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 8px 6px max(12px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+  background: var(--tabbar-bg, var(--background));
+  border-top: 1px solid var(--border);
+}
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  min-height: 56px;
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  position: relative;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.tab.on {
+  color: var(--tab-on, var(--foreground));
+  font-weight: 600;
+}
+.tab .tl {
+  line-height: 1.25;
+  text-align: center;
+}
+/* a look's own tabs: each icon idle and active, stacked; the active one shows */
+.tab .ti {
+  position: relative;
+  width: 30px;
+  height: 26px;
+  flex: none;
+}
+.tab .ti > span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition: opacity 0.22s ease;
+}
+.tab .ti svg {
+  display: block;
+  overflow: visible;
+}
+.tab .i-on,
+.tab.on .i-off {
+  opacity: 0;
+}
+.tab.on .i-on {
+  opacity: 1;
+}
+.tab-ind {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: calc(6px + (100% - 12px) * (var(--i) + 0.5) / 5);
+  transform: translateX(-50%);
+  pointer-events: none;
+  transition: left 0.45s cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+.tab-ind:empty {
+  display: none;
+}
+.tab-scan .scanbtn {
+  width: 50px;
+  height: 38px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--scan-bg, var(--primary));
+  color: var(--scan-fg, var(--primary-foreground));
+}
+.tab-scan .scanbtn.cs {
+  background: none;
+  width: 52px;
+  height: 52px;
+  margin-top: -12px;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+}
+.tab-scan .scanbtn.cs .sb {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+.tab .badge {
+  position: absolute;
+  top: -4px;
+  left: calc(50% + 6px);
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--badge-bg, var(--primary));
+  color: var(--badge-fg, var(--primary-foreground));
+  font-size: 11px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  font-variant-numeric: tabular-nums;
+}
+.tab .badge.cb {
+  background: none;
+  padding: 0;
+  min-width: 0;
+  height: auto;
+  border-radius: 0;
+  color: inherit;
+  display: block;
+  top: -6px;
+  left: calc(50% + 4px);
+}
+.tab .badge.cb svg {
+  display: block;
+  overflow: visible;
+}
+.tab .badge.cb b {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+/* the wordmark sits in the app bar */
+.wm {
+  color: var(--foreground);
+}

@@ -1,8 +1,5 @@
 {
   "extends": "../../tsconfig.base.json",
-  // The looks are drawing code ported from docs/ui/directions/src: dense index arithmetic over fixed
-  // grids and point lists, where every index is in range by construction. Strict stays on; only the
-  // per-index undefined check is off here.
-  "compilerOptions": { "lib": ["ES2023", "DOM", "DOM.Iterable"], "noUncheckedIndexedAccess": false, "types": ["node"] },
+  "compilerOptions": { "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["node"] },
   "include": ["src"]
 }

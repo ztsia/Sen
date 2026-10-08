@@ -1,3 +1,6 @@
+import { RouterProvider } from '@tanstack/react-router';
+import { router } from './router';
+
 export function App() {
-  return <main className="p-4">Sen</main>;
+  return <RouterProvider router={router} />;
 }

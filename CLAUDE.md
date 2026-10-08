@@ -172,6 +172,10 @@ Works from a phone through cloud sessions, rarely at a laptop.
   with their links), and publishing goes from a committed file. Every custom asset a look uses (its
   icons, tab bar, marks, theme tokens and fonts) is saved as a file in `docs/ui/directions/assets/`,
   written by `build.mjs` and `fonts.mjs`. Change the source, never the exported file.
+- **shadcn first, customised in place.** Every building block starts from a shadcn/ui component
+  (the `uiux` skill). When its defaults don't fit the phone, edit the shadcn file itself in
+  `apps/web/src/components/ui/`; never write a parallel, hand-rolled version of something shadcn has.
+  `patterns.md`'s building blocks are compositions of them, in `apps/web/src/blocks/`.
 - **Commands** (`pnpm test`, the web build, the QA database): the foundations slice adds them here.
 
 ## Skills
