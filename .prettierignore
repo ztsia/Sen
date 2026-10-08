@@ -10,3 +10,4 @@ test-results/
 qa-artifacts/
 apps/web/src/styles/looks.gen.css
 **/dist-production/
+qa/*/results.json

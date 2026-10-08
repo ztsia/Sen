@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 /**
- * Turns a QA run into one self-contained HTML report.
+ * Turns a QA run into one HTML report.
  *
- *   node scripts/qa-report.mjs qa-artifacts/<branch>
+ *   node scripts/qa-report.mjs qa-artifacts/<branch>            screenshots linked, as files beside it
+ *   node scripts/qa-report.mjs qa-artifacts/<branch> --inline   every screenshot inlined as a data URI
  *
- * Reads `results.json` and the PNGs in `screens/`, and writes `report.html`
- * beside them with every screenshot inlined as a data URI. Self-contained
- * matters twice over: the container is ephemeral, and a published Artifact
- * cannot load an image from anywhere but itself.
+ * Reads `results.json` and the PNGs in `screens/`, and writes `report.html` beside them. By default
+ * each screenshot is linked as `screens/<name>.png`, so the page stays small enough to read before
+ * publishing, and the PNGs are published with it as the artifact's supporting files: the script
+ * also writes `publish-files.json`, the `files` map for the Artifact tool. `--inline` makes one
+ * self-contained file instead, for opening on its own.
  *
  * The output is deliberately a **fragment** — a `<title>`, a `<style>` and the
  * body content, with no `<!doctype>`/`<html>`/`<head>`/`<body>` wrapper. That is
@@ -45,7 +47,9 @@ let embeddedBytes = 0;
 const missing = new Set();
 const used = new Set();
 
-/** A PNG as a data URI, or null when the reviewer named a file that is not there. */
+const inline = process.argv.includes('--inline');
+
+/** A PNG's address in the report (linked, or a data URI with --inline), or null when the reviewer named a file that is not there. */
 function dataUri(name) {
   if (!name) return null;
   const key = available[name] ? name : available[basename(name)] ? basename(name) : null;
@@ -56,6 +60,7 @@ function dataUri(name) {
   used.add(key);
   const bytes = readFileSync(available[key]);
   embeddedBytes += bytes.length;
+  if (!inline) return `screens/${encodeURIComponent(key)}`;
   return `data:image/png;base64,${bytes.toString('base64')}`;
 }
 
@@ -580,11 +585,18 @@ ${body}
 
 const out = join(dir, 'report.html');
 writeFileSync(out, html, 'utf8');
+// the Artifact tool's `files` map: each linked screenshot, published beside the page
+if (!inline) {
+  const files = Object.fromEntries([...used].sort().map((k) => [`screens/${k}`, join(dir, 'screens', k)]));
+  writeFileSync(join(dir, 'publish-files.json'), `${JSON.stringify(files, null, 1)}\n`, 'utf8');
+}
 
 const mb = (n) => (n / 1024 / 1024).toFixed(2);
 const total = statSync(out).size;
 console.log(`wrote ${out}`);
-console.log(`  screenshots: ${used.size} of ${Object.keys(available).length} shown, ${mb(embeddedBytes)} MB of PNG`);
+console.log(
+  `  screenshots: ${used.size} of ${Object.keys(available).length} shown, ${mb(embeddedBytes)} MB of PNG${inline ? ' inlined' : ', linked (publish-files.json lists them)'}`,
+);
 console.log(`  page size: ${mb(total)} MB${total > 15 * 1024 * 1024 ? '  ** over the 16 MB Artifact limit **' : ''}`);
 if (missing.size) {
   console.log(`  named but not found in screens/: ${[...missing].join(', ')}`);

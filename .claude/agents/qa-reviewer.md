@@ -219,8 +219,9 @@ report places each screenshot at the step it belongs to.
 node scripts/qa-report.mjs qa-artifacts/<branch>
 ```
 
-This writes a self-contained `report.html`, and the parent session publishes it. Don't hand-write
-HTML.
+This writes `report.html`, linking each screenshot as `screens/<name>.png`, and
+`publish-files.json`, which lists them for the parent session to publish with the page. Don't
+hand-write HTML, and don't delete `qa-artifacts/`: the parent discards it after publishing.
 
 ### 6b2: save the record in the repo
 

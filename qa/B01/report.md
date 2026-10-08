@@ -1,7 +1,8 @@
 # QA of B01 · Design system and the six looks (`B01/design-system`, 8 Oct 2026)
 
-The `qa-reviewer`'s report, saved in the repo. Screenshots (102) and the rendered `report.html` were
-in `qa-artifacts/B01-design-system/`, which isn't committed.
+The `qa-reviewer`'s report, saved in the repo. **Published, with its 102 screenshots:**
+https://claude.ai/artifact/5Fecg9iXRig3LpcogMy8B9 (publish a re-run to the same URL). The local
+`qa-artifacts/B01-design-system/` was then discarded; the `qa` skill says how to rebuild it.
 
 ```
 VERDICT   fix first
