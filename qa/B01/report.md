@@ -1,8 +1,9 @@
 # QA B01 · Design system and the six looks: run 2 (fresh full run)
 
 Branch `B01/design-system` at `c03c91a` (code as of `34e0961`; only `docs/handoff.md` moved during the run).
-Reviewer run 2, 8 Oct 2026. Rendered report: `qa-artifacts/B01-design-system/report.html` (published by the
-parent; link to be added here). Screenshots: `qa-artifacts/B01-design-system/screens/`.
+Reviewer run 2, 8 Oct 2026. **Published, with its 130 screenshots:** https://claude.ai/artifact/3tyzFqm3v81jS1GDM4sYSe
+(run 1's link couldn't take an update from this session, so run 2 has its own). The local
+`qa-artifacts/B01-design-system/` was then discarded; the `qa` skill says how to rebuild it.
 
 ```
 VERDICT   fix first
