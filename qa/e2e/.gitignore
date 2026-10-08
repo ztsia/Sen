@@ -1,0 +1,3 @@
+# A local symlink to ../../apps/web/node_modules, so these specs resolve @playwright/test.
+# The root .gitignore's `node_modules/` matches only directories, not a symlink.
+node_modules
