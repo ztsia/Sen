@@ -9,6 +9,10 @@ Sen's own code and documents are licensed under the GNU Affero General Public Li
 | The `neon` and `neon-postgres` skills | `.claude/skills/neon/`, `.claude/skills/neon-postgres/` | [neondatabase/agent-skills](https://github.com/neondatabase/agent-skills) | Apache-2.0 (`licenses/neondatabase-agent-skills-Apache-2.0.txt`) |
 | The `supabase-postgres-best-practices` skill | `.claude/skills/supabase-postgres-best-practices/` | [supabase/agent-skills](https://github.com/supabase/agent-skills) | MIT (`licenses/supabase-agent-skills-MIT.txt`) |
 | shadcn/ui's component documentation | `.claude/skills/uiux/docs/` | [shadcn-ui/ui](https://github.com/shadcn-ui/ui) | MIT (`licenses/shadcn-ui-MIT.txt`) |
+| The `shadcn` skill | `.claude/skills/shadcn/` | [shadcn-ui/ui](https://github.com/shadcn-ui/ui) | MIT (`licenses/shadcn-ui-MIT.txt`) |
+| shadcn/ui's components, customised in place | `apps/web/src/components/ui/` | [shadcn-ui/ui](https://github.com/shadcn-ui/ui) | MIT (`licenses/shadcn-ui-MIT.txt`) |
+| The `vercel-react-best-practices` and `web-design-guidelines` skills | `.claude/skills/vercel-react-best-practices/`, `.claude/skills/web-design-guidelines/` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT, as the repository's README states (it ships no licence file) |
+| The `capacitor-*` skills | `.claude/skills/capacitor-app-development/`, `capacitor-plugins/`, `capacitor-plugin-development/`, `capacitor-react/`, `capacitor-push-notifications/` | [capawesome-team/skills](https://github.com/capawesome-team/skills) | MIT (`licenses/capawesome-skills-MIT.txt`) |
 | UX and shadcn rules, adapted | `.claude/skills/uiux/SKILL.md`, *Rules carried over from ui-ux-pro-max* | [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT (`licenses/ui-ux-pro-max-skill-MIT.txt`) |
 | The palette validator | `docs/ui/directions/validate_palette.js` | The `dataviz` skill on Claude | See below |
 | Fonts | `docs/ui/directions/assets/fonts/` | Google Fonts | SIL Open Font License 1.1, a copy in each family's folder |

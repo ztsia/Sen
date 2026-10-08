@@ -27,7 +27,7 @@ It's called **Sen** (D48). It's for the owner, and by invitation a few friends a
 before it ends**, whether its slice is finished or not, and whenever the owner says *hand off*. Never
 append to it: it's the state now, not a log, and git keeps the old versions. Keep it under about 60
 lines:
-- where things stand: which slice is next or in progress, and on which branch
+- where things stand: which slice is next or in progress, and on which branch (*One brief, one branch*)
 - what was decided, and why
 - what's open with the owner
 - what to do first
@@ -36,20 +36,24 @@ lines:
 Anything still true next week belongs in the spec, `docs/decisions.md`, `docs/cloud.md`,
 `docs/local.md` or a brief instead.
 
-**A slice may span sessions.** A cloud session is assigned its own branch, so the slice's label goes
-in its PR title (*B07 · Sync and the outbox*), and its PR is opened when the slice is done.
+**One brief, one branch.** Each slice is built on exactly one branch, named after its brief's file:
+`B01/design-system` for `docs/briefs/B01-design-system.md`, `B07/sync` for `B07-sync.md`. The harness
+assigns each cloud session a `claude/…` branch; ignore it, and work on the slice's branch instead:
+1. Look for it: `git fetch origin && git ls-remote --heads origin '<branch>'`.
+2. **If it exists, continue it.** Never create a second branch for the same brief:
+   `git checkout -B <branch> origin/<branch>`, then read the handoff there.
+3. **If it doesn't, create it from `main`:** `git checkout -b <branch> origin/main`, and push with
+   `git push -u origin <branch>`.
+
+A slice may span sessions, all on that one branch. Its PR is opened from it when the slice is done,
+with the slice's label as its title (*B07 · Sync and the outbox*).
 
 **When context runs high, or the owner says *hand off*, mid-slice:**
 1. Commit and push.
 2. Rewrite `docs/handoff.md` on the branch: what's done and verified, what's next, and anything
    decided. Push again.
 3. End with one line for the owner to paste into the next session: *Continue B07 from branch
-   `claude/…`*.
-
-The next session then:
-1. Moves its own branch to that one:
-   `git fetch origin <branch> && git checkout -B <its branch> origin/<branch>`.
-2. Reads the handoff there, and carries on.
+   `B07/sync`*.
 
 `scripts/session-start.sh` also names the newest unmerged branch that changed the handoff, as a
 safety net.
@@ -83,6 +87,9 @@ built module by module, and every feature worked but the app didn't hang togethe
 
 **No app code until `S3`'s slice map is merged, and Sen is published** (`docs/local.md`). Then B01
 starts in `ztsia/Sen`. The next slice waits only for the owner's merge.
+
+**Built so far:** B01, the design system and the six looks (the workspace, money, the frame, the
+building blocks, the dev panel and the gallery). Next: B02, the shell and the listener.
 
 ## Non-negotiables
 
@@ -168,7 +175,38 @@ Works from a phone through cloud sessions, rarely at a laptop.
   with their links), and publishing goes from a committed file. Every custom asset a look uses (its
   icons, tab bar, marks, theme tokens and fonts) is saved as a file in `docs/ui/directions/assets/`,
   written by `build.mjs` and `fonts.mjs`. Change the source, never the exported file.
-- **Commands** (`pnpm test`, the web build, the QA database): the foundations slice adds them here.
+- **shadcn first, customised in place.** Every building block starts from a shadcn/ui component
+  (the `uiux` skill). When its defaults don't fit the phone, edit the shadcn file itself in
+  `apps/web/src/components/ui/`, with a `// Sen:` note on its first line saying what changed, so an
+  upgrade (`shadcn add <x> --dry-run`) can keep it. Never write a parallel, hand-rolled version of
+  something shadcn has. `className` at a call site is for layout only. `patterns.md`'s building
+  blocks are compositions of them, in `apps/web/src/blocks/`.
+- **Commands**, from the repo root (Node 22, pnpm 10; `scripts/session-start.sh` installs packages):
+
+  | Command | What it does |
+  |---|---|
+  | `pnpm install` | Install everything |
+  | `pnpm dev` | The web app at `localhost:5173`, with the dev panel; `/dev/gallery` shows every building block |
+  | `pnpm build` | The web app's production build, as Vercel runs it. A build is production, without dev tools, unless `SEN_ENV=preview` or Vercel's `VERCEL_ENV=preview` says otherwise |
+  | `pnpm test` | Unit tests: money, the looks' ports, the hygiene check, the no-float rule, the web app's pure parts |
+  | `pnpm e2e` | Playwright on a preview build and a production build, at a phone viewport, under the real CSP |
+  | `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |
+  | `pnpm looks` | Regenerates `apps/web/src/styles/looks.gen.css` from `docs/ui/directions/assets/`; CI fails if it's stale |
+  | `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
+  | `node apps/web/scripts/frame-times.mjs` | Each look's frame times at 390×844 with the CPU slowed 4×, against a running `vite preview` |
+
+  The QA database arrives with the server (B05).
+- **Layout** (B01):
+
+  | Path | What it holds |
+  |---|---|
+  | `apps/web/` | The web app: Vite, React, TanStack Router, Tailwind v4 and shadcn/ui. `src/components/ui/` is shadcn's, customised in place; `src/blocks/` the building blocks of `patterns.md` §7; `src/frame/` the tab bar, Sen's button and the shell of every screen; `src/screens/registry.ts` every screen id, `skeleton` or `real`; `src/dev/` the dev panel and gallery; `e2e/` Playwright |
+  | `packages/core/` | Pure TypeScript shared by the app, the API and the worker: the money module now; cycles and the template engine later |
+  | `packages/looks/` | The six looks as `DIR` modules, ported from `docs/ui/directions/src/`, each loaded only when shown |
+  | `apps/api/` | The Hono API (B05) |
+  | `apps/shell/` | The Capacitor shell for Android, with the Kotlin capture plugin (B02) |
+  | `apps/worker/` | The Cloudflare Worker: schedules and the realtime relay (B06) |
+  | `scripts/` | The session hooks, the hygiene check and the QA report |
 
 ## Skills
 
@@ -181,9 +219,11 @@ Works from a phone through cloud sessions, rarely at a laptop.
 | `database` | Designing or checking tables, migrations, SQL, RLS policies, views, functions, or an API route or sync that touches data. Ported from the owner's `claude_skills` and cut down to this stack. Its rules win over the vendor skills below |
 | `supabase-postgres-best-practices`, `neon`, `neon-postgres` | General Postgres and Neon practice: indexes, locking, pooling, branching. Installed with `npx skills add`. Where they assume Supabase, or steer towards Neon's own Auth, Functions, Storage or AI Gateway, `database` and D54–D55 win |
 
-The foundations slice adds the rest of the stack's skills with `npx skills add`, because cloud
-sessions don't load plugins: `shadcn/ui`, `vercel-labs/agent-skills` (React best practices, web
-design guidelines) and `capawesome-team/skills` (Capacitor plugins and builds).
+The stack's own skills came with `npx skills add` (B01), because cloud sessions don't load plugins:
+`shadcn` (shadcn/ui's CLI and components), `vercel-react-best-practices` and `web-design-guidelines`
+(vercel-labs), and `capacitor-app-development`, `capacitor-plugins`, `capacitor-plugin-development`,
+`capacitor-react` and `capacitor-push-notifications` (Capawesome). Where one disagrees with `uiux`,
+`patterns.md` or a decision, ours win.
 
 Skills are model-invoked from their descriptions, so no session needs to be told to use one.
 **Our own skills are knowledge, not modes (D82).** Invoking one loads what to do and what must be

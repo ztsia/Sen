@@ -142,3 +142,12 @@ path, not thrown away.
 
 - No real notification text goes into the repo, tests or logs; fixtures are anonymised (`CLAUDE.md`).
 - Keep native code to what must run with the app closed (D42). The screens here are the web app's.
+- **The bridge B01 calls** (`apps/web/src/lib/haptics.ts`, `open-in-browser.ts`): the web app looks
+  for `window.SenShell` and calls `SenShell.haptic('light')` on a long-press and a commit, and
+  `SenShell.openInBrowser(url)` for every external link (https only). Implement both on the bridge,
+  answering only our origin; without them the web app falls back to `navigator.vibrate` and a new tab.
+- **Back and safe areas:** B01 gives each sheet a history step, so back closes it in a browser. The
+  shell's back button should do the same through history, and set `--safe-area-inset-*`, which the
+  tab bar and sheets already read (`apps/web/src/styles/frame.css`).
+- **Mercury and Copper on the phone:** B01 measured them at about 15 fps in a session, on a software
+  WebGL renderer (`docs/cloud.md` §5). Check them on the Xiaomi in the debug shell.

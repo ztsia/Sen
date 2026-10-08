@@ -1,0 +1,202 @@
+/* Firefly's own material, ported from docs/ui/directions/src/firefly.css and scoped to the look.
+   An indigo night over the river, and a blue hour by day. Light is the loud thing; nothing else glows.
+   Home's sky and bokeh port with Home (B03). */
+[data-look='firefly'] {
+  .wm {
+    font: 500 23px/1 var(--font-ui);
+    letter-spacing: -0.01em;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+  }
+  .wm .ff {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ffly-core);
+    box-shadow: 0 0 10px 3px var(--glow);
+    animation: ff-wmblink 3.2s ease-in-out infinite;
+  }
+  &:not([data-mode='dark']) .wm .ff {
+    background: var(--ffly);
+    box-shadow: 0 0 8px 2px rgba(201, 148, 18, 0.35);
+  }
+  .hero-fig {
+    display: block;
+    margin: 2px 0 0;
+  }
+  .hero-fig canvas {
+    display: block;
+    width: calc(100% + 16px);
+    height: 67px;
+    margin-left: -8px;
+  }
+  .hero .strip {
+    height: 30px;
+    margin-top: 6px;
+  }
+  .ff-now {
+    animation: ff-now 3.2s ease-in-out infinite;
+  }
+  .ff-now-halo {
+    animation: ff-halo 3.2s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .fab {
+    background: #17143a;
+  }
+  /* the tab bar: the blue hour by day, the river's night after dark; icons are firefly trails */
+  .tabbar {
+    border-top-color: transparent;
+    box-shadow: 0 -1px 0 var(--border);
+    background: linear-gradient(180deg, rgba(230, 229, 243, 0.95), rgba(243, 229, 220, 0.97));
+  }
+  &[data-mode='dark'] .tabbar {
+    background: linear-gradient(180deg, rgba(22, 19, 52, 0.96), rgba(10, 9, 26, 0.98));
+    box-shadow: 0 -1px 0 rgba(120, 100, 220, 0.18);
+  }
+  .tab.on {
+    color: var(--tab-on);
+  }
+  .tab-scan .scanbtn.cs {
+    box-shadow: 0 6px 16px -6px rgba(30, 26, 72, 0.55);
+  }
+  &[data-mode='dark'] .tab-scan .scanbtn.cs {
+    box-shadow:
+      0 0 0 1px rgba(244, 233, 138, 0.14),
+      0 0 22px -4px rgba(244, 233, 138, 0.3);
+  }
+  .ff-ring {
+    animation: ff-ring 3s ease-in-out infinite;
+    animation-delay: var(--d);
+  }
+  .ff-halo {
+    animation: ff-halo2 3.2s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  &[data-mode='dark'] .tab .badge.cb svg {
+    filter: drop-shadow(0 0 4px rgba(244, 233, 138, 0.45));
+  }
+  /* the firefly that flies to a newly chosen tab, and the trail it leaves */
+  .ff-fly,
+  .ff-trail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .ff-fly {
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 -3px;
+    background: #fffce8;
+    box-shadow: 0 0 8px 3px rgba(244, 233, 138, 0.6);
+  }
+  &:not([data-mode='dark']) .ff-fly {
+    background: #f7d76a;
+    box-shadow: 0 0 8px 3px rgba(201, 148, 18, 0.45);
+  }
+  .ff-trail {
+    width: 3px;
+    height: 3px;
+    margin: -1.5px 0 0 -1.5px;
+    background: var(--ffly);
+    opacity: 0;
+    animation: ff-trail 0.9s ease-out both;
+  }
+  .tab.on.fresh .i-on {
+    animation: ff-arrive 0.95s ease-out both;
+  }
+}
+@keyframes ff-wmblink {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  6% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.55;
+  }
+}
+@keyframes ff-now {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  5% {
+    opacity: 1;
+  }
+  34% {
+    opacity: 0.7;
+  }
+}
+@keyframes ff-halo {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+  5% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  34% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+@keyframes ff-ring {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  8% {
+    opacity: 0.95;
+  }
+  40% {
+    opacity: 0.2;
+  }
+}
+@keyframes ff-halo2 {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  5% {
+    opacity: 1;
+  }
+  34% {
+    opacity: 0.7;
+  }
+}
+@keyframes ff-trail {
+  0% {
+    opacity: 0;
+  }
+  2% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes ff-arrive {
+  0%,
+  58% {
+    opacity: 0;
+  }
+  72% {
+    opacity: 1;
+    filter: brightness(1.7);
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+  }
+}

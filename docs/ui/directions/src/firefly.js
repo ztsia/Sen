@@ -182,9 +182,10 @@ function ffScan(mode, u) {
   for (let i = 0; i < 22; i++) { const a = (i / 22) * TAU; ring += `<circle cx="${f2(26 + Math.cos(a) * 21.4)}" cy="${f2(26 + Math.sin(a) * 21.4)}" r="${f2(0.45 + r() * 0.45)}" fill="#f4e98a" opacity="${f2(0.25 + r() * 0.55)}" class="ff-ring" style="--d:${f2(r() * 3)}s"/>`; }
   return svgTag('0 0 52 52', 52, 52, `<defs><radialGradient id="${u}n" cx="66%" cy="26%" r="78%"><stop offset="0" stop-color="#2e2769"/><stop offset=".55" stop-color="#17143a"/><stop offset="1" stop-color="#0b0a1e"/></radialGradient></defs><circle cx="26" cy="26" r="24" fill="url(#${u}n)"/>${ring}<g transform="translate(14 14)">${ffTabBody('scan', true, 'dark', `${u}g`)}</g>`, 'sb');
 }
+// the count on a disc of light, which stretches into a pill for wider counts (99+)
 function ffBadge(n, mode) {
-  const dark = mode === 'dark';
-  return `${svgTag('0 0 20 20', 20, 20, `<circle cx="10" cy="10" r="9.4" fill="${dark ? '#f4e98a' : '#2a2566'}"/>`)}<b style="color:${dark ? '#1b1636' : '#fbfaff'}">${n}</b>`;
+  const text = String(n); const dark = mode === 'dark'; const W = 20 + Math.max(0, text.length - 1) * 6.2;
+  return `${svgTag(`0 0 ${f2(W)} 20`, f2(W), 20, `<rect x=".6" y=".6" width="${f2(W - 1.2)}" height="18.8" rx="9.4" fill="${dark ? '#f4e98a' : '#2a2566'}"/>`)}<b style="color:${dark ? '#1b1636' : '#fbfaff'}">${text}</b>`;
 }
 // choosing a tab: a firefly flies from the old tab to the new one, leaving its trail, and lights it
 function ffFly(bar, from, to) {

@@ -1,0 +1,13 @@
+pnpm-lock.yaml
+docs/
+.claude/
+*.md
+spec_v2.md
+**/dist/
+coverage/
+playwright-report/
+test-results/
+qa-artifacts/
+apps/web/src/styles/looks.gen.css
+**/dist-production/
+qa/*/results.json

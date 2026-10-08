@@ -39,10 +39,29 @@ The owner never sees the subagent's report, so relay these yourself:
 - the verdict and the counts
 - every Blocker and Major, in full
 
-Then **publish `qa-artifacts/<branch>/report.html` with the Artifact tool** and give the owner the
-link. The container is ephemeral and `qa-artifacts/` is gitignored, so an unpublished report
-disappears with the session. When a later run replaces it, publish to the same artifact URL. If the
-reviewer couldn't render the report, run `node scripts/qa-report.mjs qa-artifacts/<branch>`.
+**First, commit and push the reviewer's record at once:** `qa/<slice>/report.md`,
+`qa/<slice>/results.json`, and its `acceptance.md`, `flows.md` and specs. That's the durable record:
+`qa-artifacts/` is gitignored and goes when the VM is reclaimed. If the reviewer didn't write
+`report.md`, write it yourself from its final message before doing anything else.
+
+Then **publish the HTML report with the Artifact tool** and give the owner the link:
+1. If the reviewer didn't render it, run `node scripts/qa-report.mjs qa-artifacts/<branch>`. Never
+   hand-write the HTML. The page links its screenshots as `screens/<name>.png` and writes
+   `qa-artifacts/<branch>/publish-files.json`, which maps each one to its file.
+2. Look at every screenshot before publishing (montage them into contact sheets), as the Artifact
+   tool requires. Real financial data must never be in one.
+3. Publish `qa-artifacts/<branch>/report.html` with `files` set to the map in `publish-files.json`.
+   The screenshots are uploaded with the page and hosted with it, so the published report keeps
+   working after the local files go. When a later run replaces it, publish to the same artifact URL.
+4. Add the link to the top of `qa/<slice>/report.md`, and commit and push it.
+5. **Discard `qa-artifacts/<branch>/`** once the publish has succeeded: `rm -rf qa-artifacts/<branch>`.
+   It's gitignored and too big for git, and the artifact now holds it.
+
+**To rebuild a discarded report** (to republish it, say), everything needed is committed: run QA's
+specs as `qa/e2e/playwright.config.ts`'s header says (preview builds served, then
+`playwright test` from `qa/e2e`) to retake the screenshots into `qa-artifacts/<branch>/screens/`, copy `qa/<slice>/results.json` to `qa-artifacts/<branch>/`, and
+run `node scripts/qa-report.mjs qa-artifacts/<branch>`. Pass `--inline` to embed the screenshots
+in one large self-contained file instead.
 
 | Severity | Meaning | Rule |
 |---|---|---|
@@ -125,4 +144,5 @@ tier-1 claim carries its own evidence.
 | `qa/<slice>/acceptance.md`, `qa/<slice>/flows.md` | Yes | A targeted re-check after a session rotation needs them |
 | `qa/<slice>/ledger.md` | Yes | Tier-1 evidence, and every tier decision |
 | `qa/e2e/*.spec.ts` | Yes | They're the regression suite |
-| `qa-artifacts/<branch>/` | No | Screenshots, traces and `results.json`. The published report is the record |
+| `qa/<slice>/report.md`, `qa/<slice>/results.json` | Yes | The findings, verdict and evidence, in the repo, so they outlive the VM |
+| `qa-artifacts/<branch>/` | No | Screenshots, traces and the rendered `report.html`. Published with the Artifact tool, then deleted. Too big to commit, and rebuilt from the rows above when needed |

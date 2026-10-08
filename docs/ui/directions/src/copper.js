@@ -264,9 +264,10 @@ function cuTabScan(mode, u) {
   const d = TAB_SK.scan.d.join('');
   return svgTag('0 0 52 52', 52, 52, `<defs>${cuCoinFill(`${u}c`)}</defs><circle cx="26" cy="26" r="24" fill="url(#${u}c)"/><circle cx="26" cy="26" r="23" fill="none" stroke="rgba(60,25,10,.42)" stroke-width="1.7" stroke-dasharray=".7 .8"/><circle cx="26" cy="26" r="20.6" fill="none" stroke="rgba(255,226,200,.45)" stroke-width=".6"/><circle cx="26" cy="26" r="20" fill="none" stroke="rgba(80,35,15,.35)" stroke-width=".6"/><g transform="translate(14 14)" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="${d}" stroke="rgba(255,225,200,.6)" stroke-width="2" transform="translate(.4 .5)"/><path d="${d}" stroke="#5c2c16" stroke-width="1.9"/></g>`, 'sb');
 }
-// the review count on a smaller coin
+// the review count on a smaller coin, which stretches into a bar of copper for wider counts (99+)
 function cuTabBadge(n, mode, u) {
-  return `${svgTag('0 0 21 21', 21, 21, `<defs>${cuCoinFill(`${u}c`)}</defs><circle cx="10.5" cy="10.5" r="10" fill="url(#${u}c)"/><circle cx="10.5" cy="10.5" r="9.4" fill="none" stroke="rgba(60,25,10,.45)" stroke-width="1" stroke-dasharray=".55 .6"/>`)}<b style="color:#2a1208">${n}</b>`;
+  const text = String(n); const W = 21 + Math.max(0, text.length - 1) * 6.2;
+  return `${svgTag(`0 0 ${f2(W)} 21`, f2(W), 21, `<defs>${cuCoinFill(`${u}c`)}</defs><rect x=".5" y=".5" width="${f2(W - 1)}" height="20" rx="10" fill="url(#${u}c)"/><rect x="1.1" y="1.1" width="${f2(W - 2.2)}" height="18.8" rx="9.4" fill="none" stroke="rgba(60,25,10,.45)" stroke-width="1" stroke-dasharray=".55 .6"/>`)}<b style="color:#2a1208">${text}</b>`;
 }
 
 const DIR = {

@@ -1,0 +1,21 @@
+{
+  "name": "@sen/looks",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./minted": "./src/minted/index.ts",
+    "./instrument": "./src/instrument/index.ts",
+    "./firefly": "./src/firefly/index.ts",
+    "./line": "./src/line/index.ts",
+    "./mercury": "./src/mercury/index.ts",
+    "./copper": "./src/copper/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@sen/core": "workspace:*"
+  }
+}

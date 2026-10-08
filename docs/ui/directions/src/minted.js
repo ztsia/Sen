@@ -55,10 +55,12 @@ function mtScan(mode, u) {
   const c = MT_TAB[mode]; const ring = (r, w, dash, op) => `<circle cx="26" cy="26" r="${r}" fill="none" stroke="#dae5f1" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ''} opacity="${op}"/>`;
   return svgTag('0 0 52 52', 52, 52, `<defs><radialGradient id="${u}g" cx="36%" cy="28%" r="80%"><stop offset="0" stop-color="${c.btn[0]}"/><stop offset=".58" stop-color="${c.btn[1]}"/><stop offset="1" stop-color="${c.btn[2]}"/></radialGradient></defs><circle cx="26" cy="26" r="24" fill="url(#${u}g)"/>${ring(22.4, 1.3, '.75 .9', 0.5)}${ring(20.3, 0.5, '', 0.35)}<g transform="translate(14 14)">${mtInline(TAB_SK.scan.d.join(''), '#dae5f1', 2.25, `${u}l`)}</g>`, 'sb');
 }
-// the review count on a seal with a scalloped edge
+// the review count on a seal with a scalloped edge; wider counts (99+) stretch the seal into a lozenge
 function mtBadge(n, mode) {
-  const [fill, ink] = MT_TAB[mode].badge; const pts = []; for (let i = 0; i < 112; i++) { const t = (i / 112) * TAU; const r = 9.7 + 0.72 * Math.cos(16 * t); pts.push([10.6 + r * Math.cos(t), 10.6 + r * Math.sin(t)]); }
-  return `${svgTag('0 0 21.2 21.2', 21.2, 21.2, `<path d="${polyD(pts, true)}" fill="${fill}"/><circle cx="10.6" cy="10.6" r="7.5" fill="none" stroke="${ink}" stroke-width=".5" opacity=".5"/>`)}<b style="color:${ink}">${n}</b>`;
+  const text = String(n); const [fill, ink] = MT_TAB[mode].badge; const extra = Math.max(0, text.length - 1) * 6.2; const W = 21.2 + extra;
+  const pts = []; for (let i = 0; i < 112; i++) { const t = (i / 112) * TAU; const r = 9.7 + 0.72 * Math.cos(16 * t); const cx = 10.6 + (Math.cos(t) > 0 ? extra : 0); pts.push([cx + r * Math.cos(t), 10.6 + r * Math.sin(t)]); }
+  const ring = extra ? `<rect x="3.1" y="3.1" width="${f2(15 + extra)}" height="15" rx="7.5" fill="none" stroke="${ink}" stroke-width=".5" opacity=".5"/>` : `<circle cx="10.6" cy="10.6" r="7.5" fill="none" stroke="${ink}" stroke-width=".5" opacity=".5"/>`;
+  return `${svgTag(`0 0 ${f2(W)} 21.2`, f2(W), 21.2, `<path d="${polyD(pts, true)}" fill="${fill}"/>${ring}`)}<b style="color:${ink}">${text}</b>`;
 }
 
 const DIR = {

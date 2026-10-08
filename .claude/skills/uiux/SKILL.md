@@ -21,7 +21,8 @@ own design.
    these; it doesn't invent its own.** If a screen genuinely needs a new pattern, add it to that file
    first.
 2. **`docs/screens.md`** and **`docs/flows.md`**: what each screen contains, and where it leads.
-3. **The components in the repo** (`src/components/ui/`, laid out by the foundations slice). Read a
+3. **The components in the repo** (`apps/web/src/components/ui/`, shadcn's, customised in place, and
+   the patterns composed from them in `apps/web/src/blocks/`). Read a
    component's source before recommending it: the source is the documentation, and its props are the
    real ones.
 4. **`.claude/skills/uiux/docs/components-index.md`**, read in full, then only the `<component>.md`
@@ -29,9 +30,6 @@ own design.
 5. **`.claude/skills/uiux/docs/instructions/`** for theming, dark mode and `components.json`.
 6. **Other skills:** `dataviz` for charts and stat tiles, and the official `shadcn/ui` skill once the
    foundations slice installs it, for current APIs.
-
-Until the foundations slice lands there's no `src/`. Recommend from the docs here, and say that's what
-you did.
 
 ## This app
 
@@ -205,9 +203,12 @@ checklist above, the checklist wins.
 - Status words are text, not colour: a pill that's only a status isn't a button.
 
 **shadcn/ui**
-- Add components with the CLI (`npx shadcn@latest add`, `--dry-run` before overwriting a
-  customised one), import them from `@/components/ui`, and extend with `className` or `cva`
-  variants rather than editing their source.
+- **Every building block starts from a shadcn component.** Add it with the CLI (`npx shadcn@latest
+  add`, `--dry-run` before overwriting a customised one) and import it from `@/components/ui`.
+- **Customise the shadcn file itself** (`apps/web/src/components/ui/<component>.tsx`) when its
+  defaults don't fit the phone: 48 px targets, the look's tokens and radii, no clipping at 1.5×.
+  Never write a second, hand-rolled version of something shadcn has. A pattern from `patterns.md`
+  is a composition of these components (in `apps/web/src/blocks/`), not a replacement for them.
 - Semantic colour pairs (`primary` with `primary-foreground`), defined in full for `:root` and
   `.dark`, as each look's `theme.css` does.
 - Compose compound components (`Card` with `CardHeader` and `CardContent`), and keep their ARIA:

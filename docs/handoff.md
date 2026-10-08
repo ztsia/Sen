@@ -1,43 +1,52 @@
 # Handoff
 
-Rewritten 8 Oct 2026 by the session that closed `S3` and published this repo. The protocol is in
-`CLAUDE.md`, *Session rotation*: read this first, and rewrite it before you end.
+Rewritten 8 Oct 2026 by the second B01 session, which fixed both QA runs' findings and opened the PR.
+The protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it before you end.
 
 ## Where things stand
 
-- **Sen is published:** this repo, `ztsia/Sen`, is one clean snapshot of the private design repo.
-  Every slice is built here from now on.
-- **The design track is done.** The slice map is `docs/modules.md`, with one brief per slice in
-  `docs/briefs/` (D111).
-- **Next: B01 · Design system and the six looks.** Its brief is the whole start.
+- **B01 · Design system and the six looks, on `B01/design-system`: done, with its PR open to `main`.**
+  It waits on the owner's merge and the phone checks in the PR's *Try it on your phone*.
+- QA ran twice. Run 1 (9 failed criteria) and run 2 (3 failed, 2 Majors about the guards themselves)
+  are both fixed. `qa/B01/ledger.md` has each fix, its tier, and its red and green evidence. Run 2's
+  report: https://claude.ai/artifact/3tyzFqm3v81jS1GDM4sYSe.
+- **Verified:** unit 135/135; the slice's e2e 88/88; QA's specs 76/76; typecheck, lint, format,
+  `looks.gen.css` and hygiene clean.
+- **Not verified yet:** CI on GitHub (it runs on the PR), the Vercel deploys, the phone.
 
-## Decided at the end of the design track
+## Decided in B01's second session, and why
 
-- **D111, the map.** Forty slices, built one at a time:
-  - claims by hand (B24–B26) come before Sen, and the ESS adapter (B34–B36) after it
-  - the next slice waits only for the owner's merge
-  - the shell (B02) comes second, so the phone soaks while the skeleton is built
-- **D112:** a new merchant's two category guesses come from a cheap model, the first time only,
-  waiting at most 5 seconds; offline or late, from the person's own history. The notification keeps
-  its buttons, and late guesses replace history's in *Review* (B12).
-- **D113:** one look roster for everyone (B14).
-- **The handoff is this one file,** rewritten every session, finished or not. A slice can span
-  sessions: see *Session rotation*.
+- **Owner: after run 2's fixes, no further QA run.** The implementer reproduces each finding first
+  (red), fixes it, shows it green, and re-runs every suite. For B01 only, unless the owner extends it.
+- **A build is production unless it says preview** (`SEN_ENV=preview`, or `VERCEL_ENV=preview`), and
+  dev-only chunks are imported behind `__SEN_ENV__` compared in place, so production has none.
+- **The no-float lint bans routes, not only names**, everywhere amounts flow. Only
+  `packages/core/src/money.ts` turns sen into ringgit text and back (`formatSen`, `parseSen`,
+  `percent`), and only the looks' drawing code is exempt.
+- **The hygiene check reads paths, binary and UTF-16 files, and every commit and message in the range.**
+- **Colours keep one meaning** (patterns.md §2): errors and status cards are in the text colours;
+  the health bar uses the warn pair through `warning` variants on shadcn's alert and button.
+- **A Review row raises its own Undo**: an answer returns what it said and how to undo it.
+- `tokens`, `extra` and `fonts` are CSS, not `DIR` fields (patterns.md §1).
+- **Buttons are pills unless the look sets `--radius-btn`** (Instrument and Copper: 10 px), as
+  `engine.css` draws them. The shadcn files carry that default; a self-referring fallback once made
+  four looks square.
 
 ## Open with the owner
 
-- **B01 can start now.** Before its PR is reviewed, the owner links Vercel, using the settings B01
-  writes into `docs/local.md`, and adds the `DENYLIST` secret. Secret scanning and push protection
-  can be turned on any time (`docs/local.md`).
-- **The laptop ESS capture** (D110) hadn't been done. It matters only for B34; until then, Q29 stays
-  open.
-- **The other four defaults** in the map's *Defaults the briefs chose* stand unless the owner changes
-  them.
+- **Copper's overspent figure is verdigris green**, as its design intends, against patterns.md §3
+  (green means money in). Kept as designed until the owner says otherwise.
+- **Link Vercel** and **add the `DENYLIST` secret** (`docs/local.md`), then the PR's phone checks.
+- Secret scanning and push protection, any time (`docs/local.md`).
+- The laptop ESS capture (D110) is still open; it matters only for B34.
+
+## What to do first
+
+- If the PR has review comments or red CI, fix them on `B01/design-system`.
+- Once merged: **B02 · The shell and the listener**, on `B02/shell-listener` from `main`. Its service
+  worker should precache all six look chunks (about 70 kB), so a quarter's change works offline (B14).
 
 ## Don't reopen
 
-D1–D113, unless the owner raises one. In particular:
-- the slice order (D111)
-- no screen mockups (D84)
-- ESS on the phone with a saved password (D103), with recipes as data (D105)
-- no payment inside Sen (D98)
+D1–D113, unless the owner raises one. In particular the slice order (D111), no screen mockups (D84),
+and from 8 Oct: one brief, one branch; shadcn first, customised in place.
