@@ -1,3 +1,4 @@
+// Sen: shadcn/ui's item, changed in place for the phone (CLAUDE.md, shadcn first): ItemGroup drops role="list", since Sen's rows are buttons and links, not list items; ItemDescription no longer clamps to two lines, so nothing clips at 1.5× text.
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
@@ -6,9 +7,7 @@ import { Slot } from 'radix-ui';
 import { Separator } from '@/components/ui/separator';
 
 function ItemGroup({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div role="list" data-slot="item-group" className={cn('group/item-group flex flex-col', className)} {...props} />
-  );
+  return <div data-slot="item-group" className={cn('group/item-group flex flex-col', className)} {...props} />;
 }
 
 function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Separator>) {
@@ -111,7 +110,7 @@ function ItemDescription({ className, ...props }: React.ComponentProps<'p'>) {
     <p
       data-slot="item-description"
       className={cn(
-        'line-clamp-2 text-sm leading-normal font-normal text-balance text-muted-foreground',
+        'text-sm leading-normal font-normal text-balance text-muted-foreground',
         '[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary',
         className,
       )}

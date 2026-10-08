@@ -80,7 +80,7 @@ export function ListRow({ icon, title, secondary, sen, kind = 'out', marks = [],
         <ItemContent className="min-w-0 gap-0">
           <ItemTitle className="block w-full truncate text-base">{title}</ItemTitle>
           {secondary || marks.length ? (
-            <ItemDescription className="flex min-w-0 items-center gap-2 text-balance">
+            <ItemDescription className="flex min-w-0 flex-wrap items-center gap-x-2 text-balance">
               {secondary ? <span className="min-w-0 truncate">{secondary}</span> : null}
               <Marks marks={marks} />
             </ItemDescription>

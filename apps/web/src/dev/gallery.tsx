@@ -85,7 +85,7 @@ export default function Gallery() {
           <a
             key={s}
             href={`#${s}`}
-            className="inline-flex min-h-12 items-center text-primary underline underline-offset-4"
+            className="inline-flex min-h-12 min-w-12 items-center justify-center px-1 text-primary underline underline-offset-4"
           >
             {s}
           </a>
@@ -175,7 +175,7 @@ export default function Gallery() {
               <PlusIcon />
             </Button>
           </div>
-          <div className="flex flex-wrap gap-4 text-icon" aria-label="Shared icons">
+          <div className="flex flex-wrap gap-4 text-icon" role="group" aria-label="Shared icons">
             {[CameraIcon, ClockIcon, WalletIcon, RefreshCwIcon, PlusIcon].map((I, i) => (
               <I key={i} className="size-6" aria-hidden="true" />
             ))}

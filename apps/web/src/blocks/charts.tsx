@@ -239,12 +239,12 @@ export function PartsBar({ parts, label }: { parts: Part[]; label: string }) {
   const row = Object.fromEntries([['name', label], ...folded.map((p) => [p.key, p.sen])]);
   return (
     <>
-      <ChartContainer config={config} className="aspect-auto h-8 w-full" initialDimension={{ width: 320, height: 32 }}>
+      <ChartContainer config={config} className="aspect-auto h-12 w-full" initialDimension={{ width: 320, height: 48 }}>
         <BarChart
           data={[row]}
           layout="vertical"
           margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
-          barCategoryGap={0}
+          barSize={16}
           accessibilityLayer
         >
           <XAxis type="number" hide domain={[0, 'dataMax']} />

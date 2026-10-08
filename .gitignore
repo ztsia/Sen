@@ -5,6 +5,7 @@ node_modules/
 # Build output and signing keys. Capacitor's android/ folder is committed source: the Kotlin
 # capture plugin lives there, and Capacitor adds its own .gitignore for android/'s build output.
 dist/
+dist-production/
 *.jks
 *.keystore
 *.p8
