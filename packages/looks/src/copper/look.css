@@ -1,0 +1,120 @@
+/* Copper's own material, ported from docs/ui/directions/src/copper.css and scoped to the look.
+   Struck metal on stone: the coin and the figure are the loud things; the rest is limestone and patina. */
+[data-look='copper'] {
+  .wm {
+    font: 600 25px/1 var(--font-ui);
+    font-stretch: 118%;
+    letter-spacing: 0.01em;
+    background: linear-gradient(170deg, #c2724a 0%, #8b4526 45%, #5a2c17 72%, #a8603a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  &[data-mode='dark'] .wm {
+    background: linear-gradient(170deg, #f6c39f 0%, #c06a3e 42%, #7d3e22 70%, #d38b5f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .hero-fig {
+    display: block;
+    margin: 0;
+  }
+  .hero-fig canvas {
+    display: block;
+    width: calc(100% + 12px);
+    height: 64px;
+    margin-left: -6px;
+  }
+  .hero .strip {
+    height: 22px;
+    margin-top: 8px;
+  }
+  .shine {
+    animation: cu-shine 4.5s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .card {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  }
+  &[data-mode='dark'] .card {
+    box-shadow: 0 1px 0 rgba(236, 229, 220, 0.04) inset;
+  }
+  .fab {
+    background: var(--fab-bg);
+  }
+  /* the tab bar: limestone by day, green-black stone by night, with a chiselled top edge */
+  .tabbar {
+    border-top: 1px solid rgba(33, 26, 22, 0.1);
+    background: linear-gradient(180deg, #ecede8, #e2e3dd);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  }
+  &[data-mode='dark'] .tabbar {
+    border-top-color: rgba(0, 0, 0, 0.65);
+    background: linear-gradient(180deg, #161f1d, #0e1412);
+    box-shadow: inset 0 1px 0 rgba(236, 229, 220, 0.05);
+  }
+  .tab.on .tl {
+    color: var(--primary);
+  }
+  .tab-scan .scanbtn.cs {
+    box-shadow:
+      0 0 0 1px rgba(90, 40, 20, 0.35),
+      0 7px 14px -6px rgba(60, 25, 10, 0.55);
+  }
+  .tab-scan.press .scanbtn {
+    animation: cu-press 0.4s ease-out;
+  }
+  .tab.on.fresh .i-on {
+    transition: none;
+  }
+  .tab.on.fresh .i-on svg {
+    animation: cu-strike 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.15) both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-look='copper'] .shine {
+    opacity: 0;
+  }
+}
+@keyframes cu-shine {
+  0%,
+  62% {
+    transform: translateX(-6px) rotate(28deg);
+    opacity: 0;
+  }
+  70% {
+    opacity: 0.85;
+  }
+  84%,
+  100% {
+    transform: translateX(16px) rotate(28deg);
+    opacity: 0;
+  }
+}
+@keyframes cu-press {
+  30% {
+    transform: scale(0.9);
+    filter: brightness(1.25);
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes cu-strike {
+  0% {
+    transform: scale(1.32);
+    filter: brightness(1.8);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(0.9);
+    filter: brightness(1.35);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}

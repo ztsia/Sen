@@ -14,6 +14,7 @@ const DM = {
   n: ['00000', '00000', '10110', '11001', '10001', '10001', '10001'], t: ['01000', '01000', '11100', '01000', '01000', '01001', '00110'],
   r: ['00000', '00000', '10110', '11001', '10000', '10000', '10000'], u: ['00000', '00000', '10001', '10001', '10001', '10011', '01101'],
   m: ['00000', '00000', '11010', '10101', '10101', '10001', '10001'],
+  '+': ['000', '000', '010', '111', '010', '000', '000'],
   ',': ['00', '00', '00', '00', '00', '01', '10'], '.': ['0', '0', '0', '0', '0', '0', '1'],
 };
 // dots for a string: returns {w, h, dots: [x, y, lit]} in pitch units
@@ -150,7 +151,7 @@ const DIR = {
     small: () => { let s = ''; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const big = i === 1 && j === 2; s += `<circle cx="${f2(4.5 + j * 5)}" cy="${f2(4.5 + i * 5)}" r="${big ? 2.5 : 1.15}" fill="currentColor"/>`; } return s; },
   },
 
-  wordmark: () => `<span class="wm" aria-label="Sen">${dmSVG('sen', 3.4, 1.3, 'currentColor', null)}</span>`,
+  wordmark: () => `<span class="wm">${dmSVG('sen', 3.4, 1.3, 'currentColor', null)}</span>`,
   tabs: { icon: inIcon, scan: inScan, badge: inBadge },
   heroFigure(sen, mode, st) {
     const p = rmParts(sen); const on = st && st.over ? 'var(--led-warn)' : 'var(--led)'; const off = 'rgba(255,255,255,.07)';

@@ -219,10 +219,11 @@ function lnScan(mode, u) {
   const c = LN_TAB[mode]; const pts = []; for (let i = 0; i < 96; i++) { const t = (i / 96) * TAU; const r = 23.3 + 0.45 * Math.sin(t * 3 + 1.3) + 0.28 * Math.sin(t * 7 + 0.4) + 0.16 * Math.sin(t * 13); pts.push([26 + r * Math.cos(t), 26 + r * Math.sin(t)]); }
   return svgTag('0 0 52 52', 52, 52, `<defs><radialGradient id="${u}s" cx="34%" cy="28%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity="${mode === 'dark' ? 0.18 : 0.12}"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><path d="${polyD(pts, true)}" fill="${c.on}"/><path d="${polyD(pts, true)}" fill="url(#${u}s)"/><g transform="translate(14 14)" color="${c.paper}"><path d="${lnInk('scan', 0.7, 2.1)}" fill="currentColor"/></g>`, 'sb');
 }
-// the review count, circled in red ink the way a bookkeeper marks what needs attention
+// the review count, circled in red ink the way a bookkeeper marks what needs attention; a wider count (99+) gets a wider ring
 function lnBadge(n, mode) {
-  const c = LN_TAB[mode]; const P = []; for (let i = 0; i <= 80; i++) { const t = -1.95 + (i / 80) * TAU * 1.07; P.push([10.6 + (8.3 + 0.35 * Math.sin(t * 2)) * Math.cos(t), 10.4 + 7.5 * Math.sin(t) + i * 0.012]); }
-  return `${svgTag('0 0 21.2 21.2', 21.2, 21.2, `<ellipse cx="10.6" cy="10.4" rx="7.6" ry="6.8" fill="${c.paper}" opacity=".92"/><path d="${lnOutline(P, 0.45, 1.5, 3)}" fill="${c.red}"/>`)}<b style="color:${c.on}">${n}</b>`;
+  const text = String(n); const c = LN_TAB[mode]; const extra = Math.max(0, text.length - 1) * 3.2; const W = 21.2 + 2 * extra; const cx = W / 2;
+  const P = []; for (let i = 0; i <= 80; i++) { const t = -1.95 + (i / 80) * TAU * 1.07; P.push([cx + (8.3 + extra + 0.35 * Math.sin(t * 2)) * Math.cos(t), 10.4 + 7.5 * Math.sin(t) + i * 0.012]); }
+  return `${svgTag(`0 0 ${f2(W)} 21.2`, f2(W), 21.2, `<ellipse cx="${f2(cx)}" cy="10.4" rx="${f2(7.6 + extra)}" ry="6.8" fill="${c.paper}" opacity=".92"/><path d="${lnOutline(P, 0.45, 1.5, 3)}" fill="${c.red}"/>`)}<b style="color:${c.on}">${text}</b>`;
 }
 // Sen's underline under the active tab, written again when you choose another
 function lnUnderline(mode) {
@@ -324,7 +325,7 @@ const DIR = {
     small: () => loopMark('currentColor', 6.4, 8.6, 0.27, -1.6, -2, 8.4),
   },
 
-  wordmark: (mode) => `<span class="wm" aria-label="Sen"><canvas class="pen pen-wm" data-kind="wm" data-mode="${mode}" data-write="0" aria-hidden="true"></canvas><svg viewBox="0 30 92 42" aria-hidden="true">${loopMark('var(--primary)', 1.6, 4.2)}</svg></span>`,
+  wordmark: (mode) => `<span class="wm"><canvas class="pen pen-wm" data-kind="wm" data-mode="${mode}" data-write="0" aria-hidden="true"></canvas><svg viewBox="0 30 92 42" aria-hidden="true">${loopMark('var(--primary)', 1.6, 4.2)}</svg></span>`,
   tabs: { icon: lnTabIcon, scan: lnScan, badge: lnBadge, ind: lnUnderline, switch: lnSwitch },
   heroFigure(sen, mode, st) { return `<canvas class="pen" data-kind="fig" data-sen="${sen}" data-over="${st && st.over ? 1 : 0}" data-mode="${mode}" aria-hidden="true"></canvas>`; },
   // the cycle as a ruled line in ink up to today, pencil dots to payday, a tick each week and a double rule at payday

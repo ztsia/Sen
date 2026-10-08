@@ -1,0 +1,114 @@
+/* Mercury's own material, ported from docs/ui/directions/src/mercury.css and scoped to the look.
+   Quicksilver in a warm room: the metal is the loud thing; everything around it is stone and shadow.
+   Home's room light and stray beads port with Home (B03). */
+[data-look='mercury'] {
+  .wm {
+    display: block;
+  }
+  .mq-wm {
+    display: block;
+    width: 66px;
+    height: 32px;
+    margin-left: -3px;
+  }
+  .hero-fig {
+    display: block;
+    margin: 0;
+  }
+  .hero-fig canvas {
+    display: block;
+    width: calc(100% + 12px);
+    height: 67px;
+    margin-left: -6px;
+  }
+  .hero .strip {
+    height: 26px;
+    margin-top: 8px;
+  }
+  .card {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.4) inset,
+      0 1px 2px rgba(40, 28, 18, 0.05);
+  }
+  &[data-mode='dark'] .card {
+    box-shadow: 0 1px 0 rgba(255, 240, 225, 0.04) inset;
+  }
+  .fab {
+    background: var(--fab-bg);
+  }
+  /* the tab bar: travertine by day, smoked bronze by night; icons etched, the active one full of quicksilver */
+  .tabbar {
+    border-top-color: transparent;
+    background-image:
+      repeating-linear-gradient(
+        178deg,
+        transparent 0 9px,
+        rgba(150, 130, 110, 0.06) 9px 10px,
+        transparent 10px 23px,
+        rgba(150, 130, 110, 0.05) 23px 24px
+      ),
+      linear-gradient(180deg, #ece7e0, #e2dcd3);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      0 -1px 0 rgba(70, 58, 48, 0.16);
+  }
+  &[data-mode='dark'] .tabbar {
+    background: linear-gradient(180deg, rgba(31, 25, 20, 0.97), rgba(17, 13, 10, 0.98));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 240, 225, 0.09),
+      0 -1px 0 rgba(0, 0, 0, 0.45);
+  }
+  .tab-scan .scanbtn.cs {
+    box-shadow:
+      0 0 0 1px rgba(70, 58, 48, 0.18),
+      0 8px 14px -6px rgba(20, 12, 6, 0.55);
+  }
+  .tab-scan.press .scanbtn {
+    animation: mq-press 0.55s ease-out;
+  }
+  .tab.on.fresh .i-on {
+    transition: none;
+  }
+  .tab.on.fresh .hg path {
+    animation: mq-flow 0.6s cubic-bezier(0.3, 0.6, 0.3, 1) both;
+    animation-delay: calc(var(--n) * 0.14s);
+  }
+  .tab.on.fresh .bead {
+    animation: mq-bead 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+    animation-delay: calc(var(--n) * 0.09s);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}
+@keyframes mq-press {
+  25% {
+    transform: scale(1.08, 0.92);
+  }
+  55% {
+    transform: scale(0.96, 1.04);
+  }
+  80% {
+    transform: scale(1.01, 0.99);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes mq-flow {
+  from {
+    stroke-dasharray: 1 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1 1;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes mq-bead {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: none;
+  }
+}

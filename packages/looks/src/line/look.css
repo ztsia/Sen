@@ -1,0 +1,162 @@
+/* Line's own material, ported from docs/ui/directions/src/line.css and scoped to the look.
+   Cotton paper and iron-gall ink: the loud thing is the hand; the rest is paper, rules and type. */
+[data-look='line'] {
+  font-variant-numeric: lining-nums;
+  /* cotton paper: a fine grain and a faint mottle, behind everything */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.55;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .44  0 0 0 0 .4  0 0 0 .09 0'/></filter><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.012 .09' numOctaves='3' seed='8'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .45  0 0 0 .05 0'/></filter><rect width='220' height='220' filter='url(%23f)'/><rect width='220' height='220' filter='url(%23g)'/></svg>");
+  }
+  &[data-mode='dark'] body::before {
+    opacity: 0.35;
+    filter: invert(1);
+  }
+  .wm {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .wm .pen-wm {
+    width: 38px;
+    height: 28px;
+    display: block;
+  }
+  .wm svg {
+    width: 34px;
+    height: 16px;
+    margin-top: 2px;
+  }
+  .hero {
+    padding-top: 0;
+  }
+  .hero-fig {
+    display: block;
+    margin: 2px 0 0;
+  }
+  .hero-fig canvas {
+    display: block;
+    width: 100%;
+    height: 76px;
+  }
+  .hero .strip {
+    height: 22px;
+    margin-top: 6px;
+  }
+  .wet {
+    animation: ln-wet 3.6s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  /* the ledger: rules instead of cards */
+  .card {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding-inline: 0;
+    border-top: 1px solid var(--border);
+    box-shadow: none;
+  }
+  .fab {
+    background: var(--fab-bg);
+  }
+  /* the tab bar: a double rule across the top, the ledger's way of closing a page; icons in ink */
+  .tabbar {
+    border-top: 0;
+  }
+  .tabbar::after {
+    content: '';
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: 0;
+    height: 3px;
+    border-top: 1px solid rgba(27, 33, 52, 0.26);
+    border-bottom: 1px solid rgba(27, 33, 52, 0.26);
+    pointer-events: none;
+  }
+  &[data-mode='dark'] .tabbar::after {
+    border-color: rgba(235, 230, 218, 0.2);
+  }
+  .tab.on {
+    color: var(--tab-on);
+  }
+  .tab-ind {
+    top: 52px;
+    transition: none;
+  }
+  .tab-ind svg {
+    display: block;
+    overflow: visible;
+  }
+  .tab-ind.redraw svg {
+    animation: ln-und 0.5s 0.55s cubic-bezier(0.4, 0.1, 0.3, 1) both;
+  }
+  .tab.on.fresh .i-on {
+    transition: none;
+  }
+  .tab.on.fresh .i-on svg {
+    animation: ln-dry 1.9s ease-out both;
+  }
+  .tab.on.fresh .pen-w {
+    animation: ln-penw 0.42s cubic-bezier(0.45, 0.1, 0.3, 1) both;
+    animation-delay: calc(var(--n) * 0.16s);
+  }
+  .tab-scan .scanbtn.cs {
+    margin-top: -10px;
+    filter: drop-shadow(0 5px 7px rgba(27, 33, 52, 0.22));
+  }
+  .tab-scan.press .scanbtn {
+    animation: ln-press 0.45s ease-out;
+  }
+}
+@keyframes ln-wet {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+@keyframes ln-und {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes ln-dry {
+  from {
+    color: var(--ink-fresh);
+  }
+  35% {
+    color: var(--ink-fresh);
+  }
+  to {
+    color: var(--tab-on);
+  }
+}
+@keyframes ln-penw {
+  from {
+    stroke-dasharray: 1 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1 1;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ln-press {
+  30% {
+    transform: scale(0.92) rotate(-4deg);
+  }
+  100% {
+    transform: none;
+  }
+}

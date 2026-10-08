@@ -47,6 +47,9 @@ importers:
       '@sen/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@sen/looks':
+        specifier: workspace:*
+        version: link:../../packages/looks
       '@tanstack/react-router':
         specifier: ^1.170.41
         version: 1.170.41(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -128,6 +131,12 @@ importers:
         version: 8.3.3(@types/node@22.20.5)(jiti@2.7.0)
 
   packages/core: {}
+
+  packages/looks:
+    dependencies:
+      '@sen/core':
+        specifier: workspace:*
+        version: link:../core
 
 packages:
 

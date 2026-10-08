@@ -215,9 +215,10 @@ function mqTabScan(mode, u) {
   const d = TAB_SK.scan.d.join('');
   return svgTag('0 0 52 52', 52, 52, `<defs>${mqBead(`${u}d`)}<radialGradient id="${u}w"><stop offset="0" stop-color="#fffaf2" stop-opacity=".9"/><stop offset="1" stop-color="#fffaf2" stop-opacity="0"/></radialGradient></defs><circle cx="26" cy="26" r="24" fill="url(#${u}d)"/><ellipse cx="18.5" cy="15" rx="8" ry="4.6" transform="rotate(-30 18.5 15)" fill="url(#${u}w)"/><g transform="translate(14 14)" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="${d}" stroke="rgba(255,250,242,.55)" stroke-width="2" transform="translate(.35 .5)"/><path d="${d}" stroke="rgba(28,22,18,.85)" stroke-width="1.9"/></g>`, 'sb');
 }
-// the review count in a bronze pill with a silver rim
+// the review count in a bronze pill with a silver rim, longer for wider counts (99+)
 function mqTabBadge(n, mode, u) {
-  return `${svgTag('0 0 21 20', 21, 20, `<defs><linearGradient id="${u}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbf9f6"/><stop offset=".5" stop-color="#6f665e"/><stop offset="1" stop-color="#d8b994"/></linearGradient></defs><rect x=".6" y=".6" width="19.8" height="18.8" rx="9.4" fill="#1c1612" stroke="url(#${u}r)" stroke-width="1.2"/>`)}<b style="color:#efe8df">${n}</b>`;
+  const text = String(n); const W = 21 + Math.max(0, text.length - 1) * 6.2;
+  return `${svgTag(`0 0 ${f2(W)} 20`, f2(W), 20, `<defs><linearGradient id="${u}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbf9f6"/><stop offset=".5" stop-color="#6f665e"/><stop offset="1" stop-color="#d8b994"/></linearGradient></defs><rect x=".6" y=".6" width="${f2(W - 1.2)}" height="18.8" rx="9.4" fill="#1c1612" stroke="url(#${u}r)" stroke-width="1.2"/>`)}<b style="color:#efe8df">${text}</b>`;
 }
 
 const DIR = {
@@ -277,7 +278,7 @@ const DIR = {
     small: () => '<path fill="currentColor" fill-rule="evenodd" d="M10.5 3.5a7.5 7.5 0 1 1 0 15a7.5 7.5 0 1 1 0-15zM8 6.6c-1.2 0-2.1.7-2.1 1.6s.9 1.6 2.1 1.6 2.1-.7 2.1-1.6-.9-1.6-2.1-1.6z"/><circle cx="19.2" cy="19.2" r="2.6" fill="currentColor"/>',
   },
 
-  wordmark: (mode) => `<span class="wm" aria-label="Sen"><canvas class="mq mq-wm" data-kind="wm" data-mode="${mode}" aria-hidden="true"></canvas></span>`,
+  wordmark: (mode) => `<span class="wm"><canvas class="mq mq-wm" data-kind="wm" data-mode="${mode}" aria-hidden="true"></canvas></span>`,
   tabs: { icon: mqTabIcon, scan: mqTabScan, badge: mqTabBadge },
   heroFigure(sen, mode, st) { return `<canvas class="mq" data-kind="fig" data-sen="${sen}" data-over="${st && st.over ? 1 : 0}" data-mode="${mode}" aria-hidden="true"></canvas>`; },
   strip(day, days) { return mqTube(day, days); },

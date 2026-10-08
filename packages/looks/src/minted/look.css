@@ -1,0 +1,69 @@
+/* Minted's own material, ported from docs/ui/directions/src/minted.css and scoped to the look.
+   Paper and intaglio ink: the one loud thing is the engraving; everything else stays quiet. */
+[data-look='minted'] {
+  .wm {
+    font: 400 27px/1 var(--font-display);
+    letter-spacing: 0.01em;
+  }
+  .hero-fig .cur {
+    font-size: 0.36em;
+    letter-spacing: 0.06em;
+    margin-right: 2px;
+  }
+  /* the tab bar: microprint along the top, a bead riding it, engraved icons */
+  .tabbar {
+    border-top: 0;
+    padding-top: 10px;
+  }
+  .mt-micro {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 5px;
+    color: var(--muted-foreground);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .tab-ind {
+    top: -2.5px;
+  }
+  .tab-ind svg {
+    display: block;
+    filter: drop-shadow(0 1px 1px rgba(10, 25, 44, 0.35));
+  }
+  .tab.on .tl {
+    color: var(--primary);
+  }
+  .tab-scan .scanbtn.cs {
+    box-shadow:
+      0 0 0 4px var(--background),
+      0 0 0 5px var(--border),
+      0 8px 16px -8px rgba(10, 25, 44, 0.6);
+  }
+  .tab-scan.press .scanbtn {
+    animation: mt-press 0.5s ease-out;
+  }
+  .tab.on.fresh .cut {
+    animation: mt-cut 0.65s cubic-bezier(0.3, 0.7, 0.3, 1) both;
+  }
+  .fab {
+    background: #14304f;
+  }
+}
+@keyframes mt-press {
+  30% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes mt-cut {
+  from {
+    transform: translateX(-24px);
+  }
+  to {
+    transform: none;
+  }
+}
