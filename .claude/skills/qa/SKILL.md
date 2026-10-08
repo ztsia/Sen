@@ -39,6 +39,11 @@ The owner never sees the subagent's report, so relay these yourself:
 - the verdict and the counts
 - every Blocker and Major, in full
 
+**First, commit and push the reviewer's record at once:** `qa/<slice>/report.md`,
+`qa/<slice>/results.json`, and its `acceptance.md`, `flows.md` and specs. That's the durable record:
+`qa-artifacts/` is gitignored and goes when the VM is reclaimed. If the reviewer didn't write
+`report.md`, write it yourself from its final message before doing anything else.
+
 Then **publish `qa-artifacts/<branch>/report.html` with the Artifact tool** and give the owner the
 link. The container is ephemeral and `qa-artifacts/` is gitignored, so an unpublished report
 disappears with the session. When a later run replaces it, publish to the same artifact URL. If the
@@ -125,4 +130,5 @@ tier-1 claim carries its own evidence.
 | `qa/<slice>/acceptance.md`, `qa/<slice>/flows.md` | Yes | A targeted re-check after a session rotation needs them |
 | `qa/<slice>/ledger.md` | Yes | Tier-1 evidence, and every tier decision |
 | `qa/e2e/*.spec.ts` | Yes | They're the regression suite |
-| `qa-artifacts/<branch>/` | No | Screenshots, traces and `results.json`. The published report is the record |
+| `qa/<slice>/report.md`, `qa/<slice>/results.json` | Yes | The findings, verdict and evidence, in the repo, so they outlive the VM |
+| `qa-artifacts/<branch>/` | No | Screenshots, traces and the rendered `report.html`, published with the Artifact tool. Too big to commit |

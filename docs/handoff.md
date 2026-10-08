@@ -15,7 +15,7 @@ rotation*: read this first, and rewrite it before you end.
   registry. Commands and layout are in `CLAUDE.md`.
 - **Verified:** 114 unit tests and the slice's 58 Playwright tests pass; typecheck, lint, format
   clean. QA's own 48 specs are in `qa/e2e/` (9 fail: the findings below). Its criteria and flows are
-  in `qa/B01/`. Its report (`qa-artifacts/`) wasn't published and is gone with the VM.
+  in `qa/B01/`. Its full report is `qa/B01/report.md`, with `qa/B01/results.json`.
 - **Not verified yet:** CI on GitHub (it runs on the PR), the Vercel deploys, the phone.
 
 ## QA findings to fix first (QA B01, 8 Oct)

@@ -1,0 +1,1860 @@
+{
+  "module": "B01",
+  "branch": "B01/design-system",
+  "verdict": "fix first",
+  "generatedAt": "2026-10-08 09:56 UTC",
+  "phases": "1-3, 5-6 (phase 4: no database or API in this slice)",
+  "headline": "The frame, the money module and the six looks hold up well. Money has teeth, tokens match the design source in all twelve combinations, axe is clean, and production is pinned with no dev tools showing. Three Majors to fix first: an unknown screen id crashes to the router's default error page, a real touch long-press on Scan picks the sheet row under the finger, and the no-float lint leaves Number() unguarded outside files named money*.",
+  "summary": {
+    "criteria": 76,
+    "pass": 67,
+    "fail": 9,
+    "unreachable": 0
+  },
+  "suites": {
+    "unit": "114/114 pass",
+    "e2e": "slice's own: 58/58 pass; QA journeys (qa/e2e, 412×915): 48 specs, 39 pass, 9 fail",
+    "typecheck": "clean",
+    "lint": "clean (format:check clean)"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "Major",
+      "status": "open",
+      "title": "An unknown screen id crashes the app to TanStack's default 'Something went wrong!' page, with no tab bar and no way back",
+      "detail": "`/s/<id>` with an id not in the registry renders TanStack Router's built-in error component. `AnyScreen` throws `redirect()` from inside a component render (router.tsx), which the router treats as a render error, not a redirect. The root route has no `errorComponent` or `notFoundComponent`, so any later screen that throws, and any stale or mistyped deep link, lands on this dead end. It's the same in the production build. An unknown top-level path (`/nope`) shows a bare 'Not Found'. Neither follows patterns.md §7 *Error*: what happened, what to do next, and a button that does it, inside the frame. B01 is the frame every later slice builds on (brief: nothing here may be a stand-in).",
+      "repro": "Open http://localhost:4173/s/does-not-exist (or the production build at :4176). Also try /nope and /s/..%2F..%2Fetc.",
+      "evidence": "QA spec FLOW-2c: errors = [\"console: Response\"]; landed = http://localhost:4173/s/does-not-exist :: Something went wrong! | Show Error\nProduction, my probe:\nURL http://localhost:4176/s/does-not-exist -> http://localhost:4176/s/does-not-exist :: Something went wrong! | Hide Error :: tabs 0\nURL http://localhost:4176/nope -> http://localhost:4176/nope :: Not Found :: tabs 0\nURL http://localhost:4176/s/..%2F..%2Fetc -> ... :: Something went wrong! | Hide Error :: tabs 0",
+      "spec": "patterns.md §7 (Error), §6 (one navigation); brief B01 Goal",
+      "screenshots": [
+        "FLOW-2c-step-1-unknown-screen.png"
+      ]
+    },
+    {
+      "id": 2,
+      "severity": "Major",
+      "status": "open",
+      "title": "Scan's long-press with a real touch: lifting the finger picks the sheet row that appeared under it",
+      "detail": "With touch events driven through Chromium's own input pipeline (CDP `Input.dispatchTouchEvent`), holding Scan for 650 ms opens *Add a payment* at 500 ms. On release, Chromium synthesises the click at the finger's position, which is now the sheet's *From gallery* row, so the app navigates straight to `/s/crop`. `useLongPress` swallows only the click on the Scan button itself (`fired`), not a click that lands on the new sheet. The slice's own test drives the long-press with `page.mouse`, where mousedown and mouseup hit different elements and no click fires, so it can't see this. On a phone, Chromium's own long-press gesture may suppress the click when the system's touch-and-hold delay is 500 ms or less. With *Medium* or *Long* (1 s, 1.5 s, a common accessibility setting, also on Xiaomi), a 600–900 ms hold is a tap to Chromium but a long-press to the app. Phone check queued in docs/local.md.",
+      "repro": "QA spec FLOW-3 (qa/e2e/b01-frame.spec.ts): touchHold(page, x, y, 650) on the Scan button, then read page.url().",
+      "evidence": "Event log, 650 ms touch hold:\npointerdown rect. prevented=false\ntouchstart rect. prevented=false\npointerup rect. prevented=false\ntouchend rect. prevented=false\nclick BUTTON.From gallery prevented=false\nURL after: http://localhost:4173/s/crop\nPlaywright: Error: lifting the finger chose the sheet row under it. Expected pattern: /4173\\/$/  Received string: \"http://localhost:4173/s/crop\"",
+      "spec": "AC-23s; patterns.md §6; D69, D83; brief Done-when 3",
+      "screenshots": [
+        "FLOW-3-step-3-touch-long-press.png",
+        "FLOW-3-step-3b-mouse-long-press-opens-scan-more.png"
+      ]
+    },
+    {
+      "id": 3,
+      "severity": "Major",
+      "status": "open",
+      "title": "The no-float lint bans Number() and unary + only in files named money*, so a block that renders amounts can parse typed text through a float unnoticed",
+      "detail": "eslint.config.js applies the `Number(…)`, unary `+` and `parseInt` bans only to `MONEY_FILES` (`**/money*`, `**/*Money*` and similar globs). `parseFloat` and `toFixed` are banned everywhere, but `Math.round(Number(typed) * 100)` or `+typed * 100` in `rows.tsx`, `detail.tsx` or `hero.tsx` (all of which render amounts) passes lint and the no-float test suite. Later slices will parse amounts in files named for their screen (`confirm.tsx`, `manual.tsx`, `split.tsx`), outside the guard. CLAUDE.md: `0.1 + 0.2` must be impossible anywhere money flows. Nothing in the current code does this. The guard has a hole.",
+      "repro": "Append `export const plantedSen = (typed: string) => Math.round(Number(typed) * 100);` and `export const plantedSen2 = (typed: string) => Math.round(+typed * 100);` to apps/web/src/blocks/rows.tsx, detail.tsx and hero.tsx; run `npx eslint` on them and `npx vitest run scripts`; then `git checkout -- apps/web/src/blocks`.",
+      "evidence": "$ npx eslint apps/web/src/blocks/rows.tsx apps/web/src/blocks/detail.tsx apps/web/src/blocks/hero.tsx; echo \"eslint exit: $?\"\neslint exit: 0\n$ npx vitest run scripts\n      Tests  13 passed (13)",
+      "spec": "AC-6; CLAUDE.md non-negotiable 1; brief *Money*",
+      "screenshots": []
+    },
+    {
+      "id": 4,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Switching look flips data-look before the look's module arrives: the tab bar breaks while it loads, and stays broken if the load fails",
+      "detail": "`applyTheme` sets `<html data-look>` at once, while `LookProvider` keeps the previous look's drawing until the new module arrives. In between, the old look's tab bar is laid out under the new look's CSS, and the bar grows from 79 px to 134 px with *More* wrapped to a second row. Offline (no service worker until B02), the chunk never arrives, `loadLook` has no `catch`, and the broken frame stays until reload. This matters for B14's reveal and any look change on a weak connection.",
+      "repro": "QA spec FLOW-1d (qa/e2e/b01-slowlook.spec.ts): delay /assets/copper-*.{js,css} by 3 s, switch to Copper in the dev panel, measure the tab bar. FLOW-12: go offline, then switch to Copper.",
+      "evidence": "tab bar height before / during load = 79.390625 / 134.390625, data-look=copper\ntab bar height after load = 78.390625\nError: the tab bar changes shape while the look loads. Expected: < 4  Received: 55\nOffline: console: Failed to load resource: net::ERR_INTERNET_DISCONNECTED (x3)",
+      "spec": "patterns.md §1 (only materials change), §6; spec §9.4",
+      "screenshots": [
+        "FLOW-1d-step-1-copper-loading.png",
+        "FLOW-1d-step-2-copper-loaded.png",
+        "FLOW-12-step-2-offline-switch-look.png"
+      ]
+    },
+    {
+      "id": 5,
+      "severity": "Minor",
+      "status": "open",
+      "title": "A change made within about 200 ms of tapping Undo gets no toast, so it has no Undo",
+      "detail": "Every toast reuses the id `sen-toast` (blocks/toast.ts). Undo's callback shows *Undone* under that id while Sonner is removing the old toast. A further `toast(…, { id })` in that window is dropped. The change still happens, but its toast and Undo never appear, against spec §6.7 and patterns.md §7 (every change happens at once, with Undo in a toast).",
+      "repro": "/dev/gallery → Show a toast → Undo → immediately Show a toast again (QA FLOW-7, and a timing probe at gaps of 0/100/200 ms, repeated 3 times).",
+      "evidence": "gap 0: second change toast visible=false, Undo buttons=0\ngap 100: second change toast visible=false, Undo buttons=0\ngap 200: second change toast visible=true, Undo buttons=1\ngap 0: second change toast visible=false, Undo buttons=0\ngap 100: second change toast visible=true, Undo buttons=1\ngap 200: second change toast visible=true, Undo buttons=1\ngap 0: second change toast visible=false, Undo buttons=0\ngap 100: second change toast visible=false, Undo buttons=0\ngap 200: second change toast visible=true, Undo buttons=1",
+      "spec": "AC-33s; patterns.md §7; spec §6.7",
+      "screenshots": [
+        "FLOW-7-step-2b-change-right-after-undo.png"
+      ]
+    },
+    {
+      "id": 6,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Review's badge count isn't announced: no aria-live region around it",
+      "detail": "patterns.md §6: the badge \"updates live, announced politely, never stealing focus\". The count is only in the link's accessible name (`<span class=\"sr-only\">, 5 to review</span>`), and no element inside or around the Review tab carries `aria-live`. A change in the count is silent to TalkBack.",
+      "repro": "QA FLOW-4: open /, then check `[data-k=\"review\"]` for an `aria-live` ancestor or descendant.",
+      "evidence": "aria-live around the badge = false\nError: no aria-live region announces the badge count. Expected: true  Received: false",
+      "spec": "AC-22; patterns.md §6",
+      "screenshots": [
+        "FLOW-4-step-1-badge-5.png",
+        "FLOW-4-step-3-badge-99plus.png"
+      ]
+    },
+    {
+      "id": 7,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Home → Review → Home, then back, goes to Review, not out of the app",
+      "detail": "TabBar replaces history between non-Home tabs but pushes when going to Home, so Home → Review → Home leaves `/`, `/review`, `/` in history, and back from Home returns to Review. D83: back on Home leaves the app. If B02's shell maps the back gesture to history, the phone inherits this; otherwise B02 must special-case it.",
+      "repro": "Open /, tap Review, tap Home, press browser back (QA FLOW-2b).",
+      "evidence": "landed = http://localhost:4173/review\nError: back on Home went to another tab. Expected pattern: not /\\/review$/  Received string: \"http://localhost:4173/review\"",
+      "spec": "AC-27; patterns.md §6; D83",
+      "screenshots": [
+        "FLOW-2b-step-1-back-from-home.png"
+      ]
+    },
+    {
+      "id": 8,
+      "severity": "Minor",
+      "status": "open",
+      "title": "The hygiene check misses a denylisted string in a file path, and one left in an earlier commit of the PR",
+      "detail": "scripts/hygiene.mjs uses `git grep` on the working tree, so it reads file contents at HEAD only. A denylisted employer name used as a folder name passes, and so does one committed and then deleted later in the same PR. The second stays in history if the PR is merged with its commits. CI checks out with the default depth and doesn't scan the PR's commits.",
+      "repro": "Plant `qa/B01/QA-PLANTED-EMPLOYER-ZXQ/a.txt` (content `hi`), `git add -f`, run `DENYLIST='qa-planted-employer-zxq' node scripts/hygiene.mjs`. And in a scratch repo, commit `ess.secret-employer.test`, remove it in a second commit, then run the check.",
+      "evidence": "Hygiene check passed.\nexit (denylisted string only in a path) 0\n--- scratch repo with the string only in history:\nHygiene check passed.\nexit 0\n$ git log -p --all | grep -c secret-employer\n2",
+      "spec": "spec_v2.md §17 Repo hygiene; brief Done-when 7",
+      "screenshots": []
+    },
+    {
+      "id": 9,
+      "severity": "Minor",
+      "status": "open",
+      "title": "The gallery and the dev panel ship in the production build, and any build that isn't explicitly production gets the dev tools",
+      "detail": "router.tsx lazy-imports `./dev/gallery` without the `DEV_TOOLS` gate, and the gallery imports `./dev-panel`, so `gallery-*.js` (398 kB) and `dev-panel-*.js` are emitted into the production build and referenced from its entry chunk. Neither is loaded or shown: the gallery route redirects and nothing fetches them, which FLOW-8 confirms. But anyone can fetch them from /assets/. vite.config.ts treats any build without `VERCEL_ENV=production` or `SEN_ENV=production` as a preview with the dev tools. A build made elsewhere (B02's bundled-app option, or a manual deploy) fails open.",
+      "repro": "`SEN_ENV=production pnpm exec vite build --outDir <dir>`; ls <dir>/assets | grep -E 'gallery|dev'; then GET /assets/gallery-*.js from the production preview.",
+      "evidence": "dev-panel-3zGCkJJp.js\ndev-panel-3zGCkJJp.js.map\ngallery-CFrWEozN.js\ngallery-CFrWEozN.js.map\ndev chunks referenced from production entry = gallery-CFrWEozN.js, dev-panel-3zGCkJJp.js\ngallery-CFrWEozN.js = 200 text/javascript\ndev-panel-3zGCkJJp.js = 200 text/javascript",
+      "spec": "AC-46s; brief *Dev panel and gallery* (never in production)",
+      "screenshots": [
+        "FLOW-8-step-2-gallery-redirects.png"
+      ]
+    },
+    {
+      "id": 10,
+      "severity": "Note",
+      "status": "open",
+      "title": "The DIR objects carry no tokens, extra or fonts",
+      "detail": "patterns.md §1 and the brief list `tokens`, `extra` and `fonts` on each look's `DIR`. `packages/looks/src/types.ts` has `radius`, `icons`, `icon`, `wordmark`, `heroFigure`, `strip`, `avatar`, `tabs` and `reveal: null`, but no `tokens`, `extra` or `fonts`. The values do reach the app, through `looks.gen.css` from each look's theme.css (FLOW-1 matched every token in all twelve combinations). Native pieces that need a look's colours (notifications, widgets, the island, D77 and D101) will have no TypeScript object to read. Record the choice as a decision, or add the fields.",
+      "repro": "sed -n 45,77p packages/looks/src/types.ts",
+      "evidence": "export interface Look {\n  id: LookId;\n  name: string;\n  radius: string;\n  icons: {...};\n  icon: {...};\n  wordmark(mode: Mode): string;\n  heroFigure(...): string;\n  strip(...): string;\n  avatar: {...};\n  tabs: LookTabs;\n  mount?(root: HTMLElement): () => void;\n  reveal: null;\n}",
+      "spec": "AC-12; patterns.md §1; brief *Theme and looks*",
+      "screenshots": []
+    },
+    {
+      "id": 11,
+      "severity": "Note",
+      "status": "open",
+      "title": "The offline banner is a static block: nothing shows it when the connection drops",
+      "detail": "With `context.setOffline(true)` on Home, no banner appears. Tabs still work (client-side). Wiring the banner to connection state probably belongs to the sync slice (B07); recorded so it isn't lost.",
+      "repro": "QA FLOW-12.",
+      "evidence": "offline banner on Home while offline = 0\nError: no offline banner appears when the connection drops. Expected: > 0  Received: 0",
+      "spec": "AC-49; patterns.md §7 (Offline)",
+      "screenshots": [
+        "FLOW-12-step-1-offline-home.png",
+        "FLOW-12-step-3-offline-tab-still-works.png"
+      ]
+    },
+    {
+      "id": 12,
+      "severity": "Note",
+      "status": "open",
+      "title": "Three dev-panel toggles are under 48 px wide",
+      "detail": "The dev panel is preview-only, but the owner uses it on the phone (brief *On your phone*).",
+      "repro": "QA FLOW-14 '48 px targets on the frame, the sheets and the dev panel'.",
+      "evidence": "dev panel: button \"1×\" 41×48\ndev panel: button \"0\" 36×48\ndev panel: button \"5\" 35×48",
+      "spec": "AC-39; patterns.md §8",
+      "screenshots": [
+        "FLOW-14-step-2-dev-panel-targets.png"
+      ]
+    },
+    {
+      "id": 13,
+      "severity": "Note",
+      "status": "open",
+      "title": "The gallery's money form echoes the typed text instead of the formatted amount",
+      "detail": "Typing `1284.5` and tapping Add toasts *Added RM1284.5*: dev/gallery.tsx builds the message from the raw text (`Added RM${amount}`), not `formatSen(sen)`. The gallery demonstrates the pattern later screens copy, and patterns.md §3 fixes the format (`RM1,284.50`).",
+      "repro": "/dev/gallery → Forms → type 1284.5 → Add.",
+      "evidence": "toast for 1284.5 = Added RM1284.5\nUndo",
+      "spec": "patterns.md §3",
+      "screenshots": [
+        "FLOW-5-step-2-typed-1284-5.png"
+      ]
+    },
+    {
+      "id": 14,
+      "severity": "Note",
+      "status": "open",
+      "title": "Copper draws an overspent figure in verdigris green, while patterns.md §3 says green means money in, everywhere",
+      "detail": "The port matches the approved design source (`docs/ui/directions/src/copper.js`: \"green all over once it's overspent\"), so this isn't a port bug. *Over by* carries the warning colour and its words. It conflicts with §3 (\"Green means money in, everywhere\"). An open question for the owner, not a fix for the build session.",
+      "repro": "/dev/gallery?look=copper&mode=dark → The large figure → Over budget.",
+      "evidence": "copper.js:3   money: the figure tarnishes as the cycle's money is spent and is green all over once it's overspent,\ncopper.js:27  if (uOver > 0.5) c = mix(c, vec3(0.31, 0.58, 0.49) * ...",
+      "spec": "patterns.md §3; D77",
+      "screenshots": [
+        "FLOW-1-step-3-copper-dark.png"
+      ]
+    },
+    {
+      "id": 15,
+      "severity": "Note",
+      "status": "open",
+      "title": "Gaps in the slice's own tests (what they claim against what they exercise)",
+      "detail": "(1) *WebGL fallback* is exercised through a `?gl=0` dev flag, not a browser without WebGL. QA ran Chromium with `--disable-webgl --disable-3d-apis`, and both fallbacks drew (ink 4555 and 4286). (2) *The avatar plays its eight states* checks only that each canvas is non-empty, never that the states differ. QA confirmed eight distinct drawings per look. (3) The long-press is driven by mouse only, which hides finding 2. (4) The 1.5× test asserts the `--text-scale` variable. QA confirmed text really grows (16 → 24 px). (5) No e2e drives a badge of 0.",
+      "repro": "apps/web/e2e/frame.spec.ts",
+      "evidence": "frame.spec.ts:127  await open(page, '/dev/gallery?gl=0', look, 'dark');\nframe.spec.ts:103  expect(a.length, `${s} is drawn`).toBeGreaterThan(1000);\nframe.spec.ts:53   await page.mouse.down(); await page.waitForTimeout(650); await page.mouse.up();",
+      "spec": "qa-reviewer phase 3",
+      "screenshots": [
+        "FLOW-13-step-1-mercury-no-webgl-figure.png",
+        "FLOW-9-step-1-mercury-eight-states.png"
+      ]
+    },
+    {
+      "id": 16,
+      "severity": "Note",
+      "status": "open",
+      "title": "parseSen trims every kind of whitespace, including a newline and a no-break space",
+      "detail": "`input.trim()` makes `\"12.5\\n\"` → 1250 and `\"12\\u00a0\"` → 1200. That's documented (\"Spaces around the text are ignored\") and safe, since no float is involved and the value is right. Recorded because the brief says anything beyond the listed forms is rejected.",
+      "repro": "parseSen('12.5\\n'), parseSen('12\\u00a0')",
+      "evidence": "× rejects \"12.5\\n\"  AssertionError: {\"ok\":true,\"sen\":1250}\n× rejects \"12 \"  AssertionError: {\"ok\":true,\"sen\":1200}",
+      "spec": "AC-1s; brief *Money*",
+      "screenshots": []
+    }
+  ],
+  "probes": [
+    {
+      "broke": "apportion rounds each part with Math.round instead of largest remainder (packages/core/src/money.ts)",
+      "caught": true,
+      "note": "money.test.ts red: × splits by largest remainder; × apportioned parts always add up to the total (Property failed after 4 tests)"
+    },
+    {
+      "broke": "parseSen computes the decimals through parseFloat (same results)",
+      "caught": true,
+      "note": "Behaviour tests stayed green, as expected; lint failed (58:54 Unexpected use of 'parseFloat' no-restricted-globals) and no-float.test 'passes the money module as it is' went red"
+    },
+    {
+      "broke": "Number(typed) * 100 and +typed * 100 planted in blocks/rows.tsx, detail.tsx, hero.tsx",
+      "caught": false,
+      "note": "eslint exit 0; scripts tests 13/13 pass. Finding 3"
+    },
+    {
+      "broke": "DEV_TOOLS forced true (apps/web/src/lib/env.ts), so production shows the dev tools",
+      "caught": true,
+      "note": "production.spec.ts red: data-look unexpected value \"copper\""
+    },
+    {
+      "broke": "badgeText threshold moved to n > 100",
+      "caught": true,
+      "note": "units.test.ts red: counts up to 99+, and reads as words"
+    },
+    {
+      "broke": "hygiene.mjs no longer looks for nested **/private/** paths",
+      "caught": true,
+      "note": "hygiene.test.mjs red: fails on a nested private/ folder too"
+    }
+  ],
+  "flows": [
+    {
+      "id": "FLOW-1",
+      "title": "Switch through all six looks, light and dark, from the dev panel",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/dev/gallery, dev panel",
+      "covers": [
+        "AC-13",
+        "AC-14",
+        "AC-15",
+        "AC-16s",
+        "AC-17",
+        "AC-19"
+      ],
+      "spec": "patterns.md §1, §2, §5; spec §17",
+      "status": "pass",
+      "ends": "data-look and data-mode match each choice; --background, --foreground, --primary, --chart-1..3, --money-in, --money-warning render the same RGB as each look's theme.css (±2), icon tokens equal; no request left the origin; no console error or CSP violation; no other look's chunk fetched on first open",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open /dev/gallery",
+          "assertion": "data-look=minted; only minted's look chunk fetched",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-1-gallery-opens.png"
+        },
+        {
+          "n": 2,
+          "action": "Open the dev panel",
+          "assertion": "all six look options present",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-2-dev-panel.png"
+        },
+        {
+          "n": 3,
+          "action": "Minted, Light",
+          "assertion": "tokens match minted/theme.css light",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-minted-light.png"
+        },
+        {
+          "n": 4,
+          "action": "Minted, Dark",
+          "assertion": "tokens match minted/theme.css .dark",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-minted-dark.png"
+        },
+        {
+          "n": 5,
+          "action": "Instrument, Light",
+          "assertion": "tokens match",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-instrument-light.png"
+        },
+        {
+          "n": 6,
+          "action": "Instrument, Dark",
+          "assertion": "tokens match",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-instrument-dark.png"
+        },
+        {
+          "n": 7,
+          "action": "Firefly, Light",
+          "assertion": "tokens match",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-firefly-light.png"
+        },
+        {
+          "n": 8,
+          "action": "Firefly, Dark",
+          "assertion": "tokens match",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-firefly-dark.png"
+        },
+        {
+          "n": 9,
+          "action": "Line, Light",
+          "assertion": "tokens match",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-line-light.png"
+        },
+        {
+          "n": 10,
+          "action": "Line, Dark",
+          "assertion": "tokens match",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-line-dark.png"
+        },
+        {
+          "n": 11,
+          "action": "Mercury, Light",
+          "assertion": "tokens match",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-mercury-light.png"
+        },
+        {
+          "n": 12,
+          "action": "Mercury, Dark",
+          "assertion": "tokens match",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-mercury-dark.png"
+        },
+        {
+          "n": 13,
+          "action": "Copper, Light",
+          "assertion": "tokens match",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-copper-light.png"
+        },
+        {
+          "n": 14,
+          "action": "Copper, Dark",
+          "assertion": "tokens match",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-copper-dark.png"
+        },
+        {
+          "n": 15,
+          "action": "Check the network and console log",
+          "assertion": "external requests = []; errors = []",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-4-done.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-1c",
+      "title": "Garbage stored look, mode and text scale, and hostile ?look=",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/?look=../../etc&mode=<script>",
+      "covers": [
+        "AC-13s",
+        "AC-20s"
+      ],
+      "spec": "patterns.md §1",
+      "status": "pass",
+      "ends": "falls back to minted, light or dark; Not built yet renders; no error",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Store sen.look=clay, sen.mode=purple, textScale=9; open with hostile params",
+          "assertion": "data-look=minted; data-mode light|dark; no errors",
+          "status": "pass",
+          "screenshot": "FLOW-1c-step-1-garbage-falls-back.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-1d",
+      "title": "Switch look on a slow connection",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/, dev panel, copper chunk delayed 3 s",
+      "covers": [
+        "AC-13"
+      ],
+      "spec": "patterns.md §1, §6",
+      "status": "fail",
+      "ends": "the frame keeps its shape while the new look loads",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Choose Copper while its chunk is delayed",
+          "assertion": "tab bar height unchanged (±4 px)",
+          "status": "fail",
+          "screenshot": "FLOW-1d-step-1-copper-loading.png"
+        },
+        {
+          "n": 2,
+          "action": "Wait for the chunk",
+          "assertion": "tab bar back to 78 px",
+          "status": "pass",
+          "screenshot": "FLOW-1d-step-2-copper-loaded.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-2",
+      "title": "Move between the tabs; pushed and task screens",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/",
+      "covers": [
+        "AC-21",
+        "AC-21s",
+        "AC-24",
+        "AC-24s",
+        "AC-25",
+        "AC-25s",
+        "AC-27"
+      ],
+      "spec": "patterns.md §6; screens.md rules",
+      "status": "pass",
+      "ends": "one aria-current at each step; labels Home·Review·Scan·Insights·More; Sen 60 px on tab screens only; last row on More clears Sen's button; back from More lands on Home; tab bar on payments, none on six task screens",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Home",
+          "assertion": "Home aria-current=page; five labels in order; Ask Sen ≥60 px",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-1-home.png"
+        },
+        {
+          "n": 2,
+          "action": "Tap Review",
+          "assertion": "URL /review; one aria-current, on Review",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-2-review.png"
+        },
+        {
+          "n": 3,
+          "action": "Tap Insights",
+          "assertion": "URL /insights; one aria-current",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-2-insights.png"
+        },
+        {
+          "n": 4,
+          "action": "Tap More",
+          "assertion": "URL /more; one aria-current",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-2-more.png"
+        },
+        {
+          "n": 5,
+          "action": "Scroll More to the end",
+          "assertion": "last row's box doesn't overlap Ask Sen",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-3-more-scrolled-to-end.png"
+        },
+        {
+          "n": 6,
+          "action": "Browser back",
+          "assertion": "URL /, Home current",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-4-back-to-home.png"
+        },
+        {
+          "n": 7,
+          "action": "Open /s/payments",
+          "assertion": "tab bar shown, no Ask Sen",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-5-pushed-payments.png"
+        },
+        {
+          "n": 8,
+          "action": "Open each of first-run, payday, confirm, manual, balance-check, split-public",
+          "assertion": "no tab bar, no Ask Sen",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-6-task-screen-split-public.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-2b",
+      "title": "Back on Home after Home → Review → Home",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/",
+      "covers": [
+        "AC-27"
+      ],
+      "spec": "patterns.md §6; D83",
+      "status": "fail",
+      "ends": "back on Home doesn't go to another tab",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Tap Review, tap Home, press back",
+          "assertion": "URL is not /review",
+          "status": "fail",
+          "screenshot": "FLOW-2b-step-1-back-from-home.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-2c",
+      "title": "An unknown screen id",
+      "kind": "sad",
+      "actor": "anyone",
+      "entry": "/s/does-not-exist",
+      "covers": [],
+      "spec": "patterns.md §7 Error",
+      "status": "fail",
+      "ends": "lands somewhere in the frame, with no error",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open /s/does-not-exist",
+          "assertion": "no console error; redirected to Home",
+          "status": "fail",
+          "screenshot": "FLOW-2c-step-1-unknown-screen.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-3",
+      "title": "Scan: tap, short hold, long-press, and the sheet's rows",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/",
+      "covers": [
+        "AC-23",
+        "AC-23s",
+        "AC-25",
+        "AC-26"
+      ],
+      "spec": "patterns.md §6; D69, D83",
+      "status": "fail",
+      "ends": "tap opens the scanner with no tab bar; a short hold opens no sheet; a long-press opens scan-more and stays; back closes it; rows navigate and back returns Home",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Home",
+          "assertion": "Home shown",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-0-home.png"
+        },
+        {
+          "n": 2,
+          "action": "Tap Scan",
+          "assertion": "URL /scan; no dialog; no tab bar",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-1-tap-opens-scanner.png"
+        },
+        {
+          "n": 3,
+          "action": "Touch-hold Scan 300 ms",
+          "assertion": "no Add a payment sheet",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-2-short-hold-no-sheet.png"
+        },
+        {
+          "n": 4,
+          "action": "Touch-hold Scan 650 ms (CDP touch events)",
+          "assertion": "URL stays / with the sheet open",
+          "status": "fail",
+          "screenshot": "FLOW-3-step-3-touch-long-press.png"
+        },
+        {
+          "n": 5,
+          "action": "Mouse-hold Scan 650 ms",
+          "assertion": "sheet open; URL stays /",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-3b-mouse-long-press-opens-scan-more.png"
+        },
+        {
+          "n": 6,
+          "action": "Browser back",
+          "assertion": "sheet hidden; URL /",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-4-back-closes-sheet.png"
+        },
+        {
+          "n": 7,
+          "action": "Long-press, tap Add manually",
+          "assertion": "URL /s/manual and stays",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-5-add-manually.png"
+        },
+        {
+          "n": 8,
+          "action": "Browser back",
+          "assertion": "URL /, no sheet",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-6-back-from-manual.png"
+        },
+        {
+          "n": 9,
+          "action": "Long-press, tap Scan in the sheet",
+          "assertion": "URL /scan and stays",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-7-sheet-scan.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-4",
+      "title": "Review's badge at 5, 0 and 120",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/, dev panel",
+      "covers": [
+        "AC-22",
+        "AC-22s"
+      ],
+      "spec": "patterns.md §6; D83",
+      "status": "fail",
+      "ends": "5 / no badge / 99+, read as words, announced politely",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Home",
+          "assertion": "badge data-count=5; name contains '5 to review'",
+          "status": "pass",
+          "screenshot": "FLOW-4-step-1-badge-5.png"
+        },
+        {
+          "n": 2,
+          "action": "Set 0 in the dev panel",
+          "assertion": "no badge; no 'to review' text",
+          "status": "pass",
+          "screenshot": "FLOW-4-step-2-badge-0.png"
+        },
+        {
+          "n": 3,
+          "action": "Set 120",
+          "assertion": "badge 99+; name 'More than 99 to review'; an aria-live region announces it",
+          "status": "fail",
+          "screenshot": "FLOW-4-step-3-badge-99plus.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-5",
+      "title": "Type an amount into the money input",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/dev/gallery, Forms",
+      "covers": [
+        "AC-31",
+        "AC-31s",
+        "AC-32"
+      ],
+      "spec": "patterns.md §7 Forms, §10",
+      "status": "pass",
+      "ends": "inputmode decimal, font ≥16 px, label above; 1,284.50 → Added RM1,284.50; 12.505 → message under the field on blur, Add stays enabled, text kept; -5, 1e3, 12..5, blank, 14 digits all invalid",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Look at the empty field",
+          "assertion": "inputmode=decimal; font-size ≥16; label above input",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-0-empty.png"
+        },
+        {
+          "n": 2,
+          "action": "Type 1,284.50, tap Add",
+          "assertion": "toast 'Added RM1,284.50'",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-1-typed-1284-50.png"
+        },
+        {
+          "n": 3,
+          "action": "Type 1284.5, tap Add",
+          "assertion": "toast reads 'Added RM1284.5' (finding 13)",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-2-typed-1284-5.png"
+        },
+        {
+          "n": 4,
+          "action": "Type 12.505, Tab away",
+          "assertion": "'Two decimals at most, like 12.50.' under the field; aria-invalid",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-3-blur-three-decimals.png"
+        },
+        {
+          "n": 5,
+          "action": "Tap Add",
+          "assertion": "button enabled; value still 12.505",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-4-submit-keeps-text.png"
+        },
+        {
+          "n": 6,
+          "action": "Type each hostile value and tap Add",
+          "assertion": "aria-invalid=true each time",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-5-hostile-values.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-6",
+      "title": "A sheet and the back button",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/ then /dev/gallery",
+      "covers": [
+        "AC-26",
+        "AC-26s"
+      ],
+      "spec": "patterns.md §6, §10",
+      "status": "pass",
+      "ends": "back closes the sheet and stays; Close leaves no dangling history; back then leaves the gallery; back closes Sen's sheet",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open a sheet",
+          "assertion": "dialog 'Which category?' visible",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-1-sheet-open.png"
+        },
+        {
+          "n": 2,
+          "action": "Browser back",
+          "assertion": "sheet hidden; still /dev/gallery",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-2-back-closed-it.png"
+        },
+        {
+          "n": 3,
+          "action": "Open again, tap Close",
+          "assertion": "sheet hidden; still /dev/gallery",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-3-closed-by-close.png"
+        },
+        {
+          "n": 4,
+          "action": "Browser back",
+          "assertion": "URL /",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-4-back-leaves-gallery.png"
+        },
+        {
+          "n": 5,
+          "action": "Tap Ask Sen",
+          "assertion": "Sen sheet with 'Looking at: Home'",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-5-sen-sheet.png"
+        },
+        {
+          "n": 6,
+          "action": "Browser back",
+          "assertion": "Sen sheet hidden; URL /",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-6-back-closes-sen.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-7",
+      "title": "A change with Undo",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/dev/gallery, overlays",
+      "covers": [
+        "AC-33",
+        "AC-33s"
+      ],
+      "spec": "patterns.md §7; spec §6.7; D83",
+      "status": "fail",
+      "ends": "Undo reverts; every change gets its toast; one toast at a time; gone after 6 s",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Show a toast",
+          "assertion": "'Attached to RM58.30 on Ryt' with Undo",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-1-toast.png"
+        },
+        {
+          "n": 2,
+          "action": "Tap Undo",
+          "assertion": "'Undone' shown",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-2-undone.png"
+        },
+        {
+          "n": 3,
+          "action": "Make a change at once",
+          "assertion": "its toast appears",
+          "status": "fail",
+          "screenshot": "FLOW-7-step-2b-change-right-after-undo.png"
+        },
+        {
+          "n": 4,
+          "action": "Toast, then answer a Review row",
+          "assertion": "only 'ROTI BAKAR 88 is Meals now' visible; 1 visible toast",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-3-replaced.png"
+        },
+        {
+          "n": 5,
+          "action": "Wait",
+          "assertion": "visible at 5 s, gone by 7 s",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-4-gone-after-6s.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-8",
+      "title": "Production opens on Not built yet",
+      "kind": "happy",
+      "actor": "anyone",
+      "entry": "production build :4176",
+      "covers": [
+        "AC-46s",
+        "AC-47s",
+        "AC-48"
+      ],
+      "spec": "brief *Dev panel and gallery*, registry",
+      "status": "pass",
+      "ends": "Not built yet in Minted despite ?look=copper; no dev panel, no badge, no skeleton note; /dev/gallery redirects to /; pushed screens show no amount; no dev chunk fetched",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open /?look=copper&mode=dark",
+          "assertion": "Not built yet; data-look=minted; no Dev panel button; no badge",
+          "status": "pass",
+          "screenshot": "FLOW-8-step-1-production-home.png"
+        },
+        {
+          "n": 2,
+          "action": "Open /dev/gallery",
+          "assertion": "URL becomes /; no gallery",
+          "status": "pass",
+          "screenshot": "FLOW-8-step-2-gallery-redirects.png"
+        },
+        {
+          "n": 3,
+          "action": "Open payments, txn, claims, split-public, first-run",
+          "assertion": "Not built yet; zero [data-sen]",
+          "status": "pass",
+          "screenshot": "FLOW-8-step-3-pushed-not-built.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-9",
+      "title": "The avatar in eight states, and reduced motion",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/dev/gallery, dev panel",
+      "covers": [
+        "AC-41",
+        "AC-41s",
+        "AC-46"
+      ],
+      "spec": "D76; patterns.md §8",
+      "status": "pass",
+      "ends": "eight pairwise-distinct drawings per look; with the dev panel's Reduced motion on, each state's frame is identical 1 s apart; the player lists all eight",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Pick each state in the avatar player",
+          "assertion": "label shows each of the eight names",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-0-avatar-player-done.png"
+        },
+        {
+          "n": 2,
+          "action": "Minted: read the eight canvases",
+          "assertion": "8 distinct",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-1-minted-eight-states.png"
+        },
+        {
+          "n": 3,
+          "action": "Minted: Reduced motion on",
+          "assertion": "frames identical 1 s apart",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-2-minted-reduced-motion.png"
+        },
+        {
+          "n": 4,
+          "action": "Instrument",
+          "assertion": "8 distinct",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-1-instrument-eight-states.png"
+        },
+        {
+          "n": 5,
+          "action": "Instrument: reduced motion",
+          "assertion": "still",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-2-instrument-reduced-motion.png"
+        },
+        {
+          "n": 6,
+          "action": "Firefly",
+          "assertion": "8 distinct",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-1-firefly-eight-states.png"
+        },
+        {
+          "n": 7,
+          "action": "Firefly: reduced motion",
+          "assertion": "still",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-2-firefly-reduced-motion.png"
+        },
+        {
+          "n": 8,
+          "action": "Line",
+          "assertion": "8 distinct",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-1-line-eight-states.png"
+        },
+        {
+          "n": 9,
+          "action": "Line: reduced motion",
+          "assertion": "still",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-2-line-reduced-motion.png"
+        },
+        {
+          "n": 10,
+          "action": "Mercury",
+          "assertion": "8 distinct",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-1-mercury-eight-states.png"
+        },
+        {
+          "n": 11,
+          "action": "Mercury: reduced motion",
+          "assertion": "still",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-2-mercury-reduced-motion.png"
+        },
+        {
+          "n": 12,
+          "action": "Copper",
+          "assertion": "8 distinct",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-1-copper-eight-states.png"
+        },
+        {
+          "n": 13,
+          "action": "Copper: reduced motion",
+          "assertion": "still",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-2-copper-reduced-motion.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-10",
+      "title": "Text scale 1.5×",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/dev/gallery, dev panel",
+      "covers": [
+        "AC-40",
+        "AC-29"
+      ],
+      "spec": "patterns.md §8; brief Done-when 5",
+      "status": "pass",
+      "ends": "text really grows 16 → 24 px; in all six looks no sideways scroll, no amount ellipsised or off the column, no overflow-hidden text clipped; tab labels fit",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Rows at 1×",
+          "assertion": "row title 16 px",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-0-rows-1x.png"
+        },
+        {
+          "n": 2,
+          "action": "Switch to 1.5×, check all six looks",
+          "assertion": "row title 24 px; problems = []",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-1-rows-1-5x.png"
+        },
+        {
+          "n": 3,
+          "action": "The large figure at 1.5×",
+          "assertion": "no clipping",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-2-figure-1-5x.png"
+        },
+        {
+          "n": 4,
+          "action": "Home's tab bar at 1.5×",
+          "assertion": "no .tl label overflows",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-3-tabbar-1-5x.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-11",
+      "title": "Another timezone",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/dev/gallery",
+      "covers": [
+        "AC-37"
+      ],
+      "spec": "CLAUDE.md conventions; patterns.md §7",
+      "status": "pass",
+      "ends": "the day header for 2026-10-08T04:00Z reads 'Thu, 8 Oct' in both Asia/Kuala_Lumpur and America/Los_Angeles (where it's still 7 Oct)",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Browser in Asia/Kuala_Lumpur",
+          "assertion": "'Thu, 8 Oct'",
+          "status": "pass",
+          "screenshot": "FLOW-11-step-1-day-header-Asia-Kuala_Lumpur.png"
+        },
+        {
+          "n": 2,
+          "action": "Browser in America/Los_Angeles",
+          "assertion": "resolved tz is LA; still 'Thu, 8 Oct'",
+          "status": "pass",
+          "screenshot": "FLOW-11-step-1-day-header-America-Los_Angeles.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-12",
+      "title": "Going offline",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/",
+      "covers": [
+        "AC-49"
+      ],
+      "spec": "patterns.md §7 Offline",
+      "status": "fail",
+      "ends": "an offline banner shows while offline; what works offline still works",
+      "steps": [
+        {
+          "n": 1,
+          "action": "context.setOffline(true)",
+          "assertion": "offline banner visible",
+          "status": "fail",
+          "screenshot": "FLOW-12-step-1-offline-home.png"
+        },
+        {
+          "n": 2,
+          "action": "Switch to Copper while offline",
+          "assertion": "frame stays whole",
+          "status": "fail",
+          "screenshot": "FLOW-12-step-2-offline-switch-look.png"
+        },
+        {
+          "n": 3,
+          "action": "Tap Review",
+          "assertion": "URL /review",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-3-offline-tab-still-works.png"
+        },
+        {
+          "n": 4,
+          "action": "Back online",
+          "assertion": "page responsive",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-4-online-again.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-13",
+      "title": "Mercury and Copper with WebGL really missing",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "Chromium --disable-webgl --disable-3d-apis",
+      "covers": [
+        "AC-18"
+      ],
+      "spec": "brief *Theme and looks*",
+      "status": "pass",
+      "ends": "getContext('webgl') is null; the figure's fallback canvas has ink; tab bar draws; no errors",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Mercury gallery",
+          "assertion": "webgl=false; fallback ink 4555 px",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-1-mercury-no-webgl-figure.png"
+        },
+        {
+          "n": 2,
+          "action": "Mercury Home",
+          "assertion": "tab bar svg visible; errors []",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-2-mercury-no-webgl-home.png"
+        },
+        {
+          "n": 3,
+          "action": "Copper gallery",
+          "assertion": "webgl=false; fallback ink 4286 px",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-1-copper-no-webgl-figure.png"
+        },
+        {
+          "n": 4,
+          "action": "Copper Home",
+          "assertion": "tab bar svg visible; errors []",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-2-copper-no-webgl-home.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-14",
+      "title": "Accessibility beyond the gallery",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/, /review, /more, /s/payments, /scan, sheets",
+      "covers": [
+        "AC-38",
+        "AC-39"
+      ],
+      "spec": "patterns.md §8; brief Done-when 2",
+      "status": "fail",
+      "ends": "axe (wcag2a/aa, 21a/aa) finds nothing on five screens, Sen's sheet and the dev panel in all 12 combinations; every target ≥48 px",
+      "steps": [
+        {
+          "n": 1,
+          "action": "axe, Copper light",
+          "assertion": "violations []",
+          "status": "pass",
+          "screenshot": "FLOW-14-step-1-copper-light-home.png"
+        },
+        {
+          "n": 2,
+          "action": "axe, Copper dark",
+          "assertion": "violations []",
+          "status": "pass",
+          "screenshot": "FLOW-14-step-1-copper-dark-home.png"
+        },
+        {
+          "n": 3,
+          "action": "axe, Firefly light",
+          "assertion": "violations []",
+          "status": "pass",
+          "screenshot": "FLOW-14-step-1-firefly-light-home.png"
+        },
+        {
+          "n": 4,
+          "action": "axe, Firefly dark",
+          "assertion": "violations []",
+          "status": "pass",
+          "screenshot": "FLOW-14-step-1-firefly-dark-home.png"
+        },
+        {
+          "n": 5,
+          "action": "Measure targets on Home, Sen's sheet, the dev panel",
+          "assertion": "none under 48 px",
+          "status": "fail",
+          "screenshot": "FLOW-14-step-2-dev-panel-targets.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-15",
+      "title": "Rows, states, dialog, charts, theme persistence (extras)",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/dev/gallery, /more",
+      "covers": [
+        "AC-20",
+        "AC-27",
+        "AC-29",
+        "AC-30",
+        "AC-34",
+        "AC-35",
+        "AC-36",
+        "AC-16"
+      ],
+      "spec": "patterns.md §3, §4, §7; D44; spec §17",
+      "status": "pass",
+      "ends": "System follows the phone live and Dark survives reload; app bar back goes back one; rows ≥64 px with money colours and words; destructive dialog; skeleton, empty, error, Updated 2 min ago; chart tooltip on tap; planted inline script blocked in production",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Flip prefers-color-scheme with System on",
+          "assertion": "data-mode follows: dark → light",
+          "status": "pass",
+          "screenshot": "AC-20-step-1-system-follows-live.png"
+        },
+        {
+          "n": 2,
+          "action": "Choose Dark, reload",
+          "assertion": "data-mode=dark",
+          "status": "pass",
+          "screenshot": "AC-20-step-2-dark-kept-after-reload.png"
+        },
+        {
+          "n": 3,
+          "action": "More → Payments",
+          "assertion": "URL /s/payments",
+          "status": "pass",
+          "screenshot": "AC-27-step-1-payments.png"
+        },
+        {
+          "n": 4,
+          "action": "App bar back",
+          "assertion": "URL /more",
+          "status": "pass",
+          "screenshot": "AC-27-step-2-app-bar-back.png"
+        },
+        {
+          "n": 5,
+          "action": "Measure the rows",
+          "assertion": "every row with an amount ≥64 px; +RM4,200.00 in --money-in, read 'plus RM 4,200.00'; RM12.90 in --money-out; 'Not synced yet' visible",
+          "status": "pass",
+          "screenshot": "AC-29-step-1-rows.png"
+        },
+        {
+          "n": 6,
+          "action": "Delete forever",
+          "assertion": "alertdialog with a button in --destructive",
+          "status": "pass",
+          "screenshot": "AC-34-step-1-destructive-dialog.png"
+        },
+        {
+          "n": 7,
+          "action": "States section",
+          "assertion": "role=status Loading with skeletons; one-line empty + Add expense; Try again; Updated 2 min ago",
+          "status": "pass",
+          "screenshot": "AC-35-step-1-states.png"
+        },
+        {
+          "n": 8,
+          "action": "Charts section",
+          "assertion": "question, takeaway, Ask Sen about this, Other",
+          "status": "pass",
+          "screenshot": "AC-36-step-1-charts.png"
+        },
+        {
+          "n": 9,
+          "action": "Tap the pace chart",
+          "assertion": "tooltip visible with RM values",
+          "status": "pass",
+          "screenshot": "AC-36-step-2-tap-tooltip.png"
+        },
+        {
+          "n": 10,
+          "action": "Plant an inline <script> in production",
+          "assertion": "it doesn't run",
+          "status": "pass",
+          "screenshot": "CSP-step-1-inline-script-blocked.png"
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "AC-1",
+      "title": "Accepted text parses into integer sen",
+      "spec": "brief Money",
+      "status": "pass",
+      "evidence": "parseSen 12/12.5/12.50/1,284.50 → 1200/1250/1250/128450 (QA scratch test + money.test.ts)"
+    },
+    {
+      "id": "AC-1s",
+      "title": "Everything else rejected",
+      "spec": "brief Money",
+      "status": "pass",
+      "evidence": "27 hostile inputs rejected incl. 1,28,4.50, 1e3, 0x10, full-width digits, 400 digits; trailing newline/NBSP trimmed by design (finding 16)"
+    },
+    {
+      "id": "AC-2",
+      "title": "Format RM, separators, two decimals",
+      "spec": "patterns §3",
+      "status": "pass",
+      "evidence": "RM1,284.50, RM0.00, RM0.05, RM1,000,000.00"
+    },
+    {
+      "id": "AC-2s",
+      "title": "Format refuses non-integers",
+      "spec": "non-negotiable 1",
+      "status": "pass",
+      "evidence": "formatSen(12.5|NaN|±Infinity) throws"
+    },
+    {
+      "id": "AC-3",
+      "title": "Screen-reader form",
+      "spec": "patterns §3",
+      "status": "pass",
+      "evidence": "spokenSen(128450) = 'RM 1,284.50'; row sr-only 'plus RM 4,200.00'"
+    },
+    {
+      "id": "AC-4",
+      "title": "Largest remainder",
+      "spec": "brief Money",
+      "status": "pass",
+      "evidence": "[34,33,33], [333,667], [1,0,0]; MAX_SAFE_INTEGER split sums exactly"
+    },
+    {
+      "id": "AC-4s",
+      "title": "Apportion refuses bad input",
+      "spec": "brief Money",
+      "status": "pass",
+      "evidence": "10.5, [], [0,0], [1,-1], [NaN,1], NaN, [Infinity,1] all throw"
+    },
+    {
+      "id": "AC-5",
+      "title": "Property tests exist and pass",
+      "spec": "Done-when 6",
+      "status": "pass",
+      "evidence": "pnpm test 114/114; fast-check properties for round trip and sums"
+    },
+    {
+      "id": "AC-5s",
+      "title": "Property tests have teeth",
+      "spec": "phase 3",
+      "status": "pass",
+      "evidence": "probe 1: per-item rounding → 2 tests red"
+    },
+    {
+      "id": "AC-6",
+      "title": "No-float lint near money",
+      "spec": "Done-when 6",
+      "status": "fail",
+      "evidence": "Number()/unary + outside money-named files pass lint (finding 3)"
+    },
+    {
+      "id": "AC-6s",
+      "title": "Planted parseFloat fails",
+      "spec": "Done-when 6",
+      "status": "pass",
+      "evidence": "probe 2: lint 'Unexpected use of parseFloat'; no-float.test red"
+    },
+    {
+      "id": "AC-7",
+      "title": "Hygiene blocks tracked private/",
+      "spec": "spec §17",
+      "status": "pass",
+      "evidence": "Tracked under private/: private/qa-probe.txt … exit 1"
+    },
+    {
+      "id": "AC-7s",
+      "title": "Hygiene with and without DENYLIST",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "planted fixture → 'A denylisted string is in qa/B01/planted.txt:1' exit 1; unset → 'denylist part was skipped'"
+    },
+    {
+      "id": "AC-8",
+      "title": "CI runs typecheck, lint, unit, Playwright on PRs",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": ".github/workflows/ci.yml: on pull_request; jobs hygiene, check (looks --check, typecheck, lint, format:check, test), e2e"
+    },
+    {
+      "id": "AC-8s",
+      "title": "No pull_request_target; only DENYLIST",
+      "spec": "spec §17",
+      "status": "pass",
+      "evidence": "grep: no pull_request_target; one secret, DENYLIST, in the hygiene job; permissions contents: read"
+    },
+    {
+      "id": "AC-9",
+      "title": "Local suites green",
+      "spec": "CLAUDE.md Commands",
+      "status": "pass",
+      "evidence": "typecheck clean; lint clean; format clean; test 114/114; e2e 58/58; looks.gen.css up to date; vite build ok"
+    },
+    {
+      "id": "AC-10",
+      "title": ".gitignore covers private, dumps, PDFs",
+      "spec": "spec §17",
+      "status": "pass",
+      "evidence": "private/, backups/, exports/, *.dump, *.sql.gz, *.pdf present"
+    },
+    {
+      "id": "AC-11",
+      "title": "No secret in the bundle",
+      "spec": "non-negotiable 3",
+      "status": "pass",
+      "evidence": "grep of production dist for AKIA/AIza/sk-/ghp_/PEM/postgres:// etc.: no hits; hosts only w3.org, react.dev, bit.ly, redux docs strings"
+    },
+    {
+      "id": "AC-12",
+      "title": "Six DIR objects with every field",
+      "spec": "patterns §1",
+      "status": "fail",
+      "evidence": "no tokens/extra/fonts on Look (finding 10); reveal: null in all six"
+    },
+    {
+      "id": "AC-13",
+      "title": "data-look and mode switch tokens",
+      "spec": "patterns §2",
+      "status": "pass",
+      "evidence": "FLOW-1: 8 colour tokens match theme.css ±2 RGB in 12 combinations"
+    },
+    {
+      "id": "AC-13s",
+      "title": "Unknown look falls back",
+      "spec": "patterns §1",
+      "status": "pass",
+      "evidence": "FLOW-1c: data-look=minted"
+    },
+    {
+      "id": "AC-14",
+      "title": "Chart hues fixed",
+      "spec": "patterns §4; D83",
+      "status": "pass",
+      "evidence": "chart-1..3 match each look's theme.css in light and dark"
+    },
+    {
+      "id": "AC-15",
+      "title": "Fonts self-hosted, no outside request",
+      "spec": "spec §17",
+      "status": "pass",
+      "evidence": "FLOW-1 external = [] across all 12 combinations"
+    },
+    {
+      "id": "AC-16",
+      "title": "Strict CSP",
+      "spec": "spec §17",
+      "status": "pass",
+      "evidence": "header script-src 'self', no unsafe-eval; planted inline script didn't run"
+    },
+    {
+      "id": "AC-16s",
+      "title": "Looks render under the CSP",
+      "spec": "Done-when 1",
+      "status": "pass",
+      "evidence": "FLOW-1 errors = [] (CSP violations logged as console errors)"
+    },
+    {
+      "id": "AC-17",
+      "title": "Looks load lazily",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "first open fetched no instrument/firefly/line/mercury/copper chunk"
+    },
+    {
+      "id": "AC-18",
+      "title": "Mercury/Copper without WebGL",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "real --disable-webgl: fallback ink 4555 / 4286 px; no errors"
+    },
+    {
+      "id": "AC-19",
+      "title": "Icon tokens per look",
+      "spec": "patterns §5",
+      "status": "pass",
+      "evidence": "FLOW-1b computed stroke/cap/join match the table for all six; dot-cap tokens match"
+    },
+    {
+      "id": "AC-20",
+      "title": "System follows live; choice persists",
+      "spec": "D44",
+      "status": "pass",
+      "evidence": "data-mode dark→light live; Dark kept after reload"
+    },
+    {
+      "id": "AC-20s",
+      "title": "Garbage mode falls back",
+      "spec": "D44",
+      "status": "pass",
+      "evidence": "sen.mode=purple → light|dark"
+    },
+    {
+      "id": "AC-21",
+      "title": "Five tabs in order with labels, all looks",
+      "spec": "patterns §6",
+      "status": "pass",
+      "evidence": "labels [Home, Review, Scan, Insights, More]; their frame.spec 12/12"
+    },
+    {
+      "id": "AC-21s",
+      "title": "Exactly one aria-current",
+      "spec": "patterns §6",
+      "status": "pass",
+      "evidence": "count 1 on each of Review, Insights, More"
+    },
+    {
+      "id": "AC-22",
+      "title": "Badge 5 / 99+ / read as words / polite announcement",
+      "spec": "patterns §6",
+      "status": "fail",
+      "evidence": "counts and names right; no aria-live (finding 6)"
+    },
+    {
+      "id": "AC-22s",
+      "title": "0 → no badge; 100 → 99+",
+      "spec": "D83",
+      "status": "pass",
+      "evidence": "badge count 0 → none; unit badgeText(100)='99+' (probe 5 caught)"
+    },
+    {
+      "id": "AC-23",
+      "title": "Tap → scanner; ≥500 ms hold → sheet",
+      "spec": "D69",
+      "status": "pass",
+      "evidence": "tap → /scan; mouse hold 650 ms → sheet"
+    },
+    {
+      "id": "AC-23s",
+      "title": "A long-press doesn't also navigate",
+      "spec": "Done-when 3",
+      "status": "fail",
+      "evidence": "touch hold 650 ms → /s/crop (finding 2)"
+    },
+    {
+      "id": "AC-24",
+      "title": "Sen button 60 px, 'Ask Sen', tab screens",
+      "spec": "patterns §6",
+      "status": "pass",
+      "evidence": "visible, width ≥60 on Home/Review/Insights/More"
+    },
+    {
+      "id": "AC-24s",
+      "title": "Absent elsewhere; last row clear",
+      "spec": "patterns §6",
+      "status": "pass",
+      "evidence": "none on /s/payments and six task screens; last row on More doesn't overlap"
+    },
+    {
+      "id": "AC-25",
+      "title": "Tab bar hidden on task screens",
+      "spec": "patterns §6",
+      "status": "pass",
+      "evidence": "first-run, payday, confirm, manual, balance-check, split-public, /scan: no Tabs nav"
+    },
+    {
+      "id": "AC-25s",
+      "title": "Tab bar on pushed screens",
+      "spec": "patterns §6",
+      "status": "pass",
+      "evidence": "/s/payments shows Tabs"
+    },
+    {
+      "id": "AC-26",
+      "title": "A sheet adds a history step",
+      "spec": "patterns §10",
+      "status": "pass",
+      "evidence": "back closes 'Which category?', scan-more and Sen's sheet, staying on the page"
+    },
+    {
+      "id": "AC-26s",
+      "title": "No dangling entry after Close",
+      "spec": "patterns §10",
+      "status": "pass",
+      "evidence": "Close then back → /"
+    },
+    {
+      "id": "AC-27",
+      "title": "Back rules",
+      "spec": "patterns §6; D83",
+      "status": "fail",
+      "evidence": "More→back→Home ok; app bar back ok; Home→Review→Home→back lands on /review (finding 7)"
+    },
+    {
+      "id": "AC-28",
+      "title": "Gallery shows every block",
+      "spec": "Done-when 1",
+      "status": "pass",
+      "evidence": "their gallery.spec 12/12 (10 sections visible + axe); my screenshots per look"
+    },
+    {
+      "id": "AC-28s",
+      "title": "Blocks in their states",
+      "spec": "Done-when 1",
+      "status": "pass",
+      "evidence": "rows in/out/pending/warning; field error; status waiting/done/warning"
+    },
+    {
+      "id": "AC-29",
+      "title": "List row ≥64 px; amounts never truncated",
+      "spec": "patterns §7; D83",
+      "status": "pass",
+      "evidence": "every amount row ≥64 px; at 1.5× merchant truncates, amounts whole"
+    },
+    {
+      "id": "AC-30",
+      "title": "Money colours with signs and words",
+      "spec": "patterns §3",
+      "status": "pass",
+      "evidence": "+RM4,200.00 in --money-in; RM12.90 in --money-out; 'Not synced yet' text"
+    },
+    {
+      "id": "AC-31",
+      "title": "Money input parses into sen",
+      "spec": "patterns §7",
+      "status": "pass",
+      "evidence": "inputmode=decimal; 1,284.50 → 'Added RM1,284.50'"
+    },
+    {
+      "id": "AC-31s",
+      "title": "Errors in words, kept text, enabled submit",
+      "spec": "patterns §7",
+      "status": "pass",
+      "evidence": "12.505 → 'Two decimals at most, like 12.50.'; Add enabled; value kept; 5 hostile inputs invalid"
+    },
+    {
+      "id": "AC-32",
+      "title": "Field label above, message below, ≥16 px",
+      "spec": "patterns §7, §10",
+      "status": "pass",
+      "evidence": "label bottom ≤ input top; message below; font ≥16 px"
+    },
+    {
+      "id": "AC-33",
+      "title": "Toast with Undo, 6 s",
+      "spec": "patterns §7",
+      "status": "pass",
+      "evidence": "Undo reverts; visible at 5 s, gone by 7 s (placement over a tab bar not reachable: see notTested)"
+    },
+    {
+      "id": "AC-33s",
+      "title": "Each change gets its toast; next replaces",
+      "spec": "patterns §7",
+      "status": "fail",
+      "evidence": "replacement works; a change within ~200 ms of Undo gets none (finding 5)"
+    },
+    {
+      "id": "AC-34",
+      "title": "Dialog only for destructive",
+      "spec": "patterns §7",
+      "status": "pass",
+      "evidence": "alertdialog; action button background = --destructive"
+    },
+    {
+      "id": "AC-35",
+      "title": "Skeleton loading; one-line empty",
+      "spec": "patterns §7",
+      "status": "pass",
+      "evidence": "role=status 'Loading' with skeletons; 'Payments you make appear here.' + Add expense"
+    },
+    {
+      "id": "AC-36",
+      "title": "Chart base: legend, tooltip on tap",
+      "spec": "patterns §4",
+      "status": "pass",
+      "evidence": "takeaway line, Ask Sen about this, tap → tooltip with RM values"
+    },
+    {
+      "id": "AC-36s",
+      "title": "Fourth series folds into Other",
+      "spec": "patterns §4",
+      "status": "pass",
+      "evidence": "foldParts unit test (5 parts → 4, Other in chart-context); 'Other' rendered"
+    },
+    {
+      "id": "AC-37",
+      "title": "Day header in KL whatever the timezone",
+      "spec": "CLAUDE.md conventions",
+      "status": "pass",
+      "evidence": "'Thu, 8 Oct' in KL and in Los Angeles"
+    },
+    {
+      "id": "AC-38",
+      "title": "axe: 12 combinations",
+      "spec": "Done-when 2",
+      "status": "pass",
+      "evidence": "gallery 12/12 (their spec) + five screens, Sen's sheet, dev panel 12/12 (QA)"
+    },
+    {
+      "id": "AC-39",
+      "title": "Every interactive element ≥48 px",
+      "spec": "Done-when 2",
+      "status": "fail",
+      "evidence": "app passes; dev panel toggles 41/36/35 px wide (finding 12)"
+    },
+    {
+      "id": "AC-40",
+      "title": "1.5×: no clipping; amounts wrap",
+      "spec": "Done-when 5",
+      "status": "pass",
+      "evidence": "font 16→24 px; problems = [] in all six looks"
+    },
+    {
+      "id": "AC-41",
+      "title": "Avatar eight states per look",
+      "spec": "Done-when 4",
+      "status": "pass",
+      "evidence": "8 distinct canvases × 6 looks"
+    },
+    {
+      "id": "AC-41s",
+      "title": "Still under reduced motion",
+      "spec": "patterns §8",
+      "status": "pass",
+      "evidence": "dev-panel toggle: identical frames 1 s apart, 8 states × 6 looks"
+    },
+    {
+      "id": "AC-42",
+      "title": "Web behaviour CSS",
+      "spec": "patterns §10",
+      "status": "pass",
+      "evidence": "overscroll none (html, body), contain (main); tap highlight rgba(0,0,0,0); touch-action manipulation; user-select none, inputs selectable; -webkit-touch-callout in CSS (not exposed by Chromium)"
+    },
+    {
+      "id": "AC-42s",
+      "title": "contextmenu cancelled except text",
+      "spec": "patterns §10",
+      "status": "pass",
+      "evidence": "defaultPrevented true on text, false on input"
+    },
+    {
+      "id": "AC-43",
+      "title": "Viewport meta",
+      "spec": "patterns §10",
+      "status": "pass",
+      "evidence": "exact string matched"
+    },
+    {
+      "id": "AC-44",
+      "title": "openInBrowser refuses non-https",
+      "spec": "spec §17",
+      "status": "pass",
+      "evidence": "11/11: http, javascript:, data:, file:, //, relative, '' refused; https opens noopener,noreferrer; shell bridge used when present"
+    },
+    {
+      "id": "AC-45",
+      "title": "Referrer-Policy no-referrer",
+      "spec": "spec §17",
+      "status": "pass",
+      "evidence": "curl -I :4173 → Referrer-Policy: no-referrer"
+    },
+    {
+      "id": "AC-46",
+      "title": "Dev panel contents",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "six looks, System/Light/Dark, text 1×/1.5×, Reduced motion, Screen state, To review, avatar player, Open the gallery"
+    },
+    {
+      "id": "AC-46s",
+      "title": "Production: no dev panel, no gallery code",
+      "spec": "brief",
+      "status": "fail",
+      "evidence": "nothing shown, but gallery/dev-panel chunks ship (finding 9)"
+    },
+    {
+      "id": "AC-47",
+      "title": "Registry covers screens.md",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "every id in screens.md headings present (47 entries), all skeleton"
+    },
+    {
+      "id": "AC-47s",
+      "title": "Production skeleton shows Not built yet, no data",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "five pushed/task ids: Not built yet, zero [data-sen]"
+    },
+    {
+      "id": "AC-48",
+      "title": "Production pinned to Minted",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "?look=copper ignored → data-look=minted"
+    },
+    {
+      "id": "AC-49",
+      "title": "Offline banner on dropping connection",
+      "spec": "patterns §7",
+      "status": "fail",
+      "evidence": "no banner (finding 11)"
+    },
+    {
+      "id": "AC-50",
+      "title": "Handoff, local.md, cloud.md §5",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "handoff rewritten for B01; Vercel and DENYLIST steps in local.md; cloud.md §5 has Chromium/Playwright versions, /dev/kvm: No, frame times"
+    },
+    {
+      "id": "AC-51",
+      "title": "Stack skills and licences",
+      "spec": "brief; spec §17",
+      "status": "pass",
+      "evidence": "skills-lock: shadcn, vercel-react-best-practices, web-design-guidelines, 5 capacitor skills; THIRD_PARTY_NOTICES.md lists vercel-labs (MIT) and licenses/"
+    },
+    {
+      "id": "AC-52",
+      "title": "Frame times measurable",
+      "spec": "Done-when 9",
+      "status": "pass",
+      "evidence": "frame-times.mjs ran: minted 16.7 ms median; mercury 50.0 ms (92–95% over 33 ms); copper 66.6 ms (99%) on SwiftShader at 4× CPU slowdown"
+    }
+  ],
+  "notTested": [
+    {
+      "what": "Scan's long-press on a real phone, including the Medium/Long touch-and-hold delay",
+      "why": "needs the device: Chromium's long-press gesture timing differs from headless touch emulation. Queued in docs/local.md"
+    },
+    {
+      "what": "CI on GitHub Actions and the Vercel preview and production deploys",
+      "why": "CI runs only on a pull_request or a push to main, and no run exists for this branch (REST: no workflow_runs). Vercel isn't linked yet (docs/local.md)"
+    },
+    {
+      "what": "Mercury and Copper frame times on a phone GPU",
+      "why": "the session renders WebGL on SwiftShader; figures here are an upper bound"
+    },
+    {
+      "what": "The toast's placement above the tab bar and clear of Sen's button",
+      "why": "no tab screen can raise a toast in B01; the gallery has neither tab bar nor Sen's button"
+    },
+    {
+      "what": "Core journeys from docs/flows.md",
+      "why": "flows.md marks no journey as core, and every screen is a placeholder until B03"
+    },
+    {
+      "what": "Phase 4 (SQL, RLS matrix, API routes, idempotency)",
+      "why": "B01 has no database or API; the QA database arrives with B05"
+    },
+    {
+      "what": "The haptic on long-press",
+      "why": "navigator.vibrate and the shell's haptic need a device"
+    },
+    {
+      "what": "TalkBack reading the figure, amounts and labels",
+      "why": "needs the device; axe checks names, not speech"
+    }
+  ]
+}

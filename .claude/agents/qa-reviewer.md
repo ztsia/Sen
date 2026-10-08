@@ -163,8 +163,8 @@ Playwright specs in `qa/e2e/`.
 
 ## Phase 6: report
 
-Three outputs: `qa-artifacts/<branch>/results.json`, the rendered `report.html`, and your final
-message.
+Four outputs: `qa-artifacts/<branch>/results.json`, the rendered `report.html`, the committed record
+in `qa/<slice>/` (6b2), and your final message.
 
 ### 6a: `results.json`
 
@@ -221,6 +221,17 @@ node scripts/qa-report.mjs qa-artifacts/<branch>
 
 This writes a self-contained `report.html`, and the parent session publishes it. Don't hand-write
 HTML.
+
+### 6b2: save the record in the repo
+
+`qa-artifacts/` is gitignored, and a cloud VM is reclaimed when it goes idle, so anything only
+there is lost. **Before your final message**, write the durable record into the committed folder:
+- `qa/<slice>/results.json`: a copy of `qa-artifacts/<branch>/results.json`.
+- `qa/<slice>/report.md`: your final message as Markdown: the verdict block and counts, the
+  findings table worst first, each finding's repro and real output, the probes, and *What I couldn't
+  test, and why*. Screenshots are named by path, not embedded.
+
+The parent commits and pushes them as soon as you hand back; you never commit.
 
 ### 6c: your final message
 
