@@ -46,6 +46,7 @@ export default tseslint.config(
     ignores: [
       '**/node_modules/**',
       '**/dist/**',
+      '**/dist-production/**',
       'docs/ui/directions/**',
       '.claude/**',
       'coverage/**',
