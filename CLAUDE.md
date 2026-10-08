@@ -27,7 +27,7 @@ It's called **Sen** (D48). It's for the owner, and by invitation a few friends a
 before it ends**, whether its slice is finished or not, and whenever the owner says *hand off*. Never
 append to it: it's the state now, not a log, and git keeps the old versions. Keep it under about 60
 lines:
-- where things stand: which slice is next or in progress, and on which branch
+- where things stand: which slice is next or in progress, and on which branch (*One brief, one branch*)
 - what was decided, and why
 - what's open with the owner
 - what to do first
@@ -36,20 +36,24 @@ lines:
 Anything still true next week belongs in the spec, `docs/decisions.md`, `docs/cloud.md`,
 `docs/local.md` or a brief instead.
 
-**A slice may span sessions.** A cloud session is assigned its own branch, so the slice's label goes
-in its PR title (*B07 · Sync and the outbox*), and its PR is opened when the slice is done.
+**One brief, one branch.** Each slice is built on exactly one branch, named after its brief's file:
+`B01/design-system` for `docs/briefs/B01-design-system.md`, `B07/sync` for `B07-sync.md`. The harness
+assigns each cloud session a `claude/…` branch; ignore it, and work on the slice's branch instead:
+1. Look for it: `git fetch origin && git ls-remote --heads origin '<branch>'`.
+2. **If it exists, continue it.** Never create a second branch for the same brief:
+   `git checkout -B <branch> origin/<branch>`, then read the handoff there.
+3. **If it doesn't, create it from `main`:** `git checkout -b <branch> origin/main`, and push with
+   `git push -u origin <branch>`.
+
+A slice may span sessions, all on that one branch. Its PR is opened from it when the slice is done,
+with the slice's label as its title (*B07 · Sync and the outbox*).
 
 **When context runs high, or the owner says *hand off*, mid-slice:**
 1. Commit and push.
 2. Rewrite `docs/handoff.md` on the branch: what's done and verified, what's next, and anything
    decided. Push again.
 3. End with one line for the owner to paste into the next session: *Continue B07 from branch
-   `claude/…`*.
-
-The next session then:
-1. Moves its own branch to that one:
-   `git fetch origin <branch> && git checkout -B <its branch> origin/<branch>`.
-2. Reads the handoff there, and carries on.
+   `B07/sync`*.
 
 `scripts/session-start.sh` also names the newest unmerged branch that changed the handoff, as a
 safety net.
