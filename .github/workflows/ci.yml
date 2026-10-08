@@ -25,6 +25,9 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          # the check needs Node alone; without this, setup-node sees package.json's packageManager
+          # and looks for pnpm, which this job doesn't install
+          package-manager-cache: false
       - name: No private/ files, no denylisted strings, in any commit
         run: node scripts/hygiene.mjs
         env:
