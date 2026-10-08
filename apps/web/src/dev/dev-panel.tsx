@@ -11,6 +11,9 @@ import { DEV_STATES, useUi, type DevState } from '@/frame/ui-store';
 import { LOOK_IDS, LOOK_NAMES, isLookId } from '@/looks/ids';
 import { useTheme, type ModePref } from '@/theme/store';
 
+/** The counts the dev panel can put on Review's badge: none, a few, and past 99+. */
+const REVIEW_COUNTS = [0, 5, 120];
+
 export const AVATAR_NAMES: Record<AvatarState, string> = {
   resting: 'Resting',
   note: 'Has a note',
@@ -62,7 +65,7 @@ export default function DevPanel() {
             type="single"
             variant="outline"
             spacing={2}
-            value={theme.look}
+            value={theme.wantLook}
             onValueChange={(v) => isLookId(v) && theme.setLook(v)}
           >
             {LOOK_IDS.map((id) => (
@@ -125,9 +128,9 @@ export default function DevPanel() {
             variant="outline"
             spacing={2}
             value={String(ui.reviewCount)}
-            onValueChange={(v) => v && ui.setReviewCount(+v)}
+            onValueChange={(v) => v && ui.setReviewCount(REVIEW_COUNTS.find((n) => String(n) === v) ?? 0)}
           >
-            {[0, 5, 120].map((n) => (
+            {REVIEW_COUNTS.map((n) => (
               <ToggleGroupItem key={n} value={String(n)}>
                 {n}
               </ToggleGroupItem>

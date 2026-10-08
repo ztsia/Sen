@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { createRootRoute, createRoute, createRouter, redirect, useParams } from '@tanstack/react-router';
 import { AppShell } from './frame/app-shell';
-import { DEV_TOOLS } from './lib/env';
+import { Lost } from './screens/lost';
 import { Placeholder } from './screens/placeholder';
 import { screenById } from './screens/registry';
 
@@ -19,7 +19,13 @@ declare module '@tanstack/react-router' {
   }
 }
 
-const rootRoute = createRootRoute({ component: AppShell });
+// A path that matches nothing, or a screen that throws, keeps the frame and offers a way home
+// (patterns.md §7, Error), never the router's own page.
+const rootRoute = createRootRoute({
+  component: AppShell,
+  notFoundComponent: () => <Lost kind="missing" />,
+  errorComponent: () => <Lost kind="broken" />,
+});
 
 const screenRoute = (path: '/' | '/review' | '/insights' | '/more' | '/scan', id: string) =>
   createRoute({
@@ -31,25 +37,35 @@ const screenRoute = (path: '/' | '/review' | '/insights' | '/more' | '/scan', id
 
 function AnyScreen() {
   const { _splat } = useParams({ from: '/s/$' });
-  const screen = screenById.get(_splat ?? '');
-  if (!screen) throw redirect({ to: '/' });
-  return <Placeholder screen={screen} />;
+  return <Placeholder screen={screenById.get(_splat ?? '')!} />;
 }
-const anyScreen = createRoute({ getParentRoute: () => rootRoute, path: '/s/$', component: AnyScreen });
+// An unknown id, from an old link or a typo, goes Home, replacing itself so back doesn't return to it.
+const anyScreen = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/s/$',
+  beforeLoad: ({ params }) => {
+    if (!screenById.has(params._splat ?? '')) throw redirect({ to: '/', replace: true });
+  },
+  component: AnyScreen,
+});
 
-const Gallery = lazy(() => import('./dev/gallery'));
+// Only development and previews build the gallery. In production its chunk doesn't exist, and its
+// path goes Home.
+// compared in place, so a production build leaves the chunk out (sen-env.d.ts)
+const Gallery = __SEN_ENV__ !== 'production' ? lazy(() => import('./dev/gallery')) : null;
 const gallery = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dev/gallery',
   staticData: { screen: 'dev/gallery' },
   beforeLoad: () => {
-    if (!DEV_TOOLS) throw redirect({ to: '/' });
+    if (!Gallery) throw redirect({ to: '/', replace: true });
   },
-  component: () => (
-    <Suspense>
-      <Gallery />
-    </Suspense>
-  ),
+  component: () =>
+    Gallery ? (
+      <Suspense>
+        <Gallery />
+      </Suspense>
+    ) : null,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -62,4 +78,10 @@ const routeTree = rootRoute.addChildren([
   gallery,
 ]);
 
-export const router = createRouter({ routeTree, defaultPreload: false, scrollRestoration: true });
+export const router = createRouter({
+  routeTree,
+  defaultPreload: false,
+  scrollRestoration: true,
+  defaultNotFoundComponent: () => <Lost kind="missing" />,
+  defaultErrorComponent: () => <Lost kind="broken" />,
+});

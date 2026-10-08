@@ -3,7 +3,7 @@
 // figures, their strips, Sen's button and the tab bar) at 390×844 in Chromium, with the CPU slowed
 // 4× to stand in for a phone. It records every animation frame for 6 seconds and prints the median
 // and 95th-percentile frame time and the share of frames over 33 ms (below 30 fps).
-//   pnpm exec vite build && pnpm exec vite preview --port 4173 &   then
+//   SEN_ENV=preview pnpm exec vite build && pnpm exec vite preview --port 4173 &   then
 //   node scripts/frame-times.mjs [http://localhost:4173] [looks...]
 // In a cloud session WebGL runs on SwiftShader, a software renderer, so Mercury and Copper measure
 // slower here than on a phone's GPU: read these as an upper bound.

@@ -297,8 +297,8 @@ export default function Gallery() {
             className="self-start"
             onClick={() => {
               const r = checkAmount(amount);
-              if (r.error) setSubmitError(r.error);
-              else toastUndo(`Added RM${amount}`, () => setAmount(''));
+              if (r.error !== undefined) setSubmitError(r.error);
+              else toastUndo(`Added ${formatSen(r.sen)}`, () => setAmount(''));
             }}
           >
             Add

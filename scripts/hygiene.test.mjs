@@ -49,6 +49,39 @@ describe('the hygiene check', () => {
     expect(r.problems.join(' ')).not.toMatch(/employer/i);
   });
 
+  // QA B01, finding 8: a name in a file's path, or only in an earlier commit of the PR, is just as public.
+  it('fails on a denylist string in a file path, and never prints it', () => {
+    put('qa/Example-Employer/a.txt', 'nothing here\n');
+    git('add', '.');
+    const r = check(dir, 'example-employer');
+    expect(r.problems).toEqual(['A denylisted string is in the path qa/***/a.txt']);
+    expect(r.problems.join(' ')).not.toMatch(/employer/i);
+  });
+
+  it("fails on a denylist string or private/ file in an earlier commit of the PR's range, since deleted", () => {
+    git('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'base');
+    const base = git('rev-parse', 'HEAD').trim();
+    put('fixtures/ess.json', '{ "host": "ess.example-employer.test" }\n');
+    put('private/x.txt', 'x');
+    put('notes/example-employer.md', 'x');
+    git('add', '.');
+    git('add', '-f', 'private/x.txt');
+    git('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'oops');
+    const oops = git('rev-parse', '--short', 'HEAD').trim();
+    git('rm', '-q', '-r', '--cached', 'fixtures/ess.json', 'private/x.txt', 'notes');
+    git('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'tidy');
+    // the tree at HEAD is clean
+    expect(check(dir, 'example-employer').problems).toEqual([]);
+    // but the range still holds it
+    const r = check(dir, 'example-employer', { base, head: 'HEAD' });
+    expect(r.problems).toEqual([
+      `Tracked under private/: private/x.txt (in ${oops})`,
+      `A denylisted string is in fixtures/ess.json:1 (in ${oops})`,
+      `A denylisted string is in the path notes/***.md (in ${oops})`,
+    ]);
+    expect(r.problems.join(' ')).not.toMatch(/employer/i);
+  });
+
   it('passes when the denylist is set and nothing matches', () => {
     expect(check(dir, 'not-in-the-repo').problems).toEqual([]);
   });

@@ -5,9 +5,9 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 // Money is integer sen, never a float (CLAUDE.md). Nowhere in the source may text become a float or a
-// float become text: no parseFloat and no toFixed. In money files (the money module, the money input
-// and anything named for money), Number(…) and a unary + are banned too, because both turn "12.50"
-// into a float. scripts/no-float.test.mjs plants each of these and checks this config catches it.
+// float become text: no parseFloat and no toFixed. Number(…), a unary + and parseInt are banned too,
+// because each turns "12.50" into a float or drops its sen, everywhere amounts can flow: the app, the
+// API, the worker and core (QA B01, finding 3). Only the looks' drawing code is exempt. scripts/no-float.test.mjs plants each of these and checks this config catches it.
 const floatBans = [
   {
     selector: "CallExpression[callee.property.name='toFixed']",
@@ -40,6 +40,8 @@ export const MONEY_FILES = [
   '**/*-money*.{ts,tsx}',
   '**/*Money*.tsx',
 ];
+
+export const DRAWING_FILES = ['packages/looks/src/**/*.{ts,tsx}'];
 
 export default tseslint.config(
   {
@@ -76,8 +78,14 @@ export default tseslint.config(
         'error',
         { object: 'Number', property: 'parseFloat', message: 'Money is integer sen: parse typed text with parseSen.' },
       ],
-      'no-restricted-syntax': ['error', ...floatBans],
+      'no-restricted-syntax': ['error', ...moneyBans],
     },
+  },
+  {
+    // Number(), a unary + and parseInt are allowed only where no amount can flow: the looks' drawing
+    // code, which reads its own SVG geometry.
+    files: DRAWING_FILES,
+    rules: { 'no-restricted-syntax': ['error', ...floatBans] },
   },
   { files: MONEY_FILES, rules: { 'no-restricted-syntax': ['error', ...moneyBans] } },
   { files: ['**/*.test.{ts,tsx}', '**/e2e/**'], rules: { 'no-restricted-syntax': 'off' } },

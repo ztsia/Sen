@@ -187,7 +187,7 @@ Works from a phone through cloud sessions, rarely at a laptop.
   |---|---|
   | `pnpm install` | Install everything |
   | `pnpm dev` | The web app at `localhost:5173`, with the dev panel; `/dev/gallery` shows every building block |
-  | `pnpm build` | The web app's production build, as Vercel runs it |
+  | `pnpm build` | The web app's production build, as Vercel runs it. A build is production, without dev tools, unless `SEN_ENV=preview` or Vercel's `VERCEL_ENV=preview` says otherwise |
   | `pnpm test` | Unit tests: money, the looks' ports, the hygiene check, the no-float rule, the web app's pure parts |
   | `pnpm e2e` | Playwright on a preview build and a production build, at a phone viewport, under the real CSP |
   | `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |

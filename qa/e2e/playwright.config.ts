@@ -5,7 +5,7 @@ import { defineConfig } from '@playwright/test';
 //   ln -sfn ../../apps/web/node_modules qa/e2e/node_modules
 // then, from qa/e2e:
 //   ./node_modules/.bin/playwright test -c playwright.config.ts
-// Expects a preview build on :4173 (`vite preview` of apps/web) and a production build
+// Expects a preview build (SEN_ENV=preview) on :4173 (`vite preview` of apps/web) and a production build
 // (SEN_ENV=production) on :4176. Uses the preinstalled Chromium; never `playwright install`.
 export const OUT = process.env.QA_SCREENS ?? '../../qa-artifacts/B01-design-system/screens';
 

@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
+import { Link, useRouter } from '@tanstack/react-router';
 import { TABS, type IconTab, type Look, type Mode } from '@sen/looks';
 import { LookMarkup } from '@/components/look/look-markup';
 import { useLongPress } from '@/lib/long-press';
@@ -14,6 +14,10 @@ const PATHS: Record<TabId, '/' | '/review' | '/insights' | '/more'> = {
   insights: '/insights',
   more: '/more',
 };
+
+/** Where Home sits in this tab's history, so the Home tab can go back to it rather than stack another. */
+let homeIndex: number | undefined;
+const historyIndex = (state: unknown) => (state as { __TSR_index?: number }).__TSR_index;
 
 /** Review's badge text: the count, up to 99+ (D83). */
 export const badgeText = (n: number) => (n > 99 ? '99+' : String(n));
@@ -33,7 +37,8 @@ interface Props {
  * The tab bar: Home · Review · Scan · Insights · More (D68), drawn by the look on the shared outlines
  * (D80). The active tab is marked three ways: the look's active icon, its indicator and aria-current.
  * Leaving Home pushes one history step; moving between the other tabs replaces it, so back on any
- * tab but Home goes to Home, and back on Home leaves (patterns.md §6).
+ * tab but Home goes to Home, and back on Home leaves (patterns.md §6). So the Home tab goes back to
+ * Home's own step when it's behind us, and otherwise replaces this one: it never stacks a second Home.
  */
 export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
   const look = useLook();
@@ -44,6 +49,19 @@ export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
   const prev = useRef<TabId | null>(active);
   const [fresh, setFresh] = useState<TabId | null>(null);
   const scan = useLongPress(onScan, onScanMore);
+  const { history } = useRouter();
+
+  useEffect(() => {
+    const st = history.location.state as { senSheet?: string };
+    if (active === 'home' && !st.senSheet) homeIndex = historyIndex(st);
+  });
+  const toHome = (e: MouseEvent) => {
+    if (active === 'home' || e.metaKey || e.ctrlKey) return;
+    const here = historyIndex(history.location.state);
+    e.preventDefault();
+    if (homeIndex !== undefined && here !== undefined && homeIndex < here) history.go(homeIndex - here);
+    else void history.replace('/');
+  };
   const index = active ? TABS.findIndex(([k]) => k === active) : -1;
 
   // a change of tab plays the look's own motion; reduced motion settles straight to the new tab
@@ -95,12 +113,19 @@ export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
             key={k}
             to={PATHS[k]}
             replace={active !== null && active !== 'home' && k !== 'home'}
+            onClick={k === 'home' ? toHome : undefined}
             className={`tab${on ? ' on' : ''}${fresh === k ? ' fresh' : ''}`}
             data-k={k}
             aria-current={on ? 'page' : undefined}
           >
             <TabIcon look={look} k={k} mode={mode} uid={`${uid}${k}`} />
             <span className="tl">{label}</span>
+            {k === 'review' ? (
+              // always there, so a screen reader hears the count change, politely (patterns.md §6)
+              <span className="sr-only" aria-live="polite" data-testid="review-count-live">
+                {reviewCount > 0 ? `, ${badgeLabel(reviewCount)}` : ''}
+              </span>
+            ) : null}
             {k === 'review' && reviewCount > 0 ? (
               <ReviewBadge look={look} count={reviewCount} mode={mode} uid={`${uid}bd`} />
             ) : null}
@@ -125,7 +150,6 @@ function ReviewBadge({ look, count, mode, uid }: { look: Look | null; count: num
   const text = badgeText(count);
   return (
     <>
-      <span className="sr-only">, {badgeLabel(count)}</span>
       {look?.tabs.badge ? (
         <span
           className="badge cb"

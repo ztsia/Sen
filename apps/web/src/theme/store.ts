@@ -1,3 +1,4 @@
+import { loadLook } from '@sen/looks';
 import { create } from 'zustand';
 import { DEV_TOOLS } from '@/lib/env';
 import { readStored, writeStored } from '@/lib/storage';
@@ -10,6 +11,8 @@ export type TextScale = 1 | 1.5;
 interface ThemeState {
   /** The look shown. In production it's pinned until B14; previews can switch it in the dev panel. */
   look: LookId;
+  /** The look asked for. It becomes the look shown once its code has arrived, so the frame never shows half a look. */
+  wantLook: LookId;
   /** System (the default), Light or Dark (D44). */
   modePref: ModePref;
   /** The phone's own setting, followed live. */
@@ -44,16 +47,29 @@ function initialMode(): ModePref {
   return v === 'light' || v === 'dark' || v === 'system' ? v : 'system';
 }
 
-export const useTheme = create<ThemeState>((set) => ({
-  look: initialLook(),
+const firstLook = initialLook();
+
+export const useTheme = create<ThemeState>((set, get) => ({
+  look: firstLook,
+  wantLook: firstLook,
   modePref: initialMode(),
   systemDark: darkMq?.matches ?? false,
   forceReducedMotion: DEV_TOOLS && readStored(KEYS.motion) === '1',
   systemReducedMotion: motionMq?.matches ?? false,
   textScale: DEV_TOOLS && readStored(KEYS.scale) === '1.5' ? 1.5 : 1,
   setLook: (look) => {
-    writeStored(KEYS.look, look);
-    set({ look });
+    set({ wantLook: look });
+    // Switch only once the look's code is here. If it can't come (offline), keep the look on show.
+    loadLook(look).then(
+      () => {
+        if (get().wantLook !== look) return;
+        writeStored(KEYS.look, look);
+        set({ look });
+      },
+      () => {
+        if (get().wantLook === look) set({ wantLook: get().look });
+      },
+    );
   },
   setModePref: (modePref) => {
     writeStored(KEYS.mode, modePref);

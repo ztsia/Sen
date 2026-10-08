@@ -32,6 +32,26 @@ describe('the no-float rule', () => {
     );
   });
 
+  // QA B01 finding 3: amounts flow through the blocks, the frame and the screens, not only files
+  // named for money, so Number(), a unary + and parseInt are banned there too.
+  it.each([
+    ['Number()', 'export const sen = (typed: string) => Math.round(Number(typed) * 100);'],
+    ['a unary +', 'export const sen = (typed: string) => Math.round(+typed * 100);'],
+    ['parseInt', 'export const sen = (typed: string) => parseInt(typed, 10) * 100;'],
+  ])('fails on a planted %s where amounts flow', async (_name, code) => {
+    for (const file of [
+      'apps/web/src/blocks/rows.tsx',
+      'apps/web/src/blocks/detail.tsx',
+      'apps/web/src/blocks/hero.tsx',
+      'apps/web/src/frame/app-bar.tsx',
+      'apps/web/src/screens/home.tsx',
+      'apps/web/src/features/ledger/list.tsx',
+      'apps/api/src/routes/transactions.ts',
+      'packages/core/src/cycles.ts',
+    ])
+      expect(await lint(code, file), file).toContain('no-restricted-syntax');
+  });
+
   it('passes the money module as it is', async () => {
     const [result] = await eslint.lintFiles(['packages/core/src/money.ts']);
     expect(result.messages).toEqual([]);

@@ -13,9 +13,13 @@ export function LookProvider({ children }: { children: ReactNode }) {
   const [look, setLook] = useState<Look | null>(() => loadedLook(id) ?? null);
   useEffect(() => {
     let live = true;
-    void loadLook(id).then((l) => {
-      if (live) setLook(l);
-    });
+    // the store switches only to a loaded look, so this fails only for the first look, offline
+    loadLook(id).then(
+      (l) => {
+        if (live) setLook(l);
+      },
+      () => undefined,
+    );
     return () => {
       live = false;
     };

@@ -1,7 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Outlet, useMatches, useNavigate } from '@tanstack/react-router';
 import { Toaster } from '@/components/ui/sonner';
-import { DEV_TOOLS } from '@/lib/env';
 import { screenById, showsSenButton, showsTabBar, type ScreenDef } from '@/screens/registry';
 import { LookProvider } from '@/theme/look';
 import { SenButton } from './sen-button';
@@ -9,7 +8,8 @@ import { ScanMoreSheet, SenSheet } from './sheets';
 import { TabBar } from './tab-bar';
 import { useUi } from './ui-store';
 
-const DevPanel = DEV_TOOLS ? lazy(() => import('@/dev/dev-panel')) : null;
+// compared in place, so a production build leaves the dev panel's chunk out (sen-env.d.ts)
+const DevPanel = __SEN_ENV__ !== 'production' ? lazy(() => import('@/dev/dev-panel')) : null;
 
 /** The screen on show, from the route: its static screen id, or the id after /s/. */
 function useCurrentScreen(): ScreenDef | undefined {
@@ -22,15 +22,22 @@ function useCurrentScreen(): ScreenDef | undefined {
   });
 }
 
+/** True when the path matched no route, so the root shows its not-found screen. */
+function useLost(): boolean {
+  return useMatches({ select: (ms) => ms.length === 1 || ms.some((m) => m.status === 'notFound') });
+}
+
 /**
  * One column, the width of a phone, centred on a wider screen. The tab bar and Sen's button show
  * where patterns.md §6 says; every screen scrolls inside the column, never the page.
  */
 export function AppShell() {
   const screen = useCurrentScreen();
+  const lost = useLost();
   const navigate = useNavigate();
   const { reviewCount, senState, setSenOpen, setScanMoreOpen } = useUi();
-  const tabs = showsTabBar(screen);
+  // Lost, the tab bar stays, with no tab active, so there's always a way back.
+  const tabs = lost || showsTabBar(screen);
   const sen = showsSenButton(screen);
   return (
     <LookProvider>

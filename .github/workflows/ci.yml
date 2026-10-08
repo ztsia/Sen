@@ -19,13 +19,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          # every commit of the PR, or of the push, is checked, not only the last
+          fetch-depth: 0
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: No private/ files, no denylisted strings
+      - name: No private/ files, no denylisted strings, in any commit
         run: node scripts/hygiene.mjs
         env:
           DENYLIST: ${{ secrets.DENYLIST }}
+          HYGIENE_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HYGIENE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
 
   check:
     runs-on: ubuntu-latest
