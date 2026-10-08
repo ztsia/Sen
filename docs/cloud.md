@@ -101,8 +101,10 @@ Sessions fill this in when they measure. Never assume a result.
 
 | Question | Result | Measured |
 |---|---|---|
-| Is there hardware virtualisation? (`ls /dev/kvm`) | | |
+| Is there hardware virtualisation? (`ls /dev/kvm`) | **No.** `/dev/kvm` doesn't exist, so no Android emulator runs in a session | 8 Oct 2026, B01 |
 | Does a local Postgres start in the session (Docker, or a package install)? | | |
-| What Chromium version is installed, and which `@playwright/test` version matches it? | | |
+| What Chromium version is installed, and which `@playwright/test` version matches it? | **Chromium 141.0.7390.37** (`/opt/pw-browsers/chromium-1194`), which is **`@playwright/test` 1.56.1**, pinned in `apps/web/package.json`. Node 22.22, pnpm 10.28 | 8 Oct 2026, B01 |
 | Can a session build the Capacitor shell's APK itself, or only GitHub Actions? (The Android SDK isn't preinstalled) | | |
+| What can a session reach? | npm, and GitHub through git (`git clone`, `git ls-remote`), so `npx skills add` works; `github.com` pages over HTTPS answer 403. `ui.shadcn.com` answers, so the shadcn CLI works, but it writes `import { cn } from "cn"` and adds a stray `cn` package: fix the import to `@/lib/utils` and remove the package after every `shadcn add` | 8 Oct 2026, B01 |
+| How smoothly does each look draw? (`apps/web/scripts/frame-times.mjs`, the gallery's top screen: four large figures, 390×844, CPU slowed 4×) | Minted and Instrument: 60 fps. Line: 60 fps median, short stalls while its pen writes. Firefly: about 30 fps. **Mercury and Copper: about 15 fps** here, where WebGL runs on SwiftShader, a software renderer; without the CPU slowdown, Mercury 60 fps and Copper 30. A phone's GPU should do better, and Home shows one figure, not four: the phone check in B01's PR says | 8 Oct 2026, B01 |
 | Does an Android emulator run on GitHub's standard runners for this repo? | | |

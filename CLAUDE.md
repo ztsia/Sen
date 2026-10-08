@@ -88,6 +88,9 @@ built module by module, and every feature worked but the app didn't hang togethe
 **No app code until `S3`'s slice map is merged, and Sen is published** (`docs/local.md`). Then B01
 starts in `ztsia/Sen`. The next slice waits only for the owner's merge.
 
+**Built so far:** B01, the design system and the six looks (the workspace, money, the frame, the
+building blocks, the dev panel and the gallery). Next: B02, the shell and the listener.
+
 ## Non-negotiables
 
 - **Money is integer sen, never a float.** That means `BIGINT` in Postgres, integers in TypeScript,
@@ -178,7 +181,32 @@ Works from a phone through cloud sessions, rarely at a laptop.
   upgrade (`shadcn add <x> --dry-run`) can keep it. Never write a parallel, hand-rolled version of
   something shadcn has. `className` at a call site is for layout only. `patterns.md`'s building
   blocks are compositions of them, in `apps/web/src/blocks/`.
-- **Commands** (`pnpm test`, the web build, the QA database): the foundations slice adds them here.
+- **Commands**, from the repo root (Node 22, pnpm 10; `scripts/session-start.sh` installs packages):
+
+  | Command | What it does |
+  |---|---|
+  | `pnpm install` | Install everything |
+  | `pnpm dev` | The web app at `localhost:5173`, with the dev panel; `/dev/gallery` shows every building block |
+  | `pnpm build` | The web app's production build, as Vercel runs it |
+  | `pnpm test` | Unit tests: money, the looks' ports, the hygiene check, the no-float rule, the web app's pure parts |
+  | `pnpm e2e` | Playwright on a preview build and a production build, at a phone viewport, under the real CSP |
+  | `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |
+  | `pnpm looks` | Regenerates `apps/web/src/styles/looks.gen.css` from `docs/ui/directions/assets/`; CI fails if it's stale |
+  | `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
+  | `node apps/web/scripts/frame-times.mjs` | Each look's frame times at 390×844 with the CPU slowed 4×, against a running `vite preview` |
+
+  The QA database arrives with the server (B05).
+- **Layout** (B01):
+
+  | Path | What it holds |
+  |---|---|
+  | `apps/web/` | The web app: Vite, React, TanStack Router, Tailwind v4 and shadcn/ui. `src/components/ui/` is shadcn's, customised in place; `src/blocks/` the building blocks of `patterns.md` §7; `src/frame/` the tab bar, Sen's button and the shell of every screen; `src/screens/registry.ts` every screen id, `skeleton` or `real`; `src/dev/` the dev panel and gallery; `e2e/` Playwright |
+  | `packages/core/` | Pure TypeScript shared by the app, the API and the worker: the money module now; cycles and the template engine later |
+  | `packages/looks/` | The six looks as `DIR` modules, ported from `docs/ui/directions/src/`, each loaded only when shown |
+  | `apps/api/` | The Hono API (B05) |
+  | `apps/shell/` | The Capacitor shell for Android, with the Kotlin capture plugin (B02) |
+  | `apps/worker/` | The Cloudflare Worker: schedules and the realtime relay (B06) |
+  | `scripts/` | The session hooks, the hygiene check and the QA report |
 
 ## Skills
 
@@ -191,9 +219,11 @@ Works from a phone through cloud sessions, rarely at a laptop.
 | `database` | Designing or checking tables, migrations, SQL, RLS policies, views, functions, or an API route or sync that touches data. Ported from the owner's `claude_skills` and cut down to this stack. Its rules win over the vendor skills below |
 | `supabase-postgres-best-practices`, `neon`, `neon-postgres` | General Postgres and Neon practice: indexes, locking, pooling, branching. Installed with `npx skills add`. Where they assume Supabase, or steer towards Neon's own Auth, Functions, Storage or AI Gateway, `database` and D54–D55 win |
 
-The foundations slice adds the rest of the stack's skills with `npx skills add`, because cloud
-sessions don't load plugins: `shadcn/ui`, `vercel-labs/agent-skills` (React best practices, web
-design guidelines) and `capawesome-team/skills` (Capacitor plugins and builds).
+The stack's own skills came with `npx skills add` (B01), because cloud sessions don't load plugins:
+`shadcn` (shadcn/ui's CLI and components), `vercel-react-best-practices` and `web-design-guidelines`
+(vercel-labs), and `capacitor-app-development`, `capacitor-plugins`, `capacitor-plugin-development`,
+`capacitor-react` and `capacitor-push-notifications` (Capawesome). Where one disagrees with `uiux`,
+`patterns.md` or a decision, ours win.
 
 Skills are model-invoked from their descriptions, so no session needs to be told to use one.
 **Our own skills are knowledge, not modes (D82).** Invoking one loads what to do and what must be

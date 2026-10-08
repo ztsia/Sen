@@ -35,6 +35,30 @@ follow on a phone, and commit.
          step, payslips as JSON), committed and pushed.
       7. Keep `private/ess/` on the laptop. In B34 the recipe goes into Sen by *Import recipe*
          (D106); no cloud session ever sees it.
+- [ ] **Link Vercel to `ztsia/Sen`** (B01, before its PR is reviewed). On your phone, at vercel.com
+      (the desktop site is easier: your browser's menu → *Desktop site*):
+      1. *Add New…* → *Project* → *Import Git Repository* → choose **ztsia/Sen**. If it isn't listed,
+         *Adjust GitHub App Permissions* and give Vercel access to that one repository.
+      2. **Root Directory:** `apps/web` (tap *Edit* next to it). Leave *Include files outside the root
+         directory in the Build Step* **on**: the build reads the looks and fonts from `docs/ui/`.
+      3. **Framework Preset:** Vite. Leave *Build Command*, *Output Directory* and *Install Command*
+         as they are: `apps/web/vercel.json` sets `pnpm build` and `dist`, and Vercel finds pnpm from
+         the lockfile at the repo's root.
+      4. No environment variables yet. *Deploy*.
+      5. Then *Settings* → *General* → **Node.js Version: 22.x**. *Settings* → *Git*: **Production
+         Branch** `main`; preview deployments stay on, one per branch. *Settings* → *Deployment
+         Protection*: keep **Vercel Authentication** on for previews (they show the dev panel), and
+         keep **Git Fork Protection** on.
+      6. Check: open the production address. It shows *Not built yet* and no dev panel. Open the
+         preview for the `B01/design-system` branch (its PR has the link): it has the dev panel on the
+         left edge, and */dev/gallery*.
+      Sessions never deploy and never hold a Vercel token: every push deploys through this link.
+- [ ] **Add the `DENYLIST` secret to `ztsia/Sen`** (B01). github.com → *ztsia/Sen* → *Settings* →
+      *Secrets and variables* → *Actions* → *New repository secret*. Name: `DENYLIST`. Value: one
+      string per line that must never appear in the repo, such as your employer's name and ESS's
+      address. Write it only there, nowhere else. The hygiene check on every PR then fails on any of
+      them, matched without regard to case, and names only the file and line. Until it's set, the check
+      still blocks `private/` files and says plainly that the denylist part was skipped.
 - [ ] **Create the cloud environment.** At claude.ai/code, start a new session, open the environment
       selector and choose *Add environment*. Fill it in from `docs/cloud.md` §2: name, network,
       variables and setup script.

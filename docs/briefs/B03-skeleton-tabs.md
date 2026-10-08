@@ -111,3 +111,11 @@ away. Later slices replace fake data with real data behind the same hooks.
 - Spend the effort on the parts that won't change: data shapes, building blocks and layout. Fake
   data can stay simple.
 - Charts on made-up numbers still follow `dataviz` exactly. B20 only swaps their data.
+- **Home's own material comes from the looks' design pages, not yet ported** (B01 ported the frame:
+  wordmark, figure, strip, avatar and tab bar). Port each look's `decorate` and `paydayFx` from
+  `docs/ui/directions/src/<look>.js` with Home: Minted's rosette behind the wordmark, microprint and
+  payday seal; Firefly's sky and bokeh; Mercury's room light and stray beads; Line's double rule under
+  the total; Copper's patina on Sen's coin (`data-patina` on a parent, which `Avatar` already reads).
+- **The large figure is `HeroFigure`** (`apps/web/src/blocks/hero.tsx`); give it `spentByDay` too, for
+  Copper's strip. The dev panel's *Screen state* switcher (`useUi().devState`) is there for Home's
+  states.
