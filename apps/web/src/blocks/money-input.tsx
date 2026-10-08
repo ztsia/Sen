@@ -47,7 +47,9 @@ export function MoneyInput({ label, value, onChange, hint, error, autoFocus, onE
         </span>
         <Input
           id={id}
-          className={cn('num h-auto min-w-0 flex-1 border-0 bg-transparent px-0 text-4xl font-semibold shadow-none focus-visible:ring-0 dark:bg-transparent')}
+          className={cn(
+            'num h-auto min-w-0 flex-1 border-0 bg-transparent px-0 text-4xl font-semibold shadow-none focus-visible:ring-0 dark:bg-transparent',
+          )}
           type="text"
           inputMode="decimal"
           enterKeyHint="done"

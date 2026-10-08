@@ -22,7 +22,19 @@ export interface DetailAction {
  * then actions as rows at the foot. Where the data came from is always said. The amount gets a Copy
  * button, since amounts aren't selectable (§10).
  */
-export function DetailPage({ sen, kind = 'out', source, facts, actions }: { sen: number; kind?: MoneyKind; source: string; facts: Fact[]; actions: DetailAction[] }) {
+export function DetailPage({
+  sen,
+  kind = 'out',
+  source,
+  facts,
+  actions,
+}: {
+  sen: number;
+  kind?: MoneyKind;
+  source: string;
+  facts: Fact[];
+  actions: DetailAction[];
+}) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(formatSen(sen));
@@ -44,7 +56,10 @@ export function DetailPage({ sen, kind = 'out', source, facts, actions }: { sen:
       </div>
       <dl className="flex flex-col">
         {facts.map((f) => (
-          <div key={f.label} className="flex min-h-12 items-baseline justify-between gap-4 border-b border-border px-4 py-3">
+          <div
+            key={f.label}
+            className="flex min-h-12 items-baseline justify-between gap-4 border-b border-border px-4 py-3"
+          >
             <dt className="text-muted-foreground">{f.label}</dt>
             <dd className="text-right wrap-anywhere">{f.value}</dd>
           </div>
@@ -57,7 +72,9 @@ export function DetailPage({ sen, kind = 'out', source, facts, actions }: { sen:
             <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
               <button type="button" onClick={a.onSelect}>
                 <ItemContent>
-                  <ItemTitle className={cn('text-base font-normal', a.destructive && 'text-destructive')}>{a.label}</ItemTitle>
+                  <ItemTitle className={cn('text-base font-normal', a.destructive && 'text-destructive')}>
+                    {a.label}
+                  </ItemTitle>
                 </ItemContent>
               </button>
             </Item>

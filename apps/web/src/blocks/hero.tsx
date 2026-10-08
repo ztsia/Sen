@@ -29,7 +29,11 @@ export function HeroFigure({ label, sen, sub, day, days, state = {} }: HeroProps
         {state.over ? <TriangleAlertIcon className="size-4" /> : null}
         {label}
       </span>
-      {look ? <LookMarkup className="hero-fig" html={look.heroFigure(sen, mode, state)} /> : <span className="hero-fig" aria-hidden="true" />}
+      {look ? (
+        <LookMarkup className="hero-fig" html={look.heroFigure(sen, mode, state)} />
+      ) : (
+        <span className="hero-fig" aria-hidden="true" />
+      )}
       <span className="hero-sub" aria-hidden="true">
         {sub}
       </span>

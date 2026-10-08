@@ -1,3 +1,4 @@
+// Sen: shadcn/ui's switch, changed in place for the phone (CLAUDE.md, shadcn first): a 48 px touch target (h-12 w-14) around a drawn track and thumb; no sm size.
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Switch as SwitchPrimitive } from 'radix-ui';

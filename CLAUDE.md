@@ -174,8 +174,10 @@ Works from a phone through cloud sessions, rarely at a laptop.
   written by `build.mjs` and `fonts.mjs`. Change the source, never the exported file.
 - **shadcn first, customised in place.** Every building block starts from a shadcn/ui component
   (the `uiux` skill). When its defaults don't fit the phone, edit the shadcn file itself in
-  `apps/web/src/components/ui/`; never write a parallel, hand-rolled version of something shadcn has.
-  `patterns.md`'s building blocks are compositions of them, in `apps/web/src/blocks/`.
+  `apps/web/src/components/ui/`, with a `// Sen:` note on its first line saying what changed, so an
+  upgrade (`shadcn add <x> --dry-run`) can keep it. Never write a parallel, hand-rolled version of
+  something shadcn has. `className` at a call site is for layout only. `patterns.md`'s building
+  blocks are compositions of them, in `apps/web/src/blocks/`.
 - **Commands** (`pnpm test`, the web build, the QA database): the foundations slice adds them here.
 
 ## Skills

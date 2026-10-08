@@ -34,7 +34,9 @@ export function Sheet({ open, onOpenChange, title, description, full, head, chil
       >
         <div className="flex items-center gap-3 border-b border-border px-4 pt-1 pb-2">
           {head ?? (
-            <DrawerTitle className="min-w-0 flex-1 text-lg leading-tight font-semibold text-pretty">{title}</DrawerTitle>
+            <DrawerTitle className="min-w-0 flex-1 text-lg leading-tight font-semibold text-pretty">
+              {title}
+            </DrawerTitle>
           )}
           <Button variant="ghost" size="icon" aria-label="Close" onClick={() => onOpenChange(false)}>
             <XIcon />

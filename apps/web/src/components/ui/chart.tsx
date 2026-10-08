@@ -1,10 +1,12 @@
+// Sen: shadcn/ui's chart, changed in place for the phone (CLAUDE.md, shadcn first): dark themes key on [data-mode='dark'], Sen's own mode attribute, not .dark; tooltip values go through valueFormatter, which defaults to formatSen, since a chart's values are integer sen.
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import * as RechartsPrimitive from 'recharts';
+import { formatSen } from '@sen/core/money';
 import type { TooltipValueType } from 'recharts';
 
 // Format: { THEME_NAME: CSS_SELECTOR }
-const THEMES = { light: '', dark: '.dark' } as const;
+const THEMES = { light: '', dark: "[data-mode='dark']" } as const;
 
 const INITIAL_DIMENSION = { width: 320, height: 200 } as const;
 type TooltipNameType = number | string;
@@ -116,6 +118,7 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
+  valueFormatter = formatSen,
 }: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
   React.ComponentProps<'div'> & {
     hideLabel?: boolean;
@@ -123,6 +126,8 @@ function ChartTooltipContent({
     indicator?: 'line' | 'dot' | 'dashed';
     nameKey?: string;
     labelKey?: string;
+    /** How a value reads: integer sen as RM1,284.50 unless a chart says otherwise. */
+    valueFormatter?: (value: number) => string;
   } & Omit<RechartsPrimitive.DefaultTooltipContentProps<TooltipValueType, TooltipNameType>, 'accessibilityLayer'>) {
   const { config } = useChart();
 
@@ -213,7 +218,7 @@ function ChartTooltipContent({
                       </div>
                       {item.value != null && (
                         <span className="font-mono font-medium text-foreground tabular-nums">
-                          {typeof item.value === 'number' ? item.value.toLocaleString() : String(item.value)}
+                          {typeof item.value === 'number' ? valueFormatter(item.value) : String(item.value)}
                         </span>
                       )}
                     </div>

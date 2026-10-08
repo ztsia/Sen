@@ -1,3 +1,4 @@
+// Sen: shadcn/ui's input, changed in place for the phone (CLAUDE.md, shadcn first): 48 px tall (h-12); 16 px text at every width, so no browser zooms on focus.
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 

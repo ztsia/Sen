@@ -30,5 +30,7 @@ export function Avatar({ state, size }: { state: AvatarState; size: number }) {
     c._dirty = true;
     dirtyAll();
   }, [look, state, mode, reduced]);
-  return <canvas ref={ref} className="av" data-state={state} style={{ width: size, height: size }} aria-hidden="true" />;
+  return (
+    <canvas ref={ref} className="av" data-state={state} style={{ width: size, height: size }} aria-hidden="true" />
+  );
 }

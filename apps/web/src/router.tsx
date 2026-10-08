@@ -22,7 +22,12 @@ declare module '@tanstack/react-router' {
 const rootRoute = createRootRoute({ component: AppShell });
 
 const screenRoute = (path: '/' | '/review' | '/insights' | '/more' | '/scan', id: string) =>
-  createRoute({ getParentRoute: () => rootRoute, path, staticData: { screen: id }, component: () => <Placeholder screen={screenById.get(id)!} /> });
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path,
+    staticData: { screen: id },
+    component: () => <Placeholder screen={screenById.get(id)!} />,
+  });
 
 function AnyScreen() {
   const { _splat } = useParams({ from: '/s/$' });

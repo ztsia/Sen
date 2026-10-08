@@ -1,3 +1,4 @@
+// Sen: shadcn/ui's button, changed in place for the phone (CLAUDE.md, shadcn first): every size at least 48 px (min-h-12/14, icon size-12); the look's --radius-btn; body text size; no hover-only states; destructive text on --background.
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';

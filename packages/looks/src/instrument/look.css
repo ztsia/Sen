@@ -31,6 +31,10 @@
     font-size: 0.875rem;
     font-stretch: 90%;
   }
+  /* over budget on the display: the display's own warning light, with its icon and words */
+  .hero.over .hero-lbl {
+    color: var(--led-warn);
+  }
   .hero-fig {
     gap: 6px;
     align-items: flex-end;

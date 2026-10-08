@@ -8,7 +8,12 @@ import { useLook } from '@/theme/look';
 import { useMode, useReducedMotion } from '@/theme/store';
 import type { TabId } from '@/screens/registry';
 
-const PATHS: Record<TabId, '/' | '/review' | '/insights' | '/more'> = { home: '/', review: '/review', insights: '/insights', more: '/more' };
+const PATHS: Record<TabId, '/' | '/review' | '/insights' | '/more'> = {
+  home: '/',
+  review: '/review',
+  insights: '/insights',
+  more: '/more',
+};
 
 /** Review's badge text: the count, up to 99+ (D83). */
 export const badgeText = (n: number) => (n > 99 ? '99+' : String(n));
@@ -58,14 +63,27 @@ export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
   }, [active, look, reduced]);
 
   return (
-    <nav ref={bar} className="tabbar" aria-label="Tabs" data-on={active ?? ''} style={{ ['--i' as string]: Math.max(0, index) }}>
-      {look?.tabs.bar ? <LookMarkup html={look.tabs.bar(mode, `${uid}b`)} /> : null}
-      <span className="tab-ind" aria-hidden="true" hidden={index < 0} dangerouslySetInnerHTML={{ __html: look?.tabs.ind ? look.tabs.ind(mode, `${uid}i`) : '' }} />
+    <nav
+      ref={bar}
+      className="tabbar"
+      aria-label="Tabs"
+      data-on={active ?? ''}
+      style={{ ['--i' as string]: Math.max(0, index) }}
+    >
+      {look?.tabs.bar ? <LookMarkup className="contents" html={look.tabs.bar(mode, `${uid}b`)} /> : null}
+      <span
+        className="tab-ind"
+        aria-hidden="true"
+        hidden={index < 0}
+        dangerouslySetInnerHTML={{ __html: look?.tabs.ind ? look.tabs.ind(mode, `${uid}i`) : '' }}
+      />
       {TABS.map(([k, label]) => {
         if (k === 'scan')
           return (
             <button key={k} type="button" className="tab tab-scan" data-k="scan" aria-label="Scan a receipt" {...scan}>
-              <span className={look ? 'scanbtn cs' : 'scanbtn'}>{look ? <LookMarkup html={look.tabs.scan(mode, `${uid}s`)} /> : null}</span>
+              <span className={look ? 'scanbtn cs' : 'scanbtn'}>
+                {look ? <LookMarkup html={look.tabs.scan(mode, `${uid}s`)} /> : null}
+              </span>
               <span className="tl" aria-hidden="true">
                 {label}
               </span>
@@ -83,7 +101,9 @@ export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
           >
             <TabIcon look={look} k={k} mode={mode} uid={`${uid}${k}`} />
             <span className="tl">{label}</span>
-            {k === 'review' && reviewCount > 0 ? <ReviewBadge look={look} count={reviewCount} mode={mode} uid={`${uid}bd`} /> : null}
+            {k === 'review' && reviewCount > 0 ? (
+              <ReviewBadge look={look} count={reviewCount} mode={mode} uid={`${uid}bd`} />
+            ) : null}
           </Link>
         );
       })}
@@ -107,7 +127,13 @@ function ReviewBadge({ look, count, mode, uid }: { look: Look | null; count: num
     <>
       <span className="sr-only">, {badgeLabel(count)}</span>
       {look?.tabs.badge ? (
-        <span className="badge cb" aria-hidden="true" data-testid="review-badge" data-count={text} dangerouslySetInnerHTML={{ __html: look.tabs.badge(text, mode, uid) }} />
+        <span
+          className="badge cb"
+          aria-hidden="true"
+          data-testid="review-badge"
+          data-count={text}
+          dangerouslySetInnerHTML={{ __html: look.tabs.badge(text, mode, uid) }}
+        />
       ) : (
         <span className="badge" aria-hidden="true" data-testid="review-badge" data-count={text}>
           {text}

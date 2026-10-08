@@ -44,7 +44,17 @@ export function ListSkeleton({ rows = 4 }: { rows?: number }) {
 }
 
 /** What happened and what to do next, in plain words, with a button that does it. What was typed is kept by the screen. */
-export function ErrorState({ title, detail, action, onAction }: { title: string; detail: string; action: string; onAction: () => void }) {
+export function ErrorState({
+  title,
+  detail,
+  action,
+  onAction,
+}: {
+  title: string;
+  detail: string;
+  action: string;
+  onAction: () => void;
+}) {
   return (
     <Alert variant="destructive" className="flex flex-col gap-2 [&>svg]:hidden">
       <AlertTitle className="flex items-center gap-2 text-base font-semibold">

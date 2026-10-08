@@ -1,7 +1,15 @@
 import type { ComponentType, ReactNode } from 'react';
 import { ChevronRightIcon, CloudOffIcon, InboxIcon, ReceiptTextIcon, SparklesIcon, SplitIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Item, ItemActions, ItemContent, ItemDescription, ItemFooter, ItemMedia, ItemTitle } from '@/components/ui/item';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemFooter,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
 import { dayLabel } from '@/lib/dates';
 import { cn } from '@/lib/utils';
@@ -26,7 +34,13 @@ export function Marks({ marks }: { marks: RowMark[] }) {
       {marks.map((m) => {
         const [Icon, label] = MARKS[m];
         return (
-          <span key={m} className={cn('inline-flex items-center gap-1 text-xs', m === 'pending' ? 'text-money-pending' : 'text-muted-foreground')}>
+          <span
+            key={m}
+            className={cn(
+              'inline-flex items-center gap-1 text-xs',
+              m === 'pending' ? 'text-money-pending' : 'text-muted-foreground',
+            )}
+          >
             <Icon className="size-3.5" />
             {label}
           </span>
@@ -100,7 +114,17 @@ export interface ReviewAnswer {
 }
 
 /** A question that needs you: on one line, what Sen knows on the next, then at most three answers plus Other…. */
-export function ReviewRow({ question, knows, answers, onOther }: { question: ReactNode; knows: ReactNode; answers: ReviewAnswer[]; onOther: () => void }) {
+export function ReviewRow({
+  question,
+  knows,
+  answers,
+  onOther,
+}: {
+  question: ReactNode;
+  knows: ReactNode;
+  answers: ReviewAnswer[];
+  onOther: () => void;
+}) {
   return (
     <Item size="sm" className="rounded-none text-base">
       <ItemContent className="min-w-0 gap-1">

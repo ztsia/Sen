@@ -1,3 +1,4 @@
+// Sen: shadcn/ui's sonner, changed in place for the phone (CLAUDE.md, shadcn first): light and dark from Sen's theme store (src/theme/store.ts) instead of next-themes.
 import { CircleCheckIcon, InfoIcon, Loader2Icon, OctagonXIcon, TriangleAlertIcon } from 'lucide-react';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 import { useMode } from '@/theme/store';

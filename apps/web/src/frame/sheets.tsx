@@ -47,7 +47,12 @@ export function ScanMoreSheet() {
     <Sheet open={scanMoreOpen} onOpenChange={setScanMoreOpen} title="Add a payment">
       <ItemGroup>
         {rows.map((r) => (
-          <Item key={r.id} asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
+          <Item
+            key={r.id}
+            asChild
+            size="sm"
+            className="min-h-14 w-full rounded-none text-left text-base active:bg-accent"
+          >
             <button type="button" onClick={() => go(r.id)}>
               <ItemMedia variant="icon" className="size-10 rounded-full border-0 bg-muted text-icon">
                 <r.icon className="size-5" />

@@ -9,7 +9,17 @@ import { useMode } from '@/theme/store';
  * The app bar (patterns.md §7): the wordmark on Home; on any other screen, back, the screen's title,
  * and at most one action on the right.
  */
-export function AppBar({ title, home, action, onBack }: { title: string; home?: boolean; action?: ReactNode; onBack?: () => void }) {
+export function AppBar({
+  title,
+  home,
+  action,
+  onBack,
+}: {
+  title: string;
+  home?: boolean;
+  action?: ReactNode;
+  onBack?: () => void;
+}) {
   const look = useLook();
   const mode = useMode();
   const router = useRouter();

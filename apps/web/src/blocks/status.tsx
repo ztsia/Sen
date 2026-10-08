@@ -50,7 +50,19 @@ export function StatusCard({
  * A health warning (spec §18), at the top of Home until it's fixed: what's wrong, in words, and one
  * button that fixes it.
  */
-export function HealthBar({ icon: Icon, title, detail, fix, onFix }: { icon: ComponentType<{ className?: string }>; title: string; detail: string; fix: string; onFix: () => void }) {
+export function HealthBar({
+  icon: Icon,
+  title,
+  detail,
+  fix,
+  onFix,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  title: string;
+  detail: string;
+  fix: string;
+  onFix: () => void;
+}) {
   return (
     <Alert className="flex items-center gap-3 border-0 bg-warn-bg text-warn-fg [&>svg]:translate-y-0">
       <Icon className="size-5 shrink-0" />
