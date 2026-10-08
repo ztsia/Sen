@@ -1,6 +1,11 @@
 # B01 · Acceptance criteria
 
-Written by the QA reviewer from the docs only (brief `docs/briefs/B01-design-system.md`,
+**Run 2 (8 Oct, fresh full run after the fixes in `e2de2a3`, `34e0961`).** Rewritten from the docs
+before any app source was opened in this run. The reviewer read run 1's criteria (themselves written
+from the docs only) and kept their numbering, so findings stay comparable across runs; AC-53 to AC-70
+are new in run 2, from spec lines run 1 didn't cover. No implementation was read before this file.
+
+Run 1 was written by the QA reviewer from the docs only (brief `docs/briefs/B01-design-system.md`,
 `docs/modules.md` B01, `spec_v2.md` §4, §5.1, §9.1, §9.4, §17, `docs/ui/patterns.md`,
 `docs/screens.md` *Rules every screen follows*, D42–D44, D57, D58, D75–D84, `CLAUDE.md`
 non-negotiables), **before** any app source was opened. Each criterion names an observable, and
@@ -319,4 +324,90 @@ AC-51  The stack's skills are added (shadcn, vercel-labs agent-skills, capawesom
 
 AC-52  Frame times for Mercury and Copper at 390×844 with CPU throttling are measurable (script exists and runs)
        Spec   brief Done-when 9
+```
+
+## Added in run 2 (docs only, before source)
+
+```
+AC-53  An unknown path, or /s/<unknown screen id>, shows the shared error state
+       Then   the shared ErrorState in words ("what happened and what to do next") with a button
+              that does it (back to Home); the tab bar stays; never TanStack's default
+              "Something went wrong" / "Not Found" page; no uncaught error in the console
+       Spec   patterns.md §7 *Error*; CLAUDE.md "No screen invents its own ... error state"
+
+AC-53s The error state's button actually lands on Home, with Home's tab aria-current
+
+AC-54  Scan long-press with a real touch (touchstart, hold 600 ms, touchend)
+       Then   scan-more opens, and the finger's lift does NOT activate whatever is now under it
+              (URL unchanged, sheet still open)
+       Spec   patterns.md §6 ("Nothing waits for a double tap"; long-press opens scan-more)
+
+AC-54s A touch tap (< 500 ms) goes to the scanner stand-in and opens no sheet; a touch that moves
+       away (scroll) before 500 ms opens nothing
+
+AC-55  The no-float lint applies wherever amounts flow, not only in money* files
+       When   `Number(x)` / `parseFloat` / `toFixed` / unary `+` on an amount is planted in a block
+              (rows, money input), the frame, or a screen
+       Then   `pnpm lint` exits non-zero
+       Spec   CLAUDE.md non-negotiable 1; brief *Money* ("no path through a float")
+
+AC-56  Switching look never shows an unstyled tab bar, and a failed chunk load is handled
+       When   a look's chunk is slow, or fails (offline)
+       Then   the previous look stays drawn (data-look unchanged) until the chunk arrives; on failure
+              no unhandled rejection and the app keeps a working, styled look
+       Spec   patterns.md §1 (one of six looks, always); §7 error
+
+AC-57  A toast stays until the next change: a change made right after Undo (or after a toast
+       closes) gets its own toast
+       Spec   patterns.md §7 *Toasts*; D83
+
+AC-58  Review's badge is announced politely when it changes and never steals focus
+       Then   the badge (or a status node) is in an aria-live="polite" region; focus unchanged
+       Spec   patterns.md §6
+
+AC-59  Back from a tab other than Home goes to Home; back on Home leaves (browser: history leaves
+       the app), including Home → Review → Home → back
+       Spec   patterns.md §6; D83
+
+AC-60  Hygiene check also catches a denylisted string in a file path and in any commit of the PR
+       range (not only the tip tree)
+       Spec   spec §17 *Repo hygiene* ("fails ... on any string from a private denylist")
+
+AC-61  Production builds hold no dev tools: no dev panel or gallery code in the shipped JS, and a
+       build without an explicit production env doesn't silently gain dev tools in production
+       Spec   brief *Dev panel* ("never in production")
+
+AC-62  The large figure is readable text: a screen reader gets its label and the same digits
+       ("Left until payday, RM1,284.50, 12 days to go") in every look
+       Spec   patterns.md §3, §8
+
+AC-63  Icon-only buttons have an aria-label; amounts read as money ("RM 1,284.50")
+       Spec   patterns.md §5, §8
+
+AC-64  Touch targets are at least 8 px apart (no two interactive hit boxes overlap or sit < 8 px
+       apart) in the gallery and the frame
+       Spec   patterns.md §8
+
+AC-65  Focus rings show for keyboard focus only (:focus-visible), not on a pointer tap
+       Spec   patterns.md §10
+
+AC-66  Safe-area variables and dvh: the frame's height uses dvh and the tab bar pads by
+       env(safe-area-inset-bottom) / --safe-area-inset-bottom
+       Spec   patterns.md §10
+
+AC-67  Detail page: amount large at the top, label/value rows, actions at the foot; Delete in
+       destructive and still offers Undo; the source is said ("Added by you")
+       Spec   patterns.md §7 *Detail page*
+
+AC-68  Review row: question on one line, what Sen knows on the next, at most three buttons plus
+       "Other…"; a suggested button is marked; answering clears it with Undo
+       Spec   patterns.md §7 *Rows*
+
+AC-69  Offline marks: "Not synced yet" appears only while offline or after 5 s, so a quick sync
+       never flickers; the offline banner is a banner, not an error
+       Spec   patterns.md §7 *Offline*
+
+AC-70  Status card and health warning: state in words first with an icon, colour only supports;
+       the warning bar has what's wrong in words and one button that fixes it
+       Spec   patterns.md §7
 ```

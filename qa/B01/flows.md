@@ -1,5 +1,8 @@
 # B01 · Flows
 
+Run 2 (8 Oct): kept run 1's flows (written from the docs only) and added FLOW-15 to FLOW-21 from the
+docs, before reading any source in this run.
+
 Written from the docs only, before the source was read. Every flow is walked at a phone viewport
 (412×915) in Chromium against `vite preview` (and the production build where named), with
 Playwright specs in `qa/e2e/`.
@@ -90,6 +93,54 @@ FLOW-14 Accessibility sweep                                              (happy)
         Entry  /dev/gallery in all 12 combinations
         Ends   axe reports no contrast or label violations; every interactive element ≥48 px
         Covers AC-38, AC-39
+```
+
+```
+FLOW-15 A wrong address                                                  (sad)
+        Actor  owner   Entry  /s/no-such-screen, then /nowhere
+        Steps  1. open the address  2. tap the error state's button
+        Ends   1 shows the shared error state in words with a button, the tab bar present, no
+               TanStack default page; 2 lands on Home with Home's tab current
+        Covers AC-53, AC-53s   Spec patterns.md §7
+
+FLOW-16 Scan long-press with a finger                                    (happy + sad)
+        Actor  owner   Entry  / at 412×915 with touch
+        Steps  1. touchstart on Scan, hold 600 ms, touchend  2. close  3. touch tap Scan
+        Ends   1 opens scan-more and the lift activates nothing under the finger (URL unchanged,
+               sheet open); 3 goes to the scanner stand-in with no sheet
+        Covers AC-54, AC-54s, AC-23
+
+FLOW-17 Switching to a look whose chunk is slow, then one that fails     (sad)
+        Actor  owner   Entry  /dev/gallery, dev panel
+        Steps  1. delay the next look's chunk 3 s and switch  2. go offline and switch to a look
+               not yet loaded
+        Ends   1 the tab bar stays styled in the old look until the new one arrives; 2 no
+               unhandled error, a styled look remains
+        Covers AC-56
+
+FLOW-18 Undo, then change again                                          (sad)
+        Actor  owner   Entry  /dev/gallery, toast
+        Steps  1. change  2. Undo  3. change again at once
+        Ends   3 shows a toast
+        Covers AC-57
+
+FLOW-19 Home → Review → Home → back                                      (sad)
+        Actor  owner   Entry  /
+        Steps  tap Review, tap Home, browser back
+        Ends   back leaves the app (history leaves the origin or stays on Home), never Review
+        Covers AC-59
+
+FLOW-20 Keyboard focus against tap focus                                 (happy + sad)
+        Actor  owner   Entry  /dev/gallery
+        Steps  1. Tab to a button  2. tap a button with the pointer
+        Ends   1 shows a focus ring; 2 shows none
+        Covers AC-65
+
+FLOW-21 The production bundle                                            (sad)
+        Actor  anyone  Entry  the production build's dist/
+        Steps  grep the built JS for the gallery, the dev panel, keys and tokens
+        Ends   none found
+        Covers AC-11, AC-61
 ```
 
 ## Core journeys
