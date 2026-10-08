@@ -87,6 +87,16 @@ follow on a phone, and commit.
             (it sets how far apart duplicates can be, D88)
       - [ ] a Grab payment made by card, if Grab and the bank app both notify it
 
+- [ ] **B01 phone check: Scan's long-press** (QA B01, finding on AC-23s). Once the preview link
+      opens on the phone (Chrome is fine; the shell from B02 too):
+      1. On Home, press and hold **Scan** for about one second, then lift your thumb.
+      2. *Add a payment* should open and **stay open**. Write down whether it instead jumped straight
+         to *From gallery* (a screen saying *Not built yet*) or *Add manually*.
+      3. Repeat with Android's *Touch and hold delay* set to **Medium** or **Long** (Settings →
+         Accessibility; on the Xiaomi, *Additional settings → Accessibility → Interaction*), then put
+         it back.
+      Paste what happened into the next cloud session. In Chromium's touch emulation, lifting the
+      finger picked the sheet's row under it.
 - [ ] **Turn on GitHub's protections for `ztsia/Sen`** (D85): Settings → *Code security* → **secret
       scanning** and **push protection**.
 - [ ] **Never make `ztsia/finance-tracker` public.** It's the private design archive: its history
