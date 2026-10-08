@@ -1,0 +1,1415 @@
+<!-- Sen wireframe (S2). The source of https://claude.ai/artifact/GV9cJbkjjFSExMgpbWY9Sc.
+     Written for the Artifact tool, which adds the doctype and head when publishing; publish this file as it is.
+     Greyscale structure only; all data is made up (D11). See docs/screens.md and docs/flows.md. -->
+<title>Sen wireframe</title>
+<style>
+/* Layout: a dark control strip on top; below it the phone, full screen on a phone, framed on a desktop. Greyscale on purpose: this is structure, not the look */
+:root {
+  --page: #e7e7e3;
+  --paper: #ffffff;
+  --ink: #1d1d1d;
+  --mute: #686868;
+  --line: #d5d5d1;
+  --fill: #eeeeeb;
+  --fill2: #dcdcd8;
+  --dark: #262626;
+  --note: #1f5fd6;
+  --hl: #f29d0b;
+  --strip: #161616;
+  --stripink: #f2f2f2;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.4 var(--font); }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-align: inherit; cursor: pointer; }
+button:disabled { opacity: .4; cursor: default; }
+:focus-visible { outline: 2px solid var(--note); outline-offset: 2px; }
+#root { height: 100%; display: flex; flex-direction: column; }
+#strip { flex: none; background: var(--strip); color: var(--stripink); padding: 8px 10px; }
+#stage { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; }
+#phone { position: relative; width: 100%; height: 100%; background: var(--paper); overflow: hidden; }
+@media (min-width: 600px) {
+  #stage { padding: 16px; }
+  #phone { width: 390px; height: min(820px, 100%); border-radius: 34px; border: 10px solid #111; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+}
+
+/* control strip */
+.tools { display: flex; gap: 6px; align-items: center; overflow-x: auto; }
+.brand { font-weight: 700; margin-right: auto; white-space: nowrap; font-size: 13px; opacity: .85; padding-right: 4px; }
+.tools button { flex: none; border: 1px solid #4a4a4a; border-radius: 999px; padding: 6px 11px; font-size: 13px; font-weight: 600; }
+.gtop { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.gtop b { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gcap { margin: 6px 0 8px; font-size: 14px; line-height: 1.4; }
+.gnav { display: flex; gap: 8px; }
+.gnav button { flex: 1; border: 1px solid #555; border-radius: 10px; padding: 8px; font-weight: 700; text-align: center; }
+.gnav .gpri { background: var(--hl); color: #111; border-color: var(--hl); }
+.gx { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #555; font-size: 18px; line-height: 1; text-align: center; }
+
+/* app frame */
+.app { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--paper); }
+.appbar { flex: none; height: 52px; display: flex; align-items: center; gap: 6px; padding: 0 10px 0 6px; border-bottom: 1px solid var(--line); }
+.appbar .t { flex: 1; min-width: 0; font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 6px; }
+.ib { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; text-align: center; }
+.sid { font: 11px var(--mono); color: var(--note); border: 1px dashed var(--note); border-radius: 6px; padding: 1px 5px; white-space: nowrap; }
+.content { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px 24px; display: flex; flex-direction: column; gap: 12px; }
+.tabbar { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line); padding: 6px 0 8px; }
+.tab { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: var(--mute); }
+.tab i { width: 22px; height: 22px; border: 1.6px solid currentColor; border-radius: 7px; }
+.tab.on { color: var(--ink); font-weight: 700; }
+.tab.on i { background: var(--ink); }
+.tab.plus i { width: 46px; height: 36px; border-radius: 12px; background: var(--dark); border: 0; position: relative; }
+.tab.plus i::after { content: "+"; color: #fff; position: absolute; inset: 0; display: grid; place-items: center; font-size: 24px; font-style: normal; line-height: 1; }
+
+/* type and helpers */
+.sub { color: var(--mute); font-size: 13px; }
+.note { color: var(--note); font-size: 12px; font-style: italic; }
+body.nonotes .note, body.nonotes .sid { display: none; }
+.sec { font-size: 13px; font-weight: 700; color: var(--mute); margin: 4px 0 -4px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.num { font-variant-numeric: tabular-nums; }
+.center { text-align: center; }
+.stack { display: grid; gap: 8px; }
+.row2 { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* home */
+.hero { display: grid; gap: 2px; padding: 4px 2px; width: 100%; }
+.hero .lbl { font-size: 14px; color: var(--mute); }
+.hero .big { font-size: 42px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.pace { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; width: 100%; }
+.quiet { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 2px; border-top: 1px solid var(--line); font-size: 14px; color: var(--mute); width: 100%; }
+.quiet b { color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+.card { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 8px; width: 100%; }
+.card.strong { border: 2px solid var(--ink); }
+.cardrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.warn { background: var(--dark); color: #fff; border-radius: 12px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.warn .b { border-color: #fff; color: #fff; background: transparent; }
+.chipoff { align-self: flex-start; font-size: 12px; font-weight: 700; border: 1.5px dashed var(--ink); border-radius: 999px; padding: 3px 10px; }
+
+/* attention rows */
+.att { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 8px; }
+.att .ati { display: grid; gap: 1px; }
+.att .q { font-size: 14px; }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* buttons */
+.b { min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1.5px solid var(--ink); font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--paper); text-align: center; }
+.b.pri { background: var(--dark); border-color: var(--dark); color: #fff; }
+.b.ghost { border-color: var(--line); }
+.b.full { width: 100%; }
+.b.big { min-height: 52px; font-size: 16px; }
+.b.sm { min-height: 30px; padding: 0 10px; font-size: 13px; }
+.b.sug { position: relative; }
+.b.sug::after { content: "Sen"; position: absolute; top: -8px; right: -6px; font-size: 9px; font-weight: 700; background: var(--ink); color: #fff; border-radius: 6px; padding: 1px 4px; }
+.link { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; font-weight: 600; font-size: 14px; }
+
+/* lists */
+.list { display: flex; flex-direction: column; }
+.row { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); width: 100%; }
+.ph { width: 36px; height: 36px; border-radius: 50%; background: var(--fill); }
+.ph.sq { border-radius: 10px; }
+.row .mid { display: grid; gap: 1px; min-width: 0; }
+.row .ti { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.amt { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; text-align: right; }
+.marks { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+.tag { font-size: 10.5px; border: 1px solid var(--line); border-radius: 999px; padding: 0 6px; color: var(--mute); white-space: nowrap; }
+.tag.k { border-color: var(--ink); color: var(--ink); }
+.tag.ns { border-style: dashed; border-color: var(--ink); color: var(--ink); }
+.dayh { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--mute); padding-top: 8px; }
+.lrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); width: 100%; }
+.lrow .v { color: var(--mute); text-align: right; }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-size: 14px; }
+.kv b { font-variant-numeric: tabular-nums; text-align: right; }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.chip { flex: none; border: 1.5px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.chip.on { border-color: var(--ink); background: var(--ink); color: #fff; }
+
+/* forms */
+.field { display: grid; gap: 4px; }
+.lab { font-size: 12px; color: var(--mute); }
+.input { border: 1.5px solid var(--line); border-radius: 10px; min-height: 42px; padding: 9px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+.input.doubt { border-style: dashed; border-color: var(--ink); }
+.input .ph2 { color: var(--mute); }
+.flag { font-size: 11px; font-weight: 700; }
+.steps { display: flex; gap: 10px; font-size: 13px; color: var(--mute); }
+.steps .on { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.check { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); width: 100%; }
+.box { width: 22px; height: 22px; border: 1.6px solid var(--ink); border-radius: 6px; display: grid; place-items: center; font-size: 13px; font-weight: 800; }
+.box.on { background: var(--ink); color: #fff; }
+.radio { width: 20px; height: 20px; border: 1.6px solid var(--ink); border-radius: 50%; display: inline-grid; place-items: center; }
+.radio.on::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.switch { width: 40px; height: 24px; border-radius: 12px; background: var(--fill2); position: relative; flex: none; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+.switch.on { background: var(--ink); }
+.switch.on::after { left: 19px; }
+.bigamt { font-size: 40px; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; }
+.kbd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.kbd button { min-height: 44px; border-radius: 10px; background: var(--fill); font-size: 20px; font-weight: 600; text-align: center; }
+.stepper { display: inline-flex; align-items: center; gap: 12px; }
+.stepper button { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--ink); font-size: 18px; text-align: center; }
+
+/* bars, receipts, QR */
+.bar { height: 8px; background: var(--fill2); border-radius: 4px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ink); }
+.rcpt { background: var(--fill); border-radius: 10px; height: 150px; display: grid; place-items: center; position: relative; overflow: hidden; width: 100%; }
+.rcpt::before { content: ""; width: 46%; height: 86%; background: repeating-linear-gradient(#fff 0 9px, #d6d6d2 9px 11px); border-radius: 3px; }
+.rcpt span { position: absolute; bottom: 6px; right: 8px; font-size: 11px; color: var(--mute); }
+.rcpt.sm { height: 64px; width: 52px; }
+.qr { width: 172px; height: 172px; margin: 0 auto; display: block; }
+
+/* agent */
+.msgs { display: grid; gap: 10px; }
+.msg { display: grid; gap: 6px; max-width: 90%; padding: 10px 12px; font-size: 14px; }
+.msg.me { justify-self: end; background: var(--fill); border-radius: 14px 14px 4px 14px; }
+.msg.sen { border: 1px solid var(--line); border-radius: 14px 14px 14px 4px; }
+.msg .when { font-size: 11px; color: var(--mute); }
+.composer { flex: none; display: grid; gap: 6px; padding: 8px 10px 10px; border-top: 1px solid var(--line); }
+
+/* overlays inside the phone */
+.layer { position: absolute; inset: 0; pointer-events: none; z-index: 15; }
+.layer > * { pointer-events: auto; }
+.scrim { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--paper); border-radius: 18px 18px 0 0; padding: 10px 14px 18px; max-height: 86%; overflow: auto; display: grid; gap: 10px; }
+.grab { width: 42px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto; }
+.sheet h4 { margin: 0; font-size: 16px; }
+.toast { position: absolute; left: 12px; right: 12px; bottom: 78px; background: var(--dark); color: #fff; border-radius: 12px; padding: 11px 12px; display: flex; gap: 10px; align-items: center; justify-content: space-between; font-size: 14px; }
+.toast.low { bottom: 14px; }
+.toast .undo { font-weight: 800; text-decoration: underline; flex: none; }
+.notif { position: absolute; left: 8px; right: 8px; top: 8px; background: #f3f3f1; border-radius: 20px; box-shadow: 0 8px 28px rgba(0,0,0,.25); padding: 10px 14px 4px; }
+.nhd { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--mute); }
+.nhd i { width: 16px; height: 16px; border-radius: 5px; background: var(--dark); }
+.nbody { display: grid; gap: 1px; width: 100%; padding: 6px 0; }
+.nbody b { font-size: 15px; }
+.nacts { display: flex; gap: 4px; flex-wrap: wrap; border-top: 1px solid var(--line); margin-top: 2px; }
+.nacts button { padding: 9px 8px; font-weight: 700; font-size: 13.5px; }
+.nx { margin-left: auto; width: 28px; height: 28px; border-radius: 50%; text-align: center; font-size: 16px; }
+
+/* scanner (native) */
+.scanner { position: absolute; inset: 0; background: #141414; color: #eee; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 14px 16px 22px; gap: 12px; }
+.vf { width: 70%; aspect-ratio: 3 / 5; border: 2px solid #eee; border-radius: 8px; position: relative; background: repeating-linear-gradient(#2c2c2c 0 9px, #3a3a3a 9px 11px); }
+.vf.crop { border-style: dashed; }
+.corner { position: absolute; width: 20px; height: 20px; border: 3px solid var(--hl); border-radius: 50%; background: #141414; }
+.shutter { width: 68px; height: 68px; border-radius: 50%; border: 4px solid #eee; background: #ddd; }
+.scanner .b { border-color: #eee; color: #eee; background: transparent; }
+.scanner .b.pri { background: #eee; color: #111; }
+
+/* the phone's own home screen */
+.phonehome { position: absolute; inset: 0; background: linear-gradient(160deg, #c8cdd2, #98a1a9); display: flex; flex-direction: column; padding: 8px 12px 14px; gap: 12px; overflow: auto; }
+.statusbar { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #222; padding: 0 4px; }
+.widget { background: rgba(255,255,255,.93); border-radius: 22px; padding: 12px; display: grid; gap: 6px; width: 100%; align-content: start; }
+.widget.off { background: #262626; color: #fff; }
+.widget.off .sub { color: #ccc; }
+.widget .b { min-height: 32px; font-size: 13px; }
+.widget.off .b { border-color: #fff; color: #fff; background: transparent; }
+.wgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.appicons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: auto; position: relative; }
+.aicon { display: grid; justify-items: center; gap: 4px; font-size: 11px; color: #111; }
+.aicon i { width: 52px; height: 52px; border-radius: 16px; background: rgba(255,255,255,.65); }
+.aicon.sen i { background: var(--dark); }
+.shortcuts { position: absolute; bottom: 80px; left: 0; background: #fff; border-radius: 16px; box-shadow: 0 8px 28px rgba(0,0,0,.25); padding: 6px; display: grid; min-width: 180px; }
+.shortcuts button { padding: 10px 12px; font-weight: 600; border-radius: 10px; }
+
+/* friend's browser */
+.urlbar { font: 12px var(--mono); background: var(--fill); border-radius: 999px; padding: 7px 12px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* guide highlight */
+.hl { outline: 3px solid var(--hl) !important; outline-offset: 2px; border-radius: 10px; animation: pulse 1.3s ease-in-out infinite; }
+@keyframes pulse { 50% { outline-color: rgba(242,157,11,.3); } }
+@media (prefers-reduced-motion: reduce) { .hl { animation: none; } }
+
+/* tool sheets (wireframe controls, not app UI) */
+#tool { position: fixed; inset: 0; z-index: 100; display: none; }
+#tool.on { display: block; }
+.tscrim { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+.tsheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: 88%; overflow: auto; background: #1b1b1b; color: #f1f1f1; border-radius: 18px 18px 0 0; padding: 14px 16px 24px; display: grid; gap: 8px; }
+@media (min-width: 600px) { .tsheet { left: 50%; transform: translateX(-50%); width: min(560px, 100%); } }
+.tsheet h2 { font-size: 17px; margin: 2px 0; }
+.tsheet h3 { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: #aaa; margin: 10px 0 2px; }
+.tsheet p { margin: 0; color: #cfcfcf; font-size: 13.5px; }
+.titem { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: #272727; width: 100%; }
+.titem .s { font-size: 12.5px; color: #bbb; }
+.thead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tclose { border: 1px solid #555; border-radius: 999px; padding: 6px 12px; flex: none; }
+.tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.tid { font: 12.5px var(--mono); padding: 8px 10px; border-radius: 10px; background: #272727; width: 100%; }
+
+/* tabs: badge; the scan tab */
+.tab { position: relative; }
+.badge { position: absolute; top: -2px; left: calc(50% + 6px); min-width: 18px; height: 18px; border-radius: 9px; background: var(--ink); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; padding: 0 5px; }
+.tab.plus { color: var(--ink); font-weight: 700; }
+.tab.plus i::after { content: "⌗"; font-size: 20px; }
+
+/* Sen: floating button and full-height sheet (D68) */
+.fab { position: absolute; right: 14px; bottom: 82px; z-index: 5; width: 56px; height: 56px; border-radius: 18px; background: var(--dark); color: #fff; font-weight: 800; font-size: 14px; text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.sensheet { position: absolute; left: 0; right: 0; bottom: 0; top: 24px; background: var(--paper); border-radius: 18px 18px 0 0; display: flex; flex-direction: column; overflow: hidden; }
+.senbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-bottom: 1px solid var(--line); }
+.senbar b { font-size: 17px; }
+.ctxchip { font-size: 12px; padding: 3px 9px; margin-right: auto; }
+.senmsgs { padding-top: 12px; }
+.askl { font-size: 13px; justify-self: start; }
+
+/* charts (dataviz rules: thin marks, hairline grid, legend for 2+ series) */
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .ax { font-size: 10px; fill: var(--mute); }
+.chart .lb { font-size: 11px; fill: var(--ink); }
+.chart .vl { font-size: 11px; fill: var(--ink); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--mute); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.key { width: 14px; height: 8px; border-radius: 2px; display: inline-block; background: var(--ink); }
+.key.grey { background: #b4b4b0; }
+.key.pale { background: #e6e6e2; }
+.key.dash { height: 0; border-top: 2px dashed var(--ink); background: none; }
+.key.tick { width: 2px; height: 12px; }
+.key.l1 { background: #cfcfcb; } .key.l3 { background: #5d5d5a; } .key.l5 { background: #1d1d1d; }
+.card.ins { gap: 10px; }
+.iq { font-size: 16px; }
+.take { font-size: 14px; }
+.tile { display: grid; gap: 2px; }
+.tilev { font-size: 28px; font-weight: 800; letter-spacing: -.01em; }
+.meterrow { display: grid; gap: 4px; }
+.meter { position: relative; height: 10px; border-radius: 5px; background: #e6e6e2; }
+.meter i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--ink); }
+.meter b { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--note); }
+.stackbar { display: flex; gap: 2px; height: 14px; }
+.stackbar i { border-radius: 3px; background: var(--ink); min-width: 2px; }
+.stackbar i.grey { background: #b4b4b0; }
+.stackbar i.pale { background: #e6e6e2; }
+
+/* receipts and splits */
+.itemrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); width: 100%; }
+.doubtrow .amt { text-decoration: underline dashed; text-underline-offset: 4px; }
+
+/* widgets */
+.wmeter { position: relative; height: 8px; border-radius: 4px; background: #e6e6e2; }
+.wmeter i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--ink); }
+.wmeter b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--note); }
+.wcats { display: grid; gap: 3px; }
+.wbar { height: 6px; border-radius: 3px; background: #e6e6e2; }
+.wbar i { display: block; height: 100%; border-radius: 3px; background: var(--ink); }
+.widget.off .wmeter, .widget.off .chart { display: none; }
+.content.withfab { padding-bottom: 84px; }
+.check.unclaimed { background: repeating-linear-gradient(135deg, transparent 0 8px, #f3f3f0 8px 10px); }
+.check.unclaimed .sub { color: var(--ink); font-weight: 700; }
+.roster { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; font-weight: 700; }
+.roster .notdone { color: var(--mute); font-weight: 400; }
+</style>
+
+<div id="root">
+  <div id="strip"></div>
+  <div id="stage"><div id="phone"></div></div>
+</div>
+<div id="tool"></div>
+<script>
+'use strict';
+// ---------- helpers ----------
+const $ = (s) => document.querySelector(s);
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+// Money is integer sen everywhere, even here.
+function rm(sen) {
+  const neg = sen < 0; const a = Math.abs(Math.round(sen));
+  return (neg ? '−' : '') + 'RM' + Math.floor(a / 100).toLocaleString('en-MY') + '.' + String(a % 100).padStart(2, '0');
+}
+function rm0(sen) { return 'RM' + Math.round(sen / 100).toLocaleString('en-MY'); }
+function attrs(o) { return Object.entries(o || {}).map(([k, v]) => (k === 'id' ? ` id="${esc(v)}"` : ` data-${k}="${esc(v)}"`)).join(''); }
+function B(label, a, o, cls) { return `<button class="b ${cls || ''}" data-a="${a}"${attrs(o)}>${label}</button>`; }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+// Split an amount over weights by largest remainder, so the parts add up exactly.
+function apportion(total, weights) {
+  const sum = weights.reduce((s, w) => s + w, 0); if (!sum) return weights.map(() => 0);
+  const raw = weights.map((w) => (total * w) / sum); const base = raw.map(Math.floor);
+  let rest = total - base.reduce((s, x) => s + x, 0);
+  raw.map((r, i) => [r - Math.floor(r), i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (rest > 0) { base[i] += 1; rest -= 1; } });
+  return base;
+}
+
+const CATS = ['Meals', 'Drinks & desserts', 'Groceries', 'Transport', 'Car', 'Phone & internet', 'Home & bills', 'Shopping', 'Entertainment', 'Subscriptions', 'Health', 'Personal care', 'Gifts & treats', 'Family', 'Travel', 'Fees & charges', 'Cash'];
+const DAYS = { d18: 'Today, Sat 18 Oct', d17: 'Yesterday, Fri 17 Oct', d16: 'Thu 16 Oct', d15: 'Wed 15 Oct', d03: 'Fri 3 Oct', s30: 'Wed 30 Sep' };
+const DAYORDER = ['d18', 'd17', 'd16', 'd15', 'd03', 's30'];
+
+// Receipts. Printed amounts; tax and service are spread into each item's price (D66). All made up.
+const R = {
+  r1: { m: 'NASI KANDAR ABC', when: 'Sat 18 Oct, 13:05', short: '18 Oct', svc: 500, tax: 330, total: 5830, doubt: 3,
+    items: [['Nasi kandar ayam', 1450], ['Teh tarik', 350], ['Roti canai ×2', 500], ['Nasi kandar kambing', 1800], ['Milo ais', 400], ['Teh o ais limau ×2', 500]] },
+  r2: { m: 'BBQ PLACE', when: 'Fri 17 Oct, 21:30', short: '17 Oct', svc: 0, tax: 0, total: 9600,
+    items: [['Set A', 3000], ['Set B', 3000], ['Set C', 2440], ['Mineral water ×3', 1160]] },
+  r3: { m: 'ROTI BAKAR 88', when: 'Sat 18 Oct, 13:02', short: '18 Oct', svc: 0, tax: 0, total: 950,
+    items: [['Roti bakar kaya', 350], ['Kopi O', 220], ['Half-boiled eggs', 380]] },
+  r4: { m: 'KEDAI MEE ABC', when: 'Sat 18 Oct, 19:40', short: '18 Oct', svc: 550, tax: 363, total: 6413,
+    items: [['Mee goreng', 900], ['Mee goreng', 900], ['Kuey teow goreng', 1000], ['Fried chicken', 1800], ['Teh ais ×3', 900]] },
+};
+function subtotal(rid) { return R[rid].items.reduce((s, i) => s + i[1], 0); }
+function prices(rid) { const r = R[rid]; const extra = apportion(r.total - subtotal(rid), r.items.map((i) => i[1])); return r.items.map((it, k) => it[1] + extra[k]); }
+// what you ate: an item is yours (1), shared evenly by n people (n), or not yours (0)
+function partOf(price, n) { return n > 0 ? apportion(price, Array.from({ length: n }, () => 1))[0] : 0; }
+
+function base() {
+  return {
+    as: 'owner', view: 'app', notes: true, offline: false, captureOff: false, payday: false, plan: null,
+    beforeSalary: false, incomeSet: true, propDone: false, sc: false, sen: null,
+    stack: [{ s: 'home' }], sheet: null, toast: null, notif: null, scan: 'view', fr: 1, pd: 1, bcv: {},
+    man: { amt: '', cat: '' }, cf: null, pub: null, sp: null,
+    fig: { income: 420000, spent: 291550, pace: 14000, days: 12, day: 19, gap: 3620, gapDate: '3 Oct' },
+    accounts: [
+      { id: 'ryt', name: 'Ryt (Main Account)', bal: 587015, app: 'Ryt Bank', open: 510233, openDate: '5 Oct' },
+      { id: 'pbb', name: 'Public Bank', bal: 120460, app: 'Public Bank', open: 98012, openDate: '5 Oct' },
+      { id: 'goplus', name: 'GO+', bal: 98000, app: 'TNG eWallet', open: 95000, openDate: '5 Oct' },
+      { id: 'tng', name: 'TNG eWallet', bal: 21240, app: 'TNG eWallet', open: 30210, openDate: '5 Oct' },
+      { id: 'grab', name: 'GrabPay Wallet', bal: 13495, app: 'Grab', open: 8000, openDate: '5 Oct' },
+    ],
+    txns: [
+      { id: 't1', day: 'd18', time: '12:41', m: 'KOPI KAWAN', c: null, a: 'ryt', amt: 1290, dir: 'out', marks: ['needs'], ns: true },
+      { id: 't8', day: 'd18', time: '11:58', m: 'ALI BIN ABU BAKA', c: null, a: 'ryt', amt: 2099, dir: 'in', marks: ['needs'] },
+      { id: 't3', day: 'd18', time: '09:02', m: 'HIGHWAY TOLL', c: 'Car', a: 'tng', amt: 210, dir: 'out', marks: [], ns: true },
+      { id: 't4', day: 'd18', time: '08:30', m: 'GRAB RIDE', c: 'Transport', a: 'grab', amt: 1400, dir: 'out', marks: [] },
+      { id: 't5', day: 'd17', time: '19:30', m: 'GRABFOOD, NASI LEMAK HOUSE', c: 'Meals', a: 'grab', amt: 2460, dir: 'out', marks: [] },
+      { id: 't6', day: 'd17', time: '13:05', m: 'MAK CIK HAWKER STALL', c: 'Meals', a: 'tng', amt: 800, dir: 'out', marks: [], note: 'DuitNow to SITI AMINAH BT YUSOF: a hawker, filed as a merchant (D70)' },
+      { id: 't7', day: 'd17', time: '08:40', m: 'Ryt → TNG eWallet', c: null, a: 'ryt', amt: 10000, dir: 'xfer', marks: [] },
+      { id: 't9', day: 'd16', time: '20:14', m: 'KEDAI MEE ABC', c: 'Meals', a: 'ryt', amt: 6413, dir: 'out', marks: ['receipt', 'split'], share: 2100, rcpt: 'r4', split: 's1' },
+      { id: 't10', day: 'd16', time: '12:30', m: 'TEA PAL', c: 'Drinks & desserts', a: 'tng', amt: 890, dir: 'out', marks: [] },
+      { id: 't11', day: 'd16', time: '07:55', m: 'PETROL KL', c: 'Car', a: 'ryt', amt: 8000, dir: 'out', marks: [] },
+      { id: 't12', day: 'd15', time: '09:10', m: 'Public Bank → Ryt', c: null, a: 'ryt', amt: 200000, dir: 'xfer', marks: ['filled'] },
+      { id: 't13', day: 'd03', time: '21:40', m: 'TELCO ONE', c: 'Phone & internet', a: 'ryt', amt: 4500, dir: 'out', marks: [] },
+      { id: 't14', day: 's30', time: '17:02', m: 'SYARIKAT CONTOH SDN BHD', c: 'Salary', a: 'pbb', amt: 420000, dir: 'in', marks: [] },
+    ],
+    // Review: what needs you (counted) and what waits on others (not counted)
+    att: [
+      { id: 'a1', k: 'cat', tx: 't1', title: 'RM12.90 · KOPI KAWAN', sub: 'Ryt · Today 12:41 · new merchant', opts: ['Drinks & desserts', 'Meals'], sug: 'Drinks & desserts' },
+      { id: 'a2', k: 'whose', tx: 't8', title: 'RM20.99 in from ALI BIN ABU BAKA', sub: 'Ryt · Today 11:58 · a name Sen hasn’t seen', opts: [['Ali', 'KEDAI MEE ABC, RM20.99']] },
+      { id: 'a6', k: 'owe', title: 'You owe Mei RM24.40', sub: 'BBQ PLACE, last night · Sen reminded you an hour after' },
+      { id: 'a5', k: 'wording', title: 'New TNG wording', q: 'Paid RM6.50 to KEDAI MAJU. Right?', sub: 'TNG eWallet · Today 10:02', sug: 'Yes' },
+      { id: 'a3', k: 'prop', title: 'Sen suggests a budget', q: 'Drinks & desserts: RM150.00 a cycle', sub: 'From Sen · Fri 21:02' },
+    ],
+    waiting: [
+      { id: 'w1', k: 'split', sp: 's1', title: 'KEDAI MEE ABC: 1 of 2 paid you back', sub: 'Mei, RM22.14, not yet' },
+      { id: 'w2', k: 'rwait', title: 'TELCO ONE e-bill, RM45.00', sub: 'Forwarded today. Waiting for its payment' },
+      { id: 'w3', k: 'promise', title: 'Refund from ONLINE STORE, RM59.00', sub: 'Expected by 25 Oct' },
+    ],
+    // splits: who paid, members, item owners (indexes into members), the payer's ticks
+    splits: {
+      s1: { id: 's1', rid: 'r4', payer: 'You', members: ['You', 'Ali', 'Mei'], owners: [[0], [1], [2], [0, 1, 2], [0, 1, 2]], paid: { You: true, Ali: false, Mei: false }, how: {}, done: { You: true, Ali: true, Mei: true }, open: true, locked: true },
+      s2: { id: 's2', rid: 'r2', payer: 'Mei', members: ['You', 'Mei', 'Ravi'], owners: [[1], [2], [0], [1, 2]], paid: { Mei: true, You: false, Ravi: true }, how: { Ravi: 'ticked by Mei' }, done: { You: true, Mei: true, Ravi: true }, open: true, locked: true },
+    },
+    budgets: [{ c: 'Meals', amt: 90000, spent: 64000 }],
+    goals: [
+      { id: 'g1', n: 'Trip home for CNY', kind: 'Bucket', target: 150000, saved: 90000, per: 15000, by: 'Feb 2027', note: 'On track' },
+      { id: 'g2', n: 'Emergency fund', kind: 'Goal', target: 1000000, saved: 320000, per: 30000, by: 'Jun 2028', note: 'Your median surplus, RM480.00 over 6 cycles, can carry it' },
+    ],
+    subs: [
+      { n: 'VIDEO PLUS', amt: 3990, next: '24 Oct' }, { n: 'TUNEBOX', amt: 1690, next: '21 Oct' },
+      { n: 'CLOUDBOX', amt: 899, next: '2 Nov' }, { n: 'TELCO ONE plan', amt: 3000, next: '3 Nov' },
+    ],
+    claims: [
+      { id: 'c1', n: 'Phone & data', amt: 3800, status: 'To submit', due: '7 Nov', ev: 'TELCO ONE e-bill', missing: false },
+      { id: 'c2', n: 'Travel', amt: 4200, status: 'To submit', due: '7 Nov', ev: null, missing: true },
+    ],
+    skipped: [
+      { app: 'TNG eWallet', when: 'Fri 17 Oct, 10:02', text: 'Weekend treat! Enjoy 10% cashback at selected outlets.' },
+      { app: 'Grab', when: 'Fri 17 Oct, 18:40', text: 'Your driver is arriving in 3 minutes.' },
+      { app: 'Ryt Bank', when: 'Thu 16 Oct, 09:00', text: 'Your monthly statement is ready to view.' },
+    ],
+    msgs: [
+      { id: 'm-note', who: 'sen', when: 'Yesterday, 21:02', t: 'Quiet Friday: RM32.60 on meals. You’re RM140.00 ahead of last cycle’s spending, mostly Shopping.' },
+      { id: 'm-prop', who: 'sen', when: 'Yesterday, 21:02', card: 'prop' },
+      { id: 'm-q', who: 'me', when: 'Today, 08:10', t: 'How much on bubble tea since June?' },
+      { id: 'm-answer', who: 'sen', when: 'Today, 08:10', t: 'RM186.40 across 21 visits since 1 Jun. Most of it at TEA PAL: 14 visits, RM124.60.' },
+      { id: 'm-research', who: 'sen', when: 'Today, 09:30', card: 'research' },
+    ],
+  };
+}
+
+// The same app for a friend without notification capture (D52).
+function asFriend() {
+  S.as = 'friend'; S.incomeSet = false;
+  S.fig = { income: 300000, spent: 64230, pace: -5200, days: 12, day: 19, gap: 0, gapDate: '' };
+  S.txns = [
+    { id: 'f2', day: 'd18', time: '13:20', m: 'MAMAK CORNER', c: 'Meals', a: 'cash', amt: 2340, dir: 'out', marks: ['receipt'] },
+    { id: 'f3', day: 'd17', time: '19:05', m: 'GROCER MART', c: 'Groceries', a: 'cash', amt: 8655, dir: 'out', marks: ['receipt'] },
+    { id: 'f4', day: 'd16', time: '12:00', m: 'Lunch (added by hand)', c: 'Meals', a: 'cash', amt: 1500, dir: 'out', marks: [] },
+  ];
+  S.att = [{ id: 'f1', k: 'rread', title: 'Receipt read: NASI KANDAR ABC', sub: 'RM58.30 · confirming creates the payment' }];
+  S.waiting = []; S.claims = []; S.budgets = []; S.msgs = S.msgs.filter((m) => m.id === 'm-q' || m.id === 'm-answer');
+}
+
+let S = base();
+const G = { j: null, i: 0 };
+let T = null; // the open tool sheet: journeys, sim or screens
+
+function acct(id) { return S.accounts.find((a) => a.id === id) || { name: id === 'cash' ? 'From a receipt' : id, app: '' }; }
+function tx(id) { return S.txns.find((t) => t.id === id); }
+function cur() { return S.stack[S.stack.length - 1]; }
+function go(s, p) { S.stack.push(Object.assign({ s }, p || {})); S.sheet = null; S.sen = null; }
+function root(s) { S.stack = [{ s }]; S.sheet = null; S.sen = null; }
+function back() { if (S.sheet) { S.sheet = null; return; } if (S.sen) { S.sen = null; return; } if (S.stack.length > 1) S.stack.pop(); }
+function snap() { const c = clone(S); c.toast = null; return c; }
+function toast(msg, undo) { S.toast = { msg, undo: undo || null }; }
+function total() { return S.accounts.reduce((s, a) => s + a.bal, 0); }
+function addSpend(sen, a) { S.fig.spent += sen; const ac = S.accounts.find((x) => x.id === a); if (ac) ac.bal -= sen; }
+
+// Split shares: each item goes to its owner, or evenly to everyone sharing it.
+function spShares(sp) {
+  const p = prices(sp.rid); const out = {}; sp.members.forEach((m) => { out[m] = 0; });
+  sp.owners.forEach((own, k) => { if (!own.length) return; const parts = apportion(p[k], own.map(() => 1)); own.forEach((mi, j) => { out[sp.members[mi]] += parts[j]; }); });
+  return out;
+}
+function spNew(rid) { const n = R[rid].items.length; return { id: 'sN', rid, payer: 'You', members: ['You'], owners: Array.from({ length: n }, () => []), paid: { You: true }, how: {}, done: {}, open: true, locked: false }; }
+// A split is final once every item has someone (D71); after that only the payer changes ticks.
+function spUnclaimed(sp) { return sp.owners.map((o, k) => (o.length ? -1 : k)).filter((k) => k >= 0); }
+// Final only when every item is claimed AND everyone on the link has tapped Done (D71).
+function spWaiting(sp) { return sp.members.filter((m) => !sp.done[m]); }
+function spCheckLock(sp) { if (!sp.locked && !spUnclaimed(sp).length && !spWaiting(sp).length) { sp.locked = true; return true; } return false; }
+
+function cfNew(rid, mode) { return { rid, mode, people: 1, photo: false }; }
+function addKnown() {
+  if (tx('tK')) return tx('tK');
+  const t = { id: 'tK', day: 'd18', time: '13:07', m: 'NASI KANDAR ABC', c: 'Meals', a: 'ryt', amt: 5830, dir: 'out', marks: [] };
+  S.txns.unshift(t); addSpend(5830, 'ryt'); return t;
+}
+function addRoti() {
+  if (tx('tR')) return tx('tR');
+  const t = { id: 'tR', day: 'd18', time: '13:02', m: 'ROTI BAKAR 88', c: 'Meals', a: 'ryt', amt: 950, dir: 'out', marks: [] };
+  S.txns.unshift(t); addSpend(950, 'ryt'); return t;
+}
+function attCat(id, title, sub, opts) { return { id, k: 'cat', title, sub, opts }; }
+function attXfer() { return { id: 'aX', k: 'xfer', title: 'RM2,000.00 arrived in Ryt from TAN WEI MING', sub: 'Your own name, so it’s a transfer · Today 09:10', opts: ['Public Bank', 'TNG eWallet', 'Elsewhere'] }; }
+function attBal() { return { id: 'aB', k: 'bal', title: 'Balance check due', sub: 'Weekly while capture is new · week 2 of 4' }; }
+const BANK = { ryt: 587015, pbb: 120460, goplus: 98000, tng: 17620, grab: 13495 };
+function bcFill() { S.bcv = Object.assign({}, BANK); }
+function arriveForWaiting() {
+  S.waiting = S.waiting.filter((a) => a.id !== 'wW');
+  const t = addKnown(); t.marks = ['receipt']; t.rcpt = 'r1';
+  toast('Receipt attached to RM58.30 on Ryt');
+}
+function qrSvg(seed) {
+  let x = seed || 7; const rnd = () => { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; };
+  let cells = '';
+  for (let r = 0; r < 21; r++) for (let c = 0; c < 21; c++) {
+    const br = r < 7 ? 0 : (r > 13 ? 14 : -1); const bc = c < 7 ? 0 : (c > 13 ? 14 : -1);
+    const finder = br >= 0 && bc >= 0 && !(br === 14 && bc === 14);
+    let on;
+    if (finder) { const lr = r - br, lc = c - bc; on = lr === 0 || lr === 6 || lc === 0 || lc === 6 || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4); }
+    else on = rnd() > 0.52;
+    if (on) cells += `<rect x="${c}" y="${r}" width="1" height="1"/>`;
+  }
+  return `<svg class="qr" viewBox="-1 -1 23 23" role="img" aria-label="QR code (placeholder)"><rect x="-1" y="-1" width="23" height="23" fill="#fff"/><g fill="#1d1d1d">${cells}</g></svg>`;
+}
+// ---------- shared pieces ----------
+function attRow(a) {
+  const s = (o) => (a.sug === o ? ' sug' : '');
+  let q = a.q || '', btns = '';
+  if (a.k === 'cat') { q = 'What was it?'; btns = a.opts.map((o) => B(esc(o), 'res', { x: a.id, y: o }, s(o))).join('') + B('Other…', 'sheet', { x: 'cat', id: a.id }, 'ghost'); }
+  else if (a.k === 'whose') { q = 'Whose split share is it?'; btns = a.opts.map((o) => B(`${esc(o[0])} · ${esc(o[1])}`, 'res', { x: a.id, y: o[0] })).join('') + B('Not a split', 'res', { x: a.id, y: 'none' }, 'ghost'); }
+  else if (a.k === 'moneyin') { q = 'What was it?'; btns = B('Income', 'res', { x: a.id, y: 'income' }) + B('Transfer', 'res', { x: a.id, y: 'transfer' }) + B('Refund of…', 'res', { x: a.id, y: 'refund' }, 'ghost'); }
+  else if (a.k === 'owe') { btns = B('Open the split', 'go', { s: 'split', sid: 's2' }) + B('I’ve paid', 'res', { x: a.id, y: 'paid' }, 'ghost'); }
+  else if (a.k === 'rread') { btns = B('Check and confirm', 'openConfirm', { x: a.id }, 'pri'); }
+  else if (a.k === 'wording') { btns = B('Yes', 'res', { x: a.id, y: 'Yes' }, s('Yes')) + B('No', 'res', { x: a.id, y: 'No' }, 'ghost'); }
+  else if (a.k === 'unread') { btns = B('Enter it by hand', 'res', { x: a.id, y: 'enter' }); }
+  else if (a.k === 'prop') { btns = B('Apply', 'res', { x: a.id, y: 'apply' }, 'pri') + B('Dismiss', 'res', { x: a.id, y: 'dismiss' }, 'ghost'); }
+  else if (a.k === 'xfer') { q = 'Where did it come from?'; btns = a.opts.map((o) => B(esc(o), 'res', { x: a.id, y: o })).join(''); }
+  else if (a.k === 'bal') { btns = B('Check balances', 'go', { s: 'balance-check' }, 'pri'); }
+  else if (a.k === 'claim') { btns = B('Open the kit', 'go', { s: 'claim', sid: 'c1' }, 'pri'); }
+  else if (a.k === 'payday') { btns = B('Continue payday', 'go', { s: 'payday' }, 'pri'); }
+  return `<div class="att" id="att-${a.id}"><div class="ati"><b>${esc(a.title)}</b><span class="sub">${esc(a.sub || '')}</span></div>${q ? `<div class="q">${esc(q)}</div>` : ''}<div class="btns">${btns}</div></div>`;
+}
+function waitRow(w) {
+  const act = w.k === 'split' ? { a: 'go', s: 'split', id: w.sp } : w.k === 'rwait' ? { a: 'attachSheet' } : { a: 'noop', x: 'Sen watches for it and chases it if it doesn’t land' };
+  return `<button class="row" data-a="${act.a}"${act.s ? ` data-s="${act.s}"` : ''}${act.id ? ` data-id="${act.id}"` : ''}${act.x ? ` data-x="${esc(act.x)}"` : ''} id="wait-${w.id}"><span class="ph"></span><span class="mid"><span class="ti">${esc(w.title)}</span><span class="sub">${esc(w.sub)}</span></span><span>›</span></button>`;
+}
+function txRow(t) {
+  const isIn = t.dir === 'in', isX = t.dir === 'xfer';
+  const sub = isX ? 'Transfer between your accounts' : (t.c || (isIn ? 'Money in' : 'No category yet')) + ' · ' + acct(t.a).name;
+  const mk = [];
+  if (t.marks.includes('needs')) mk.push('<span class="tag k">in Review</span>');
+  if (t.marks.includes('receipt')) mk.push('<span class="tag">receipt</span>');
+  if (t.marks.includes('split')) mk.push('<span class="tag">split</span>');
+  if (t.marks.includes('filled')) mk.push('<span class="tag">filled in</span>');
+  if (t.ns && S.offline) mk.push('<span class="tag ns">not synced yet</span>');
+  return `<button class="row" data-a="go" data-s="txn" data-id="${t.id}" id="row-${t.id}"><span class="ph"></span><span class="mid"><span class="ti">${esc(t.m)}</span><span class="sub">${esc(sub)}</span>${mk.length ? `<span class="marks">${mk.join('')}</span>` : ''}</span><span class="amt">${isIn ? '+' : ''}${rm(t.amt)}${t.share != null && t.share !== t.amt ? `<span class="sub" style="display:block;font-weight:400">yours ${rm(t.share)}</span>` : ''}</span></button>`;
+}
+
+const SCR = {};
+
+// ---------- Home (D59, D68) ----------
+SCR.home = () => {
+  const own = S.as === 'owner'; const f = S.fig; let h = '';
+  if (S.offline) h += '<div class="chipoff" id="offline-chip">Offline · 2 not synced yet</div>';
+  if (S.captureOff && own) h += `<div class="warn" id="warn-capture"><div><b>Capture is off.</b><div style="font-size:13px">Payments aren’t being recorded.</div></div>${B('Fix', 'fixCapture', { id: 'fix-capture' }, 'sm')}</div>`;
+  if (S.payday) h += `<div class="card strong cardrow" id="payday-card"><div><b>Payday: your salary landed</b><div class="sub">Four quick steps start the new cycle</div></div>${B('Start', 'startPayday', { id: 'pd-start' }, 'pri')}</div>`;
+  if (S.plan) h += `<button class="card cardrow" data-a="go" data-s="payday" id="plan-card"><span><b>Payday plan</b><span class="sub" style="display:block">${S.plan.done} of ${S.plan.total} moves done</span></span><span>›</span></button>`;
+  let lbl, big, sub;
+  if (own && S.beforeSalary) { lbl = 'Spent since you started'; big = rm(1290); sub = 'Waiting for your first salary to start a cycle'; }
+  else if (!own) { lbl = 'Spent this month'; big = rm(f.spent); sub = 'Since 1 October'; }
+  else { const left = f.income - f.spent; lbl = left < 0 ? 'Over by' : 'Left until payday'; big = rm(Math.abs(left)); sub = `${f.days} days to go`; }
+  h += `<button class="hero" data-a="sheet" data-x="cycle" id="hero"><span class="lbl">${lbl}</span><span class="big">${big}</span><span class="sub">${sub}</span></button>`;
+  if (!own) h += `<button class="link" data-a="go" data-s="set" data-id="you" id="payday-opt">Count from a payday instead</button>`;
+  if (!S.beforeSalary) h += `<button class="pace" data-a="go" data-s="payments" id="pace"><span class="cardrow"><span>Spent <b>${rm(f.spent)}</b> this ${own ? 'cycle' : 'month'}</span><span>›</span></span><span class="sub">${rm(Math.abs(f.pace))} ${f.pace < 0 ? 'less' : 'more'} than last ${own ? 'cycle' : 'month'} by this day</span>${own ? paceChart({ mini: true, h: 70 }) : ''}</button><span class="note">Tap: this cycle’s payments. The line is this cycle against last (grey)</span>`;
+  const note = S.msgs.find((m) => m.id === 'm-note');
+  if (note && S.as === 'owner') h += `<button class="card" data-a="openSen" id="sen-note"><span class="sub">From Sen, ${note.when}</span><span>${esc(note.t)}</span></button>`;
+  if (own && !S.beforeSalary) h += `<button class="quiet" data-a="go" data-s="accounts" id="bal-row"><span>Total balance</span><b>${rm(total())}</b><span>Gap at last check, ${S.fig.gapDate}</span><b>${rm(S.fig.gap)}</b></button>`;
+  if (!own) h += '<span class="note">No balances or gap without capture, and time runs by calendar month unless they set a payday; elsewhere, cycle reads month for them (§9.6, D79)</span>';
+  return { t: '<b>Sen</b>', sid: 'home', body: h, fab: true };
+};
+
+// ---------- Review (D68): what needs you, then what waits on others ----------
+SCR.review = () => {
+  let h = '';
+  const sugs = S.att.filter((a) => a.sug);
+  if (sugs.length) h += `<div class="card cardrow" id="sug-bar"><span><b>Sen suggested ${sugs.length} answers</b><span class="sub" style="display:block">Marked on each item</span></span>${B('Apply all', 'applySug', { id: 'apply-sug' }, 'sm')}</div>`;
+  h += `<div class="sec"><span>Needs you</span><span>${S.att.length}</span></div>`;
+  h += S.att.length ? S.att.map(attRow).join('') : '<div class="center sub" style="padding:24px 0">Nothing needs you.</div>';
+  if (S.waiting.length) h += `<div class="sec"><span>Waiting on others</span><span>${S.waiting.length}</span></div><div class="list">${S.waiting.map(waitRow).join('')}</div><span class="note">Not counted in the badge: nothing for you to do yet</span>`;
+  h += `<button class="lrow" data-a="openManual" id="review-add"><span>Missing a payment?<span class="sub" style="display:block">Add it by hand</span></span><span class="v">›</span></button><button class="lrow" data-a="go" data-s="skipped" id="skipped-link"><span>Skipped notifications</span><span class="v">${S.skipped.length} ›</span></button>`;
+  return { t: 'Review', sid: 'review', body: h, fab: true };
+};
+SCR.skipped = () => ({ t: 'Skipped notifications', sid: 'skipped', body: '<p class="sub" style="margin:0">No template read these, and they showed no sign of a payment.</p>' + S.skipped.map((n) => `<div class="att"><div class="ati"><b>${esc(n.app)}</b><span class="sub">${esc(n.when)}</span></div><div class="q">${esc(n.text)}</div><div class="btns">${B('This was a payment', 'noop', { x: 'Sen would draft a template, or open manual entry' }, 'ghost sm')}</div></div>`).join('') });
+
+// ---------- Payments (the old Activity) ----------
+SCR.payments = () => {
+  let h = `<div class="input"><span class="ph2">Search payments, merchants, items</span></div><div class="chips">${['October cycle ▾', 'Account', 'Category', 'Shared'].map((c, i) => `<button class="chip${i === 0 ? ' on' : ''}" data-a="noop" data-x="Filters aren’t wired in the wireframe">${c}</button>`).join('')}</div>`;
+  DAYORDER.forEach((d) => {
+    const ts = S.txns.filter((t) => t.day === d); if (!ts.length) return;
+    const spent = ts.filter((t) => t.dir === 'out').reduce((s, t) => s + (t.share != null ? t.share : t.amt), 0);
+    h += `<div class="dayh"><span>${DAYS[d]}</span><span>${spent ? rm(spent) : ''}</span></div><div class="list">${ts.map(txRow).join('')}</div>`;
+  });
+  h += '<span class="note">Example rows; the cycle’s figures count more payments than are listed here</span>';
+  return { t: 'Payments', sid: 'payments', body: h };
+};
+
+SCR.txn = (r) => {
+  const t = tx(r.id) || S.txns[0]; const isIn = t.dir === 'in', isX = t.dir === 'xfer';
+  const src = t.marks.includes('filled') ? 'Filled in from your transfer rule. A real one replaces it if it arrives.' : (S.as === 'friend' ? (t.marks.includes('receipt') ? 'From a receipt' : 'Added by you') : `From ${acct(t.a).app}’s notification`);
+  let h = `<div class="stack center" style="padding:6px 0"><div class="bigamt" style="font-size:34px">${isIn ? '+' : ''}${rm(t.amt)}</div><b>${esc(t.m)}</b><span class="sub">${DAYS[t.day]}, ${t.time} · ${esc(acct(t.a).name)}</span><span class="sub">${esc(src)}</span>${t.note ? `<span class="note">${esc(t.note)}</span>` : ''}</div>`;
+  if (!isX) {
+    h += `<button class="lrow" data-a="sheet" data-x="cat" data-id="${t.id}" id="txn-cat"><span>Category</span><span class="v">${esc(t.c || 'Choose…')} ›</span></button>`;
+    if (!isIn) h += `<div class="lrow"><span>Your spending</span><span class="v">${rm(t.share != null ? t.share : t.amt)}</span></div>`;
+    h += `<div class="lrow"><span>Note</span><span class="v">Add a note</span></div>`;
+  }
+  h += `<div class="stack" id="txn-rcpt"><div class="sec"><span>Receipt</span></div>${t.rcpt ? `<button class="row" data-a="go" data-s="receipt" data-id="${t.rcpt}"><span class="ph sq"></span><span class="mid"><span class="ti">${esc(R[t.rcpt].m)}</span><span class="sub">${R[t.rcpt].items.length} items · ${rm(R[t.rcpt].total)}</span></span><span>›</span></button>` : `<span class="sub">None yet</span>${B('Scan the receipt', 'startScan', { x: 'attach' }, 'ghost sm')}`}</div>`;
+  if (t.split) h += `<button class="lrow" data-a="go" data-s="split" data-id="${t.split}" id="txn-split"><span>Split</span><span class="v">${spDone(S.splits[t.split])} of ${S.splits[t.split].members.length - 1} paid you back ›</span></button>`;
+  else if (!isIn && !isX) h += `<button class="lrow" data-a="splitPayment" data-x="${t.id}"><span>Split<span class="sub" style="display:block">Share it, or lend it all to a friend</span></span><span class="v">›</span></button>`;
+  if (S.as === 'owner') h += `<details class="card"><summary><b>What the bank said</b></summary><p class="sub" style="margin:0;font-family:var(--mono)">Card payment completed. RM${(t.amt / 100).toFixed(2)} paid at ${esc(t.m)} using your Main Account.</p>${B('Correct amount, time or account', 'noop', { x: 'Corrections happen beside the raw text (§6.7)' }, 'ghost sm')}</details>`;
+  h += `<details class="card"><summary><b>Changes</b></summary><span class="sub">${DAYS[t.day]}, ${t.time}: created by the system</span></details>`;
+  h += `<div class="row2">${B('Mark as…', 'sheet', { x: 'mark', id: t.id }, 'ghost')}${B('Delete', 'delTxn', { x: t.id }, 'ghost')}</div>`;
+  return { t: isX ? 'Transfer' : (isIn ? 'Money in' : 'Payment'), sid: 'txn', body: h };
+};
+
+SCR.receipt = (r) => {
+  const rid = R[r.id] ? r.id : 'r4'; const rc = R[rid]; const p = prices(rid); const sp = Object.values(S.splits).find((x) => x.rid === rid);
+  const h = `<div class="kv"><span>${esc(rc.m)}</span><b>${rm(rc.total)}</b><span>${esc(rc.when)}</span><b></b></div><div class="list">${rc.items.map((it, k) => `<div class="itemrow"><span>${esc(it[0])}${sp ? `<span class="sub" style="display:block">${sp.owners[k].map((i) => sp.members[i]).join(', ')}</span>` : ''}</span><span class="amt">${rm(p[k])}</span></div>`).join('')}</div><div class="cardrow sub"><span>Prices include tax and service</span><span>✓ adds up</span></div>${B('View photo', 'noop', { x: 'Opens the image full screen, zoomable' }, 'ghost sm')}${B('Keep as evidence only', 'noop', { x: 'For a claim, with no payment' }, 'ghost sm')}`;
+  return { t: 'Receipt', sid: 'receipt', body: h };
+};
+// ---------- Capture ----------
+SCR.scan = () => {
+  const own = S.as === 'owner';
+  const label = own ? 'Google’s document scanner (native)' : 'The phone’s camera, then a four-corner crop (browser)';
+  let mid, btns;
+  if (S.scan === 'view') {
+    mid = '<div class="vf"></div><span style="font-size:13px">Looking for the receipt’s edges…</span>';
+    btns = `<div class="row2" style="align-items:center;gap:22px">${B('Gallery', 'noop', { x: 'Gallery import is inside the scanner' }, 'sm')}<button class="shutter" data-a="scanCap" id="scan-cap" aria-label="Capture"></button>${B('Cancel', 'back', {}, 'sm')}</div>`;
+  } else {
+    mid = '<div class="vf crop"><span class="corner" style="left:-10px;top:-10px"></span><span class="corner" style="right:-10px;top:-10px"></span><span class="corner" style="left:-10px;bottom:-10px"></span><span class="corner" style="right:-10px;bottom:-10px"></span></div><span style="font-size:13px">Drag a corner to adjust the crop</span>';
+    btns = `<div class="row2">${B('Retake', 'scanRetake', {}, '')}${B('Save', 'scanSave', { id: 'scan-save' }, 'pri')}</div>`;
+  }
+  return { full: true, tabs: false, sid: own ? 'scan' : 'crop', body: `<div class="scanner"><span style="font-size:12px;opacity:.75">${label}</span>${mid}${btns}</div>` };
+};
+
+SCR.reading = () => ({
+  t: 'Reading receipt', sid: 'reading', tabs: false,
+  body: `<div class="rcpt"></div><div class="center stack"><b>Reading receipt…</b><span class="sub">You can leave. It waits in Review once it’s read.</span></div>${B('Continue', 'go', { s: 'confirm', id: 'read-go' }, 'pri full')}<span class="note">The real screen moves on by itself once the receipt is read</span><button class="link" data-a="readFail">Show the failure case</button>`,
+});
+
+// One screen; the itemised list is the receipt (D67). Without a split, only how many people ate (D66).
+SCR.confirm = () => {
+  const c = S.cf || (S.cf = cfNew('r1', 'attach')); const r = R[c.rid]; const p = prices(c.rid);
+  if (c.photo) return { t: 'Photo', sid: 'confirm', tabs: false, back: true, body: `<div class="rcpt" style="height:420px"><span>pinch to zoom</span></div>${B('Back to the items', 'cfPhoto', { x: 0 }, 'full')}` };
+  let h = `<div class="cardrow"><div class="stack" style="gap:0"><b style="font-size:18px">${esc(r.m)}</b><span class="sub">${esc(r.when)}</span></div>${B('View photo', 'cfPhoto', { x: 1, id: 'cf-photo' }, 'ghost sm')}</div>`;
+  h += `<div class="list" id="cf-items">${r.items.map((it, k) => `<div class="itemrow${r.doubt === k ? ' doubtrow' : ''}"><span>${esc(it[0])}${r.doubt === k ? '<span class="flag" style="display:block">check this price</span>' : ''}</span><span class="amt">${rm(p[k])}</span></div>`).join('')}</div>`;
+  const extra = [r.svc ? `service ${rm(r.svc)}` : '', r.tax ? `tax ${rm(r.tax)}` : ''].filter(Boolean).join(' and ');
+  h += `<div class="cardrow"><span class="sub">${extra ? `Prices include ${extra}` : 'No tax or service on this bill'}</span><b>Total ${rm(r.total)}</b></div><div class="sub">✓ Items add up to the total</div>`;
+  const each = c.people > 1 ? apportion(r.total, Array.from({ length: c.people }, () => 1))[0] : r.total;
+  h += `<div class="card" id="cf-people"><div class="cardrow"><span>How many people ate?</span><span class="stepper"><button data-a="cfPeople" data-x="-1" aria-label="Fewer people" id="cf-pminus">−</button><b>${c.people}</b><button data-a="cfPeople" data-x="1" aria-label="More people" id="cf-pplus">+</button></span></div><span class="sub">For your meal average: ${c.people > 1 ? `${rm(r.total)} ÷ ${c.people} = ${rm(each)} a person` : `${rm(r.total)} for one`}. ${S.as === 'owner' ? 'You paid it all, so all of it is your spending.' : ''}</span></div>`;
+  h += `<div class="row2" style="flex-wrap:nowrap">${B('Done', 'cfDone', { id: 'cf-done' }, 'pri full big')}${B('Split', 'cfSplit', { id: 'cf-split' }, 'full big')}</div><span class="note">Split when others pay their part. Then everyone ticks what they had (D71)</span><button class="link" data-a="cfEvidence">Not a payment? Keep it as evidence</button>`;
+  return { t: 'Receipt', sid: 'confirm', tabs: false, back: true, body: h };
+};
+
+SCR.manual = () => {
+  const m = S.man; const dup = m.amt === '12.90';
+  const cats = ['Meals', 'Drinks & desserts', 'Transport', 'Groceries', 'Car'];
+  let h = `<div class="bigamt" id="man-amt">RM${m.amt || '0.00'}</div>`;
+  if (dup) h += '<div class="card" id="man-dup"><b>Looks like one Sen already has</b><span class="sub">RM12.90 at KOPI KAWAN, today 12:41, Ryt. Save anyway?</span></div>';
+  h += `<div class="chips" style="flex-wrap:wrap">${cats.map((c) => `<button class="chip${m.cat === c ? ' on' : ''}" data-a="manCat" data-x="${esc(c)}">${esc(c)}</button>`).join('')}<button class="chip" data-a="sheet" data-x="cat" data-id="man">All…</button></div>`;
+  h += `<div class="kv"><span>Account</span><b>Ryt (Main Account) ▾</b><span>When</span><b>Now ▾</b></div><button class="link" data-a="noop" data-x="Merchant and note">More</button>`;
+  h += `<div class="kbd">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'].map((k) => `<button data-a="manKey" data-x="${k}">${k}</button>`).join('')}</div>${B('Save', 'manSave', { id: 'man-save' }, 'pri full big')}`;
+  return { t: 'Add manually', sid: 'manual', tabs: false, back: true, body: h };
+};
+
+// ---------- Splits (D64, D65, D71) ----------
+function spDone(sp) { return sp.members.filter((m) => m !== sp.payer && sp.paid[m]).length; }
+function nm(m) { return m === 'You' ? 'Wei Ming' : m; }
+function claimers(sp, k, me) { // "Ali", or "Shared ÷3: Wei Ming, Ali, you · your part RM6.99"
+  const o = sp.owners[k]; if (!o.length) return '';
+  const names = o.map((i) => (i === me ? 'you' : (me == null ? sp.members[i] : nm(sp.members[i]))));
+  if (o.length === 1) return names[0];
+  const parts = apportion(prices(sp.rid)[k], o.map(() => 1)); const mine = me == null ? o.indexOf(sp.members.indexOf('You')) : o.indexOf(me);
+  return `Shared ÷${o.length}: ${names.join(', ')}${mine >= 0 ? ` · your part ${rm(parts[mine])}` : ''}`;
+}
+function roster(sp, me) { return sp.members.map((m) => `<span class="${sp.done[m] ? 'done' : 'notdone'}">${sp.done[m] ? '✓' : '…'} ${esc(me === 'pub' ? nm(m) : m)}</span>`).join(''); }
+function statusCard(sp, id, who) {
+  const rc = R[sp.rid]; const un = spUnclaimed(sp); const wait = spWaiting(sp);
+  if (sp.locked) return `<div class="card strong" id="${id}"><b>Final</b><span class="sub">Everyone is done and every item is claimed, so the shares are locked.${who === 'payer' ? ' You can still change a tick.' : ` To change a tick, ask ${esc(nm(sp.payer))}.`}</span></div>`;
+  const left = [];
+  if (wait.length) left.push(`not done yet: ${wait.map((m) => (who === 'pub' ? nm(m) : m)).join(', ')}`);
+  if (un.length) left.push(`nobody has ticked ${un.map((k) => rc.items[k][0]).join(', ')}`);
+  return `<div class="card strong" id="${id}"><b>Still changing</b><span class="sub">Everyone ticks what they had, in any order, then taps Done. It locks when everyone is done and every item is claimed.</span><div class="roster">${roster(sp, who)}</div>${left.length ? `<span class="sub">Waiting: ${esc(left.join('; '))}</span>` : ''}</div>`;
+}
+SCR.split = (r) => {
+  const sp = S.splits[r.id] || S.splits.s1; const rc = R[sp.rid]; const p = prices(sp.rid); const sh = spShares(sp); const iPaid = sp.payer === 'You'; const you = sp.members.indexOf('You');
+  let h = `<div class="cardrow"><div class="stack" style="gap:0"><b style="font-size:18px">${esc(rc.m)}</b><span class="sub">${esc(rc.when)} · ${rm(rc.total)}</span></div><span class="chip on">Paid by ${esc(sp.payer)}</span></div>`;
+  h += statusCard(sp, 'sp-status', iPaid ? 'payer' : 'member');
+  if (iPaid && sp.open && !sp.locked) h += `<div class="card center" id="sp-qr">${qrSvg(11)}<span class="sub">Friends scan this at the table. No app, no login.</span>${B('Share the link', 'noop', { x: 'Opens Android’s share sheet with the link' }, 'ghost sm')}</div>`;
+  h += `<div class="sec"><span>Tick what you had</span><span>shared items split evenly</span></div><div class="list">${rc.items.map((it, k) => { const mine = sp.owners[k].includes(you); const who = claimers(sp, k, null);
+    return `<div class="check${sp.owners[k].length ? '' : ' unclaimed'}" id="sp-item${k}"><button class="box${mine ? ' on' : ''}" data-a="spMine" data-x="${sp.id}" data-y="${k}" id="sp-mine${k}" aria-label="I had ${esc(it[0])}">${mine ? '✓' : ''}</button><span>${esc(it[0])}<span class="sub" style="display:block">${who || 'Nobody yet'}</span>${!sp.owners[k].length && iPaid ? `<span class="row2" style="margin-top:4px">${B('Everyone', 'spAssign', { x: sp.id, y: k, z: 'all' }, 'sm ghost')}${B('Someone else…', 'sheet', { x: 'owners', id: sp.id, y: k }, 'sm ghost')}</span>` : ''}</span><span class="amt">${rm(p[k])}</span></div>`; }).join('')}</div>`;
+  if (!sp.locked) {
+    h += sp.done.You ? `<div class="card cardrow" id="sp-done-state"><span>You’re done ✓</span>${B('Still ticking', 'spDone', { x: sp.id, y: 'You' }, 'ghost sm')}</div>` : B('I’ve ticked everything I had', 'spDone', { x: sp.id, y: 'You', id: 'sp-done' }, 'pri full');
+    if (iPaid && !spUnclaimed(sp).length && spWaiting(sp).some((m) => m !== 'You')) h += `<button class="link" data-a="spLockNow" data-x="${sp.id}" id="sp-locknow">Lock without waiting for ${esc(spWaiting(sp).filter((m) => m !== 'You').join(', '))}</button>`;
+  }
+  if (iPaid && sp.locked) {
+    h += `<div class="sec"><span>Who has paid you back</span><span>${spDone(sp)} of ${sp.members.length - 1}</span></div><div class="list" id="sp-ticks">${sp.members.filter((m) => m !== 'You').map((m) => `<div class="check" id="sp-${m}"><button class="box${sp.paid[m] ? ' on' : ''}" data-a="spPaid" data-x="${sp.id}" data-y="${m}" aria-label="Mark ${m} paid" id="sp-tick-${m}">${sp.paid[m] ? '✓' : ''}</button><span>${esc(m)}<span class="sub" style="display:block">${sp.paid[m] ? esc(sp.how[m] || 'ticked by you') : 'Not yet. Their payment ticks this by itself; tick cash by hand'}</span></span><span class="amt">${rm(sh[m])}</span></div>`).join('')}</div>`;
+  } else if (iPaid) {
+    h += `<div class="sec"><span>Shares so far</span><span>still changing</span></div><div class="list" id="sp-ticks">${sp.members.map((m) => `<div class="lrow"><span>${esc(m)}</span><span class="v">${rm(sh[m])}</span></div>`).join('')}</div>`;
+  } else {
+    h += `<div class="card strong" id="sp-owe"><span class="cardrow"><b>You owe ${esc(sp.payer)}</b><b>${rm(sh.You)}</b></span><span class="sub">${!sp.locked ? 'Still changing until everyone is done.' : sp.paid.You ? 'Paid ✓ ' + esc(sp.how.You || '') : 'Not paid yet. Your payment to ' + esc(sp.payer) + ' ticks this by itself. Sen reminds you an hour after the split.'}</span>${sp.locked && !sp.paid.You ? B('I’ve paid', 'spPaid', { x: sp.id, y: 'You', id: 'sp-ive-paid' }, 'sm') : ''}</div>`;
+    h += `<div class="sec"><span>${esc(sp.payer)}’s tick list</span></div>${sp.members.filter((m) => m !== sp.payer && m !== 'You').map((m) => `<div class="lrow"><span>${esc(m)}<span class="sub" style="display:block">${sp.paid[m] ? esc(sp.how[m] || 'paid') : 'not yet'}</span></span><span class="v">${rm(sh[m])}</span></div>`).join('')}<span class="note">Only the payer ticks who has paid (D65)</span>`;
+  }
+  h += `<div class="cardrow"><span>Your share, your spending</span><b>${rm(sh.You || 0)}</b></div>`;
+  const all = sp.locked && spDone(sp) === sp.members.length - 1;
+  h += `<div class="sub" id="sp-state">${all ? 'Everyone has paid. The link closes tomorrow, so a wrong tick can still be undone.' : 'Link open. It closes a day after the last payment is ticked, or after 30 days.'}</div>`;
+  return { t: 'Split', sid: 'split', body: h };
+};
+
+// A friend's browser, no login (D47, D64, D71)
+SCR['split-public'] = () => {
+  const pub = S.pub || (S.pub = { sp: 's1', who: 'Mei', known: true });
+  const sp = S.splits[pub.sp]; const rc = R[sp.rid]; const p = prices(sp.rid);
+  if (!sp.members.includes(pub.who)) sp.members.push(pub.who);
+  const me = sp.members.indexOf(pub.who); const sh = spShares(sp);
+  let h = `<div class="urlbar">sen.example/s/7Kq2 · ${esc(pub.who)}’s phone, in a browser</div><div class="stack" style="gap:0"><b style="font-size:18px">${esc(rc.m)}</b><span class="sub">${esc(rc.when)} · ${rm(rc.total)} · paid by ${esc(nm(sp.payer))}</span></div>`;
+  h += pub.known ? `<div class="card cardrow" id="pub-hi"><span>Hi <b>${esc(pub.who)}</b>. Sen remembers this browser.</span><button class="link" data-a="noop" data-x="Asks for a name instead">Not ${esc(pub.who)}?</button></div>` : `<div class="field"><span class="lab">Your name</span><div class="input"><span>${esc(pub.who)}</span></div></div>`;
+  h += statusCard(sp, 'pub-status', 'pub');
+  h += `<div class="list">${rc.items.map((it, k) => { const on = sp.owners[k].includes(me); const who = claimers(sp, k, me);
+    return `<button class="check${sp.owners[k].length ? '' : ' unclaimed'}" data-a="pubTick" data-x="${k}" id="pub-i${k}"><span class="box${on ? ' on' : ''}">${on ? '✓' : ''}</span><span>${esc(it[0])}<span class="sub" style="display:block">${who || 'Nobody yet'}</span></span><span class="amt">${rm(p[k])}</span></button>`; }).join('')}</div>`;
+  h += `<div class="card cardrow"><span>Your share${sp.locked ? '' : ' so far'}, tax and service included</span><b id="pub-share">${rm(sh[pub.who] || 0)}</b></div>`;
+  if (!sp.locked) h += sp.done[pub.who] ? `<div class="card cardrow" id="pub-done-state"><span>You’re done ✓ Waiting for the others.</span>${B('Still ticking', 'pubDone', {}, 'ghost sm')}</div>` : B('I’ve ticked everything I had', 'pubDone', { id: 'pub-done' }, 'pri full big');
+  h += sp.locked ? `<div class="card center" id="pub-pay"><b>Pay ${esc(nm(sp.payer))}</b><span class="sub">DuitNow QR</span>${qrSvg(23)}<b>Pay ${rm(sh[pub.who] || 0)}</b></div>`
+    : `<div class="card center" id="pub-pay"><span class="sub">The QR and your final share appear once everyone is done.</span></div>`;
+  if (sp.locked) h += `<div class="sub">${sp.members.filter((m) => m !== sp.payer).map((m) => `${esc(nm(m))} ${sp.paid[m] ? '✓ paid' : 'not yet'}`).join(' · ')}</div>`;
+  h += `<span class="note">Same components and theme as the app; no login</span>`;
+  return { t: 'Split link', sid: 'split-public', tabs: false, back: true, body: h };
+};
+// ---------- charts (greyscale: ink is the point, grey is context) ----------
+const INK = '#1d1d1d', GREY = '#b4b4b0', GRID = '#e3e3df', MUTE = '#686868';
+// cumulative spending by day of cycle, in sen (made up, coherent with the figures)
+const THIS_CYCLE = [4500, 101000, 108000, 119000, 126200, 141000, 147000, 156000, 169000, 182000, 211000, 219000, 226000, 238000, 247000, 260000, 268000, 286000, 291550];
+const LAST_CYCLE = [6000, 98000, 106000, 113000, 121000, 133000, 141000, 150000, 160500, 171000, 180500, 189000, 198000, 211000, 222000, 236000, 248000, 263000, 277550, 284000, 289000, 293500, 296000, 299000, 301500, 303800, 305600, 307900, 309500, 311000, 312040];
+function bar(x, y, w, h) { // 4px rounded data end, square at the baseline (horizontal bar)
+  if (w < 5) return `<rect x="${x}" y="${y}" width="${Math.max(w, 1)}" height="${h}"/>`;
+  return `<path d="M${x} ${y}h${w - 4}a4 4 0 0 1 4 4v${h - 8}a4 4 0 0 1 -4 4h-${w - 4}z"/>`;
+}
+function col(x, y, w, h) { // column: rounded top, square base
+  if (h < 5) return `<rect x="${x}" y="${y}" width="${w}" height="${Math.max(h, 1)}"/>`;
+  return `<path d="M${x} ${y + h}v-${h - 4}a4 4 0 0 1 4 -4h${w - 8}a4 4 0 0 1 4 4v${h - 4}z"/>`;
+}
+function paceChart(opts) {
+  const W = 320, H = opts.h || 150, L = 34, Rr = 64, Tp = 10, Bt = 22; const pw = W - L - Rr, ph = H - Tp - Bt;
+  const maxY = 450000, days = 31;
+  const X = (d) => L + ((d - 1) / (days - 1)) * pw, Y = (v) => Tp + ph - (v / maxY) * ph;
+  const path = (arr) => arr.map((v, i) => `${i ? 'L' : 'M'}${X(i + 1).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
+  const now = THIS_CYCLE.length, last = THIS_CYCLE[now - 1], proj = 389000;
+  let g = '';
+  [0, 200000, 400000].forEach((v) => { g += `<line x1="${L}" x2="${W - Rr}" y1="${Y(v)}" y2="${Y(v)}" stroke="${GRID}"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" class="ax">${v ? rm0(v).replace('RM', '') : '0'}</text>`; });
+  g += `<line x1="${L}" x2="${W - Rr}" y1="${Y(420000)}" y2="${Y(420000)}" stroke="${MUTE}"/><text x="${L + 4}" y="${Y(420000) - 4}" class="ax">Income ${opts.mini ? '' : rm0(420000)}</text>`;
+  g += `<path d="${path(LAST_CYCLE)}" fill="none" stroke="${GREY}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  if (!opts.mini) g += `<path d="M${X(now)} ${Y(last)}L${X(31)} ${Y(proj)}" fill="none" stroke="${INK}" stroke-width="2" stroke-dasharray="4 4"/>`;
+  g += `<path d="${path(THIS_CYCLE)}" fill="none" stroke="${INK}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  g += `<circle cx="${X(now)}" cy="${Y(last)}" r="4.5" fill="${INK}" stroke="#fff" stroke-width="2"/>`;
+  if (!opts.mini) {
+    g += `<text x="${X(31) + 6}" y="${Y(proj) + 4}" class="ax">${rm0(proj)} est.</text><text x="${X(31) + 6}" y="${Y(312040) + 16}" class="ax">Last ${rm0(312040)}</text>`;
+    g += `<text x="${L}" y="${H - 4}" class="ax">30 Sep</text><text x="${X(now)}" y="${H - 4}" text-anchor="middle" class="ax">Today</text><text x="${W - Rr}" y="${H - 4}" text-anchor="end" class="ax">Payday</text>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Cumulative spending this cycle against last cycle">${g}</svg>`;
+}
+function legend(items) { return `<div class="legend">${items.map(([k, l]) => `<span><i class="key ${k}"></i>${l}</span>`).join('')}</div>`; }
+
+const CYC = [['Home & bills', 90000, 90000], ['Meals', 64000, 56000], ['Car', 41000, 33000], ['Shopping', 32000, 15000], ['Transport', 21000, 23000], ['Drinks & desserts', 12300, 11000], ['Subscriptions', 9579, 9579], ['Groceries', 9171, 16000], ['Entertainment', 8000, 9000], ['Phone & internet', 4500, 4500]];
+function catBars(rows) {
+  const W = 320, rowH = 26, L = 112, Rr = 58; const H = rows.length * rowH + 4; const max = 90000;
+  let g = '';
+  rows.forEach((r, i) => {
+    const y = 4 + i * rowH; const w = Math.max(2, (r[1] / max) * (W - L - Rr)); const tx = L + (r[2] / max) * (W - L - Rr);
+    const over = r[1] - r[2] > 5000;
+    g += `<text x="0" y="${y + 13}" class="lb">${esc(r[0])}</text><g fill="${over ? INK : GREY}">${bar(L, y + 4, w, 12)}</g><line x1="${tx}" x2="${tx}" y1="${y}" y2="${y + 20}" stroke="${INK}" stroke-width="2"/><text x="${W}" y="${y + 13}" text-anchor="end" class="vl">${rm0(r[1])}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Spending by category against typical">${g}</svg>`;
+}
+function meterRow(label, used, budget, elapsedPct) {
+  const pct = Math.round((used * 100) / budget);
+  return `<div class="meterrow"><div class="cardrow"><span>${esc(label)}</span><span class="sub">${rm(used)} of ${rm(budget)}</span></div><div class="meter"><i style="width:${Math.min(100, pct)}%"></i><b style="left:${elapsedPct}%"></b></div><span class="sub">${pct}% used, ${elapsedPct}% of the cycle gone${pct > elapsedPct + 10 ? ': ahead of pace' : ''}</span></div>`;
+}
+// discretionary spending by day: a calendar of the cycle, Wed 30 Sep to Thu 29 Oct
+const DISC = [0, 0, 1200, 3400, 2600, 0, 890, 1500, 0, 1800, 28900, 4200, 0, 1200, 2300, 900, 0, 3800, 2400];
+function heatmap() {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']; const start = 2; const cell = 30, gap = 4, L = 30;
+  let g = days.map((d, i) => `<text x="${L + i * (cell + gap) + cell / 2}" y="10" text-anchor="middle" class="ax">${d[0]}</text>`).join('');
+  for (let k = 0; k < 31; k++) {
+    const pos = k + start; const r = Math.floor(pos / 7), c = pos % 7; const v = DISC[k];
+    const shade = v == null ? null : (v === 0 ? '#f1f1ee' : v < 1500 ? '#cfcfcb' : v < 3000 ? '#9a9a96' : v < 10000 ? '#5d5d5a' : '#1d1d1d');
+    const x = L + c * (cell + gap), y = 16 + r * (cell + gap);
+    g += shade ? `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="4" fill="${shade}"/>` : `<rect x="${x + 1}" y="${y + 1}" width="${cell - 2}" height="${cell - 2}" rx="4" fill="none" stroke="${GRID}"/>`;
+    if (k === 0 || k === 18) g += `<text x="${x + cell / 2}" y="${y + cell / 2 + 4}" text-anchor="middle" class="ax" fill="${k === 18 ? '#fff' : MUTE}">${k === 0 ? '30' : '18'}</text>`;
+  }
+  ['wk 1', 'wk 2', 'wk 3', 'wk 4', 'wk 5'].forEach((w, r) => { g += `<text x="0" y="${16 + r * (cell + gap) + 19}" class="ax">${w}</text>`; });
+  return `<svg viewBox="0 0 ${L + 7 * (cell + gap)} ${16 + 5 * (cell + gap)}" class="chart" style="max-width:280px" role="img" aria-label="Discretionary spending by day">${g}</svg>`;
+}
+function columns(vals, labels, ref, refLabel, emphLast) {
+  const W = 300, H = 120, L = 6, Bt = 18, Tp = 14; const max = Math.max(...vals, ref || 0) * 1.1; const n = vals.length; const slot = (W - L) / n; const w = Math.min(24, slot - 10);
+  let g = `<line x1="${L}" x2="${W}" y1="${H - Bt}" y2="${H - Bt}" stroke="${GRID}"/>`;
+  vals.forEach((v, i) => { const h = ((H - Bt - Tp) * v) / max; const x = L + i * slot + (slot - w) / 2; g += `<g fill="${emphLast && i === n - 1 ? INK : GREY}">${col(x, H - Bt - h, w, h)}</g><text x="${x + w / 2}" y="${H - 4}" text-anchor="middle" class="ax">${labels[i]}</text>`; });
+  if (ref) { const y = H - Bt - ((H - Bt - Tp) * ref) / max; g += `<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="${INK}"/><text x="${W}" y="${y - 4}" text-anchor="end" class="ax">${refLabel}</text>`; }
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="${esc(refLabel || 'Columns')}">${g}</svg>`;
+}
+function spark(vals, w, h) {
+  const max = Math.max(...vals), min = Math.min(...vals); const X = (i) => 4 + (i * (w - 8)) / (vals.length - 1), Y = (v) => h - 4 - ((v - min) / (max - min || 1)) * (h - 8);
+  return `<svg viewBox="0 0 ${w} ${h}" class="spark" width="${w}" height="${h}" aria-hidden="true"><path d="${vals.map((v, i) => `${i ? 'L' : 'M'}${X(i)} ${Y(v)}`).join('')}" fill="none" stroke="${GREY}" stroke-width="2"/><circle cx="${X(vals.length - 1)}" cy="${Y(vals[vals.length - 1])}" r="4" fill="${INK}" stroke="#fff" stroke-width="2"/></svg>`;
+}
+function stack(segs) { // part to whole, 2px surface gaps
+  const tot = segs.reduce((s, x) => s + x[1], 0);
+  return `<div class="stackbar">${segs.map(([l, v, cls]) => `<i class="${cls}" style="flex:${v}" title="${esc(l)}"></i>`).join('')}</div>${legend(segs.map(([l, v, cls]) => [cls, `${l} ${Math.round((v * 100) / tot)}%`]))}`;
+}
+
+// ---------- Insights ----------
+function icard(id, q, take, vis, ask) {
+  return `<section class="card ins" id="ic-${id}"><b class="iq">${q}</b>${vis}<span class="take">${take}</span><button class="link askl" data-a="askSen" data-x="${esc(ask)}">Ask Sen about this</button></section>`;
+}
+SCR.insights = () => {
+  const own = S.as === 'owner';
+  let h = `<button class="chip on" data-a="noop" data-x="Pick an earlier cycle" style="align-self:flex-start">October cycle, 30 Sep to 29 Oct ▾</button><span class="note">Each card answers one question. The sentence under each chart is computed by code; Sen explains when you ask</span>`;
+  h += `<div class="sec"><span>This cycle</span></div>`;
+  h += icard('pace', 'Am I on track?', 'RM140.00 more than last cycle by this day. On this pace, about RM310.00 is left at payday (an estimate).', paceChart({}) + legend([['ink', 'This cycle'], ['grey', 'Last cycle'], ['dash', 'Estimate']]), 'Why am I ahead of last cycle?');
+  if (S.budgets.length) h += icard('budgets', 'Which budgets are at risk?', S.budgets.length > 1 ? 'Drinks & desserts is ahead of pace: 82% used with 61% of the cycle gone.' : 'Meals is on pace.', S.budgets.map((b) => meterRow(b.c, b.spent, b.amt, 61)).join('') + `<span class="note">The tick on each bar is how much of the cycle has gone</span>`, 'Which budget should I watch?');
+  h += icard('where', 'Where did it go, and what changed?', 'Shopping is RM170.00 above your typical cycle; Groceries is RM68.29 below.', catBars(CYC.slice(0, 8)) + legend([['ink', 'Above typical'], ['grey', 'Within typical'], ['tick', 'Typical by this day']]), 'Why is Shopping high this cycle?');
+  h += icard('habits', 'When does the money leak?', 'Discretionary spending peaks on Fridays, and 11 Oct alone was RM289.00.', heatmap() + legend([['l1', 'Under RM15'], ['l3', 'RM30 to RM100'], ['l5', 'Over RM100']]), 'What happened on 11 Oct?');
+  h += icard('small', 'Do the small things add up?', '41 payments under RM15 this cycle: RM318.40, more than Groceries.', `<div class="tile"><span class="sub">Payments under RM15</span><b class="tilev">RM318.40</b><span class="sub">41 payments · drinks 19, snacks 12, parking 10</span></div>`, 'Which small spends could I drop?');
+  h += `<div class="sec"><span>Food</span></div>`;
+  h += icard('meal', 'What does a meal cost me?', 'RM14.20 a meal, counting only what you ate. Down from RM14.50 last cycle.', `<div class="tile"><span class="sub">Your meal average (estimate)</span><span class="cardrow"><b class="tilev">RM14.20</b>${spark([1310, 1380, 1460, 1390, 1450, 1420], 96, 32)}</span><span class="sub">Last 6 cycles</span></div>`, 'How could I bring my meal cost down?');
+  h += icard('delivery', 'Am I keeping my GrabFood experiment?', 'This week: 2 orders so far, under your limit of 3.', columns([5, 4, 3, 2], ['wk 1', 'wk 2', 'wk 3', 'this wk'], 3, 'Limit 3', true), 'How is my experiment going?');
+  h += icard('eatout', 'Eating out or cooking?', 'RM640.00 eating out, RM91.71 on groceries: 87% of food money is eaten out.', stack([['Eating out', 64000, 'ink'], ['Groceries', 9171, 'grey']]), 'Is eating out worth cutting?');
+  h += `<div class="sec"><span>Commitments</span></div>`;
+  h += icard('fixed', 'How much is spoken for before I spend?', 'A quarter of your income goes to fixed costs: rent, phone and subscriptions.', stack([['Fixed', 104079, 'ink'], ['Spent', 187471, 'grey'], ['Left', 128450, 'pale']]), 'Which fixed costs could go?');
+  h += icard('subs', 'What renews soon?', `${rm(S.subs.reduce((s, x) => s + x.amt, 0))} a month in subscriptions. Next: TUNEBOX on 21 Oct.`, `<div class="list">${S.subs.map((x) => `<div class="lrow"><span>${esc(x.n)}<span class="sub" style="display:block">${x.next}</span></span><span class="v">${rm(x.amt)}</span></div>`).join('')}</div><button class="link" data-a="go" data-s="subscriptions">Manage subscriptions</button>`, 'Which subscription do I use least?');
+  h += `<div class="sec"><span>Over time</span></div>`;
+  h += icard('surplus', 'Am I saving more than before?', 'Median RM480.00 left at payday over 6 cycles; September was your best.', columns([38000, 52000, 29000, 61000, 44000, 107960], ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'], 48000, 'Median', true), 'How much could I save each cycle?');
+  h += icard('goals', 'Will my goals make it?', 'Both are on track at their current set-asides.', S.goals.map((g) => `<div class="meterrow"><div class="cardrow"><span>${esc(g.n)}</span><span class="sub">${g.by}</span></div><div class="meter"><i style="width:${Math.round((g.saved * 100) / g.target)}%"></i></div><span class="sub">${rm(g.saved)} of ${rm(g.target)}</span></div>`).join('') + `<button class="link" data-a="go" data-s="goals">Goals and buckets</button>`, 'Can I reach my emergency fund sooner?');
+  if (own) h += icard('gap', 'Can I trust these numbers?', 'The unaccounted gap is shrinking: RM36.20 this cycle.', columns([14250, 8800, 3620], ['Aug', 'Sep', 'Oct'], 0, '', true), 'Where might the RM36.20 have gone?');
+  h += icard('merch', 'Where do I spend most often?', 'GRABFOOD: 11 orders, RM268.40 this cycle.', `<div class="list">${[['GRABFOOD', 26840, 11], ['PETROL KL', 16000, 2], ['TEA PAL', 6230, 7], ['NASI KANDAR ABC', 5740, 5]].map((m) => `<div class="lrow"><span>${m[0]}<span class="sub" style="display:block">${m[2]} payments</span></span><span class="v">${rm(m[1])}</span></div>`).join('')}</div>`, 'Is GrabFood worth it?');
+  h += `<button class="lrow" data-a="go" data-s="ins" data-id="year"><span>The year<span class="sub" style="display:block">2026 by month, savings rate, relief tags</span></span><span class="v">›</span></button>`;
+  return { t: 'Insights', sid: 'insights', body: h, fab: true };
+};
+SCR.ins = () => ({ t: 'The year', sid: 'insights/year', body: `${columns([298000, 311000, 287000, 352000, 305000, 296000, 330000, 318000, 312040, 291550], ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O'], 0, '', true)}<div class="kv"><span>Spent in 2026</span><b>RM31,005.90</b><span>Savings rate</span><b>21%</b><span>Relief tags</span><b>Lifestyle RM1,204.00</b></div>` });
+SCR.subscriptions = () => ({ t: 'Subscriptions', sid: 'subscriptions', body: `<div class="kv"><span>Each month</span><b>${rm(S.subs.reduce((s, x) => s + x.amt, 0))}</b></div>` + S.subs.map((x) => `<div class="lrow"><span>${esc(x.n)}<span class="sub" style="display:block">Next on ${x.next} · forecast, not yet paid</span></span><span class="v">${rm(x.amt)}</span></div>`).join('') + B('Declare a subscription', 'noop', { x: 'Name, amount, currency, cadence, next renewal' }, 'ghost full') + '<span class="note">Expected charges are forecasts in their own table, never transactions (§11)</span>' });
+SCR.goals = () => ({ t: 'Goals and buckets', sid: 'goals', body: S.goals.map((g) => `<button class="card" data-a="go" data-s="goal" data-id="${g.id}"><span class="cardrow"><b>${esc(g.n)}</b><span class="sub">${g.kind}</span></span><div class="meter"><i style="width:${Math.round((g.saved * 100) / g.target)}%"></i></div><span class="sub">${rm(g.saved)} of ${rm(g.target)}</span></button>`).join('') + B('Add a goal', 'noop', { x: 'Name, target and date' }, 'ghost full') });
+SCR.goal = (r) => {
+  const g = S.goals.find((x) => x.id === r.id) || S.goals[0];
+  return { t: esc(g.n), sid: 'goal', body: `<div class="kv"><span>Saved</span><b>${rm(g.saved)} of ${rm(g.target)}</b><span>Each cycle</span><b>${rm(g.per)}</b><span>Finishes, at this rate</span><b>${g.by}</b></div><div class="card"><b>Can you carry it?</b><span class="sub">${esc(g.note)}</span></div><span class="note">Feasibility uses your median surplus, with its sample size (§10)</span>` };
+};
+SCR.budgets = () => ({ t: 'Budgets', sid: 'budgets', body: S.budgets.map((b) => meterRow(b.c, b.spent, b.amt, 61)).join('') + B('Add a budget', 'noop', { x: 'Pick a category and an amount per cycle' }, 'ghost full') });
+
+// ---------- Sen: a floating button, then a full-height sheet (D68) ----------
+const CTX = { home: 'Home', review: 'Review', insights: 'Insights', more: 'More', payments: 'Payments' };
+function senSheet() {
+  const ctx = S.sen.ctx || CTX[S.stack[0].s] || 'Home';
+  const card = (m) => {
+    if (m.card === 'prop') return `<div class="msg sen" id="m-prop"><b>Proposal: a budget</b><span>Drinks & desserts, RM150.00 a cycle. You’ve spent RM123.00 so far this cycle.</span>${S.propDone ? '<span class="sub">Applied ✓</span>' : `<div class="btns">${B('Apply', 'res', { x: 'a3', y: 'apply' }, 'pri sm')}${B('Dismiss', 'res', { x: 'a3', y: 'dismiss' }, 'ghost sm')}</div>`}<span class="when">${m.when}</span></div>`;
+    if (m.card === 'research') return `<div class="msg sen" id="m-research"><b>Research draft: where to keep RM5,000</b><span class="sub">Unconfirmed until you confirm the figures</span><span>Bank A: 3.00% a year, up to RM50,000 · source: bank-a.example, checked 2 Oct</span><span>Bank B: 3.20% a year for new money, ends 31 Dec · source: bank-b.example, checked 2 Oct</span><div class="btns">${B('Confirm figures', 'noop', { x: 'Confirmed figures go into products; code compares them' }, 'sm')}${B('Not now', 'noop', {}, 'ghost sm')}</div><span class="note">If Google’s terms require it, its search suggestions sit here (§21 Q24)</span><span class="when">${m.when}</span></div>`;
+    return '';
+  };
+  const msgs = S.msgs.map((m) => (m.card ? card(m) : `<div class="msg ${m.who}" id="${m.id}"><span>${esc(m.t)}</span><span class="when">${m.when}</span></div>`)).join('');
+  const sugg = (S.sen.q ? [S.sen.q] : []).concat(ctx === 'Insights' ? ['What changed this cycle?'] : ['Where did last month go?', 'Can I afford a RM400 phone?']);
+  const comp = S.offline ? '<div class="composer" id="sen-offline"><div class="input"><span class="sub">Sen needs a connection. Everything else still works.</span></div></div>' : `<div class="composer"><div class="chips">${sugg.map((q) => `<button class="chip" data-a="ask" data-x="${esc(q)}">${esc(q)}</button>`).join('')}</div><div class="input" id="sen-input"><span class="ph2">Ask Sen…</span><span>↑</span></div></div>`;
+  return `<div class="sensheet" role="dialog" aria-label="Sen"><div class="senbar"><b>Sen</b><span class="chip ctxchip">Looking at: ${esc(ctx)}</span><button class="ib" data-a="senMenu" aria-label="More">⋯</button><button class="ib" data-a="senClose" aria-label="Close">×</button></div><div class="content senmsgs">${msgs}<span class="note">Every figure Sen states comes from a tool (§12.2)</span></div>${comp}</div>`;
+}
+SCR.asub = (r) => {
+  const id = r.id; let h = '';
+  if (id === 'memory') h = ['Goal: the trip home for CNY', 'Rule: two bubble teas a week', 'Experiment: GrabFood at most 3 times a week, since 30 Sep'].map((x) => `<div class="lrow"><span>${esc(x)}</span><span class="v">Forget</span></div>`).join('');
+  else if (id === 'research') h = '<div class="lrow"><span>Where to keep RM5,000<span class="sub" style="display:block">2 Oct · 4 sources</span></span><span class="v">›</span></div>';
+  else h = '<div class="card"><b>This month</b><div class="meter"><i style="width:31%"></i></div><span class="sub">RM3.10 of your RM10.00 cap, estimated. At the cap, Sen pauses until next month; everything else keeps working.</span></div>';
+  return { t: { memory: 'What Sen remembers', research: 'Research', usage: 'Sen usage' }[id], sid: 'agent/' + id, body: h };
+};
+
+// ---------- More (D68) ----------
+SCR.more = () => {
+  const own = S.as === 'owner';
+  const row = (s, t, sub, id) => `<button class="lrow" data-a="go" data-s="${s}"${id ? ` data-id="${id}"` : ''} id="more-${s}"><span>${t}<span class="sub" style="display:block">${sub}</span></span><span class="v">›</span></button>`;
+  let h = row('payments', 'Payments', 'Every transaction, searchable');
+  h += row('shared', 'Shared bills', 'Splits, open and settled');
+  if (own) h += row('accounts', 'Accounts', `${rm(total())} across 5 accounts`);
+  if (own) h += row('claims', 'Claims', 'October: 2 to submit');
+  h += row('settings', 'Settings', 'Appearance, capture, categories, Sen, data');
+  return { t: 'More', sid: 'more', body: `<div class="list">${h}</div>`, fab: true };
+};
+SCR.shared = () => {
+  const row = (sp) => { const sh = spShares(sp); const r = R[sp.rid]; const iPaid = sp.payer === 'You'; const others = sp.members.filter((m) => m !== sp.payer); const done = others.filter((m) => sp.paid[m]).length;
+    return `<button class="row" data-a="go" data-s="split" data-id="${sp.id}" id="sh-${sp.id}"><span class="ph sq"></span><span class="mid"><span class="ti">${esc(r.m)}</span><span class="sub">${iPaid ? `You paid · ${done} of ${others.length} paid you back` : `${esc(sp.payer)} paid · you owe ${rm(sh.You)}${sp.paid.You ? ', paid' : ''}`}</span></span><span class="amt">${rm(r.total)}</span></button>`; };
+  return { t: 'Shared bills', sid: 'shared', body: `<div class="list">${Object.values(S.splits).map(row).join('')}</div><span class="note">Owing exists only on a split (D64): there's no people list</span>` };
+};
+SCR.accounts = () => {
+  let h = `<div class="kv"><span>Total</span><b>${rm(total())}</b></div><div class="list">${S.accounts.map((a) => `<button class="row" data-a="go" data-s="account" data-id="${a.id}"><span class="ph sq"></span><span class="mid"><span class="ti">${esc(a.name)}</span><span class="sub">Checked ${S.fig.gapDate}</span></span><span class="amt">${rm(a.bal)}</span></button>`).join('')}</div>`;
+  h += `<div class="sec"><span>Elsewhere</span></div><div class="lrow"><span>Other bank<span class="sub" style="display:block">Not watched. Money sent there is a transfer, not spending</span></span></div>`;
+  h += `${B('Check balances', 'go', { s: 'balance-check', id: 'acc-check' }, 'pri full')}${B('Add an account', 'noop', { x: 'For example a new card' }, 'ghost full')}`;
+  return { t: 'Accounts', sid: 'accounts', body: h };
+};
+SCR.account = (r) => {
+  const a = S.accounts.find((x) => x.id === r.id) || S.accounts[0];
+  return { t: esc(a.name), sid: 'account', body: `<div class="bigamt" style="font-size:32px">${rm(a.bal)}</div><div class="kv"><span>Opening balance</span><b>${rm(a.open)} on ${a.openDate}</b><span>Fed by</span><b>${esc(a.app)}’s notifications</b></div><div class="sec"><span>Recent</span></div><div class="list">${S.txns.filter((t) => t.a === a.id).slice(0, 4).map(txRow).join('')}</div><div class="row2">${B('Rename', 'noop', {}, 'ghost sm')}${B('Archive', 'noop', {}, 'ghost sm')}</div>` };
+};
+function bcRows() {
+  return S.accounts.map((a) => { const v = S.bcv[a.id]; return `<div class="field"><span class="lab">${esc(a.name)} · Sen says ${rm(a.bal)}</span><div class="row2" style="flex-wrap:nowrap"><button class="input" data-a="bcType" data-x="${a.id}" id="bc-${a.id}">${v != null ? `<span>${rm(v)}</span>` : '<span class="ph2">Type what the bank app shows</span>'}</button>${B('Matches', 'bcMatch', { x: a.id }, 'ghost sm')}</div></div>`; }).join('');
+}
+SCR['balance-check'] = () => ({ t: 'Check balances', sid: 'balance-check', tabs: false, back: true, body: `<span class="sub">Open each app and type its balance, or tap Matches when it’s the same. Unsynced payments are already counted.</span>${bcRows()}${B('Save', 'bcSave', { id: 'bc-save' }, 'pri full')}<span class="note">Tap a box to type the bank’s figure (wireframe)</span>` });
+SCR.claims = () => ({ t: 'Claims', sid: 'claims', body: `<div class="sec"><span>October</span></div>${S.claims.map((c) => `<button class="card" data-a="go" data-s="claim" data-id="${c.id}" id="cl-${c.id}"><span class="cardrow"><b>${esc(c.n)}</b><span>${rm(c.amt)}</span></span><span class="sub">${c.status} · due ${c.due}</span><span class="sub">${c.missing ? 'Missing: the My50 receipt. Share it to Sen' : 'Evidence: ' + esc(c.ev) + ' ✓'}</span></button>`).join('')}<div class="sec"><span>September</span></div><span class="sub">Phone & data and Travel: paid in the 30 Sep salary</span><span class="note">Example amounts. Real claim values never enter the repo (D10)</span>` });
+SCR.claim = (r) => {
+  const c = S.claims.find((x) => x.id === r.id) || S.claims[0];
+  const row = (l, v) => `<div class="lrow"><span>${l}<span class="sub" style="display:block">${v}</span></span>${B('Copy', 'copy', { x: v }, 'ghost sm')}</div>`;
+  let h = `<span class="sub">In ESS’s order. Copy each value, attach each file, then mark it submitted.</span>${row('Claim type', esc(c.n))}${row('Period', 'October 2026')}${row('Amount', (c.amt / 100).toFixed(2))}`;
+  h += c.missing ? '<div class="card"><b>Missing: the My50 receipt</b><span class="sub">Share it to Sen from Gmail or Files, then keep it as evidence.</span></div>' : `<div class="lrow"><span>Attach<span class="sub" style="display:block">telco-one-oct.pdf</span></span><span class="row2">${B('Open', 'noop', {}, 'ghost sm')}${B('Share', 'noop', {}, 'ghost sm')}</span></div>`;
+  h += c.status === 'Submitted' ? '<span class="sub">Submitted. Waiting for the salary.</span>' : B('Submitted', 'clSubmit', { x: c.id, id: 'cl-submitted' }, 'pri full');
+  return { t: esc(c.n) + ', October', sid: 'claim', body: h };
+};
+// ---------- Settings ----------
+const SETS = [
+  ['appearance', 'Appearance', 'System, light or dark', 'all'],
+  ['capture', 'Capture', 'Listener, Xiaomi settings, the quiet scan prompt', 'owner'],
+  ['you', 'You', 'Your names, expected payday, DuitNow QR', 'all'],
+  ['cats', 'Categories and rules', '18 categories, 42 merchant rules', 'all'],
+  ['email', 'Receipts by email', 'Your forwarding address', 'all'],
+  ['claims', 'Claims', 'Schemes', 'owner'],
+  ['sen', 'Sen', 'Google Calendar, memory, your AI usage', 'all'],
+  ['members', 'Members', 'Invitations, switches, AI caps', 'owner'],
+  ['data', 'Data', 'Export everything, backups', 'all'],
+  ['account', 'Account', 'Sign out', 'all'],
+];
+SCR.settings = () => ({ t: 'Settings', sid: 'settings', body: `<div class="list">${SETS.filter((s) => s[3] === 'all' || S.as === 'owner').map((s) => `<button class="lrow" data-a="go" data-s="set" data-id="${s[0]}" id="set-${s[0]}"><span>${s[1]}<span class="sub" style="display:block">${s[2]}</span></span><span class="v">›</span></button>`).join('')}</div>` });
+SCR.set = (r) => {
+  const id = r.id; let h = '';
+  const sw = (l, on, sub) => `<div class="lrow"><span>${l}${sub ? `<span class="sub" style="display:block">${sub}</span>` : ''}</span><span class="switch${on ? ' on' : ''}"></span></div>`;
+  if (id === 'appearance') h = ['System (follows the phone)', 'Light', 'Dark'].map((x, i) => `<div class="lrow"><span>${x}</span><span class="radio${i === 0 ? ' on' : ''}"></span></div>`).join('') + '<span class="note">Then the look: Changes each quarter, or one of the six pinned (D77, D78). No accent picker (D58)</span>';
+  else if (id === 'capture') h = `<div class="card"><b>${S.captureOff ? 'Capture is off' : 'Listening'}</b><span class="sub">${S.captureOff ? 'No word from your bank apps since yesterday' : 'Last bank event: today 12:41'}</span></div><div class="lrow"><span>Notification access</span><span class="v">${S.captureOff ? 'Off ›' : 'On ✓'}</span></div><div class="lrow"><span>Xiaomi settings</span><span class="v">›</span></div>${sw('Scan receipt after known payments', true, 'A quiet one-button notification that clears itself after 10 minutes (§6.3)')}<div class="lrow"><span>Wordings Sen has learned</span><span class="v">3 ›</span></div><button class="lrow" data-a="go" data-s="skipped"><span>Skipped notifications</span><span class="v">${S.skipped.length} ›</span></button>`;
+  else if (id === 'you') h = (S.as === 'owner' ? '<div class="lrow"><span>Your names as banks print them<span class="sub" style="display:block">TAN WEI MING</span></span><span class="v">›</span></div><div class="lrow"><span>Expected payday<span class="sub" style="display:block">Last working day of the month</span></span><span class="v">›</span></div>' : '<div class="lrow" id="set-payday"><span>Expected payday<span class="sub" style="display:block">Not set: Sen counts by calendar month. Set one to count from payday, with what’s left until it</span></span><span class="v">Set ›</span></div><span class="note">Optional without capture (D79)</span>') + '<div class="lrow"><span>Your DuitNow QR<span class="sub" style="display:block">Shown on split links you paid</span></span><span class="v">Added ✓</span></div>';
+  else if (id === 'cats') h = CATS.slice(0, 8).map((c) => `<div class="lrow"><span>${esc(c)}</span><span class="v">›</span></div>`).join('') + '<span class="sub">…and 10 more</span>' + B('Add a category', 'noop', {}, 'ghost full') + '<div class="lrow"><span>Merchant rules<span class="sub" style="display:block">Hawkers with personal DuitNow names included (D70)</span></span><span class="v">42 ›</span></div>';
+  else if (id === 'email') h = `<div class="field"><span class="lab">Your forwarding address</span><div class="input"><span style="font-family:var(--mono);font-size:13px">sen.inbox+k7q2xm@example.com</span>${B('Copy', 'copy', { x: 'sen.inbox+k7q2xm@example.com' }, 'ghost sm')}</div></div><div class="card"><b>Set it up in your Gmail</b><span class="sub">1. Add this as a forwarding address.<br>2. Gmail emails it a code, which appears below.<br>3. Make a filter: your chosen senders, forwarded here.</span></div><div class="card"><b>Gmail’s confirmation code</b><span style="font-size:22px;font-weight:800">482913</span></div>`;
+  else if (id === 'claims') h = '<div class="lrow"><span>Phone & data<span class="sub" style="display:block">Monthly · from the tagged spending</span></span><span class="v">›</span></div><div class="lrow"><span>Travel<span class="sub" style="display:block">Monthly · from the evidence receipt</span></span><span class="v">›</span></div>' + B('Add a scheme', 'noop', {}, 'ghost full') + '<span class="note">Caps and the deadline day live only here, in your own words (D10)</span>';
+  else if (id === 'sen') h = `<div class="lrow"><span>Google Calendar<span class="sub" style="display:block">Deadlines in Sen’s own calendar</span></span>${B('Connect', 'noop', { x: 'Opens Google’s sign-in in the phone’s browser (§12.7)' }, 'sm')}</div><button class="lrow" data-a="go" data-s="asub" data-id="memory"><span>What Sen remembers</span><span class="v">3 ›</span></button><button class="lrow" data-a="go" data-s="asub" data-id="usage"><span>Your AI usage<span class="sub" style="display:block">RM3.10 of RM10.00 this month</span></span><span class="v">›</span></button>`;
+  else if (id === 'members') h = `${B('Invite someone', 'noop', { x: 'Their email, their switches and their monthly AI cap' }, 'pri full')}<div class="lrow"><span>Mum<span class="sub" style="display:block">Receipts, splits, Sen · AI RM0.80 of RM5.00</span></span><span class="v">›</span></div><span class="note">You see invitations, switches and AI usage, never anyone’s money (D52)</span>`;
+  else if (id === 'data') h = `${B('Export everything', 'exportAll', {}, 'full')}<span class="sub">A ZIP of your data and receipts, behind a link that lasts 24 hours.</span><div class="lrow"><span>Last backup</span><span class="v">Today 03:12 ✓</span></div>`;
+  else h = `<div class="lrow"><span>you@example.com</span></div>${B('Sign out', 'noop', {}, 'ghost full')}${B('Sign out everywhere', 'noop', { x: 'Revokes every session, such as a lost phone' }, 'ghost full')}`;
+  return { t: (SETS.find((s) => s[0] === id) || [0, 'Settings'])[1], sid: 'settings/' + id, body: h };
+};
+
+// ---------- Payday (D60) ----------
+SCR.payday = () => {
+  const n = S.pd; let h = `<div class="steps">${['Claims', 'Balances', 'Look-back', 'Plan'].map((s, i) => `<span class="${n === i + 1 ? 'on' : ''}">${s}</span>`).join('')}</div>`;
+  if (n === 1) h += `<b style="font-size:20px">Did this salary include your submitted claims?</b><span class="sub">Submitted for September: Phone & data and Travel.</span>${B('Yes, it did', 'pdNext', { x: 'yes', id: 'pd-yes' }, 'pri full')}${B('No, not this time', 'pdNext', { x: 'no' }, 'full')}<span class="note">Yes splits the salary: the claims’ part repays the bills it covers, the rest is income (D45)</span>`;
+  else if (n === 2) h += `<b style="font-size:20px">Check your balances</b>${bcRows()}${B('Save and continue', 'pdNext', { x: 'bal', id: 'pd-next' }, 'pri full')}`;
+  else if (n === 3) h += `<b style="font-size:20px">September, looking back</b><span class="sub">RM3,120.40 spent; RM1,079.60 left at payday.</span><div class="card"><b>Three reasons</b><span class="sub">1. GrabFood 14 times, RM344.10.<br>2. One shopping day, 20 Sep: RM289.00.<br>3. Drinks and desserts went RM31.00 over budget.</span></div><div class="card strong"><b>One experiment</b><span>GrabFood at most 3 times a week.</span></div>${B('Track it', 'pdNext', { x: 'track', id: 'pd-track' }, 'pri full')}<span class="note">Sen writes this; every figure comes from its tools</span>`;
+  else h += `<b style="font-size:20px">October’s plan</b><div class="sec"><span>Due before next payday</span></div><div class="kv"><span>Rent, Ryt → landlord, 1 Nov</span><b>RM900.00</b><span>TELCO ONE, 3 Nov</span><b>RM45.00</b><span>VIDEO PLUS, 24 Nov</span><b>RM39.90</b></div><div class="sec"><span>Set aside</span></div><div class="kv"><span>Trip home, Ryt → GO+</span><b>RM150.00</b><span>Emergency fund, Ryt → GO+</span><b>RM300.00</b></div><div class="card cardrow"><b>Left to spend</b><b>RM2,765.10</b></div>${B('Use this plan', 'pdNext', { x: 'use', id: 'pd-use' }, 'pri full')}<span class="note">Computed in SQL; Sen only writes it up (§12.1)</span>`;
+  if (n < 4) h += B('Skip this step', 'pdNext', { x: 'skip' }, 'ghost full');
+  return { t: `Payday, step ${n} of 4`, sid: 'payday', tabs: false, back: true, body: h };
+};
+
+// ---------- First run (D26) ----------
+const FR_OWNER = ['email', 'code', 'access', 'xiaomi', 'accounts', 'name', 'payday'];
+const FR_FRIEND = ['email', 'code', 'cats'];
+SCR['first-run'] = () => {
+  const list = S.as === 'owner' ? FR_OWNER : FR_FRIEND; const k = list[S.fr - 1]; const last = S.fr === list.length;
+  const next = (l) => B(l || (last ? 'Finish' : 'Next'), 'frNext', { id: 'fr-next' }, 'pri full big');
+  let h = `<span class="sub">${S.fr <= 2 ? 'Sign in' : `Setup, step ${S.fr - 2} of ${list.length - 2}`}</span>`;
+  if (k === 'email') h += `<b style="font-size:24px">Sen</b><div class="field"><span class="lab">Your email</span><div class="input"><span>${S.as === 'owner' ? 'you@example.com' : 'friend@example.com (from the invitation)'}</span></div></div>${next('Send code')}<span class="sub">Sen is invitation-only.</span>`;
+  else if (k === 'code') h += `<b style="font-size:22px">Check your email</b><div class="row2" style="flex-wrap:nowrap">${'482913'.split('').map((d) => `<span class="input" style="justify-content:center;font-weight:800;font-size:20px">${d}</span>`).join('')}</div>${next('Sign in')}`;
+  else if (k === 'access') h += `<b style="font-size:22px">Let Sen read payment notifications</b><span>Only from TNG eWallet, Ryt Bank, Public Bank and Grab. Everything else is dropped on the phone, before it’s stored.</span>${B('Open settings', 'frAccess', { id: 'fr-access' }, 'pri full big')}${B('Skip for now', 'frSkipAccess', {}, 'ghost full')}<span class="note">Switch greyed out? Sen opens its app info page first: ⋮ → Allow restricted settings</span>`;
+  else if (k === 'xiaomi') h += `<b style="font-size:22px">Keep Sen running on Xiaomi</b>${['Autostart: on', 'Battery saver: No restrictions', 'Lock Sen in recents'].map((x, i) => `<div class="lrow"><span>${x}</span>${B(i === 2 ? 'Show how' : 'Open', 'noop', { x: 'Opens the right settings page' }, 'ghost sm')}</div>`).join('')}${next()}`;
+  else if (k === 'accounts') h += `<b style="font-size:22px">Your accounts</b><span class="sub">Type each balance as its app shows it right now.</span>${S.accounts.map((a) => `<div class="field"><span class="lab">${esc(a.name)}</span><div class="input"><span>${rm(a.open)}</span></div></div>`).join('')}${next()}`;
+  else if (k === 'name') h += `<b style="font-size:22px">Your name, as the banks print it</b><span class="sub">So Sen can tell money moving between your own accounts.</span><div class="input"><span style="font-family:var(--mono)">TAN WEI MING</span></div>${next()}`;
+  else if (k === 'payday') h += `<b style="font-size:22px">When is payday?</b><div class="lrow"><span>Last working day of the month</span><span class="radio on"></span></div><div class="lrow"><span>A day of the month</span><span class="radio"></span></div><span class="sub">Only used for estimates. A cycle starts when salary actually lands.</span>${next()}`;
+  else h += `<b style="font-size:22px">Your categories</b><span class="sub">Switch off any you won’t use.</span>${CATS.slice(0, 6).map((c) => `<div class="lrow"><span>${esc(c)}</span><span class="switch on"></span></div>`).join('')}${next()}`;
+  return { t: '', sid: S.fr <= 2 ? 'sign-in' : 'first-run', tabs: false, body: h };
+};
+
+// ---------- the phone itself: widgets earn their size (D32, revised) ----------
+function renderPhone() {
+  const off = S.captureOff; const f = S.fig; const left = f.income - f.spent; const n = S.att.length;
+  const offTxt = `<b>Capture is off</b><span class="sub">Payments aren’t being recorded</span>${B('Fix', 'openApp', { x: 'home' }, 'sm')}`;
+  const meter = `<div class="wmeter"><i style="width:69%"></i><b style="left:61%"></b></div><span class="sub" style="font-size:11px">69% spent · 61% of the cycle gone</span>`;
+  const small = `<div class="widget${off ? ' off' : ''}" id="w-s">${off ? offTxt : `<span class="sub">Left until payday</span><b style="font-size:20px">${rm0(left)}</b>${meter}${B('Scan', 'openApp', { x: 'scan' }, 'sm')}`}</div>`;
+  const med = `<div class="widget${off ? ' off' : ''}" id="w-m">${off ? offTxt : `<div class="cardrow"><span class="stack" style="gap:0"><span class="sub">Left until payday · 12 days</span><b style="font-size:22px">${rm(left)}</b></span></div>${paceChart({ mini: true, h: 64 })}<span class="sub">RM140 more than last cycle by today</span><div class="row2">${B('Scan', 'openApp', { x: 'scan' }, 'sm')}${B('Review ' + n, 'openApp', { x: 'review' }, 'sm')}</div>`}</div>`;
+  const large = `<div class="widget${off ? ' off' : ''}" id="w-l">${off ? offTxt : `<span class="sub">Left until payday · 12 days</span><b style="font-size:22px">${rm(left)}</b>${paceChart({ mini: true, h: 64 })}<div class="wcats">${[['Meals', 64000], ['Car', 41000], ['Shopping', 32000]].map(([c, v]) => `<span class="cardrow sub"><span>${c}</span><span>${rm0(v)}</span></span><div class="wbar"><i style="width:${Math.round((v / 64000) * 100)}%"></i></div>`).join('')}</div><span class="sub">Budget at risk: Drinks & desserts, 82%</span><div class="card" style="padding:8px"><span class="sub">From Sen</span><span style="font-size:13px">You’re RM140 ahead of last cycle, mostly Shopping.</span></div><div class="row2">${B('Scan', 'openApp', { x: 'scan' }, 'sm')}${B('Review ' + n, 'openApp', { x: 'review' }, 'sm')}</div>`}</div>`;
+  const sc = S.sc ? `<div class="shortcuts">${B('Scan receipt', 'openApp', { x: 'scan' }, 'ghost')}${B('Add expense', 'openApp', { x: 'manual' }, 'ghost')}</div>` : '';
+  return `<div class="phonehome"><div class="statusbar"><span>13:07</span><span>5G · 82%</span></div><span class="note" style="color:#14336f">Small: what’s left and a pace meter. Medium adds the pace line and Review. Large adds where it went, the budget at risk and Sen’s note</span><div class="wgrid">${small}<div></div></div>${med}${large}<div class="appicons">${sc}<span class="aicon"><i></i>Phone</span><span class="aicon"><i></i>Ryt</span><span class="aicon"><i></i>TNG</span><button class="aicon sen" data-a="shortcuts" id="sen-icon"><i></i>Sen</button></div><span class="note" style="color:#14336f">Tap Sen’s icon for its long-press shortcuts</span></div>`;
+}
+
+// ---------- Android notifications (native) ----------
+const NOTIF = {
+  newm: { title: 'RM9.50 · ROTI BAKAR 88', text: 'Ryt Bank · What was it?', acts: [['Meals', 'nCat', 'Meals'], ['Drinks & desserts', 'nCat', 'Drinks & desserts'], ['Scan receipt', 'nScan', 'r3']], open: 'review' },
+  hawker: { title: 'RM8.00 · SITI AMINAH BT YUSOF', text: 'TNG eWallet · What was it?', acts: [['Meals', 'nHawker', 'Meals'], ['Groceries', 'nHawker', 'Groceries'], ['Scan receipt', 'nScan', 'r1']], open: 'review' },
+  quiet: { title: 'RM58.30 · NASI KANDAR ABC · Meals', text: 'Got the receipt? This clears itself in 10 minutes.', acts: [['Scan receipt', 'nScan', 'r1']], open: 'home' },
+  owe: { title: 'You owe Mei RM24.40', text: 'BBQ PLACE, an hour ago. Paid her yet?', acts: [['I’ve paid', 'nOwePaid', ''], ['Open the split', 'nOpenSplit', 's2']], open: 'review' },
+  payback: { title: 'RM25.00 to MEI LING TAN', text: 'TNG eWallet · What was it?', acts: [['Paying back: BBQ PLACE', 'nPayback', ''], ['Other…', 'nOpen', '']], open: 'review' },
+  payday: { title: 'Payday', text: 'Your salary landed. Four quick steps start the new cycle.', acts: [], open: 'home' },
+  capoff: { title: 'Capture may be off', text: 'Sen hasn’t heard from your bank apps since yesterday. Tap to fix.', acts: [], open: 'home' },
+};
+function mk(k) { return Object.assign({ k }, clone(NOTIF[k])); }
+function notifHtml(n) {
+  const acts = n.done ? '' : n.acts.map((a) => `<button data-a="${a[1]}" data-x="${esc(a[2])}">${esc(a[0])}</button>`).join('');
+  return `<div class="notif" role="status"><div class="nhd"><i></i><span>Sen · now</span><span class="note" style="font-size:11px">Android notification (native)</span><button class="nx" data-a="nSwipe" aria-label="Swipe away">×</button></div><button class="nbody" data-a="nBody"><b>${esc(n.title)}</b><span class="sub">${esc(n.done || n.text)}</span></button>${acts ? `<div class="nacts">${acts}</div>` : ''}</div>`;
+}
+
+// ---------- sheets inside the app ----------
+const SHEETS = {
+  scanmore: () => `<h4>Add a payment</h4>${B('Scan receipt', 'startScan', { x: 'attach', id: 'more-scan' }, 'pri full big')}${B('From gallery', 'noop', { x: 'Android’s photo picker; several at once' }, 'full')}${B('Add manually', 'openManual', { id: 'more-manual' }, 'full')}<span class="note">A long-press on Scan opens this; a tap scans straight away (D69)</span>`,
+  cycle: () => { const f = S.fig; return `<h4>October cycle</h4><span class="sub">30 Sep to 29 Oct · expected payday Fri 30 Oct</span><div class="kv"><span>Income received</span><b>${rm(f.income)}</b><span>Spent</span><b>−${rm(f.spent)}</b><span>Left until payday</span><b>${rm(f.income - f.spent)}</b></div><div class="card"><b>At payday, on this pace</b><span>About RM310.00 left</span><span class="sub">An estimate from your recent pace and the subscriptions still due</span></div>`; },
+  cat: (sh) => `<h4>Choose a category</h4><div class="chips" style="flex-wrap:wrap">${CATS.map((c) => `<button class="chip" data-a="pickCat" data-x="${esc(sh.id || '')}" data-y="${esc(c)}">${esc(c)}</button>`).join('')}</div>`,
+  scope: (sh) => `<h4>Change to ${esc(sh.y)}</h4><span class="sub">For ${esc((tx(sh.id) || {}).m || '')}:</span>${B('Just this one', 'scope', { x: sh.id, y: sh.y, z: 'one' }, 'full')}${B('From now on', 'scope', { x: sh.id, y: sh.y, z: 'rule' }, 'pri full')}<span class="note">From now on updates the merchant rule; past payments stay (D25)</span>`,
+  attach: () => `<h4>Attach to a payment</h4><span class="sub">Likely payments: same merchant, close amounts</span><button class="row" data-a="attachPick" data-x="t13" id="att-pick-t13"><span class="ph"></span><span class="mid"><span class="ti">TELCO ONE</span><span class="sub">Fri 3 Oct, 21:40 · Ryt</span></span><span class="amt">RM45.00</span></button><div class="row2">${B('Evidence only', 'attachPick', { x: 'evidence' }, 'ghost sm')}${B('Enter the payment', 'openManual', {}, 'ghost sm')}</div>`,
+  mark: () => `<h4>Mark as…</h4>${['A transfer between my accounts', 'A refund of…'].map((x) => B(x, 'noop', { x: 'Done, with Undo' }, 'full')).join('')}`,
+  owners: (sh) => {
+    const sp = S.splits[sh.id]; const k = +sh.y; const it = R[sp.rid].items[k];
+    return `<h4>Who had ${esc(it[0])}?</h4><span class="sub">Pick one, or several to share it evenly.</span>${sp.members.map((m, i) => `<button class="check" data-a="ownerToggle" data-x="${sp.id}" data-y="${k}" data-z="${i}" id="own-${m}"><span class="box${sp.owners[k].includes(i) ? ' on' : ''}">${sp.owners[k].includes(i) ? '✓' : ''}</span><span>${esc(m)}</span><span></span></button>`).join('')}${B('Add a name', 'noop', { x: 'Someone who isn’t on the link yet' }, 'ghost sm')}${B('Done', 'closeSheet', {}, 'pri full')}`;
+  },
+  payer: () => `<h4>Who paid this bill?</h4>${B('I paid', 'spPayer', { x: 'You' }, 'pri full')}${B('A friend paid', 'spPayer', { x: 'Mei' }, 'full')}<span class="note">A friend's name comes from the link or recent splits; there's no people list (D64)</span>`,
+  senmenu: () => ['memory', 'research', 'usage'].map((id) => `<button class="lrow" data-a="go" data-s="asub" data-id="${id}"><span>${{ memory: 'What Sen remembers', research: 'Research', usage: 'Usage' }[id]}</span><span class="v">›</span></button>`).join(''),
+};
+// ---------- rendering ----------
+const TABS = [['home', 'Home'], ['review', 'Review'], ['scan', 'Scan'], ['insights', 'Insights'], ['more', 'More']];
+function tabbar() {
+  const rootS = S.stack[0].s; const n = S.att.length;
+  return `<nav class="tabbar">${TABS.map(([id, l]) => (id === 'scan'
+    ? `<button class="tab plus" data-a="scanTap" id="tab-scan" aria-label="Scan a receipt. Long-press for more"><i></i>${l}</button>`
+    : `<button class="tab${rootS === id ? ' on' : ''}" data-a="tab" data-x="${id}" id="tab-${id}"><i></i>${l}${id === 'review' && n ? `<span class="badge">${n}</span>` : ''}</button>`)).join('')}</nav>`;
+}
+function renderApp() {
+  const r = cur(); const v = SCR[r.s](r);
+  if (v.full) return `<div class="app">${v.body}</div>`;
+  const canBack = S.stack.length > 1 || v.back;
+  const bar = `<header class="appbar">${canBack ? '<button class="ib" data-a="back" aria-label="Back" id="back">‹</button>' : ''}<div class="t">${v.t}</div>${v.right || ''}${S.notes ? `<span class="sid">${esc(v.sid || r.s)}</span>` : ''}</header>`;
+  const fab = v.fab && S.stack.length === 1 && S.as !== 'noagent' ? `<button class="fab" data-a="openSen" id="fab" aria-label="Ask Sen">Sen</button>` : '';
+  return `<div class="app">${bar}<main class="content${fab ? ' withfab' : ''}" id="content">${v.body}</main>${fab}${v.tabs === false ? '' : tabbar()}</div>`;
+}
+function renderLayer() {
+  let h = '';
+  if (S.sen) h += `<div class="scrim" data-a="senClose"></div>${senSheet()}`;
+  if (S.sheet && SHEETS[S.sheet.k]) h += `<div class="scrim" data-a="closeSheet"></div><div class="sheet" role="dialog"><div class="grab"></div>${SHEETS[S.sheet.k](S.sheet)}</div>`;
+  if (S.toast) { const v = S.view === 'phone' ? { tabs: false } : SCR[cur().s](cur()); h += `<div class="toast${v.tabs === false || S.sen ? ' low' : ''}" id="toast"><span>${esc(S.toast.msg)}</span>${S.toast.undo ? '<button data-a="undo" class="undo" id="undo">Undo</button>' : ''}</div>`; }
+  if (S.notif) h += notifHtml(S.notif);
+  return h;
+}
+let lastKey = '';
+function render() {
+  document.body.classList.toggle('nonotes', !S.notes);
+  const prev = document.getElementById('content'); const keep = prev ? prev.scrollTop : 0;
+  const key = S.view + JSON.stringify(cur()) + (S.sen ? 'sen' : '');
+  $('#strip').innerHTML = renderStrip();
+  $('#phone').innerHTML = (S.view === 'phone' ? renderPhone() : renderApp()) + `<div class="layer">${renderLayer()}</div>`;
+  const now = document.getElementById('content'); if (now && key === lastKey) now.scrollTop = keep;
+  lastKey = key;
+  $('#tool').className = T ? 'on' : ''; $('#tool').innerHTML = T ? renderTool() : '';
+  applyHL();
+}
+function applyHL() {
+  if (!G.j) return; const st = G.j.steps[G.i]; const sel = st.hl || st.see; if (!sel) return;
+  const el = document.querySelector(sel); if (!el) return;
+  el.classList.add('hl');
+  const box = el.closest('.content, .sheet, .phonehome'); if (!box) return;
+  const r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+  if (r.top < b.top || r.bottom > b.bottom) box.scrollTop += r.top - b.top - 48;
+}
+
+// ---------- actions ----------
+const ACT = {
+  go(d) { const id = d.id || d.sid; go(d.s, id ? { id } : null); },
+  tab(d) { root(d.x); },
+  back() { back(); },
+  sheet(d) { S.sheet = { k: d.x, id: d.id, y: d.y }; },
+  closeSheet() { S.sheet = null; },
+  noop(d) { toast(d.x || 'Not wired in this wireframe'); },
+  copy(d) { toast('Copied ' + d.x); },
+  undo() { if (S.toast && S.toast.undo) { const keep = { view: S.view, notes: S.notes }; S = S.toast.undo; Object.assign(S, keep); toast('Undone'); } },
+
+  // Sen (D68)
+  openSen() { S.sen = { ctx: null, q: null }; },
+  askSen(d) { S.sen = { ctx: 'Insights', q: d.x }; },
+  senClose() { S.sen = null; },
+  senMenu() { S.sheet = { k: 'senmenu' }; },
+  ask(d) {
+    S.msgs.push({ id: 'm-x', who: 'me', when: 'Now', t: d.x });
+    const a = d.x.startsWith('Why am I ahead') ? 'You’re RM140.00 ahead of last cycle by day 19. Shopping explains RM170.00 of it: one RM289.00 day on 11 Oct. Meals and Car are each about RM80.00 above typical; Groceries is RM68.29 below.'
+      : d.x.startsWith('Where did') ? 'September: RM3,120.40. The top three were Home & bills RM900.00, Meals RM702.30 and Car RM388.00.'
+        : 'You have RM1,284.50 left with 12 days to go, and about RM310.00 at payday on this pace (an estimate). A RM400.00 phone would put you about RM90.00 over. After payday it fits.';
+    S.msgs.push({ id: 'm-y', who: 'sen', when: 'Now', t: a }); if (S.sen) S.sen.q = null;
+  },
+
+  // scanning (D69): tap scans; long-press opens the sheet
+  scanTap() { if (lp.fired) { lp.fired = false; return; } ACT.startScan({ x: 'attach' }); },
+  scanLong() { S.sheet = { k: 'scanmore' }; },
+
+  res(d) {
+    const before = snap(); const a = S.att.find((x) => x.id === d.x);
+    const drop = () => { S.att = S.att.filter((x) => x.id !== d.x); };
+    if (!a) { if (d.x === 'a3') ACT.propDecide(d.y, before); return; }
+    if (a.k === 'cat') { const t = tx(a.tx); if (t) { t.c = d.y; t.marks = t.marks.filter((m) => m !== 'needs'); } drop(); toast(`${a.title.split('· ')[1] || 'It'} is ${d.y} from now on`, before); }
+    else if (a.k === 'whose') {
+      if (d.y === 'none') { Object.assign(a, { k: 'moneyin', sub: 'Not a split share' }); toast('Not a split. What was it?', before); return; }
+      const t = tx(a.tx); t.c = 'Repayment'; t.marks = []; const sp = S.splits.s1; sp.paid.Ali = true; sp.how.Ali = 'matched: Ryt, today 11:58';
+      S.waiting = S.waiting.map((w) => (w.id === 'w1' ? Object.assign(w, { title: 'KEDAI MEE ABC: 1 of 2 paid you back' }) : w));
+      drop(); toast('Ali’s share is paid. Sen will know ALI BIN ABU BAKA next time.', before);
+    } else if (a.k === 'moneyin') { drop(); toast(d.y === 'income' ? 'Saved as income' : d.y === 'transfer' ? 'Saved as a transfer' : 'Pick the purchase it refunds', before); }
+    else if (a.k === 'owe') { const sp = S.splits.s2; sp.paid.You = true; sp.how.You = 'ticked by you'; drop(); toast('Ticked: you paid Mei', before); }
+    else if (a.k === 'wording') {
+      if (d.y === 'Yes') { drop(); S.txns.unshift({ id: 'tK2', day: 'd18', time: '10:02', m: 'KEDAI MAJU', c: null, a: 'tng', amt: 650, dir: 'out', marks: ['needs'] }); S.att.unshift(attCat('aK', 'RM6.50 · KEDAI MAJU', 'TNG eWallet · Today 10:02 · new merchant', ['Groceries', 'Meals'])); toast('Wording saved. Later ones are read without asking.', before); }
+      else { Object.assign(a, { k: 'unread', title: 'Kept unread: TNG eWallet, today 10:02', sub: 'Enter it by hand if it was a payment' }); toast('Kept unread', before); }
+    } else if (a.k === 'unread') { drop(); ACT.openManual(); }
+    else if (a.k === 'prop') { ACT.propDecide(d.y, before); }
+    else if (a.k === 'xfer') { drop(); toast(`From ${d.y}. Next time it’s filled in by itself.`, before); }
+  },
+  propDecide(y, before) {
+    S.att = S.att.filter((x) => x.id !== 'a3'); S.propDone = true;
+    if (y === 'apply') { S.budgets.push({ c: 'Drinks & desserts', amt: 15000, spent: 12300 }); toast('Budget added: Drinks & desserts, RM150.00 a cycle', before); }
+    else toast('Dismissed', before);
+  },
+  applySug() { const before = snap(); S.att.filter((a) => a.sug).forEach((a) => { if (a.k === 'cat') { const t = tx(a.tx); if (t) { t.c = a.sug; t.marks = []; } } }); S.att = S.att.filter((a) => !a.sug); toast('Applied Sen’s suggestions', before); },
+  attachSheet() { S.sheet = { k: 'attach' }; },
+  attachPick(d) { const before = snap(); S.waiting = S.waiting.filter((x) => x.id !== 'w2'); S.sheet = null; toast(d.x === 't13' ? 'Attached to RM45.00 on Ryt, 3 Oct' : 'Kept as evidence only', before); },
+  openConfirm() { S.cf = cfNew('r1', 'friend'); go('confirm'); },
+  pickCat(d) {
+    if (d.x === 'man') { S.man.cat = d.y; S.sheet = null; return; }
+    const a = S.att.find((x) => x.id === d.x); if (a) { S.sheet = null; ACT.res({ x: a.id, y: d.y }); return; }
+    const t = tx(d.x); if (!t) { S.sheet = null; return; }
+    if (!t.c) { const before = snap(); t.c = d.y; S.sheet = null; toast(`${t.m} is ${d.y}`, before); return; }
+    S.sheet = { k: 'scope', id: d.x, y: d.y };
+  },
+  scope(d) { const before = snap(); const t = tx(d.x); if (t) t.c = d.y; S.sheet = null; toast(d.z === 'rule' ? `${t.m} is ${d.y} from now on` : 'Changed this one only', before); },
+  delTxn(d) { const before = snap(); S.txns = S.txns.filter((t) => t.id !== d.x); back(); toast('Deleted', before); },
+  fixCapture() { S.captureOff = false; S.notif = null; toast('Capture is back on'); },
+  incomeSet() { S.incomeSet = true; toast('Income added: RM3,000.00 this cycle'); },
+  startPayday() { S.pd = 1; go('payday'); },
+  pdNext(d) {
+    if (d.x === 'skip') S.att.unshift({ id: 'aP' + S.pd, k: 'payday', title: 'A payday step you skipped', sub: ['', 'Claims question', 'Balance check', 'Look-back', 'Plan'][S.pd] });
+    if (d.x === 'bal') ACT.bcSave({ inFlow: true });
+    if (d.x === 'track') S.msgs.push({ id: 'm-exp', who: 'sen', when: 'Today', t: 'Tracking: GrabFood at most 3 times a week.' });
+    if (d.x === 'use' || (d.x === 'skip' && S.pd === 4)) { S.plan = d.x === 'use' ? { done: 0, total: 3 } : null; S.payday = false; root('home'); if (d.x === 'use') toast('Plan saved. Each move ticks off when its notification arrives.'); return; }
+    S.pd += 1;
+  },
+  bcType(d) { S.bcv[d.x] = BANK[d.x]; },
+  bcMatch(d) { const a = S.accounts.find((x) => x.id === d.x); S.bcv[d.x] = a.bal; },
+  bcSave(o) {
+    let gap = 0; S.accounts.forEach((a) => { const v = S.bcv[a.id]; if (v != null) { gap += a.bal - v; a.bal = v; } });
+    S.fig.gap = gap; S.fig.gapDate = 'today'; S.bcv = {}; S.att = S.att.filter((x) => x.k !== 'bal');
+    if (!(o && o.inFlow)) { root('home'); toast(`Gap ${rm(gap)}, booked as Unaccounted`); }
+  },
+  clSubmit(d) { const c = S.claims.find((x) => x.id === d.x); c.status = 'Submitted'; back(); toast('Marked submitted'); },
+  exportAll() { toast('Building your export. Sen will tell you when it’s ready.'); },
+
+  // capture
+  startScan(d) { S.notif = null; S.sen = null; S.cf = cfNew(d.y || 'r1', d.x || 'attach'); S.scan = 'view'; S.sheet = null; go('scan'); },
+  scanCap() { S.scan = 'crop'; },
+  scanRetake() { S.scan = 'view'; },
+  scanSave() { S.scan = 'view'; S.stack.pop(); go('reading'); },
+  readFail() { S.stack.pop(); S.man = { amt: '', cat: '' }; go('manual'); toast('Couldn’t read it. Enter the details; the image is kept.'); },
+  cfPhoto(d) { S.cf.photo = d.x === '1'; },
+  cfPeople(d) { S.cf.people = Math.max(1, S.cf.people + +d.x); },
+  cfEvidence() { root('home'); toast('Kept as evidence, with no payment'); },
+  cfDone() {
+    const before = snap(); const c = S.cf; const r = R[c.rid];
+    if (S.as === 'friend') { S.att = S.att.filter((x) => x.k !== 'rread'); root('home'); toast(`Payment created: ${rm(r.total)}, ${r.m}`, before); return; }
+    if (c.mode === 'wait') { S.waiting.unshift({ id: 'wW', k: 'rwait', title: `${r.m}, ${rm(r.total)}`, sub: 'Scanned just now. Waiting for its payment' }); root('home'); toast('Waiting for its payment. It attaches itself.', before); return; }
+    const t = c.rid === 'r3' ? addRoti() : addKnown(); t.marks = Array.from(new Set(t.marks.concat(['receipt']))); t.rcpt = c.rid;
+    root('home'); toast(`Attached to ${rm(r.total)} on Ryt`, before);
+  },
+  cfSplit() { const sp = spNew(S.cf.rid); S.splits.sN = sp; S.sheet = { k: 'payer' }; },
+  spPayer(d) { const sp = S.splits.sN; sp.payer = d.x; if (d.x !== 'You') { sp.members.push(d.x); sp.paid = { [d.x]: true }; } S.sheet = null; S.stack = [{ s: 'home' }, { s: 'split', id: 'sN' }]; },
+  splitPayment(d) { const t = tx(d.x); toast(`Split ${t.m}: shared evenly between whoever joins, or lent in full to one friend`); },
+  ownerToggle(d) { const sp = S.splits[d.x]; const k = +d.y, i = +d.z; const o = sp.owners[k]; sp.owners[k] = o.includes(i) ? o.filter((x) => x !== i) : o.concat([i]).sort(); if (spCheckLock(sp)) toast('Everyone is done. Shares are final.'); },
+  spMine(d) { const sp = S.splits[d.x]; const k = +d.y; const i = sp.members.indexOf('You'); const o = sp.owners[k]; sp.owners[k] = o.includes(i) ? o.filter((x) => x !== i) : o.concat([i]).sort(); if (!sp.locked) sp.done.You = false; },
+  spDone(d) { const sp = S.splits[d.x]; sp.done[d.y] = !sp.done[d.y]; if (spCheckLock(sp)) toast('Everyone is done. Shares are final.'); },
+  spLockNow(d) { const sp = S.splits[d.x]; if (spUnclaimed(sp).length) { toast('Settle the items nobody has ticked first'); return; } sp.members.forEach((m) => { sp.done[m] = true; }); spCheckLock(sp); toast('Locked. Shares are final.'); },
+  pubDone() { const sp = S.splits[S.pub.sp]; sp.done[S.pub.who] = !sp.done[S.pub.who]; if (spCheckLock(sp)) toast('Everyone is done. Your share is final.'); },
+  spAssign(d) { const sp = S.splits[d.x]; const k = +d.y; sp.owners[k] = sp.members.map((_, i) => i); if (spCheckLock(sp)) toast('Everyone is done. Shares are final.'); },
+  spPaid(d) { const sp = S.splits[d.x]; if (sp.payer !== 'You' && d.y !== 'You') return; sp.paid[d.y] = !sp.paid[d.y]; sp.how[d.y] = sp.paid[d.y] ? 'ticked by you' : ''; },
+  pubTick(d) { const sp = S.splits[S.pub.sp]; if (sp.locked) { toast(`Shares are final. Ask ${nm(sp.payer)} to change a tick.`); return; } const me = sp.members.indexOf(S.pub.who); const k = +d.x; const o = sp.owners[k]; sp.owners[k] = o.includes(me) ? o.filter((x) => x !== me) : o.concat([me]).sort(); if (sp.done[S.pub.who]) { sp.done[S.pub.who] = false; toast('Ticking again. Tap Done when you’ve finished.'); } },
+  openManual() { S.man = { amt: '', cat: '' }; S.sheet = null; go('manual'); },
+  manKey(d) { let a = S.man.amt; if (d.x === '⌫') a = a.slice(0, -1); else if (!(d.x === '.' && a.includes('.')) && !(a.includes('.') && a.split('.')[1].length >= 2)) a += d.x; S.man.amt = a; },
+  manCat(d) { S.man.cat = d.x; },
+  manSave() { const before = snap(); root('home'); toast(`Saved: RM${S.man.amt || '0.00'}${S.man.cat ? ', ' + S.man.cat : ''}`, before); },
+
+  // notifications
+  nCat(d) { addRoti().c = d.x; S.notif.done = `Saved as ${d.x}. Sen won’t ask about ROTI BAKAR 88 again.`; },
+  nHawker(d) { S.notif.done = `Saved as ${d.x}. SITI AMINAH BT YUSOF is a merchant now, filed silently next time.`; },
+  nScan(d) { const rid = d.x || 'r1'; S.notif = null; S.view = 'app'; if (rid === 'r1') addKnown(); else addRoti(); ACT.startScan({ x: 'attach', y: rid }); },
+  nOwePaid() { const sp = S.splits.s2; sp.paid.You = true; sp.how.You = 'ticked by you'; S.att = S.att.filter((a) => a.k !== 'owe'); S.notif.done = 'Ticked. Mei’s tick list shows you paid.'; },
+  nOpenSplit(d) { S.notif = null; S.view = 'app'; root('home'); go('split', { id: d.x }); },
+  nPayback() { const sp = S.splits.s2; sp.paid.You = true; sp.how.You = 'matched: TNG, RM25.00'; S.att = S.att.filter((a) => a.k !== 'owe'); S.notif.done = 'Paid Mei back for BBQ PLACE. Your share ticked itself; the RM25.00 counts as Meals.'; },
+  nOpen() { S.notif = null; S.view = 'app'; root('review'); },
+  nSwipe() { const n = S.notif; S.notif = null; if (n && n.k === 'newm' && !n.done) S.att.unshift(attCat('aR', 'RM9.50 · ROTI BAKAR 88', 'Ryt · Today 13:02 · new merchant', ['Meals', 'Drinks & desserts'])); },
+  nBody() { const n = S.notif; S.notif = null; S.view = 'app'; root(n && n.open === 'review' ? 'review' : 'home'); },
+
+  // the phone
+  shortcuts() { S.sc = !S.sc; },
+  openApp(d) { S.view = 'app'; S.sc = false; root('home'); if (d.x === 'scan') ACT.startScan({ x: 'attach' }); else if (d.x === 'manual') ACT.openManual(); else if (d.x === 'review') root('review'); },
+
+  // first run
+  frNext() { const list = S.as === 'owner' ? FR_OWNER : FR_FRIEND; if (S.fr < list.length) { S.fr += 1; return; } root('home'); if (S.as === 'owner') S.beforeSalary = true; },
+  frAccess() { S.fr += 1; toast('Notification access on. Capture has started.'); },
+  frSkipAccess() { S.fr += 1; S.captureOff = true; },
+};
+
+// ---------- clicks, and the long-press on Scan ----------
+const lp = { t: null, fired: false };
+document.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('#tab-scan')) return;
+  lp.fired = false; clearTimeout(lp.t);
+  lp.t = setTimeout(() => { lp.fired = true; ACT.scanLong(); render(); }, 500);
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => document.addEventListener(ev, () => clearTimeout(lp.t)));
+document.addEventListener('contextmenu', (e) => { if (e.target.closest('#tab-scan')) e.preventDefault(); });
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-a]'); if (!el || el.disabled) return;
+  const fn = ACT[el.dataset.a]; if (!fn) return;
+  e.preventDefault();
+  let guideTap = false;
+  if (G.j && el.closest('#phone')) { const st = G.j.steps[G.i]; if (st.hl && el.matches(st.hl)) guideTap = true; }
+  if (el.closest('#phone') && el.dataset.a !== 'undo' && S.toast && !guideTap) S.toast = null;
+  fn(el.dataset, el);
+  if (guideTap) advance();
+  render();
+});
+// ---------- guided journeys ----------
+function fresh() { const keepNotes = S.notes; S = base(); S.notes = keepNotes; }
+const J = [
+  { id: 'tour', g: 'Start here', t: 'The new layout', d: 'Home, Review, Scan, Insights, More, and Sen floating on top', steps: [
+    { cap: 'Home answers what’s left until payday. Under it, your pace against last cycle; tap it for this cycle’s payments. Then Sen’s latest note, and your balances.', go() { fresh(); }, see: '#hero' },
+    { cap: 'Review is its own tab now. The badge counts what needs you.', hl: '#tab-review' },
+    { cap: 'Needs you comes first. Below it, what’s waiting on others: splits, receipts, refunds. Those aren’t counted, because there’s nothing for you to do yet.', see: '#wait-w1' },
+    { cap: 'Insights: every card asks one question, answers it with a chart, and says the takeaway in a sentence.', hl: '#tab-insights' },
+    { cap: 'More holds what you open now and then: Payments, Shared bills, Accounts, Claims and Settings.', hl: '#tab-more' },
+    { cap: 'Sen floats on every tab. Tap it.', hl: '#fab' },
+    { cap: 'The conversation opens over the screen you were on, and knows where you were. Close it to carry on.', see: '.sensheet' },
+  ] },
+  { id: 'scan-after', g: 'Receipts', t: 'Scanning a receipt after paying', d: 'The quiet prompt, the scanner, the one-screen receipt', steps: [
+    { cap: 'You pay RM58.30 at NASI KANDAR ABC, a shop Sen knows. Its rule files it as Meals, with no question.', go() { fresh(); addKnown(); } },
+    { cap: 'A quiet notification offers one thing: Scan receipt. It clears itself after 10 minutes.', go() { S.notif = mk('quiet'); }, hl: '.notif [data-a="nScan"]' },
+    { cap: 'Google’s scanner opens (native) and finds the receipt’s edges.', hl: '#scan-cap' },
+    { cap: 'Check the crop while the receipt is in your hand, then save.', hl: '#scan-save' },
+    { cap: 'Sen reads it. You could leave; it would wait in Review.', hl: '#read-go' },
+    { cap: 'One screen, and the list is the receipt: every item, its tax and service already in its price, adding up to the total. A doubtful price is marked where it is.', see: '#cf-items' },
+    { cap: 'Three of you ate, and you paid for everyone. All you say is how many people ate: tap +.', hl: '#cf-pplus' },
+    { cap: 'Once more: three people. The whole RM58.30 is your spending; your meal average counts RM19.44 a person.', hl: '#cf-pplus' },
+    { cap: 'Done.', hl: '#cf-done' },
+    { cap: 'Matched to the RM58.30 payment by amount and time, and attached.', see: '#toast' },
+  ] },
+  { id: 'split-mine', g: 'Shared bills', t: 'Splitting a bill you paid', d: 'Tick in any order, tap Done; it locks when everyone is done', steps: [
+    { cap: 'KEDAI MEE ABC, RM64.13, which you paid. Ali and Mei will pay you back their part. Tap Split.', go() { fresh(); S.cf = cfNew('r4', 'split'); S.stack = [{ s: 'home' }, { s: 'confirm' }]; }, hl: '#cf-split' },
+    { cap: 'Who paid? You did.', hl: '[data-a="spPayer"][data-x="You"]' },
+    { cap: 'Everyone ticks what they had: one person ticks an item, it’s theirs; several tick it, it’s split evenly. You first: your mee goreng,', hl: '#sp-mine0' },
+    { cap: 'the fried chicken you shared,', hl: '#sp-mine3' },
+    { cap: 'and the teh ais.', hl: '#sp-mine4' },
+    { cap: 'That’s everything you had, so tap Done.', hl: '#sp-done' },
+    { cap: 'Ali scans the QR, ticks his mee goreng, the fried chicken and the teh ais, and taps Done. Now Mei’s phone. She ticks her kuey teow first, the one item nobody had.', go() { const sp = S.splits.sN; sp.members.push('Ali'); const a = sp.members.indexOf('Ali'); [1, 3, 4].forEach((k) => { sp.owners[k] = sp.owners[k].concat([a]).sort(); }); sp.done.Ali = true; S.pub = { sp: 'sN', who: 'Mei', known: true }; go('split-public'); }, hl: '#pub-i2' },
+    { cap: 'Every item now has someone, but nothing locks: Mei hasn’t tapped Done. Her share is still changing, and the QR waits.', see: '#pub-status' },
+    { cap: 'She remembers the fried chicken: shared by three now,', hl: '#pub-i3' },
+    { cap: 'and the teh ais.', hl: '#pub-i4' },
+    { cap: 'Now she’s done.', hl: '#pub-done' },
+    { cap: 'Everyone is done and every item is claimed, so the split locks: Mei’s RM22.14 is final, and your DuitNow QR appears.', see: '#pub-pay' },
+    { cap: 'Final on your phone too. Split three ways, the fried chicken is RM7.00, RM7.00 and RM6.99, so the parts add up to the sen. The tick list of who has paid you back is yours.', go() { S.toast = null; S.stack.pop(); }, see: '#sp-ticks' },
+  ] },
+  { id: 'unclaimed', g: 'Shared bills', t: 'When a split gets stuck', d: 'An item nobody ticks, or a friend who left', steps: [
+    { cap: 'Everyone has tapped Done, but nobody remembers the teh ais. It stays still changing.', go() { fresh(); const sp = spNew('r4'); sp.members = ['You', 'Ali', 'Mei']; sp.owners = [[0], [1], [2], [0, 1, 2], []]; sp.done = { You: true, Ali: true, Mei: true }; S.splits.sN = sp; S.stack = [{ s: 'home' }, { s: 'split', id: 'sN' }]; }, see: '#sp-status' },
+    { cap: 'You paid, so you settle it: everyone shared it.', hl: '#sp-item4 [data-z="all"]' },
+    { cap: 'Locked. Shares are final, and your tick list appears.', see: '#sp-status' },
+    { cap: 'Another night: every item is claimed, but Ali left before tapping Done.', go() { fresh(); const sp = spNew('r4'); sp.members = ['You', 'Ali', 'Mei']; sp.owners = [[0], [1], [2], [0, 1, 2], [0, 1, 2]]; sp.done = { You: true, Mei: true }; S.splits.sN = sp; S.stack = [{ s: 'home' }, { s: 'split', id: 'sN' }]; }, see: '#sp-status' },
+    { cap: 'As the payer, you can lock without him.', hl: '#sp-locknow' },
+    { cap: 'Final. Everyone sees their share and your QR.', see: '#sp-status' },
+  ] },
+  { id: 'paid-back', g: 'Shared bills', t: 'Getting paid back', d: 'A repayment ticks itself; cash you tick by hand', steps: [
+    { cap: 'RM20.99 arrives from ALI BIN ABU BAKA, a name Sen hasn’t seen. It matches Ali’s open share, so Review asks once.', go() { fresh(); root('review'); }, hl: '#att-a2 [data-y="Ali"]' },
+    { cap: 'Ticked. Sen remembers that name for Ali, for you alone, so his next payment ticks itself.', see: '#toast' },
+    { cap: 'The split is your tick list, because you paid. Ali is ticked. Mei gave you cash, so tick her yourself.', go() { S.toast = null; go('split', { id: 's1' }); }, hl: '#sp-tick-Mei' },
+    { cap: 'Everyone has paid. The link closes tomorrow, so a wrong tick can still be undone.', see: '#sp-state' },
+  ] },
+  { id: 'split-theirs', g: 'Shared bills', t: 'A bill a friend paid', d: 'Mei keeps the ticks; Sen reminds you once', steps: [
+    { cap: 'Mei paid for BBQ last night and split it on her link. You tapped your Set C, so you owe her RM24.40. It waits in Review.', go() { fresh(); root('review'); }, see: '#att-a6' },
+    { cap: 'Open the split.', hl: '#att-a6 [data-s="split"]' },
+    { cap: 'Mei keeps the tick list; you see her ticks. Your payment to her ticks your share by itself.', see: '#sp-owe' },
+    { cap: 'An hour after the split, if you haven’t paid, Sen reminds you once.', go() { S.notif = mk('owe'); }, see: '.notif' },
+    { cap: 'You send Mei RM25.00 from TNG. Because you owe her, the prompt offers Paying back first.', go() { S.notif = mk('payback'); }, hl: '.notif [data-a="nPayback"]' },
+    { cap: 'Within RM5 and 30 days it matches: your share ticks itself, and the payment counts as Meals, with the receipt.', see: '.notif' },
+  ] },
+  { id: 'hawker', g: 'Everyday capture', t: 'Paying a hawker', d: 'A personal DuitNow name is still a merchant', steps: [
+    { cap: 'You pay RM8.00 by DuitNow at a stall. The name is the owner’s own, SITI AMINAH BT YUSOF, but it’s still buying, so Sen asks like any new merchant.', go() { fresh(); S.notif = mk('hawker'); }, hl: '.notif [data-x="Meals"]' },
+    { cap: 'Saved, with a rule: next time it files itself silently. Only a name matched to someone on a split ever asks again.', see: '.notif' },
+  ] },
+  { id: 'pay-new', g: 'Everyday capture', t: 'Paying at a new merchant', d: 'The category prompt, and what happens if you swipe it away', steps: [
+    { cap: 'You pay RM9.50 at ROTI BAKAR 88, a shop Sen hasn’t seen. Its prompt arrives straight away. Tap Meals.', go() { fresh(); S.notif = mk('newm'); }, hl: '.notif [data-x="Meals"]' },
+    { cap: 'Done without opening the app, and Sen made a rule.', see: '.notif' },
+    { cap: 'Had you swiped it away, it would wait in Review with the same buttons.', go() { fresh(); S.att.unshift(attCat('aR', 'RM9.50 · ROTI BAKAR 88', 'Ryt · Today 13:02 · new merchant', ['Meals', 'Drinks & desserts'])); root('review'); }, see: '#att-aR' },
+  ] },
+  { id: 'scan-button', g: 'Everyday capture', t: 'The Scan button', d: 'Tap scans at once; long-press for more', steps: [
+    { cap: 'The middle tab scans. A long-press opens the other ways in.', go() { fresh(); }, hl: '#tab-scan', act: 'scanLong' },
+    { cap: 'Scan, From gallery, or Add manually. A plain tap skips this and opens the scanner.', see: '.sheet' },
+  ] },
+  { id: 'receipt-first', g: 'Receipts', t: 'A receipt before its payment', d: 'It waits, then attaches itself; or you attach it', steps: [
+    { cap: 'You scan before the bank’s notification arrives. Done.', go() { fresh(); S.cf = cfNew('r1', 'wait'); S.stack = [{ s: 'home' }, { s: 'confirm' }]; }, hl: '#cf-done' },
+    { cap: 'Nothing to match yet, so it waits in Review, under Waiting on others.', go() { S.toast = null; root('review'); }, see: '#wait-wW' },
+    { cap: 'Ryt’s notification lands; matching attaches it, and it leaves the list.', go() { arriveForWaiting(); }, see: '#toast' },
+    { cap: 'This phone bill PDF came by email days after you paid, so attach it by hand.', go() { S.toast = null; }, hl: '#wait-w2' },
+    { cap: 'Sen lists likely payments: same merchant, close amounts.', hl: '#att-pick-t13' },
+  ] },
+  { id: 'manual', g: 'Fixing things', t: 'Entering a payment Sen missed', d: 'From Review, about ten seconds', steps: [
+    { cap: 'At the foot of Review: Missing a payment?', go() { fresh(); root('review'); }, hl: '#review-add' },
+    { cap: 'Type the amount and pick a category. RM12.90 looks like a payment Sen already has, so it warns, without blocking.', go() { S.man = { amt: '12.90', cat: 'Drinks & desserts' }; }, hl: '#man-save' },
+    { cap: 'Saved, with Undo.', see: '#toast' },
+  ] },
+  { id: 'new-wording', g: 'Fixing things', t: 'A notification no template reads', d: 'Sen drafts a template; you confirm it once', steps: [
+    { cap: 'TNG changed its wording. Sen drafted a template and asks once.', go() { fresh(); root('review'); }, hl: '#att-a5 [data-y="Yes"]' },
+    { cap: 'Saved. KEDAI MAJU is new, so it now asks what it was.', see: '#att-aK' },
+  ] },
+  { id: 'payday', g: 'The cycle', t: 'Payday', d: 'One flow: claims, balances, look-back, plan (D60)', steps: [
+    { cap: 'Salary lands and a new cycle starts. Home shows the Payday card.', go() { fresh(); S.payday = true; }, hl: '#pd-start' },
+    { cap: 'Did the salary include your submitted claims?', hl: '#pd-yes' },
+    { cap: 'Balance check: type each balance, or tap Matches.', go() { bcFill(); }, hl: '#pd-next' },
+    { cap: 'Sen’s look-back: three reasons, and one experiment.', hl: '#pd-track' },
+    { cap: 'The plan: due, set aside, left to spend.', hl: '#pd-use' },
+    { cap: 'Each move ticks off as its notification arrives.', go() { S.toast = null; }, see: '#plan-card' },
+  ] },
+  { id: 'insights', g: 'The cycle', t: 'Insights', d: 'Questions, charts, and Ask Sen', steps: [
+    { cap: 'Am I on track? This cycle’s spending (black) against last cycle (grey), with the estimate to payday dashed and your income as the ceiling.', go() { fresh(); root('insights'); }, see: '#ic-pace' },
+    { cap: 'Where did it go, and what changed? Each bar is this cycle; the tick is your typical cycle by this day. Black bars are the ones above typical.', see: '#ic-where' },
+    { cap: 'When does the money leak? A calendar of the cycle: darker days, more discretionary spending.', see: '#ic-habits' },
+    { cap: 'Every card can ask Sen. Try it on the first one.', hl: '#ic-pace .askl' },
+    { cap: 'Sen opens knowing you were on Insights, with the question ready. Tap it.', hl: '.sensheet .chip[data-a="ask"]' },
+    { cap: 'Every figure in the answer comes from Sen’s tools.', see: '.sensheet .msg:last-of-type' },
+  ] },
+  { id: 'widgets', g: 'The phone', t: 'Widgets', d: 'Each size earns its space', steps: [
+    { cap: 'Small: what’s left, and a pace meter: how much is spent against how much of the cycle has gone. One button: Scan.', go() { fresh(); S.view = 'phone'; }, see: '#w-s' },
+    { cap: 'Medium adds the pace line, this cycle against last, and Review with its count.', see: '#w-m' },
+    { cap: 'Large adds where it went, the budget at risk, and Sen’s latest note.', see: '#w-l' },
+    { cap: 'When capture stops, every size turns dark with Fix.', go() { S.captureOff = true; }, see: '#w-m' },
+  ] },
+  { id: 'capture-off', g: 'When things break', t: 'Capture switched off', d: 'The watchdog, the widgets, and Fix', steps: [
+    { cap: 'HyperOS kills the listener overnight. Within a day the watchdog warns. Tap it.', go() { fresh(); S.view = 'phone'; S.captureOff = true; S.notif = mk('capoff'); }, hl: '.notif .nbody' },
+    { cap: 'Home says Capture is off, above everything. Fix opens the right setting.', hl: '#fix-capture' },
+    { cap: 'Back on. Payments cleared meanwhile turn up as a gap at the next balance check.', see: '#toast' },
+  ] },
+  { id: 'balance-check', g: 'The cycle', t: 'Checking balances', d: 'Type what the banks say; the difference is the gap', steps: [
+    { cap: 'Weekly for the first four weeks, then each payday, a balance check waits in Review.', go() { fresh(); S.att.unshift(attBal()); root('review'); }, hl: '#att-aB [data-a="go"]' },
+    { cap: 'Type what each bank app shows, or tap Matches.', go() { bcFill(); }, hl: '#bc-save' },
+    { cap: 'TNG had RM36.20 less than Sen thought. That’s booked as Unaccounted, and the gap shows on Home.', see: '#bal-row' },
+  ] },
+  { id: 'claims', g: 'The cycle', t: 'The month’s claims', d: 'From More: drafts, evidence, the kit', steps: [
+    { cap: 'More, then Claims. Travel is missing the My50 receipt.', go() { fresh(); root('more'); go('claims'); }, see: '#cl-c2' },
+    { cap: 'The kit lays out ESS’s fields in order. Then Submitted.', go() { go('claim', { id: 'c1' }); }, hl: '#cl-submitted' },
+  ] },
+  { id: 'friend', g: 'Friends and family', t: 'A friend without capture', d: 'Invited, a short first run, receipts create payments', steps: [
+    { cap: 'An invited friend signs in with an emailed code, in their phone’s browser.', go() { fresh(); asFriend(); S.stack = [{ s: 'first-run' }]; S.fr = 1; }, hl: '#fr-next' },
+    { cap: 'The code.', hl: '#fr-next' },
+    { cap: 'A short first run: just the categories. No payday question: they count by month (D79).', hl: '#fr-next' },
+    { cap: 'Their Home: no balances, no gap. Without capture, confirming a receipt creates its payment.', see: '#hero' },
+  ] },
+  { id: 'offline', g: 'When things break', t: 'Offline', d: 'What still works, and what waits', steps: [
+    { cap: 'Offline. Capture, prompts, manual entry and Review all still work.', go() { fresh(); S.offline = true; }, see: '#offline-chip' },
+    { cap: 'Anything still in the outbox is marked Not synced yet.', go() { go('payments'); }, see: '.tag.ns' },
+    { cap: 'Sen needs a connection, and says so.', go() { root('home'); S.sen = { ctx: null }; }, see: '#sen-offline' },
+  ] },
+];
+
+function runStep() { const st = G.j.steps[G.i]; if (st.go) st.go(); render(); }
+function advance() { G.i += 1; if (G.i >= G.j.steps.length) { G.j = null; render(); } else runStep(); }
+function startJourney(id) { const j = J.find((x) => x.id === id); T = null; G.j = j; G.i = 0; fresh(); runStep(); }
+function nextStep() {
+  const st = G.j.steps[G.i];
+  if (st.act) ACT[st.act]({});
+  else if (st.hl) { const el = document.querySelector(st.hl); if (el && el.dataset.a && ACT[el.dataset.a]) ACT[el.dataset.a](el.dataset, el); }
+  advance();
+}
+Object.assign(ACT, {
+  gNext() { nextStep(); },
+  gBack() { const target = G.i - 1; const j = G.j; G.j = j; G.i = 0; fresh(); runStep(); while (G.j && G.i < target) nextStep(); },
+  gEnd() { G.j = null; },
+  tool(d) { T = d.x; },
+  toolClose() { T = null; },
+  journey(d) { startJourney(d.x); },
+  sim(d) {
+    T = null; const x = d.x;
+    if (['newm', 'hawker', 'owe', 'capoff', 'payday'].includes(x)) { if (x === 'capoff') S.captureOff = true; if (x === 'payday') S.payday = true; S.notif = mk(x); }
+    else if (x === 'known') { addKnown(); S.notif = mk('quiet'); }
+    else if (x === 'email') { if (!S.waiting.find((a) => a.id === 'w2')) S.waiting.unshift({ id: 'w2', k: 'rwait', title: 'TELCO ONE e-bill, RM45.00', sub: 'Forwarded just now. Waiting for its payment' }); S.view = 'app'; root('review'); toast('An e-bill arrived by email'); }
+    else if (x === 'captureon') S.captureOff = false;
+    else if (x === 'offline') S.offline = !S.offline;
+    else if (x === 'as') { const was = S.as; fresh(); if (was === 'owner') asFriend(); }
+    else if (x === 'notes') S.notes = !S.notes;
+    else if (x === 'reset') fresh();
+  },
+  jump(d) {
+    T = null; S.view = 'app'; S.notif = null; const s = d.s;
+    const map = {
+      scanmore: () => { root('home'); S.sheet = { k: 'scanmore' }; }, cycle: () => { root('home'); S.sheet = { k: 'cycle' }; },
+      txn: () => { root('more'); go('payments'); go('txn', { id: 't9' }); }, receipt: () => { root('more'); go('payments'); go('receipt', { id: 'r4' }); },
+      scan: () => { root('home'); ACT.startScan({ x: 'attach' }); }, reading: () => { root('home'); S.cf = cfNew('r1', 'attach'); go('reading'); },
+      confirm: () => { root('home'); S.cf = cfNew('r4', 'attach'); go('confirm'); }, manual: () => { root('review'); ACT.openManual(); },
+      split: () => { root('more'); go('shared'); go('split', { id: 's1' }); }, 'split-public': () => { S.pub = { sp: 's1', who: 'Mei', known: true }; root('home'); go('split-public'); },
+      account: () => { root('more'); go('accounts'); go('account', { id: 'ryt' }); }, claim: () => { root('more'); go('claims'); go('claim', { id: 'c1' }); }, goal: () => { root('insights'); go('goals'); go('goal', { id: 'g1' }); },
+      payday: () => { S.payday = true; S.pd = 1; root('home'); go('payday'); }, 'sign-in': () => { S.stack = [{ s: 'first-run' }]; S.fr = 1; }, 'first-run': () => { S.stack = [{ s: 'first-run' }]; S.fr = 3; },
+      phone: () => { S.view = 'phone'; }, sen: () => { root('home'); S.sen = { ctx: null }; },
+    };
+    if (map[s]) map[s]();
+    else if (s.startsWith('agent/')) { root('home'); go('asub', { id: s.split('/')[1] }); }
+    else if (s.startsWith('settings/')) { root('more'); go('settings'); go('set', { id: s.split('/')[1] }); }
+    else if (['home', 'review', 'insights', 'more'].includes(s)) root(s);
+    else if (['payments', 'shared', 'accounts', 'claims', 'settings'].includes(s)) { root('more'); go(s); }
+    else if (['subscriptions', 'goals', 'budgets', 'ins'].includes(s)) { root('insights'); go(s); }
+    else { root('home'); go(s); }
+  },
+  view() { S.view = S.view === 'app' ? 'phone' : 'app'; S.sc = false; },
+});
+
+function renderStrip() {
+  if (G.j) {
+    const st = G.j.steps[G.i]; const last = G.i === G.j.steps.length - 1;
+    return `<div class="gtop"><b>${esc(G.j.t)}</b><span>${G.i + 1} of ${G.j.steps.length}</span><button class="gx" data-a="gEnd" aria-label="End the journey">×</button></div><p class="gcap">${esc(st.cap)}</p><div class="gnav"><button data-a="gBack" ${G.i === 0 ? 'disabled' : ''}>‹ Back</button><button class="gpri" data-a="gNext">${last ? 'Finish' : (st.hl ? 'Tap it for me ›' : 'Next ›')}</button></div>`;
+  }
+  return `<div class="tools"><span class="brand">Sen wireframe</span><button data-a="tool" data-x="journeys" id="t-journeys">Journeys</button><button data-a="tool" data-x="sim" id="t-sim">Simulate</button><button data-a="tool" data-x="screens" id="t-screens">Screens</button><button data-a="view" id="t-view">${S.view === 'app' ? 'Phone' : 'App'}</button></div>`;
+}
+const SCREEN_INDEX = [
+  ['Tabs', ['home', 'review', 'scan', 'insights', 'more', 'sen']],
+  ['Home', ['cycle', 'payday']],
+  ['Review', ['skipped', 'manual', 'scanmore']],
+  ['Receipts', ['reading', 'confirm', 'receipt']],
+  ['Shared bills', ['shared', 'split', 'split-public']],
+  ['Insights', ['subscriptions', 'goals', 'goal', 'budgets', 'ins']],
+  ['More', ['payments', 'txn', 'accounts', 'account', 'balance-check', 'claims', 'claim', 'settings', 'settings/capture', 'settings/email', 'agent/memory', 'agent/usage']],
+  ['Outside the tabs', ['sign-in', 'first-run', 'phone']],
+];
+function renderTool() {
+  let h = '';
+  if (T === 'journeys') {
+    h = `<div class="thead"><h2>Journeys</h2><button class="tclose" data-a="toolClose">Close</button></div><p>Each one walks you through, highlighting what to tap. Tap it yourself, or use the button at the top.</p>`;
+    let g = '';
+    J.forEach((j) => { if (j.g !== g) { g = j.g; h += `<h3>${esc(g)}</h3>`; } h += `<button class="titem" data-a="journey" data-x="${j.id}" id="j-${j.id}"><b>${esc(j.t)}</b><span class="s">${esc(j.d)}</span></button>`; });
+  } else if (T === 'sim') {
+    const it = (x, t, s) => `<button class="titem" data-a="sim" data-x="${x}" id="sim-${x}"><b>${t}</b><span class="s">${s}</span></button>`;
+    h = `<div class="thead"><h2>Simulate</h2><button class="tclose" data-a="toolClose">Close</button></div><p>The dev simulator panel from the spec: fire what Android would do.</p><h3>Payments</h3>${it('newm', 'Pay at a new merchant', 'RM9.50 at ROTI BAKAR 88: the category prompt')}${it('hawker', 'Pay a hawker by DuitNow', 'A personal name, filed as a merchant')}${it('known', 'Pay at a known merchant', 'RM58.30 at NASI KANDAR ABC: the quiet scan prompt')}${it('owe', 'An hour after a friend’s split', 'The reminder: you owe Mei RM24.40')}${it('email', 'A receipt arrives by email', 'It waits for its payment')}<h3>The cycle and the phone</h3>${it('payday', 'Salary lands', 'The Payday card')}${it(S.captureOff ? 'captureon' : 'capoff', S.captureOff ? 'Capture back on' : 'Capture switches off', 'The watchdog, the widgets, the warning')}${it('offline', S.offline ? 'Back online' : 'Go offline', 'What still works')}<h3>The wireframe</h3>${it('as', S.as === 'owner' ? 'View as a friend without capture' : 'View as the owner', 'D52')}${it('notes', S.notes ? 'Hide the blue notes' : 'Show the blue notes', 'Rules and screen ids')}${it('reset', 'Reset', 'Back to the example data')}`;
+  } else {
+    h = `<div class="thead"><h2>Screens</h2><button class="tclose" data-a="toolClose">Close</button></div><p>Tap one to open it.</p>`;
+    SCREEN_INDEX.forEach(([g, ids]) => { h += `<h3>${esc(g)}</h3><div class="tgrid">${ids.map((s) => `<button class="tid" data-a="jump" data-s="${s}">${s === 'ins' ? 'insights/year' : s}</button>`).join('')}</div>`; });
+  }
+  return `<div class="tscrim" data-a="toolClose"></div><div class="tsheet" role="dialog">${h}</div>`;
+}
+
+render();
+</script>

@@ -1,0 +1,1349 @@
+<title>Sen Firefly</title>
+<!-- Sen, the look "Firefly" (S2, D57, D78). Built by docs/ui/directions/build.mjs from src/; edit the source, then rebuild.
+     Written for the Artifact tool, which adds the doctype and head. All figures are made up. Its assets are in assets/firefly/. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,400&display=swap">
+<style>
+/* Sen design directions: the shared page and phone styles. Each direction sets the tokens and fonts;
+   its own stylesheet adds what only it has. Layout: one centred column; phones side by side when they fit. */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--background); color: var(--foreground); font: 16px/1.5 var(--font-ui); }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+svg { display: block; }
+/* the shared icon set (D81): lucide outlines in the look's weight and line ends; colour comes from where the icon sits */
+svg.lu { fill: none; stroke: currentColor; stroke-width: var(--icon-stroke); stroke-linecap: var(--icon-cap); stroke-linejoin: var(--icon-join); }
+svg.lu path[d$="h.01"] { stroke-linecap: var(--icon-dot-cap); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- page ---------- */
+.pg { max-width: 1080px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: flex; flex-direction: column; gap: 56px; }
+.pg-head { display: grid; gap: 14px; position: relative; }
+.pg-nav { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--muted-foreground); }
+.pg-nav a, .pg-nav span.cur { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--foreground); text-decoration: none; }
+.pg-nav span.cur { background: var(--foreground); color: var(--background); border-color: var(--foreground); }
+.pg-nav .lbl { margin-right: 4px; }
+.pg-title { font: var(--title-weight, 400) clamp(44px, 9vw, 84px)/1 var(--font-display); letter-spacing: var(--title-track, -0.01em); margin: 6px 0 0; text-wrap: balance; }
+.pg-lede { max-width: 62ch; font-size: 18px; line-height: 1.55; margin: 0; color: var(--foreground); }
+.pg-meta { color: var(--muted-foreground); font-size: 14px; margin: 0; max-width: 64ch; }
+.pg-sec { display: grid; gap: 18px; min-width: 0; }
+.pg-h2 { font: 400 clamp(28px, 5vw, 40px)/1.1 var(--font-display); margin: 0; letter-spacing: -0.005em; }
+.pg-p { margin: 0; max-width: 64ch; color: var(--muted-foreground); }
+.pg-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.cap { font-size: 13px; color: var(--muted-foreground); }
+
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 3px; gap: 2px; background: var(--card); flex-wrap: wrap; }
+.seg button { padding: 6px 12px; border-radius: 999px; font-size: 14px; color: var(--muted-foreground); }
+.seg button[aria-pressed="true"] { background: var(--foreground); color: var(--background); }
+
+/* ---------- phones ---------- */
+.phones { display: flex; gap: 14px; justify-content: center; align-items: flex-start; min-width: 0; }
+.phone-wrap { flex: none; position: relative; width: calc(390px * var(--z, 1)); height: calc(844px * var(--z, 1)); }
+.phone-wrap[hidden] { display: none; }
+.phone-wrap .tag { position: absolute; left: 0; right: 0; top: calc(100% + 6px); text-align: center; font-size: 13px; color: var(--muted-foreground); }
+.phones.has-tags { padding-bottom: 26px; }
+.phone { position: absolute; left: 0; top: 0; width: 390px; height: 844px; transform: scale(var(--z, 1)); transform-origin: 0 0; border-radius: 46px; padding: 9px; background: #0c0c0d; box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset, 0 30px 60px -20px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.25); }
+.screen { position: relative; width: 100%; height: 100%; border-radius: 38px; overflow: hidden; background: var(--background); color: var(--foreground); font-family: var(--font-ui); display: flex; flex-direction: column; isolation: isolate; }
+.phone-wrap.zoomable { cursor: zoom-in; }
+
+.sbar { flex: none; height: 34px; padding: 10px 26px 0 30px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; color: var(--foreground); }
+.sbar .sbi { display: flex; gap: 6px; align-items: center; }
+.sbar svg { width: 16px; height: 16px; }
+.appbar { flex: none; height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+.content { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; padding: 2px 20px 96px; display: flex; flex-direction: column; gap: 14px; }
+.content::-webkit-scrollbar { display: none; }
+.content > * { flex-shrink: 0; }
+
+.hero { display: grid; gap: 3px; width: 100%; padding: 2px 0 0; position: relative; }
+.hero-lbl { font-size: 15px; color: var(--muted-foreground); }
+.hero-fig { font: var(--hero-weight, 300) var(--hero-size, 54px)/1.05 var(--font-num); letter-spacing: var(--hero-track, -0.015em); color: var(--foreground); display: flex; align-items: baseline; gap: 4px; }
+.hero-fig .cur { font-size: 0.4em; letter-spacing: 0.02em; }
+.hero.over .hero-fig { color: var(--money-warning); }
+.hero-sub { font-size: 15px; color: var(--muted-foreground); }
+.strip { margin-top: 8px; width: 100%; height: 22px; display: block; }
+
+.card { background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: var(--radius-card, 16px); padding: 14px 16px; display: grid; gap: 8px; width: 100%; }
+.pace .row1 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 15px; }
+.pace .row1 b { font-weight: 600; }
+.pace .sub { font-size: 14px; color: var(--muted-foreground); }
+.pace .chart { width: 100%; height: auto; overflow: visible; }
+.chart .ax { font: 11px var(--font-ui); fill: var(--muted-foreground); }
+.legend { display: flex; gap: 14px; font-size: 12px; line-height: 1; color: var(--muted-foreground); margin-top: -2px; }
+.legend i { display: inline-block; width: 14px; height: 2px; border-radius: 1px; vertical-align: middle; margin-right: 6px; }
+
+.note { gap: 6px; }
+.note-head { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted-foreground); }
+.note-head b { color: var(--foreground); font-weight: 600; font-size: 14px; }
+.note p { margin: 0; font: var(--voice-style, normal) var(--voice-weight, 400) var(--voice-size, 15px)/1.45 var(--font-voice); color: var(--card-foreground); }
+
+.quiet { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 0 0; border-top: 1px solid var(--border); font-size: 14px; color: var(--muted-foreground); width: 100%; }
+.quiet b { color: var(--foreground); font-weight: 500; text-align: right; }
+
+.warnbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: var(--radius-card, 16px); background: var(--warn-bg); color: var(--warn-fg); font-size: 14px; }
+.warnbar b { display: block; font-size: 15px; }
+.warnbar .fix { flex: none; padding: 7px 14px; border-radius: 999px; background: var(--warn-fg); color: var(--warn-bg); font-weight: 600; font-size: 14px; }
+
+.payday { display: flex; align-items: center; justify-content: space-between; gap: 12px; position: relative; overflow: hidden; }
+.payday b { font-size: 16px; display: block; }
+.payday .sub { font-size: 14px; color: var(--muted-foreground); }
+.btn-pri { flex: none; padding: 9px 16px; border-radius: var(--radius-btn, 999px); background: var(--primary); color: var(--primary-foreground); font-weight: 600; font-size: 14px; }
+.btn-ghost { flex: none; padding: 8px 14px; border-radius: var(--radius-btn, 999px); border: 1px solid var(--border); color: var(--foreground); font-weight: 500; font-size: 14px; }
+
+.fab { position: absolute; right: 18px; bottom: 92px; width: 60px; height: 60px; border-radius: 50%; z-index: 4; display: grid; place-items: center; box-shadow: var(--fab-shadow, 0 8px 22px -6px rgba(0,0,0,.45)); }
+.fab canvas { border-radius: 50%; }
+
+.tabbar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; height: 78px; padding: 8px 6px 20px; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--tabbar-bg, var(--background)); border-top: 1px solid var(--border); }
+.tab { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11.5px; color: var(--muted-foreground); position: relative; }
+.tab > svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: var(--icon-stroke, 1.75); stroke-linecap: round; stroke-linejoin: round; }
+.tab.on { color: var(--tab-on, var(--foreground)); font-weight: 600; }
+.tab .badge { position: absolute; top: -4px; left: calc(50% + 6px); min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; background: var(--badge-bg, var(--primary)); color: var(--badge-fg, var(--primary-foreground)); font-size: 11px; font-weight: 700; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.tab-scan .scanbtn { width: 50px; height: 38px; border-radius: 14px; display: grid; place-items: center; background: var(--scan-bg, var(--primary)); color: var(--scan-fg, var(--primary-foreground)); }
+.tab-scan .scanbtn > svg { width: 22px; height: 22px; }
+/* a look's own tabs: each icon idle and active, stacked; the active one shows */
+.tab .ti { position: relative; width: 30px; height: 26px; flex: none; }
+.tab .ti > span { position: absolute; inset: 0; display: grid; place-items: center; transition: opacity .22s ease; }
+.tab .ti svg { display: block; overflow: visible; }
+.tab .i-on, .tab.on .i-off { opacity: 0; }
+.tab.on .i-on { opacity: 1; }
+.tab .tl { line-height: 1.25; }
+.tab-ind { position: absolute; z-index: 2; top: 0; left: calc(6px + (100% - 12px) * (var(--i) + .5) / 5); transform: translateX(-50%); pointer-events: none; transition: left .45s cubic-bezier(.3,.7,.2,1); }
+.tab-ind:empty { display: none; }
+.tab-scan .scanbtn.cs { background: none; width: 52px; height: 52px; margin-top: -12px; border-radius: 50%; transition: transform .15s ease; }
+.tab-scan .scanbtn.cs .sb { width: 100%; height: 100%; display: block; overflow: visible; }
+.tab .badge.cb { background: none; padding: 0; min-width: 0; height: auto; border-radius: 0; color: inherit; display: block; top: -6px; left: calc(50% + 4px); }
+.tab .badge.cb svg { display: block; overflow: visible; }
+.tab .badge.cb b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---------- Sen's sheet ---------- */
+.scrim { position: absolute; inset: 0; z-index: 6; background: rgba(0,0,0,.38); opacity: 0; transition: opacity .25s; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; top: 44px; z-index: 7; background: var(--popover); color: var(--popover-foreground); border-radius: 24px 24px 0 0; display: flex; flex-direction: column; transform: translateY(100%); transition: transform .32s cubic-bezier(.2,.8,.2,1); box-shadow: 0 -10px 40px -10px rgba(0,0,0,.35); }
+.sheet.open { transform: none; }
+.scrim.open { opacity: 1; }
+.grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 8px auto 0; flex: none; }
+.sheet-head { flex: none; display: flex; align-items: center; gap: 12px; padding: 10px 14px 12px 18px; border-bottom: 1px solid var(--border); }
+.sheet-head .who { flex: 1; min-width: 0; display: grid; }
+.sheet-head .who b { font-size: 17px; font-weight: 600; }
+.sheet-head .who span { font-size: 13px; color: var(--muted-foreground); }
+.ib { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: var(--icon); }
+.ib svg { width: 22px; height: 22px; }
+.msgs { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.msg { max-width: 88%; display: grid; gap: 4px; font-size: 15px; line-height: 1.45; }
+.msg.sen { align-self: flex-start; }
+.msg.sen p { margin: 0; font: var(--voice-style, normal) var(--voice-weight, 400) var(--voice-size, 15px)/1.45 var(--font-voice); }
+.msg.me { align-self: flex-end; background: var(--secondary); color: var(--secondary-foreground); padding: 9px 13px; border-radius: 18px 18px 4px 18px; }
+.msg .when { font-size: 12px; color: var(--muted-foreground); }
+.msg .acts { display: flex; gap: 8px; margin-top: 6px; }
+.chips { display: flex; gap: 8px; padding: 0 18px 10px; overflow-x: auto; flex: none; }
+.chip { flex: none; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border); font-size: 14px; color: var(--foreground); background: var(--card); }
+.composer { flex: none; margin: 0 14px 22px; display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 16px; border: 1px solid var(--input); border-radius: 999px; color: var(--muted-foreground); font-size: 15px; }
+.composer > span:first-child { flex: 1; }
+.composer .send { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: var(--primary-foreground); display: grid; place-items: center; }
+.composer .send svg { width: 18px; height: 18px; }
+.ctxchip { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted-foreground); white-space: nowrap; }
+
+/* ---------- Sen section ---------- */
+.sen-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; align-items: center; }
+@media (min-width: 760px) { .sen-top { grid-template-columns: 300px minmax(0, 1fr); } }
+.sen-stage { display: grid; place-items: center; padding: 18px 0; }
+.profile { display: grid; gap: 14px; min-width: 0; }
+.profile h3 { margin: 0; font: 400 34px/1.1 var(--font-display); }
+.profile .role { color: var(--muted-foreground); margin: 0; }
+.profile dl { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 560px) { .profile dl { grid-template-columns: 120px minmax(0, 1fr); gap: 10px 18px; } }
+.profile dt { font-size: 14px; color: var(--muted-foreground); }
+.profile dd { margin: 0; }
+.profile .voice { font: var(--voice-style, normal) var(--voice-weight, 400) 17px/1.5 var(--font-voice); }
+.states { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 640px) { .states { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.state { display: grid; gap: 8px; justify-items: start; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-card, 16px); background: var(--card); }
+.state b { font-size: 15px; font-weight: 600; }
+.state span { font-size: 13px; color: var(--muted-foreground); line-height: 1.35; }
+.incontext { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.ctxbox { border: 1px solid var(--border); border-radius: var(--radius-card, 16px); padding: 14px; display: grid; gap: 10px; align-content: start; background: var(--card); min-width: 0; }
+.ctxbox .cap { margin: 0; }
+
+/* ---------- icon section ---------- */
+.icon-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+@media (min-width: 860px) { .icon-top { grid-template-columns: 360px minmax(0, 1fr); align-items: start; } }
+.launcher { position: relative; width: 100%; max-width: 360px; aspect-ratio: 360 / 600; border-radius: 30px; overflow: hidden; padding: 12px 16px 16px; display: flex; flex-direction: column; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.launcher .lsb { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; opacity: .95; padding: 0 6px; }
+.launcher .clock { margin: 26px 6px 0; font-size: 50px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; }
+.launcher .date { margin: 6px 6px 0; font-size: 14px; opacity: .9; }
+.lgrid { margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 6px; justify-items: center; }
+.app { display: grid; justify-items: center; gap: 6px; width: 100%; position: relative; }
+.app-ic { width: 56px; height: 56px; display: block; }
+.app-ic.plain { border-radius: 18px; display: grid; place-items: center; }
+.app-ic.plain svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.app-lbl { font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+.dock { margin-top: 18px; padding: 10px 6px; border-radius: 26px; background: rgba(255,255,255,.16); display: grid; grid-template-columns: repeat(4, 1fr); justify-items: center; }
+.pop { position: absolute; z-index: 2; width: 196px; border-radius: 18px; background: rgba(250,250,252,.97); color: #1b1b1f; box-shadow: 0 16px 40px -10px rgba(0,0,0,.5); padding: 6px; font-size: 14px; }
+.pop div { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; }
+.pop svg { width: 20px; height: 20px; }
+.icon-side { display: grid; gap: 18px; min-width: 0; }
+.masks { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end; }
+.maskc { display: grid; justify-items: center; gap: 6px; font-size: 12px; color: var(--muted-foreground); }
+.anatomy { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
+.layer { display: grid; gap: 6px; font-size: 12px; color: var(--muted-foreground); }
+.layer .box { aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: repeating-conic-gradient(var(--checker) 0 25%, transparent 0 50%) 0 0 / 12px 12px; border: 1px solid var(--border); }
+.layer .box svg { width: 100%; height: 100%; }
+.layer .box.mid { background: repeating-conic-gradient(#7d848c 0 25%, #8d949c 0 50%) 0 0 / 12px 12px; }
+.themed { border-radius: 24px; padding: 16px; display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+.themed .app { width: auto; }
+.themed .app-lbl { text-shadow: none; }
+.shade { border-radius: 24px; background: #17181c; color: #eceef2; padding: 12px; display: grid; gap: 10px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.shade .ssb { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; padding: 0 8px; }
+.shade .ssb .icons { display: flex; gap: 6px; align-items: center; }
+.shade .ssb svg { width: 15px; height: 15px; }
+.notif { background: #26272d; border-radius: 20px; padding: 12px 14px; display: grid; gap: 4px; font-size: 14px; }
+.notif .nh { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #b9bcc6; }
+.notif .nh svg { width: 16px; height: 16px; }
+.notif .nb { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: start; }
+.notif .nt { font-weight: 600; }
+.notif .nx { color: #c9ccd4; line-height: 1.4; }
+.notif .na { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.notif .na span { padding: 6px 12px; border-radius: 999px; background: #34363e; font-size: 13px; font-weight: 600; color: #e7e9ee; }
+
+/* ---------- tab bar section: the bar at full size in each mode, then every icon at twice its size ---------- */
+.tabdemos { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 820px) { .tabdemos { grid-template-columns: 1fr 1fr; } }
+.tabdemo-wrap { display: grid; gap: 6px; justify-items: center; min-width: 0; }
+.phone.tabdemo { position: relative; left: auto; top: auto; transform: none; width: 100%; max-width: 390px; height: 104px; padding: 0; border-radius: 22px; background: none; box-shadow: 0 0 0 1px var(--border); overflow: hidden; }
+.phone.tabdemo .screen { border-radius: 22px; }
+.iconsheets { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 820px) { .iconsheets { grid-template-columns: 1fr 1fr; } }
+.iconsheet { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 8px; padding: 18px 10px 14px; border-radius: var(--radius-card, 16px); border: 1px solid var(--border); background: var(--tabbar-bg, var(--background)); color: var(--foreground); }
+.iconsheet .ic { display: grid; justify-items: center; align-content: start; gap: 18px; }
+.iconsheet .ic2 { width: 74px; height: 56px; display: grid; place-items: center; }
+.iconsheet .ic2 > svg { transform: scale(2); overflow: visible; }
+.iconsheet .ic-scan { grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; gap: 22px; padding-top: 14px; margin-top: 4px; border-top: 1px solid var(--border); }
+.iconsheet .ic-scan .ic2 { width: 84px; height: 84px; }
+.iconsheet .ic-scan .ic2 > svg { transform: scale(1.5); }
+.iconsheet .cap { font-size: 12px; }
+
+/* ---------- theme section ---------- */
+.tok { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tokwrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-card, 16px); background: var(--card); }
+.tok th, .tok td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.tok th { font-weight: 600; font-size: 13px; color: var(--muted-foreground); }
+.tok tr:last-child td { border-bottom: 0; }
+.tok .sw { display: inline-block; width: 22px; height: 22px; border-radius: 6px; vertical-align: middle; margin-right: 8px; box-shadow: inset 0 0 0 1px rgba(127,127,127,.35); }
+.tok code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.tok .ratio { font-size: 12px; color: var(--muted-foreground); margin-left: 6px; }
+.tok .ok { color: var(--money-in); }
+.moneyrow { display: flex; flex-wrap: wrap; gap: 10px; }
+.mchip { display: grid; gap: 2px; padding: 10px 14px; border-radius: var(--radius-card, 14px); border: 1px solid var(--border); min-width: 150px; }
+.mchip span { font-size: 12px; color: var(--muted-foreground); }
+.mchip b { font: 600 18px/1.2 var(--font-ui); }
+.mchip.in b { color: var(--money-in); }
+.mchip.out b { color: var(--money-out); }
+.mchip.pend b { color: var(--money-pending); text-decoration: underline dashed; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.mchip.warn b { color: var(--money-warning); }
+.modes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 760px) { .modes { grid-template-columns: 1fr 1fr; } }
+.modebox { border-radius: var(--radius-card, 16px); padding: 16px; display: grid; gap: 12px; border: 1px solid var(--border); background: var(--background); color: var(--foreground); }
+.spec { display: grid; gap: 14px; }
+.spec .s1 { font: var(--hero-weight, 300) 46px/1.05 var(--font-num); letter-spacing: var(--hero-track, -0.015em); }
+.spec .s2 { font: 400 22px/1.3 var(--font-display); }
+.spec .s3 { font-size: 16px; }
+.spec .s4 { font: var(--voice-style, normal) var(--voice-weight, 400) 17px/1.5 var(--font-voice); }
+.cssbox { position: relative; }
+.cssbox pre { margin: 0; max-height: 320px; overflow: auto; padding: 14px 16px; border-radius: var(--radius-card, 16px); background: var(--muted); color: var(--foreground); font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; border: 1px solid var(--border); }
+.cssbox .copy { position: absolute; top: 10px; right: 10px; padding: 6px 12px; border-radius: 999px; background: var(--primary); color: var(--primary-foreground); font-size: 13px; font-weight: 600; }
+
+.tradeoffs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 760px) { .tradeoffs { grid-template-columns: 1fr 1fr; } }
+.tradeoffs div { border: 1px solid var(--border); border-radius: var(--radius-card, 16px); padding: 16px 18px; background: var(--card); }
+.tradeoffs h3 { margin: 0 0 8px; font-size: 16px; }
+.tradeoffs ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.foot { color: var(--muted-foreground); font-size: 13px; border-top: 1px solid var(--border); padding-top: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .scrim { transition: none; }
+}
+
+/* ---------- charts section: the palette, then the Insights questions in each mode ---------- */
+.swrow, .vizrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 820px) { .swrow, .vizrow { grid-template-columns: 1fr 1fr; } }
+.swatches, .vizpanel { display: grid; gap: 10px; align-content: start; padding: 14px; border-radius: var(--radius-card, 16px); border: 1px solid var(--border); background: var(--background); color: var(--foreground); min-width: 0; }
+.swc { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 10px; font-size: 14px; }
+.swc i { width: 28px; height: 18px; border-radius: 5px; }
+.swc code { font-size: 12px; color: var(--muted-foreground); }
+.swc.seq { grid-template-columns: repeat(5, 18px) 1fr; gap: 3px; }
+.swc.seq i { width: 18px; }
+.swc.seq b { margin-left: 8px; }
+.vcard { gap: 10px; }
+.vq { font-weight: 600; font-size: 15px; }
+.vtake { font-size: 13px; color: var(--muted-foreground); }
+.viz { width: 100%; height: auto; overflow: visible; }
+.viz .vl { font: 12px var(--font-ui); fill: var(--foreground); }
+.viz .vv { font: 12px var(--font-ui); fill: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.viz .vd { font: 10px var(--font-ui); fill: var(--muted-foreground); }
+.viz .vd.on { fill: var(--card); }
+.viz.cal { max-width: 276px; }
+.vlegend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted-foreground); }
+.vlegend b { font-weight: 600; color: var(--foreground); font-variant-numeric: tabular-nums; }
+.vlegend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+.vlegend.seq { align-items: center; gap: 3px; }
+.vlegend.seq i { margin: 0; width: 16px; }
+.vlegend.seq span:first-child { margin-right: 6px; } .vlegend.seq span:last-child { margin-left: 6px; }
+.meter { display: grid; gap: 4px; }
+.meter .mt { display: flex; justify-content: space-between; font-size: 13px; }
+.meter .mt span:last-child { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.meter .risk { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--money-warning); }
+.meter .risk svg { width: 16px; height: 16px; flex: none; }
+.icrow { display: flex; flex-wrap: wrap; gap: 14px; padding: 14px 16px; border-radius: var(--radius-card, 16px); border: 1px solid var(--border); background: var(--card); color: var(--icon); }
+.icrow svg { width: 24px; height: 24px; }
+.icrow .warn { color: var(--money-warning); }
+
+/* Firefly: an indigo night over the river, and a blue hour by day. Light is the loud thing; nothing else glows. */
+:root {
+  --font-ui: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-num: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-voice: "Newsreader", Georgia, "Times New Roman", serif;
+  --voice-style: italic; --voice-weight: 400; --voice-size: 17px;
+  --hero-size: 58px; --hero-weight: 300; --hero-track: -0.02em;
+  --title-weight: 300; --radius-card: 18px;
+}
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pg-title { line-height: 0; margin-top: 2px; }
+.ff-title { display: block; width: calc(100% + 16px); max-width: 576px; height: 70px; margin-left: -8px; }
+.pg-h2, .profile h3 { font-weight: 300; font-variation-settings: "opsz" 60; }
+.pg-h2 { letter-spacing: -0.01em; }
+
+.wm { font: 500 23px/1 var(--font-ui); letter-spacing: -0.01em; display: inline-flex; align-items: baseline; gap: 3px; }
+.wm .ff { width: 6px; height: 6px; border-radius: 50%; background: var(--ffly-core); box-shadow: 0 0 10px 3px var(--glow); animation: wmblink 3.2s ease-in-out infinite; }
+.phone.light .wm .ff { background: var(--ffly); box-shadow: 0 0 8px 2px rgba(201,148,18,.35); }
+@keyframes wmblink { 0%, 100% { opacity: .55; } 6% { opacity: 1; } 30% { opacity: .55; } }
+
+.hero-fig { display: block; margin: 2px 0 0; }
+.hero-fig canvas, .spec .s1 canvas { display: block; width: calc(100% + 16px); height: 67px; margin-left: -8px; }
+.spec .s1 canvas { max-width: 456px; }
+.hero .strip { height: 30px; margin-top: 6px; }
+.ff-now { animation: ffnow 3.2s ease-in-out infinite; }
+.ff-now-halo { animation: ffhalo 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes ffnow { 0%, 100% { opacity: .7; } 5% { opacity: 1; } 34% { opacity: .7; } }
+@keyframes ffhalo { 0%, 100% { opacity: .45; transform: scale(.85); } 5% { opacity: 1; transform: scale(1.12); } 34% { opacity: .45; transform: scale(.85); } }
+.hero.sync .tw-ff, .hero.sync .ff-now, .hero.sync .ff-now-halo { animation: ffsync .85s ease-out 3; }
+@keyframes ffsync { 0% { opacity: .2; } 10% { opacity: 1; } 100% { opacity: .2; } }
+
+.sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.phone.dark .sky { background: radial-gradient(120% 55% at 92% -4%, rgba(92,74,184,.34), transparent 62%), radial-gradient(90% 40% at 30% 108%, rgba(120,72,142,.26), transparent 70%); }
+.phone.light .sky { background: linear-gradient(180deg, #d8dbf0 0%, #e5e4f2 38%, #ece6ec 72%, #f3e5dc 100%); }
+.bokeh i { position: absolute; border-radius: 50%; opacity: var(--o); animation: drift 38s ease-in-out infinite alternate; }
+.phone.dark .bokeh i { background: radial-gradient(circle, rgba(244,233,138,.9) 0 55%, rgba(244,233,138,0) 72%); filter: blur(1.5px); }
+.phone.dark .bokeh i:nth-child(3n) { background: radial-gradient(circle, rgba(172,156,244,.9) 0 55%, rgba(172,156,244,0) 72%); }
+.phone.light .bokeh i { background: radial-gradient(circle, rgba(255,255,255,.95) 0 50%, rgba(255,255,255,0) 72%); opacity: calc(var(--o) * 3); }
+@keyframes drift { to { transform: translate(var(--dx), var(--dy)); } }
+.screen > .sbar, .screen > .appbar, .screen > .content { position: relative; z-index: 1; }
+.phone.light .card { background: rgba(250,250,254,.86); }
+.phone.dark .card { background: rgba(23,20,58,.88); }
+.pace .chart path[stroke="var(--chart-accent)"] { filter: drop-shadow(0 0 4px var(--glow)); }
+.note p { color: var(--foreground); }
+.fab { background: #17143a; }
+/* the tab bar: the blue hour by day, the river's night after dark; icons are firefly trails */
+.tabbar { border-top-color: transparent; box-shadow: 0 -1px 0 var(--border); }
+.phone.light .tabbar { background: linear-gradient(180deg, rgba(230,229,243,.95), rgba(243,229,220,.97)); }
+.phone.dark .tabbar { background: linear-gradient(180deg, rgba(22,19,52,.96), rgba(10,9,26,.98)); box-shadow: 0 -1px 0 rgba(120,100,220,.18); }
+.iconsheet.mlight { background: linear-gradient(180deg, #e6e5f3, #f3e5dc); }
+.iconsheet.mdark { background: linear-gradient(180deg, #16133a, #0a091a); }
+.tab-scan .scanbtn.cs { box-shadow: 0 6px 16px -6px rgba(30,26,72,.55); }
+.phone.dark .tab-scan .scanbtn.cs { box-shadow: 0 0 0 1px rgba(244,233,138,.14), 0 0 22px -4px rgba(244,233,138,.3); }
+.ff-ring { animation: ffring 3s ease-in-out infinite; animation-delay: var(--d); }
+@keyframes ffring { 0%, 100% { opacity: .2; } 8% { opacity: .95; } 40% { opacity: .2; } }
+.ff-halo { animation: ffhalo2 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes ffhalo2 { 0%, 100% { opacity: .7; } 5% { opacity: 1; } 34% { opacity: .7; } }
+.phone.dark .tab .badge.cb svg { filter: drop-shadow(0 0 4px rgba(244,233,138,.45)); }
+/* the firefly that flies to a newly chosen tab, and the trail it leaves */
+.ff-fly, .ff-trail { position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none; z-index: 5; }
+.ff-fly { width: 6px; height: 6px; margin: -3px 0 0 -3px; background: #fffce8; box-shadow: 0 0 8px 3px rgba(244,233,138,.6); }
+.phone.light .ff-fly { background: #f7d76a; box-shadow: 0 0 8px 3px rgba(201,148,18,.45); }
+.ff-trail { width: 3px; height: 3px; margin: -1.5px 0 0 -1.5px; background: var(--ffly); opacity: 0; animation: fftrail .9s ease-out both; }
+@keyframes fftrail { 0% { opacity: 0; } 2% { opacity: .9; } 100% { opacity: 0; } }
+.tab.on.fresh .i-on { animation: ffarrive .95s ease-out both; }
+@keyframes ffarrive { 0%, 58% { opacity: 0; } 72% { opacity: 1; filter: brightness(1.7); } 100% { opacity: 1; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .bokeh i, .ff-now, .ff-now-halo, .wm .ff, .ff-ring, .ff-halo, .tab.on.fresh .i-on { animation: none; } }
+</style>
+<div class="pg" id="pg"></div>
+<script>
+/* Sen design directions: the shared engine. Pure helpers come first, so build.mjs can run the icon
+   functions in node to export the SVG layers; everything that touches the DOM runs from boot().
+   All figures are made up, in integer sen (the wireframe's data, D11). */
+'use strict';
+const TAU = Math.PI * 2;
+const f2 = (n) => String(Math.round(n * 100) / 100);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- money: integer sen in, text out ----------
+function group(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function rm(sen) { const a = Math.abs(sen); return (sen < 0 ? '−' : '') + 'RM' + group(Math.floor(a / 100)) + '.' + String(a % 100).padStart(2, '0'); }
+function rmParts(sen) { const a = Math.abs(sen); return { cur: 'RM', whole: group(Math.floor(a / 100)), cents: String(a % 100).padStart(2, '0') }; }
+
+// ---------- colour maths (WCAG contrast, OKLCH for shadcn's variables) ----------
+function hexRgb(h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map((c) => c + c).join(''); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255); }
+function lin(c) { return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+function lum(h) { const [r, g, b] = hexRgb(h).map(lin); return 0.2126 * r + 0.7152 * g + 0.0722 * b; }
+function contrast(a, b) { const la = lum(a), lb = lum(b); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); }
+function oklch(h) {
+  const [r, g, b] = hexRgb(h).map(lin);
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+  const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+  const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+  const C = Math.hypot(A, B); let H = Math.atan2(B, A) * 180 / Math.PI; if (H < 0) H += 360;
+  return `oklch(${L.toFixed(3)} ${C.toFixed(3)} ${C < 0.002 ? 0 : H.toFixed(1)})`;
+}
+
+// ---------- geometry ----------
+function bez(p0, p1, p2, p3, t) { const u = 1 - t; return [u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0], u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1]]; }
+// n points spaced evenly by arc length along a chain of cubic segments
+function sampleSegs(segs, n) {
+  const fine = []; segs.forEach((s) => { for (let i = 0; i <= 160; i++) fine.push(bez(s[0], s[1], s[2], s[3], i / 160)); });
+  const d = [0]; for (let i = 1; i < fine.length; i++) d.push(d[i - 1] + Math.hypot(fine[i][0] - fine[i - 1][0], fine[i][1] - fine[i - 1][1]));
+  const L = d[d.length - 1]; const out = []; let j = 0;
+  for (let k = 0; k < n; k++) { const tg = L * k / (n - 1); while (j < d.length - 2 && d[j + 1] < tg) j++; const f = (tg - d[j]) / ((d[j + 1] - d[j]) || 1); out.push([fine[j][0] + f * (fine[j + 1][0] - fine[j][0]), fine[j][1] + f * (fine[j + 1][1] - fine[j][1])]); }
+  return out;
+}
+const polyD = (pts, close) => pts.map((p, i) => (i ? 'L' : 'M') + f2(p[0]) + ' ' + f2(p[1])).join('') + (close ? 'Z' : '');
+
+// ---------- adaptive icon: 108dp canvas, 72dp viewport, 66dp safe zone ----------
+const MASKS = {
+  circle: '<circle cx="54" cy="54" r="36"/>',
+  squircle: '<path d="M54 18C80.5 18 90 27.5 90 54S80.5 90 54 90 18 80.5 18 54 27.5 18 54 18Z"/>',
+  rounded: '<rect x="18" y="18" width="72" height="72" rx="17"/>',
+  teardrop: '<path d="M54 18H90V54A36 36 0 1 1 54 18Z"/>',
+};
+let UID = 0;
+function iconSVG(size, mask) { const p = 'i' + (UID++); return `<svg class="app-ic" width="${size}" height="${size}" viewBox="18 18 72 72" role="img" aria-label="Sen"><defs><clipPath id="${p}m">${MASKS[mask || 'squircle']}</clipPath></defs><g clip-path="url(#${p}m)">${DIR.icon.background(p)}${DIR.icon.foreground(p)}</g></svg>`; }
+function layerSVG(which) {
+  const p = 'i' + (UID++);
+  const guides = '<rect x="18" y="18" width="72" height="72" fill="none" stroke="#ff2d95" stroke-width=".5" stroke-dasharray="2 2"/><circle cx="54" cy="54" r="33" fill="none" stroke="#18c8ff" stroke-width=".5"/>';
+  if (which === 'background') return `<svg viewBox="0 0 108 108">${DIR.icon.background(p)}${guides}</svg>`;
+  if (which === 'foreground') return `<svg viewBox="0 0 108 108">${DIR.icon.foreground(p)}${guides}</svg>`;
+  if (which === 'monochrome') return `<svg viewBox="0 0 108 108" style="color:var(--foreground)">${DIR.icon.monochrome(p)}${guides}</svg>`;
+  return `<svg viewBox="0 0 108 108">${DIR.icon.background(p)}${DIR.icon.foreground(p)}${guides}</svg>`;
+}
+function themedSVG(size, bg, fg) { const p = 'i' + (UID++); return `<svg class="app-ic" width="${size}" height="${size}" viewBox="18 18 72 72" role="img" aria-label="Sen, themed"><circle cx="54" cy="54" r="36" fill="${bg}"/><g style="color:${fg}">${DIR.icon.monochrome(p)}</g></svg>`; }
+function smallSVG(size, color) { return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="color:${color}" aria-hidden="true">${DIR.icon.small()}</svg>`; }
+
+// ---------- lucide-style glyphs (the stack's icon set) ----------
+const GLYPH = {
+  home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  review: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  scan: '<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/>',
+  insights: '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/>',
+  more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  up: '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  cal: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+  sliders: '<path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
+  folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  pin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  note: '<path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/>',
+  calc: '<rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>',
+  wallet: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+};
+// one shared set, lucide (D81): every look draws these in its own icon colour, weight and line ends (DIR.icons)
+const ico = (k, cls) => `<svg viewBox="0 0 24 24" class="lu${cls ? ` ${cls}` : ''}" aria-hidden="true">${GLYPH[k]}</svg>`;
+
+// ---------- the tab bar: the same five tabs and the same outlines in every look; each look draws them in its own material ----------
+const TABS = [['home', 'Home'], ['review', 'Review'], ['scan', 'Scan'], ['insights', 'Insights'], ['more', 'More']];
+// outlines on a 24-unit square: strokes as absolute path data, the face some looks fill when a tab is active, and where a trail ends
+const TAB_SK = {
+  home: { d: ['M3.8 11.4L12 4.4L20.2 11.4', 'M6.2 9.4V19.6H17.8V9.4', 'M10.2 19.6V15.2Q10.2 13.8 11.6 13.8H12.4Q13.8 13.8 13.8 15.2V19.6'], area: 'M6.2 9.4L12 4.4L17.8 9.4V19.6H13.8V15.2Q13.8 13.8 12.4 13.8H11.6Q10.2 13.8 10.2 15.2V19.6H6.2Z', head: [12, 4.4] },
+  review: { d: ['M3.6 13L6.4 6Q6.8 5 7.9 5H16.1Q17.2 5 17.6 6L20.4 13V18Q20.4 19.6 18.8 19.6H5.2Q3.6 19.6 3.6 18Z', 'M3.6 13H8.4L9.8 15.6H14.2L15.6 13H20.4'], area: 'M3.6 13H8.4L9.8 15.6H14.2L15.6 13H20.4V18Q20.4 19.6 18.8 19.6H5.2Q3.6 19.6 3.6 18Z', head: [12, 15.6] },
+  scan: { d: ['M4 8.6V6.4Q4 4 6.4 4H8.6', 'M15.4 4H17.6Q20 4 20 6.4V8.6', 'M20 15.4V17.6Q20 20 17.6 20H15.4', 'M8.6 20H6.4Q4 20 4 17.6V15.4', 'M7.6 12H16.4'], head: [16.4, 12] },
+  insights: { d: ['M4 3.8V18.4Q4 20 5.6 20H20.2', 'M7.6 15.4L11 11.4L14 13.8L19 7.8'], area: 'M7.6 15.4L11 11.4L14 13.8L19 7.8V17.4H7.6Z', head: [19, 7.8] },
+  more: { d: [], dots: [[5.4, 12], [12, 12], [18.6, 12]], r: 1.7, head: [12, 12] },
+};
+// absolute path data (M L H V Q C Z) as fine polylines; the point that ends each command is marked as a vertex
+function pathFine(d) {
+  const tok = d.match(/[MLHVQCZ]|-?\d*\.?\d+/gi) || []; const polys = []; let P = null, i = 0, cmd = '', x = 0, y = 0, sx = 0, sy = 0;
+  const n = () => +tok[i++];
+  const mark = () => { P[P.length - 1].v = 1; };
+  const line = (x1, y1) => { const m = Math.max(1, Math.ceil(Math.hypot(x1 - x, y1 - y) / 0.2)); for (let k = 1; k <= m; k++) P.push([x + (x1 - x) * k / m, y + (y1 - y) * k / m]); x = x1; y = y1; mark(); };
+  while (i < tok.length) {
+    if (/[A-Z]/i.test(tok[i])) cmd = tok[i++].toUpperCase();
+    if (cmd === 'M') { x = sx = n(); y = sy = n(); P = [[x, y]]; mark(); polys.push(P); cmd = 'L'; }
+    else if (cmd === 'L') line(n(), n());
+    else if (cmd === 'H') line(n(), y);
+    else if (cmd === 'V') line(x, n());
+    else if (cmd === 'Z') { line(sx, sy); P.closed = true; }
+    else if (cmd === 'Q') { const cx = n(), cy = n(), x1 = n(), y1 = n(); for (let k = 1; k <= 24; k++) { const t = k / 24, u = 1 - t; P.push([u * u * x + 2 * u * t * cx + t * t * x1, u * u * y + 2 * u * t * cy + t * t * y1]); } x = x1; y = y1; mark(); }
+    else if (cmd === 'C') { const c1 = [n(), n()], c2 = [n(), n()], e = [n(), n()]; const p0 = [x, y]; for (let k = 1; k <= 32; k++) P.push(bez(p0, c1, c2, e, k / 32)); x = e[0]; y = e[1]; mark(); }
+    else i++;
+  }
+  return polys;
+}
+// a fine polyline resampled every `step` units of its length, as [x, y, angle]
+function resample(P, step) {
+  const d = [0]; for (let i = 1; i < P.length; i++) d.push(d[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
+  const L = d[d.length - 1]; const n = Math.max(1, Math.round(L / step)); const out = []; let j = 0;
+  for (let k = 0; k <= n; k++) {
+    const s = L * k / n; while (j < P.length - 2 && d[j + 1] < s) j++;
+    const a = P[j], b = P[Math.min(P.length - 1, j + 1)]; const f = (s - d[j]) / ((d[j + 1] - d[j]) || 1);
+    out.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, Math.atan2(b[1] - a[1], b[0] - a[0])]);
+  }
+  out.len = L; return out;
+}
+// split a fine polyline where it turns by more than `deg` degrees at a vertex, as a pen would lift there
+function splitSharp(P, deg) {
+  const out = []; let cur = [P[0]];
+  for (let i = 1; i < P.length; i++) {
+    cur.push(P[i]);
+    if (P[i].v && i < P.length - 1) {
+      const a = P[i - 1], b = P[i], c = P[i + 1]; let t = Math.abs(Math.atan2(c[1] - b[1], c[0] - b[0]) - Math.atan2(b[1] - a[1], b[0] - a[0])); if (t > Math.PI) t = TAU - t;
+      if (t > deg * Math.PI / 180) { out.push(cur); cur = [P[i]]; }
+    }
+  }
+  out.push(cur); return out.filter((q) => q.length > 1);
+}
+// every stroke of a tab's outline, as fine polylines, optionally split at sharp turns
+function tabPolys(k, split) { return TAB_SK[k].d.flatMap((d) => pathFine(d)).flatMap((P) => (split ? splitSharp(P, split) : [P])); }
+// a standalone SVG for the export (build.mjs) and the page alike
+const svgTag = (vb, w, h, body, cls) => `<svg viewBox="${vb}" width="${w}" height="${h}"${cls ? ` class="${cls}"` : ''} aria-hidden="true">${body}</svg>`;
+const SB_ICONS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 20h3v-4H2zM7 20h3v-7H7zM12 20h3V9h-3zM17 20h3V4h-3z" fill="currentColor"/></svg><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r=".8" fill="currentColor"/></svg><svg viewBox="0 0 28 24" style="width:22px" aria-hidden="true"><rect x="1" y="6" width="22" height="12" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".55"/><rect x="3" y="8" width="15" height="8" rx="2" fill="currentColor"/><rect x="24" y="10" width="2" height="4" rx="1" fill="currentColor" opacity=".55"/></svg>';
+
+// ---------- the data (the wireframe's, D11) ----------
+const DATA = {
+  income: 420000, spent: 291550, day: 19, days: 31, toGo: 12,
+  total: 840210, gap: 3620, gapDate: '3 Oct', review: 5,
+  thisCycle: [4500, 101000, 108000, 119000, 126200, 141000, 147000, 156000, 169000, 182000, 211000, 219000, 226000, 238000, 247000, 260000, 268000, 286000, 291550],
+  lastCycle: [6000, 98000, 106000, 113000, 121000, 133000, 141000, 150000, 160500, 171000, 180500, 189000, 198000, 211000, 222000, 236000, 248000, 263000, 277550, 284000, 289000, 293500, 296000, 299000, 301500, 303800, 305600, 307900, 309500, 311000, 312040],
+  note: { when: 'Yesterday, 21:02', t: 'Quiet Friday: RM32.60 on meals. You’re RM140.00 ahead of last cycle’s spending, mostly Shopping.' },
+};
+const STATE_VIEW = {
+  normal: { lbl: 'Left until payday', fig: 128450, sub: '12 days to go', day: 19, spent: 291550, pace: 'RM140.00 more than last cycle by this day', fab: 'resting' },
+  payday: { lbl: 'Left until payday', fig: 420000, sub: '31 days to go', day: 1, spent: 0, pace: 'Last cycle ended with RM1,079.60 left', fab: 'note', total: 1260210, note: { when: 'Today, 09:14', t: 'Your salary landed: RM4,200.00 in Public Bank. The payday plan is ready, three moves and RM2,765.10 left to spend.' } },
+  over: { lbl: 'Over by', fig: 21540, sub: '12 days to go', day: 19, spent: 441540, pace: 'RM1,639.90 more than last cycle by this day', fab: 'note', over: true, note: { when: 'Today, 21:02', t: 'Over by RM215.40 with 12 days to go, mostly Shopping. I can draft a plan to payday when you want one.' } },
+  capture: { lbl: 'Left until payday', fig: 128450, sub: '12 days to go', day: 19, spent: 291550, pace: 'RM140.00 more than last cycle by this day', fab: 'resting', capture: true },
+};
+const AV_STATES = [
+  ['resting', 'Resting', 'On the five tabs, bottom right'],
+  ['note', 'Has a note', 'After the 9pm note, until you open it'],
+  ['listening', 'Listening', 'The sheet is open, waiting for you'],
+  ['thinking', 'Working', 'Running its tools'],
+  ['helpers', 'With helpers', 'A subagent is out: research, the payday plan'],
+  ['speaking', 'Answering', 'Writing its reply'],
+  ['paused', 'Paused', 'Offline, or at this month’s AI cap'],
+  ['done', 'Done', 'A change you applied went through'],
+];
+const DEMO = [
+  { q: 'Can I afford a RM400 phone?', steps: [['thinking', 1500]], a: 'Not comfortably before payday. You have RM1,284.50 left for 12 days, and at your usual pace you’d reach payday with about RM235.10. After payday it fits.', acts: ['Make it a goal', 'Not now'] },
+  { q: 'Where should I keep RM5,000?', steps: [['thinking', 900], ['helpers', 1700]], a: 'My researcher found two to compare, both drafts until you confirm the figures: Bank A at 3.00% a year, and Bank B at 3.20% for new money until 31 Dec.', acts: ['Check the figures', 'Not now'] },
+];
+
+// ---------- the pace chart (dataviz: 2px lines, grey context, one accent, legend) ----------
+function paceChart(st, mode) {
+  const W = 318, H = 76, L = 2, R = 2, T = 14, B = 16; const pw = W - L - R, ph = H - T - B; const days = 31, maxY = 470000;
+  const X = (d) => L + ((d - 1) / (days - 1)) * pw, Y = (v) => T + ph - (v / maxY) * ph;
+  const tc = st.spent === 0 ? [0] : st.over ? DATA.thisCycle.map((v) => Math.round(v * 441540 / 291550)) : DATA.thisCycle;
+  const line = (arr) => arr.map((v, i) => `${i ? 'L' : 'M'}${f2(X(i + 1))} ${f2(Y(v))}`).join('');
+  const now = tc.length, last = tc[now - 1];
+  let g = `<line x1="${L}" x2="${W - R}" y1="${f2(Y(0))}" y2="${f2(Y(0))}" stroke="var(--border)" stroke-width="1"/>`;
+  g += `<line x1="${L}" x2="${W - R}" y1="${f2(Y(420000))}" y2="${f2(Y(420000))}" stroke="var(--border)" stroke-width="1"/><text x="${L}" y="${f2(Y(420000) - 5)}" class="ax">Income RM4,200</text>`;
+  g += `<path d="${line(DATA.lastCycle)}" fill="none" stroke="var(--chart-context)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  if (now > 1) g += `<path d="${line(tc)}" fill="none" stroke="var(--chart-accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  g += `<circle cx="${f2(X(now))}" cy="${f2(Y(last))}" r="4.5" fill="var(--chart-accent)" stroke="var(--card)" stroke-width="2"/>`;
+  g += `<text x="${L}" y="${H - 3}" class="ax">${st.spent === 0 ? '31 Oct' : '30 Sep'}</text><text x="${f2(X(now))}" y="${H - 3}" text-anchor="${now < 4 ? 'start' : 'middle'}" class="ax">Today</text><text x="${W - R}" y="${H - 3}" text-anchor="end" class="ax">Payday</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Spending this cycle against last cycle">${g}</svg>`;
+}
+
+// ---------- the phone: Home (D59, D68) ----------
+function homeHTML(mode, stKey) {
+  const st = STATE_VIEW[stKey]; const note = st.note || DATA.note;
+  let h = '';
+  if (st.capture) h += `<div class="warnbar" role="alert"><span><b>Capture is off</b>Payments aren’t being recorded.</span><button class="fix">Fix</button></div>`;
+  if (stKey === 'payday') h += `<div class="card payday"><span><b>Payday: your salary landed</b><span class="sub">Four quick steps start the new cycle</span></span><button class="btn-pri">Start</button></div>`;
+  const fig = DIR.heroFigure ? DIR.heroFigure(st.fig, mode, st) : defaultFigure(st.fig);
+  h += `<button class="hero${st.over ? ' over' : ''}" aria-label="${esc(st.lbl)} ${esc(rm(st.fig))}, ${esc(st.sub)}"><span class="hero-lbl">${st.lbl}</span><span class="hero-fig">${fig}</span><span class="hero-sub">${st.sub}</span>${DIR.strip ? `<span class="strip">${DIR.strip(st.day, DATA.days, mode, st)}</span>` : ''}</button>`;
+  const spentTxt = st.spent === 0 ? 'New cycle: nothing spent yet' : `Spent <b>${rm(st.spent)}</b> this cycle`;
+  h += `<button class="card pace"><span class="row1"><span>${spentTxt}</span><span aria-hidden="true">›</span></span><span class="sub">${st.pace}</span>${st.spent === 0 ? '' : paceChart(st, mode) + '<span class="legend"><span><i style="background:var(--chart-accent)"></i>This cycle</span><span><i style="background:var(--chart-context)"></i>Last cycle</span></span>'}</button>`;
+  h += `<button class="card note"><span class="note-head"><canvas class="av" data-size="28" data-state="resting" data-mode="${mode}"></canvas><b>Sen</b><span>${note.when}</span></span><p>${esc(note.t)}</p></button>`;
+  h += `<button class="quiet"><span>Total balance</span><b>${rm(st.total || DATA.total)}</b><span>Gap at last check, ${DATA.gapDate}</span><b>${rm(DATA.gap)}</b></button>`;
+  return `<div class="screen" data-mode="${mode}" data-state="${stKey}">
+    <div class="sbar"><span>21:14</span><span class="sbi">${SB_ICONS}</span></div>
+    <header class="appbar">${DIR.wordmark(mode)}</header>
+    <main class="content">${h}</main>
+    <button class="fab" aria-label="Ask Sen"><canvas class="av" data-size="60" data-state="${st.fab}" data-mode="${mode}"></canvas></button>
+    ${tabbarHTML(mode)}
+  </div>`;
+}
+// the five tabs in the look's own material; each icon is drawn idle and active, and the bar shows one or the other
+let TB_N = 0;
+function tabbarHTML(mode, on = 'home') {
+  const T = DIR.tabs; const u = `tb${++TB_N}`; const oi = TABS.findIndex(([k]) => k === on);
+  const items = TABS.map(([k, l], i) => {
+    if (k === 'scan') return `<button class="tab tab-scan" data-k="scan" aria-label="Scan a receipt"><span class="scanbtn${T ? ' cs' : ''}">${T ? T.scan(mode, `${u}s`) : ico('scan')}</span><span class="tl">${l}</span></button>`;
+    const isOn = k === on;
+    const badge = k !== 'review' ? '' : T && T.badge ? `<span class="badge cb" aria-label="${DATA.review} to review">${T.badge(DATA.review, mode, `${u}b`)}</span>` : `<span class="badge">${DATA.review}</span>`;
+    const icon = T ? `<span class="ti"><span class="i-off">${T.icon(k, false, mode, `${u}${k}0`)}</span><span class="i-on">${T.icon(k, true, mode, `${u}${k}1`)}</span></span>` : ico(k);
+    return `<button class="tab${isOn ? ' on' : ''}" data-k="${k}" data-i="${i}"${isOn ? ' aria-current="page"' : ''}>${icon}<span class="tl">${l}</span>${badge}</button>`;
+  }).join('');
+  return `<nav class="tabbar" data-on="${on}" data-mode="${mode}" style="--i:${oi}">${T && T.bar ? T.bar(mode, u) : ''}<span class="tab-ind" aria-hidden="true">${T && T.ind ? T.ind(mode, `${u}i`) : ''}</span>${items}</nav>`;
+}
+// choosing a tab: the active state moves, in the look's own motion; the scan button just answers the press
+function switchTab(bar, btn) {
+  if (!bar || !btn) return;
+  if (btn.dataset.k === 'scan') { btn.classList.remove('press'); void btn.offsetWidth; btn.classList.add('press'); clearTimeout(btn._p); btn._p = setTimeout(() => btn.classList.remove('press'), 800); return; }
+  if (btn.classList.contains('on')) return;
+  const from = bar.querySelector('.tab.on');
+  if (from) { from.classList.remove('on', 'fresh'); from.removeAttribute('aria-current'); from.classList.add('left'); clearTimeout(from._l); from._l = setTimeout(() => from.classList.remove('left'), 900); }
+  btn.classList.add('on', 'fresh'); btn.setAttribute('aria-current', 'page'); bar.dataset.on = btn.dataset.k; bar.style.setProperty('--i', btn.dataset.i);
+  clearTimeout(btn._f); btn._f = setTimeout(() => btn.classList.remove('fresh'), 1900);
+  if (DIR.tabs && DIR.tabs.switch && !REDUCED) DIR.tabs.switch(bar, from, btn);
+}
+function defaultFigure(sen) { const p = rmParts(sen); return `<span class="cur">${p.cur}</span><span>${p.whole}.${p.cents}</span>`; }
+
+// ---------- Sen's sheet, with a short scripted answer ----------
+function openSheet(screen) {
+  if (screen.querySelector('.sheet')) return;
+  const mode = screen.dataset.mode;
+  const note = (STATE_VIEW[screen.dataset.state].note || DATA.note);
+  screen.insertAdjacentHTML('beforeend', `<div class="scrim"></div><div class="sheet" role="dialog" aria-label="Sen"><div class="grab"></div>
+    <div class="sheet-head"><canvas class="av" data-size="40" data-state="listening" data-mode="${mode}"></canvas><span class="who"><b>Sen</b><span>Looking at: Home</span></span><button class="ib close" aria-label="Close">${ico('x')}</button></div>
+    <div class="msgs"><div class="msg sen"><p>${esc(note.t)}</p><span class="when">${note.when}</span></div></div>
+    <div class="chips">${DEMO.map((d, i) => `<button class="chip" data-q="${i}">${esc(d.q)}</button>`).join('')}</div>
+    <div class="composer"><span>Ask Sen…</span><span class="send">${ico('up')}</span></div></div>`);
+  mountAvatars(screen);
+  requestAnimationFrame(() => requestAnimationFrame(() => { screen.querySelector('.sheet').classList.add('open'); screen.querySelector('.scrim').classList.add('open'); }));
+}
+function closeSheet(screen) {
+  const sh = screen.querySelector('.sheet'), sc = screen.querySelector('.scrim'); if (!sh) return;
+  sh.classList.remove('open'); sc.classList.remove('open'); clearTimeout(screen._demo);
+  setTimeout(() => { sh.remove(); sc.remove(); }, REDUCED ? 0 : 330);
+}
+function ask(screen, i) {
+  const d = DEMO[i]; const msgs = screen.querySelector('.msgs'); const av = screen.querySelector('.sheet-head .av');
+  screen.querySelector('.chips').hidden = true;
+  msgs.insertAdjacentHTML('beforeend', `<div class="msg me">${esc(d.q)}</div>`);
+  const reply = document.createElement('div'); reply.className = 'msg sen'; reply.innerHTML = '<p></p>';
+  let delay = 0; const steps = d.steps.slice();
+  const run = () => {
+    if (steps.length) { const [s, ms] = steps.shift(); setAv(av, s); screen._demo = setTimeout(run, REDUCED ? 0 : ms); return; }
+    setAv(av, 'speaking'); msgs.append(reply); const p = reply.querySelector('p'); const words = d.a.split(' '); let k = 0;
+    const tick = () => { k += REDUCED ? words.length : 2; p.textContent = words.slice(0, k).join(' '); msgs.scrollTop = msgs.scrollHeight; if (k < words.length) screen._demo = setTimeout(tick, 60); else { reply.insertAdjacentHTML('beforeend', `<span class="acts">${d.acts.map((a, j) => `<span class="${j ? 'btn-ghost' : 'btn-pri'}">${a}</span>`).join('')}</span><span class="when">Just now</span>`); msgs.scrollTop = msgs.scrollHeight; setAv(av, 'listening'); } };
+    tick();
+  };
+  screen._demo = setTimeout(run, delay);
+}
+function setAv(c, s) { if (c) { c.dataset.state = s; c._dirty = true; } }
+
+// ---------- avatars: one loop for every canvas on the page ----------
+const REDUCED = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const AV = { set: new Set(), t0: 0, last: 0, io: null };
+function mountAvatars(root) {
+  root.querySelectorAll('canvas.av').forEach((c) => {
+    if (c._m) return; c._m = true; const s = +c.dataset.size; const dpr = Math.min(3, (window.devicePixelRatio || 1));
+    c.width = Math.round(s * dpr); c.height = Math.round(s * dpr); c.style.width = c.style.height = s + 'px'; c._dpr = dpr; c._vis = true; c._dirty = true;
+    AV.set.add(c); if (AV.io) AV.io.observe(c);
+  });
+}
+function avMode(c) { return c.dataset.mode === 'page' ? pageMode() : c.dataset.mode; }
+function drawAv(c, t) { const s = +c.dataset.size, ctx = c.getContext('2d'); ctx.setTransform(c._dpr, 0, 0, c._dpr, 0, 0); ctx.clearRect(0, 0, s, s); DIR.avatar.draw(ctx, s, t, c.dataset.state, avMode(c)); }
+function avLoop(now) {
+  const t = (now - AV.t0) / 1000;
+  if (now - AV.last > 32) { AV.last = now; for (const c of AV.set) { if (!c.isConnected) { AV.set.delete(c); continue; } if (!c._vis) continue; if (REDUCED && !c._dirty) continue; drawAv(c, REDUCED ? 2.2 : t); c._dirty = false; } }
+  requestAnimationFrame(avLoop);
+}
+function pageMode() { const a = document.documentElement.getAttribute('data-theme'); if (a === 'dark' || a === 'light') return a; return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+
+// ---------- page sections ----------
+// the published pages (docs/ui/README.md); republish a page from its file to keep its URL
+const LINKS = {
+  minted: 'https://claude.ai/artifact/Co4jSZC5CRSRPgnSq9gnYG', firefly: 'https://claude.ai/artifact/DdtERg2hYY2HvEEdTUw7JY',
+  instrument: 'https://claude.ai/artifact/FtzJQRoKgs542C4NyAvnkj', line: 'https://claude.ai/artifact/9N9VXLoYYTg2F4WwSvmZJ7',
+  mercury: 'https://claude.ai/artifact/QMZtw9imqk8Jw6f44yxBGA', copper: 'https://claude.ai/artifact/PMtA2qnvKY3BwgFom611YM',
+};
+// the pool of six (D78); four of them play each year, one per quarter
+const LOOKS = [['minted', 'Minted'], ['instrument', 'Instrument'], ['firefly', 'Firefly'], ['line', 'Line'], ['mercury', 'Mercury'], ['copper', 'Copper']];
+function navHTML() {
+  const L = DIR.links || LINKS;
+  const items = LOOKS.map(([k, n]) => k === DIR.id ? `<span class="cur">${n}</span>` : (L[k] ? `<a href="${L[k]}" target="_blank" rel="noopener">${n}</a>` : `<span class="dim">${n}</span>`)).join('');
+  return `<nav class="pg-nav" aria-label="Looks"><span class="lbl">Sen, six looks:</span>${items}</nav>`;
+}
+function secHead() { return `<header class="pg-head">${navHTML()}<h1 class="pg-title">${DIR.titleHTML || DIR.name}</h1><p class="pg-lede">${DIR.lede}</p><p class="pg-meta">${DIR.meta}</p></header>`; }
+function secHome() {
+  return `<section class="pg-sec" id="home"><h2 class="pg-h2">Home</h2>
+  <p class="pg-p">The approved layout (D59, D68), in this theme, light and dark. Tap Sen’s button to open the sheet and ask it something. The states show the payday card, an overspent cycle and a health warning.</p>
+  <div class="pg-row"><div class="seg" id="seg-state" role="group" aria-label="State">${[['normal', 'Normal'], ['payday', 'Payday'], ['over', 'Over budget'], ['capture', 'Capture off']].map(([k, l], i) => `<button data-st="${k}" aria-pressed="${!i}">${l}</button>`).join('')}</div>
+  <div class="seg" id="seg-view" role="group" aria-label="View">${[['both', 'Side by side'], ['light', 'Light'], ['dark', 'Dark']].map(([k, l], i) => `<button data-v="${k}" aria-pressed="${!i}">${l}</button>`).join('')}</div></div>
+  <div class="phones has-tags" id="phones"><div class="phone-wrap" data-mode="light"><div class="phone light"></div><span class="tag">Light</span></div><div class="phone-wrap" data-mode="dark"><div class="phone dark"></div><span class="tag">Dark</span></div></div>
+  <p class="cap" id="phones-hint"></p></section>`;
+}
+function secSen() {
+  const P = SEN_PROFILE;
+  return `<section class="pg-sec" id="sen"><h2 class="pg-h2">Sen</h2><p class="pg-p">${DIR.senIntro}</p>
+  <div class="sen-top"><div class="sen-stage"><canvas class="av" data-size="220" data-state="resting" data-mode="page" id="sen-big"></canvas></div>
+  <div class="profile"><h3>Sen</h3><p class="role">${P.role}</p><dl>
+    <dt>Voice</dt><dd>${P.voice}</dd>
+    <dt>Does</dt><dd>${P.does}</dd>
+    <dt>Promises</dt><dd>${P.promises}</dd>
+    <dt>Sounds like</dt><dd class="voice">“${esc(DATA.note.t)}”</dd></dl>
+    <div class="seg" id="seg-av" role="group" aria-label="Sen's state">${AV_STATES.map(([k, l], i) => `<button data-s="${k}" aria-pressed="${!i}">${l}</button>`).join('')}</div></div></div>
+  <div class="states">${AV_STATES.map(([k, l, w]) => `<div class="state"><canvas class="av" data-size="72" data-state="${k}" data-mode="page"></canvas><b>${l}</b><span>${w}</span></div>`).join('')}</div>
+  <div class="incontext">${ctxBoxes()}</div></section>`;
+}
+function ctxBoxes() {
+  return `<div class="ctxbox"><p class="cap">Its note on Home</p><div class="card note" style="pointer-events:none"><span class="note-head"><canvas class="av" data-size="28" data-state="resting" data-mode="page"></canvas><b>Sen</b><span>${DATA.note.when}</span></span><p>${esc(DATA.note.t)}</p></div></div>
+  <div class="ctxbox"><p class="cap">A proposal in Review</p><div class="card" style="pointer-events:none;gap:10px"><span class="note-head"><canvas class="av" data-size="22" data-state="resting" data-mode="page"></canvas><span>Sen suggests a budget</span></span><b style="font-weight:600">Drinks & desserts, RM150.00 a cycle</b><span class="cap">You’ve spent RM123.00 so far this cycle.</span><span class="pg-row"><span class="btn-pri">Apply</span><span class="btn-ghost">Dismiss</span></span></div></div>
+  <div class="ctxbox"><p class="cap">Its push, once a day at most (§12.4)</p>${shadeHTML(true)}</div>`;
+}
+function secIcon() {
+  const masks = ['squircle', 'circle', 'rounded', 'teardrop'].map((m) => `<div class="maskc">${iconSVG(64, m)}<span>${{ squircle: 'HyperOS', circle: 'Pixel', rounded: 'One UI', teardrop: 'Teardrop' }[m]}</span></div>`).join('');
+  return `<section class="pg-sec" id="icon"><h2 class="pg-h2">The icon</h2><p class="pg-p">${DIR.iconIntro}</p>
+  <div class="icon-top">${launcherHTML()}<div class="icon-side">
+    <div class="masks">${masks}</div>
+    <div class="anatomy"><div class="layer"><div class="box">${layerSVG('background')}</div>Background layer</div><div class="layer"><div class="box mid">${layerSVG('foreground')}</div>Foreground layer</div><div class="layer"><div class="box">${layerSVG('both')}</div>108 dp canvas: 72 dp shows, the mark stays inside the 66 dp circle</div><div class="layer"><div class="box">${layerSVG('monochrome')}</div>Monochrome layer, for themed icons</div></div>
+    ${themedHTML()}
+    <div><p class="cap" style="margin:0 0 8px">The notification’s small icon: a flat white silhouette, shown at 24 dp</p>${shadeHTML(false)}</div>
+  </div></div></section>`;
+}
+function launcherHTML() {
+  const A = (n, g, bg, fg = '#fff') => `<div class="app"><span class="app-ic plain" style="background:${bg};color:${fg}">${ico(g)}</span><span class="app-lbl">${n}</span></div>`;
+  const sen = `<div class="app">${iconSVG(56, 'squircle')}<span class="app-lbl">Sen</span><div class="pop" style="left:-34px;bottom:84px"><div>${ico('scan')}Scan receipt</div><div>${ico('plus')}Add expense</div></div></div>`;
+  return `<div class="launcher" style="background:${DIR.wall || 'linear-gradient(165deg,#8ea3b8,#3e4c5e 55%,#232b36)'}"><div class="lsb"><span>21:14</span><span>5G · 82%</span></div><div class="clock">21:14</div><div class="date">Saturday, 18 October</div>
+  <div class="lgrid">${A('Calendar', 'cal', '#e9ecf1', '#3a5a9a')}${A('Notes', 'note', '#f2d27a', '#5b4511')}${A('Gallery', 'image', '#e3e7ee', '#b4532a')}${A('Maps', 'pin', '#e4efe6', '#2f7a4c')}${A('Music', 'music', '#2b2d33')}${sen}${A('Files', 'folder', '#e8eaf0', '#4a5a78')}${A('Clock', 'clock', '#222428')}</div>
+  <div class="dock">${A('Phone', 'phone', '#3b8a5a')}${A('Messages', 'msg', '#3a6fb8')}${A('Browser', 'globe', '#f3f4f7', '#3b5bb5')}${A('Camera', 'camera', '#4a4d55')}</div></div>`;
+}
+function themedHTML() {
+  const T = (n, g) => `<div class="app"><svg class="app-ic" viewBox="0 0 56 56" width="56" height="56"><circle cx="28" cy="28" r="28" fill="#c9d4e3"/><g transform="translate(16 16)" fill="none" stroke="#1f2d42" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${GLYPH[g]}</g></svg><span class="app-lbl" style="color:#1f2d42">${n}</span></div>`;
+  return `<div><p class="cap" style="margin:0 0 8px">With themed icons on, Android tints the monochrome layer</p><div class="themed" style="background:#e4e9f1">${T('Calendar', 'cal')}${T('Maps', 'pin')}<div class="app">${themedSVG(56, '#c9d4e3', '#1f2d42')}<span class="app-lbl" style="color:#1f2d42">Sen</span></div>${T('Camera', 'camera')}</div>
+  <div class="themed" style="background:#1d2129;margin-top:10px">${['cal', 'pin'].map((g, i) => `<div class="app"><svg class="app-ic" viewBox="0 0 56 56" width="56" height="56"><circle cx="28" cy="28" r="28" fill="#33405a"/><g transform="translate(16 16)" fill="none" stroke="#cfe0ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${GLYPH[g]}</g></svg><span class="app-lbl" style="color:#cfe0ff">${['Calendar', 'Maps'][i]}</span></div>`).join('')}<div class="app">${themedSVG(56, '#33405a', '#cfe0ff')}<span class="app-lbl" style="color:#cfe0ff">Sen</span></div></div></div>`;
+}
+function shadeHTML(senOnly) {
+  const sb = `<div class="ssb"><span>21:02</span><span class="icons">${smallSVG(15, '#eceef2')}<svg viewBox="0 0 24 24" style="width:15px;height:15px" fill="#eceef2"><path d="M2 20h3v-4H2zM7 20h3v-7H7zM12 20h3V9h-3zM17 20h3V4h-3z"/></svg></span></div>`;
+  const senMsg = `<div class="notif"><span class="nh">${smallSVG(14, '#c9ccd4')}Sen · 21:02</span><span class="nb"><span><span class="nt">Sen</span><br><span class="nx">${esc(DATA.note.t)}</span></span><canvas class="av" data-size="36" data-state="resting" data-mode="dark"></canvas></span></div>`;
+  const prompt = `<div class="notif"><span class="nh">${smallSVG(14, '#c9ccd4')}Sen · now</span><span class="nt">RM12.90 · KOPI KAWAN</span><span class="nx">Which category? New merchant, paid from Ryt.</span><span class="na"><span>Drinks & desserts</span><span>Meals</span><span>Other</span></span></div>`;
+  return `<div class="shade">${senOnly ? '' : sb}${senOnly ? senMsg : prompt + senMsg}</div>`;
+}
+function secTabs() {
+  if (!DIR.tabs) return '';
+  const T = DIR.tabs;
+  const demo = (m) => `<div class="tabdemo-wrap"><div class="phone ${m} tabdemo"><div class="screen" data-mode="${m}">${tabbarHTML(m)}</div></div><span class="cap">${m === 'light' ? 'Light' : 'Dark'}</span></div>`;
+  const sheet = (m) => `<div class="iconsheet m${m}">${['home', 'review', 'insights', 'more'].map((k) => `<div class="ic"><span class="ic2">${T.icon(k, false, m, `sh${m}${k}0`)}</span><span class="ic2">${T.icon(k, true, m, `sh${m}${k}1`)}</span><span class="cap">${k[0].toUpperCase()}${k.slice(1)}</span></div>`).join('')}<div class="ic ic-scan"><span class="ic2">${T.scan(m, `sh${m}sc`)}</span><span class="cap">The scan button</span></div></div>`;
+  return `<section class="pg-sec" id="tabs"><h2 class="pg-h2">The tab bar</h2><p class="pg-p">${DIR.tabsIntro} The five tabs, their order and the outline of each icon are the same in every look (D77, D80); only the material changes. Tap a tab to see how this look moves between them.</p>
+  <div class="tabdemos">${demo('light')}${demo('dark')}</div>
+  <p class="cap">Each icon idle, then active, at twice its size. They’re saved as SVG files in <code>docs/ui/directions/assets/${DIR.id}/tabs/</code>, with the scan button and the badge.</p>
+  <div class="iconsheets">${sheet('light')}${sheet('dark')}</div></section>`;
+}
+// ---------- the chart palette (palette.mjs, D77): the same hues in every look, tuned to its surfaces ----------
+const VIZ = {
+  cats: [['Meals', 84250, 76000], ['Shopping', 52300, 38000], ['Groceries', 41200, 45000], ['Transport', 30600, 31000], ['Drinks & desserts', 12300, 11000]],
+  spoken: [['Fixed costs', 152000], ['Spent', 139550], ['Left', 128450]],
+  food: [['Eating out', 84250], ['Groceries', 41200]],
+  budgets: [['Drinks & desserts', 12300, 15000], ['Shopping', 52300, 80000]],
+  days: [0, 4210, 0, 1250, 2890, 6420, 980, 0, 3150, 1730, 520, 8810, 2240, 0, 1450, 3980, 610, 5230, 1190],
+};
+function vizCats() {
+  const W = 300, rowH = 30, max = 90000, lx = 116, bw = W - lx - 62;
+  const g = VIZ.cats.map(([n, v, typ], i) => {
+    const y = i * rowH + 6, w = bw * v / max, tx = lx + bw * typ / max, above = v > typ;
+    return `<text x="0" y="${y + 13}" class="vl">${esc(n)}</text><path d="M${lx} ${y + 3}h${f2(w - 4)}a4 4 0 0 1 4 4v6a4 4 0 0 1-4 4h-${f2(w - 4)}z" fill="var(${above ? '--chart-accent' : '--chart-context'})"/><line x1="${f2(tx)}" x2="${f2(tx)}" y1="${y}" y2="${y + 20}" stroke="var(--card)" stroke-width="5.5"/><line x1="${f2(tx)}" x2="${f2(tx)}" y1="${y}" y2="${y + 20}" stroke="var(--foreground)" stroke-width="1.5"/><text x="${f2(Math.max(lx + w, tx) + 6)}" y="${y + 13}" class="vv">${rm(v)}</text>`;
+  }).join('');
+  return `<svg class="viz" viewBox="0 0 ${W} ${VIZ.cats.length * rowH + 4}" role="img" aria-label="Each category this cycle against its typical level">${g}</svg>`;
+}
+function vizParts(parts, label) {
+  const W = 300, total = parts.reduce((a, p) => a + p[1], 0); let x = 0;
+  const segs = parts.map(([n, v], i) => { const w = (W - 2 * (parts.length - 1)) * v / total; const r = `<rect x="${f2(x)}" y="0" width="${f2(w)}" height="14" rx="${i === 0 || i === parts.length - 1 ? 4 : 0}" fill="var(--chart-${i + 1})"/>`; x += w + 2; return r; }).join('');
+  const legend = parts.map(([n, v], i) => `<span><i style="background:var(--chart-${i + 1})"></i>${esc(n)} <b>${rm(v)}</b></span>`).join('');
+  return `<svg class="viz" viewBox="0 0 ${W} 14" role="img" aria-label="${esc(label)}">${segs}</svg><span class="vlegend">${legend}</span>`;
+}
+function vizBudgets() {
+  const done = DATA.day / DATA.days;
+  return VIZ.budgets.map(([n, v, cap]) => {
+    const share = v / cap, risk = share > done + 0.1;
+    return `<div class="meter"><span class="mt"><span>${esc(n)}</span><span>${rm(v)} of ${rm(cap)}</span></span><svg class="viz" viewBox="0 0 300 12" aria-hidden="true"><rect x="0" y="2" width="300" height="8" rx="4" fill="var(--muted)"/><rect x="0" y="2" width="${f2(300 * Math.min(1, share))}" height="8" rx="4" fill="var(${risk ? '--money-warning' : '--chart-accent'})"/><line x1="${f2(300 * done)}" x2="${f2(300 * done)}" y1="0" y2="12" stroke="var(--card)" stroke-width="5.5"/><line x1="${f2(300 * done)}" x2="${f2(300 * done)}" y1="0" y2="12" stroke="var(--foreground)" stroke-width="1.5"/></svg>${risk ? `<span class="risk">${ico('alert')}At risk: ${Math.round(share * 100)}% spent, ${Math.round(done * 100)}% of the cycle gone</span>` : `<span class="cap">On track</span>`}</div>`;
+  }).join('');
+}
+function vizCalendar() {
+  const max = Math.max(...VIZ.days), cell = 36, gap = 4; let g = '';
+  for (let d = 1; d <= DATA.days; d++) {
+    const i = d - 1, x = (i % 7) * (cell + gap), y = Math.floor(i / 7) * (cell + gap); const v = VIZ.days[i];
+    const step = v ? Math.ceil(5 * v / max) : 0;
+    const fill = v === undefined ? 'none' : step ? `var(--chart-seq-${step})` : 'var(--muted)';
+    g += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="6" fill="${fill}"${v === undefined ? ' stroke="var(--border)"' : ''}/><text x="${x + 5}" y="${y + 13}" class="vd${step >= 3 ? ' on' : ''}">${d}</text>`;
+  }
+  const steps = [1, 2, 3, 4, 5].map((k) => `<i style="background:var(--chart-seq-${k})"></i>`).join('');
+  return `<svg class="viz cal" viewBox="0 0 ${7 * cell + 6 * gap} ${5 * cell + 4 * gap}" role="img" aria-label="Discretionary spending each day of the cycle">${g}</svg><span class="vlegend seq"><span>Less</span>${steps}<span>More</span></span>`;
+}
+function vizPanel(mode) {
+  const card = (q, body, take) => `<div class="card vcard"><b class="vq">${q}</b>${body}<span class="vtake">${take}</span></div>`;
+  return `<div class="vizpanel m${mode}" data-mode="${mode}"><span class="cap">${mode === 'light' ? 'Light' : 'Dark'}</span>
+    ${card('Am I on track?', paceChart(STATE_VIEW.normal, mode) + '<span class="legend"><span><i style="background:var(--chart-accent)"></i>This cycle</span><span><i style="background:var(--chart-context)"></i>Last cycle</span></span>', 'RM140.00 more than last cycle by this day.')}
+    ${card('Where did it go, and what changed?', vizCats(), 'Shopping is RM143.00 above its usual by day 19. The line marks typical.')}
+    ${card('Which budgets are at risk?', vizBudgets(), 'Drinks & desserts is ahead of the cycle.')}
+    ${card('How much is spoken for before I spend?', vizParts(VIZ.spoken, 'Fixed costs, spent and left'), 'RM1,520.00 is fixed each cycle.')}
+    ${card('Eating out or cooking?', vizParts(VIZ.food, 'Eating out against groceries'), 'Two ringgit out for every one at home.')}
+    ${card('When does the money leak?', vizCalendar(), 'The 12th: RM88.10 on the day.')}
+  </div>`;
+}
+function secCharts() {
+  const R = CHART_REPORT[DIR.id];
+  const sw = (m) => `<div class="swatches m${m}"><span class="cap">${m === 'light' ? 'Light' : 'Dark'}</span>${CHART_HUES.map((h) => `<span class="swc"><i style="background:var(--chart-${h.slot})"></i><b>${h.slot} ${h.name}</b><code>${CHARTS[DIR.id][m][`chart-${h.slot}`]}</code></span>`).join('')}<span class="swc"><i style="background:var(--chart-accent)"></i><b>Accent</b><code>${DIR.tokens[m]['chart-accent']}</code></span><span class="swc"><i style="background:var(--chart-context)"></i><b>Context, Other</b><code>${DIR.tokens[m]['chart-context']}</code></span><span class="swc seq">${[1, 2, 3, 4, 5].map((k) => `<i style="background:var(--chart-seq-${k})"></i>`).join('')}<b>Sequential</b></span>
+    <span class="cap">Every pair: colour-blind ΔE ${R[m].cvd}, normal ${R[m].normal}. Slots ${R[m].contrast.map((c) => `${c}:1`).join(', ')} on the card.</span></div>`;
+  return `<section class="pg-sec" id="charts"><h2 class="pg-h2">Charts</h2><p class="pg-p">Most of Sen’s charts use two colours: the accent for what’s in focus, such as this cycle, and grey for context. When a chart shows different things side by side, they take three hues, blue, orchid and gold, in that order. The hues are the same in every look; only their lightness is tuned to ${DIR.name}’s surfaces. They keep clear of the colours that already mean something: green for money in, amber for a warning, red, and Copper’s verdigris. A budget at risk takes the warning colour, always with its icon and words.</p>
+  <div class="swrow">${sw('light')}${sw('dark')}</div>
+  <div class="vizrow">${vizPanel('light')}${vizPanel('dark')}</div>
+  <p class="cap">All figures made up. Checked with the dataviz skill’s validator by <code>docs/ui/directions/palette.mjs</code>, which writes these colours into each look’s tokens.</p></section>`;
+}
+function secTheme() {
+  return `<section class="pg-sec" id="theme"><h2 class="pg-h2">The theme</h2><p class="pg-p">${DIR.themeIntro} shadcn’s variables in light and dark, plus the money colours, which always mean the same thing (D58). Contrast is measured against the background. The chart palette is in the section above.</p>
+  <div class="moneyrow"><div class="mchip in"><span>Money in</span><b>+RM4,200.00</b></div><div class="mchip out"><span>Money out</span><b>RM12.90</b></div><div class="mchip pend"><span>Not synced yet</span><b>RM6.50</b></div><div class="mchip warn"><span>Warning</span><b>Over by RM215.40</b></div></div>
+  <div class="icrow" aria-label="The shared icons in this look">${['x', 'up', 'plus', 'camera', 'image', 'cal', 'sliders', 'wallet', 'calc', 'alert'].map((k) => `<span class="${k === 'alert' ? 'warn' : ''}">${ico(k)}</span>`).join('')}</div><p class="cap">Every icon outside the tab bar is the same lucide set in all six looks (D81). ${DIR.name} draws it at weight ${DIR.icons.weight}, with ${DIR.icons.cap} ends and ${DIR.icons.join} corners, in its icon colour; a warning takes the warning colour.</p>
+  <div class="tokwrap"><table class="tok" id="tok"></table></div>
+  <div class="modes"><div class="modebox spec"><span class="cap">Type</span><span class="s1">${DIR.heroFigure ? DIR.heroFigure(128450, pageMode(), STATE_VIEW.normal) : defaultFigure(128450)}</span><span class="s2">${DIR.typeNote.display}</span><span class="s3">${DIR.typeNote.ui}</span><span class="s4">${DIR.typeNote.voice}</span></div>
+  <div class="cssbox"><button class="copy" id="copy-css">Copy</button><pre id="css-out"></pre></div></div></section>`;
+}
+function secTrade() { return `<section class="pg-sec" id="tradeoffs"><h2 class="pg-h2">Trade-offs</h2><div class="tradeoffs"><div><h3>What it does well</h3><ul>${DIR.good.map((x) => `<li>${x}</li>`).join('')}</ul></div><div><h3>What to weigh</h3><ul>${DIR.weigh.map((x) => `<li>${x}</li>`).join('')}</ul></div></div><p class="foot">${DIR.name} is one of six looks in Sen’s pool, and four of them play each year, one per quarter (D77, D78). Each is a theme, an icon and Sen’s avatar, designed together. Fonts load from Google here; the app will host its own (§17). All figures are made up.</p></section>`; }
+const SEN_PROFILE = {
+  role: 'Your money secretary. It plans, watches, researches, chases and reviews.',
+  voice: 'Brief and plain, like a friend who’s good with money. Short, specific, no lectures.',
+  does: 'A note at 9pm when something’s worth saying. The payday plan. Answers about where the money went. Proposals you apply with a tap.',
+  promises: 'Every figure it states comes from your data, never its own maths. It changes nothing without your tap.',
+};
+
+// ---------- tokens: the table and the CSS ----------
+const TOKEN_ROWS = [
+  ['background', null], ['foreground', 'background'], ['card', null], ['muted-foreground', 'background'], ['primary', 'background'], ['primary-foreground', 'primary'],
+  ['secondary', null], ['accent', null], ['border', null], ['ring', null], ['destructive', 'background'],
+  ['money-in', 'background'], ['money-out', 'background'], ['money-pending', 'background'], ['money-warning', 'background'], ['icon', 'background'], ['chart-accent', 'card'], ['chart-context', 'card'], ['chart-1', 'card'], ['chart-2', 'card'], ['chart-3', 'card'],
+];
+function tokenTable() {
+  const T = DIR.tokens; let h = '<thead><tr><th>Token</th><th>Light</th><th>Dark</th></tr></thead><tbody>';
+  for (const [k, against] of TOKEN_ROWS) {
+    const cell = (m) => { const v = T[m][k]; let r = ''; if (against) { const c = contrast(v, T[m][against]); r = `<span class="ratio${c >= 4.5 || (k.startsWith('chart') && c >= 3) ? ' ok' : ''}">${c.toFixed(1)}:1</span>`; } return `<td><span class="sw" style="background:${v}"></span><code>${v}</code>${r}</td>`; };
+    h += `<tr><td><code>--${k}</code></td>${cell('light')}${cell('dark')}</tr>`;
+  }
+  return h + '</tbody>';
+}
+function cssExport() {
+  const block = (sel, m) => `${sel} {\n` + Object.entries(DIR.tokens[m]).map(([k, v]) => `  --${k}: ${oklch(v)};`).join('\n') + '\n}';
+  return `/* Sen, ${DIR.name}: shadcn/ui tokens plus Sen's money, chart and icon tokens */\n:root {\n  --radius: ${DIR.radius || '0.875rem'};\n  --icon-stroke: ${DIR.icons.weight};\n  --icon-cap: ${DIR.icons.cap};\n  --icon-join: ${DIR.icons.join};\n  --icon-dot-cap: ${dotCap(DIR.icons.cap)};\n}\n${block(':root', 'light')}\n${block('.dark', 'dark')}`;
+}
+// page and phone token blocks, generated once at boot
+// lucide draws a dot as a zero-length line, which butt ends would hide, so dots take square ends there
+const dotCap = (cap) => (cap === 'butt' ? 'square' : cap);
+function iconVars() { const I = DIR.icons; return `--icon-stroke:${I.weight};--icon-cap:${I.cap};--icon-join:${I.join};--icon-dot-cap:${dotCap(I.cap)};`; }
+function tokenCSS() {
+  const vars = (m) => Object.entries(Object.assign({}, DIR.tokens[m], DIR.extra ? DIR.extra[m] : {})).map(([k, v]) => `--${k}:${v};`).join('');
+  return `:root{${iconVars()}${vars('light')}}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${vars('dark')}color-scheme:dark}}:root[data-theme="dark"]{${vars('dark')}color-scheme:dark}.phone.light{${vars('light')}color-scheme:light}.phone.dark{${vars('dark')}color-scheme:dark}.mlight{${vars('light')}}.mdark{${vars('dark')}}`;
+}
+
+// ---------- boot ----------
+const VIEW = { st: 'normal', view: 'both' };
+function renderPhones() {
+  document.querySelectorAll('#phones .phone').forEach((ph) => { const mode = ph.classList.contains('dark') ? 'dark' : 'light'; ph.innerHTML = homeHTML(mode, VIEW.st); if (DIR.decorate) DIR.decorate(ph.querySelector('.screen'), mode, VIEW.st); });
+  mountAvatars(document.getElementById('phones'));
+  if (VIEW.st === 'payday' && DIR.paydayFx) document.querySelectorAll('#phones .phone .screen').forEach((s) => DIR.paydayFx(s, s.dataset.mode));
+  fitPhones();
+}
+function fitPhones() {
+  const box = document.getElementById('phones'); if (!box) return; const W = box.clientWidth;
+  const wraps = [...box.querySelectorAll('.phone-wrap')];
+  wraps.forEach((w) => { w.hidden = VIEW.view !== 'both' && w.dataset.mode !== VIEW.view; });
+  const z = VIEW.view === 'both' ? Math.min(1, (W - 14) / 780) : Math.min(1, W / 390);
+  wraps.forEach((w) => { w.style.setProperty('--z', z.toFixed(4)); w.classList.toggle('zoomable', VIEW.view === 'both' && z < 0.75); });
+  box.classList.toggle('has-tags', VIEW.view === 'both');
+  document.getElementById('phones-hint').textContent = VIEW.view === 'both' && z < 0.75 ? 'Tap a phone to see it full size.' : '';
+}
+function press(group, attr, val) { group.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset[attr] === val))); }
+function boot() {
+  const st = document.createElement('style'); st.textContent = tokenCSS(); document.head.prepend(st);
+  const pg = document.getElementById('pg');
+  pg.innerHTML = secHead() + secHome() + secSen() + secIcon() + secTabs() + secCharts() + secTheme() + secTrade();
+  if (DIR.afterBoot) DIR.afterBoot(pg);
+  document.getElementById('tok').innerHTML = tokenTable();
+  document.getElementById('css-out').textContent = cssExport();
+  AV.io = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver((es) => es.forEach((e) => { e.target._vis = e.isIntersecting; if (e.isIntersecting) e.target._dirty = true; }), { rootMargin: '80px' }) : null;
+  renderPhones(); mountAvatars(pg);
+  AV.t0 = performance.now(); requestAnimationFrame(avLoop);
+  document.getElementById('seg-state').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; VIEW.st = b.dataset.st; press(e.currentTarget, 'st', VIEW.st); renderPhones(); });
+  document.getElementById('seg-view').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; VIEW.view = b.dataset.v; press(e.currentTarget, 'v', VIEW.view); fitPhones(); });
+  document.getElementById('seg-av').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; press(e.currentTarget, 's', b.dataset.s); setAv(document.getElementById('sen-big'), b.dataset.s); });
+  document.getElementById('phones').addEventListener('click', (e) => {
+    const wrap = e.target.closest('.phone-wrap'); if (!wrap) return; const screen = wrap.querySelector('.screen');
+    if (wrap.classList.contains('zoomable')) { VIEW.view = wrap.dataset.mode; press(document.getElementById('seg-view'), 'v', VIEW.view); fitPhones(); return; }
+    if (e.target.closest('.fab')) return openSheet(screen);
+    if (e.target.closest('.close') || e.target.closest('.scrim')) return closeSheet(screen);
+    const chip = e.target.closest('.chip'); if (chip) return ask(screen, +chip.dataset.q);
+    const tab = e.target.closest('.tabbar .tab'); if (tab) return switchTab(tab.closest('.tabbar'), tab);
+  });
+  const tabsSec = document.getElementById('tabs');
+  if (tabsSec) tabsSec.addEventListener('click', (e) => { const tab = e.target.closest('.tabbar .tab'); if (tab) switchTab(tab.closest('.tabbar'), tab); });
+  document.getElementById('copy-css').addEventListener('click', async (e) => { const b = e.currentTarget; try { await navigator.clipboard.writeText(cssExport()); b.textContent = 'Copied'; } catch (_) { const r = document.createRange(); r.selectNodeContents(document.getElementById('css-out')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selected'; } setTimeout(() => { b.textContent = 'Copy'; }, 1600); });
+  window.addEventListener('resize', fitPhones);
+  const mq = matchMedia('(prefers-color-scheme: dark)'); const redraw = () => AV.set.forEach((c) => { c._dirty = true; });
+  if (mq.addEventListener) mq.addEventListener('change', redraw);
+  new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
+/* Direction: Firefly. In the mangroves along the Selangor River, fireflies gather by the thousand and
+   flash in time. Sen is one of them: a small light that keeps watch at night. The figure that matters
+   is written in fireflies, and the share of them alight is the share of the cycle's money still left,
+   so it is brightest on payday. Dark leads; light is the blue hour, just after sunset. */
+
+// the S the firefly draws, tail at bottom left, head at top right (108 dp canvas)
+const FF_S = [[[37, 74], [45, 82], [68, 80], [68, 66.5]], [[68, 66.5], [68, 53.5], [40, 55], [40, 42]], [[40, 42], [40, 30], [62, 27.5], [70, 35]]];
+function ffTrail(n, color, alphaFloor, glow, p) {
+  const pts = sampleSegs(FF_S, n); let s = '';
+  for (let i = 0; i < n - 1; i++) { const t = i / (n - 2); s += `<circle cx="${f2(pts[i][0])}" cy="${f2(pts[i][1])}" r="${f2(0.95 + 1.3 * t * t)}" fill="${color}" opacity="${f2(alphaFloor + (1 - alphaFloor) * t)}"/>`; }
+  const h = pts[n - 1];
+  if (glow) s += `<circle cx="${f2(h[0])}" cy="${f2(h[1])}" r="19" fill="url(#${p}g)"/>`;
+  s += `<circle cx="${f2(h[0])}" cy="${f2(h[1])}" r="4.5" fill="${glow ? '#fffce8' : color}"/>`;
+  return s;
+}
+// a firefly's flash: a quick rise and a slower fade, u in 0..1 of its period
+const ffFlash = (u) => (u < 0.07 ? u / 0.07 : Math.exp(-(u - 0.07) * 10));
+// a seeded random, so decorations come out the same on every render
+function ffRand(seed) { let x = seed >>> 0 || 1; return () => { x ^= x << 13; x ^= x >>> 17; x ^= x << 5; return (x >>> 0) / 4294967296; }; }
+
+// a glowing point on canvas
+function ffLight(c, x, y, s, k, a, halo) {
+  const R = s * (s < 44 ? halo * 1.25 : halo) * k; const hg = c.createRadialGradient(x, y, 0, x, y, R);
+  hg.addColorStop(0, `rgba(255,251,214,${0.95 * a})`); hg.addColorStop(0.22, `rgba(246,238,140,${0.55 * a})`); hg.addColorStop(1, 'rgba(236,229,108,0)');
+  c.fillStyle = hg; c.beginPath(); c.arc(x, y, R, 0, TAU); c.fill();
+  c.fillStyle = `rgba(255,252,232,${Math.min(1, 0.3 + a)})`; c.beginPath(); c.arc(x, y, s * (s < 44 ? 0.12 : 0.085) * k * (0.85 + 0.15 * a), 0, TAU); c.fill();
+}
+
+// ---------- text written in fireflies: the large figure, and the page title ----------
+const FF_FAM = '"Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+const FFT = { set: new Set(), sprite: null, loop: false, t0: 0 };
+// one soft light, drawn once and stamped for every firefly
+function ffSprite() {
+  if (FFT.sprite) return FFT.sprite;
+  const n = 48, cv = document.createElement('canvas'); cv.width = cv.height = n; const g = cv.getContext('2d');
+  const r = g.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2);
+  r.addColorStop(0, 'rgba(255,253,236,1)'); r.addColorStop(0.12, 'rgba(255,248,200,1)'); r.addColorStop(0.26, 'rgba(246,236,140,.55)'); r.addColorStop(0.55, 'rgba(236,222,110,.14)'); r.addColorStop(1, 'rgba(236,222,110,0)');
+  g.fillStyle = r; g.fillRect(0, 0, n, n); FFT.sprite = cv; return cv;
+}
+// the figure as canvas text: the currency small, the amount large, fitted to the width
+const FF_PAD = 8;
+function ffLayout(g, W, sen, size) {
+  const p = rmParts(sen);
+  for (let k = 0; k < 12; k++) {
+    const big = `500 ${size}px ${FF_FAM}`, cur = `400 ${Math.round(size * 0.36)}px ${FF_FAM}`;
+    g.font = cur; const wc = g.measureText('RM').width; g.font = big; const wn = g.measureText(`${p.whole}.${p.cents}`).width;
+    if (wc + 6 + wn <= W - 2 * FF_PAD || size < 30) return { size, parts: [{ t: 'RM', font: cur, x: FF_PAD }, { t: `${p.whole}.${p.cents}`, font: big, x: FF_PAD + wc + 6 }] };
+    size -= 3;
+  }
+}
+function ffPrepare(cv) {
+  const kind = cv.dataset.kind; const W = Math.max(120, cv.clientWidth || cv.parentElement.clientWidth || 350);
+  const g0 = document.createElement('canvas').getContext('2d'); let L;
+  if (kind === 'title') { const size = Math.round(Math.min(96, Math.max(56, W * 0.16))); L = { size, parts: [{ t: cv.dataset.text, font: `600 ${size}px ${FF_FAM}`, x: FF_PAD }] }; } else L = ffLayout(g0, W, +cv.dataset.sen, +cv.dataset.size || 58);
+  const base = Math.round(L.size * 0.94), H = Math.round(L.size * 1.16);
+  const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
+  // sample the glyphs at twice the resolution, then pick the fireflies' places at random inside them
+  const k = 2, m = document.createElement('canvas'); m.width = W * k; m.height = H * k; const mg = m.getContext('2d');
+  mg.scale(k, k); mg.fillStyle = '#fff'; L.parts.forEach((q) => { mg.font = q.font; mg.fillText(q.t, q.x, base); });
+  const px = mg.getImageData(0, 0, m.width, m.height).data; const cand = [];
+  for (let y = 0; y < m.height; y++) for (let x = 0; x < m.width; x++) if (px[(y * m.width + x) * 4 + 3] > 150) cand.push(x, y);
+  const total = cand.length / 2;
+  // a firefly every few pixels of the glyphs; the share of them alight is the share of the cycle's income still left
+  const want = Math.round(total / (k * k) / (kind === 'title' ? 11 : 9.5));
+  const lit = kind === 'title' ? 1 : cv.dataset.over === '1' ? 0 : Math.min(1, +cv.dataset.sen / DATA.income);
+  const rnd = ffRand(+cv.dataset.sen || 7919); const P = [];
+  for (let i = 0; i < want; i++) {
+    const j = i + Math.floor(rnd() * (total - i)); const ax = cand[2 * j], ay = cand[2 * j + 1]; cand[2 * j] = cand[2 * i]; cand[2 * j + 1] = cand[2 * i + 1]; cand[2 * i] = ax; cand[2 * i + 1] = ay;
+    P.push({ hx: (ax + rnd()) / k, hy: (ay + rnd()) / k, per: 2.2 + rnd() * 2.6, ph: rnd() * 10, w1: 0.4 + rnd() * 0.8, w2: rnd() * TAU, r: 0.75 + rnd() * 0.6, sx: 0, sy: 0, dl: rnd() * 0.7, on: i < Math.round(lit * want) });
+  }
+  cv._ff = { W, H, base, L, P, dpr, gather: null };
+  if (cv.dataset.gather) ffGather(cv, cv.dataset.gather);
+}
+// fireflies fly in and settle into their places: from the twig below for payday, from everywhere for the title
+function ffGather(cv, from) {
+  const F = cv._ff; if (!F || REDUCED) return; const rnd = ffRand(4242);
+  F.P.forEach((p) => {
+    if (from === 'twig') { p.sx = rnd() * F.W; p.sy = F.H + 22 + rnd() * 26; } else { const a = rnd() * TAU, d = 0.6 + rnd() * 0.9; p.sx = F.W / 2 + Math.cos(a) * F.W * d; p.sy = F.H / 2 + Math.sin(a) * F.H * 2.4 * d; }
+  });
+  F.gather = { t: (performance.now() - FFT.t0) / 1000, dur: from === 'twig' ? 1.5 : 2.2 };
+}
+function ffDraw(cv, t) {
+  const F = cv._ff; if (!F) return; const g = cv.getContext('2d'); const mode = cv.dataset.mode === 'page' ? pageMode() : cv.dataset.mode; const dark = mode === 'dark';
+  const cs = getComputedStyle(cv); const over = cv.dataset.over === '1';
+  g.setTransform(F.dpr, 0, 0, F.dpr, 0, 0); g.clearRect(0, 0, F.W, F.H); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+  // the underlay keeps the figure legible whatever the swarm is doing: by night a warm haze, by day the night itself
+  const key = `${mode}|${over}`;
+  if (F.key !== key) {
+    const u = document.createElement('canvas'); u.width = cv.width; u.height = cv.height; const ug = u.getContext('2d'); ug.scale(F.dpr, F.dpr);
+    const text = (fill) => { ug.fillStyle = fill; F.L.parts.forEach((q) => { ug.font = q.font; ug.fillText(q.t, q.x, F.base); }); };
+    if (over) text(cs.getPropertyValue('--money-warning').trim());
+    else if (dark) { ug.filter = `blur(${Math.max(3, F.L.size * 0.09)}px)`; text('rgba(250,224,118,.26)'); ug.filter = 'none'; text('rgba(250,224,118,.075)'); }
+    else text(cs.getPropertyValue('--night-ink').trim() || '#1d1a45');
+    F.under = u; F.key = key;
+  }
+  g.drawImage(F.under, 0, 0, F.W, F.H);
+  if (!F.P.length || over) return;
+  const spr = ffSprite(); g.globalCompositeOperation = dark ? 'lighter' : 'source-atop';
+  // every eight seconds the swarm flashes together, in a wave from left to right
+  const sy = REDUCED ? -1 : (t % 8) - 0.4; const G = F.gather; const sz = Math.max(2.6, F.L.size * (cv.dataset.kind === 'title' ? 0.058 : 0.075));
+  for (const p of F.P) {
+    if (!p.on) { g.globalAlpha = dark ? 0.3 : 0.16; g.drawImage(spr, p.hx - 1.6, p.hy - 1.6, 3.2, 3.2); continue; }
+    let x = p.hx, y = p.hy, b = 0.8;
+    if (!REDUCED) {
+      x += 0.45 * Math.sin(t * p.w1 + p.w2); y += 0.45 * Math.cos(t * p.w1 * 0.8 + p.w2);
+      const wave = Math.exp(-Math.pow(sy - (x / F.W) * 0.6, 2) * 70);
+      b = 0.26 + 0.6 * ffFlash(((t + p.ph) % p.per) / p.per) * (1 - wave) + 0.95 * wave;
+      if (G) { const k = Math.min(1, Math.max(0, (t - G.t - p.dl) / G.dur)); if (k < 1) { const e = 1 - Math.pow(1 - k, 3); x = p.sx + (x - p.sx) * e; y = p.sy + (y - p.sy) * e - Math.sin(Math.PI * e) * 14; b = 0.55 + 0.45 * Math.abs(Math.sin(t * 9 + p.ph)); } }
+    }
+    const r = sz * p.r * (0.75 + 0.45 * b) * (dark ? 1 : 1.25); g.globalAlpha = Math.min(1, 0.95 * b); g.drawImage(spr, x - r, y - r, 2 * r, 2 * r);
+  }
+  g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+  if (G && t - G.t > G.dur + 0.8) F.gather = null;
+}
+function ffMount(root) {
+  root.querySelectorAll('canvas.ffc').forEach((cv) => {
+    if (cv._m) return; cv._m = true; FFT.set.add(cv);
+    const fam = cv.dataset.kind === 'title' ? `600 64px ${FF_FAM}` : `500 58px ${FF_FAM}`;
+    Promise.all([document.fonts.load(fam), document.fonts.load(`400 21px ${FF_FAM}`)]).catch(() => {}).then(() => { if (cv.isConnected) { ffPrepare(cv); if (REDUCED) ffDraw(cv, 2.2); } });
+  });
+  if (!FFT.loop) {
+    FFT.loop = true; FFT.t0 = performance.now(); let last = 0;
+    const step = (now) => { if (now - last > 32) { last = now; const t = (now - FFT.t0) / 1000; for (const cv of FFT.set) { if (!cv.isConnected) { FFT.set.delete(cv); continue; } if (!REDUCED) ffDraw(cv, t); } } requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+}
+
+// the twig the fireflies settle on, one perch a day; the berembang flower at its tip is payday
+function ffTwig(day, days, now) {
+  const W = 350, H = 30; const yb = (x) => 16 + 2.4 * Math.sin(x / 61 + 0.5) - 0.006 * x; const x0 = 6, x1 = W - 14;
+  const pts = []; for (let x = 0; x <= x1; x += 6) pts.push([x, yb(x)]); pts.push([x1, yb(x1)]);
+  const L = [], R = []; pts.forEach((p, i) => { const w = 1.9 - 1.3 * (i / (pts.length - 1)); L.push([p[0], p[1] - w / 2]); R.push([p[0], p[1] + w / 2]); });
+  let s = `<path d="${polyD(L.concat(R.reverse()), true)}" fill="var(--twig)"/>`;
+  [[44, 1, 0.9], [118, -1, 1.15], [176, 1, 0.95], [252, -1, 1], [312, 1, 0.85]].forEach(([x, dir, k]) => { const y = yb(x) + 0.6; s += `<path d="M${x} ${f2(y)}c${f2(2 * dir * k)} ${f2(3.4 * k)} ${f2(6 * dir * k)} ${f2(5.4 * k)} ${f2(9.5 * dir * k)} ${f2(5.6 * k)}c${f2(-1.8 * dir * k)} ${f2(-2.6 * k)} ${f2(-5 * dir * k)} ${f2(-4.4 * k)} ${f2(-9.5 * dir * k)} ${f2(-5.6 * k)}z" fill="var(--twig)"/>`; });
+  // the flower: a pompom of stamens
+  const fx = W - 7, fy = yb(x1) - 1; for (let i = 0; i < 14; i++) { const a = -Math.PI * 0.95 + (i / 13) * Math.PI * 1.9; s += `<line x1="${fx}" y1="${f2(fy)}" x2="${f2(fx + 5.2 * Math.cos(a))}" y2="${f2(fy + 5.2 * Math.sin(a))}" stroke="var(--flower)" stroke-width=".7" stroke-linecap="round"/>`; }
+  s += `<circle cx="${fx}" cy="${f2(fy)}" r="1.6" fill="var(--flower)"/>`;
+  for (let i = 0; i < days; i++) {
+    const d = i + 1; const x = x0 + (i / (days - 1)) * (x1 - x0 - 8); const y = yb(x) - 2.9;
+    if (d < day) { const f = d / day; s += `<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2(1.25 + 0.7 * f)}" fill="var(--ffly)" opacity="${f2(0.16 + 0.62 * f * f)}" class="tw-ff"/>`; }
+    else if (d > day) s += `<circle cx="${f2(x)}" cy="${f2(y + 0.8)}" r="1.15" fill="var(--twig-bud)"/>`;
+  }
+  const tx = x0 + ((day - 1) / (days - 1)) * (x1 - x0 - 8), ty = yb(tx) - 3.2;
+  s += `<circle cx="${f2(tx)}" cy="${f2(ty)}" r="12" fill="url(#ffs-${now})" class="ff-now-halo"/><circle cx="${f2(tx)}" cy="${f2(ty)}" r="3.3" fill="var(--ffly-core)" class="ff-now"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" aria-hidden="true" style="overflow:visible"><defs><radialGradient id="ffs-${now}"><stop offset="0" stop-color="var(--ffly-core)"/><stop offset=".28" stop-color="var(--ffly)" stop-opacity=".7"/><stop offset="1" stop-color="var(--ffly)" stop-opacity="0"/></radialGradient></defs>${s}</svg>`;
+}
+// out-of-focus lights behind the screen, and the blue hour's horizon
+function ffSky(mode) {
+  const r = ffRand(mode === 'dark' ? 11 : 23); let b = '';
+  const n = mode === 'dark' ? 6 : 4;
+  for (let i = 0; i < n; i++) { const sz = 26 + r() * 54; const left = i % 2 ? 62 + r() * 34 : -10 + r() * 30; b += `<i style="left:${f2(left)}%;top:${f2(4 + r() * 70)}%;width:${f2(sz)}px;height:${f2(sz)}px;--o:${f2(0.05 + r() * 0.1)};--dx:${f2(r() * 30 - 15)}px;--dy:${f2(r() * 24 - 12)}px;animation-delay:${f2(-r() * 30)}s"></i>`; }
+  return `<div class="sky" aria-hidden="true"><div class="bokeh">${b}</div></div>`;
+}
+
+// ---------- the tab bar: each icon a firefly's trail, dotted as a long exposure shows it ----------
+const FF_TAB = {
+  light: { idle: '#545072', dot: '#2a2566', head: '#c99412', halo: '201,148,18', glow: 0 },
+  dark: { idle: '#a7a3c8', dot: '#f4e98a', head: '#fffce8', halo: '244,233,138', glow: 0.55 },
+};
+// the dots of a tab's trail, each with its distance from the head, where the firefly is
+function ffTabDots(k, step) {
+  const S = TAB_SK[k]; const hx = S.head[0], hy = S.head[1]; const out = [];
+  if (S.dots) S.dots.forEach(([x, y]) => out.push([x, y, Math.hypot(x - hx, y - hy)]));
+  tabPolys(k).forEach((P) => { const R = resample(P, step); const n = P.closed ? R.length - 1 : R.length; for (let i = 0; i < n; i++) out.push([R[i][0], R[i][1], Math.hypot(R[i][0] - hx, R[i][1] - hy)]); });
+  return out;
+}
+function ffTabBody(k, on, mode, u) {
+  const c = FF_TAB[mode], S = TAB_SK[k]; const big = k === 'more';
+  const dots = ffTabDots(k, 2.05);
+  if (!on) return dots.map(([x, y]) => `<circle cx="${f2(x)}" cy="${f2(y)}" r="${big ? 1.5 : 0.82}" fill="${c.idle}"/>`).join('');
+  // active: alight, brightest near the head, with a halo where the firefly is
+  const lit = dots.map(([x, y, d]) => { const k2 = Math.exp(-d / 8); return `<circle cx="${f2(x)}" cy="${f2(y)}" r="${f2((big ? 1.3 : 0.76) + 0.4 * k2)}" fill="${c.dot}" opacity="${f2(0.5 + 0.5 * k2)}"/>`; }).join('');
+  const [hx, hy] = S.head;
+  return `<defs><radialGradient id="${u}h"><stop offset="0" stop-color="rgb(${c.halo})" stop-opacity="${c.glow ? 0.6 : 0.4}"/><stop offset="1" stop-color="rgb(${c.halo})" stop-opacity="0"/></radialGradient>${c.glow ? `<filter id="${u}f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation=".9"/></filter>` : ''}</defs>`
+    + `<circle cx="${hx}" cy="${hy}" r="${big ? 6 : 5}" fill="url(#${u}h)" class="ff-halo"/>` + (c.glow ? `<g filter="url(#${u}f)" opacity="${c.glow}">${lit}</g>` : '') + lit + `<circle cx="${hx}" cy="${hy}" r="${big ? 1.9 : 1.45}" fill="${c.head}"/>`;
+}
+const ffTabIcon = (k, on, mode, u) => svgTag('0 0 24 24', 24, 24, ffTabBody(k, on, mode, u));
+// the scan button: a patch of night, fireflies circling its edge and the scan mark in light
+function ffScan(mode, u) {
+  let ring = ''; const r = ffRand(29);
+  for (let i = 0; i < 22; i++) { const a = (i / 22) * TAU; ring += `<circle cx="${f2(26 + Math.cos(a) * 21.4)}" cy="${f2(26 + Math.sin(a) * 21.4)}" r="${f2(0.45 + r() * 0.45)}" fill="#f4e98a" opacity="${f2(0.25 + r() * 0.55)}" class="ff-ring" style="--d:${f2(r() * 3)}s"/>`; }
+  return svgTag('0 0 52 52', 52, 52, `<defs><radialGradient id="${u}n" cx="66%" cy="26%" r="78%"><stop offset="0" stop-color="#2e2769"/><stop offset=".55" stop-color="#17143a"/><stop offset="1" stop-color="#0b0a1e"/></radialGradient></defs><circle cx="26" cy="26" r="24" fill="url(#${u}n)"/>${ring}<g transform="translate(14 14)">${ffTabBody('scan', true, 'dark', `${u}g`)}</g>`, 'sb');
+}
+function ffBadge(n, mode) {
+  const dark = mode === 'dark';
+  return `${svgTag('0 0 20 20', 20, 20, `<circle cx="10" cy="10" r="9.4" fill="${dark ? '#f4e98a' : '#2a2566'}"/>`)}<b style="color:${dark ? '#1b1636' : '#fbfaff'}">${n}</b>`;
+}
+// choosing a tab: a firefly flies from the old tab to the new one, leaving its trail, and lights it
+function ffFly(bar, from, to) {
+  if (!from) return; const br = bar.getBoundingClientRect(); const s = br.width / bar.offsetWidth || 1;
+  const c = (el) => { const r = el.querySelector('.ti').getBoundingClientRect(); return [(r.left + r.width / 2 - br.left) / s, (r.top + r.height / 2 - br.top) / s]; };
+  const [x0, y0] = c(from), [x1, y1] = c(to); const N = 22, dur = 680; const pts = [];
+  for (let k = 0; k <= N; k++) { const t = k / N; const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; pts.push([x0 + (x1 - x0) * e, y0 + (y1 - y0) * e - Math.sin(Math.PI * e) * (14 + Math.abs(x1 - x0) * 0.06)]); }
+  const fly = document.createElement('i'); fly.className = 'ff-fly'; bar.append(fly);
+  fly.animate(pts.map(([x, y]) => ({ transform: `translate(${f2(x)}px, ${f2(y)}px)` })), { duration: dur, easing: 'linear', fill: 'forwards' });
+  pts.forEach(([x, y], k) => { if (k % 2 || k === N) return; const d = document.createElement('i'); d.className = 'ff-trail'; d.style.transform = `translate(${f2(x)}px, ${f2(y)}px)`; d.style.animationDelay = `${Math.round((k / N) * dur)}ms`; bar.append(d); setTimeout(() => d.remove(), dur + 1200); });
+  setTimeout(() => fly.remove(), dur + 40);
+}
+
+let FF_N = 0;
+const DIR = {
+  id: 'firefly', name: 'Firefly', title: 'Sen Firefly',
+  fonts: 'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,400&display=swap',
+  titleHTML: '<span class="vh">Firefly</span><canvas class="ffc ff-title" data-kind="title" data-text="Firefly" data-mode="page" data-gather="all" aria-hidden="true"></canvas>',
+  lede: 'In the mangroves along the Selangor River, fireflies gather by the thousand and flash in time. Sen is one of them: a small light that keeps watch at night and has a note for you by morning. The figure that matters is written in fireflies, and the share of them alight is the share of the cycle’s money still left: all of them on payday, fewer as the cycle runs down.',
+  meta: 'Dark leads: an indigo night over the river. Light is the blue hour, just after sunset, with the fireflies kept inside the night of each figure.',
+  senIntro: 'Sen is one firefly, nothing more: no face, no body. It drifts over the water at rest and blinks now and then. It holds still and brightens when you open the sheet, and loops quickly, leaving a trail, while it works. When it sends out helpers, more lights join it and flash in time with it, the way the river’s fireflies do.',
+  iconIntro: 'An S drawn in light. Fireflies blink as they fly, so a long exposure shows a dotted trail; here the trail writes the app’s initial and ends in the glow, over a horizon at dusk. In the themed and notification icons the dots stay and the glow becomes a solid head.',
+  tabsIntro: 'Each icon is a firefly’s trail, dotted the way a long exposure shows one, like the app icon’s S. Idle trails rest dim; the active one is alight, brightest where the firefly is. Choose another tab and a firefly flies over to it, leaving its trail, and lights it up. The scan button is a patch of night with fireflies circling its edge.',
+  themeIntro: 'An indigo night with one warm light, and a blue hour by day.',
+  typeNote: { display: 'Be Vietnam Pro for the figure, written in fireflies over a faint underlay, and Newsreader, light, for headings', ui: 'Be Vietnam Pro for everything you read and tap, with tabular figures in columns.', voice: 'Sen’s own words are set in Newsreader italic: a voice, distinct from the interface.' },
+  radius: '1rem',
+  // every icon outside the tab bar is lucide, in this look's colour (the icon token), weight and line ends (D81): a light trail: soft ends
+  icons: { weight: 1.6, cap: 'round', join: 'round' },
+  tokens: {
+    light: {
+      background: '#e8e8f3', foreground: '#1b1838', card: '#f8f8fc', 'card-foreground': '#1b1838', popover: '#fbfbfe', 'popover-foreground': '#1b1838',
+      primary: '#2a2566', 'primary-foreground': '#fbfaff', secondary: '#e0dfee', 'secondary-foreground': '#1b1838', muted: '#e2e1ef', 'muted-foreground': '#545072',
+      accent: '#dddcf0', 'accent-foreground': '#1b1838', destructive: '#b8233a', border: '#d6d5e8', input: '#c8c6df', ring: '#2a2566',
+      'chart-accent': '#2a2566', 'chart-context': '#a9a6c8',
+      'money-in': '#137649', 'money-out': '#1b1838', 'money-pending': '#625e86', 'money-warning': '#9a5100', icon: '#545072',
+    },
+    dark: {
+      background: '#0e0c22', foreground: '#ecebf7', card: '#17143a', 'card-foreground': '#ecebf7', popover: '#1b1842', 'popover-foreground': '#ecebf7',
+      primary: '#f4e98a', 'primary-foreground': '#1b1636', secondary: '#231f48', 'secondary-foreground': '#ecebf7', muted: '#1d1a40', 'muted-foreground': '#a7a3c8',
+      accent: '#262150', 'accent-foreground': '#ecebf7', destructive: '#ff8f8f', border: '#2a2652', input: '#383368', ring: '#f4e98a',
+      'chart-accent': '#f2f388', 'chart-context': '#5c578c',
+      'money-in': '#6fe0a9', 'money-out': '#ecebf7', 'money-pending': '#a19dc4', 'money-warning': '#ffb36b', icon: '#a7a3c8',
+    },
+  },
+  extra: {
+    light: { glow: 'rgba(242,234,140,0)', 'night-ink': '#1e1a48', 'warn-bg': '#f8e1e5', 'warn-fg': '#8f1630', checker: 'rgba(26,23,56,.06)', 'tab-on': '#2a2566', 'fab-shadow': '0 10px 24px -8px rgba(29,25,64,.55)', twig: 'rgba(38,34,78,.62)', 'twig-bud': 'rgba(38,34,78,.42)', ffly: '#c99412', 'ffly-core': '#fff1a8', flower: 'rgba(38,34,78,.5)' },
+    dark: { glow: 'rgba(242,234,140,.2)', 'night-ink': '#1e1a48', 'warn-bg': '#3d1825', 'warn-fg': '#ffb3c1', checker: 'rgba(236,235,247,.06)', 'tab-on': '#f4e98a', 'fab-shadow': '0 0 0 1px rgba(242,234,140,.18), 0 0 28px -2px rgba(242,234,140,.28)', twig: '#3a3570', 'twig-bud': '#4a4585', ffly: '#f4e98a', 'ffly-core': '#fffce8', flower: 'rgba(222,214,250,.55)' },
+  },
+  wall: 'linear-gradient(170deg,#4b4f86 0%,#2a2856 42%,#5a3e66 78%,#c48a6c 100%)',
+
+  avatar: {
+    draw(c, s, t, st) {
+      const cx = s / 2, cy = s / 2; const big = s >= 40;
+      const g = c.createRadialGradient(s * 0.66, s * 0.24, 0, cx, cy, s * 0.75);
+      g.addColorStop(0, '#2e2769'); g.addColorStop(0.55, '#17143a'); g.addColorStop(1, '#0b0a1e');
+      c.fillStyle = g; c.beginPath(); c.arc(cx, cy, s / 2, 0, TAU); c.fill();
+      c.save(); c.beginPath(); c.arc(cx, cy, s / 2, 0, TAU); c.clip();
+      const hz = s * 0.72; const focus = st === 'listening' ? 0.35 : 1;
+      if (big) {
+        // the far bank's glow, the river, and lights out of focus
+        const hg = c.createLinearGradient(0, hz - s * 0.24, 0, hz); hg.addColorStop(0, 'rgba(126,84,156,0)'); hg.addColorStop(1, 'rgba(126,84,156,.34)');
+        c.fillStyle = hg; c.fillRect(0, hz - s * 0.24, s, s * 0.24);
+        c.fillStyle = 'rgba(5,4,15,.6)'; c.fillRect(0, hz, s, s - hz);
+        c.strokeStyle = 'rgba(176,160,232,.09)'; c.lineWidth = Math.max(0.6, s / 160);
+        for (let k = 0; k < 5; k++) { const y = hz + s * (0.035 + k * 0.05); const o = Math.sin(t * 0.6 + k) * s * 0.04; c.beginPath(); c.moveTo(s * 0.12 + o, y); c.lineTo(s * 0.88 + o, y); c.stroke(); }
+        [[0.24, 0.27, 0.075, '240,222,150'], [0.79, 0.38, 0.055, '170,152,240'], [0.6, 0.15, 0.045, '170,152,240'], [0.36, 0.52, 0.04, '240,222,150']].forEach(([x, y, r, col], i) => {
+          const bx = s * (x + 0.012 * Math.sin(t * 0.13 + i)), by = s * (y + 0.01 * Math.cos(t * 0.11 + i * 2)); const a = (0.1 + 0.05 * Math.sin(t * 0.7 + i * 1.7)) * focus;
+          const bg = c.createRadialGradient(bx, by, 0, bx, by, s * r); bg.addColorStop(0, `rgba(${col},${a})`); bg.addColorStop(0.75, `rgba(${col},${a * 0.8})`); bg.addColorStop(1, `rgba(${col},0)`);
+          c.fillStyle = bg; c.beginPath(); c.arc(bx, by, s * r, 0, TAU); c.fill();
+        });
+      }
+      // where the light is at time u: a slow figure of eight at rest, quick loops while working
+      const busy = st === 'thinking' || st === 'helpers';
+      const path = (u) => busy ? [cx + s * 0.15 * Math.sin(u * 2.4), cy - s * 0.04 + s * 0.09 * Math.sin(u * 4.8)] : [cx + s * 0.08 * Math.sin(u * 0.5), cy - s * 0.05 + s * 0.045 * Math.sin(u * 1.0)];
+      let here = path(t), a = 0.5 + 0.5 * ffFlash((t % 3.2) / 3.2), halo = 0.42, trail = 0;
+      if (st === 'note') { here = [cx, cy - s * 0.05]; const u = t % 2.2; a = 0.55 + 0.45 * Math.max(ffFlash(u / 0.9), u > 0.3 ? ffFlash((u - 0.3) / 0.9) : 0); const ph = (t * 0.45) % 1; c.strokeStyle = `rgba(246,238,140,${0.5 * (1 - ph)})`; c.lineWidth = Math.max(1, s / 70); c.beginPath(); c.arc(here[0], here[1], s * (0.1 + 0.3 * ph), 0, TAU); c.stroke(); }
+      if (st === 'listening') { here = [cx, cy - s * 0.04]; a = 0.94 + 0.06 * Math.sin(t * 1.6); halo = 0.52; }
+      if (busy) { trail = 10; a = 0.45 + 0.55 * ffFlash((t % 1.1) / 1.1); }
+      if (st === 'speaking') { here = [cx, cy - s * 0.05]; a = 0.62 + 0.38 * Math.abs(Math.sin(t * 8.5) * Math.sin(t * 2.9)); }
+      if (st === 'paused') { here = [cx, hz - s * 0.03]; a = 0.16; halo = 0.22; }
+      if (st === 'done') { here = [cx, cy - s * 0.05]; const k = Math.max(0, 1 - (t % 3) / 0.7); a = 0.8 + 0.2 * k; halo = 0.42 + 0.16 * k; const ph = (t % 3) / 1.2; if (ph < 1) { c.strokeStyle = `rgba(255,248,200,${0.6 * (1 - ph)})`; c.lineWidth = Math.max(1, s / 60); c.beginPath(); c.arc(here[0], here[1], s * (0.08 + 0.36 * ph), 0, TAU); c.stroke(); } }
+      // its reflection in the river
+      if (big && here[1] < hz) {
+        const ry = hz + (hz - here[1]) * 0.55;
+        for (let k = 0; k < 6; k++) { const y = ry + (k - 2.5) * s * 0.018; const w = s * (0.05 - Math.abs(k - 2.5) * 0.007); const o = Math.sin(t * 2.2 + k * 1.3) * s * 0.012; c.strokeStyle = `rgba(246,236,150,${0.32 * a * (1 - Math.abs(k - 2.5) / 3.2)})`; c.lineWidth = Math.max(0.8, s / 110); c.beginPath(); c.moveTo(here[0] - w + o, y); c.lineTo(here[0] + w + o, y); c.stroke(); }
+      }
+      // the trail: where it blinked a moment ago
+      for (let k = trail; k >= 1; k--) { const p = path(t - k * 0.085); const f = 1 - k / (trail + 1); c.fillStyle = `rgba(246,238,140,${0.6 * f * f})`; c.beginPath(); c.arc(p[0], p[1], s * (0.011 + 0.016 * f), 0, TAU); c.fill(); }
+      // helpers flash in time with Sen, like the river's fireflies
+      if (st === 'helpers') { for (let h = 0; h < 3; h++) { const u = t * 0.6 + h * TAU / 3; ffLight(c, cx + s * 0.31 * Math.cos(u), cy - s * 0.06 + s * 0.2 * Math.sin(u), s, 0.42, 0.2 + 0.8 * ffFlash((t % 1.1) / 1.1), 0.42); } }
+      ffLight(c, here[0], here[1], s, 1, a, halo);
+      c.restore();
+    },
+  },
+
+  icon: {
+    background: (p) => `<defs><radialGradient id="${p}n" cx="72%" cy="22%" r="95%"><stop offset="0" stop-color="#2f2869"/><stop offset=".5" stop-color="#171436"/><stop offset="1" stop-color="#0d0b20"/></radialGradient><linearGradient id="${p}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7e549c" stop-opacity="0"/><stop offset="1" stop-color="#7e549c" stop-opacity=".42"/></linearGradient><radialGradient id="${p}b"><stop offset="0" stop-color="#f0de96" stop-opacity=".16"/><stop offset=".8" stop-color="#f0de96" stop-opacity=".12"/><stop offset="1" stop-color="#f0de96" stop-opacity="0"/></radialGradient><radialGradient id="${p}v"><stop offset="0" stop-color="#aa98f0" stop-opacity=".16"/><stop offset=".8" stop-color="#aa98f0" stop-opacity=".1"/><stop offset="1" stop-color="#aa98f0" stop-opacity="0"/></radialGradient></defs><rect width="108" height="108" fill="url(#${p}n)"/><rect y="66" width="108" height="20" fill="url(#${p}h)"/><rect y="86" width="108" height="22" fill="#08071a" opacity=".55"/><circle cx="31" cy="35" r="7" fill="url(#${p}b)"/><circle cx="80" cy="50" r="5" fill="url(#${p}v)"/><circle cx="74" cy="76" r="4" fill="url(#${p}b)"/>`,
+    foreground: (p) => `<defs><radialGradient id="${p}g"><stop offset="0" stop-color="#fffbd8"/><stop offset=".16" stop-color="#f6ef8e" stop-opacity=".95"/><stop offset=".42" stop-color="#ece56c" stop-opacity=".3"/><stop offset="1" stop-color="#ece56c" stop-opacity="0"/></radialGradient></defs>${ffTrail(20, '#f2ec8a', 0.16, true, p)}`,
+    monochrome: () => ffTrail(16, 'currentColor', 0.3, false),
+    small: () => { const pts = sampleSegs([[[5.5, 19.5], [7.5, 22], [17, 21.5], [17, 16.5]], [[17, 16.5], [17, 11.5], [7, 12.5], [7, 8]], [[7, 8], [7, 3.5], [14.5, 2.5], [18, 5.5]]], 8); return pts.slice(0, 7).map((q, i) => `<circle cx="${f2(q[0])}" cy="${f2(q[1])}" r="${f2(1.05 + 0.2 * i)}" fill="currentColor"/>`).join('') + `<circle cx="${f2(pts[7][0])}" cy="${f2(pts[7][1])}" r="3.2" fill="currentColor"/>`; },
+  },
+
+  wordmark: () => '<span class="wm">sen<i class="ff" aria-hidden="true"></i></span>',
+  tabs: { icon: ffTabIcon, scan: ffScan, badge: ffBadge, switch: ffFly },
+  heroFigure(sen, mode, st) { return `<canvas class="ffc" data-kind="fig" data-sen="${sen}" data-over="${st && st.over ? 1 : 0}" data-mode="${mode}" aria-hidden="true"></canvas>`; },
+  strip(day, days) { return ffTwig(day, days, ++FF_N); },
+  decorate(screen, mode) { screen.insertAdjacentHTML('afterbegin', ffSky(mode)); ffMount(screen); },
+  paydayFx(screen) {
+    if (REDUCED) return; const cv = screen.querySelector('.hero-fig canvas'); if (!cv) return;
+    if (cv._ff) ffGather(cv, 'twig'); else cv.dataset.gather = 'twig';
+    const hero = screen.querySelector('.hero'); setTimeout(() => { hero.classList.add('sync'); setTimeout(() => hero.classList.remove('sync'), 2600); }, 1700);
+  },
+  afterBoot(pg) { ffMount(pg); },
+
+  good: [
+    'The calmest of the six, and with Mercury one of the two that lead with dark. It suits an app that speaks once a day, at 9pm, and otherwise keeps watch.',
+    'The figure carries meaning in its light: the share of fireflies alight is the share of the cycle’s money left, so a glance says how full the cycle still is before you read a digit.',
+    'Sen is pure light, no face and no mascot, and its helpers are more lights flashing in time with it, so subagents are visible without being explained.',
+  ],
+  weigh: [
+    'Light mode is the harder half. The fireflies need night around them, so by day they live inside the figure and Sen’s button stays dark.',
+    'The accent is a pale lemon. It never means money, but it sits near the warning orange, so warnings always carry an icon and words.',
+    'Glow is an effect, not a colour. On dim screens and in screenshots it reads softer than on a good display, and the swarm costs more battery than a still figure, so it rests when the screen does.',
+  ],
+};
+
+/* Sen's chart palette, one per look. Written by docs/ui/directions/palette.mjs: change the hues there
+   and run it again; don't edit this file. build.mjs folds these into each look's tokens. */
+'use strict';
+const CHART_HUES = [{"slot":1,"name":"Blue","h":268},{"slot":2,"name":"Orchid","h":343},{"slot":3,"name":"Gold","h":93}];
+const CHARTS = {
+ "minted": {
+  "light": {
+   "chart-1": "#2a44c4",
+   "chart-2": "#d362ab",
+   "chart-3": "#ad8d00",
+   "chart-seq-1": "#90b7e8",
+   "chart-seq-2": "#7096c6",
+   "chart-seq-3": "#5176a4",
+   "chart-seq-4": "#345783",
+   "chart-seq-5": "#173a63"
+  },
+  "dark": {
+   "chart-1": "#577eff",
+   "chart-2": "#b74a92",
+   "chart-3": "#a28400",
+   "chart-seq-1": "#404e5d",
+   "chart-seq-2": "#5e6d7d",
+   "chart-seq-3": "#7e8d9f",
+   "chart-seq-4": "#a0b0c2",
+   "chart-seq-5": "#c3d3e6"
+  }
+ },
+ "instrument": {
+  "light": {
+   "chart-1": "#2942c1",
+   "chart-2": "#d060a9",
+   "chart-3": "#ab8b00",
+   "chart-seq-1": "#afb1b4",
+   "chart-seq-2": "#858789",
+   "chart-seq-3": "#5d5f61",
+   "chart-seq-4": "#383a3c",
+   "chart-seq-5": "#17181a"
+  },
+  "dark": {
+   "chart-1": "#5a80ff",
+   "chart-2": "#ba4c94",
+   "chart-3": "#a58700",
+   "chart-seq-1": "#4f4e4a",
+   "chart-seq-2": "#73726e",
+   "chart-seq-3": "#999994",
+   "chart-seq-4": "#c2c1bc",
+   "chart-seq-5": "#ecebe6"
+  }
+ },
+ "firefly": {
+  "light": {
+   "chart-1": "#2943c2",
+   "chart-2": "#d261aa",
+   "chart-3": "#ac8c00",
+   "chart-seq-1": "#a8abf9",
+   "chart-seq-2": "#8588d2",
+   "chart-seq-3": "#6566ad",
+   "chart-seq-4": "#464589",
+   "chart-seq-5": "#2a2566"
+  },
+  "dark": {
+   "chart-1": "#557bff",
+   "chart-2": "#b54890",
+   "chart-3": "#a08300",
+   "chart-seq-1": "#4e4e00",
+   "chart-seq-2": "#757400",
+   "chart-seq-3": "#9d9d2d",
+   "chart-seq-4": "#c7c75c",
+   "chart-seq-5": "#f2f388"
+  }
+ },
+ "line": {
+  "light": {
+   "chart-1": "#2a44c4",
+   "chart-2": "#d362ab",
+   "chart-3": "#ad8d00",
+   "chart-seq-1": "#abb3cd",
+   "chart-seq-2": "#838ca4",
+   "chart-seq-3": "#5e667c",
+   "chart-seq-4": "#3b4257",
+   "chart-seq-5": "#1b2134"
+  },
+  "dark": {
+   "chart-1": "#577eff",
+   "chart-2": "#b74a92",
+   "chart-3": "#a28400",
+   "chart-seq-1": "#504c42",
+   "chart-seq-2": "#746f65",
+   "chart-seq-3": "#9a958a",
+   "chart-seq-4": "#c2bdb1",
+   "chart-seq-5": "#ebe6da"
+  }
+ },
+ "mercury": {
+  "light": {
+   "chart-1": "#273fbe",
+   "chart-2": "#ca5ba4",
+   "chart-3": "#a58700",
+   "chart-seq-1": "#b2aaa3",
+   "chart-seq-2": "#8d8680",
+   "chart-seq-3": "#6a635e",
+   "chart-seq-4": "#4a433e",
+   "chart-seq-5": "#2b2520"
+  },
+  "dark": {
+   "chart-1": "#567dff",
+   "chart-2": "#b64991",
+   "chart-3": "#a18400",
+   "chart-seq-1": "#4f4b45",
+   "chart-seq-2": "#706b65",
+   "chart-seq-3": "#938e87",
+   "chart-seq-4": "#b7b2ac",
+   "chart-seq-5": "#ddd8d1"
+  }
+ },
+ "copper": {
+  "light": {
+   "chart-1": "#273fbf",
+   "chart-2": "#cd5ea6",
+   "chart-3": "#a78900",
+   "chart-seq-1": "#e99b86",
+   "chart-seq-2": "#c77c67",
+   "chart-seq-3": "#a55d49",
+   "chart-seq-4": "#843f2d",
+   "chart-seq-5": "#642210"
+  },
+  "dark": {
+   "chart-1": "#5b81ff",
+   "chart-2": "#bb4c95",
+   "chart-3": "#a68700",
+   "chart-seq-1": "#70442d",
+   "chart-seq-2": "#8f6149",
+   "chart-seq-3": "#b08067",
+   "chart-seq-4": "#d2a086",
+   "chart-seq-5": "#f5c1a6"
+  }
+ }
+};
+const CHART_REPORT = {"minted":{"light":{"ok":true,"cvd":15.2,"normal":24.5,"contrast":[7.44,3.32,3.08],"nearest":{"slot":3,"token":"money-warning","de":14.9,"min":12},"accent":{"contrast":11.12,"fromWarning":26.3,"fromContext":41.2},"seqOk":true},"dark":{"ok":true,"cvd":17,"normal":22.8,"contrast":[4.78,3.61,4.78],"nearest":{"slot":3,"token":"money-warning","de":15.5,"min":12},"accent":{"contrast":11.28,"fromWarning":18.4,"fromContext":38.6},"seqOk":true}},"instrument":{"light":{"ok":true,"cvd":15.1,"normal":24.3,"contrast":[7.4,3.3,3.05],"nearest":{"slot":3,"token":"money-warning","de":15.1,"min":12},"accent":{"contrast":16.55,"fromWarning":32.9,"fromContext":53.4},"seqOk":true},"dark":{"ok":true,"cvd":17.2,"normal":22.6,"contrast":[4.74,3.61,4.81],"nearest":{"slot":3,"token":"money-warning","de":16.1,"min":12},"accent":{"contrast":13.96,"fromWarning":20.3,"fromContext":47.9},"seqOk":true}},"firefly":{"light":{"ok":true,"cvd":15.2,"normal":24.4,"contrast":[7.41,3.29,3.05],"nearest":{"slot":3,"token":"money-warning","de":15.9,"min":12},"accent":{"contrast":12.75,"fromWarning":29.6,"fromContext":43.1},"seqOk":true},"dark":{"ok":true,"cvd":17,"normal":23,"contrast":[4.73,3.59,4.79],"nearest":{"slot":3,"token":"money-warning","de":21.6,"min":12},"accent":{"contrast":14.99,"fromWarning":15.3,"fromContext":50.4},"seqOk":true}},"line":{"light":{"ok":true,"cvd":15.2,"normal":24.5,"contrast":[7.44,3.32,3.08],"nearest":{"slot":3,"token":"money-warning","de":16.1,"min":12},"accent":{"contrast":15.42,"fromWarning":31,"fromContext":51.9},"seqOk":true},"dark":{"ok":true,"cvd":17,"normal":22.8,"contrast":[4.78,3.61,4.78],"nearest":{"slot":3,"token":"money-warning","de":17.3,"min":12},"accent":{"contrast":13.81,"fromWarning":18.1,"fromContext":50.4},"seqOk":true}},"mercury":{"light":{"ok":true,"cvd":14.4,"normal":24.2,"contrast":[7.22,3.31,3.02],"nearest":{"slot":3,"token":"money-warning","de":13.8,"min":12},"accent":{"contrast":13.22,"fromWarning":26.7,"fromContext":46.7},"seqOk":true},"dark":{"ok":true,"cvd":17.1,"normal":22.9,"contrast":[4.79,3.61,4.83],"nearest":{"slot":3,"token":"money-warning","de":17.2,"min":12},"accent":{"contrast":12.3,"fromWarning":15.5,"fromContext":44.6},"seqOk":true}},"copper":{"light":{"ok":true,"cvd":15.1,"normal":24.2,"contrast":[7.46,3.31,3.06],"nearest":{"slot":3,"token":"patina","de":13.7,"min":12},"accent":{"contrast":9.86,"fromWarning":15.5,"fromContext":40},"seqOk":true},"dark":{"ok":true,"cvd":17.2,"normal":22.5,"contrast":[4.72,3.59,4.77],"nearest":{"slot":3,"token":"patina","de":16,"min":12},"accent":{"contrast":4.62,"fromWarning":17.8,"fromContext":18.6},"seqOk":true}}};
+if (typeof DIR !== 'undefined' && CHARTS[DIR.id]) for (const m of ['light', 'dark']) Object.assign(DIR.tokens[m], CHARTS[DIR.id][m]);
+
+boot();
+</script>

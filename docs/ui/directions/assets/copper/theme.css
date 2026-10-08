@@ -1,0 +1,78 @@
+/* Sen, Copper: shadcn/ui tokens plus Sen's money, chart and icon tokens */
+:root {
+  --radius: 0.75rem;
+  --icon-stroke: 1.8;
+  --icon-cap: butt;
+  --icon-join: round;
+  --icon-dot-cap: square;
+}
+:root {
+  --background: oklch(0.929 0.007 115.7);
+  --foreground: oklch(0.225 0.013 51.5);
+  --card: oklch(0.965 0.005 117.9);
+  --card-foreground: oklch(0.225 0.013 51.5);
+  --popover: oklch(0.974 0.005 117.9);
+  --popover-foreground: oklch(0.225 0.013 51.5);
+  --primary: oklch(0.473 0.105 43.3);
+  --primary-foreground: oklch(0.976 0.009 67.7);
+  --secondary: oklch(0.895 0.009 113.2);
+  --secondary-foreground: oklch(0.225 0.013 51.5);
+  --muted: oklch(0.904 0.008 114.2);
+  --muted-foreground: oklch(0.470 0.011 72.5);
+  --accent: oklch(0.898 0.011 89.7);
+  --accent-foreground: oklch(0.225 0.013 51.5);
+  --destructive: oklch(0.501 0.178 28.7);
+  --border: oklch(0.867 0.011 112.4);
+  --input: oklch(0.823 0.012 111.8);
+  --ring: oklch(0.473 0.105 43.3);
+  --chart-accent: oklch(0.370 0.099 36.1);
+  --chart-context: oklch(0.759 0.013 96.5);
+  --money-in: oklch(0.471 0.102 158.4);
+  --money-out: oklch(0.225 0.013 51.5);
+  --money-pending: oklch(0.499 0.013 76.5);
+  --money-warning: oklch(0.516 0.122 58.9);
+  --icon: oklch(0.470 0.011 72.5);
+  --chart-1: oklch(0.441 0.200 268.1);
+  --chart-2: oklch(0.640 0.163 343.0);
+  --chart-3: oklch(0.639 0.131 93.3);
+  --chart-seq-1: oklch(0.762 0.099 35.8);
+  --chart-seq-2: oklch(0.661 0.099 36.4);
+  --chart-seq-3: oklch(0.557 0.099 36.4);
+  --chart-seq-4: oklch(0.453 0.100 35.7);
+  --chart-seq-5: oklch(0.350 0.100 35.9);
+}
+.dark {
+  --background: oklch(0.201 0.011 175.8);
+  --foreground: oklch(0.925 0.014 74.4);
+  --card: oklch(0.238 0.013 180.0);
+  --card-foreground: oklch(0.925 0.014 74.4);
+  --popover: oklch(0.255 0.013 180.2);
+  --popover-foreground: oklch(0.925 0.014 74.4);
+  --primary: oklch(0.742 0.109 51.3);
+  --primary-foreground: oklch(0.201 0.011 175.8);
+  --secondary: oklch(0.271 0.014 181.6);
+  --secondary-foreground: oklch(0.925 0.014 74.4);
+  --muted: oklch(0.251 0.013 180.1);
+  --muted-foreground: oklch(0.712 0.014 172.2);
+  --accent: oklch(0.295 0.020 180.2);
+  --accent-foreground: oklch(0.925 0.014 74.4);
+  --destructive: oklch(0.758 0.145 29.0);
+  --border: oklch(0.305 0.017 178.2);
+  --input: oklch(0.361 0.019 175.9);
+  --ring: oklch(0.742 0.109 51.3);
+  --chart-accent: oklch(0.631 0.070 48.5);
+  --chart-context: oklch(0.465 0.018 176.4);
+  --money-in: oklch(0.775 0.131 158.3);
+  --money-out: oklch(0.925 0.014 74.4);
+  --money-pending: oklch(0.695 0.015 174.0);
+  --money-warning: oklch(0.798 0.125 68.0);
+  --icon: oklch(0.712 0.014 172.2);
+  --chart-1: oklch(0.641 0.192 268.0);
+  --chart-2: oklch(0.585 0.165 343.1);
+  --chart-3: oklch(0.634 0.130 92.5);
+  --chart-seq-1: oklch(0.433 0.070 47.8);
+  --chart-seq-2: oklch(0.536 0.070 48.3);
+  --chart-seq-3: oklch(0.641 0.070 48.6);
+  --chart-seq-4: oklch(0.746 0.070 48.7);
+  --chart-seq-5: oklch(0.850 0.070 48.8);
+}

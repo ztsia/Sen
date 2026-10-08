@@ -1,0 +1,68 @@
+/* Firefly: an indigo night over the river, and a blue hour by day. Light is the loud thing; nothing else glows. */
+:root {
+  --font-ui: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-num: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-voice: "Newsreader", Georgia, "Times New Roman", serif;
+  --voice-style: italic; --voice-weight: 400; --voice-size: 17px;
+  --hero-size: 58px; --hero-weight: 300; --hero-track: -0.02em;
+  --title-weight: 300; --radius-card: 18px;
+}
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pg-title { line-height: 0; margin-top: 2px; }
+.ff-title { display: block; width: calc(100% + 16px); max-width: 576px; height: 70px; margin-left: -8px; }
+.pg-h2, .profile h3 { font-weight: 300; font-variation-settings: "opsz" 60; }
+.pg-h2 { letter-spacing: -0.01em; }
+
+.wm { font: 500 23px/1 var(--font-ui); letter-spacing: -0.01em; display: inline-flex; align-items: baseline; gap: 3px; }
+.wm .ff { width: 6px; height: 6px; border-radius: 50%; background: var(--ffly-core); box-shadow: 0 0 10px 3px var(--glow); animation: wmblink 3.2s ease-in-out infinite; }
+.phone.light .wm .ff { background: var(--ffly); box-shadow: 0 0 8px 2px rgba(201,148,18,.35); }
+@keyframes wmblink { 0%, 100% { opacity: .55; } 6% { opacity: 1; } 30% { opacity: .55; } }
+
+.hero-fig { display: block; margin: 2px 0 0; }
+.hero-fig canvas, .spec .s1 canvas { display: block; width: calc(100% + 16px); height: 67px; margin-left: -8px; }
+.spec .s1 canvas { max-width: 456px; }
+.hero .strip { height: 30px; margin-top: 6px; }
+.ff-now { animation: ffnow 3.2s ease-in-out infinite; }
+.ff-now-halo { animation: ffhalo 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes ffnow { 0%, 100% { opacity: .7; } 5% { opacity: 1; } 34% { opacity: .7; } }
+@keyframes ffhalo { 0%, 100% { opacity: .45; transform: scale(.85); } 5% { opacity: 1; transform: scale(1.12); } 34% { opacity: .45; transform: scale(.85); } }
+.hero.sync .tw-ff, .hero.sync .ff-now, .hero.sync .ff-now-halo { animation: ffsync .85s ease-out 3; }
+@keyframes ffsync { 0% { opacity: .2; } 10% { opacity: 1; } 100% { opacity: .2; } }
+
+.sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.phone.dark .sky { background: radial-gradient(120% 55% at 92% -4%, rgba(92,74,184,.34), transparent 62%), radial-gradient(90% 40% at 30% 108%, rgba(120,72,142,.26), transparent 70%); }
+.phone.light .sky { background: linear-gradient(180deg, #d8dbf0 0%, #e5e4f2 38%, #ece6ec 72%, #f3e5dc 100%); }
+.bokeh i { position: absolute; border-radius: 50%; opacity: var(--o); animation: drift 38s ease-in-out infinite alternate; }
+.phone.dark .bokeh i { background: radial-gradient(circle, rgba(244,233,138,.9) 0 55%, rgba(244,233,138,0) 72%); filter: blur(1.5px); }
+.phone.dark .bokeh i:nth-child(3n) { background: radial-gradient(circle, rgba(172,156,244,.9) 0 55%, rgba(172,156,244,0) 72%); }
+.phone.light .bokeh i { background: radial-gradient(circle, rgba(255,255,255,.95) 0 50%, rgba(255,255,255,0) 72%); opacity: calc(var(--o) * 3); }
+@keyframes drift { to { transform: translate(var(--dx), var(--dy)); } }
+.screen > .sbar, .screen > .appbar, .screen > .content { position: relative; z-index: 1; }
+.phone.light .card { background: rgba(250,250,254,.86); }
+.phone.dark .card { background: rgba(23,20,58,.88); }
+.pace .chart path[stroke="var(--chart-accent)"] { filter: drop-shadow(0 0 4px var(--glow)); }
+.note p { color: var(--foreground); }
+.fab { background: #17143a; }
+/* the tab bar: the blue hour by day, the river's night after dark; icons are firefly trails */
+.tabbar { border-top-color: transparent; box-shadow: 0 -1px 0 var(--border); }
+.phone.light .tabbar { background: linear-gradient(180deg, rgba(230,229,243,.95), rgba(243,229,220,.97)); }
+.phone.dark .tabbar { background: linear-gradient(180deg, rgba(22,19,52,.96), rgba(10,9,26,.98)); box-shadow: 0 -1px 0 rgba(120,100,220,.18); }
+.iconsheet.mlight { background: linear-gradient(180deg, #e6e5f3, #f3e5dc); }
+.iconsheet.mdark { background: linear-gradient(180deg, #16133a, #0a091a); }
+.tab-scan .scanbtn.cs { box-shadow: 0 6px 16px -6px rgba(30,26,72,.55); }
+.phone.dark .tab-scan .scanbtn.cs { box-shadow: 0 0 0 1px rgba(244,233,138,.14), 0 0 22px -4px rgba(244,233,138,.3); }
+.ff-ring { animation: ffring 3s ease-in-out infinite; animation-delay: var(--d); }
+@keyframes ffring { 0%, 100% { opacity: .2; } 8% { opacity: .95; } 40% { opacity: .2; } }
+.ff-halo { animation: ffhalo2 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes ffhalo2 { 0%, 100% { opacity: .7; } 5% { opacity: 1; } 34% { opacity: .7; } }
+.phone.dark .tab .badge.cb svg { filter: drop-shadow(0 0 4px rgba(244,233,138,.45)); }
+/* the firefly that flies to a newly chosen tab, and the trail it leaves */
+.ff-fly, .ff-trail { position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none; z-index: 5; }
+.ff-fly { width: 6px; height: 6px; margin: -3px 0 0 -3px; background: #fffce8; box-shadow: 0 0 8px 3px rgba(244,233,138,.6); }
+.phone.light .ff-fly { background: #f7d76a; box-shadow: 0 0 8px 3px rgba(201,148,18,.45); }
+.ff-trail { width: 3px; height: 3px; margin: -1.5px 0 0 -1.5px; background: var(--ffly); opacity: 0; animation: fftrail .9s ease-out both; }
+@keyframes fftrail { 0% { opacity: 0; } 2% { opacity: .9; } 100% { opacity: 0; } }
+.tab.on.fresh .i-on { animation: ffarrive .95s ease-out both; }
+@keyframes ffarrive { 0%, 58% { opacity: 0; } 72% { opacity: 1; filter: brightness(1.7); } 100% { opacity: 1; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .bokeh i, .ff-now, .ff-now-halo, .wm .ff, .ff-ring, .ff-halo, .tab.on.fresh .i-on { animation: none; } }

@@ -1,0 +1,78 @@
+/* Sen, Line: shadcn/ui tokens plus Sen's money, chart and icon tokens */
+:root {
+  --radius: 1rem;
+  --icon-stroke: 1.5;
+  --icon-cap: round;
+  --icon-join: round;
+  --icon-dot-cap: round;
+}
+:root {
+  --background: oklch(0.969 0.005 106.5);
+  --foreground: oklch(0.252 0.037 270.2);
+  --card: oklch(0.987 0.004 106.5);
+  --card-foreground: oklch(0.252 0.037 270.2);
+  --popover: oklch(0.987 0.004 106.5);
+  --popover-foreground: oklch(0.252 0.037 270.2);
+  --primary: oklch(0.252 0.037 270.2);
+  --primary-foreground: oklch(0.978 0.005 106.5);
+  --secondary: oklch(0.938 0.008 106.6);
+  --secondary-foreground: oklch(0.252 0.037 270.2);
+  --muted: oklch(0.941 0.008 106.6);
+  --muted-foreground: oklch(0.476 0.020 271.0);
+  --accent: oklch(0.941 0.011 274.9);
+  --accent-foreground: oklch(0.252 0.037 270.2);
+  --destructive: oklch(0.501 0.178 28.7);
+  --border: oklch(0.893 0.011 100.8);
+  --input: oklch(0.850 0.011 100.9);
+  --ring: oklch(0.493 0.210 266.6);
+  --chart-accent: oklch(0.252 0.037 270.2);
+  --chart-context: oklch(0.769 0.010 100.0);
+  --money-in: oklch(0.512 0.120 154.6);
+  --money-out: oklch(0.252 0.037 270.2);
+  --money-pending: oklch(0.525 0.018 269.8);
+  --money-warning: oklch(0.517 0.128 55.1);
+  --icon: oklch(0.252 0.037 270.2);
+  --chart-1: oklch(0.456 0.200 268.0);
+  --chart-2: oklch(0.656 0.165 343.1);
+  --chart-3: oklch(0.654 0.134 92.7);
+  --chart-seq-1: oklch(0.769 0.038 271.9);
+  --chart-seq-2: oklch(0.641 0.037 269.1);
+  --chart-seq-3: oklch(0.512 0.036 269.4);
+  --chart-seq-4: oklch(0.382 0.037 270.3);
+  --chart-seq-5: oklch(0.252 0.037 270.2);
+}
+.dark {
+  --background: oklch(0.196 0.008 274.5);
+  --foreground: oklch(0.926 0.017 88.0);
+  --card: oklch(0.223 0.010 276.6);
+  --card-foreground: oklch(0.926 0.017 88.0);
+  --popover: oklch(0.232 0.010 276.6);
+  --popover-foreground: oklch(0.926 0.017 88.0);
+  --primary: oklch(0.926 0.017 88.0);
+  --primary-foreground: oklch(0.196 0.008 274.5);
+  --secondary: oklch(0.266 0.011 278.1);
+  --secondary-foreground: oklch(0.926 0.017 88.0);
+  --muted: oklch(0.249 0.010 276.7);
+  --muted-foreground: oklch(0.697 0.014 86.9);
+  --accent: oklch(0.272 0.039 277.2);
+  --accent-foreground: oklch(0.926 0.017 88.0);
+  --destructive: oklch(0.759 0.144 26.1);
+  --border: oklch(0.295 0.011 278.2);
+  --input: oklch(0.339 0.012 279.3);
+  --ring: oklch(0.779 0.112 271.3);
+  --chart-accent: oklch(0.926 0.017 88.0);
+  --chart-context: oklch(0.422 0.013 280.1);
+  --money-in: oklch(0.788 0.134 158.8);
+  --money-out: oklch(0.926 0.017 88.0);
+  --money-pending: oklch(0.677 0.012 89.8);
+  --money-warning: oklch(0.785 0.129 63.9);
+  --icon: oklch(0.926 0.017 88.0);
+  --chart-1: oklch(0.633 0.196 267.8);
+  --chart-2: oklch(0.576 0.163 343.0);
+  --chart-3: oklch(0.623 0.128 92.7);
+  --chart-seq-1: oklch(0.417 0.017 88.8);
+  --chart-seq-2: oklch(0.543 0.016 84.6);
+  --chart-seq-3: oklch(0.671 0.017 86.4);
+  --chart-seq-4: oklch(0.799 0.018 88.0);
+  --chart-seq-5: oklch(0.926 0.017 88.0);
+}

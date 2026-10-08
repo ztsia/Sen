@@ -1,0 +1,78 @@
+/* Sen, Firefly: shadcn/ui tokens plus Sen's money, chart and icon tokens */
+:root {
+  --radius: 1rem;
+  --icon-stroke: 1.6;
+  --icon-cap: round;
+  --icon-join: round;
+  --icon-dot-cap: round;
+}
+:root {
+  --background: oklch(0.934 0.015 286.1);
+  --foreground: oklch(0.232 0.060 285.0);
+  --card: oklch(0.980 0.005 286.3);
+  --card-foreground: oklch(0.232 0.060 285.0);
+  --popover: oklch(0.989 0.004 286.3);
+  --popover-foreground: oklch(0.232 0.060 285.0);
+  --primary: oklch(0.312 0.110 281.4);
+  --primary-foreground: oklch(0.987 0.007 295.5);
+  --secondary: oklch(0.909 0.020 289.1);
+  --secondary-foreground: oklch(0.232 0.060 285.0);
+  --muted: oklch(0.915 0.019 289.3);
+  --muted-foreground: oklch(0.449 0.055 289.4);
+  --accent: oklch(0.901 0.027 288.1);
+  --accent-foreground: oklch(0.232 0.060 285.0);
+  --destructive: oklch(0.512 0.183 19.1);
+  --border: oklch(0.880 0.026 288.3);
+  --input: oklch(0.836 0.035 289.3);
+  --ring: oklch(0.312 0.110 281.4);
+  --chart-accent: oklch(0.312 0.110 281.4);
+  --chart-context: oklch(0.739 0.049 289.2);
+  --money-in: oklch(0.501 0.112 157.2);
+  --money-out: oklch(0.232 0.060 285.0);
+  --money-pending: oklch(0.502 0.063 288.5);
+  --money-warning: oklch(0.513 0.124 57.4);
+  --icon: oklch(0.449 0.055 289.4);
+  --chart-1: oklch(0.452 0.199 267.9);
+  --chart-2: oklch(0.653 0.165 343.1);
+  --chart-3: oklch(0.651 0.133 92.6);
+  --chart-seq-1: oklch(0.768 0.111 281.7);
+  --chart-seq-2: oklch(0.655 0.110 281.1);
+  --chart-seq-3: oklch(0.542 0.110 281.5);
+  --chart-seq-4: oklch(0.427 0.110 281.3);
+  --chart-seq-5: oklch(0.312 0.110 281.4);
+}
+.dark {
+  --background: oklch(0.171 0.045 284.8);
+  --foreground: oklch(0.944 0.016 289.9);
+  --card: oklch(0.220 0.071 282.4);
+  --card-foreground: oklch(0.944 0.016 289.9);
+  --popover: oklch(0.240 0.077 282.1);
+  --popover-foreground: oklch(0.944 0.016 289.9);
+  --primary: oklch(0.923 0.117 102.6);
+  --primary-foreground: oklch(0.226 0.060 287.7);
+  --secondary: oklch(0.268 0.074 284.7);
+  --secondary-foreground: oklch(0.944 0.016 289.9);
+  --muted: oklch(0.245 0.070 283.5);
+  --muted-foreground: oklch(0.731 0.053 290.0);
+  --accent: oklch(0.282 0.083 284.5);
+  --accent-foreground: oklch(0.944 0.016 289.9);
+  --destructive: oklch(0.770 0.136 20.7);
+  --border: oklch(0.298 0.078 284.8);
+  --input: oklch(0.355 0.090 285.2);
+  --ring: oklch(0.923 0.117 102.6);
+  --chart-accent: oklch(0.941 0.130 109.1);
+  --chart-context: oklch(0.485 0.084 287.1);
+  --money-in: oklch(0.826 0.131 160.4);
+  --money-out: oklch(0.944 0.016 289.9);
+  --money-pending: oklch(0.713 0.056 289.6);
+  --money-warning: oklch(0.825 0.125 63.1);
+  --icon: oklch(0.731 0.053 290.0);
+  --chart-1: oklch(0.626 0.200 268.1);
+  --chart-2: oklch(0.570 0.163 343.1);
+  --chart-3: oklch(0.619 0.127 93.2);
+  --chart-seq-1: oklch(0.410 0.089 109.8);
+  --chart-seq-2: oklch(0.542 0.118 109.2);
+  --chart-seq-3: oklch(0.675 0.130 109.4);
+  --chart-seq-4: oklch(0.808 0.130 109.0);
+  --chart-seq-5: oklch(0.941 0.130 109.1);
+}

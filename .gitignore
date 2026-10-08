@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output and signing keys. Capacitor's android/ folder is committed source: the Kotlin
+# capture plugin lives there, and Capacitor adds its own .gitignore for android/'s build output.
+dist/
+*.jks
+*.keystore
+*.p8
+*.p12
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# QA run output: screenshots, traces, rendered reports. The published report is the record.
+qa-artifacts/
+playwright-report/
+test-results/
+coverage/
+
+# Vendored skills keep a fetch cache next to their scripts
+.claude/skills/**/.cache/
+.claude/settings.local.json
+
+# PRIVATE: never committed (CLAUDE.md, non-negotiables)
+#   real notification text, receipts, statements, balances, account numbers;
+#   the employer handbook and real claim values; database dumps and exports.
+private/
+backups/
+exports/
+*.dump
+*.sql.gz
+# Generated or real PDFs (bills, exports). A made-up fixture PDF is force-added with `git add -f`.
+*.pdf
+
+# OS and editors
+.DS_Store
+Thumbs.db
+*.log
+*.tsbuildinfo

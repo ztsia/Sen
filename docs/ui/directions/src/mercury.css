@@ -1,0 +1,47 @@
+/* Mercury: quicksilver in a warm room. The metal is the loud thing; everything around it is stone and shadow. */
+:root {
+  --font-ui: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Marcellus", Georgia, "Times New Roman", serif;
+  --font-num: "Hanken Grotesk", system-ui, sans-serif;
+  --font-voice: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --voice-style: italic; --voice-weight: 400; --voice-size: 16px;
+  --title-weight: 400; --radius-card: 18px;
+  --fab-shadow: 0 0 0 1px rgba(255,240,225,.08), 0 14px 28px -10px rgba(20,12,6,.7);
+}
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pg-title { line-height: 0; }
+.mq-title { display: block; width: calc(100% + 12px); max-width: 572px; height: 108px; margin-left: -6px; }
+.pg-h2 { letter-spacing: 0; }
+.wm { display: block; }
+.mq-wm { display: block; width: 66px; height: 32px; margin-left: -3px; }
+.hero-fig { display: block; margin: 0; }
+.hero-fig canvas, .spec .s1 canvas { display: block; width: calc(100% + 12px); height: 67px; margin-left: -6px; }
+.spec .s1 canvas { max-width: 452px; }
+.hero .strip { height: 26px; margin-top: 8px; }
+.col.rise { transform-box: fill-box; transform-origin: left center; animation: rise 1.6s cubic-bezier(.3,.7,.2,1) both; }
+@keyframes rise { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.beads i { position: absolute; width: calc(var(--r) * 2); height: calc(var(--r) * 2); border-radius: 50%; background: radial-gradient(circle at 36% 30%, #fffaf3 0 16%, #a59d94 34%, #2b241e 68%, #b58c62 100%); box-shadow: 1px 2px 2px rgba(20,12,6,.3); }
+.room { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.phone.light .room { background: radial-gradient(90% 46% at 6% -6%, rgba(255,251,244,.85), transparent 70%), linear-gradient(180deg, rgba(255,255,255,.12), transparent 40%); }
+.phone.dark .room { background: radial-gradient(100% 50% at 4% -8%, rgba(255,196,140,.13), transparent 68%); }
+.screen > .sbar, .screen > .appbar, .screen > .content { position: relative; z-index: 1; }
+.card { box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 1px 2px rgba(40,28,18,.05); }
+.phone.dark .card { box-shadow: 0 1px 0 rgba(255,240,225,.04) inset; }
+.fab { background: var(--fab-bg); }
+/* the tab bar: travertine by day, smoked bronze by night; icons etched, the active one full of quicksilver */
+.tabbar { border-top-color: transparent; background: linear-gradient(180deg, #ece7e0, #e2dcd3); box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 -1px 0 rgba(70,58,48,.16); }
+.tabbar { background-image: repeating-linear-gradient(178deg, transparent 0 9px, rgba(150,130,110,.06) 9px 10px, transparent 10px 23px, rgba(150,130,110,.05) 23px 24px), linear-gradient(180deg, #ece7e0, #e2dcd3); }
+.phone.dark .tabbar { background: linear-gradient(180deg, rgba(31,25,20,.97), rgba(17,13,10,.98)); box-shadow: inset 0 1px 0 rgba(255,240,225,.09), 0 -1px 0 rgba(0,0,0,.45); }
+.iconsheet.mlight { background: linear-gradient(180deg, #ece7e0, #e2dcd3); }
+.iconsheet.mdark { background: linear-gradient(180deg, #1f1914, #110d0a); }
+.tab-scan .scanbtn.cs { box-shadow: 0 0 0 1px rgba(70,58,48,.18), 0 8px 14px -6px rgba(20,12,6,.55); }
+.tab-scan.press .scanbtn { animation: mqpress .55s ease-out; }
+@keyframes mqpress { 25% { transform: scale(1.08, .92); } 55% { transform: scale(.96, 1.04); } 80% { transform: scale(1.01, .99); } 100% { transform: none; } }
+.tab.on.fresh .i-on { transition: none; }
+.tab.on.fresh .hg path { animation: hgflow .6s cubic-bezier(.3,.6,.3,1) both; animation-delay: calc(var(--n) * .14s); }
+@keyframes hgflow { from { stroke-dasharray: 1 1; stroke-dashoffset: 1; } to { stroke-dasharray: 1 1; stroke-dashoffset: 0; } }
+.tab.on.fresh .bead { animation: hgbead .5s cubic-bezier(.3,1.5,.5,1) both; animation-delay: calc(var(--n) * .09s); transform-box: fill-box; transform-origin: center; }
+@keyframes hgbead { from { transform: scale(0); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tab-scan.press .scanbtn, .tab.on.fresh .hg path, .tab.on.fresh .bead { animation: none; } }
+.profile h3 { font-weight: 400; }
+@media (prefers-reduced-motion: reduce) { .col.rise { animation: none; } }

@@ -1,0 +1,96 @@
+{
+ "note": "The five tabs in order, and each icon's outline on a 24-unit square, shared by every look: strokes as absolute SVG path data, the face some looks fill when a tab is active, and the head, where a trail ends. Each look draws these in its own material (D80).",
+ "tabs": [
+  [
+   "home",
+   "Home"
+  ],
+  [
+   "review",
+   "Review"
+  ],
+  [
+   "scan",
+   "Scan"
+  ],
+  [
+   "insights",
+   "Insights"
+  ],
+  [
+   "more",
+   "More"
+  ]
+ ],
+ "outlines": {
+  "home": {
+   "d": [
+    "M3.8 11.4L12 4.4L20.2 11.4",
+    "M6.2 9.4V19.6H17.8V9.4",
+    "M10.2 19.6V15.2Q10.2 13.8 11.6 13.8H12.4Q13.8 13.8 13.8 15.2V19.6"
+   ],
+   "area": "M6.2 9.4L12 4.4L17.8 9.4V19.6H13.8V15.2Q13.8 13.8 12.4 13.8H11.6Q10.2 13.8 10.2 15.2V19.6H6.2Z",
+   "head": [
+    12,
+    4.4
+   ]
+  },
+  "review": {
+   "d": [
+    "M3.6 13L6.4 6Q6.8 5 7.9 5H16.1Q17.2 5 17.6 6L20.4 13V18Q20.4 19.6 18.8 19.6H5.2Q3.6 19.6 3.6 18Z",
+    "M3.6 13H8.4L9.8 15.6H14.2L15.6 13H20.4"
+   ],
+   "area": "M3.6 13H8.4L9.8 15.6H14.2L15.6 13H20.4V18Q20.4 19.6 18.8 19.6H5.2Q3.6 19.6 3.6 18Z",
+   "head": [
+    12,
+    15.6
+   ]
+  },
+  "scan": {
+   "d": [
+    "M4 8.6V6.4Q4 4 6.4 4H8.6",
+    "M15.4 4H17.6Q20 4 20 6.4V8.6",
+    "M20 15.4V17.6Q20 20 17.6 20H15.4",
+    "M8.6 20H6.4Q4 20 4 17.6V15.4",
+    "M7.6 12H16.4"
+   ],
+   "head": [
+    16.4,
+    12
+   ]
+  },
+  "insights": {
+   "d": [
+    "M4 3.8V18.4Q4 20 5.6 20H20.2",
+    "M7.6 15.4L11 11.4L14 13.8L19 7.8"
+   ],
+   "area": "M7.6 15.4L11 11.4L14 13.8L19 7.8V17.4H7.6Z",
+   "head": [
+    19,
+    7.8
+   ]
+  },
+  "more": {
+   "d": [],
+   "dots": [
+    [
+     5.4,
+     12
+    ],
+    [
+     12,
+     12
+    ],
+    [
+     18.6,
+     12
+    ]
+   ],
+   "r": 1.7,
+   "head": [
+    12,
+    12
+   ]
+  }
+ }
+}

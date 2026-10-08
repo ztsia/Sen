@@ -1,0 +1,191 @@
+# CLAUDE.md
+
+A personal finance tracker, made in Malaysia for its owner. It's an Android app that:
+- turns the payment notifications from the bank and e-wallet apps each person chooses (the owner's: Touch 'n Go, Ryt Bank, Public Bank and Grab) into transactions (D86)
+- keeps account balances
+- reads receipts, scanned or forwarded by email (D51, D56)
+- has an AI agent that watches the money
+
+It's called **Sen** (D48). It's for the owner, and by invitation a few friends and family, each seeing only their own data (D52). Not commercial: nobody pays inside it (D98). Its source is public under AGPL-3.0 (D85), published from a clean snapshot on 8 Oct 2026. The design history before that stays in the owner's private archive.
+
+## Read these first
+
+| File | What it is | Treat it as |
+|---|---|---|
+| `spec_v2.md` | The system | The contract, **under review** in the design track below. If code disagrees with it, the code is wrong |
+| `docs/decisions.md` | Decisions made with the owner, numbered | Settled. Don't reopen one unless the owner does |
+| `docs/flows.md`, `docs/screens.md`, `docs/ui/patterns.md` | Journeys, screen map, shared UI patterns, written by `S2` | The UX contract. Journeys and screens are approved (6 Oct), with a clickable wireframe in `docs/ui/wireframe.html`. Patterns are written for six looks (6 Oct), and their defaults confirmed (D83, 7 Oct) |
+| `docs/modules.md`, `docs/briefs/` | The slice map: forty slices in nine stages, built one at a time, and one brief per slice. Written by `S3` (D111) | Your branch's boundary. A build session starts from its brief |
+| `docs/notifications.md` | What each bank app's notifications look like, anonymised | The parsers' source. Add to it whenever a new format turns up |
+| `docs/cloud.md` | What a cloud session has, can reach, and must never hold | Measured facts. Update it when you measure something new |
+| `docs/local.md` | What only the owner, or a machine with a device, can do | A queue. Add to it instead of attempting these |
+| `docs/handoff.md` | The one handoff, from the last session to you | Read it first. Rewrite it before you end |
+
+### Session rotation
+
+**`docs/handoff.md` is the one handoff.** Read it before anything else. **Every session rewrites it
+before it ends**, whether its slice is finished or not, and whenever the owner says *hand off*. Never
+append to it: it's the state now, not a log, and git keeps the old versions. Keep it under about 60
+lines:
+- where things stand: which slice is next or in progress, and on which branch
+- what was decided, and why
+- what's open with the owner
+- what to do first
+- what must not be argued over again
+
+Anything still true next week belongs in the spec, `docs/decisions.md`, `docs/cloud.md`,
+`docs/local.md` or a brief instead.
+
+**A slice may span sessions.** A cloud session is assigned its own branch, so the slice's label goes
+in its PR title (*B07 · Sync and the outbox*), and its PR is opened when the slice is done.
+
+**When context runs high, or the owner says *hand off*, mid-slice:**
+1. Commit and push.
+2. Rewrite `docs/handoff.md` on the branch: what's done and verified, what's next, and anything
+   decided. Push again.
+3. End with one line for the owner to paste into the next session: *Continue B07 from branch
+   `claude/…`*.
+
+The next session then:
+1. Moves its own branch to that one:
+   `git fetch origin <branch> && git checkout -B <its branch> origin/<branch>`.
+2. Reads the handoff there, and carries on.
+
+`scripts/session-start.sh` also names the newest unmerged branch that changed the handoff, as a
+safety net.
+
+## Where the build is
+
+**Nothing is built, deliberately.** The design track comes first. The owner's previous project
+built module by module, and every feature worked but the app didn't hang together
+(`docs/decisions.md` D7). The track has three steps:
+
+1. **`S1`** (done, 5 Oct): grill `spec_v2.md` with the owner, section by section, and log the decisions.
+2. **`S2`** (done, 7 Oct): user journeys, screen map and shared UI patterns. Journeys, screens and the wireframe are approved (6 Oct). The identity is settled (D75).
+   Six looks, each a theme, an icon and Sen's avatar (D76), make a pool: four play each year, one a
+   quarter (D77, D78). All six are built in `docs/ui/directions/`: Minted, Instrument, Firefly, Line,
+   Mercury and Copper. Each draws its own tab bar on shared outlines (D80), and everything a look
+   draws is saved in `docs/ui/directions/assets/`. Each look has its chart palette (one set of hues,
+   tuned per look by `palette.mjs`) and icon tokens (D81), and `docs/ui/patterns.md` is written,
+   with the reveal's shared frame (§9). Screens weren't mocked up: the walking skeleton is the
+   mockup, in all six looks, and each look's reveal is built in code (D84).
+   On 7 Oct the owner refined the spec once more (2.8, D85–D102): open source, capture from apps each
+   person chooses, templates that start from nothing, Sen's structure, claims with Sen and a printable
+   claim pack, ESS filed from the phone, AI credit, realtime, and the island.
+   On 8 Oct, spec 2.9 (D103–D110): ESS becomes an adapter run from recipes, which signs in from the
+   phone and fetches the payslip on payday; Sen's figures are traceable rather than clipped, skills
+   run on Sen's model, and its chat takes files.
+3. **`S3`** (done, 8 Oct): the slice map in `docs/modules.md`, with one brief per slice in
+   `docs/briefs/` (D111). Forty slices in nine stages, built one at a time: the design system and
+   looks, the shell and listener, the walking skeleton with the owner's review, then the server, and
+   capture to ledger, after which daily use starts (B13). Claims by hand come before Sen; the ESS
+   adapter after it.
+
+**No app code until `S3`'s slice map is merged, and Sen is published** (`docs/local.md`). Then B01
+starts in `ztsia/Sen`. The next slice waits only for the owner's merge.
+
+## Non-negotiables
+
+- **Money is integer sen, never a float.** That means `BIGINT` in Postgres, integers in TypeScript,
+  and user input parsed as text into sen. `0.1 + 0.2` must be impossible anywhere money flows.
+- **Row-level security on every table, from its first migration**, keyed on `user_id`. The API runs each request as the signed-in user through a database role that can't bypass RLS, and the admin never reads anyone's money (D52).
+- **Secrets never ship in the app.** No cloud session ever holds production credentials
+  (`docs/cloud.md` §3).
+- **Real financial data never enters the repo.** That covers notification text, receipts,
+  statements, balances and account numbers. Test fixtures are anonymised copies; the real ones live
+  in the gitignored `private/`.
+- **The employee handbook never enters the repo or any AI's context**, and **real claim values never
+  enter the repo, test fixtures or a build session's context.** The handbook forbids copying, storing
+  or transmitting it. Claim schemes are entered in the app's Settings, in the owner's own words, and
+  inside the app Sen may see what the owner typed (D95). A local session capturing ESS may see them too, and
+  writes only to `private/` (D110).
+- **Models draft, the owner confirms, code computes.** No number a model produces is stored or shown
+  as fact. The agent only states figures its tools returned or the person typed, and a `calc` tool
+  does its arithmetic (D108). One draft acts before it's confirmed: a
+  template for new notification wording books its payments at once, marked, and *No* undoes them,
+  because code still reads every amount from the raw text (D87).
+- **A prediction never shares a table with a fact.** That applies to forecasts, estimates and
+  projections.
+- **Every input has a dedupe key.** A retried sync, a re-posted notification or a file shared twice
+  is a no-op.
+- **The notification listener discards apps the person hasn't chosen, and OTP/TAC messages, in native
+  code**, before anything is stored or reaches JavaScript. Messaging, SMS, email and social apps can
+  never be chosen (D86).
+- **One navigation and one set of UI patterns** (`docs/ui/patterns.md`). No screen invents its own
+  list row, form, sheet, or empty, loading or error state.
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| App | A **Capacitor** shell for Android around a **web app** (React, TypeScript, Vite), hosted on Vercel (D42) |
+| Native pieces | Kotlin, in the shell: the notification listener, parsing, the category prompt, the outbox and sync, the scanner, share-to-app, push, widgets |
+| UI | shadcn/ui on Tailwind v4, with this app's own design (D43) |
+| Client state | TanStack Query and Zustand |
+| Offline queue | The shell's SQLite outbox |
+| Backend | One Hono API on Vercel Functions, Neon Postgres (Drizzle), Better Auth with emailed codes (D54) |
+| Schedules and realtime | One small Cloudflare Worker: cron triggers that call `/jobs/tick`, and a relay that pushes "something changed" hints, never data (D99, D100) |
+| Storage | Cloudflare R2 for receipt images |
+| AI | Gemini through Vertex AI (D55), called through the Vercel AI SDK. Models are provisional until each phase tests them, named only in `ai/models.ts` (D94) |
+| Agent | Our own small loop in Claude Code's shape: main prompt, skills, tools, subagents (D53), engineered in `spec_v2.md` §12.5 (D94) |
+
+The full table is in `spec_v2.md` §5.1.
+
+**The web app is the real UI.** Android's WebView is Chromium, so what a cloud session tests in
+Chromium at a phone viewport is what runs on the phone (`docs/cloud.md` §4). Native-only features
+(the notification listener, the scanner, notification buttons, widgets) get a dev-only simulator
+panel, so flows can be walked in a browser.
+
+**Two rules the shell imposes:**
+- **Nothing in the web app runs while the app is closed.** Anything that must (capture, the category
+  prompt, sync) lives in Kotlin.
+- **The shell loads only our own site.** No third-party scripts, and the native bridge answers no
+  other origin (`spec_v2.md` §17).
+
+## The owner
+
+Works from a phone through cloud sessions, rarely at a laptop.
+
+- **Design sessions (`S1`–`S3`) are conversations.** Ask, but batch questions, prefer multiple
+  choice, keep messages short, and always recommend an answer.
+- **Put what the owner must weigh inside the question's options.** Text written just before a
+  question box can be hidden; the owner once missed a whole list that way.
+- The owner reads every trade-off and often comes back with a better idea. Recommend clearly
+  anyway.
+- **Build sessions run unattended: never stop to ask.** Record the question in the handoff and keep
+  going on everything else.
+- Anything the owner must do by hand goes in `docs/local.md`, with steps a phone can follow.
+- Commit and push work in progress often. An idle cloud VM can be reclaimed, and uncommitted work
+  goes with it.
+
+## Conventions
+
+- One slice at a time, each ending in one PR to `main` titled with its label (*B07 · Sync and the
+  outbox*). A slice may span sessions (*Session rotation*).
+- Dates and month boundaries are always in `Asia/Kuala_Lumpur`. Store `timestamptz` in UTC.
+- **Design pages and their assets live in the repo**, so nothing depends on a published page or a
+  font CDN staying up. Every published page has its source here (`docs/ui/README.md` lists them
+  with their links), and publishing goes from a committed file. Every custom asset a look uses (its
+  icons, tab bar, marks, theme tokens and fonts) is saved as a file in `docs/ui/directions/assets/`,
+  written by `build.mjs` and `fonts.mjs`. Change the source, never the exported file.
+- **Commands** (`pnpm test`, the web build, the QA database): the foundations slice adds them here.
+
+## Skills
+
+| Skill | Use it when |
+|---|---|
+| `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent and **sets the three tiers for fixing what QA finds** |
+| `uiux` | Choosing shadcn components for a screen, building one, or checking one before it's done. Ported from GCO_events (D43): it reads its component index first, then only the docs it shortlists |
+| `dataviz` | Any chart, stat tile or chart colour. It comes from the owner's claude.ai account, not the repo |
+| `frontend-design` | Narrowed when `S2` closed (D57, D84): only for a look's own drawing (its figure, strip, avatar, tab bar and reveal) or a new look for the pool. Every screen follows `docs/ui/patterns.md` and `uiux` instead. Installed with `npx skills add` |
+| `database` | Designing or checking tables, migrations, SQL, RLS policies, views, functions, or an API route or sync that touches data. Ported from the owner's `claude_skills` and cut down to this stack. Its rules win over the vendor skills below |
+| `supabase-postgres-best-practices`, `neon`, `neon-postgres` | General Postgres and Neon practice: indexes, locking, pooling, branching. Installed with `npx skills add`. Where they assume Supabase, or steer towards Neon's own Auth, Functions, Storage or AI Gateway, `database` and D54–D55 win |
+
+The foundations slice adds the rest of the stack's skills with `npx skills add`, because cloud
+sessions don't load plugins: `shadcn/ui`, `vercel-labs/agent-skills` (React best practices, web
+design guidelines) and `capawesome-team/skills` (Capacitor plugins and builds).
+
+Skills are model-invoked from their descriptions, so no session needs to be told to use one.
+**Our own skills are knowledge, not modes (D82).** Invoking one loads what to do and what must be
+true; it never asks which mode to run in or produces an audit report for someone else to act on.
+Build sessions run unattended and call skills themselves.

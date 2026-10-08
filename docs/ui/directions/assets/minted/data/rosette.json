@@ -1,0 +1,19 @@
+{
+ "note": "Guilloché bands: radius R and amplitude A as fractions of the mark's size, p petals, copies twisted by spread. See rosetteSVG in src/minted.js.",
+ "bands": [
+  {
+   "R": 0.37,
+   "A": 0.035,
+   "p": 20,
+   "copies": 6,
+   "spread": 0.34
+  },
+  {
+   "R": 0.2,
+   "A": 0.1,
+   "p": 8,
+   "copies": 6,
+   "spread": 1
+  }
+ ]
+}

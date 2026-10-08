@@ -1,0 +1,65 @@
+/* Line: cotton paper and iron-gall ink. The loud thing is the hand; the rest is paper, rules and type. */
+:root {
+  --font-ui: "Alegreya Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Alegreya", Georgia, "Times New Roman", serif;
+  --font-num: "Alegreya Sans", system-ui, sans-serif;
+  --font-voice: "Alegreya", Georgia, "Times New Roman", serif;
+  --voice-style: italic; --voice-weight: 400; --voice-size: 17.5px;
+  --title-weight: 400; --radius-card: 14px;
+}
+body, .screen { font-variant-numeric: lining-nums; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* cotton paper: a fine grain and a faint mottle */
+.phone .screen::before, body::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: var(--grain, .55); background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .44  0 0 0 0 .4  0 0 0 .09 0'/></filter><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.012 .09' numOctaves='3' seed='8'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .45  0 0 0 .05 0'/></filter><rect width='220' height='220' filter='url(%23f)'/><rect width='220' height='220' filter='url(%23g)'/></svg>"); }
+body { position: relative; }
+body::before { position: fixed; }
+.phone.dark .screen::before, .mdark::before { --grain: .35; filter: invert(1); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body::before { filter: invert(1); opacity: .3; } }
+.pg { position: relative; z-index: 1; }
+.pg-title { line-height: 0; margin-top: 0; }
+.pen-title { display: block; width: 100%; max-width: 560px; height: 96px; }
+.pg-h2 { font-weight: 400; letter-spacing: 0; }
+.profile h3 { font-weight: 400; }
+
+.wm { display: inline-flex; align-items: center; gap: 4px; }
+.wm .pen-wm { width: 38px; height: 28px; display: block; }
+.wm svg { width: 34px; height: 16px; margin-top: 2px; }
+.hero { padding-top: 0; }
+.hero-fig { display: block; margin: 2px 0 0; }
+.hero-fig canvas, .spec .s1 canvas { display: block; width: 100%; height: 76px; }
+.spec .s1 canvas { max-width: 420px; }
+.hero .strip { height: 22px; margin-top: 6px; }
+.wet { animation: wet 3.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes wet { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.drawn.draw { animation: reveal 1.5s cubic-bezier(.4,0,.2,1) both; }
+@keyframes reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+/* the ledger: rules instead of cards, a double rule under the total */
+.screen > .sbar, .screen > .appbar, .screen > .content { position: relative; z-index: 1; }
+.screen .card { background: transparent; border: 0; border-radius: 0; padding: 14px 0 0; border-top: 1px solid var(--border); box-shadow: none; }
+.screen .payday { border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; background: var(--card); }
+.quiet { border-top: 1px solid var(--border); }
+.quiet b.total { justify-self: end; padding-bottom: 3px; border-bottom: 3px double var(--foreground); }
+.note p { color: var(--foreground); }
+.fab { background: var(--fab-bg); }
+/* the tab bar: a double rule across the top, the ledger's way of closing a page; icons in ink */
+.tabbar { border-top: 0; background: transparent; }
+.tabbar::before { content: ""; position: absolute; inset: 0; background: var(--background); z-index: -1; }
+.tabbar::after { content: ""; position: absolute; left: 14px; right: 14px; top: 0; height: 3px; border-top: 1px solid rgba(27,33,52,.26); border-bottom: 1px solid rgba(27,33,52,.26); pointer-events: none; }
+.phone.dark .tabbar::after { border-color: rgba(235,230,218,.2); }
+.tab-ind { top: 52px; transition: none; }
+.tab-ind svg { display: block; overflow: visible; }
+.tab-ind.redraw svg { animation: lnund .5s .55s cubic-bezier(.4,.1,.3,1) both; }
+@keyframes lnund { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.tab.on.fresh .i-on { transition: none; }
+.tab.on.fresh .i-on svg { animation: lndry 1.9s ease-out both; }
+@keyframes lndry { from { color: var(--ink-fresh); } 35% { color: var(--ink-fresh); } to { color: var(--tab-on); } }
+.tab.on.fresh .pen-w { animation: penw .42s cubic-bezier(.45,.1,.3,1) both; animation-delay: calc(var(--n) * .16s); }
+@keyframes penw { from { stroke-dasharray: 1 1; stroke-dashoffset: 1; } to { stroke-dasharray: 1 1; stroke-dashoffset: 0; } }
+.tab-scan .scanbtn.cs { margin-top: -10px; filter: drop-shadow(0 5px 7px rgba(27,33,52,.22)); }
+.tab-scan.press .scanbtn { animation: lnpress .45s ease-out; }
+@keyframes lnpress { 30% { transform: scale(.92) rotate(-4deg); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tab-ind.redraw svg, .tab.on.fresh .i-on svg, .tab.on.fresh .pen-w, .tab-scan.press .scanbtn { animation: none; } }
+.btn-pri, .composer .send, .cssbox .copy { background: var(--primary); }
+@media (prefers-reduced-motion: reduce) { .wet, .drawn.draw { animation: none; } }
+.chart .ax, .note p, .msg.sen p, .profile .voice, .spec .s4 { font-variant-numeric: lining-nums; }

@@ -1,0 +1,1233 @@
+<title>Sen screen map</title>
+<!-- Sen screen map: the S2 draft of 5 Oct, as published at https://claude.ai/artifact/Qg4xnrytAMWfJ7uSnSq8DJ.
+     Kept as a record. docs/screens.md, docs/flows.md and docs/ui/wireframe.html (approved 6 Oct) supersede it.
+     Written for the Artifact tool, which adds the doctype and head. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: one reading column; a sticky section bar; every screen and journey is a card that opens in place */
+:root {
+  --bg: #f3f4f1;
+  --surface: #ffffff;
+  --ink: #1a201f;
+  --muted: #59635f;
+  --line: #dbe0dc;
+  --accent: #2b4e86;
+  --accent-soft: #e5ebf5;
+  --chip: #eceeea;
+  --flag: #7a4f00;
+  --flag-soft: #f8edd5;
+  --font-body: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111514; --surface: #181e1c; --ink: #e5eae8; --muted: #9aa5a1; --line: #2a3230;
+    --accent: #a8c0ea; --accent-soft: #1c293d; --chip: #222a28; --flag: #f0c56e; --flag-soft: #33290f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111514; --surface: #181e1c; --ink: #e5eae8; --muted: #9aa5a1; --line: #2a3230;
+  --accent: #a8c0ea; --accent-soft: #1c293d; --chip: #222a28; --flag: #f0c56e; --flag-soft: #33290f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--font-body); }
+.wrap { max-width: 46rem; margin: 0 auto; padding-inline: 16px; padding-block: 20px 72px; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3, h4 { text-wrap: balance; margin: 0; }
+header.top { display: grid; gap: 8px; padding-block: 12px 18px; }
+h1 { font-size: 2rem; line-height: 1.15; letter-spacing: -0.01em; }
+.lede { margin: 0; color: var(--muted); max-width: 62ch; }
+.lede code, .note code { font-family: var(--font-mono); font-size: 0.88em; }
+nav.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+  display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; margin-inline: -16px; padding-inline: 12px;
+}
+nav.bar a {
+  flex: none; text-decoration: none; color: var(--ink); font-weight: 700; font-size: 0.88rem;
+  padding: 6px 8px; border-radius: 999px;
+}
+nav.bar a:hover { background: var(--chip); }
+section.part { display: grid; gap: 14px; padding-top: 28px; scroll-margin-top: 56px; }
+.parthead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+h2 { font-size: 1.35rem; line-height: 1.25; }
+.count { color: var(--muted); font-weight: 400; font-size: 0.95rem; }
+.tools { display: flex; gap: 6px; }
+button.tool {
+  font: inherit; font-size: 0.85rem; color: var(--accent); background: transparent;
+  border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer;
+}
+p.note { margin: 0; color: var(--muted); max-width: 62ch; }
+ul.decided { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ul.decided li { display: grid; grid-template-columns: 3.2rem 1fr; gap: 8px; align-items: baseline; }
+.dno { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); }
+
+/* the map */
+.tabbar {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 6px;
+}
+.tabbar span { text-align: center; font-weight: 700; font-size: 0.82rem; padding: 8px 2px; border-radius: 10px; color: var(--muted); }
+.tabbar span.plus { color: var(--accent); background: var(--accent-soft); }
+.trees { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 12px; }
+.tabtree { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 12px 14px; min-width: 0; }
+.tabtree h4 { font-size: 0.95rem; margin-bottom: 8px; }
+.tabtree ul { list-style: none; margin: 0; padding: 0; }
+.tabtree ul ul { margin-left: 10px; padding-left: 10px; border-left: 1px solid var(--line); }
+.tabtree li { padding-block: 3px; }
+.chip {
+  display: inline-block; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.3;
+  background: var(--chip); color: var(--ink); text-decoration: none; padding: 3px 8px; border-radius: 6px;
+}
+a.chip:hover { background: var(--accent-soft); color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mapnote { display: grid; gap: 6px; }
+.mapnote h4 { font-size: 0.95rem; }
+
+/* cards */
+section.group { display: grid; gap: 8px; }
+section.group h3 { font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 10px; }
+details.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; scroll-margin-top: 64px; }
+details.card[open] { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+summary {
+  list-style: none; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 10px;
+  align-items: start; padding: 12px 14px;
+}
+summary::-webkit-details-marker { display: none; }
+.sumtext { display: grid; gap: 3px; min-width: 0; }
+.sid { font-family: var(--font-mono); font-weight: 600; font-size: 0.95rem; color: var(--accent); }
+.sname, .fname { font-weight: 700; }
+.fid { font-family: var(--font-mono); font-weight: 400; font-size: 0.78rem; color: var(--muted); margin-left: 4px; white-space: nowrap; }
+.sub { color: var(--muted); font-size: 0.95rem; }
+.sub em { font-style: italic; }
+.tog { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); position: relative; margin-top: 1px; }
+.tog::before, .tog::after { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 1.6px; background: var(--muted); transform: translate(-50%, -50%); }
+.tog::after { transform: translate(-50%, -50%) rotate(90deg); transition: transform 0.15s ease; }
+details[open] > summary .tog::after { transform: translate(-50%, -50%) rotate(0deg); }
+.body { padding: 2px 14px 14px; border-top: 1px solid var(--line); display: grid; gap: 10px; min-width: 0; }
+.body > * { margin: 0; }
+.body p, .body li { max-width: 64ch; }
+.body ul, .body ol { padding-left: 1.3rem; display: grid; gap: 4px; }
+.body li > ul, .body li > ol { margin-top: 4px; }
+.body code, .flat code { font-family: var(--font-mono); font-size: 0.86em; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+a.ref { text-decoration: none; }
+a.ref code { color: var(--accent); background: var(--accent-soft); }
+.body strong { font-weight: 700; }
+.body p:first-child { padding-top: 10px; }
+.body > ul:first-child, .body > ol:first-child, .body > .tablewrap:first-child { margin-top: 10px; }
+
+/* tables: a grid when wide, stacked rows when narrow */
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); }
+th { font-size: 0.8rem; color: var(--muted); font-weight: 700; }
+@media (max-width: 640px) {
+  table, thead, tbody, tr, td { display: block; width: 100%; }
+  thead { display: none; }
+  tr { padding-block: 8px; border-bottom: 1px solid var(--line); }
+  td { border: 0; padding: 2px 0; }
+  td::before { content: attr(data-label); display: block; font-size: 0.75rem; color: var(--muted); font-weight: 700; }
+  td[data-label=""]::before { display: none; }
+}
+
+.flat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px 14px 14px; display: grid; gap: 10px; }
+.flat > * { margin: 0; }
+.flat ul, .flat ol { padding-left: 1.3rem; display: grid; gap: 4px; }
+.confirm { background: var(--flag-soft); border-color: color-mix(in srgb, var(--flag) 30%, var(--line)); }
+.confirm ol { gap: 10px; }
+.confirm li::marker { color: var(--flag); font-weight: 700; }
+footer { padding-top: 36px; color: var(--muted); font-size: 0.9rem; }
+@media (prefers-reduced-motion: reduce) { .tog::after { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Sen screen map</h1>
+    <p class="lede">Every screen and journey, drafted from your answers on 5 Oct. Tap a card to open it; tap a <code>screen-id</code> to jump to that screen. The source is <code>docs/screens.md</code> and <code>docs/flows.md</code> in the repo.</p>
+  </header>
+
+  <nav class="bar" aria-label="Sections">
+    <a href="#decided">Decided</a>
+    <a href="#map">Map</a>
+    <a href="#screens">Screens</a>
+    <a href="#journeys">Journeys</a>
+    <a href="#confirm">Confirm</a>
+  </nav>
+
+  <section class="part" id="decided">
+    <div class="parthead"><h2>Decided today</h2></div>
+    <ul class="decided"><li><span class="dno">D57</span><span>Sen's look comes from the <em>frontend-design</em> skill: several directions, each a theme with its own icon, and you pick one.</span></li><li><span class="dno">D58</span><span>One theme, in light and dark. No accent picker.</span></li><li><span class="dno">D59</span><span>Home: <em>Left until payday</em> is the one large figure, and Needs attention can be cleared right on Home.</span></li><li><span class="dno">D60</span><span>Payday is one flow of up to four steps; a skipped step waits in Needs attention.</span></li><li><span class="dno">D61</span><span>People in the Home menu. Names link when they match exactly, otherwise Sen asks once; Merge fixes duplicates.</span></li><li><span class="dno">D62</span><span>Insights is one scroll of summary cards.</span></li><li><span class="dno">D63</span><span>Receipt confirm is three steps: Check, Items, Who paid.</span></li></ul>
+  </section>
+
+  <section class="part" id="map">
+    <div class="parthead"><h2>The map</h2></div>
+    <div class="tabbar" aria-hidden="true"><span>Home</span><span>Activity</span><span class="plus">(+)</span><span>Insights</span><span>Agent</span></div>
+    <div class="trees"><div class="tabtree"><h4>Home</h4><ul><li><a class="chip" href="#s-home">home</a><ul><li><a class="chip" href="#s-menu">menu</a><ul><li><a class="chip" href="#s-accounts">accounts</a><ul><li><a class="chip" href="#s-account">account</a></li><li><a class="chip" href="#s-balance-check">balance-check</a></li></ul></li><li><a class="chip" href="#s-people">people</a><ul><li><a class="chip" href="#s-person">person</a></li></ul></li><li><a class="chip" href="#s-claims">claims</a><ul><li><a class="chip" href="#s-claim">claim</a></li></ul></li><li><a class="chip" href="#s-settings">settings</a></li></ul></li><li><a class="chip" href="#s-payday">payday</a></li><li><a class="chip" href="#s-cycle">cycle</a></li><li><a class="chip" href="#s-attention">attention</a><ul><li><a class="chip" href="#s-skipped">skipped</a></li></ul></li></ul></li></ul></div><div class="tabtree"><h4>Activity</h4><ul><li><a class="chip" href="#s-activity">activity</a><ul><li><a class="chip" href="#s-txn">txn</a><ul><li><a class="chip" href="#s-receipt">receipt</a></li></ul></li></ul></li></ul></div><div class="tabtree"><h4>(+)</h4><ul><li><a class="chip" href="#s-plus">plus</a><ul><li><a class="chip" href="#s-scan">scan</a><ul><li><a class="chip" href="#s-reading">reading</a><ul><li><a class="chip" href="#s-confirm">confirm</a><ul><li><a class="chip" href="#s-split">split</a></li></ul></li></ul></li></ul></li><li><a class="chip" href="#s-manual">manual</a></li></ul></li></ul></div><div class="tabtree"><h4>Insights</h4><ul><li><a class="chip" href="#s-insights">insights</a><ul><li><a class="chip" href="#s-insights">insights/categories</a></li><li><a class="chip" href="#s-insights">budgets</a></li><li><a class="chip" href="#s-insights">insights/discretionary</a></li><li><a class="chip" href="#s-insights">insights/food</a></li><li><a class="chip" href="#s-insights">insights/unaccounted</a></li><li><a class="chip" href="#s-insights">insights/merchants</a></li><li><a class="chip" href="#s-insights">subscriptions</a></li><li><a class="chip" href="#s-insights">goals</a><ul><li><a class="chip" href="#s-insights">goal</a></li></ul></li><li><a class="chip" href="#s-insights">insights/year</a></li></ul></li></ul></div><div class="tabtree"><h4>Agent</h4><ul><li><a class="chip" href="#s-agent">agent</a><ul><li><a class="chip" href="#s-agent">agent/memory</a></li><li><a class="chip" href="#s-agent">agent/promises</a></li><li><a class="chip" href="#s-agent">agent/research</a></li><li><a class="chip" href="#s-agent">agent/usage</a></li></ul></li></ul></div></div>
+    <div class="mapnote">
+      <h4>Outside the tabs</h4>
+      <div class="chips"><a class="chip" href="#s-sign-in">sign-in</a><a class="chip" href="#s-first-run">first-run</a><a class="chip" href="#s-split-public">split-public</a></div>
+    </div>
+    <details class="card" id="s-native">
+      <summary><span class="sumtext"><span class="sname">Native surfaces</span><span class="sub">What Android draws outside the app: prompts, alerts, widgets, shortcuts, the share sheet.</span></span><span class="tog" aria-hidden="true"></span></summary>
+      <div class="body"><p>Android draws these, outside the web app. The browser shows a stand-in in the dev simulator panel
+(D42).</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>What it shows</th>
+<th>Tapping it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Surface"><strong>Category prompt</strong> (a new merchant, §6.3)</td>
+<td data-label="What it shows"><em>RM12.90 · KOPI KAWAN</em>, with the two best guesses and <em>Scan receipt</em></td>
+<td data-label="Tapping it">A button answers it; the body opens its row in <a class="ref" href="#s-attention"><code>attention</code></a></td>
+</tr>
+<tr>
+<td data-label="Surface"><strong>Person prompt</strong> (§6.3, D20)</td>
+<td data-label="What it shows"><em>RM20.00 to ALI BIN ABU BAKAR</em>, with your last answer for them, <em>Lent</em> and <em>Other…</em>; <em>Paying back</em> first when you owe them</td>
+<td data-label="Tapping it"><em>Who is this?</em> for a new name is asked in the app, once (D61)</td>
+</tr>
+<tr>
+<td data-label="Surface"><strong>Quiet scan prompt</strong> (a known merchant, §6.3)</td>
+<td data-label="What it shows"><em>RM58.30 · NASI KANDAR ABC · Meals</em>, one button: <em>Scan receipt</em>. Clears itself after 10 minutes; off in Settings → Capture</td>
+<td data-label="Tapping it">Opens <a class="ref" href="#s-scan"><code>scan</code></a> for that payment</td>
+</tr>
+<tr>
+<td data-label="Surface"><strong>Health alerts</strong> (§18)</td>
+<td data-label="What it shows"><em>Capture may be off</em>, <em>Daily jobs have stopped</em></td>
+<td data-label="Tapping it">Opens the fix</td>
+</tr>
+<tr>
+<td data-label="Surface"><strong>Sen's push</strong> (§12.4)</td>
+<td data-label="What it shows">At most one a day: the 9pm note, budget warnings</td>
+<td data-label="Tapping it">Opens <a class="ref" href="#s-agent"><code>agent</code></a></td>
+</tr>
+<tr>
+<td data-label="Surface"><strong>Claim reminders</strong> (§13)</td>
+<td data-label="What it shows">3 days before, and on the day</td>
+<td data-label="Tapping it">Opens <a class="ref" href="#s-claim"><code>claim</code></a></td>
+</tr>
+<tr>
+<td data-label="Surface"><strong>Export ready</strong> (D49)</td>
+<td data-label="What it shows">The link is ready for 24 hours</td>
+<td data-label="Tapping it">Opens the download</td>
+</tr>
+<tr>
+<td data-label="Surface"><strong>Widgets</strong> (D32)</td>
+<td data-label="What it shows">Small, medium, large; red with <em>Capture is off</em> when the listener stops</td>
+<td data-label="Tapping it">Their buttons open <a class="ref" href="#s-scan"><code>scan</code></a>, <a class="ref" href="#s-attention"><code>attention</code></a>, <a class="ref" href="#s-manual"><code>manual</code></a>; the rest opens <a class="ref" href="#s-home"><code>home</code></a></td>
+</tr>
+<tr>
+<td data-label="Surface"><strong>Launcher shortcuts</strong></td>
+<td data-label="What it shows"><em>Scan receipt</em>, <em>Add expense</em></td>
+<td data-label="Tapping it"><a class="ref" href="#s-scan"><code>scan</code></a>, <a class="ref" href="#s-manual"><code>manual</code></a></td>
+</tr>
+<tr>
+<td data-label="Surface"><strong>Share target</strong></td>
+<td data-label="What it shows"><em>Sen</em> in Android's share sheet, for PDFs and images</td>
+<td data-label="Tapping it">Uploads it as a receipt, then <a class="ref" href="#s-reading"><code>reading</code></a></td>
+</tr>
+</tbody>
+</table></div></div>
+    </details>
+    <details class="card" id="s-rules">
+      <summary><span class="sumtext"><span class="sname">Rules every screen follows</span><span class="sub">Tab bar, back gesture, what each person sees, warnings, offline, undo.</span></span><span class="tog" aria-hidden="true"></span></summary>
+      <div class="body"><p>The details are in <code>ui/patterns.md</code>; these shape the map.</p>
+<ul>
+<li>
+<p><strong>The tab bar</strong> shows on the five tab roots and on screens pushed from them. It hides during a
+  task with an end: <a class="ref" href="#s-first-run"><code>first-run</code></a>, <a class="ref" href="#s-payday"><code>payday</code></a>, <a class="ref" href="#s-confirm"><code>confirm</code></a>, <a class="ref" href="#s-manual"><code>manual</code></a>, <a class="ref" href="#s-balance-check"><code>balance-check</code></a> and <a class="ref" href="#s-scan"><code>scan</code></a>.</p>
+</li>
+<li>
+<p><strong>Android's back gesture</strong> closes the top sheet first, then goes back one screen (<code>uiux</code>).</p>
+</li>
+<li>
+<p><strong>A person sees only what they can use</strong> (D52). Without capture there's no <a class="ref" href="#s-accounts"><code>accounts</code></a>,
+  <a class="ref" href="#s-balance-check"><code>balance-check</code></a>, gap or capture setting. With a feature switched off, its screens, menu entries and
+  cards aren't there. With the agent off, the tab bar has four slots.</p>
+</li>
+<li>
+<p><strong>Health warnings</strong> (§18) sit at the top of <a class="ref" href="#s-home"><code>home</code></a> until fixed, each with a button that fixes it.</p>
+</li>
+<li><strong>Rows still in the outbox</strong> show beside synced ones, marked <em>Not synced yet</em> (§5).</li>
+<li><strong>Every change happens at once, with <em>Undo</em> in a toast</strong> (§6.7). Only a destructive action that
+  can't be undone asks first.</li>
+</ul></div>
+    </details>
+  </section>
+
+  <section class="part" id="screens">
+    <div class="parthead">
+      <h2>Screens <span class="count">28</span></h2>
+      <div class="tools"><button class="tool" type="button" data-open="screens" id="open-screens">Open all</button><button class="tool" type="button" data-close="screens" id="close-screens">Close all</button></div>
+    </div>
+    <section class="group"><h3>Home</h3><details class="card" id="s-home"><summary><span class="sumtext"><span class="sid">home</span><span class="sub">What's left until payday, and does anything need me?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows</strong> (D59), top to bottom:</p>
+<ol>
+<li><strong>Header:</strong> the Sen wordmark, and ≡ for the <a class="ref" href="#s-menu"><code>menu</code></a>.</li>
+<li>
+<p><strong>Health warnings</strong>, if any (§18): <em>Capture is off</em>, <em>Daily jobs have stopped</em>, <em>Backups are
+   failing</em>. Each has its fix button.</p>
+</li>
+<li>
+<p><strong>The Payday card</strong>, on payday (D60), until the flow is done or dismissed. After it, the card
+   shrinks to the payday plan's progress (<em>2 of 5 moves done</em>) until every move is ticked or you hide
+   it.</p>
+</li>
+<li>
+<p><strong>Left until payday</strong>, large: income received this cycle minus spending this cycle (D14), with
+   <em>12 days to go</em> from the expected payday. Below zero it reads <em>Over by RM…</em> in the warning colour.</p>
+</li>
+<li>
+<p><strong>Pace:</strong> <em>Spent RM2,115 this cycle</em> and <em>RM140 less than last cycle by this day</em>.</p>
+</li>
+<li>
+<p><strong>Needs attention:</strong> its count, then its first three items, each with its buttons, then
+   <em>See all</em>. Hidden when there's nothing.</p>
+</li>
+<li>
+<p><strong>A quiet row:</strong> total balance, and the gap the last balance check found, with its date.</p>
+</li>
+</ol>
+<p><strong>Does:</strong> tap the large figure for <a class="ref" href="#s-cycle"><code>cycle</code></a>; pace for <a class="ref" href="#s-insights"><code>insights</code></a>; an item's buttons answer it there;
+<em>See all</em> for <a class="ref" href="#s-attention"><code>attention</code></a>; the balance row for <a class="ref" href="#s-accounts"><code>accounts</code></a>.</p>
+<p><strong>From:</strong> the Home tab; opening the app; a widget; most notifications.</p>
+<p><strong>Varies:</strong></p>
+<ul>
+<li>
+<p><strong>Without capture</strong> (§9.6): no balance row and no gap. <em>Left until payday</em> appears once the
+  person enters this cycle's income; until then the large figure is spending, with its pace.</p>
+</li>
+<li>
+<p><strong>Before the first salary:</strong> the cycle runs from the opening date (D14), with no income in it, so
+  the large figure reads <em>Spent since you started</em> instead of a misleading negative.</p>
+</li>
+<li>
+<p><strong>The first cycle</strong> has no last cycle: the pace line says so.</p>
+</li>
+<li><strong>Offline:</strong> the figures include outbox rows (§5), and a small chip says how many aren't synced.</li>
+</ul></div></details><details class="card" id="s-menu"><summary><span class="sumtext"><span class="sid">menu</span><span class="sub">A sheet from ≡: <strong>Accounts</strong> (capture only), <strong>People</strong> (D61), <strong>Claims</strong> (claims switch) and <strong>Settings</strong>.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p>A sheet from ≡: <strong>Accounts</strong> (capture only), <strong>People</strong> (D61), <strong>Claims</strong> (claims switch) and
+<strong>Settings</strong>.</p></div></details><details class="card" id="s-cycle"><summary><span class="sumtext"><span class="sid">cycle</span><span class="sub">How is <em>left until payday</em> worked out, and where will it end?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p>A sheet from the large figure.</p>
+<p><strong>Shows:</strong> income received this cycle, spending this cycle, and the result; the cycle's dates and the
+expected payday; and <strong>at payday, on this pace</strong>, from <code>project_cycle_end</code> (§12.3), labelled as an
+estimate.</p></div></details><details class="card" id="s-attention"><summary><span class="sumtext"><span class="sid">attention</span><span class="sub">What does Sen need from me?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> one list (D27), every kind in §6.6. Items with a deadline come first (a claim due, a
+balance check, a skipped payday step), then the newest. Each row is the question and its buttons, the
+same row as on <a class="ref" href="#s-home"><code>home</code></a>:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Its row</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Item">A payment with no category</td>
+<td data-label="Its row">The two best guesses and <em>Other…</em>, or for a person their last answer, <em>Lent</em> and <em>Other…</em> (§6.3)</td>
+</tr>
+<tr>
+<td data-label="Item">A name Sen hasn't seen</td>
+<td data-label="Its row"><em>Who is this?</em> with the likeliest people and <em>Someone new</em> (D61), then the payment's own question</td>
+</tr>
+<tr>
+<td data-label="Item">Money in to classify</td>
+<td data-label="Its row"><em>Repaid</em>, <em>Income</em>, <em>Transfer</em>, and <em>Refund of…</em> when it's from a merchant (D21). <em>Repaid</em> asks which bill when there's more than one</td>
+</tr>
+<tr>
+<td data-label="Item">A receipt read and waiting</td>
+<td data-label="Its row">Opens <a class="ref" href="#s-confirm"><code>confirm</code></a></td>
+</tr>
+<tr>
+<td data-label="Item">A receipt waiting for its payment</td>
+<td data-label="Its row"><em>Waiting for its payment</em>, with <em>Attach to a payment…</em>, <em>Evidence only</em> and <em>Enter the payment</em> (§6.4)</td>
+</tr>
+<tr>
+<td data-label="Item">A receipt that couldn't be read</td>
+<td data-label="Its row">Opens <a class="ref" href="#s-manual"><code>manual</code></a> with the image beside it</td>
+</tr>
+<tr>
+<td data-label="Item">New notification wording</td>
+<td data-label="Its row">What Sen read, such as <em>Paid RM12.90 to KOPI KAWAN. Right?</em>, with <em>Yes</em> and <em>No</em> (D15). <em>No</em> offers <em>Enter it by hand</em></td>
+</tr>
+<tr>
+<td data-label="Item">A transfer missing its other side</td>
+<td data-label="Its row"><em>Where did it come from?</em> with your accounts and <em>Elsewhere</em> (D17)</td>
+</tr>
+<tr>
+<td data-label="Item">An amount you owe, unmatched after 30 days</td>
+<td data-label="Its row"><em>Paid another way</em>, <em>I was treated</em>, <em>Still owe</em> (D20)</td>
+</tr>
+<tr>
+<td data-label="Item">A balance check that's due</td>
+<td data-label="Its row">Opens <a class="ref" href="#s-balance-check"><code>balance-check</code></a></td>
+</tr>
+<tr>
+<td data-label="Item">A claim due within 7 days</td>
+<td data-label="Its row">Opens <a class="ref" href="#s-claim"><code>claim</code></a></td>
+</tr>
+<tr>
+<td data-label="Item">The payday claims question</td>
+<td data-label="Its row"><em>Yes</em> or <em>No</em> (D45)</td>
+</tr>
+<tr>
+<td data-label="Item">A proposal from Sen</td>
+<td data-label="Its row">The proposal, with <em>Apply</em> and <em>Dismiss</em> (§12.1)</td>
+</tr>
+</tbody>
+</table></div>
+<p>When Sen has suggested answers (§12.1, <em>Chores</em>), the suggested button on each row is marked, and a
+bar at the top offers <em>Apply Sen's N suggestions</em>. Each applied answer can still be undone.</p>
+<p>At the bottom: <strong>Skipped notifications (N)</strong>, for <a class="ref" href="#s-skipped"><code>skipped</code></a>.</p>
+<p><strong>Varies:</strong> empty: <em>Nothing needs you.</em> Offline, it still works from the outbox (D22).</p></div></details><details class="card" id="s-skipped"><summary><span class="sumtext"><span class="sid">skipped</span><span class="sub">Did Sen throw a payment away by mistake?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> notifications filed as <em>skipped</em> (§6.2): no template read them and they showed no sign of
+a payment. Each has its app, time and text, and <em>This was a payment</em>, which drafts a template or opens
+<a class="ref" href="#s-manual"><code>manual</code></a>.</p></div></details></section><section class="group"><h3>Activity</h3><details class="card" id="s-activity"><summary><span class="sumtext"><span class="sid">activity</span><span class="sub">What exactly happened, and when?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> a search field; filter chips for the cycle (this one by default), account, category, and
+kind (<em>Spending</em>, <em>Money in</em>, <em>Transfers</em>, <em>Shared</em>); then every transaction, newest first, grouped by
+day, each day with its total spent. A row is the merchant or person, the category and account, and
+the amount, with small marks for: a receipt attached, a split, waiting in <em>Needs attention</em>, <em>Not
+synced yet</em>, and <em>Filled in</em> (a transfer side Sen inferred, §7). A transfer is one row, <em>Ryt → TNG
+eWallet</em>.</p>
+<p><strong>Does:</strong> tap a row for <a class="ref" href="#s-txn"><code>txn</code></a>.</p>
+<p><strong>Varies:</strong> empty: <em>Payments appear here as their notifications arrive.</em> A filter with no results
+offers <em>Clear filters</em>. Long lists scroll virtually (§5.1).</p></div></details><details class="card" id="s-txn"><summary><span class="sumtext"><span class="sid">txn</span><span class="sub">What was this, and is it right?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong></p>
+<ul>
+<li>
+<p><strong>The amount</strong>, large, then the merchant or person, the date and time, the account, and where it
+  came from: <em>From Ryt's notification</em>, <em>Added by you</em>, <em>From a receipt</em>, or <em>Filled in from your
+  transfer rule</em> (replaced if the real side arrives, §7).</p>
+</li>
+<li>
+<p><strong>Category.</strong> Changing it asks <em>Just this one</em> or <em>From now on</em> (D25).</p>
+</li>
+<li><strong>Your share</strong> and, when others owe part of it, <strong>owed to you</strong> (D19). <strong>Pax</strong> for a meal.</li>
+<li><strong>Note.</strong></li>
+<li><strong>Receipts</strong>, as thumbnails, for <a class="ref" href="#s-receipt"><code>receipt</code></a>, and <em>Add receipt</em>.</li>
+<li><strong>Split:</strong> its status, for <a class="ref" href="#s-split"><code>split</code></a>, or <em>Split with friends</em>.</li>
+<li><strong>Linked:</strong> the repayments, the refund, the transfer's other side, or the bill it pays back.</li>
+<li><strong>Claim tag</strong>, with the claims switch on.</li>
+<li>
+<p><strong>What the bank said:</strong> the raw notification, collapsed, with <em>Correct amount, time or account</em>
+  (§6.7).</p>
+</li>
+<li>
+<p><strong>Changes:</strong> its audit log, collapsed (§6.7).</p>
+</li>
+</ul>
+<p><strong>Does:</strong> <em>Mark as…</em> (transfer, repayment, refund of…, lent), <em>Write off</em> (when owed), <em>Delete</em>
+(a notification's payment is dismissed, §6.7). Each with <em>Undo</em>.</p>
+<p><strong>From:</strong> <a class="ref" href="#s-activity"><code>activity</code></a>, <a class="ref" href="#s-person"><code>person</code></a>, <a class="ref" href="#s-account"><code>account</code></a>, a Sen message, a search.</p></div></details><details class="card" id="s-receipt"><summary><span class="sumtext"><span class="sid">receipt</span><span class="sub">What did this receipt say?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> the image or PDF, zoomable; merchant, date and totals; the items, with yours ticked and
+their categories; what it's attached to, or that it's waiting or kept as evidence.</p>
+<p><strong>Does:</strong> <em>Edit</em> (reopens <a class="ref" href="#s-confirm"><code>confirm</code></a>), <em>Attach to a payment…</em>, <em>Keep as evidence only</em>, <em>Delete</em>.</p></div></details></section><section class="group"><h3>Capture: the (+) button</h3><details class="card" id="s-plus"><summary><span class="sumtext"><span class="sid">plus</span><span class="sub">A sheet: <strong>Scan receipt</strong> (the largest), <strong>From gallery</strong>, <strong>Add manually</strong> (§9.1).</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p>A sheet: <strong>Scan receipt</strong> (the largest), <strong>From gallery</strong>, <strong>Add manually</strong> (§9.1).</p></div></details><details class="card" id="s-scan"><summary><span class="sumtext"><span class="sid">scan</span><span class="sub"><strong>In the shell:</strong> ML Kit's own scanner (§6.4), full screen: it finds the edges and crops, and you adjust the crop before saving. Saving goes to <a class="ref" href="#s-reading"><code>reading</code></a>.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>In the shell:</strong> ML Kit's own scanner (§6.4), full screen: it finds the edges and crops, and you
+adjust the crop before saving. Saving goes to <a class="ref" href="#s-reading"><code>reading</code></a>.</p>
+<p><strong>In a browser</strong> (D52): the phone's camera through the file picker, then <strong><a class="ref" href="#s-scan"><code>crop</code></a></strong>, with four
+draggable corners.</p></div></details><details class="card" id="s-reading"><summary><span class="sumtext"><span class="sid">reading</span><span class="sub">Is my receipt being read?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> the image, and <em>Reading receipt…</em>. You can leave: it waits in <em>Needs attention</em> when it's
+read.</p>
+<p><strong>To:</strong> <a class="ref" href="#s-confirm"><code>confirm</code></a> once read. If reading fails: <em>Couldn't read it</em>, and <a class="ref" href="#s-manual"><code>manual</code></a> with the image beside
+it; the image is kept. Offline: <em>Saved. It uploads when you're back online</em>, and it waits in <em>Needs
+attention</em>.</p></div></details><details class="card" id="s-confirm"><summary><span class="sumtext"><span class="sid">confirm</span><span class="sub">Did Sen read this receipt right, and what part was mine?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p>Three steps (D63), each one screen, with the photo one tap away:</p>
+<ol>
+<li>
+<p><strong>Check:</strong> the photo on top (pinch to zoom), then merchant, date and time, service charge, tax and
+   total. Doubtful fields are marked, and the sum is checked against the total.</p>
+</li>
+<li>
+<p><strong>Items:</strong> tick what's yours (all of them to start with); each item's category, from the reader's
+   suggestion; your share, updating as you tick.</p>
+</li>
+<li>
+<p><strong>Who paid:</strong> <em>Me</em>, a person, or <em>Someone new</em>; pax for a meal; <em>Split with friends</em>; and, quieter,
+   <em>Not a payment: keep as evidence</em> (for a claim, §6.4).</p>
+</li>
+</ol>
+<p><strong>After <em>Done</em>:</strong> a toast says what happened (§6.4):</p>
+<ul>
+<li><em>Attached to RM58.30 on Ryt</em>, with <em>Undo</em></li>
+<li>several payments match: a sheet asks which</li>
+<li>
+<p>no payment yet: <em>Waiting for its payment; it attaches itself</em> (with capture), or the payment is
+  created (without capture)</p>
+</li>
+<li>
+<p>someone else paid: <em>You owe Mei RM24.40</em> (D20)</p>
+</li>
+</ul>
+<p><strong>Leaving early</strong> keeps the receipt in <em>Needs attention</em>, read and waiting.</p></div></details><details class="card" id="s-manual"><summary><span class="sumtext"><span class="sid">manual</span><span class="sub">What did I pay that Sen didn't see?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> the amount, large, with a number pad (typed as text, kept in sen); the categories, most
+used first; the account (the last one used); the time (now). Behind <em>More</em>: merchant, note, your
+share, pax.</p>
+<p><strong>Does:</strong> <em>Save</em>, with <em>Undo</em>. A near-duplicate of a payment already captured gets a warning that
+doesn't block (§6.5).</p>
+<p><strong>From:</strong> <a class="ref" href="#s-plus"><code>plus</code></a>, the <em>Add expense</em> launcher shortcut and large widget, a Sen question about a quiet
+day (the day filled in, §12.1), an item Sen couldn't read.</p></div></details></section><section class="group"><h3>Shared bills</h3><details class="card" id="s-split"><summary><span class="sumtext"><span class="sid">split</span><span class="sub">Who owes what for this bill, and who has paid?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> the bill (merchant, total) and who paid; a large QR for the table and <em>Share link</em>; the
+people who've joined, their items, their shares (live) and their paid ticks; when a friend paid,
+their DuitNow QR, or <em>Add their QR</em>; the link's state, <em>Open</em> or <em>Closed</em>, with when it closes (a day
+after the last tick, or 30 days, D47).</p>
+<p><strong>Does:</strong> <em>Add someone</em> (for a friend without a phone: you tick their items), change a share, tick or
+untick paid, close the link, reopen it.</p>
+<p><strong>From:</strong> <a class="ref" href="#s-confirm"><code>confirm</code></a> step 3, <a class="ref" href="#s-txn"><code>txn</code></a>, <a class="ref" href="#s-receipt"><code>receipt</code></a>, <a class="ref" href="#s-person"><code>person</code></a>.</p></div></details><details class="card" id="s-split-public"><summary><span class="sumtext"><span class="sid">split-public</span><span class="sub">What do I owe, and how do I pay?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p>A friend's browser, no login (D47). Same components and theme as the app.</p>
+<p><strong>Shows:</strong> the merchant, date and total; <em>Your name</em> (type it, or pick one already there); the items
+to tick (an item several people tick is shared); your share, live, tax and service included;
+everyone's shares and paid ticks; <strong>how to pay</strong>: the payer's DuitNow QR and your amount. When a
+friend paid: <em>I paid</em> (pick your name, upload your QR), and ticks anyone can set.</p>
+<p><strong>Varies:</strong> closed: <em>This split is closed</em>, and nothing else.</p></div></details><details class="card" id="s-people"><summary><span class="sumtext"><span class="sid">people</span><span class="sub">Who owes me, and whom do I owe? (D61)</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> <em>Owed to you</em>, by person, with totals; <em>You owe</em>, by person; <em>Settled</em>, collapsed.</p>
+<p><strong>To:</strong> <a class="ref" href="#s-person"><code>person</code></a>.</p></div></details><details class="card" id="s-person"><summary><span class="sumtext"><span class="sid">person</span><span class="sub">What's open between me and this person?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> their name (rename it); what's open, either way, with amounts and age; their repayments;
+the names banks have printed for them.</p>
+<p><strong>Does:</strong> <em>Copy reminder</em> (a message ready to paste into a chat), <em>Write off</em> (D19), <em>Merge with…</em>,
+each with <em>Undo</em>.</p></div></details></section><section class="group"><h3>Insights</h3><details class="card" id="s-insights"><summary><span class="sumtext"><span class="sid">insights</span><span class="sub">Where is my money going, and am I on track? (D62)</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> the cycle picker (<em>October</em>, with its exact dates), then summary cards. Each answers one
+question with one figure or a small chart, and opens its screen:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Card</th>
+<th>Opens</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Card">Where it went: the top categories, this cycle against the 12-month average</td>
+<td data-label="Opens"><a class="ref" href="#s-insights"><code>insights/categories</code></a></td>
+<td data-label="Notes">A category opens <a class="ref" href="#s-activity"><code>activity</code></a>, filtered</td>
+</tr>
+<tr>
+<td data-label="Card">Budgets: the closest to its limit</td>
+<td data-label="Opens"><a class="ref" href="#s-insights"><code>budgets</code></a></td>
+<td data-label="Notes">Add, change and remove budgets there (D29)</td>
+</tr>
+<tr>
+<td data-label="Card">Essential and discretionary</td>
+<td data-label="Opens"><a class="ref" href="#s-insights"><code>insights/discretionary</code></a></td>
+<td data-label="Notes"></td>
+</tr>
+<tr>
+<td data-label="Card">Food: meal average (an estimate), drinks and desserts, eating out against groceries</td>
+<td data-label="Opens"><a class="ref" href="#s-insights"><code>insights/food</code></a></td>
+<td data-label="Notes"></td>
+</tr>
+<tr>
+<td data-label="Card">Unaccounted: the gap per cycle (capture only)</td>
+<td data-label="Opens"><a class="ref" href="#s-insights"><code>insights/unaccounted</code></a></td>
+<td data-label="Notes">It should trend to zero (§7)</td>
+</tr>
+<tr>
+<td data-label="Card">Top merchants</td>
+<td data-label="Opens"><a class="ref" href="#s-insights"><code>insights/merchants</code></a></td>
+<td data-label="Notes"></td>
+</tr>
+<tr>
+<td data-label="Card">Subscriptions: the monthly commitment and the next renewal</td>
+<td data-label="Opens"><a class="ref" href="#s-insights"><code>subscriptions</code></a></td>
+<td data-label="Notes">Declare, change, forecast against actual, missed (§11)</td>
+</tr>
+<tr>
+<td data-label="Card">Goals and buckets</td>
+<td data-label="Opens"><a class="ref" href="#s-insights"><code>goals</code></a>, then <a class="ref" href="#s-insights"><code>goal</code></a></td>
+<td data-label="Notes">Per cycle, feasibility against median surplus with its sample size, projected finish (§10)</td>
+</tr>
+<tr>
+<td data-label="Card">The year: spending by category, savings rate, relief tags</td>
+<td data-label="Opens"><a class="ref" href="#s-insights"><code>insights/year</code></a></td>
+<td data-label="Notes"></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Varies:</strong> a card with no data isn't shown. In the first days: <em>Insights fill in as your first
+cycle runs.</em></p></div></details></section><section class="group"><h3>Agent: Sen</h3><details class="card" id="s-agent"><summary><span class="sumtext"><span class="sid">agent</span><span class="sub">What should I know, or do, about my money?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> the one conversation (§12.5): Sen's notes (the 9pm note, the weekly summary, the cycle
+review), its answers, and these as cards:</p>
+<ul>
+<li><strong>proposals</strong>, with <em>Apply</em> and <em>Dismiss</em> (§12.1)</li>
+<li>
+<p><strong>research drafts</strong>, with each source and the date it was checked, marked unconfirmed until you
+  confirm the figures (§12.2 rule 6). If Google's terms require them (§21 Q24), the search
+  suggestions sit at the foot of the card</p>
+</li>
+<li>
+<p><strong>reminders of what's owed</strong>, with <em>Copy message</em></p>
+</li>
+</ul>
+<p>Then the composer, with suggested questions when the conversation is quiet.</p>
+<p><strong>Header menu:</strong> <em>What Sen remembers</em> (<a class="ref" href="#s-agent"><code>agent/memory</code></a>), <em>Promises</em> it's watching (<a class="ref" href="#s-agent"><code>agent/promises</code></a>),
+<em>Research</em> (<a class="ref" href="#s-agent"><code>agent/research</code></a>), <em>Usage</em> (<a class="ref" href="#s-agent"><code>agent/usage</code></a>, the AI cap, D52).</p>
+<p><strong>Varies:</strong> streaming while Sen answers; offline: <em>Sen needs a connection</em>; at the cap: <em>Sen is paused
+until 1 Nov; everything else works</em> (§9.6); agent switched off: no tab.</p></div></details></section><section class="group"><h3>Menu screens</h3><details class="card" id="s-accounts"><summary><span class="sumtext"><span class="sid">accounts</span><span class="sub">What's in each account, and can I trust it?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p>Capture only.</p>
+<p><strong>Shows:</strong> the total; each tracked account with its balance, when it was last checked and the gap
+then; <em>Elsewhere</em> accounts, without balances (§7); <em>Check balances</em>.</p>
+<p><strong>To:</strong> <a class="ref" href="#s-account"><code>account</code></a>, <a class="ref" href="#s-balance-check"><code>balance-check</code></a>. <em>Add account</em>, such as a new card (§12.1).</p></div></details><details class="card" id="s-account"><summary><span class="sumtext"><span class="sid">account</span><span class="sub"><strong>Shows:</strong> its balance, opening balance and date, the app that feeds it, its transactions (as <a class="ref" href="#s-activity"><code>activity</code></a>, filtered) and its balance checks. <strong>Does:</strong> rename, archive.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> its balance, opening balance and date, the app that feeds it, its transactions (as
+<a class="ref" href="#s-activity"><code>activity</code></a>, filtered) and its balance checks. <strong>Does:</strong> rename, archive.</p></div></details><details class="card" id="s-balance-check"><summary><span class="sumtext"><span class="sid">balance-check</span><span class="sub">Do Sen's balances match the banks'?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><strong>Shows:</strong> each tracked account's computed balance beside a box for the real one, and <em>Matches</em> to
+copy it across in one tap (D18).</p>
+<p><strong>Does:</strong> <em>Save</em>: each difference is booked as <em>Unaccounted</em> (§7). The result says the gap, with
+<em>Undo</em>.</p>
+<p><strong>From:</strong> <a class="ref" href="#s-payday"><code>payday</code></a> step 2, <a class="ref" href="#s-attention"><code>attention</code></a>, <a class="ref" href="#s-accounts"><code>accounts</code></a>.</p></div></details><details class="card" id="s-claims"><summary><span class="sumtext"><span class="sid">claims</span><span class="sub">Which claims are due, and are they ready?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p>Claims switch only.</p>
+<p><strong>Shows:</strong> this period's claim for each scheme: its amount (computed), status, deadline, and whether
+its evidence is in; past claims by month (§13).</p></div></details><details class="card" id="s-claim"><summary><span class="sumtext"><span class="sid">claim</span><span class="sub">What do I type and attach in ESS?</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p>The submission kit (§13).</p>
+<p><strong>Shows:</strong> in ESS's order, each amount with <em>Copy</em> and each file with <em>Open</em> and <em>Share</em>; missing
+evidence with how to add it (<em>Share the My50 receipt to Sen</em>).</p>
+<p><strong>Does:</strong> <em>Submitted</em>; later <em>Rejected</em>, with a reason. <em>Paid</em> comes from the payday question (D45).</p></div></details><details class="card" id="s-settings"><summary><span class="sumtext"><span class="sname">Settings</span><span class="sub"><a class="ref" href="#s-settings"><code>settings</code></a> is a list of sections, each its own screen:</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p><a class="ref" href="#s-settings"><code>settings</code></a> is a list of sections, each its own screen:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Holds</th>
+<th>Who sees it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td data-label="Section">Appearance</td>
+<td data-label="Holds"><em>System</em>, <em>Light</em>, <em>Dark</em> (D44)</td>
+<td data-label="Who sees it">Everyone</td>
+</tr>
+<tr>
+<td data-label="Section">Capture</td>
+<td data-label="Holds">Listener status, notification access, the Xiaomi settings, the switch for the quiet <em>Scan receipt</em> notification (§6.3), the wordings Sen has learned, skipped notifications</td>
+<td data-label="Who sees it">Shell, capture on</td>
+</tr>
+<tr>
+<td data-label="Section">You</td>
+<td data-label="Holds">Your names as banks print them (D17), expected payday (D14), your DuitNow QR (D47)</td>
+<td data-label="Who sees it">Everyone (names: capture only)</td>
+</tr>
+<tr>
+<td data-label="Section">Categories and rules</td>
+<td data-label="Holds">Categories (rename, add, archive, flags) and merchant rules</td>
+<td data-label="Who sees it">Everyone</td>
+</tr>
+<tr>
+<td data-label="Section">Receipts by email</td>
+<td data-label="Holds">Your forwarding address with <em>Copy</em>, how to set the Gmail filter step by step, Gmail's confirmation code once it arrives, recent forwarded emails (D56)</td>
+<td data-label="Who sees it">Everyone</td>
+</tr>
+<tr>
+<td data-label="Section">Claims</td>
+<td data-label="Holds">Schemes (§13)</td>
+<td data-label="Who sees it">Claims switch</td>
+</tr>
+<tr>
+<td data-label="Section">Sen</td>
+<td data-label="Holds">Google Calendar (D41), what Sen remembers, your AI usage this month against your cap</td>
+<td data-label="Who sees it">Agent switch</td>
+</tr>
+<tr>
+<td data-label="Section">Members</td>
+<td data-label="Holds">Invitations, each person's switches and AI cap, monthly AI usage (D52)</td>
+<td data-label="Who sees it">Admin only</td>
+</tr>
+<tr>
+<td data-label="Section">Data</td>
+<td data-label="Holds"><em>Export everything</em> (D49), the last backup, integration tokens (§16)</td>
+<td data-label="Who sees it">Everyone; backups and tokens: admin</td>
+</tr>
+<tr>
+<td data-label="Section">Account</td>
+<td data-label="Holds">Your email, <em>Sign out</em>, <em>Sign out everywhere</em> (§17)</td>
+<td data-label="Who sees it">Everyone</td>
+</tr>
+</tbody>
+</table></div></div></details></section><section class="group"><h3>Outside the tabs</h3><details class="card" id="s-sign-in"><summary><span class="sumtext"><span class="sid">sign-in</span><span class="sub">Your email, then the 6-digit code (D13). An invitation's link lands here with the email filled in (D52). States: wrong or expired code, and <em>Sen is invitation-only</em> for an unknown email.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p>Your email, then the 6-digit code (D13). An invitation's link lands here with the email filled in
+(D52). States: wrong or expired code, and <em>Sen is invitation-only</em> for an unknown email.</p></div></details><details class="card" id="s-first-run"><summary><span class="sumtext"><span class="sid">first-run</span><span class="sub">Full screen, one step per screen (D26): sign in, notification access (with <em>Allow restricted settings</em> when the switch is greyed out, §6.2), Xiaomi settings, accounts with today's balances, your name as banks print it, expected payday. Without capture: sign in, expected payday, categories (§9.6).</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p>Full screen, one step per screen (D26): sign in, notification access (with <em>Allow restricted
+settings</em> when the switch is greyed out, §6.2), Xiaomi settings, accounts with today's balances, your
+name as banks print it, expected payday. Without capture: sign in, expected payday, categories
+(§9.6).</p></div></details><details class="card" id="s-payday"><summary><span class="sumtext"><span class="sid">payday</span><span class="sub">Full screen, up to four steps (D60, §9.7): the claims question, <a class="ref" href="#s-balance-check"><code>balance-check</code></a>, last cycle's look-back with one experiment, this cycle's plan. Each step has <em>Skip</em>; a skipped step waits in <em>Needs attention</em>. The plan (§12.1) lists what's due, what to set aside and what's left, each with its from and to accounts, and <em>Use this plan</em>.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><p>Full screen, up to four steps (D60, §9.7): the claims question, <a class="ref" href="#s-balance-check"><code>balance-check</code></a>, last cycle's
+look-back with one experiment, this cycle's plan. Each step has <em>Skip</em>; a skipped step waits in
+<em>Needs attention</em>. The plan (§12.1) lists what's due, what to set aside and what's left, each with
+its from and to accounts, and <em>Use this plan</em>.</p></div></details></section>
+  </section>
+
+  <section class="part" id="journeys">
+    <div class="parthead">
+      <h2>Journeys <span class="count">34</span></h2>
+      <div class="tools"><button class="tool" type="button" data-open="journeys" id="open-journeys">Open all</button><button class="tool" type="button" data-close="journeys" id="close-journeys">Close all</button></div>
+    </div>
+    <p class="note">Each journey: what starts it, the steps, what happens when it goes wrong, and how it ends.</p>
+    <section class="group"><h3>Setting up</h3><details class="card" id="f-first-run"><summary><span class="sumtext"><span class="fname">First run <span class="fid">first-run</span></span><span class="sub">Starts: the owner opens the shell for the first time, installed from a GitHub Actions build (§3).</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li><a class="ref" href="#s-sign-in"><code>sign-in</code></a>: email, then the 6-digit code from the email.</li>
+<li>
+<p><strong>Notification access.</strong> <em>Open settings</em> goes to Android's notification-access page; switch Sen
+   on and come back. Capture starts now: anything it sees waits in the outbox (§9.5).</p>
+</li>
+<li>
+<p><strong>Xiaomi settings:</strong> Autostart on, battery saver <em>No restrictions</em>, and the app locked in recents.
+   Each step opens the right page; locking in recents is a gesture, so that step shows how.</p>
+</li>
+<li>
+<p><strong>Accounts:</strong> Public Bank, Ryt, TNG eWallet, GO+ and GrabPay Wallet, each with the balance its app
+   shows right now (§7).</p>
+</li>
+<li>
+<p><strong>Your name as the banks print it</strong>, such as <code>TAN WEI MING</code>, for spotting transfers between your
+   own accounts (D17). More than one is allowed.</p>
+</li>
+<li>
+<p><strong>Expected payday:</strong> the last working day of the month (the default), or a day number (D14).</p>
+</li>
+<li><a class="ref" href="#s-home"><code>home</code></a>. The large figure reads <em>Spent since you started</em> until the first salary lands.</li>
+</ol>
+<p><strong>When it goes wrong</strong></p>
+<ul>
+<li>
+<p><strong>The switch is greyed out</strong> (Android 16's restricted settings, §6.2): Sen explains, then opens its
+  own app-info page, where ⋮ → <em>Allow restricted settings</em> unlocks it; then back to step 2.</p>
+</li>
+<li>
+<p><strong>Notification access refused:</strong> <em>Skip for now</em> is allowed. <a class="ref" href="#s-home"><code>home</code></a> then shows <em>Capture is off</em> with
+  <em>Fix</em> until it's granted.</p>
+</li>
+<li>
+<p><strong>The app is closed mid-setup:</strong> it reopens at the same step.</p>
+</li>
+<li><strong>Wrong or expired code:</strong> <em>Send a new code</em>. <strong>Offline:</strong> <em>Signing in needs a connection</em>.</li>
+<li><strong>Anything that breaks later</strong> shows on <a class="ref" href="#s-home"><code>home</code></a> as a warning with a fix; the steps never come back
+  (D26).</li>
+</ul>
+<p><strong>Done:</strong> <a class="ref" href="#s-home"><code>home</code></a>, with capture on.</p></div></details><details class="card" id="f-invited"><summary><span class="sumtext"><span class="fname">An invited friend&#x27;s first day <span class="fid">invited</span></span><span class="sub">Starts: an invitation email (D52).</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>The link opens <a class="ref" href="#s-sign-in"><code>sign-in</code></a> in the browser, the email filled in; then the code.</li>
+<li>
+<p>The short first run (§9.6): expected payday, then the starting categories, where any can be
+   switched off.</p>
+</li>
+<li>
+<p><a class="ref" href="#s-home"><code>home</code></a>: <em>Needs attention</em> and spending, no balances. In a browser, Sen offers <em>Add to Home screen</em>
+   (the PWA).</p>
+</li>
+<li>
+<p>Their first receipt (<a class="ref" href="#f-scan-after"><code>scan-after</code></a>) creates its payment, since no notification is coming (§6.4).</p>
+</li>
+</ol>
+<p><strong>When it goes wrong:</strong> an expired invitation says <em>Ask for a new invitation</em>; an email that wasn't
+invited gets <em>Sen is invitation-only</em>.</p></div></details></section><section class="group"><h3>Everyday capture</h3><details class="card" id="f-pay-known"><summary><span class="sumtext"><span class="fname">Paying at a known merchant <span class="fid">pay-known</span></span><span class="sub">Starts: a payment at a merchant Sen has a rule for, such as KOPI KAWAN.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>
+<p>Ryt notifies. In native code, the listener stores the raw text, a template reads it, and the
+   merchant rule sets the category. The payment is done, with no review (D24).</p>
+</li>
+<li>
+<p><strong>If the quiet scan prompt is on</strong> (§6.3): <em>RM8.90 · KOPI KAWAN · Drinks &amp; desserts</em>, with one
+   button, <em>Scan receipt</em>. It clears itself after 10 minutes.</p>
+</li>
+<li>
+<p>The outbox syncs when there's a network. <a class="ref" href="#s-home"><code>home</code></a> and the widgets reflect it at their next refresh.</p>
+</li>
+</ol>
+<p><strong>When it goes wrong</strong></p>
+<ul>
+<li><strong>Offline:</strong> nothing changes for you; sync waits for the network (§6.2).</li>
+<li>
+<p><strong>The same notification again</strong> (the listener reconnects, a reinstall): the dedupe key makes it a
+  no-op (§6.5).</p>
+</li>
+<li>
+<p><strong>A Grab charge that names no restaurant</strong> waits up to 10 minutes for its context notification
+  (§6.2).</p>
+</li>
+<li>
+<p><strong>A card hold</strong> at a petrol pump is ignored; the final charge is the payment (§6.3).</p>
+</li>
+</ul>
+<p><strong>Done:</strong> a categorised payment, with no tap.</p></div></details><details class="card" id="f-pay-new"><summary><span class="sumtext"><span class="fname">Paying at a new merchant <span class="fid">pay-new</span></span><span class="sub">Starts: a payment at a merchant Sen hasn't seen, such as NASI KANDAR ABC.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>
+<p>The category prompt (§6.3): <em>RM11.00 · NASI KANDAR ABC</em>, with the two best guesses and <em>Scan
+   receipt</em>.</p>
+</li>
+<li>
+<p><strong>Tap a category:</strong> the payment takes it, and a merchant rule is made, so this merchant never asks
+   again.</p>
+</li>
+<li>
+<p><strong>Or tap <em>Scan receipt</em>:</strong> <a class="ref" href="#f-scan-after"><code>scan-after</code></a>. The receipt answers the question: the payment takes its
+   items' categories, and the merchant's rule takes the receipt's largest category.</p>
+</li>
+<li>
+<p><strong>Or tap the notification itself:</strong> Sen opens at its row in <a class="ref" href="#s-attention"><code>attention</code></a>, with every category.</p>
+</li>
+</ol>
+<p><strong>When it goes wrong</strong></p>
+<ul>
+<li><strong>Swiped away or ignored:</strong> it waits in <em>Needs attention</em> (D22).</li>
+<li>
+<p><strong>Another new merchant before you answer:</strong> the new prompt replaces the old one in the shade; the
+  old one waits in <em>Needs attention</em> (D24).</p>
+</li>
+<li>
+<p><strong>The wrong button:</strong> fix it in <a class="ref" href="#s-txn"><code>txn</code></a> (<a class="ref" href="#f-fix"><code>fix</code></a>).</p>
+</li>
+<li><strong>Offline:</strong> the buttons work; the answer syncs later.</li>
+</ul>
+<p><strong>Done:</strong> a categorised payment and a new merchant rule.</p></div></details><details class="card" id="f-pay-person"><summary><span class="sumtext"><span class="fname">Paying a friend <span class="fid">pay-person</span></span><span class="sub">Starts: money sent to a person, such as RM20.00 to ALI BIN ABU BAKAR from TNG.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>
+<p>The person prompt (§6.3, D20): your last answer for Ali first, then <em>Lent</em> and <em>Other…</em>. When you
+   owe Ali an amount, <em>Paying back: Dinner, 3 Oct</em> comes first, even offline (§5).</p>
+</li>
+<li>
+<p>Tap one. There's never a silent rule for a person (D20).</p>
+</li>
+<li><strong>A name Sen hasn't seen</strong> that doesn't match a known one asks <em>Who is this?</em> once, in <a class="ref" href="#s-attention"><code>attention</code></a>
+   (D61). Later payments to that name know who it is.</li>
+</ol>
+<p><strong>When it goes wrong</strong></p>
+<ul>
+<li>
+<p><strong>Paying back a different amount</strong> from what you owe: within RM5 it still matches (D20); otherwise
+  <em>Needs attention</em> asks which bill, if any.</p>
+</li>
+<li>
+<p><strong>Your own name</strong> is a transfer, not a payment (<a class="ref" href="#f-own-transfer"><code>own-transfer</code></a>).</p>
+</li>
+</ul>
+<p><strong>Done:</strong> the payment has its <em>what</em>, and the person is known.</p></div></details><details class="card" id="f-money-in"><summary><span class="sumtext"><span class="fname">Money in from someone <span class="fid">money-in</span></span><span class="sub">Starts: money arrives from a name that isn't yours, such as RM40.00 from ALI BIN ABU BAKA.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>No notification asks; it waits in <a class="ref" href="#s-attention"><code>attention</code></a> (§6.6).</li>
+<li>
+<p><strong>One open amount Ali owes you, and it fits:</strong> Sen matches it as the repayment, ticks the share
+   on any split, and the row clears itself.</p>
+</li>
+<li>
+<p><strong>Otherwise</strong> the row asks: <em>Repaid</em> (which bill, when there are several), <em>Income</em> (such as a
+   gift), or <em>Transfer</em>.</p>
+</li>
+<li>
+<p><strong>A name Sen hasn't seen</strong> asks <em>Who is this?</em> first (D61).</p>
+</li>
+</ol>
+<p><strong>When it goes wrong:</strong> a payment that's more than what's owed links what's owed, and the row asks
+about the rest.</p>
+<p><strong>Done:</strong> the money is a repayment, income or a transfer.</p></div></details><details class="card" id="f-own-transfer"><summary><span class="sumtext"><span class="fname">Moving money between your own accounts <span class="fid">own-transfer</span></span><span class="sub">Starts: salary lands in Public Bank, and you send RM2,000 on to Ryt.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>
+<p>Ryt notifies <em>You've received RM2,000.00 from TAN WEI MING</em>. Your own name makes it a transfer,
+   never income (D17).</p>
+</li>
+<li>
+<p><strong>Public Bank doesn't notify money leaving it</strong> (§21 Q16), so one side is missing. The first time,
+   <a class="ref" href="#s-attention"><code>attention</code></a> asks <em>Where did it come from?</em>, with your accounts and <em>Elsewhere</em>.</p>
+</li>
+<li>
+<p>Your answer becomes a transfer rule. Next time, the missing side is filled in by itself and marked
+   <em>Filled in</em> in <a class="ref" href="#s-activity"><code>activity</code></a> (§7).</p>
+</li>
+<li>
+<p>If the real side ever arrives, it replaces the filled-in one.</p>
+</li>
+</ol>
+<p>Moves inside one app (eWallet → GO+) and GrabPay top-ups from the Public Bank card are transfers by
+their templates (§6.2, D38).</p>
+<p><strong>Done:</strong> one transfer, both accounts right, no spending.</p></div></details><details class="card" id="f-refund"><summary><span class="sumtext"><span class="fname">A refund <span class="fid">refund</span></span><span class="sub">Starts: money in from a merchant.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>It waits in <a class="ref" href="#s-attention"><code>attention</code></a>, with <em>Refund of…</em> as well as the money-in buttons.</li>
+<li><em>Refund of…</em> lists recent payments to that merchant; pick the purchase.</li>
+<li>The refund takes its amount off that purchase's spending, in the purchase's cycle (D21).</li>
+</ol>
+<p><strong>Done:</strong> the purchase's spending is lower; the refund is never income.</p></div></details></section><section class="group"><h3>Receipts</h3><details class="card" id="f-scan-after"><summary><span class="sumtext"><span class="fname">Scanning a receipt after paying <span class="fid">scan-after</span></span><span class="sub">Starts: the quiet scan prompt, the category prompt's third button, a widget, the launcher shortcut, or <a class="ref" href="#s-plus"><code>plus</code></a>.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>
+<p><a class="ref" href="#s-scan"><code>scan</code></a>: ML Kit finds the edges and crops; adjust the crop while the receipt is in your hand, then
+   save. In a browser: the camera, then <a class="ref" href="#s-scan"><code>crop</code></a>.</p>
+</li>
+<li>
+<p>The image is resized and uploaded (§6.4); <a class="ref" href="#s-reading"><code>reading</code></a>.</p>
+</li>
+<li><a class="ref" href="#s-confirm"><code>confirm</code></a> step 1, <strong>Check:</strong> compare the marked fields with the photo; fix any.</li>
+<li>Step 2, <strong>Items:</strong> untick what isn't yours.</li>
+<li>Step 3, <strong>Who paid:</strong> <em>Me</em>; pax 3 for a meal; <em>Done</em>.</li>
+<li>Matching finds the RM58.30 payment within 3 hours (§6.4) and attaches the receipt: items, your
+   share, evidence. The toast says <em>Attached to RM58.30 on Ryt</em>, with <em>Undo</em>.</li>
+</ol>
+<p><strong>When it goes wrong</strong></p>
+<ul>
+<li>
+<p><strong>Some items weren't yours:</strong> your share is what you ticked, with tax and service pro rata; the
+  rest is owed to you (D19), and <em>Split with friends</em> is offered.</p>
+</li>
+<li>
+<p><strong>Several payments match:</strong> a sheet asks which.</p>
+</li>
+<li><strong>No payment yet:</strong> <a class="ref" href="#f-receipt-first"><code>receipt-first</code></a>.</li>
+<li><strong>Reading fails:</strong> <em>Couldn't read it</em>; <a class="ref" href="#f-manual"><code>manual</code></a> with the image beside it. The image is never lost.</li>
+<li><strong>Offline:</strong> <em>Saved. It uploads when you're back online</em>; it waits in <em>Needs attention</em>.</li>
+<li><strong>You leave half-way:</strong> it waits in <em>Needs attention</em>, read and waiting.</li>
+<li><strong>The same file twice:</strong> <em>Already added</em>, and it opens the first one (§6.5).</li>
+<li><strong>The total differs from the payment</strong> (a tip, rounding): they don't match by themselves.
+  <em>Attach to a payment…</em> attaches items and evidence only, and never changes the amount, your share
+  or the category (§6.4).</li>
+</ul>
+<p><strong>Done:</strong> the payment carries its receipt, items and your share.</p></div></details><details class="card" id="f-receipt-first"><summary><span class="sumtext"><span class="fname">A receipt before its payment <span class="fid">receipt-first</span></span><span class="sub">Starts: a receipt confirmed with no payment to match: scanned before Ryt's notification arrived, or a phone bill PDF forwarded days after it was paid.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>The toast says <em>Waiting for its payment; it attaches itself</em>. The receipt waits in <a class="ref" href="#s-attention"><code>attention</code></a>.</li>
+<li><strong>The payment's notification arrives:</strong> matching attaches the receipt, and the row clears itself.</li>
+<li><strong>It never comes</strong>, so the row offers:<ul>
+<li><em>Attach to a payment…</em>: a list of likely payments (same merchant, close amounts), for the phone
+ bill paid days before its PDF arrived</li>
+<li><em>Evidence only</em>: no payment, for a claim, such as the My50 receipt (§13)</li>
+<li><em>Enter the payment</em>: capture really missed it</li>
+</ul>
+</li>
+</ol>
+<p><strong>Without capture</strong> (D52): confirming creates the payment; nothing waits.</p>
+<p><strong>Done:</strong> attached, kept as evidence, or entered.</p></div></details><details class="card" id="f-email-setup"><summary><span class="sumtext"><span class="fname">Setting up forwarded receipts <span class="fid">email-setup</span></span><span class="sub">Starts: Settings → <em>Receipts by email</em> (D56).</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>Copy your forwarding address, such as <code>sen.inbox+k7q2xm@example.com</code>.</li>
+<li>
+<p>Follow the steps, in your own Gmail: add it as a forwarding address, then a filter that forwards
+   only the senders you choose.</p>
+</li>
+<li>
+<p><strong>Gmail confirms a forwarding address by emailing it a code.</strong> That email arrives in Sen's inbox,
+   so Sen shows the code on this screen, to type into Gmail.</p>
+</li>
+<li>
+<p>From then on, each forwarded email becomes a receipt, read and matched like a scan
+   (<a class="ref" href="#f-scan-after"><code>scan-after</code></a>), checked when the phone syncs and once a day.</p>
+</li>
+</ol>
+<p><strong>When it goes wrong</strong></p>
+<ul>
+<li><strong>Mail to an unknown <code>+code</code></strong> is dropped (§6.4).</li>
+<li>
+<p><strong>An email that isn't a receipt</strong>, such as a newsletter that slipped through the filter, is
+  ignored and listed under recent forwarded emails.</p>
+</li>
+<li>
+<p><strong>The same email twice</strong> is a no-op (<code>Message-ID</code>).</p>
+</li>
+</ul>
+<p><strong>Done:</strong> invoices arrive without a tap.</p></div></details></section><section class="group"><h3>Fixing things</h3><details class="card" id="f-manual"><summary><span class="sumtext"><span class="fname">Entering a payment Sen missed <span class="fid">manual</span></span><span class="sub">Starts: <a class="ref" href="#s-plus"><code>plus</code></a> → <em>Add manually</em>, the <em>Add expense</em> shortcut, or the large widget.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>Type the amount, such as <code>12.50</code>.</li>
+<li>Pick a category. The account (the last used) and the time (now) are already set.</li>
+<li><em>Save</em>. The toast has <em>Undo</em>.</li>
+</ol>
+<p><strong>When it goes wrong</strong></p>
+<ul>
+<li>
+<p><strong>It looks like a payment already captured</strong> (same amount, close in time): a warning, which
+  doesn't block (§6.5).</p>
+</li>
+<li>
+<p><strong>An amount that isn't money</strong>, such as <code>12.505</code>: the field says why.</p>
+</li>
+<li><strong>Offline:</strong> it saves to the outbox.</li>
+</ul>
+<p><strong>Done:</strong> a payment, about ten seconds later.</p></div></details><details class="card" id="f-new-wording"><summary><span class="sumtext"><span class="fname">A notification no template reads <span class="fid">new-wording</span></span><span class="sub">Starts: TNG changes its wording.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>The event is stored and marked <code>unparsed</code> (§6.2).</li>
+<li>If it has an amount and a payment word, the API drafts a template, and code checks it (D15).</li>
+<li><a class="ref" href="#s-attention"><code>attention</code></a>: <em>New TNG wording: paid RM12.90 to KOPI KAWAN. Right?</em></li>
+<li>
+<p><strong>Yes:</strong> the template is saved, this payment is created (with its category prompt, if the merchant
+   is new), and other unread events from TNG are re-read.</p>
+</li>
+<li>
+<p><strong>No:</strong> it stays unread, with <em>Enter it by hand</em>, which opens <a class="ref" href="#f-manual"><code>manual</code></a> with the notification's text
+   beside it.</p>
+</li>
+</ol>
+<p><strong>When it goes wrong</strong></p>
+<ul>
+<li><strong>No amount or payment word:</strong> filed under <a class="ref" href="#s-skipped"><code>skipped</code></a>, which can be opened.</li>
+<li><strong>Offline, or the day's drafting cap reached:</strong> the row says <em>Waiting to read this new wording</em>
+  until it can.</li>
+</ul>
+<p><strong>Done:</strong> one confirmation, and every later notification in that wording is read without a model.</p></div></details><details class="card" id="f-fix"><summary><span class="sumtext"><span class="fname">Fixing a payment <span class="fid">fix</span></span><span class="sub">Starts: something wrong in <a class="ref" href="#s-txn"><code>txn</code></a>.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ul>
+<li>
+<p><strong>Category:</strong> pick another; Sen asks <em>Just this one</em> or <em>From now on</em> (D25). <em>From now on</em> updates
+  the merchant rule; past payments stay.</p>
+</li>
+<li>
+<p><strong>Amount, time or account:</strong> <em>What the bank said</em> → <em>Correct…</em>, beside the raw notification
+  (§6.7).</p>
+</li>
+<li>
+<p><strong>What it was:</strong> <em>Mark as…</em> transfer, repayment, refund of…, or lent.</p>
+</li>
+<li><strong>Delete:</strong> a notification's payment is dismissed and never comes back on a re-read (§6.7).</li>
+<li>Every change shows a toast with <em>Undo</em>, and lands in <em>Changes</em> (the audit log).</li>
+</ul></div></details></section><section class="group"><h3>Shared money</h3><details class="card" id="f-split-mine"><summary><span class="sumtext"><span class="fname">Splitting a bill you paid <span class="fid">split-mine</span></span><span class="sub">Starts: you paid RM120 for dinner on Ryt, for you, Mei and Ravi.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li><a class="ref" href="#f-scan-after"><code>scan-after</code></a> up to <a class="ref" href="#s-confirm"><code>confirm</code></a> step 3; <em>Split with friends</em>, paid by <em>Me</em>.</li>
+<li><a class="ref" href="#s-split"><code>split</code></a> shows a QR. Mei and Ravi scan it at the table.</li>
+<li>
+<p>On <a class="ref" href="#s-split-public"><code>split-public</code></a>, each types a name and ticks their items. Shares appear at once, tax and
+   service included, with your DuitNow QR and their amount.</p>
+</li>
+<li>
+<p>Your share is your own items (D19); the rest is owed to you, by person (<a class="ref" href="#s-people"><code>people</code></a>).</p>
+</li>
+<li>
+<p>Mei pays by DuitNow. Her money in is matched to her share, which ticks itself (<a class="ref" href="#f-money-in"><code>money-in</code></a>). The
+   first time, Sen asks who MEI LING TAN is (D61).</p>
+</li>
+<li>
+<p>When the last share ticks, the link stops working a day later (D47).</p>
+</li>
+</ol>
+<p><strong>When it goes wrong</strong></p>
+<ul>
+<li><strong>A friend never opens the link:</strong> <em>Add someone</em>, and you tick their items.</li>
+<li>
+<p><strong>A wrong tick:</strong> anyone can untick; you can change any share. The day's grace after the last tick
+  is for this (D47).</p>
+</li>
+<li>
+<p><strong>Someone pays cash:</strong> tick their share in <a class="ref" href="#s-split"><code>split</code></a>.</p>
+</li>
+<li><strong>Nobody pays:</strong> <a class="ref" href="#f-owed"><code>owed</code></a>.</li>
+<li><strong>The link expired</strong> (30 days): <em>Reopen</em> in <a class="ref" href="#s-split"><code>split</code></a>.</li>
+<li><strong>A payment with no receipt:</strong> started from <a class="ref" href="#s-txn"><code>txn</code></a>; the total is shared evenly between whoever
+  joins, and you can change any share (§7).</li>
+</ul>
+<p><strong>Done:</strong> every share ticked, and your spending is your part only.</p></div></details><details class="card" id="f-split-theirs"><summary><span class="sumtext"><span class="fname">A bill a friend paid <span class="fid">split-theirs</span></span><span class="sub">Starts: Mei paid RM96 for dinner.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>Scan the receipt (or Mei's photo of it) up to <a class="ref" href="#s-confirm"><code>confirm</code></a> step 3; <em>Who paid</em>: Mei.</li>
+<li>
+<p>Tick your items: <em>You owe Mei RM24.40</em>. It's an amount owed, not a payment, because no money has
+   moved yet (D20).</p>
+</li>
+<li>
+<p><strong>Optional:</strong> <em>Split with friends</em>. On the link, Mei taps <em>I paid</em> and uploads her DuitNow QR, so
+   everyone at the table pays her.</p>
+</li>
+<li>
+<p>You send Mei RM25.00. The person prompt offers <em>Paying back: Dinner, 3 Oct</em> first.</p>
+</li>
+<li>It matches by person and an amount within RM5 within 30 days. The transfer becomes your spending,
+   in the receipt's categories, with the receipt attached (D20).</li>
+</ol>
+<p><strong>When it goes wrong</strong></p>
+<ul>
+<li>
+<p><strong>No matching payment after 30 days:</strong> <a class="ref" href="#s-attention"><code>attention</code></a> asks <em>Paid another way</em>, <em>I was treated</em> or
+  <em>Still owe</em> (D20).</p>
+</li>
+<li>
+<p><strong>Several open amounts for Mei:</strong> it asks which.</p>
+</li>
+</ul>
+<p><strong>Done:</strong> your share of the dinner is your spending.</p></div></details><details class="card" id="f-owed"><summary><span class="sumtext"><span class="fname">Chasing what&#x27;s owed <span class="fid">owed</span></span><span class="sub">Starts: <a class="ref" href="#s-people"><code>people</code></a>, or Sen's reminder of what's owed (§12.1).</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li><a class="ref" href="#s-person"><code>person</code></a>: Ali owes RM40.00 for dinner on 3 Oct.</li>
+<li><em>Copy reminder</em>: a message ready to paste into a chat.</li>
+<li>Ali pays: <a class="ref" href="#f-money-in"><code>money-in</code></a> matches it.</li>
+<li><strong>He never does:</strong> <em>Write off</em>. Your share grows by that amount, so spending stays honest (D19).</li>
+</ol></div></details></section><section class="group"><h3>The cycle</h3><details class="card" id="f-daily"><summary><span class="sumtext"><span class="fname">The daily glance <span class="fid">daily</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li><strong>Morning:</strong> the widget shows what's left until payday and the days to go (D32).</li>
+<li><strong>Opening Sen:</strong> <a class="ref" href="#s-home"><code>home</code></a> answers what's left; one or two <em>Needs attention</em> rows get cleared there.</li>
+<li><strong>9pm:</strong> Sen's note, only on days worth a word (D35). It opens <a class="ref" href="#s-agent"><code>agent</code></a>.</li>
+</ol></div></details><details class="card" id="f-payday"><summary><span class="sumtext"><span class="fname">Payday <span class="fid">payday</span></span><span class="sub">Starts: a salary credit lands. A new cycle starts (D14), and <a class="ref" href="#s-home"><code>home</code></a> shows the <em>Payday</em> card. With the agent on, Sen's one push that day says so.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>
+<p><strong>Claims</strong> (only when some are submitted): <em>Did this salary include your claims?</em> <em>Yes</em> splits the
+   salary: the claims' part repays what they cover, the rest is income. <em>No</em> leaves them submitted,
+   and the question returns with the next salary (D45).</p>
+</li>
+<li>
+<p><strong>Balance check:</strong> <a class="ref" href="#f-balance-check"><code>balance-check</code></a>.</p>
+</li>
+<li>
+<p><strong>Last cycle:</strong> Sen's three biggest reasons and one experiment, such as <em>GrabFood at most 3 times a
+   week</em>. <em>Track it</em> applies it (§12.1).</p>
+</li>
+<li>
+<p><strong>This cycle's plan:</strong> what's due before next payday, what to set aside for each goal and bucket,
+   and what's left to spend, each line with its accounts. <em>Use this plan</em>.</p>
+</li>
+<li>
+<p>You make the moves in your bank apps. As each one's notification arrives, matching ticks it off,
+   and the card on <a class="ref" href="#s-home"><code>home</code></a> shows the progress.</p>
+</li>
+</ol>
+<p><strong>When it goes wrong</strong></p>
+<ul>
+<li><strong>A step skipped:</strong> it waits in <em>Needs attention</em>.</li>
+<li>
+<p><strong>An early salary</strong> (before Hari Raya or CNY): the cycle starts when the money lands; nothing to
+  set (§7).</p>
+</li>
+<li>
+<p><strong>A late salary:</strong> Sen warns that it's later than expected.</p>
+</li>
+<li><strong>A bonus within 15 days</strong> of the salary doesn't start a cycle (§7).</li>
+<li><strong>A new employer's first salary:</strong> mark it as salary once; a merchant rule learns the new name.</li>
+<li><strong>The agent off, or at its cap:</strong> steps 3 and 4 aren't there.</li>
+</ul>
+<p><strong>Done:</strong> a new cycle with honest balances, a look-back and a plan.</p></div></details><details class="card" id="f-balance-check"><summary><span class="sumtext"><span class="fname">Checking balances <span class="fid">balance-check</span></span><span class="sub">Starts: weekly for the first four weeks, then each payday (D18), from <a class="ref" href="#s-attention"><code>attention</code></a>, <a class="ref" href="#f-payday"><code>payday</code></a> or <a class="ref" href="#s-accounts"><code>accounts</code></a>.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>Each account shows Sen's balance beside an empty box.</li>
+<li>Open the bank app, read the balance, type it, or tap <em>Matches</em>.</li>
+<li><em>Save</em>. Each difference becomes an <em>Unaccounted</em> adjustment (§7). The result: <em>Gap RM36.20</em>, with
+   <em>Undo</em>.</li>
+</ol>
+<p><strong>When it goes wrong:</strong> a typo is undone, or the adjustment is edited in <a class="ref" href="#s-txn"><code>txn</code></a>. Offline, computed
+balances include unsynced rows, so there's no false gap (§7).</p>
+<p><strong>Done:</strong> balances match the banks, and the gap shows on <a class="ref" href="#s-home"><code>home</code></a>.</p></div></details><details class="card" id="f-review"><summary><span class="sumtext"><span class="fname">Looking back <span class="fid">review</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ul>
+<li><a class="ref" href="#s-insights"><code>insights</code></a>: a card opens its detail; a category opens <a class="ref" href="#s-activity"><code>activity</code></a>, filtered.</li>
+<li>Or ask Sen: <em>Where did last month's money go?</em> Every figure in the answer comes from a tool (§12.2).</li>
+</ul></div></details><details class="card" id="f-budget"><summary><span class="sumtext"><span class="fname">Budgets <span class="fid">budget</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li><a class="ref" href="#s-insights"><code>insights</code></a> → <em>Budgets</em> → <em>Add</em>: a category and an amount per cycle (D29).</li>
+<li>
+<p>At 80% and when it's over, the warning rides in Sen's one push of the day (D31), and the card
+   shows it.</p>
+</li>
+<li>
+<p>Each cycle starts fresh; nothing rolls over.</p>
+</li>
+</ol></div></details><details class="card" id="f-goal"><summary><span class="sumtext"><span class="fname">Goals and buckets <span class="fid">goal</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li><a class="ref" href="#s-insights"><code>goals</code></a> → <em>Add</em>: a name, a target and a date.</li>
+<li>
+<p><a class="ref" href="#f-goal"><code>goal</code></a> shows the amount needed each cycle, whether your median surplus can carry it (with the
+   sample size), and when it would finish at this rate (§10).</p>
+</li>
+<li>
+<p>Sen proposes buckets for lumpy yearly costs (road tax, CNY); <em>Apply</em> adds them, and their
+   set-asides join the payday plan.</p>
+</li>
+</ol></div></details><details class="card" id="f-subscription"><summary><span class="sumtext"><span class="fname">Subscriptions <span class="fid">subscription</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li><a class="ref" href="#s-insights"><code>subscriptions</code></a> → <em>Declare</em>: name, amount, currency, cadence, next renewal (§11).</li>
+<li>Each expected charge is a forecast; the real charge matches it, or it's marked <em>missed</em>.</li>
+<li>Sen spots a new recurring charge and proposes declaring it; a forwarded invoice from a new sender
+   does the same (§11).</li>
+</ol></div></details><details class="card" id="f-claims"><summary><span class="sumtext"><span class="fname">The month&#x27;s claims <span class="fid">claims</span></span><span class="sub">Starts: the 1st of the month. Each scheme's claim drafts itself (§13).</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li><a class="ref" href="#f-claims"><code>claims</code></a> shows each claim's amount, deadline and evidence.</li>
+<li><strong>Evidence missing:</strong> <em>My50 receipt not added yet</em>. Share it to Sen; <a class="ref" href="#s-confirm"><code>confirm</code></a> → <em>Evidence only</em>.</li>
+<li>
+<p><strong>Reminders</strong>, written by code: in <a class="ref" href="#s-attention"><code>attention</code></a> from 7 days before, a push 3 days before and on
+   the day, and in your calendar.</p>
+</li>
+<li>
+<p><a class="ref" href="#s-claim"><code>claim</code></a>: copy each amount into ESS and attach each file. <em>Submitted</em>.</p>
+</li>
+<li><strong>The salary lands:</strong> <a class="ref" href="#f-payday"><code>payday</code></a> step 1 marks it paid.</li>
+</ol>
+<p><strong>When it goes wrong:</strong> <em>Rejected</em>, with a reason; the expense stays your spending (§13).</p></div></details></section><section class="group"><h3>Sen</h3><details class="card" id="f-proposal"><summary><span class="sumtext"><span class="fname">A proposal from Sen <span class="fid">proposal</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>
+<p>A card in <a class="ref" href="#s-agent"><code>agent</code></a>, also in <a class="ref" href="#s-attention"><code>attention</code></a>: a budget, a rule, a subscription, a goal or bucket, a
+   promise to watch, or answers for the <em>Needs attention</em> backlog (§12.1).</p>
+</li>
+<li>
+<p><em>Apply</em> makes the change, recorded as Sen's in the audit log, with <em>Undo</em>. <em>Dismiss</em> drops it.</p>
+</li>
+</ol></div></details><details class="card" id="f-research"><summary><span class="sumtext"><span class="fname">Research <span class="fid">research</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>Sen researches where to keep savings or which card fits your spending (D39).</li>
+<li>A research draft arrives in <a class="ref" href="#s-agent"><code>agent</code></a>, each figure with its source and date, marked unconfirmed.</li>
+<li>
+<p>You confirm the figures you trust. Code compares them against your real balances and spending,
+   and Sen reports the result.</p>
+</li>
+<li>
+<p>It re-checks monthly and says when something changes (§12.1).</p>
+</li>
+</ol></div></details><details class="card" id="f-gap"><summary><span class="sumtext"><span class="fname">Closing the gap <span class="fid">gap</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>
+<p>The gap grows. Sen looks for days with nothing captured: <em>Nothing was captured on Saturday. Did you
+   pay for anything?</em></p>
+</li>
+<li>
+<p><em>Yes, add it</em> opens <a class="ref" href="#f-manual"><code>manual</code></a> with Saturday filled in; you type the amount (§12.1).</p>
+</li>
+</ol></div></details></section><section class="group"><h3>When things break</h3><details class="card" id="f-capture-off"><summary><span class="sumtext"><span class="fname">Capture switched off <span class="fid">capture-off</span></span><span class="sub">Starts: HyperOS kills the listener, or notification access is turned off.</span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>The heartbeat stops. Within a day the watchdog pushes <em>Capture may be off</em> (§6.2).</li>
+<li>Every widget turns red, and <a class="ref" href="#s-home"><code>home</code></a> shows <em>Capture is off</em> with <em>Fix</em>.</li>
+<li><em>Fix</em> opens notification access, or the Xiaomi settings.</li>
+<li>The listener reconnects and re-reads the notifications still showing; duplicates are no-ops.</li>
+<li>Payments whose notifications were cleared meanwhile are lost to capture; the next balance check
+   finds them as a gap.</li>
+</ol>
+<p><strong>Also:</strong> if the daily jobs stop, the shell notices on its next sync and warns by itself (§18).</p></div></details><details class="card" id="f-offline"><summary><span class="sumtext"><span class="fname">Offline <span class="fid">offline</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ul>
+<li>
+<p><strong>Still works:</strong> capture, the prompts, manual entry, answering <em>Needs attention</em>, and scanning (the
+  upload waits). Everything goes to the outbox, marked <em>Not synced yet</em> (§5).</p>
+</li>
+<li>
+<p><strong>Shows what it last had:</strong> every screen, from the web app's cache.</p>
+</li>
+<li>
+<p><strong>Needs a connection:</strong> Sen, reading a receipt, creating a split link, signing in. Each says so
+  where it's used.</p>
+</li>
+<li>
+<p><strong>Back online:</strong> the outbox syncs, matching runs, and the marks disappear.</p>
+</li>
+<li><strong>In a browser</strong> (no shell): writes need a connection, so offline is read-only, with a banner (§5).</li>
+</ul></div></details><details class="card" id="f-lost-phone"><summary><span class="sumtext"><span class="fname">A lost phone <span class="fid">lost-phone</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>From any browser, <a class="ref" href="#s-sign-in"><code>sign-in</code></a>, then Settings → Account → <em>Sign out everywhere</em> (§17).</li>
+<li>The phone's session is revoked.</li>
+</ol></div></details></section><section class="group"><h3>Admin and data</h3><details class="card" id="f-invite"><summary><span class="sumtext"><span class="fname">Inviting a friend <span class="fid">invite</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>
+<p>Settings → <em>Members</em> → <em>Invite</em>: their email, their switches (capture, agent, claims, splits) and
+   their monthly AI cap (D52).</p>
+</li>
+<li>
+<p>They get the email: <a class="ref" href="#f-invited"><code>invited</code></a>.</p>
+</li>
+<li><em>Members</em> shows the invitation accepted, and later their monthly AI usage, never their money.</li>
+</ol></div></details><details class="card" id="f-calendar"><summary><span class="sumtext"><span class="fname">Connecting Google Calendar <span class="fid">calendar</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>Settings → <em>Sen</em> → <em>Connect Google Calendar</em>.</li>
+<li>
+<p>The phone's browser opens Google's sign-in (§12.7). The first time, Google warns the app isn't
+   verified; continue.</p>
+</li>
+<li>
+<p>Back in Sen: <em>Connected</em>. Sen made its own calendar.</p>
+</li>
+</ol>
+<p><strong>When it goes wrong:</strong> refused, it stays off, and <em>Needs attention</em> and pushes still remind you.
+If Google later revokes it, Settings says so, with <em>Reconnect</em>.</p></div></details><details class="card" id="f-export"><summary><span class="sumtext"><span class="fname">Exporting everything <span class="fid">export</span></span><span class="sub"></span></span><span class="tog" aria-hidden="true"></span></summary><div class="body"><ol>
+<li>Settings → <em>Data</em> → <em>Export everything</em>, all years or one (D49).</li>
+<li><em>Building your export. Sen will tell you when it's ready.</em></li>
+<li>A push: the link works for 24 hours.</li>
+</ol></div></details></section>
+    <div class="flat"><ul>
+<li><strong>The lunch pool</strong> (D23) is deferred and built last, if the pool still runs.</li>
+</ul></div>
+  </section>
+
+  <section class="part" id="confirm">
+    <div class="parthead"><h2>Defaults to confirm</h2></div>
+    <p class="note">Choices I made without asking. Tell me any you'd change; I'll also show them on the mockups.</p>
+    <div class="flat confirm"><p><code>S2</code> chose these without asking. The owner reacts to them on the mockups.</p>
+<ol>
+<li>
+<p><strong>Payday plan progress stays on Home</strong> after the payday flow, as a shrunk card, until every move
+   is ticked or hidden (<a class="ref" href="#s-home"><code>home</code></a>).</p>
+</li>
+<li>
+<p><strong>The person prompt asks only <em>what</em></strong>. <em>Who is this?</em> for a new name waits in the app, because a
+   notification can't offer a list of people (<a class="ref" href="#s-attention"><code>attention</code></a>).</p>
+</li>
+<li>
+<p><strong>Skipped notifications</strong> sit at the foot of <em>Needs attention</em>, as well as in Settings → Capture.</p>
+</li>
+<li><strong>Before the first salary</strong>, the large figure is <em>Spent since you started</em>.</li>
+<li><strong>The agent's tab is called <em>Agent</em></strong> (§9.1). <em>Sen</em> is the alternative, since you <em>ask Sen</em>.</li>
+<li><strong>Sen's suggested answers</strong> are marked on each <em>Needs attention</em> row, with <em>Apply all</em> at the top.</li>
+<li><strong>The large figure opens a sheet with an estimate</strong> of what's left at payday, labelled as one.</li>
+<li>
+<p><strong>A receipt answers a new merchant's prompt:</strong> the payment takes its items' categories, and the
+   merchant's rule takes the receipt's largest category (<code>flows.md</code>, <a class="ref" href="#f-pay-new"><code>pay-new</code></a>).</p>
+</li>
+<li>
+<p><strong>Gmail's forwarding confirmation code</strong> arrives in Sen's inbox, so Sen shows it in Settings →
+   <em>Receipts by email</em> (<code>flows.md</code>, <a class="ref" href="#f-email-setup"><code>email-setup</code></a>).</p>
+</li>
+</ol></div>
+  </section>
+
+  <footer>Sen, design track step S2. Draft for review; nothing here is built.</footer>
+</div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function openTo(id) {
+    var el = document.getElementById(id);
+    if (!el) return false;
+    if (el.tagName === "DETAILS") el.open = true;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    return true;
+  }
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var id = a.getAttribute("href").slice(1);
+    if (openTo(id)) e.preventDefault();
+  });
+  document.querySelectorAll("button[data-open], button[data-close]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var part = document.getElementById(b.dataset.open || b.dataset.close);
+      var open = !!b.dataset.open;
+      part.querySelectorAll("details.card").forEach(function (d) { d.open = open; });
+    });
+  });
+  if (location.hash.length > 1) openTo(location.hash.slice(1));
+})();
+</script>
+
