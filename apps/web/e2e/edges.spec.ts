@@ -142,3 +142,11 @@ test('losing the connection shows the offline banner, and it goes when the conne
   await context.setOffline(false);
   await expect(banner).toHaveCount(0);
 });
+
+for (const id of ['sen', 'scan-more', 'cycle'])
+  test(`/s/${id}, a sheet's id, goes to its screen rather than showing a bare page`, async ({ page }) => {
+    await open(page, `/s/${id}`);
+    await expect(page).toHaveURL(/\/(\?.*)?$/);
+    await expect(page.getByTestId('not-built')).toBeVisible();
+    await expect(tabs(page)).toBeVisible();
+  });

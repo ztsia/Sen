@@ -39,12 +39,17 @@ function AnyScreen() {
   const { _splat } = useParams({ from: '/s/$' });
   return <Placeholder screen={screenById.get(_splat ?? '')!} />;
 }
+const TAB_PATHS = { home: '/', review: '/review', insights: '/insights', more: '/more' } as const;
+
 // An unknown id, from an old link or a typo, goes Home, replacing itself so back doesn't return to it.
+// A sheet's id isn't a page: it goes to the screen the sheet opens over, its tab's or Home.
 const anyScreen = createRoute({
   getParentRoute: () => rootRoute,
   path: '/s/$',
   beforeLoad: ({ params }) => {
-    if (!screenById.has(params._splat ?? '')) throw redirect({ to: '/', replace: true });
+    const screen = screenById.get(params._splat ?? '');
+    if (!screen) throw redirect({ to: '/', replace: true });
+    if (screen.kind === 'sheet') throw redirect({ to: TAB_PATHS[screen.tab ?? 'home'], replace: true });
   },
   component: AnyScreen,
 });

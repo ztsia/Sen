@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { dayLabel } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import { Money, type MoneyKind } from './money';
+import { toastUndo } from './toast';
 
 // The rows every list is made of (patterns.md §7), composed from shadcn's Item. A row is one control:
 // the whole row opens its detail, and nothing inside it is a button.
@@ -110,10 +111,15 @@ export interface ReviewAnswer {
   label: string;
   /** Sen suggests this one: marked on the button (patterns.md §7). */
   suggested?: boolean;
-  onSelect: () => void;
+  /** Makes the change, and returns what happened, in words, and how to undo it. */
+  onSelect: () => { said: string; undo: () => void };
 }
 
-/** A question that needs you: on one line, what Sen knows on the next, then at most three answers plus Other…. */
+/**
+ * A question that needs you: on one line, what Sen knows on the next, then at most three answers plus
+ * Other…. Answering clears it with Undo (patterns.md §7): the row raises the toast itself, so no
+ * answer can skip it.
+ */
 export function ReviewRow({
   question,
   knows,
@@ -133,7 +139,15 @@ export function ReviewRow({
       </ItemContent>
       <ItemFooter className="flex-wrap justify-start">
         {answers.slice(0, 3).map((a) => (
-          <Button key={a.label} variant={a.suggested ? 'default' : 'secondary'} size="sm" onClick={a.onSelect}>
+          <Button
+            key={a.label}
+            variant={a.suggested ? 'default' : 'secondary'}
+            size="sm"
+            onClick={() => {
+              const { said, undo } = a.onSelect();
+              toastUndo(said, undo);
+            }}
+          >
             {a.suggested ? <SparklesIcon aria-hidden="true" /> : null}
             {a.label}
             {a.suggested ? <span className="sr-only">, Sen suggests this</span> : null}
@@ -156,13 +170,14 @@ export function SettingsRow(props: SettingsRowProps) {
   if (props.onCheckedChange) {
     const id = `set-${props.label.replace(/\W+/g, '-').toLowerCase()}`;
     return (
-      <Item size="sm" className="min-h-14 flex-nowrap rounded-none py-0 pr-2 text-base">
+      // the label stretches over the whole row, so a tap anywhere on it flips the switch (patterns.md §8)
+      <Item size="sm" className="relative min-h-14 flex-nowrap rounded-none py-0 pr-2 text-base active:bg-accent">
         <ItemContent className="min-w-0">
-          <label htmlFor={id} className="py-3">
+          <label htmlFor={id} className="py-3 after:absolute after:inset-0">
             {props.label}
           </label>
         </ItemContent>
-        <ItemActions>
+        <ItemActions className="relative">
           <Switch id={id} checked={props.checked} onCheckedChange={props.onCheckedChange} />
         </ItemActions>
       </Item>

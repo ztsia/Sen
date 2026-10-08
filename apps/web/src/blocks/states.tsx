@@ -56,7 +56,8 @@ export function ErrorState({
   onAction: () => void;
 }) {
   return (
-    <Alert variant="destructive" className="flex flex-col gap-2 [&>svg]:hidden">
+    // in the text colour, not destructive red: an error removes nothing (patterns.md §2)
+    <Alert className="flex flex-col gap-2 [&>svg]:hidden">
       <AlertTitle className="flex items-center gap-2 text-base font-semibold">
         <TriangleAlertIcon className="size-5 shrink-0" aria-hidden="true" />
         {title}

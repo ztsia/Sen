@@ -36,6 +36,30 @@ import { AVATAR_NAMES } from './dev-panel';
 // Switch the look, light and dark, reduced motion and text size in the dev panel. All figures are
 // made up (the wireframe's data, D11), and the gallery never exists in production.
 
+// Each chart and its table read the same rows, so the table never says less than the chart (§4).
+const CATEGORIES = [
+  { label: 'Meals', sen: 84250, typical: 76000 },
+  { label: 'Shopping', sen: 52300, typical: 38000 },
+  { label: 'Groceries', sen: 41200, typical: 45000 },
+  { label: 'Transport', sen: 30600, typical: 31000 },
+  { label: 'Drinks & desserts', sen: 12300, typical: 11000 },
+];
+const CYCLE_PARTS = [
+  { key: 'fixed', label: 'Fixed costs', sen: 152000 },
+  { key: 'spent', label: 'Spent', sen: 139550 },
+  { key: 'left', label: 'Left', sen: 128450 },
+];
+const FOLDED_PARTS = [
+  { key: 'a', label: 'Eating out', sen: 84250 },
+  { key: 'b', label: 'Groceries', sen: 41200 },
+  { key: 'c', label: 'Transport', sen: 30600 },
+  { key: 'd', label: 'Drinks', sen: 12300 },
+];
+const BUDGETS = [
+  { label: 'Drinks & desserts', sen: 12300, cap: 15000 },
+  { label: 'Shopping', sen: 52300, cap: 80000 },
+];
+
 const D = {
   income: 420000,
   thisCycle: [
@@ -80,7 +104,7 @@ export default function Gallery() {
 
   return (
     <Screen bar={<AppBar title="Gallery" />}>
-      <nav aria-label="Sections" className="flex flex-wrap gap-x-3 gap-y-1 px-4 pt-2 text-sm">
+      <nav aria-label="Sections" className="flex flex-wrap gap-2 px-4 pt-2 text-sm">
         {['figure', 'sen', 'money', 'rows', 'detail', 'forms', 'overlays', 'status', 'states', 'charts'].map((s) => (
           <a
             key={s}
@@ -231,18 +255,14 @@ export default function Gallery() {
               </>
             }
             knows="New merchant, paid from TNG at 08:12."
-            answers={[
-              {
-                label: 'Meals',
-                suggested: true,
-                onSelect: () => {
-                  setAnswered(true);
-                  toastUndo('ROTI BAKAR 88 is Meals now', () => setAnswered(false));
-                },
+            answers={(['Meals', 'Drinks & desserts', 'Groceries'] as const).map((label) => ({
+              label,
+              suggested: label === 'Meals',
+              onSelect: () => {
+                setAnswered(true);
+                return { said: `ROTI BAKAR 88 is ${label} now`, undo: () => setAnswered(false) };
               },
-              { label: 'Drinks & desserts', onSelect: () => setAnswered(true) },
-              { label: 'Groceries', onSelect: () => setAnswered(true) },
-            ]}
+            }))}
             onOther={() => setSheet(true)}
           />
         ) : (
@@ -407,19 +427,11 @@ export default function Gallery() {
               <ChartTable
                 caption="Each category this cycle"
                 head={['Category', 'This cycle']}
-                rows={[['Meals', 'RM842.50']]}
+                rows={CATEGORIES.map((c) => [c.label, formatSen(c.sen)])}
               />
             }
           >
-            <CategoryBars
-              rows={[
-                { label: 'Meals', sen: 84250, typical: 76000 },
-                { label: 'Shopping', sen: 52300, typical: 38000 },
-                { label: 'Groceries', sen: 41200, typical: 45000 },
-                { label: 'Transport', sen: 30600, typical: 31000 },
-                { label: 'Drinks & desserts', sen: 12300, typical: 11000 },
-              ]}
-            />
+            <CategoryBars rows={CATEGORIES} />
           </ChartCard>
           <ChartCard
             question="How much is spoken for before I spend?"
@@ -428,33 +440,24 @@ export default function Gallery() {
               <ChartTable
                 caption="Fixed costs, spent and left"
                 head={['Part', 'Amount']}
-                rows={[['Fixed costs', 'RM1,520.00']]}
+                rows={CYCLE_PARTS.map((p) => [p.label, formatSen(p.sen)])}
               />
             }
           >
-            <PartsBar
-              label="This cycle"
-              parts={[
-                { key: 'fixed', label: 'Fixed costs', sen: 152000 },
-                { key: 'spent', label: 'Spent', sen: 139550 },
-                { key: 'left', label: 'Left', sen: 128450 },
-              ]}
-            />
+            <PartsBar label="This cycle" parts={CYCLE_PARTS} />
           </ChartCard>
           <ChartCard
             question="Four things, folded"
             takeaway="A fourth part folds into Other, in the grey."
-            table={<ChartTable caption="Parts" head={['Part']} rows={[['Other']]} />}
+            table={
+              <ChartTable
+                caption="Parts"
+                head={['Part', 'Amount']}
+                rows={FOLDED_PARTS.map((p) => [p.label, formatSen(p.sen)])}
+              />
+            }
           >
-            <PartsBar
-              label="Parts"
-              parts={[
-                { key: 'a', label: 'Eating out', sen: 84250 },
-                { key: 'b', label: 'Groceries', sen: 41200 },
-                { key: 'c', label: 'Transport', sen: 30600 },
-                { key: 'd', label: 'Drinks', sen: 12300 },
-              ]}
-            />
+            <PartsBar label="Parts" parts={FOLDED_PARTS} />
           </ChartCard>
           <ChartCard
             question="When does the money leak?"
@@ -476,12 +479,13 @@ export default function Gallery() {
               <ChartTable
                 caption="Budgets"
                 head={['Budget', 'Spent', 'Cap']}
-                rows={[['Drinks & desserts', 'RM123.00', 'RM150.00']]}
+                rows={BUDGETS.map((b) => [b.label, formatSen(b.sen), formatSen(b.cap)])}
               />
             }
           >
-            <BudgetMeter label="Drinks & desserts" sen={12300} cap={15000} cycleShare={19 / 31} />
-            <BudgetMeter label="Shopping" sen={52300} cap={80000} cycleShare={19 / 31} />
+            {BUDGETS.map((b) => (
+              <BudgetMeter key={b.label} label={b.label} sen={b.sen} cap={b.cap} cycleShare={19 / 31} />
+            ))}
           </ChartCard>
         </Pad>
       </Section>

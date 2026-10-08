@@ -5,10 +5,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 export type StatusTone = 'neutral' | 'done' | 'waiting' | 'warning';
+// The money colours keep their one meaning (patterns.md §3): done and waiting are said in words, in the
+// text colours; only a warning, always with its icon and words, takes money-warning.
 const tone: Record<StatusTone, string> = {
   neutral: 'text-icon',
-  done: 'text-money-in',
-  waiting: 'text-money-pending',
+  done: 'text-foreground',
+  waiting: 'text-muted-foreground',
   warning: 'text-money-warning',
 };
 
@@ -64,13 +66,13 @@ export function HealthBar({
   onFix: () => void;
 }) {
   return (
-    <Alert className="flex items-center gap-3 border-0 bg-warn-bg text-warn-fg [&>svg]:translate-y-0">
+    <Alert variant="warning" className="flex items-center gap-3 [&>svg]:translate-y-0">
       <Icon className="size-5 shrink-0" />
       <div className="min-w-0 flex-1">
         <AlertTitle className="text-base font-semibold">{title}</AlertTitle>
-        <AlertDescription className="text-warn-fg">{detail}</AlertDescription>
+        <AlertDescription>{detail}</AlertDescription>
       </div>
-      <Button size="sm" className="bg-warn-fg text-warn-bg" onClick={onFix}>
+      <Button size="sm" variant="warning" onClick={onFix}>
         {fix}
       </Button>
     </Alert>

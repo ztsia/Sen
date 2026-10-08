@@ -29,12 +29,17 @@ function senEnv(command: 'serve' | 'build'): (typeof ENVS)[number] {
   return process.env.VERCEL_ENV === 'preview' || process.env.VERCEL_ENV === 'development' ? 'preview' : 'production';
 }
 
-export default defineConfig(({ command }) => ({
-  define: { __SEN_ENV__: JSON.stringify(senEnv(command)) },
-  plugins: [react(), tailwindcss()],
-  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-  // The fonts are self-hosted from docs/ui/directions/assets/fonts/, the one copy (spec §17).
-  server: { fs: { allow: [fileURLToPath(new URL('../..', import.meta.url))] } },
-  preview: { headers: siteHeaders },
-  build: { target: 'es2022', sourcemap: true },
-}));
+export default defineConfig(({ command }) => {
+  const env = senEnv(command);
+  return {
+    define: { __SEN_ENV__: JSON.stringify(env) },
+    plugins: [react(), tailwindcss()],
+    resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+    // The fonts are self-hosted from docs/ui/directions/assets/fonts/, the one copy (spec §17).
+    server: { fs: { allow: [fileURLToPath(new URL('../..', import.meta.url))] } },
+    preview: { headers: siteHeaders },
+    // Source maps in previews, to debug there; production ships none. The source is public anyway (AGPL),
+    // so this is size and tidiness, not secrecy (QA B01 run 2, note 16).
+    build: { target: 'es2022', sourcemap: env !== 'production' },
+  };
+});

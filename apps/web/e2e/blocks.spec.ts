@@ -15,6 +15,17 @@ test('answering a Review row clears it at once, and Undo brings it back', async 
   await expect(rows.getByText('ROTI BAKAR 88')).toBeVisible();
 });
 
+for (const answer of ['Drinks & desserts', 'Groceries'])
+  test(`answering ${answer} clears the Review row with Undo too`, async ({ page }) => {
+    await open(page, '/dev/gallery');
+    const rows = page.getByTestId('gallery-rows');
+    await rows.getByRole('button', { name: answer, exact: true }).click();
+    await expect(rows.getByText('ROTI BAKAR 88')).toBeHidden();
+    await expect(page.getByText(`ROTI BAKAR 88 is ${answer} now`)).toBeVisible();
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect(rows.getByText('ROTI BAKAR 88')).toBeVisible();
+  });
+
 test('a change made right after Undo still gets its own toast, with Undo', async ({ page }) => {
   await open(page, '/dev/gallery');
   const overlays = page.getByTestId('gallery-overlays');
@@ -56,4 +67,50 @@ test('Other… opens a sheet that back closes, and the destructive dialog is onl
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: 'Keep it' }).click();
   await expect(dialog).toBeHidden();
+});
+
+/** An element's text colour, and what a token resolves to, computed the same way so they compare. */
+const colours = (page: import('@playwright/test').Page, selector: string, token: string) =>
+  page.evaluate(
+    ([sel, tok]) => {
+      const el = document.querySelector(sel!)!;
+      const probe = document.createElement('span');
+      probe.style.color = `var(${tok})`;
+      document.body.append(probe);
+      const out = [getComputedStyle(el).color, getComputedStyle(probe).color];
+      probe.remove();
+      return out;
+    },
+    [selector, token],
+  );
+
+// patterns.md §2 and §3: destructive is for removing; money-in green means money in, nothing else
+// (QA B01 run 2, findings 5 and 8).
+test('an error is drawn in the text colour, never destructive red', async ({ page }) => {
+  await open(page, '/nowhere');
+  await expect(page.getByText("There's nothing here")).toBeVisible();
+  const [title, destructive] = await colours(page, '[data-slot="alert-title"]', '--destructive');
+  expect(title).not.toBe(destructive);
+});
+
+test("a status card's Final is not drawn in money-in green", async ({ page }) => {
+  await open(page, '/dev/gallery');
+  const final = page.getByTestId('gallery-status').getByText('Final', { exact: true });
+  await final.scrollIntoViewIfNeeded();
+  await final.evaluate((e) => e.closest('p')!.setAttribute('data-probe', ''));
+  const [state, moneyIn] = await colours(page, '[data-probe]', '--money-in');
+  expect(state).not.toBe(moneyIn);
+});
+
+// patterns.md §4: the chart is never the only way to the answer, so its table holds every row it draws
+// (QA B01 run 2, finding 12).
+test("each chart's table holds every row its chart draws", async ({ page }) => {
+  await open(page, '/dev/gallery');
+  const rowsIn = (caption: string) =>
+    page.locator('table', { has: page.locator('caption', { hasText: caption }) }).locator('tbody tr');
+  await expect(rowsIn('Each category this cycle')).toHaveCount(5);
+  await expect(rowsIn('Fixed costs, spent and left')).toHaveCount(3);
+  await expect(rowsIn('Parts')).toHaveCount(4);
+  await expect(rowsIn('Budgets')).toHaveCount(2);
+  await expect(rowsIn('Each category this cycle').first()).toContainText('RM842.50');
 });

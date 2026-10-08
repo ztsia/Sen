@@ -41,6 +41,8 @@ export const smallTargets = (page: Page) =>
         const cs = getComputedStyle(el);
         if (r.width === 0 || r.height === 0 || cs.visibility === 'hidden') return false;
         if (el.closest('.sr-only, [aria-hidden="true"]')) return false;
+        // the dev panel's handle: previews only, a strip in the side gutter
+        if (el.hasAttribute('data-dev-handle')) return false;
         return r.width < 47.5 || r.height < 47.5;
       })
       .map(

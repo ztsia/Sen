@@ -45,14 +45,17 @@ export default function DevPanel() {
   const ui = useUi();
   return (
     <>
+      {/* a 16 px strip in the screen's side gutter, so it covers no content; previews only, so it's
+          the one target allowed under 48 px wide (QA B01 run 2, note 15) */}
       <Button
         variant="secondary"
         size="icon"
         aria-label="Dev panel"
-        className="fixed top-1/2 left-0 z-[var(--z-index-dev)] -translate-y-1/2 rounded-l-none opacity-70"
+        data-dev-handle=""
+        className="fixed top-1/2 left-0 z-[var(--z-index-dev)] h-16 w-4 -translate-y-1/2 rounded-l-none opacity-70"
         onClick={() => setOpen(true)}
       >
-        <SlidersHorizontalIcon />
+        <SlidersHorizontalIcon className="size-3" />
       </Button>
       <Sheet
         open={open}

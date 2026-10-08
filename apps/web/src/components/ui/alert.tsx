@@ -1,4 +1,4 @@
-// Sen: shadcn/ui's alert, changed in place for the phone (CLAUDE.md, shadcn first): AlertTitle wraps instead of clamping to one line, so nothing clips at 1.5× text.
+// Sen: shadcn/ui's alert, changed in place for the phone (CLAUDE.md, shadcn first): AlertTitle wraps instead of clamping to one line, so nothing clips at 1.5× text; a `warning` variant on the warn pair for the health bar (patterns.md §7).
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ const alertVariants = cva(
         default: 'bg-card text-card-foreground',
         destructive:
           'bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 [&>svg]:text-current',
+        warning: 'border-0 bg-warn-bg text-warn-fg *:data-[slot=alert-description]:text-warn-fg',
       },
     },
     defaultVariants: {

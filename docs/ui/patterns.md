@@ -65,9 +65,12 @@ dark, saved as `theme.css` (OKLCH) and `tokens.json` (hex) in `directions/assets
 | Money | `money-in`, `money-out`, `money-pending`, `money-warning` | §3 |
 | Charts | `chart-1` to `chart-3`, `chart-accent`, `chart-context`, `chart-seq-1` to `chart-seq-5` | §4 |
 | Icons | `icon`, plus `--icon-stroke`, `--icon-cap`, `--icon-join` | §5 |
+| Warning band | `warn-bg`, `warn-fg` | The health bar (§7) and its fix button, through the alert's and button's `warning` variant |
 
-`destructive` is for actions that remove something, never for an amount. A look's `extra` variables
-are never used by a shared component.
+`destructive` is for actions that remove something, never for an amount or an error: an error is
+said in words, in the text colour. The money tokens keep their one meaning (§3), so a status card's
+*Final* or *Waiting* is in the text colours, and only a warning takes `money-warning`. A look's
+`extra` variables are never used by a shared component.
 
 ## 3. Money
 
@@ -278,7 +281,9 @@ plan's *2 of 3 moves done*) states it in words first, with an icon, then what it
   avatar holds one still frame per state, and nothing loops.
 - **Contrast:** text 4.5:1 (large text 3:1), icons and chart marks 3:1, in every look, light and dark.
   The theme section of each look's page measures its tokens.
-- **Touch targets** at least 48 px, 8 px apart. Nothing depends on hover.
+- **Touch targets** at least 48 px, 8 px apart. Full-width rows that touch (list rows, settings rows,
+  a detail page's action rows, §7) are the exception: each whole row is the target, and a
+  separator is between them. Nothing depends on hover.
 - **Text scales** with the system font size to at least 1.5× without clipping; amounts wrap before
   they truncate.
 - **TalkBack** reads every icon-only button by its label, amounts as money, and the large figure as
