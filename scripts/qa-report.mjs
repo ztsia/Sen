@@ -125,7 +125,11 @@ function richText(s) {
 }
 
 const para = (s) => (s ? `<p>${richText(s)}</p>` : '');
-const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const slug = (s) =>
+  String(s)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 
 const STATUS = {
   pass: 'pass',
@@ -186,8 +190,7 @@ function verdictBlock() {
 function findingsBlock() {
   const list = [...(r.findings ?? [])].sort(
     (a, b) =>
-      (SEVERITY_ORDER[String(a.severity).toLowerCase()] ?? 9) -
-      (SEVERITY_ORDER[String(b.severity).toLowerCase()] ?? 9),
+      (SEVERITY_ORDER[String(a.severity).toLowerCase()] ?? 9) - (SEVERITY_ORDER[String(b.severity).toLowerCase()] ?? 9),
   );
   if (!list.length) {
     return `<section id="findings"><h2>Findings</h2><p class="empty">No findings recorded.</p></section>`;

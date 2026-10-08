@@ -1,0 +1,179 @@
+/* Sen's one stylesheet: Tailwind v4 and shadcn/ui on the look's tokens (patterns.md §2), the fonts,
+   and the web behaviour of patterns.md §10. Each look's tokens are in looks.gen.css (generated, never
+   edited); each look's own material CSS loads with its module (src/looks/<look>/look.css). */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '../../../../docs/ui/directions/assets/fonts/fonts.css';
+@import './looks.gen.css';
+
+/* Light and dark follow data-mode on the element that sets the look (the root, or a preview inside it). */
+@custom-variant dark (&:where([data-mode='dark'], [data-mode='dark'] *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-money-in: var(--money-in);
+  --color-money-out: var(--money-out);
+  --color-money-pending: var(--money-pending);
+  --color-money-warning: var(--money-warning);
+  --color-icon: var(--icon);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-fg: var(--warn-fg);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-accent: var(--chart-accent);
+  --color-chart-context: var(--chart-context);
+  --color-chart-seq-1: var(--chart-seq-1);
+  --color-chart-seq-2: var(--chart-seq-2);
+  --color-chart-seq-3: var(--chart-seq-3);
+  --color-chart-seq-4: var(--chart-seq-4);
+  --color-chart-seq-5: var(--chart-seq-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-card: var(--radius-card, 16px);
+  --radius-btn: var(--radius-btn, 999px);
+  --font-sans: var(--font-ui);
+  --font-display: var(--font-display);
+  --font-num: var(--font-num);
+  --font-voice: var(--font-voice);
+}
+
+@theme {
+  /* the z-index scale (uiux skill): content, sticky headers, tab bar, Sen's button, sheets, toasts */
+  --z-index-sticky: 10;
+  --z-index-tabbar: 30;
+  --z-index-fab: 40;
+  --z-index-sheet: 50;
+  --z-index-toast: 60;
+  --z-index-dev: 70;
+  --ease-out-ui: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    /* text scales with the system font size (patterns.md §8); the dev panel sets --text-scale */
+    font-size: calc(100% * var(--text-scale, 1));
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  /* §10: the page stays fixed and never bounces or refreshes; each screen scrolls inside it */
+  html,
+  body {
+    overscroll-behavior: none;
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: 1rem;
+    line-height: 1.5;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+  }
+  #root {
+    min-height: 100dvh;
+  }
+  /* §10: text is selectable only where it is text */
+  input,
+  textarea,
+  [contenteditable],
+  .selectable {
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+  img {
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  /* §10: inputs at least 16 px, so no browser zooms on focus */
+  input,
+  textarea,
+  select {
+    font-size: max(1rem, 16px);
+  }
+  button {
+    cursor: pointer;
+  }
+  /* focus rings for keyboard use only (§10), 2 px, 3:1 against their surroundings */
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  /* the shared icon set (patterns.md §5): lucide in the look's weight, line ends and corners */
+  svg.lucide {
+    stroke-width: var(--icon-stroke);
+    stroke-linecap: var(--icon-cap);
+    stroke-linejoin: var(--icon-join);
+  }
+  svg.lucide path[d$='h.01'] {
+    stroke-linecap: var(--icon-dot-cap);
+  }
+}
+
+@layer utilities {
+  .scroll-area {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: none;
+  }
+  .scroll-area::-webkit-scrollbar {
+    display: none;
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .wrap-anywhere {
+    overflow-wrap: anywhere;
+  }
+  .safe-top {
+    padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  }
+  .safe-bottom {
+    padding-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+/* the dev panel's reduced-motion toggle does the same as the system setting */
+[data-reduced-motion='true'] *,
+[data-reduced-motion='true'] *::before,
+[data-reduced-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
