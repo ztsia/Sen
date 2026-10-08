@@ -1,6 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { MAX_SEN, apportion, formatSen, moneyParts, parseSen, spokenSen } from './money';
+import { MAX_SEN, apportion, formatSen, moneyParts, parseSen, percent, spokenSen } from './money';
 
 const ok = (sen: number) => ({ ok: true, sen });
 
@@ -165,5 +165,14 @@ describe('properties', () => {
         expect(parseSen(text.slice(0, i) + sign + text.slice(i)).ok).toBe(false);
       }),
     );
+  });
+});
+
+describe('percent', () => {
+  it('shows a share as a whole percent, rounded', () => {
+    expect(percent(0.42)).toBe(42);
+    expect(percent(0.875)).toBe(88);
+    expect(percent(1.2)).toBe(120);
+    expect(percent(0)).toBe(0);
   });
 });

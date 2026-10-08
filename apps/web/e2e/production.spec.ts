@@ -24,8 +24,23 @@ test('production shows Not built yet, the pinned look, and no dev tools', async 
 test('the site sends a strict content security policy and no referrer', async ({ request }) => {
   const r = await request.get('/');
   const csp = r.headers()['content-security-policy'] ?? '';
-  expect(csp).toContain("script-src 'self'");
-  expect(csp).not.toMatch(/script-src[^;]*unsafe/);
-  expect(csp).toContain("frame-ancestors 'none'");
+  const directives = new Map(
+    csp
+      .split(';')
+      .map((d) => d.trim().split(/\s+/))
+      .filter((d) => d[0])
+      .map(([name, ...sources]) => [name!, sources]),
+  );
+  // the shell loads only our own site: scripts from it alone, and no other host anywhere (spec §17)
+  expect(directives.get('script-src')).toEqual(["'self'"]);
+  expect(directives.get('default-src')).toEqual(["'self'"]);
+  expect(directives.get('frame-ancestors')).toEqual(["'none'"]);
+  expect(directives.get('object-src')).toEqual(["'none'"]);
+  const allowed = new Set(["'self'", "'none'", 'data:', 'blob:']);
+  for (const [name, sources] of directives)
+    for (const src of sources)
+      expect(allowed.has(src) || (name === 'style-src' && src === "'unsafe-inline'"), `${name} allows ${src}`).toBe(
+        true,
+      );
   expect(r.headers()['referrer-policy']).toBe('no-referrer');
 });

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { MessageCircleIcon, TriangleAlertIcon } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts';
-import { formatSen } from '@sen/core/money';
+import { formatSen, percent } from '@sen/core/money';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
@@ -438,7 +438,7 @@ export function BudgetMeter({
       {risk ? (
         <span className="inline-flex items-center gap-1.5 text-sm text-money-warning">
           <TriangleAlertIcon className="size-4 shrink-0" aria-hidden="true" />
-          At risk: {Math.round(share * 100)}% spent, {Math.round(cycleShare * 100)}% of the cycle gone
+          At risk: {percent(share)}% spent, {percent(cycleShare)}% of the cycle gone
         </span>
       ) : (
         <span className="text-sm text-muted-foreground">On track</span>

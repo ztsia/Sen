@@ -52,6 +52,30 @@ describe('the no-float rule', () => {
       expect(await lint(code, file), file).toContain('no-restricted-syntax');
   });
 
+  // QA B01 run 2, finding 4: the rule bans routes, not only names.
+  it.each([
+    ['Number.parseInt', 'export const sen = (t: string) => Number.parseInt(t, 10) * 100;'],
+    ['window.parseFloat', 'export const sen = (t: string) => window.parseFloat(t) * 100;'],
+    ['globalThis.parseFloat', 'export const sen = (t: string) => globalThis.parseFloat(t) * 100;'],
+    ['globalThis.Number()', 'export const sen = (t: string) => globalThis.Number(t);'],
+    ['new Number()', 'export const sen = (t: string) => new Number(t).valueOf();'],
+    ['valueAsNumber', 'export const sen = (el: HTMLInputElement) => el.valueAsNumber;'],
+    ['sen / 100 for display', 'export const text = (sen: number) => `RM${sen / 100}`;'],
+    ['Intl.NumberFormat', "export const text = (sen: number) => new Intl.NumberFormat('en-MY').format(sen);"],
+    ['toLocaleString', 'export const text = (sen: number) => sen.toLocaleString();'],
+    ['Math.round(x * 100)', 'export const sen = (rm: number) => Math.round(rm * 100);'],
+  ])('fails on a planted %s, in a block and in core', async (_name, code) => {
+    for (const file of ['apps/web/src/blocks/rows.tsx', 'packages/core/src/cycles.ts'])
+      expect(await lint(code, file), file).toContain('no-restricted-syntax');
+  });
+
+  it.each([
+    ['Number.parseInt', 'export const sen = (t: string) => Number.parseInt(t, 10) * 100;'],
+    ['new Number()', 'export const sen = (t: string) => new Number(t).valueOf();'],
+  ])('fails on a planted %s in the money module itself', async (_name, code) => {
+    expect(await lint(code, 'packages/core/src/money.ts')).toContain('no-restricted-syntax');
+  });
+
   it('passes the money module as it is', async () => {
     const [result] = await eslint.lintFiles(['packages/core/src/money.ts']);
     expect(result.messages).toEqual([]);

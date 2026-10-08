@@ -145,3 +145,6 @@ export function apportion(total: number, weights: readonly number[]): number[] {
   // eslint-disable-next-line no-restricted-syntax -- BigInt to integer sen, never text or a float
   return floors.map((f) => sign * Number(f) || 0);
 }
+
+/** A share (0.42) as a whole percent (42), for words beside a chart. Never an amount. */
+export const percent = (share: number): number => Math.round(share * 100);
