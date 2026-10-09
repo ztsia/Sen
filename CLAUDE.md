@@ -225,7 +225,7 @@ No per-task review loops: the main session reads a subagent's diff itself, and Q
 
 | Skill | Use it when |
 |---|---|
-| `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent and **sets the three tiers for fixing what QA finds** |
+| `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent and **sets the three tiers for fixing what QA finds**: small fixes self-verified, scoped ones re-checked by resuming the last run's reviewer, and a fresh full run only when a fix reaches the whole flow (D117, D121) |
 | `uiux` | Choosing shadcn components for a screen, building one, or checking one before it's done. Ported from GCO_events (D43): it reads its component index first, then only the docs it shortlists |
 | `dataviz` | Any chart, stat tile or chart colour. It comes from the owner's claude.ai account, not the repo |
 | `frontend-design` | Narrowed when `S2` closed (D57, D84): only for a look's own drawing (its figure, strip, avatar, tab bar and reveal) or a new look for the pool. Every screen follows `docs/ui/patterns.md` and `uiux` instead. Installed with `npx skills add` |

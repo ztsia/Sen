@@ -150,3 +150,27 @@ unit 141/141; Playwright 100/100; the e2e APK and the emulator tests build.
 `9e4c72a` not because Android's regex threw (as `a6a2437`'s message guessed), but because Android cuts a
 notification's text at 1,024 characters, and the test looked for its tag at the end. The row was stored
 and masked all along. The tag now leads. `a6a2437`'s extra catch (`RuntimeException`) stays, as defence.
+
+## Run 7 (scoped, on Sonnet) → fixes, and D121 (9 Oct 2026)
+
+Seventh round of findings on how digits are grouped, so the owner changed the rule (D121): until B10,
+every digit outside an amount is masked, whatever its neighbours.
+
+| # | Finding | Fix | Tier, and why |
+|---|---|---|---|
+| 17 | Major: commas and dots between digit groups let a TAC through | D121: no grouping rule left to beat | 1 (owner's call: the rule only got simpler and stronger; self-verified) |
+| 18 | Major: nothing guarded the gate masking the title and expanded text | `OtpMaskTest` "the gate masks every field it stores" | 1 |
+| 19 | Minor: line breaks collapsed on *Captured* | `whitespace-pre-line` on the title, text and expanded text | 1 |
+| 20 | Minor: other drops not logged | Spec §6.2 now says only OTP and *unread* drops are logged: summaries, ongoing, dropped channels and empty ones are never payments | spec |
+| 21 | Note: a storage failure uncaught on the capture thread | Caught and logged as *unread* | 1 |
+| twin 2, 4, 5 | Split across title and text; foreign amounts masked; the filter slow on long text | Gone with D121; currency codes and signs keep amounts; the filter reads 2,000 characters a part | 1 |
+
+**Superseded by D121** (they expected short numbers to stay readable): `Probe5.ac52s_short_numbers_stay`,
+`Probe6.ac24s_short_numbers_stay`, `ac10s_three_digits_unchanged_unmarked`, `ac14s_grab_reference_masked_unmarked`,
+`after_nbsp_currency`, `after_sim_sample_parity`, `Probe7.ac8_any_wording_masked`, `ac10_digit_forms`,
+`ac11_everything_else_verbatim`, `ac25_simulator_parity`. Still red as before: `Probe4.r4_merchant_tac_store_no`
+(the deliberate TAC CAFE drop) and `Probe6.ac25` (needs a JVM overflow).
+
+**Evidence:** core 45/45 (the new tests: every digit masked, foreign amounts kept, every field masked); QA's
+probes 285/297, the 12 red listed above; unit 141/141; Playwright 100/100; typecheck, lint clean; the e2e
+APK and the emulator tests build.

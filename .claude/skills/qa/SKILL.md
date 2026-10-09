@@ -1,6 +1,6 @@
 ---
 name: qa
-description: Independent QA pass on the current branch before its PR, plus the rules for fixing what it finds. Spawns a clean-context reviewer that writes acceptance criteria and flows from the spec, checks the tests actually catch breakage, exercises the database, row-level security and routes, and walks the journeys in the web app at a phone viewport with a screenshot per step. Every finished slice gets a full run. Fixes then go by three tiers. Small: the main session fixes and verifies itself. Scoped: a fresh reviewer checks only the area the fixes touched. Full: a fresh full run, only when a fix reaches the whole flow. Use when a slice is finished, before a PR, when a non-negotiable was touched, or when asked to verify, QA or review work.
+description: Independent QA pass on the current branch before its PR, plus the rules for fixing what it finds. Spawns a clean-context reviewer that writes acceptance criteria and flows from the spec, checks the tests actually catch breakage, exercises the database, row-level security and routes, and walks the journeys in the web app at a phone viewport with a screenshot per step. Every finished slice gets a full run. Fixes then go by three tiers. Small: the main session fixes and verifies itself. Scoped: the last run's reviewer is resumed on the area the fixes touched. Full: a fresh full run, only when a fix reaches the whole flow. Use when a slice is finished, before a PR, when a non-negotiable was touched, or when asked to verify, QA or review work.
 ---
 
 # QA pass
@@ -99,22 +99,25 @@ Only when a fix **reaches the whole flow**, not one area of it:
 
 Spawn a **new** `qa-reviewer` with the thin prompt above and run every phase again.
 
-### Tier 2, scoped: a fresh reviewer on the area the fixes touched
+### Tier 2, scoped: the last run's reviewer, resumed on the area the fixes touched
 
 Any fix that changes behaviour and isn't tier 3, including a **Blocker** fix and a fix that touches
 a `CLAUDE.md` non-negotiable, as long as it stays inside one area of the slice.
 
 1. Fix, commit and push.
-2. Spawn a **new** `qa-reviewer` with the thin prompt, plus:
-   - **the area**, named the way the spec names it, not the way the code does: *the capture path,
-     from a chosen app's notification to what's stored (spec §6.2)*
-   - the IDs of the findings fixed in it, from the last `results.json`
+2. **Resume the reviewer of the last run** (SendMessage to its agent ID) with:
+   - **the area**, named the way the spec names it: *the capture path, from a chosen app's
+     notification to what's stored (spec §6.2)*
+   - the IDs of the findings fixed in it, and the commit range
 
-   Nothing about how you fixed them. A fresh reviewer, not the old one resumed: it writes the area's
-   criteria from the spec again, so it can find what the last run didn't think of.
-3. It runs in **scoped mode** (`.claude/agents/qa-reviewer.md`): every phase, but only for that
-   area and the journeys that pass through it. It re-checks the fixed findings, then attacks the
-   area anew.
+   Nothing about how you fixed them. It already holds the slice's criteria, flows and probes, so a
+   re-check costs a fraction of a fresh run. Keep each run's agent ID in the handoff for this.
+3. It runs in **scoped mode** (`.claude/agents/qa-reviewer.md`): it re-checks the fixed findings,
+   re-runs its probes, and attacks the area again, adding criteria the fixes call for.
+
+**Only when that reviewer is gone** (the session rotated, or it was never in this session), spawn a
+fresh one in scoped mode with the same message; it reads the committed `acceptance.md`, `flows.md` and
+`results.json` first.
 
 **When an area keeps failing, question its design** before patching it again. Repeated misses
 usually mean the approach is wrong, not that it needs another rule; take the design question to the
