@@ -1,0 +1,48 @@
+# The OTP and TAC filter's phrases (spec §6.2, D86, brief B02). A notification whose title, text or
+# expanded text contains any of them, as whole words and in any case, is dropped in native code before
+# anything is stored. English and Malay. One phrase per line; '#' starts a comment.
+#
+# Erring towards dropping is safe here: a dropped message is an OTP, an approval request or a security
+# warning, never a completed payment. Each phrase is tested against every anonymised sample in
+# docs/notifications.md, none of which may be dropped (OtpFilterTest).
+#
+# Add a phrase when a new sample shows one, with the sample anonymised in docs/notifications.md.
+
+# English
+otp
+tac
+mtac
+one-time password
+one time password
+one-time passcode
+one time passcode
+one-time pin
+one time pin
+one-time code
+one time code
+transaction authorisation code
+transaction authorization code
+verification code
+security code
+authentication code
+authorisation code
+authorization code
+passcode
+login code
+log-in code
+sign-in code
+secure2u
+secure verification
+do not share
+don't share
+never share
+
+# Malay
+kod tac
+kod otp
+kod pengesahan
+kod keselamatan
+kod sekali guna
+kata laluan sekali
+jangan kongsi
+jangan dedahkan
