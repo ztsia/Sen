@@ -1,6 +1,6 @@
 ---
 name: qa
-description: Independent QA pass on the current branch before its PR, plus the rules for fixing what it finds. Spawns a clean-context reviewer that writes acceptance criteria and flows from the spec, checks the tests actually catch breakage, exercises the database, row-level security and routes, and walks the journeys in the web app at a phone viewport with a screenshot per step. Then sorts every fix into three tiers. Small: the implementer fixes and self-verifies. Medium: the same reviewer is resumed for a targeted re-check. Big: a fresh full QA run. Use when a slice is finished, before a PR, when a non-negotiable was touched, or when asked to verify, QA or review work.
+description: Independent QA pass on the current branch before its PR, plus the rules for fixing what it finds. Spawns a clean-context reviewer that writes acceptance criteria and flows from the spec, checks the tests actually catch breakage, exercises the database, row-level security and routes, and walks the journeys in the web app at a phone viewport with a screenshot per step. Every finished slice gets a full run. Fixes then go by three tiers. Small: the main session fixes and verifies itself. Scoped: a fresh reviewer checks only the area the fixes touched. Full: a fresh full run, only when a fix reaches the whole flow. Use when a slice is finished, before a PR, when a non-negotiable was touched, or when asked to verify, QA or review work.
 ---
 
 # QA pass
@@ -10,7 +10,8 @@ skill sets the run up and hands off to the `qa-reviewer` subagent. Its clean con
 
 ## When to run it
 
-- **A slice branch is finished, before its PR is opened.** This is the main case.
+- **A slice branch is finished, before its PR is opened.** This is the main case, and it's always a
+  **full run**, whatever the slice. The tiers below apply only to the fixes that follow it.
 - **A `CLAUDE.md` non-negotiable was touched**, even mid-slice.
 - **Someone asks** to verify, QA or independently check work.
 
@@ -24,7 +25,9 @@ Skip it for a docs-only change. If `git diff --stat main...HEAD` shows nothing o
 2. Spawn `qa-reviewer` with the Agent tool, `subagent_type: "qa-reviewer"`. **Keep the agent ID**,
    because a medium-tier re-check resumes this same agent.
 3. **Keep the prompt thin:** the branch, the slice label, and the slice's row in `docs/modules.md`.
-   Nothing else.
+   Nothing else. A scoped run (tier 2) adds only its area and the finding IDs, below.
+4. **Keep the last run's record:** before a new run, rename `qa/<slice>/report.md` to
+   `report-run<N>.md`, so the new run writes its own.
 
 > **Don't tell it what you built, how it works, or why you think it's right.** Its value is that it
 > derives its criteria from the spec independently. Briefing it with your reasoning turns an
@@ -76,54 +79,53 @@ same way.
 
 ## Fixing the findings: three tiers
 
-Sort each **fix**, not each finding, by what the fix changes. Check the tiers in order, from 3 down
-to 1; the first one that matches is the tier. **When unsure, go up a tier.** A batch of fixes takes
-the highest tier among them. Record every tier decision, and why, in `qa/<slice>/ledger.md`.
+Sort each **fix**, not each finding, by how far it reaches. Check the tiers from 3 down to 1; the
+first one that matches is the tier. **When unsure, go up a tier.** A batch of fixes takes the highest
+tier among them. Record every tier decision, and why, in `qa/<slice>/ledger.md`.
 
-### Tier 3, big: a fresh full QA run
+### Tier 3, full: a fresh full run
 
-The fix is tier 3 if **any** of these apply:
+Only when a fix **reaches the whole flow**, not one area of it:
 - It adds a migration, or changes the schema, row-level security, or a SQL view or function the
   agent reads.
-- It touches a `CLAUDE.md` non-negotiable.
-- It changes shared code:
+- It changes shared code that every journey passes through:
   - navigation
   - a component in `components/ui/`
   - a pattern from `docs/ui/patterns.md`
   - a shared store
   - the money module
   - the theme
-- It fixes a **Blocker**.
-- It changes how the slice works, rather than fixing a defect in it.
+- It changes how the slice works as a whole, rather than fixing a defect in one part of it.
 
-Then spawn a **new** `qa-reviewer` with a clean context and run every phase again. Don't resume the
-old reviewer: it has seen the old implementation, and a big change invalidates what it observed.
+Spawn a **new** `qa-reviewer` with the thin prompt above and run every phase again.
 
-### Tier 2, medium: the same reviewer, targeted
+### Tier 2, scoped: a fresh reviewer on the area the fixes touched
 
-The fix is tier 2 if it changes behaviour but stays inside the slice's own files, and nothing from
-tier 3 applies.
+Any fix that changes behaviour and isn't tier 3, including a **Blocker** fix and a fix that touches
+a `CLAUDE.md` non-negotiable, as long as it stays inside one area of the slice.
 
 1. Fix, commit and push.
-2. Resume the **original** reviewer: send a message to its agent ID with the IDs of the findings you
-   fixed and the commit range. Say nothing about how you fixed them.
-3. It re-checks only the affected criteria and flows and re-runs the probes that covered them. It
-   also walks the core journeys from `docs/flows.md` once. Then it updates `results.json` and the
-   report.
+2. Spawn a **new** `qa-reviewer` with the thin prompt, plus:
+   - **the area**, named the way the spec names it, not the way the code does: *the capture path,
+     from a chosen app's notification to what's stored (spec §6.2)*
+   - the IDs of the findings fixed in it, from the last `results.json`
 
-If the original reviewer is gone because the session rotated, spawn a fresh one in **targeted
-mode** instead. Point it at the committed `qa/<slice>/acceptance.md` and `flows.md`, and give it the
-finding IDs.
+   Nothing about how you fixed them. A fresh reviewer, not the old one resumed: it writes the area's
+   criteria from the spec again, so it can find what the last run didn't think of.
+3. It runs in **scoped mode** (`.claude/agents/qa-reviewer.md`): every phase, but only for that
+   area and the journeys that pass through it. It re-checks the fixed findings, then attacks the
+   area anew.
 
-**Escalation:** if two medium rounds in a row each find something new, the next round is tier 3.
-Repeated misses mean the slice isn't understood yet.
+**Escalation:** if two scoped rounds in a row on the same area each find something new, fix it, then
+check whether the area is the whole flow after all. If it is, the next round is tier 3. Repeated misses
+mean the area isn't understood yet.
 
-### Tier 1, small: fix and self-verify
+### Tier 1, small: the main session verifies itself
 
 The fix is tier 1 only if **all** of these are true:
-- It changes one source file, plus its test.
+- It's a small change: one source file plus its test, or a test, a word or a style.
 - It changes no behaviour beyond the finding itself, and nothing from tiers 2 or 3 applies.
-- The finding is a Minor or a Major, never a Blocker.
+- The finding isn't a Blocker.
 
 1. **Red first.** Write or adjust a test that fails on the current code. Run it and keep the output.
 2. Fix the code. Run that test (now green), the slice's suite, the typecheck and the lint.
@@ -141,7 +143,7 @@ tier-1 claim carries its own evidence.
 
 | Path | Committed? | Why |
 |---|---|---|
-| `qa/<slice>/acceptance.md`, `qa/<slice>/flows.md` | Yes | A targeted re-check after a session rotation needs them |
+| `qa/<slice>/acceptance.md`, `qa/<slice>/flows.md` | Yes | Each run adds its section; a scoped run reads the earlier ones after writing its own |
 | `qa/<slice>/ledger.md` | Yes | Tier-1 evidence, and every tier decision |
 | `qa/e2e/*.spec.ts` | Yes | They're the regression suite |
 | `qa/<slice>/report.md`, `qa/<slice>/results.json` | Yes | The findings, verdict and evidence, in the repo, so they outlive the VM |

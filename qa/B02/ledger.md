@@ -107,3 +107,6 @@ made harmless. The filter is unchanged; what it keeps but might hold a code is s
 **Evidence:** Kotlin core 39/39; QA's probes 147/148 test methods (the red one is the deliberate TAC CAFE
 drop); unit 141/141; Playwright 100/100 (with the maybe-OTP row); QA's Playwright 45/45 (AC-8 needs its own
 server, not re-run); all four APKs and the emulator tests build. The emulator runs on the next push.
+
+**QA after the D116 round:** run 5, scoped to the capture path (spec §6.2), by the owner's choice, which became
+the `qa` skill's tier 2 (D117).

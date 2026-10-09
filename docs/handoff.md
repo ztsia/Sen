@@ -55,6 +55,6 @@ read this first, and rewrite it before you end.
 
 ## Don't reopen
 
-D1–D116, unless the owner raises one. In particular remote against bundled (D114), masking plus learned
+D1–D117, unless the owner raises one. In particular remote against bundled (D114), masking plus learned
 OTP templates rather than more filter rules (D116), the slice order (D111), no screen mockups (D84), one
 brief, one branch; shadcn first, customised in place.
