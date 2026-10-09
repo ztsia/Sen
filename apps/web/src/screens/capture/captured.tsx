@@ -196,7 +196,7 @@ function EventRow({
       {e.bigText && e.bigText !== e.text ? (
         <p className="selectable text-sm wrap-anywhere text-muted-foreground">{e.bigText}</p>
       ) : null}
-      {false ? (
+      {e.maybeOtp ? (
         <p className="text-sm text-muted-foreground">Maybe a one-time code, so its numbers are hidden</p>
       ) : null}
     </ItemContent>
