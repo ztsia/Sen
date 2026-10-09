@@ -168,8 +168,9 @@ test('R6-FLOW-6 share samples: tapping a masked row\'s body ticks it', async ({ 
   await expect(box).toHaveCount(1);
   await expect(box).not.toBeChecked();
   await shot(page, 'R6-FLOW-6-step-1-picking');
-  // tap the row's text, not the box
-  await rows(page).first().getByText(MASKED, { exact: true }).click();
+  // a real tap where the row's text is drawn, not on the box (the row's label covers it)
+  const at = (await rows(page).first().getByText(MASKED, { exact: true }).boundingBox())!;
+  await page.touchscreen.tap(at.x + at.width / 2, at.y + at.height / 2);
   await expect(box).toBeChecked();
   await expect(rows(page).first().getByText(LINE)).toBeVisible();
   await shot(page, 'R6-FLOW-6-step-2-ticked-by-body');
