@@ -220,7 +220,14 @@ them in its *Charts* section.
   then its buttons, at most three plus *Other…*. Answering clears it with *Undo*. A suggestion from
   Sen is marked on the button it suggests.
 - **Settings row:** a label, its current value or a switch on the right, and a chevron when it opens
-  a screen.
+  a screen. A row that opens nothing is information, not a control (the heartbeat's checks); a
+  version row may hold a long-press (B02's hidden tests). A switch row may lead with an app's icon and
+  carry a line under its label, which, on a disabled switch, says why it can't be turned on.
+- **Raw notification row** (B02's *Captured on this phone* only, until B07 replaces it): the app and
+  the time on one line, then the title and the text as the app wrote them, selectable, line breaks
+  kept, with every digit outside an amount masked as stored (D121); the screen's intro says so once. One that might hold
+  a one-time code has a muted line under it: *Maybe a one-time code, so its numbers are hidden* (D116).
+  When sharing, a checkbox leads and the whole row ticks it.
 
 ### Detail page
 

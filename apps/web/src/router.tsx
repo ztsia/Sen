@@ -3,6 +3,8 @@ import { createRootRoute, createRoute, createRouter, redirect, useParams } from 
 import { AppShell } from './frame/app-shell';
 import { Lost } from './screens/lost';
 import { Placeholder } from './screens/placeholder';
+import { REAL } from './screens/real';
+import { ListSkeleton } from './blocks/states';
 import { screenById } from './screens/registry';
 
 // The routes: the four tab screens, Scan's task screen, every other screen by its id from
@@ -37,6 +39,13 @@ const screenRoute = (path: '/' | '/review' | '/insights' | '/more' | '/scan', id
 
 function AnyScreen() {
   const { _splat } = useParams({ from: '/s/$' });
+  const Real = REAL[_splat ?? ''];
+  if (Real)
+    return (
+      <Suspense fallback={<ListSkeleton />}>
+        <Real />
+      </Suspense>
+    );
   return <Placeholder screen={screenById.get(_splat ?? '')!} />;
 }
 const TAB_PATHS = { home: '/', review: '/review', insights: '/insights', more: '/more' } as const;

@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "capacitor-app-creation": {
+      "source": "capawesome-team/skills",
+      "sourceType": "github",
+      "skillPath": "skills/capacitor-app-creation/SKILL.md",
+      "computedHash": "1ac200f4e28c7b18001c9032db7e25e0c8d38c5b8f006a22aa65ca2ed9a8c211"
+    },
     "capacitor-app-development": {
       "source": "capawesome-team/skills",
       "sourceType": "github",

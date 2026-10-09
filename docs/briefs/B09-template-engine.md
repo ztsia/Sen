@@ -56,6 +56,9 @@ drafts the real ones.
   outbox with its derived id. Nothing waits for the web app or the network.
 - **With no template:** `skipped` when there's no RM or MYR amount (§6.2 step 1); otherwise it waits
   for B10's drafting.
+- **Known wordings first, in the listener (D119):** an `ignore: OTP` template drops its wording like
+  any OTP, never stored; a money template's wording is stored with its numbers, unmasked. A wording no
+  template knows goes to B10's classify step, its raw digits held in memory only.
 
 ### On the server
 - **A re-read:** when a template arrives or changes, the server re-reads that person's matching

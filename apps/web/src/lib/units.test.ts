@@ -3,6 +3,7 @@ import { foldParts } from '@/blocks/charts';
 import { checkAmount } from '@/blocks/money-input';
 import { badgeLabel, badgeText } from '@/frame/tab-bar';
 import { SCREENS, showsSenButton, showsTabBar } from '@/screens/registry';
+import { REAL } from '@/screens/real';
 import { dayLabel, updatedAgo } from './dates';
 
 describe("Review's badge", () => {
@@ -54,10 +55,11 @@ describe('the money input', () => {
 });
 
 describe('the screen registry', () => {
-  it('has every screen once, all skeletons for now', () => {
+  it('has every screen once, and a component for each one a slice made real', () => {
     const ids = SCREENS.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(SCREENS.every((s) => s.status === 'skeleton')).toBe(true);
+    const real = SCREENS.filter((s) => s.status === 'real').map((s) => s.id);
+    expect(real.sort()).toEqual(Object.keys(REAL).sort());
   });
   it('shows the tab bar on tabs and pushed screens, and hides it during a task', () => {
     const by = (id: string) => SCREENS.find((s) => s.id === id);

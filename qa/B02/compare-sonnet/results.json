@@ -1,0 +1,942 @@
+{
+  "module": "B02",
+  "branch": "B02/shell-listener (detached at 251d584), scoped run: capture path, \"compare-sonnet\"",
+  "verdict": "fix first",
+  "generatedAt": "2026-10-09 UTC",
+  "phases": "1-6 (scoped to the capture path, §6.2)",
+  "headline": "The masking net and the dedupe key hold on every ordinary shape and the Kotlin tests have teeth (12 of 12 core probes and 3 of 3 web probes went red), and run 5's findings 1-5 are fixed. One Major remains: a code separated by invisible or format characters outside the mask's list (bidi marks, U+061C, U+2062, U+034F, keycaps, tag characters) is stored readable and unmarked. The Android classes (Capture, Outbox, Heartbeat) are covered only by emulator tests I could not run.",
+  "summary": {
+    "criteria": 52,
+    "fail": 5,
+    "unreachable": 7,
+    "pass": 40
+  },
+  "suites": {
+    "unit": "141/141 pass (pnpm test); core Kotlin 41/41 (gradle -p apps/shell/core test)",
+    "e2e": "my specs: 9/9 green in Playwright (FLOW-9 only logs the reload result, so its failure is recorded in results.json, not by Playwright); the branch capture.spec 9/9 on my server",
+    "typecheck": "clean",
+    "lint": "clean (--max-warnings 0)"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "Major",
+      "status": "open",
+      "title": "A code separated by invisible or format characters outside the mask's list is stored whole, unmarked",
+      "detail": "`OtpMask` joins digits across a fixed INVISIBLE set (U+200B-200F, 2060, FEFF, 00AD) and the filter strips the same set. U+202A-202E and 2066-2069 (bidi), U+061C, U+2061-2064 (invisible operators), U+034F, the keycap sequence (digit, U+FE0F, U+20E3) and tag characters (U+E0020...) are not in it, so each digit is its own 1-digit run: nothing is masked, `maybe_otp` stays 0, and the filter does not drop it either. The code is stored readable. Spec §6.2: \"Digits are read as the filter reads them (any Unicode digit, across spaces, dashes, dots, brackets and invisible characters)\" and D116 \"no possible code is ever stored\". A bank would not send these, but the rule is exactly the non-negotiable the net exists for, and run 5's Major 1 was this same family with other characters. The core suite has no test with any of these characters (QA probe 6 shows the existing zero-width test does catch shrinking the set).",
+      "repro": "gradle -p qa/B02/compare-sonnet/core-probe test --tests \"*CaptureProbe.evasions\" -i  (prints EVASION lines)",
+      "evidence": "EVASION keycap -> KEPT text=[Your OTP is 4️⃣8️⃣2️⃣9️⃣1️⃣3️⃣] maybeOtp=false leak=true\nEVASION bidi 202C -> KEPT text=[Your OTP is 4‬8‬2‬9‬1‬3] maybeOtp=false leak=true\nEVASION arabic letter mark 061C -> KEPT ... leak=true\nEVASION invisible times 2062 -> KEPT ... leak=true\nEVASION CGJ 034F -> KEPT ... leak=true\nEVASION tag chars -> KEPT ... leak=true",
+      "spec": "AC-20, AC-26, spec_v2.md §6.2, D116, D119"
+    },
+    {
+      "id": 2,
+      "severity": "Minor",
+      "status": "open",
+      "title": "A code split across the title and text (or text and expanded text) is stored whole",
+      "detail": "The mask reads each field alone, so \"Your OTP 482\" + \"913\" has two 3-digit runs and nothing is masked; the filter (which does see all parts) also keeps it because a 3-digit number is not a code. Contrived, and a bank app rarely splits a code across fields; listed because §6.2 promises no code reaches storage.",
+      "repro": "CaptureProbe.evasions, \"split across title/text\"",
+      "evidence": "EVASION split across title/text -> KEPT title=[Your OTP 482] text=[913]\nAC-26 FAIL: split code kept whole across title+text: [Your OTP 482]+[913]",
+      "spec": "AC-26, spec_v2.md §6.2"
+    },
+    {
+      "id": 3,
+      "severity": "Minor",
+      "status": "open",
+      "title": "The mask eats the hour of a time that follows a date",
+      "detail": "A date and a time written with single spaces join into one run, so \"09-10-2026 21:47\" becomes \"••-••-•••• ••:47\". The comma-space rule saves Ryt's \"12/9/2026, 9:48 PM\", but TNG-style \"12 Oct 2026 21:47\" loses its hour as well. D119 masks dates, so the date is by design; the hour and the half-masked time are collateral. Until B10 gives numbers back, a payment's stored text cannot be read for its time.",
+      "repro": "CaptureProbe FalseDrops.verdicts",
+      "evidence": "VERDICT [Balance | Your balance is RM1,234.56 as of 09-10-2026 21:47.] -> keep [Your balance is RM1,234.56 as of ••-••-•••• ••:47.] maybe=false",
+      "spec": "spec_v2.md §6.2 (D119)"
+    },
+    {
+      "id": 4,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Whole-number amounts in other currencies are masked",
+      "detail": "Only RM, MYR, USD, SGD and \"$\" protect the number after them. \"THB 2500\", \"EUR 1500\", \"IDR 150000\", \"¥15000\", \"£1500\" lose their digits (and \"RM 1234.5\" does). A card payment abroad may print the foreign amount beside the RM one. The ringgit amount survives; spec says \"the number after a currency\".",
+      "repro": "CaptureProbe.foreignCurrency",
+      "evidence": "AMOUNT [Paid THB 2500 at SHOP] -> [Paid THB •••• at SHOP]\nAMOUNT [Paid JPY 15000 (RM 450.00)] -> [Paid JPY ••••• (RM 450.00)]\nAMOUNT [Paid £1500] -> [Paid £••••]",
+      "spec": "AC-19, spec_v2.md §6.2"
+    },
+    {
+      "id": 5,
+      "severity": "Minor",
+      "status": "open",
+      "title": "The OTP filter is quadratic in text length: 100 kB takes about 30 s on the single capture thread",
+      "detail": "Sentence splitting runs a regex over the growing sentence at every \"no.\" and the ADVICE patterns rescan it. Measured on the core: 5 kB 59-137 ms, 10 kB 0.3 s, 20 kB 1.1-1.3 s, 40 kB 3.5-4 s, 100 kB 28-31 s. One executor thread serves every capture, so a huge notification stalls the rest. Android's CI log shows the platform cutting text at 1,024 characters, which would hide it on a phone; I could not run that.",
+      "repro": "gradle -p qa/B02/compare-sonnet/core-probe test --tests \"*Recheck.timing\" --tests \"*CaptureProbe.hostile\" -i",
+      "evidence": "HOSTILE 100k 'no. ' -> keep maybe=false len=100000 in 31545ms\nHOSTILE 100k 'never ' -> keep maybe=false len=96000 in 27685ms\nTIMING no.  size=40000 -> 3534ms\nTIMING never  size=40000 -> 3969ms",
+      "spec": "AC-34, spec_v2.md §17"
+    },
+    {
+      "id": 6,
+      "severity": "Note",
+      "status": "open",
+      "title": "A payment worded \"Code: 123456\" is dropped (in doubt, by design)",
+      "detail": "\"Top up RM50.00 successful. Code: 123456\" is dropped as an OTP: weak keyword plus a code in the same sentence. §6.2 chooses this (\"in doubt it drops\") and logs it, so it shows as a gap. Recorded so the soak can watch for real top-up wordings.",
+      "repro": "CaptureProbe FalseDrops.verdicts",
+      "evidence": "VERDICT [Top-up successful | Top up RM50.00 successful. Code: 123456] -> DROP OTP",
+      "spec": "AC-15, spec_v2.md §6.2"
+    },
+    {
+      "id": 7,
+      "severity": "Minor",
+      "status": "open",
+      "title": "*Captured on this phone* says \"as the apps wrote them\" over rows whose numbers D119 now masks",
+      "detail": "Every kept notification has its 4+ digit runs masked, but only a row marked maybe-OTP says so. A plain row such as \"on ••/•/••••, 9:48 PM\" shows bullets with no explanation under a header that claims the text is as written. §6.2 asks for the line only under a marked row, so this is wording drift, not a spec breach; the owner reading samples on the soak will wonder.",
+      "repro": "Settings > Capture > Captured on this phone, simulate a notification (sample 4)",
+      "evidence": "header: \"3 notifications, newest first, as the apps wrote them. They stay on this phone.\"; row: \"You've received RM42.50 from TAN WEI MING on ••/•/••••, 9:48 PM (GMT+8).\" with no note",
+      "spec": "AC-37/38, patterns.md raw notification row",
+      "screenshots": ["FLOW-4-step-1-maybe-otp-row.png"]
+    },
+    {
+      "id": 8,
+      "severity": "Note",
+      "status": "open",
+      "title": "The simulator is a stand-in: fixed samples, no filter or mask, and state lost on reload",
+      "detail": "`sim.post()` cycles four fixed samples, `otp()` and `maybeOtp()` push fixed strings (the second already masked), and the store is zustand memory: a browser reload empties it, so \"outbox survives\" and \"offline then sync once\" cannot be walked in Chromium (sync is B07). A browser walk proves the screen, not the capture logic; the logic is proven by the Kotlin core tests and my probes. Same point as run 5 note 6.",
+      "repro": "FLOW-9: capture offline, reload",
+      "evidence": "FLOW-9: rows before reload 1; after reload body mentions: 0 notifications",
+      "spec": "AC-44, AC-46, AC-52",
+      "screenshots": ["FLOW-9-step-1-offline-captured.png", "FLOW-9-step-2-after-reload.png"]
+    },
+    {
+      "id": 9,
+      "severity": "Note",
+      "status": "open",
+      "title": "The listener trusts the stored chosen list without re-running the classifier",
+      "detail": "`CaptureGate` only tests `packageName in chosen`; `Chosen.set` is called from `setChosen` after the classifier, but B07 will sync `capture_apps` into the same preferences. A list holding WhatsApp would be honoured by the listener. Defence in depth only; nothing writes such a list today. Not run on a device.",
+      "repro": "read Chosen.kt, CaptureGate.decide",
+      "evidence": "if (p.packageName !in chosen) return Decision.Drop(DropReason.NOT_CHOSEN)   // the only check on the list",
+      "spec": "AC-4, spec_v2.md §6.2"
+    },
+    {
+      "id": 10,
+      "severity": "Note",
+      "status": "open",
+      "title": "Capture.store catches only the gate; an exception from the SQLite insert is uncaught on the capture thread",
+      "detail": "`outbox.insert(...)` runs outside the try/catch. A SQLiteException (disk full, corruption) in `worker.execute` reaches the thread's uncaught handler, which kills the process on Android, and the reconnect replays the same notification. Not verified on a device.",
+      "repro": "read Capture.kt store()",
+      "evidence": "outbox.insert(d.event).also { new -> if (new) Heartbeat.event(context) }   // no catch around it",
+      "spec": "AC-34"
+    },
+    {
+      "id": 11,
+      "severity": "Note",
+      "status": "open",
+      "title": "The emulator suite was red on CI for this code, and I could not run it",
+      "detail": "`gh run list` for the branch: the Shell workflow on a6a2437 (the last code commit before this one; 251d584 is docs only) concluded failure. Its log shows `CaptureListenerTest.a_very_long_notification_is_read_without_crashing_the_listener` failing with a stored row of length 1024. Later commits exist on the remote branch (I read only their subject lines and nothing else of run 6). Every Android-only criterion in this run is therefore unreachable here.",
+      "repro": "gh run view 37925426843 --log-failed",
+      "evidence": "CaptureListenerTest > a_very_long_notification_is_read_without_crashing_the_listener FAILED: java.lang.AssertionError: not stored; recent beats: [connected]; similar rows (length, end): [(1024, • • • • • • )]",
+      "spec": "brief Done when 4"
+    },
+    {
+      "id": 12,
+      "severity": "Note",
+      "status": "open",
+      "title": "Only OTP and unreadable drops reach the drop log",
+      "detail": "§6.2/D115 say each drop from a chosen app is logged by time and app. `Capture.store` logs OTP and unread only; group-summary, ongoing, channel and empty drops leave no trace. A payment is never ongoing, so the soak loses little, but a mis-flagged group summary would vanish silently.",
+      "repro": "read Capture.store",
+      "evidence": "if (d.reason == DropReason.OTP) Heartbeat.dropped(context, posted)",
+      "spec": "AC-17, D115"
+    },
+    {
+      "id": 13,
+      "severity": "Note",
+      "status": "fixed",
+      "title": "Re-check of run 5 findings 1-5 (the coordinator's list)",
+      "detail": "1 fixed for the shapes it named: thin, en, ideographic, narrow, figure, em, hair, line-separator, Ogham spaces and tab all masked in the kept shape (`Recheck.finding1`), circled/math-bold/Devanagari dropped; but see my finding 1 for other characters. 2 fixed: nine unlisted wordings incl. Chinese and spelled-out TAC are masked (`Recheck.finding2`). 3 fixed: eight 5 kB shapes on a 1 MB thread never overflow the gate; the filter overflows on two of them and the gate keeps them masked and marked (`Overflow`). 4 fixed: \"No. 123, 9:47 PM\" intact; RM with NBSP, double space, tab, thin space, thousands all keep the amount (`Recheck.finding4`; only \"RM:2500\" is masked). 5 fixed: probe 6 (INVISIBLE reduced to U+00AD) turns OtpMaskTest red.",
+      "repro": "gradle -p qa/B02/compare-sonnet/core-probe test --tests \"*Recheck*\" --tests \"*Overflow*\" -i",
+      "evidence": "F2 [Nombor pengesahan anda ialah 482913] -> Nombor pengesahan anda ialah •••••• [maybe]\nF4 [No. 123, 9:47 PM] -> [No. 123, 9:47 PM]\nPROBE mask: invisible characters not joined: suite RED  OtpMaskTest > codes in every shape ... a code is left in: Your code: 48​29​13",
+      "spec": "run 5 findings 1-5"
+    }
+  ],
+  "probes": [
+    {
+      "broke": "DedupeKey: the `when` component replaced by an empty string",
+      "caught": true,
+      "note": "CaptureGateTest (replay vs second identical payment) and DedupeKeyTest red"
+    },
+    {
+      "broke": "DedupeKey: the length prefix removed",
+      "caught": true,
+      "note": "DedupeKeyTest \"moving text between fields\" red"
+    },
+    {
+      "broke": "CaptureGate: dedupe key taken from the UNMASKED text",
+      "caught": true,
+      "note": "OtpMaskTest \"the dedupe key is taken from the masked text\" red"
+    },
+    {
+      "broke": "CaptureGate: chosen-apps check removed",
+      "caught": true,
+      "note": "3 CaptureGateTest tests red"
+    },
+    {
+      "broke": "CaptureGate: OTP drop removed",
+      "caught": true,
+      "note": "CaptureGateTest \"an OTP from a chosen app is dropped\" red"
+    },
+    {
+      "broke": "OtpMask: INVISIBLE set reduced to U+00AD (run 5 finding 5)",
+      "caught": true,
+      "note": "OtpMaskTest \"codes in every shape\" red: Your code: 48​29​13"
+    },
+    {
+      "broke": "OtpMask: amounts no longer protected",
+      "caught": true,
+      "note": "4 OtpMaskTest tests red"
+    },
+    {
+      "broke": "OtpMask: only the text field masked",
+      "caught": true,
+      "note": "OtpMaskTest \"every part is masked\" red"
+    },
+    {
+      "broke": "CaptureGate: ongoing notifications kept",
+      "caught": true,
+      "note": "CaptureGateTest red"
+    },
+    {
+      "broke": "OtpMask: maybe_otp never set",
+      "caught": true,
+      "note": "4 OtpMaskTest tests red"
+    },
+    {
+      "broke": "OtpFilter: advice sentences no longer set aside",
+      "caught": true,
+      "note": "OtpMaskTest and OtpFilterTest red"
+    },
+    {
+      "broke": "otp-keywords.txt: \"tac\" removed",
+      "caught": true,
+      "note": "4 OtpFilterTest tests red"
+    },
+    {
+      "broke": "captured.tsx: the maybe-OTP line never rendered",
+      "caught": true,
+      "note": "apps/web e2e capture.spec \"lists what arrived\" red"
+    },
+    {
+      "broke": "capture-sim.ts: the chosen-app check removed",
+      "caught": true,
+      "note": "same spec red (timed out at the step that needs \"0 notifications\")"
+    },
+    {
+      "broke": "capture-sim.ts: replay dedupe removed",
+      "caught": true,
+      "note": "same spec red"
+    }
+  ],
+  "flows": [
+    {
+      "id": "FLOW-1",
+      "title": "A payment from a chosen app is captured",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "dev panel, Settings > Capture > Captured on this phone",
+      "covers": ["AC-18", "AC-19", "AC-25", "AC-36", "AC-37", "AC-38"],
+      "spec": "§6.2",
+      "status": "pass",
+      "ends": "Rows appear newest first with app, time, title and text; amounts untouched; no maybe-OTP line on plain rows",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open Captured on this phone with nothing captured",
+          "assertion": "\"0 notifications\" and the EmptyState line with \"Choose your apps\"",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-1-empty.png"
+        },
+        {
+          "n": 3,
+          "action": "post notifications from the chosen app",
+          "assertion": "rows listed newest first, \"Today, hh:mm\", text as stored",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-rows.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-2",
+      "title": "An unchosen app posts",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "dev panel simulator",
+      "covers": ["AC-1", "AC-3", "AC-47"],
+      "spec": "§6.2, D86",
+      "status": "pass",
+      "ends": "0 rows with no app chosen; with Ryt only, 2 of 4 posts stored and no TNG/PBB text on screen",
+      "steps": [
+        {
+          "n": 1,
+          "action": "grant access, post 4 with no app chosen",
+          "assertion": "\"0 notifications\"",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-1-none-chosen-4-posted.png"
+        },
+        {
+          "n": 2,
+          "action": "choose Ryt only, post 4",
+          "assertion": "\"2 notifications\", all \"Ryt Bank\", no DuitNow/Money Received text",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-2-ryt-only-2-of-4.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-3",
+      "title": "A clear OTP is dropped",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "dev panel simulator",
+      "covers": ["AC-9", "AC-17"],
+      "spec": "§6.2",
+      "status": "pass",
+      "ends": "count unchanged; heartbeat lists \"Dropped a one-time code from Ryt Bank\" with a time; no digits or words of it anywhere (simulator only; the filter itself is probed in the core)",
+      "steps": [
+        {
+          "n": 1,
+          "action": "post an OTP, open Heartbeat",
+          "assertion": "row count 2, line \"Dropped a one-time code from Ryt Bank\", dialog text has no 482910 / TAC",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-1-heartbeat-otp-line.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-4",
+      "title": "Payment with advice and a store number: masked and marked",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "dev panel simulator (fixed string)",
+      "covers": ["AC-11", "AC-22", "AC-38"],
+      "spec": "§6.2, D116",
+      "status": "pass",
+      "ends": "row shows bullets and exactly one \"Maybe a one-time code, so its numbers are hidden\" among three rows",
+      "steps": [
+        {
+          "n": 1,
+          "action": "post a maybe-OTP",
+          "assertion": "text \"RM50.00 transfer to TAN WEI MING: ••••••. Never share your TAC.\" and the muted line once",
+          "status": "pass",
+          "screenshot": "FLOW-4-step-1-maybe-otp-row.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-5",
+      "title": "Masking: no 4+ digit run on screen",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "dev panel simulator",
+      "covers": ["AC-18", "AC-39"],
+      "spec": "§6.2, D119",
+      "status": "pass",
+      "ends": "no run of 4+ digits outside RM amounts in any row (the real mask is probed in the core: FLOW-13)",
+      "steps": [
+        {
+          "n": 1,
+          "action": "post all four samples and a maybe-OTP",
+          "assertion": "\"on ••/•/••••, 9:48 PM\" visible; longRuns(rows) = []",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-1-samples-masked.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-6",
+      "title": "Replay is a no-op; identical payments with a different when are two rows",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "dev panel simulator",
+      "covers": ["AC-27", "AC-28", "AC-29"],
+      "spec": "§6.2, §6.5",
+      "status": "pass",
+      "ends": "3 rows after Post it again; 5 rows after 4 more posts, with two identical \"Petron\" rows",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Post it again",
+          "assertion": "still \"3 notifications\"",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-1-replay-no-new-row.png"
+        },
+        {
+          "n": 2,
+          "action": "post 4 more",
+          "assertion": "\"5 notifications\" and 2 Petron rows",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-2-two-identical-payments-two-rows.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-8",
+      "title": "Share samples",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Captured on this phone > Share samples",
+      "covers": ["AC-40"],
+      "spec": "screens.md",
+      "status": "pass",
+      "ends": "nothing ticked is refused with a message; a row tap ticks only its checkbox; \"Share 1 sample\" gives the share toast",
+      "steps": [
+        {
+          "n": 1,
+          "action": "tap Share samples",
+          "assertion": "checkboxes lead each row",
+          "status": "pass",
+          "screenshot": "FLOW-8-step-1-picking.png"
+        },
+        {
+          "n": 2,
+          "action": "tap the row (not the box)",
+          "assertion": "checkbox 2 checked, checkbox 1 not; button reads \"Share 1 sample\"",
+          "status": "pass",
+          "screenshot": "FLOW-8-step-2-row-ticked.png"
+        },
+        {
+          "n": 3,
+          "action": "Share 1 sample",
+          "assertion": "toast \"Simulated: the share sheet with 1 sample\"",
+          "status": "pass",
+          "screenshot": "FLOW-8-step-3-shared.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-9",
+      "title": "Offline capture, reload, back online",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "context.setOffline(true), dev panel simulator",
+      "covers": ["AC-46", "AC-52"],
+      "spec": "§6.2, §18",
+      "status": "fail",
+      "ends": "Expected the row to survive a reload and sync once. The row is stored offline but the reload empties the simulator; sync is B07 and not built (finding 8)",
+      "steps": [
+        {
+          "n": 1,
+          "action": "offline: post 3, one is Ryt",
+          "assertion": "\"1 notification\"",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-1-offline-captured.png"
+        },
+        {
+          "n": 2,
+          "action": "back online, reload",
+          "assertion": "\"0 notifications\": simulator memory lost",
+          "status": "fail",
+          "screenshot": "FLOW-9-step-2-after-reload.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-10",
+      "title": "Browser in New York, and 23:30 KL on the last day of a month",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "timezoneId America/New_York, page.clock",
+      "covers": ["AC-51"],
+      "spec": "D14",
+      "status": "pass",
+      "ends": "row shows KL time (\"Today, 23:20\" at KL 23:20 / NY 11:20); at 2026-10-31 23:30 KL it says \"Today, 23:30\", after KL midnight \"Yesterday, 23:30\"",
+      "steps": [
+        {
+          "n": 1,
+          "action": "NY browser, post",
+          "assertion": "row time equals KL clock",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-1-kl-time-under-ny-browser.png"
+        },
+        {
+          "n": 2,
+          "action": "clock 2026-10-31T15:30Z, post",
+          "assertion": "\"Today, 23:30\"",
+          "status": "pass",
+          "screenshot": "FLOW-10b-step-1-2330-kl-today.png"
+        },
+        {
+          "n": 3,
+          "action": "fast-forward 40 min, reopen",
+          "assertion": "\"Yesterday, 23:30\"",
+          "status": "pass",
+          "screenshot": "FLOW-10b-step-2-after-kl-midnight-yesterday.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-11",
+      "title": "Production has no simulator",
+      "kind": "sad",
+      "actor": "visitor",
+      "entry": "production build :4311",
+      "covers": ["AC-45", "AC-49"],
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "ends": "no Dev panel, no simulator controls, bundle has no capture-sim chunk or secret pattern",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open /s/settings/capture",
+          "assertion": "\"Capture works in Sen's Android app\", no Dev panel",
+          "status": "pass",
+          "screenshot": "FLOW-11-step-1-prod-capture.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-12",
+      "title": "Bridge missing, and the empty state",
+      "kind": "sad",
+      "actor": "visitor",
+      "entry": "production build and preview",
+      "covers": ["AC-41", "AC-43"],
+      "spec": "patterns §4",
+      "status": "pass",
+      "ends": "no stack trace; EmptyState with an action",
+      "steps": [
+        {
+          "n": 1,
+          "action": "preview, nothing captured",
+          "assertion": "\"Choose your apps\" button under the empty line",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-1-empty-state-actions.png"
+        },
+        {
+          "n": 2,
+          "action": "production /s/settings/capture/captured",
+          "assertion": "plain sentence, no error text",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-2-prod-captured.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-13",
+      "title": "Kotlin core: filter, mask, dedupe, with probes",
+      "kind": "sad",
+      "actor": "QA",
+      "entry": "gradle (no Android SDK)",
+      "covers": [
+        "AC-9",
+        "AC-10",
+        "AC-11",
+        "AC-12",
+        "AC-13",
+        "AC-14",
+        "AC-15",
+        "AC-16",
+        "AC-18",
+        "AC-19",
+        "AC-20",
+        "AC-21",
+        "AC-22",
+        "AC-23",
+        "AC-25",
+        "AC-26",
+        "AC-27",
+        "AC-28",
+        "AC-29",
+        "AC-30",
+        "AC-31",
+        "AC-34"
+      ],
+      "spec": "§6.2",
+      "status": "fail",
+      "ends": "passes everything except invisible/format-character codes and a split code (findings 1, 2)",
+      "steps": [
+        {
+          "n": 1,
+          "action": "gradle -p apps/shell/core test, then my CaptureProbe/Recheck/Overflow/FalseDrops",
+          "assertion": "the branch suite: 41/41; mine: evasions fail (finding 1, 2), hostile timing fails over 2 s (finding 5)",
+          "status": "fail"
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "AC-1",
+      "title": "Unchosen app is dropped, not stored",
+      "spec": "§6.2, D86",
+      "status": "pass",
+      "evidence": "CaptureProbe.drops: gate returns Drop(NOT_CHOSEN); sim e2e FLOW-2: 4 posts with 1 of 3 apps chosen store only the Ryt rows (2 of 4)"
+    },
+    {
+      "id": "AC-2",
+      "title": "Unchosen app leaves no trace (drop log)",
+      "spec": "§6.2",
+      "status": "unreachable",
+      "evidence": "Capture.post returns before Heartbeat.dropped (read); the drop log is Android-only and the emulator test checks storage, not the log. Not run"
+    },
+    {
+      "id": "AC-3",
+      "title": "Empty chosen list stores nothing",
+      "spec": "§6.2, D86",
+      "status": "pass",
+      "evidence": "CaptureProbe.drops: Drop(NOT_CHOSEN) with emptySet(); e2e FLOW-2 step 1: 4 posts, \"0 notifications\""
+    },
+    {
+      "id": "AC-4",
+      "title": "Classifier refuses SMS/social/denylist",
+      "spec": "§6.2, D86",
+      "status": "pass",
+      "evidence": "AppClassifierTest 7/7 in the core suite (run). The sad twin (listener re-checks a stored list) is finding 9"
+    },
+    {
+      "id": "AC-5",
+      "title": "Group summaries dropped, child kept",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "CaptureProbe.drops"
+    },
+    {
+      "id": "AC-6",
+      "title": "Ongoing dropped, normal kept",
+      "spec": "D115",
+      "status": "pass",
+      "evidence": "CaptureProbe.drops; probe 9 (ongoing check removed) turned CaptureGateTest red"
+    },
+    {
+      "id": "AC-7",
+      "title": "Channel drop list starts empty",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "CaptureProbe.drops: payment on any channel kept with the default empty set (Outbox.droppedChannels read, not run)"
+    },
+    {
+      "id": "AC-8",
+      "title": "Conversation notifications refused in the manifest",
+      "spec": "§6.2",
+      "status": "unreachable",
+      "evidence": "Manifest read: disabled_filter_types=conversations on the service. Needs a device to observe. Not run"
+    },
+    {
+      "id": "AC-9",
+      "title": "Clear OTP dropped",
+      "spec": "§6.2, D115",
+      "status": "pass",
+      "evidence": "CaptureProbe.filter: 19 English/Malay/variant OTPs all Drop(OTP)"
+    },
+    {
+      "id": "AC-10",
+      "title": "Malay OTP/TAC variants dropped",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "CaptureProbe.filter"
+    },
+    {
+      "id": "AC-11",
+      "title": "Payment with advice footer + store number kept (sad twin)",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "kept, stored as \"...ZUS COFFEE #••••. Never share your TAC.\" maybe=true"
+    },
+    {
+      "id": "AC-12",
+      "title": "Reference code is not a code",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "CaptureProbe.filter: \"Reference no: 20260912345678\" kept"
+    },
+    {
+      "id": "AC-13",
+      "title": "Amount, date, time, phone not codes",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "CaptureProbe.filter: kept"
+    },
+    {
+      "id": "AC-14",
+      "title": "Code in any digit set / spacing / zero-width still found",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "fullwidth, Arabic-Indic, spaced, dashed, ZWSP, word-joiner, superscript, circled, math-bold, Devanagari: all dropped. (Other invisible characters are finding 1)"
+    },
+    {
+      "id": "AC-15",
+      "title": "In doubt it drops",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "\"OTP 482913 for RM12.90 payment\" dropped; code only in bigText dropped"
+    },
+    {
+      "id": "AC-16",
+      "title": "Title weighed apart from text",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "title \"Your OTP\" + text \"482913\" dropped"
+    },
+    {
+      "id": "AC-17",
+      "title": "Drop log once per notification, no text",
+      "spec": "§6.2, D115",
+      "status": "unreachable",
+      "evidence": "Heartbeat.dropped/Outbox.beat read (UNIQUE drop_key over package+key+when, no text). Android only; not run. The sim logs a beat per press, which is the sim"
+    },
+    {
+      "id": "AC-18",
+      "title": "Runs of 4+ digits outside amounts masked as bullets",
+      "spec": "§6.2, D119",
+      "status": "pass",
+      "evidence": "CaptureProbe.mask: \"Card ending 5678 ... ref 998877\" -> \"Card ending •••• ... ref ••••••\""
+    },
+    {
+      "id": "AC-19",
+      "title": "Amounts left byte-identical",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "RM1,234.50, RM 1500, MYR2000, RM12.90, RM12,345,678.90, \"RM12.90 4829\"->\"RM12.90 ••••\". Foreign whole amounts are finding 4"
+    },
+    {
+      "id": "AC-20",
+      "title": "Every digit shape and separator masked",
+      "spec": "§6.2",
+      "status": "fail",
+      "evidence": "Digits split by U+202C, U+061C, U+2062, U+034F, keycap U+FE0F U+20E3, tag characters: \"Your OTP is 4⁢8⁢2⁢9⁢1⁢3\" kept, maybe=false, code readable (finding 1)"
+    },
+    {
+      "id": "AC-21",
+      "title": "Masking applies to title, text and expanded text",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "CaptureProbe.mask: \"Ref ••••••\" | \"Number ••••••\" | \"Big ••••••\"; probe 8 (text only) went red"
+    },
+    {
+      "id": "AC-22",
+      "title": "maybe_otp exactly when an OTP word and a masked run",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "plain payment maybe=false; advice+store number maybe=true; probe 10 red"
+    },
+    {
+      "id": "AC-23",
+      "title": "Dedupe key from the masked text",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "two texts differing only in a masked ref: same key; key != hash of unmasked text; probe 3 red"
+    },
+    {
+      "id": "AC-24",
+      "title": "Unreadable kept masked+marked / dropped as unread",
+      "spec": "§6.2",
+      "status": "unreachable",
+      "evidence": "Core half seen: 5 KB inputs that overflow the filter are kept masked, maybe=true (Recheck.finding3). The \"unread\" drop is Capture.kt, Android only. Not run"
+    },
+    {
+      "id": "AC-25",
+      "title": "Everything else stored unchanged",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "CaptureProbe.mask: whitespace, tab, emoji, apostrophe preserved"
+    },
+    {
+      "id": "AC-26",
+      "title": "Unmasked digits never stored/reach JS",
+      "spec": "§6.2, CLAUDE.md",
+      "status": "fail",
+      "evidence": "Code split 3+3 across title and text stored whole: title \"Your OTP 482\", text \"913\" (finding 2); invisible-separated codes (finding 1)"
+    },
+    {
+      "id": "AC-27",
+      "title": "Same notification twice = one key",
+      "spec": "§6.5",
+      "status": "pass",
+      "evidence": "CaptureProbe.dedupe"
+    },
+    {
+      "id": "AC-28",
+      "title": "Two genuine identical payments differ by when",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "CaptureProbe.dedupe (also when=0 falling back to postTime)"
+    },
+    {
+      "id": "AC-29",
+      "title": "Replay adds nothing",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "same key for same postTime/when, incl. when=0; probes 1 and 2 red. The reconnect itself is emulator-only"
+    },
+    {
+      "id": "AC-30",
+      "title": "Different key or one-char text change = new key",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "CaptureProbe.dedupe"
+    },
+    {
+      "id": "AC-31",
+      "title": "Fields length-prefixed; package in key",
+      "spec": "§6.2, D115",
+      "status": "pass",
+      "evidence": "(\"ab\",\"c\") vs (\"a\",\"bc\") differ; text/bigText/null boundaries differ (3 distinct keys); probe 2 red"
+    },
+    {
+      "id": "AC-32",
+      "title": "UNIQUE enforced by the store",
+      "spec": "§6.5",
+      "status": "unreachable",
+      "evidence": "Outbox.kt: dedupe_key TEXT NOT NULL UNIQUE + CONFLICT_IGNORE (read). Emulator only; not run"
+    },
+    {
+      "id": "AC-33",
+      "title": "Stored fields",
+      "spec": "§6.2",
+      "status": "unreachable",
+      "evidence": "RawEvent/Outbox columns read; Android only; not run"
+    },
+    {
+      "id": "AC-34",
+      "title": "Hostile input handled",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "CaptureProbe.hostile: SQL metacharacters, NUL, lone surrogate, 100 kB of x/digits kept without a throw. Slow on 100 kB of \"no. \" or \"never \" (finding 5)"
+    },
+    {
+      "id": "AC-35",
+      "title": "No notification text logged",
+      "spec": "brief Notes",
+      "status": "pass",
+      "evidence": "git grep \"Log\\.|println|Timber\" over apps/shell/android/app/src/main and core/src/main: no hits"
+    },
+    {
+      "id": "AC-36",
+      "title": "Newest first",
+      "spec": "patterns §7",
+      "status": "pass",
+      "evidence": "e2e FLOW-1 step 3 (last posted on top); Outbox ORDER BY id DESC (read)"
+    },
+    {
+      "id": "AC-37",
+      "title": "Row: app + time, then title and text, selectable",
+      "spec": "patterns §7",
+      "status": "pass",
+      "evidence": "e2e: row text \"Ryt Bank / Today, 23:13 / title / text\"; .selectable on title and text"
+    },
+    {
+      "id": "AC-38",
+      "title": "maybe-OTP line only on marked rows",
+      "spec": "D116, patterns §7",
+      "status": "pass",
+      "evidence": "e2e FLOW-4: exactly 1 \"Maybe a one-time code, so its numbers are hidden\" among 3 rows"
+    },
+    {
+      "id": "AC-39",
+      "title": "Masked digits shown as bullets; no run in DOM",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "e2e FLOW-4/5: no 4+ digit run outside RM amounts in any row"
+    },
+    {
+      "id": "AC-40",
+      "title": "Share samples ticking and empty selection",
+      "spec": "screens.md",
+      "status": "pass",
+      "evidence": "e2e FLOW-8: row tap ticks checkbox 2 only; \"Tick the ones to share\" shows \"Tick the notifications to share first.\"; Share 1 sample toast"
+    },
+    {
+      "id": "AC-41",
+      "title": "Empty / loading / error states follow patterns",
+      "spec": "patterns §4",
+      "status": "pass",
+      "evidence": "Empty state seen (EmptyState with action). Loading and error not exercised (the sim cannot fail) -- see notTested"
+    },
+    {
+      "id": "AC-42",
+      "title": "Heartbeat: connected, last event, drops do not count",
+      "spec": "§6.2 Health",
+      "status": "unreachable",
+      "evidence": "Capture.store only calls Heartbeat.event on a new insert (read). Android only; not run"
+    },
+    {
+      "id": "AC-43",
+      "title": "Bridge missing shows a sensible state",
+      "spec": "§5",
+      "status": "pass",
+      "evidence": "production build: \"Capture works in Sen's Android app, which reads your bank notifications on the phone.\" no error text"
+    },
+    {
+      "id": "AC-44",
+      "title": "Simulator runs the same filter/mask/dedupe",
+      "spec": "CLAUDE.md simulator",
+      "status": "fail",
+      "evidence": "It does not: four fixed samples plus fixed \"already masked\" strings; no input reaches a filter or mask in the browser (finding 8)"
+    },
+    {
+      "id": "AC-45",
+      "title": "No simulator in production",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "e2e: no Dev panel, no Post a notification, bundle lacks \"Simulated:\" and any capture-sim chunk (22 js files)"
+    },
+    {
+      "id": "AC-46",
+      "title": "Simulator state survives reload",
+      "spec": "AC from §6.2 outbox",
+      "status": "fail",
+      "evidence": "FLOW-9: 1 row before reload, \"0 notifications\" after (zustand in page memory; finding 8)"
+    },
+    {
+      "id": "AC-47",
+      "title": "Page cannot store for an unchosen app",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "sim store() checks chosen and access; probe 14 red. The native setChosen refusing blocked apps: classifier tests only"
+    },
+    {
+      "id": "AC-48",
+      "title": "No float money; amounts byte-identical",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "git grep parseFloat|toFixed|Number( over capture screens, sim, bridge, native: no hits; mask probes keep amounts intact"
+    },
+    {
+      "id": "AC-49",
+      "title": "No secret in the built bundle",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "dist-cs-prod js (605,183 bytes) has no AKIA/sk-ant-/ghp_/PRIVATE KEY"
+    },
+    {
+      "id": "AC-50",
+      "title": "No real data in fixtures; hygiene",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "pnpm hygiene passed (DENYLIST not set so only private/ checked); my fixtures are invented"
+    },
+    {
+      "id": "AC-51",
+      "title": "Times in Kuala Lumpur whatever the browser",
+      "spec": "D14",
+      "status": "pass",
+      "evidence": "FLOW-10 (NY browser: row \"Today, 23:20\" at KL 23:20, NY 11:20); FLOW-10b: 23:30 KL on 31 Oct \"Today, 23:30\", after KL midnight \"Yesterday, 23:30\""
+    },
+    {
+      "id": "AC-52",
+      "title": "Offline capture survives reload, syncs once",
+      "spec": "§6.2, §18",
+      "status": "fail",
+      "evidence": "offline capture stored (1 row) but the reload empties the sim; sync is B07, not built (finding 8)"
+    }
+  ],
+  "notTested": [
+    {
+      "what": "The real listener, Capture.kt, Outbox.kt, Heartbeat.kt, the bridge plugin, the manifest filter",
+      "why": "Android only; the emulator tests run on GitHub Actions and CI was red for this code (finding 11). No emulator here"
+    },
+    {
+      "what": "Error and loading states of Captured on this phone",
+      "why": "the simulator cannot fail or be slowed"
+    },
+    {
+      "what": "Sync exactly once after offline capture",
+      "why": "sync is B07, not built; the simulator loses state on reload (finding 8)"
+    },
+    {
+      "what": "Real notification wordings and Android 16 hiding OTPs",
+      "why": "needs the owner's Xiaomi soak (docs/local.md)"
+    }
+  ]
+}

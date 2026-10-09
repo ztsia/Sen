@@ -52,6 +52,15 @@ model writes is ever stored.**
    *Skipped*.
 5. **A money template starts `provisional` and books at once.** Its payments are marked *new
    wording*. `/sync` returns the new templates so the shell re-reads its own events.
+6. **Classify first (D119).** A wording no template knows arrives with all its numbers masked (B02
+   masks every long number until then). A cheap-tier call classifies it: transaction, OTP, promotion,
+   order or delivery, account notice, or other. On the phone (B09), the raw digits wait in memory only
+   for the answer; a transaction is stored with them and drafted as a money template; an OTP is dropped
+   and drafted from the masked text as `ignore: OTP`; the rest become `ignore` or `context` templates.
+   Offline or late, the event is stored masked and classified at the next sync. Learned OTP wordings
+   are listed in Settings → Capture, with *This was a payment* to undo, which retires the template.
+   **Before fixing the classifier's model, test it (D94):** the cheap tier's candidates against Jev
+   (TypeSafe AI) on the soak's anonymised samples, for OTP-against-transaction accuracy, cost and speed.
 
 ### Confirming
 - ***Review* holds one item per provisional template,** such as *New Ryt wording: RM12.90 paid at ZUS
@@ -74,9 +83,15 @@ model writes is ever stored.**
 - **Every call** is recorded in `ai_usage`, with its tokens and outcome, and no cost column.
 
 ### The model
-- **Benchmark two or three cheap candidates** on `notifications.md`'s samples, scoring how many
-  templates pass code's checks first time, with latency and tokens. Name the winner only in
-  `ai/models.ts`, and record a decision.
+- **Build the eval harness, `evals/`, the first slice to call a model** (D120): one golden set per job
+  (anonymised cases with their expected answers, from `notifications.md` and the soak's samples), a
+  runner that calls each candidate through the AI SDK, and scores by code (the class, whether the
+  template passes code's checks, the amount read), with tokens, cost and latency. What code can't
+  score (how a template or merchant is named), the session reads in a blind side-by-side sample of
+  the candidates' answers and judges, recording why; the owner decides where it's a matter of taste.
+  Later phases add their own job's set (receipts in P4, the agent in P6).
+- **Benchmark the cheap candidates** on it: Claude Haiku 5.5, Gemini 3.5 Flash-Lite and, for
+  classifying, Jev. Name the winner only in `ai/models.ts`, and record a decision.
 - **The live drafter test needs a key, so it runs in the benchmark session only.** CI replays
   recorded model responses to test the checks.
 

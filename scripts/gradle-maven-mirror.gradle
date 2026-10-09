@@ -1,0 +1,17 @@
+// Cloud sessions only, copied into ~/.gradle/init.d by scripts/session-start.sh (docs/cloud.md §5): Maven Central answers 429 to this VM; Google's mirror of it doesn't.
+def mirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
+def swap = { RepositoryHandler repos ->
+  repos.withType(MavenArtifactRepository).configureEach { r ->
+    if (r.url.toString().startsWith('https://repo.maven.apache.org')) r.url = mirror
+  }
+}
+beforeSettings { s ->
+  swap(s.pluginManagement.repositories)
+  s.dependencyResolutionManagement.repositories.withType(MavenArtifactRepository).configureEach { r ->
+    if (r.url.toString().startsWith('https://repo.maven.apache.org')) r.url = mirror
+  }
+}
+allprojects { p ->
+  swap(p.repositories)
+  p.buildscript { swap(repositories) }
+}

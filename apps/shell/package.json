@@ -1,0 +1,22 @@
+{
+  "name": "@sen/shell",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "sync": "cap sync android",
+    "typecheck": "tsc -p tsconfig.json",
+    "icons": "node scripts/icons.mjs",
+    "keep-running": "node scripts/keep-running.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.2",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/haptics": "8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.2",
+    "@playwright/test": "1.56.1"
+  }
+}

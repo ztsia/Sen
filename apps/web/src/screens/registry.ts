@@ -18,12 +18,22 @@ export interface ScreenDef {
   slice: string;
 }
 
+// The screens a slice has made real (screens/real.ts holds their components).
+const BUILT = new Set([
+  'settings/capture',
+  'settings/capture/apps',
+  'settings/capture/access',
+  'settings/capture/running',
+  'settings/capture/captured',
+  'settings/account',
+]);
+
 const s = (id: string, title: string, kind: ScreenKind, tab: TabId | undefined, slice: string): ScreenDef => ({
   id,
   title,
   kind,
   tab,
-  status: 'skeleton',
+  status: BUILT.has(id) ? 'real' : 'skeleton',
   slice,
 });
 
@@ -72,6 +82,11 @@ export const SCREENS: ScreenDef[] = [
   s('settings', 'Settings', 'pushed', 'more', 'B04'),
   s('settings/appearance', 'Appearance', 'pushed', 'more', 'B04'),
   s('settings/capture', 'Capture', 'pushed', 'more', 'B02, B09'),
+  // Capture's steps (B02); B08 shows the first three in first-run too
+  s('settings/capture/apps', 'Your apps', 'pushed', 'more', 'B02'),
+  s('settings/capture/access', 'Notification access', 'pushed', 'more', 'B02'),
+  s('settings/capture/running', 'Keep Sen running', 'pushed', 'more', 'B02'),
+  s('settings/capture/captured', 'Captured on this phone', 'pushed', 'more', 'B02; B07 replaces it'),
   s('settings/you', 'You', 'pushed', 'more', 'B08'),
   s('settings/categories', 'Categories and rules', 'pushed', 'more', 'B12'),
   s('settings/email', 'Receipts by email', 'pushed', 'more', 'B19'),

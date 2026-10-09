@@ -1,14 +1,13 @@
-// A light tick on commit, never on scroll (uiux skill). In the shell, the native haptics plugin
-// (B02) answers through the bridge; in a browser, a short vibration where the phone allows it.
-interface ShellBridge {
-  haptic?: (kind: 'light') => void;
-  openInBrowser?: (url: string) => void;
-}
-export const shell = (): ShellBridge | undefined => (window as unknown as { SenShell?: ShellBridge }).SenShell;
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { inShell } from '@/shell/bridge';
 
+// A light tick on commit, never on scroll (uiux skill). In the shell, Capacitor's haptics plugin
+// (B02); in a browser, a short vibration where the phone allows it.
 export function lightTick() {
-  const s = shell();
-  if (s?.haptic) return s.haptic('light');
+  if (inShell()) {
+    void Haptics.impact({ style: ImpactStyle.Light }).catch(() => undefined);
+    return;
+  }
   try {
     navigator.vibrate?.(10);
   } catch {

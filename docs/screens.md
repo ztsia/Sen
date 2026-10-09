@@ -371,6 +371,13 @@ approved amount.
 | Data | *Export everything* (D49), the last backup | Everyone; backups: admin |
 | Account | Your email, *Sign out*, *Sign out everywhere* (§17) | Everyone |
 
+Capture's steps are screens of their own (B02), so first run can show the same ones (B08):
+`settings/capture/apps` (your apps), `settings/capture/access` (notification access, with *Allow restricted
+settings* when its switch is greyed out) and `settings/capture/running` (Keep Sen running). For B02's
+week of soak only, `settings/capture/captured` lists the raw events on the phone with *Share samples* and
+the heartbeat; B07 replaces it. Until B05 builds the rest of Account, it shows the shell's version, and a
+long-press on it opens the hidden tests (`docs/local.md`).
+
 ---
 
 ## Outside the tabs

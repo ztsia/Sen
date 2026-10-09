@@ -1,0 +1,48 @@
+# Run once, by hand (docs/local.md): makes the shell's release signing key and stores it, and its
+# password, as this repository's Actions secrets. Nobody sees either: they're made on the runner,
+# masked in the log, and written straight into the secrets with the owner's short-lived token.
+# It refuses to replace a key: a new key means the phone can't install updates over the app.
+name: Shell signing key
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  key:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Make the key and store it as secrets
+        env:
+          GH_TOKEN: ${{ secrets.SEN_SECRETS_TOKEN }}
+          HAVE_KEY: ${{ secrets.SEN_KEYSTORE_B64 != '' }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ "$HAVE_KEY" = "true" ]; then
+            echo "::error::A key already exists (SEN_KEYSTORE_B64). A new one would stop updates installing over the app on your phone. Delete that secret first only if you mean to start again."
+            exit 1
+          fi
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Add the SEN_SECRETS_TOKEN secret first (docs/local.md)."
+            exit 1
+          fi
+          pass=$(openssl rand -hex 24)
+          echo "::add-mask::$pass"
+          keytool -genkeypair -keystore "$RUNNER_TEMP/sen.jks" -storetype PKCS12 -alias sen \
+            -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=Sen" \
+            -storepass "$pass" -keypass "$pass" 2>/dev/null
+          b64=$(base64 -w0 "$RUNNER_TEMP/sen.jks")
+          echo "::add-mask::$b64"
+          gh secret set SEN_KEYSTORE_PASSWORD --repo "$REPO" --body "$pass"
+          gh secret set SEN_KEYSTORE_B64 --repo "$REPO" --body "$b64"
+          # the certificate's fingerprint is public: it identifies the key, and reveals nothing of it
+          keytool -list -keystore "$RUNNER_TEMP/sen.jks" -storepass "$pass" -alias sen 2>/dev/null | grep -i sha-256 || true
+          rm -f "$RUNNER_TEMP/sen.jks"
+          echo "Done. Now delete the SEN_SECRETS_TOKEN secret, and the token itself on GitHub."

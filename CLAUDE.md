@@ -89,7 +89,8 @@ built module by module, and every feature worked but the app didn't hang togethe
 starts in `ztsia/Sen`. The next slice waits only for the owner's merge.
 
 **Built so far:** B01, the design system and the six looks (the workspace, money, the frame, the
-building blocks, the dev panel and the gallery). Next: B02, the shell and the listener.
+building blocks, the dev panel and the gallery). In progress: B02, the shell and the listener, on
+`B02/shell-listener`.
 
 ## Non-negotiables
 
@@ -133,7 +134,7 @@ building blocks, the dev panel and the gallery). Next: B02, the shell and the li
 | Backend | One Hono API on Vercel Functions, Neon Postgres (Drizzle), Better Auth with emailed codes (D54) |
 | Schedules and realtime | One small Cloudflare Worker: cron triggers that call `/jobs/tick`, and a relay that pushes "something changed" hints, never data (D99, D100) |
 | Storage | Cloudflare R2 for receipt images |
-| AI | Gemini through Vertex AI (D55), called through the Vercel AI SDK. Models are provisional until each phase tests them, named only in `ai/models.ts` (D94) |
+| AI | Claude through Anthropic's own API and Gemini through Vertex AI (D55, D120), both called through the Vercel AI SDK. Models are provisional until each phase tests them on its golden set in `evals/`, named only in `ai/models.ts` (D94) |
 | Agent | Our own small loop in Claude Code's shape: main prompt, skills, tools, subagents (D53), engineered in `spec_v2.md` §12.5 (D94) |
 
 The full table is in `spec_v2.md` §5.1.
@@ -193,6 +194,9 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |
   | `pnpm looks` | Regenerates `apps/web/src/styles/looks.gen.css` from `docs/ui/directions/assets/`; CI fails if it's stale |
   | `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
+  | `gradle -p apps/shell/core test` | The capture core's Kotlin tests; needs no Android SDK |
+  | `bash scripts/android-sdk.sh` | Installs the Android SDK in a cloud session (about 2 minutes), to build the shell's APKs there: then `pnpm --filter @sen/shell sync` and `gradle assembleDebug` in `apps/shell/android` |
+  | `node apps/shell/scripts/icons.mjs` | Renders the launcher and notification icons from the looks' SVGs into the Android resources |
   | `node apps/web/scripts/frame-times.mjs` | Each look's frame times at 390×844 with the CPU slowed 4×, against a running `vite preview` |
 
   The QA database arrives with the server (B05).
@@ -204,15 +208,24 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | `packages/core/` | Pure TypeScript shared by the app, the API and the worker: the money module now; cycles and the template engine later |
   | `packages/looks/` | The six looks as `DIR` modules, ported from `docs/ui/directions/src/`, each loaded only when shown |
   | `apps/api/` | The Hono API (B05) |
-  | `apps/shell/` | The Capacitor shell for Android, with the Kotlin capture plugin (B02) |
+  | `apps/shell/` | The Capacitor shell for Android (B02): application id **`io.github.ztsia.sen`**, name **Sen** (`.debug`, *Sen review*, for the review build). `android/` is the app, with our Kotlin in `app/src/main/java/io/github/ztsia/sen/` (the listener, the outbox, the bridge's two plugins `SenShell` and `SenCapture`) and its emulator tests in `app/src/androidTest/`; `core/` the pure Kotlin capture core (no Android SDK); `data/` the curated apps and the brands' steps; `sites.json` the one address each build loads; `www/` the page shown when the site can't load |
   | `apps/worker/` | The Cloudflare Worker: schedules and the realtime relay (B06) |
   | `scripts/` | The session hooks, the hygiene check and the QA report |
+
+### Models and subagents
+
+The main session (Opus) decides, talks with the owner, works on the non-negotiables, and reviews what
+comes back. It hands work down by judgement, never by ritual. `.claude/agents/` has `implementer`
+(Sonnet), for a change already decided and big enough to be worth a brief; `scout` (Haiku), for
+lookups, logs and summaries; and `qa-reviewer` (Sonnet by default; the main session picks Opus for a
+run when it judges one needs it). A brief costs a cold start, so a small edit is quicker done in place.
+No per-task review loops: the main session reads a subagent's diff itself, and QA checks the slice.
 
 ## Skills
 
 | Skill | Use it when |
 |---|---|
-| `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent and **sets the three tiers for fixing what QA finds** |
+| `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent and **sets the three tiers for fixing what QA finds**: small fixes self-verified, scoped ones re-checked by resuming the last run's reviewer, and a fresh full run only when a fix reaches the whole flow (D117, D121) |
 | `uiux` | Choosing shadcn components for a screen, building one, or checking one before it's done. Ported from GCO_events (D43): it reads its component index first, then only the docs it shortlists |
 | `dataviz` | Any chart, stat tile or chart colour. It comes from the owner's claude.ai account, not the repo |
 | `frontend-design` | Narrowed when `S2` closed (D57, D84): only for a look's own drawing (its figure, strip, avatar, tab bar and reveal) or a new look for the pool. Every screen follows `docs/ui/patterns.md` and `uiux` instead. Installed with `npx skills add` |
@@ -222,8 +235,9 @@ Works from a phone through cloud sessions, rarely at a laptop.
 The stack's own skills came with `npx skills add` (B01), because cloud sessions don't load plugins:
 `shadcn` (shadcn/ui's CLI and components), `vercel-react-best-practices` and `web-design-guidelines`
 (vercel-labs), and `capacitor-app-development`, `capacitor-plugins`, `capacitor-plugin-development`,
-`capacitor-react` and `capacitor-push-notifications` (Capawesome). Where one disagrees with `uiux`,
-`patterns.md` or a decision, ours win.
+`capacitor-react` and `capacitor-push-notifications` (Capawesome), with `capacitor-app-creation` added
+in B02 for creating the shell. Where one disagrees with `uiux`, `patterns.md` or a decision, ours
+win; a build session never stops to ask the questions a skill says to ask.
 
 Skills are model-invoked from their descriptions, so no session needs to be told to use one.
 **Our own skills are knowledge, not modes (D82).** Invoking one loads what to do and what must be

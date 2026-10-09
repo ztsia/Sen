@@ -1,0 +1,157 @@
+# The Android shell (B02): the capture core's tests, both APKs, and the emulator's tests.
+# On any branch when the shell, the web app it loads, or this file changes. The release key is the
+# one secret here (spec §17); a fork's PR never sees it, and builds unsigned.
+name: Shell
+
+on:
+  push:
+    paths:
+      - 'apps/shell/**'
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/shell.yml'
+  pull_request:
+    paths:
+      - 'apps/shell/**'
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/shell.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shell-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: 8.14.3
+      - name: The capture core, pure Kotlin (OTP filter, classifier, dedupe key, the gate)
+        run: gradle -p apps/shell/core test
+
+  apks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # a release on main, so the owner installs from one link (docs/local.md)
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Each brand's steps, fresh from dontkillmyapp.com (the committed file if it can't be reached)
+        run: node apps/shell/scripts/keep-running.mjs || echo "::warning::dontkillmyapp.com didn't answer; kept the committed keep-running.json"
+      - name: Capacitor's files into the Android project
+        run: pnpm --filter @sen/shell sync
+      - name: The release key, from the Actions secrets
+        env:
+          SEN_KEYSTORE_B64: ${{ secrets.SEN_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$SEN_KEYSTORE_B64" ]; then
+            echo "$SEN_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/sen.jks"
+            echo "SEN_KEYSTORE_FILE=$RUNNER_TEMP/sen.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No SEN_KEYSTORE_B64 secret yet, so the release is unsigned (docs/local.md: run the Shell signing key workflow once)"
+          fi
+      - name: Build release and debug
+        working-directory: apps/shell/android
+        env:
+          SEN_VERSION_CODE: ${{ github.run_number }}
+          SEN_KEYSTORE_PASSWORD: ${{ secrets.SEN_KEYSTORE_PASSWORD }}
+        run: ./gradlew assembleRelease assembleDebug --no-daemon
+      - name: Name the APKs
+        id: apk
+        run: |
+          v="0.2.${{ github.run_number }}"
+          mkdir -p out
+          release=$(ls apps/shell/android/app/build/outputs/apk/release/*.apk)
+          cp "$release" "out/sen-$v.apk"
+          cp apps/shell/android/app/build/outputs/apk/debug/app-debug.apk "out/sen-review-$v.apk"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "signed=$([ -n "${SEN_KEYSTORE_FILE:-}" ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
+          rm -f "$RUNNER_TEMP/sen.jks"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sen-${{ steps.apk.outputs.version }}
+          path: out/*.apk
+          retention-days: 30
+      - name: On main, a release the phone can download
+        if: github.ref == 'refs/heads/main' && steps.apk.outputs.signed == 'yes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${{ steps.apk.outputs.version }}"
+          gh release create "shell-v$v" out/*.apk --target "$GITHUB_SHA" --title "Sen $v" \
+            --notes "Install sen-$v.apk on your phone. sen-review-$v.apk is the review build: capture off, it loads the branch under review."
+
+  emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
+      - run: pnpm --filter @sen/shell sync
+      - name: The web app, as production builds it
+        run: SEN_ENV=production pnpm --filter @sen/web exec vite build --outDir dist-e2e
+      - name: Served on the runner, as the e2e build's site (localhost:4173)
+        run: nohup node apps/shell/e2e/serve.mjs apps/web/dist-e2e 4173 > "$RUNNER_TEMP/serve.log" 2>&1 &
+      - name: The e2e app and its tests, built before the emulator starts
+        working-directory: apps/shell/android
+        run: ./gradlew assembleE2e assembleE2eAndroidTest --no-daemon
+      - name: Hardware acceleration for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Capture and the shell, on an Android 14 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          working-directory: apps/shell/android
+          script: |
+            adb reverse tcp:4173 tcp:4173
+            ./gradlew connectedE2eAndroidTest --no-daemon
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-reports
+          path: |
+            apps/shell/android/app/build/reports/androidTests/
+            apps/shell/android/app/build/outputs/androidTest-results/
+          retention-days: 7

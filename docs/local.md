@@ -53,6 +53,71 @@ follow on a phone, and commit.
          preview for the `B01/design-system` branch (its PR has the link): it has the dev panel on the
          left edge, and */dev/gallery*.
       Sessions never deploy and never hold a Vercel token: every push deploys through this link.
+- [ ] **B02: the shell on your phone.** Four parts, in this order. The first three take a few minutes
+      each; the soak is a week of ordinary use.
+      1. **The signing key, once** (so every update installs over the last). Nobody sees the key: a
+         workflow makes it and writes it into the repo's secrets itself.
+         - github.com → your avatar → *Settings* → *Developer settings* → *Personal access tokens* →
+           *Fine-grained tokens* → *Generate new token*. Name `sen-key`, expiry **7 days**,
+           *Repository access* → *Only select repositories* → **ztsia/Sen**, *Permissions* →
+           *Repository permissions* → **Secrets: Read and write**. *Generate*, and copy it.
+         - *ztsia/Sen* → *Settings* → *Secrets and variables* → *Actions* → *New repository secret*:
+           name `SEN_SECRETS_TOKEN`, paste the token.
+         - *ztsia/Sen* → *Actions* → **Shell signing key** → *Run workflow*. When it's green, delete
+           the `SEN_SECRETS_TOKEN` secret, and delete the token on GitHub. The repo now holds
+           `SEN_KEYSTORE_B64` and `SEN_KEYSTORE_PASSWORD`; never delete those, or updates stop
+           installing over the app (you'd uninstall, and lose what's only on the phone).
+      2. **Two Vercel addresses.** After *Link Vercel* above:
+         - **Production:** the project's *Domains* shows it, such as `sen-xxxx.vercel.app`.
+         - **The review alias** (§17: the debug build loads one fixed address, never `*.vercel.app`):
+           *Settings* → *Domains* → *Add*, type `sen-review.vercel.app` (or any free
+           `….vercel.app` name), and connect it to the **Preview** environment with **Git branch
+           `review`**. A session points it at the branch under review by pushing that branch to
+           `review`.
+         - Paste both addresses into a session. It writes them into `apps/shell/sites.json`; the next
+           build loads them. Then open the review alias in your phone's Chrome: if Vercel asks you to
+           log in, say so in the session (the debug build then needs a bypass; nothing else changes).
+      3. **Install and set up.** The *Shell* workflow builds both apps on every push. After B02 is
+         merged, *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* → tap `sen-0.2.N.apk` (Chrome asks
+         to allow installing unknown apps: allow it for Chrome). Before the merge, the run's page has
+         them under *Artifacts* (a zip). Then in Sen: *More* → *Settings* → *Capture*:
+         - *Your apps*: tap *Choose these*, or tick yours.
+         - *Notification access* → *Open settings*, find Sen, switch it on. **Greyed out?** Back in
+           Sen, *Open Sen's app info*, tap ⋮ at the top right → *Allow restricted settings*, then try
+           again.
+         - *Keep Sen running*: *Allow*, then *Autostart* on, *Battery saver* → *No restrictions*,
+           and lock Sen in recent apps (open recents, drag Sen's card down or long-press → padlock).
+      4. **The soak, a week** (B02 done-when 6). Pay as you normally do. Now and then open *Settings* →
+         *Capture* → *Captured on this phone*: each payment should be there, and the ♥ (*Heartbeat*) at the top
+         shows the listener's checks. **Reboot once**, and **leave the phone alone for a day once**;
+         the heartbeat should show it carrying on after both. Then:
+         - *Share samples*: tick the new notifications (Ryt's duplicates with their times, a TNG QR
+           payment, a toll, …) and share them into a cloud session, which anonymises them into
+           `docs/notifications.md`. Real text never goes into the repo.
+         - Say whether anything from an app you didn't choose ever showed up (it must not).
+         - Say whether any row shows a one-time code or TAC you could read (it must not: long
+           numbers show as `•`, D119). Expect Ryt's dates as `••/•/••••`; that's the mask, not a fault.
+           (QA B02 run 6)
+      The **hidden tests** are behind a long-press on *Version* in *More* → *Settings* → *Account*,
+      in the next two items.
+- [ ] **Does your launcher keep Sen's icon when the look changes?** (D77) In the installed release, long-press
+      *Version* (*More* → *Settings* → *Account*) and tap **Switch icon**. Put Sen on your home screen first,
+      then press Home after tapping and check, on the home screen and in the app drawer:
+      - Sen's icon changed (Minted ↔ Instrument) and stayed where it was
+      - no second Sen icon appeared, and nothing went missing
+      - a Sen widget, if one exists by then, still updates
+      Tap it again to switch back. Report what you saw in a cloud session. If anything misbehaved, the
+      icon stays fixed and only the inside of the app rotates.
+- [ ] **Does your phone show Sen's moments in the Hyper Island?** (D101, `spec_v2.md` §21 Q27) Same
+      place, **Test island**. Then:
+      - does the pill appear at the top, and does tapping it expand into the full card with its
+        buttons?
+      - does it count down and close by itself after a minute?
+      - **Test category prompt**: do its three buttons show and work when you pull the notification
+        down?
+      Separately, install the demo app from github.com/D4vidDf/HyperIsland-ToolKit (*Releases*), and
+      check whether its demo notifications show as the island. If they do, a session adds Xiaomi's
+      own island as a second implementation; if not, Sen stays on the standard one.
 - [ ] **Add the `DENYLIST` secret to `ztsia/Sen`** (B01). github.com → *ztsia/Sen* → *Settings* →
       *Secrets and variables* → *Actions* → *New repository secret*. Name: `DENYLIST`. Value: one
       string per line that must never appear in the repo, such as your employer's name and ESS's
@@ -168,25 +233,6 @@ values in *Production* only), never into the repo or a chat:
 Each slice that needs one of these lists it under *Needs from you first* in its brief
 (`docs/briefs/`), and writes the exact steps here before it starts.
 
-- [ ] **Does your launcher keep Sen's icon when the look changes?** (D77) Once the first build of the
-      Android shell is on your phone, a session adds a hidden *Switch icon* button. Put Sen on your
-      home screen, tap the button, then press Home and check, on the home screen and in the app
-      drawer:
-      - Sen's icon changed and stayed where it was
-      - no second Sen icon appeared, and nothing went missing
-      - its long-press shortcuts (*Scan receipt*, *Add expense*) still work
-      - a Sen widget, if you've added one, still updates
-      Report what you saw in a cloud session. If anything misbehaved, the icon stays fixed and only
-      the inside of the app rotates.
-
-- [ ] **Does your phone show Sen's moments in the Hyper Island?** (D101, `spec_v2.md` §21 Q27) Once the
-      first shell build is on your phone, a session adds a hidden *Test island* button. Tap it, then:
-      - does the pill appear at the top, and does tapping it expand into the full card with its
-        buttons?
-      - does it count down and close by itself?
-      Separately, install the demo app from github.com/D4vidDf/HyperIsland-ToolKit (*Releases*), and
-      check whether its demo notifications show as the island. If they do, a session adds Xiaomi's
-      own island as a second implementation; if not, Sen stays on the standard one.
 - [ ] **Does TNG accept a QR shared from Sen?** (D101, Q28) In B18, a session adds *Pay with TNG*.
       Try it with a test QR, then the same in Ryt and MAE, and say which opened the payment screen,
       and whether TNG filled in an amount carried in the QR.

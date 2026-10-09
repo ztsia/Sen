@@ -1,0 +1,48 @@
+# The OTP and TAC filter's strong keywords (spec §6.2, D86, D115). A notification is dropped in native
+# code, before anything is stored, when one of these appears outside its advice sentences ("never share
+# your TAC") and a code appears anywhere in the rest of it. OtpFilter.kt says what a code is, which
+# sentences are advice, and the weak keywords (PIN, kod, code, password), which count only when joined
+# straight to their code.
+#
+# Strong means: a notification that says this word and carries a code is about that code. Keep words
+# that a payment, a receipt or a merchant's name uses in other senses out of this list; make them weak
+# in OtpFilter.kt instead. Left out for that reason: "authorisation code" (a card receipt's approval),
+# "Secure2u" (Maybank's approval app, named in its payment notifications).
+#
+# Keywords match as whole words, in any case. English and Malay. One per line; '#' starts a comment.
+# OtpFilterTest checks the list against made-up OTPs and payments (QA B02's cases included), and against
+# every anonymised sample in docs/notifications.md, none of which may be dropped. Add a keyword when a
+# new sample shows one, with the sample anonymised in docs/notifications.md.
+
+# English
+otp
+tac
+mtac
+one-time password
+one time password
+one-time passcode
+one time passcode
+one-time pin
+one time pin
+one-time code
+one time code
+transaction authorisation code
+transaction authorization code
+verification code
+security code
+authentication code
+passcode
+login code
+log-in code
+sign-in code
+secure verification
+
+# Malay
+kod tac
+kod otp
+kod pengesahan
+kod keselamatan
+kod sekali guna
+kata laluan sekali
+kata laluan sekali guna
+nombor tac

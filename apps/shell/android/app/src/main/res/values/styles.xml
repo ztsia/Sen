@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app's theme: no action bar; the web app draws everything, edge to edge. -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/sen_background</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="AppTheme" />
+
+    <!-- The splash (Android 12's, through androidx on older phones): the launcher icon on the look's
+         background, held until the page has painted (MainActivity). -->
+    <style name="AppTheme.Launch" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/sen_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_minted</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+    </style>
+</resources>

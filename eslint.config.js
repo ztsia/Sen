@@ -83,6 +83,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/dist/**',
       '**/dist-production/**',
+      'apps/web/dist-*/**',
       'docs/ui/directions/**',
       '.claude/**',
       'coverage/**',
@@ -90,6 +91,9 @@ export default tseslint.config(
       '**/test-results/**',
       'qa-artifacts/**',
       'apps/web/src/styles/looks.gen.css',
+      // The shell's Android project: Gradle's outputs and Capacitor's copies of www/.
+      'apps/shell/android/**',
+      'apps/shell/core/build/**',
     ],
   },
   js.configs.recommended,

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Minted's background and foreground (docs/ui/directions/assets/minted/tokens.json), behind the
+         splash and the WebView before the page paints, so a launch doesn't flash white in dark mode. -->
+    <color name="sen_background">#EEF1F2</color>
+    <color name="sen_foreground">#0F2238</color>
+</resources>

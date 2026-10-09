@@ -18,3 +18,13 @@ export function updatedAgo(then: Date, now: Date = new Date()): string {
   if (h < 24) return `Updated ${h} h ago`;
   return `Updated ${dayLabel(then)}`;
 }
+
+const dayKey = new Intl.DateTimeFormat('en-CA', { timeZone: KL, year: 'numeric', month: '2-digit', day: '2-digit' });
+
+/** `Today, 21:02`, `Yesterday, 09:15`, else `Thu, 8 Oct, 21:02`: a moment, relative when recent, in Kuala Lumpur. */
+export function momentLabel(then: Date, now: Date = new Date()): string {
+  const t = dayKey.format(then);
+  if (t === dayKey.format(now)) return `Today, ${timeLabel(then)}`;
+  if (t === dayKey.format(new Date(now.getTime() - 86_400_000))) return `Yesterday, ${timeLabel(then)}`;
+  return `${dayLabel(then)}, ${timeLabel(then)}`;
+}
