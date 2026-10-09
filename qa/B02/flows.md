@@ -159,3 +159,58 @@ FLOW-20 The simulator and the core agree                                   (sad)
 Still none marked core in `docs/flows.md` (open with the owner since run 1). By the owner's scope for this
 run, the other journeys aren't walked; the capture path above stands in for the "payment captured" journey
 the handoff recommends as core.
+
+## Run 6: the capture path only (scoped)
+
+Written from the docs before reading the implementation. Walked in Chromium at 412×915 through the dev
+simulator panel (the listener itself is native; its Kotlin core is exercised by `Probe6.kt`).
+Every notification is made up.
+
+```
+R6-FLOW-1  A payment from a chosen app lands on Captured, exactly          (happy)
+           Entry  dev panel -> simulate Ryt Bank "Card payment completed 👍" /
+                  "RM12.90 paid at Kedai Kopi 椰 using your Main Account."
+           Steps  1. open settings/capture/captured  2. simulate  3. reload the list
+           Ends   one new top row: Ryt Bank + KL time; title and text byte-identical; no muted line
+           Covers R6-AC-14, R6-AC-19
+
+R6-FLOW-2  An unchosen app and an OTP leave nothing                        (sad)
+           Entry  dev panel
+           Steps  1. simulate an unchosen app's payment  2. simulate a chosen app's "Your TAC is 482913."
+                  3. open Captured
+           Ends   row count unchanged; "482913" nowhere on the page
+           Covers R6-AC-1, R6-AC-2, R6-AC-3, R6-AC-22
+
+R6-FLOW-3  A payment with a TAC footer and a store number is masked       (sad)
+           Entry  dev panel -> "Paid RM12.90 at KEDAI 4829. Never share your TAC."
+           Steps  1. simulate  2. open Captured
+           Ends   the row reads "Paid RM12.90 at KEDAI ••••. Never share your TAC." with the muted line
+           Covers R6-AC-10, R6-AC-11, R6-AC-20, R6-AC-22
+
+R6-FLOW-4  The same notification twice                                     (sad)
+           Entry  dev panel: post the same notification (same key, same when) twice
+           Ends   one row
+           Covers R6-AC-15
+
+R6-FLOW-5  A no-OTP-word notification with a long reference                (sad; D119)
+           Entry  dev panel -> Grab "Your GrabPay Wallet has been charged MYR 12.40 for booking
+                  00129876543-K4XQ2PLM7RTWA-G-1."
+           Ends   the reference's long digit run masked, MYR 12.40 kept, no muted line (not marked)
+           Covers R6-AC-14, R6-AC-20
+
+R6-FLOW-6  Share samples of a masked row                                  (sad)
+           Steps  1. Captured -> Share samples  2. tick the masked row by tapping its body  3. share
+           Ends   shared text holds "••••", not "4829"
+           Covers R6-AC-23
+
+R6-FLOW-7  Another timezone                                               (sad)
+           Entry  browser timezone America/New_York; simulate a post at 23:30 KL on 31 Oct 2026
+           Ends   the row shows the KL time and date
+           Covers R6-AC-21
+```
+
+### Core journeys
+
+`docs/flows.md` still marks no journey as core (open with the owner, `docs/handoff.md`). None of the
+candidate journeys (`pay-known`, `pay-new`, `scan-after`) is reachable in B02, whose capture stops at
+the outbox. R6-FLOW-1 is the capture path's end-to-end walk and stands in for them.

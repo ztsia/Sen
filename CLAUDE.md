@@ -134,7 +134,7 @@ building blocks, the dev panel and the gallery). In progress: B02, the shell and
 | Backend | One Hono API on Vercel Functions, Neon Postgres (Drizzle), Better Auth with emailed codes (D54) |
 | Schedules and realtime | One small Cloudflare Worker: cron triggers that call `/jobs/tick`, and a relay that pushes "something changed" hints, never data (D99, D100) |
 | Storage | Cloudflare R2 for receipt images |
-| AI | Gemini through Vertex AI (D55), called through the Vercel AI SDK. Models are provisional until each phase tests them, named only in `ai/models.ts` (D94) |
+| AI | Claude through Anthropic's own API and Gemini through Vertex AI (D55, D120), both called through the Vercel AI SDK. Models are provisional until each phase tests them on its golden set in `evals/`, named only in `ai/models.ts` (D94) |
 | Agent | Our own small loop in Claude Code's shape: main prompt, skills, tools, subagents (D53), engineered in `spec_v2.md` §12.5 (D94) |
 
 The full table is in `spec_v2.md` §5.1.

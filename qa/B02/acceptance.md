@@ -541,3 +541,189 @@ AC-65 Done-when 4, with the mask
              reconnect replay adds nothing, a doubtful OTP stored masked with its code nowhere in the outbox
 AC-65s Then  the test that claims "nowhere in the outbox" reads every table, not only `events.text`
       Spec   brief *Done when* 4; D116
+
+## Run 6: the capture path only (scoped; spec §6.2, D86, D115, D116, D119)
+
+Written from `spec_v2.md` §6.2 and §6.5, `docs/decisions.md` D86, D115, D116, D119,
+`docs/screens.md` (`settings/capture/captured`, *Native surfaces*) and `docs/ui/patterns.md` §7
+(*Raw notification row*), before reading any implementation. The first draft was written at `8e2e457`,
+where D119 was cited by commit messages but not yet in the docs; the branch then gained `2474aff`
+(D119 in `decisions.md` and §6.2), and the criteria below were amended to it before any source was
+opened: until B09/B10, **every** kept notification has its 4+ digit runs outside amounts masked,
+whatever its words; *maybe OTP* marks only those with an OTP word. Every notification below is made up.
+
+```
+R6-AC-1  An unchosen app is dropped before anything
+         Given  chosen apps = {Ryt Bank}
+         When   an unchosen package posts "Paid RM12.90 at KEDAI MAJU"
+         Then   0 outbox rows, 0 drop-log entries (no record of other apps kept)
+         Twin   the same text from Ryt Bank -> exactly 1 outbox row
+         Spec   §6.2 ¶3, D86, CLAUDE.md non-negotiable (listener)
+
+R6-AC-2  The chosen-apps check runs before the OTP filter
+         Given  an unchosen package
+         When   it posts "Your TAC is 482913"
+         Then   0 rows and 0 drop-log entries (a drop log names only chosen apps)
+         Twin   the same OTP from a chosen app -> 0 rows, 1 drop-log entry
+         Spec   §6.2 ¶3-¶5
+
+R6-AC-3  A clear OTP/TAC from a chosen app is dropped, English and Malay
+         When   a chosen app posts "Your TAC is 482913." / "Kod pengesahan anda ialah 482913." /
+                title "OTP" text "482913 is your code"
+         Then   0 rows; the code string appears nowhere in the outbox database file
+         Twin   a payment whose footer is advice only ("Never share your TAC with anyone."), no code ->
+                1 row (and see R6-AC-11 for its masking)
+         Spec   §6.2 ¶5, D115
+
+R6-AC-4  Advice that points at a code is evidence
+         When   "Use 482913 to approve. Do not share this code."
+         Then   dropped (0 rows)
+         Twin   "Paid RM12.90 at KEDAI MAJU. Never share your TAC." -> kept
+         Spec   §6.2 ¶5
+
+R6-AC-5  A weak keyword only with its code in the same sentence, outside a promotion
+         When   "Your PIN is 4829." -> dropped
+         Twin   "Promo! Use code 4829 for 10% off." -> kept;
+                "Paid RM12.90. Code of conduct applies. Store 4829." -> kept
+         Spec   §6.2 ¶5
+
+R6-AC-6  A reference's own code is never a code
+         When   "Payment of RM12.90 successful. Payment code 48291375." /
+                "Bayaran RM12.90 berjaya. Kod rujukan 48291375."
+         Then   kept (1 row each)
+         Twin   "Your verification code is 48291375." -> dropped
+         Spec   §6.2 ¶5
+
+R6-AC-7  Code shapes the filter must read
+         When   a strong keyword with the code grouped ("482 913"), one digit at a time
+                ("4 8 2 9 1 3"), prefixed ("G-482913"), or in non-ASCII digits (fullwidth ４８２９１３)
+         Then   dropped (0 rows) each
+         Twin   a strong keyword whose only numbers are an amount (RM4,829.00), a date (09-10-2026),
+                a time (21:47) or a phone number (03-2345 6789) -> not dropped as an OTP
+         Spec   §6.2 ¶5
+
+R6-AC-8  Each drop is logged once, by time and app, never text
+         When   the same dropped OTP is posted twice (same key, same when)
+         Then   1 drop-log entry carrying a time and the package, and no title/text
+         Twin   two different OTPs -> 2 entries
+         Spec   §6.2 ¶5
+
+R6-AC-9  Group summaries, ongoing notifications and dropped channels never reach storage
+         When   a chosen app posts a group summary / an ongoing notification / on a channel in the drop list
+         Then   0 rows each
+         Twin   the same text as a normal notification on another channel -> 1 row
+         Spec   §6.2 ¶4, D115, B02 brief (channel drop list)
+
+R6-AC-10 A kept notification with an OTP word and a 4+ digit run is masked and marked (D116)
+         When   "Paid RM12.90 at KEDAI 4829. Never share your TAC."
+         Then   stored text "Paid RM12.90 at KEDAI ••••. Never share your TAC.", maybe_otp = true
+         Twin   "Paid RM12.90 at KEDAI 482. Never share your TAC." (3 digits) -> stored unchanged,
+                maybe_otp = false (nothing was masked, so nothing to say)
+         Spec   §6.2 ¶6, D116, D119
+
+R6-AC-11 Amounts are left in a masked notification
+         When   an OTP word plus "RM 1,250.00", "MYR 12.40", "RM12.40", "RM 4829", "12.40"
+         Then   each amount is stored as written; only other 4+ digit runs become •
+         Twin   a bare "4829" in the same text -> "••••"
+         Spec   §6.2 ¶6
+
+R6-AC-12 Every stored field is masked: title, text and expanded text
+         When   the 4+ digit run is only in the expanded text (or only in the title) and the OTP word
+                in another field
+         Then   that field's digits are •, maybe_otp = true
+         Twin   n/a (same rule, other field)
+         Spec   §6.2 ¶6 ("a notification ... carries an OTP word anywhere")
+
+R6-AC-13 The dedupe key comes from the masked text; the code never reaches storage, not even hashed
+         Given  two notifications identical in package, key and when, differing only in masked digits
+         Then   1 row; the stored dedupe_key equals hash(masked fields); the unmasked digit string is
+                absent from the outbox database file
+         Twin   a different `when` -> 2 rows
+         Spec   §6.2 ¶6, ¶8
+
+R6-AC-14 Raw text is stored exactly as the app wrote it, apart from masking
+         When   a chosen app posts text with a curly apostrophe, an emoji, Chinese characters,
+                doubled spaces and a newline
+         Then   the stored title/text/bigText are byte-identical to what was posted; package, channel,
+                key, postTime and when are all stored
+         Twin   a notification with no OTP word but a 4+ digit run ("charged MYR 12.40 for booking
+                00129876543-K4XQ2PLM7RTWA-G-1") -> the long run masked, MYR 12.40 and "-G-1" kept,
+                maybe_otp = false, and no muted line on Captured (D119)
+         Spec   §6.2 ¶6-¶8, D119
+
+R6-AC-15 Dedupe key: package + key + when + text, length-prefixed
+         When   the same notification is posted twice (identical four parts)
+         Then   1 row
+         Twin   identical text with a different `when` -> 2 rows; title "AB"+text "C" against
+                title "A"+text "BC" (same key, when) -> 2 rows; a different package, same key -> 2 rows
+         Spec   §6.2 ¶8, §6.5, D115
+
+R6-AC-16 A listener reconnect replay adds nothing
+         When   the notifications still showing are replayed after a reconnect
+         Then   row count unchanged
+         Spec   §6.2 ¶8, brief Done-when 4
+
+R6-AC-17 The outbox enforces uniqueness itself
+         When   a row with an existing dedupe_key is inserted directly
+         Then   the database refuses or ignores it (UNIQUE), row count unchanged
+         Spec   brief *Raw events go to a SQLite outbox* (`UNIQUE`), CLAUDE.md (dedupe key)
+
+R6-AC-18 Hostile and odd input never crashes the listener and never stores a code
+         When   a 5,000-character text, an empty title, a null text, zero-width characters inside a
+                code next to an OTP word
+         Then   no exception escapes; the OTP-bearing ones are dropped or masked, never stored raw
+         Spec   §6.2, §18
+
+R6-AC-19 *Captured on this phone* shows what was stored, newest first
+         When   three events are captured in order A, B, C
+         Then   the list shows C, B, A; each row: app and time on one line, then title and text exactly
+                as stored, selectable
+         Twin   an empty outbox -> the empty state from patterns.md, not a blank screen
+         Spec   screens.md `settings/capture/captured`, patterns.md §7 *Raw notification row*
+
+R6-AC-20 A maybe-OTP row says so; others don't
+         Then   a masked row shows its • text and the muted line
+                "Maybe a one-time code, so its numbers are hidden"
+         Twin   an unmasked row has no such line
+         Spec   patterns.md §7, §6.2 ¶6, D116
+
+R6-AC-21 The time on a row is Kuala Lumpur time, whatever the device's timezone
+         When   the browser runs in America/New_York and an event is posted at 23:30 KL
+         Then   the row shows 11:30 PM (or 23:30) and the KL date
+         Spec   CLAUDE.md conventions (dates in Asia/Kuala_Lumpur)
+
+R6-AC-22 The simulator goes through the same gate as the listener
+         When   the dev simulator posts an unchosen-app notification, an OTP, a masked case and a payment
+         Then   Captured shows only the payment and the masked case, masked exactly as the Kotlin core
+                masks the same input
+         Spec   CLAUDE.md (simulator panel), screens.md *Native surfaces*
+
+R6-AC-24 Digits are read as the filter reads them (D119)
+         When   a kept notification holds a run as "482\u2009913", "４８２９１３", "(482) 913", "482_913",
+                "48\u200B29\u200B13", "𝟒𝟖𝟐𝟗𝟏𝟑" (math bold), "④⑧②⑨①③"
+         Then   no 4 of its digits survive in order in the stored text
+         Twin   short separate numbers stay: "Table 12, No. 123, 9:47 PM" stored unchanged
+         Spec   §6.2 ¶6 (D119: "any Unicode digit, across spaces, dashes, dots, brackets and invisible characters")
+
+R6-AC-25 What the filter can't read is kept masked and marked; what can't be read at all is dropped as *unread*
+         When   the filter fails on a notification (an internal error)
+         Then   it is stored masked with maybe_otp = true; if even that fails, 0 rows and one drop-log
+                entry with reason *unread*, time and app only; the listener does not crash
+         Spec   §6.2 ¶6 (D119)
+
+R6-AC-26 OTP wording without a listed word is never stored readable
+         When   "Masukkan 482913 untuk sahkan transaksi." / "Nombor pengesahan anda ialah 482913." /
+                "您的验证码是482913"
+         Then   dropped, or stored with no 4 of the code's digits readable
+         Spec   CLAUDE.md non-negotiable, D116, D119 (added after reading run 5's AC-63)
+
+R6-AC-27 The bridge hands the page only stored, masked text
+         Then   the page's event list gives the masked fields and `maybeOtp`; a dropped event never appears
+         Spec   §6.2 ¶3, CLAUDE.md (added after reading run 5's AC-56)
+
+R6-AC-23 Share samples shares what was stored, never more
+         When   a masked row and a plain row are ticked and shared
+         Then   the shared text holds the • digits, never the original; the checkbox leads and the
+                whole row ticks it
+         Spec   brief *Share samples*, patterns.md §7, D116
+```

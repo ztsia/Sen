@@ -83,9 +83,13 @@ model writes is ever stored.**
 - **Every call** is recorded in `ai_usage`, with its tokens and outcome, and no cost column.
 
 ### The model
-- **Benchmark two or three cheap candidates** on `notifications.md`'s samples, scoring how many
-  templates pass code's checks first time, with latency and tokens. Name the winner only in
-  `ai/models.ts`, and record a decision.
+- **Build the eval harness, `evals/`, the first slice to call a model** (D120): one golden set per job
+  (anonymised cases with their expected answers, from `notifications.md` and the soak's samples), a
+  runner that calls each candidate through the AI SDK, and scores by code (the class, whether the
+  template passes code's checks, the amount read), with tokens, cost and latency. Later phases add
+  their own job's set (receipts in P4, the agent in P6).
+- **Benchmark the cheap candidates** on it: Claude Haiku 5.5, Gemini 3.5 Flash-Lite and, for
+  classifying, Jev. Name the winner only in `ai/models.ts`, and record a decision.
 - **The live drafter test needs a key, so it runs in the benchmark session only.** CI replays
   recorded model responses to test the checks.
 
