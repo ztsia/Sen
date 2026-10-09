@@ -1,90 +1,90 @@
 # QA · B02 · The shell and the listener
 
-**Report with screenshots:** https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA
+**Report with screenshots:** https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA (run 2; run 1's record is
+`report-run1.md`)
 
-Run 1, 9 Oct 2026, at `45aacca`, by the `qa-reviewer` subagent (its final message, saved here because
-the harness refused its own write). The HTML report with screenshots is linked below once published.
+Run 2, 9 Oct 2026, at `1a7827d`, a fresh `qa-reviewer` after run 1's tier-3 fixes (its final message,
+saved here because the harness refused its own write).
 
 ```
 VERDICT   fix first
-          52 criteria, 36 pass, 9 fail, 7 not reachable
-          phases run: 1-6 (B02 has no server, so phase 4 ran the outbox's SQLite schema instead)
-          screenshots: 46
+          46 criteria, 35 pass, 2 fail, 9 not reachable
+          phases run: 1-6 (no server: phase 4 ran the outbox's SQLite schema and the APK manifests)
+          screenshots: 40
 ```
 
-Suites: Vitest 141/141; Kotlin core 22/22; the branch's Playwright 98/98; typecheck and lint clean;
-CI emulator (run 37881271168) 7 tests, 5 pass, 2 fail; QA's own Playwright 15, 13 pass (findings 7, 10).
+Suites: unit 141/141; Kotlin core 25/25; the branch's Playwright 100/100; typecheck, lint, format clean;
+hygiene passes (private/ only, no DENYLIST yet); CI Shell run 37884510996 on `1a7827d`: core, both APKs
+and the emulator all green (7/7). QA's Playwright: 17, 16 pass (FLOW-5, finding 4). QA's core probe
+`Probe2`: 31 cases, 11 fail (findings 1 and 2).
 
 ## Findings, worst first
 
 | # | Severity | What breaks | Repro | AC / spec |
 |---|---|---|---|---|
-| 1 | Major | Done-when 3 fails on CI, and its test can't prove the bridge is refused to another origin | run 37881271168 (ShellTest.kt:99) | AC-3, §17 |
-| 2 | Major | Done-when 4's unchosen-app test fails on CI, and it races its own marker | same run (CaptureListenerTest.kt:59) | AC-23, §6.2 |
-| 3 | Major | The OTP filter keeps `OTP123456`, "…code is…", "Kod anda ialah…" and "Your PIN is…" | `gradle -p apps/shell/core jar && gradle -p qa/B02/core-probe test` | AC-24, §6.2 |
-| 4 | Major | The OTP filter silently drops real payments that mention TAC, OTP or a security warning | same | AC-25, §6.2, §6.6 |
-| 5 | Minor | The branch's "never caches the API" test is decorative | worker changed to cache /api/: test stays green | AC-7, D114 |
-| 6 | Minor | The heartbeat's last-event time moves on every duplicate and replay | `Capture.kt` store() | AC-30, §6.2 |
-| 7 | Minor | *Share samples* with nothing ticked acts anyway | FLOW-9 step 2 | AC-52 |
-| 8 | Minor | The simulator can't walk the sad paths: no OTP, no re-post, always a Xiaomi | dev panel | AC-44, AC-49 |
-| 9 | Minor | The soak and Account rows are built by hand instead of from patterns.md's rows | captured, account | AC-60 |
-| 10 | Minor | More has two "Account" and two "Claims" rows | /more | AC-61 |
-| 11 | Minor | The handoff said B02 "not started"; cloud.md §5's emulator row is blank though the emulator ran | docs | AC-62, done-when 9 |
-| 12 | Minor | The dedupe key also hashes title and expanded text, beyond spec §6.2, frozen once B07 syncs | core probe | AC-28 |
-| 13 | Note | A U+001F inside a field produces a key collision, despite the comment | core probe | AC-28 |
-| 14 | Note | *Choose these 5* ticks Google Wallet as well as the owner's four apps | Your apps | D88 |
-| 15 | Note | *Keep Sen running* says "Tested on a Xiaomi" before any Xiaomi test has happened | Keep Sen running | §6.2 |
+| 1 | Blocker | The OTP/TAC filter stores OTPs in six ordinary shapes | `gradle -p apps/shell/core jar && gradle -p qa/B02/core-probe test --tests Probe2` | AC-17, §6.2, CLAUDE.md non-negotiable |
+| 2 | Major | Real payments are silently dropped as OTPs when a security footer meets any 6–8 digit number | same | AC-17s, §6.2, D115 |
+| 3 | Minor | The gate's tests don't pin chosen-first order or an exact package match; two probes stayed green | swap the checks in `CaptureGate.kt` | AC-16, §6.2 |
+| 4 | Minor | On *Captured on this phone*, the title can't be selected | `b02-r2-flows.spec.ts -g FLOW-5` | AC-33, patterns.md §7 |
+| 5 | Minor | The simulator's *Post it again* and *Post an OTP* only show a toast | dev panel | AC-17, AC-21 |
+| 6 | Note | *Keep Sen running* promises a Home warning that only B07 builds | a brand with no steps | AC-32s, §18 |
+| 7 | Note | No journey in `docs/flows.md` is marked core | `grep -i core docs/flows.md` | QA rules |
 
-**1.** The test asserts `typeof window.Capacitor === 'undefined'` on `http://127.0.0.1:4173`, which
-serves the same web build; its bundle's `@capacitor/core` defines `window.Capacitor` on any origin, so
-it can never pass. The check that matters, `typeof window.androidBridge`, never runs. The first half
-passed: the page couldn't navigate the WebView to the other origin.
+**1.** Dropped only with a keyword and a code `isCode` accepts. Never qualify: codes split by a space or
+hyphen, after `#` or `-`, after `No.`, and 4-digit codes with words between them and the keyword.
+```
+isOtp=false  <- Your OTP is 123 456. Valid for 3 minutes.
+isOtp=false  <- Your verification code is 123-456
+isOtp=false  <- G-482910 is your verification code.
+isOtp=false  <- Your TAC is #482910 for DuitNow Transfer
+isOtp=false  <- TAC No. 482910 for RM50.00 transfer
+isOtp=false  <- Your OTP for login: 4829
+```
 
-**2.** The test posts as `com.android.shell` while only Ryt is chosen, then `settle()` adds
-`com.android.shell` to the chosen list for its marker. `cmd notification post` returns before the
-listener's callback runs, so the unchosen notification is likely judged as chosen. If the race isn't the
-cause, an unchosen app reached storage, which would be a Blocker; as written the test can't tell.
+**2.** Footer phrases (`never share`, `do not share`, `jangan kongsi`) and `pin` count as keywords, and any
+unprefixed 6–8 digit number anywhere counts as a code.
+```
+isOtp=true  <- RM12.90 paid at 7-ELEVEN 123456 KL using your Main Account. Never share your PIN.
+isOtp=true  <- RM8.00 paid to MERCHANT 482910 via DuitNow QR. Do not share your TAC.
+isOtp=true  <- Card payment RM38.15 at PETRON approved. Approval code 482910. Never share your OTP.
+isOtp=true  <- You've received RM42.50 from TAN PIN HUI. Reference number 20261009.
+isOtp=true  <- Anda telah menerima RM50.00 daripada TAN WEI MING. No. Transaksi 48291077. Jangan kongsi TAC anda.
+```
 
-**3.** A keyword can't be followed by a digit (`OTP123456`), and there's no phrase for "…code is…",
-"kod anda" or "PIN is".
+**3.** `CaptureGateTest`'s "even an OTP from it is NOT_CHOSEN" posts `OTP 1`, which isn't an OTP. Moving
+the chosen check below the OTP check, or matching packages by prefix, left the core tests green.
 
-**4.** Bare `tac`/`otp` and `never share`/`do not share`/`jangan kongsi` also match payments (a merchant
-`TAC CAFE`, a transfer ending "We never ask for your TAC"). Each is dropped before storage.
+**4.** The title (`ItemTitle`) inherits `user-select: none`; only the text paragraphs carry `.selectable`.
 
-**5.** The test only greps `sw.js` for `'/api/'`. The behaviour is right today (FLOW-10).
+**5.** `sim.repost()` and `sim.otp()` only call `toastDone`, so the flows pass whatever the code does.
 
-**6.** `Heartbeat.event` runs before `outbox.insert`, whatever it returns, so a replay after a reboot
-reads as a new event.
+**6.** "If capture stops, Sen warns you on Home": the watchdog and Home's warning are B07's.
 
-**7.** The simulator resolves `shareSamples({ids: []})`; the native plugin rejects `EMPTY`, and the
-screen would then toast the wrong reason.
+**7.** For the owner: which journeys in `docs/flows.md` are core.
 
 ## Probes
 
-| Broke | Caught |
+| What was broken | Caught |
 |---|---|
-| Chosen-apps check removed from CaptureGate | yes |
-| `tac` removed from otp-keywords.txt | yes |
-| OTP whole-word boundaries removed | yes |
 | `when` dropped from the dedupe key | yes |
-| Dedupe key's field separator dropped | yes |
-| Origin check changed to accept a startsWith match | yes |
-| `com.whatsapp` taken off the denylist | yes |
-| Service worker caches `/api/` | **no** |
-| `UNIQUE` on the outbox's dedupe key dropped | not run (emulator only); the table definition in SQLite ignores a replayed insert |
+| 6-digit codes no longer count | yes |
+| Origin compares host only | yes |
+| Chosen check by package prefix | **no** (finding 3) |
+| Default SMS app not blocked | yes |
+| Chosen check moved after the OTP check | **no** (finding 3) |
+| Back on Home goes Home | yes |
+| Service worker caches every GET, the API included | yes |
+| Every Malay OTP keyword removed | yes |
 
-## What passed
-
-APKs from CI: package names, the review build's listener disabled, no `QUERY_ALL_PACKAGES`,
-conversations refused, the fallback page in the APK. CI emulator: the fallback page offline, the bridge
-answering our origin, airplane mode after the first load, a chosen app stored and its OTP dropped, a
-reconnect replay with no duplicates. Chromium: every capture screen, the picker refusing WhatsApp, Gmail,
-Messages and Instagram, KL times under another time zone, offline with the API never cached, a new
-deploy waiting for the next launch, axe clean. All 27 curated packages exist on Play. The production
-bundle holds no secret and no simulator.
+Phase 4: the outbox schema in SQLite ignores a replayed insert and refuses a plain duplicate; the three
+APKs read with aapt2 have the right ids, no `QUERY_ALL_PACKAGES`, conversations refused, the debug build's
+listener and boot receiver disabled, two launcher aliases with one enabled; no secrets in the release APK
+or the production bundle; no dev tools in production.
 
 ## Not testable here
 
-The real listener, bridge and outbox on a device beyond CI's emulator (no KVM); the soak (the owner's);
-native back, status bar, edge-to-edge, splash, haptics, openInBrowser; the signed release (no key yet);
-sync and RLS (B05, B07).
+The real listener on the Xiaomi (the soak; Q2, Q3, Q26, Q27); probes on emulator-only paths (no KVM);
+Android-only behaviour (openInBrowser, status bar, insets, haptics, Switch icon, the Live Update, the
+prompt's buttons); a new deploy taking over inside the WebView (Chromium only: in the shell, back on Home
+minimises, so a waiting worker may wait until Android kills the process); the release and debug
+addresses (null until Vercel); the signed release (no key yet).

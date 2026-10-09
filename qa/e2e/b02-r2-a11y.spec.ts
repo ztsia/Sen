@@ -11,7 +11,11 @@ const axe = async (page: Page) =>
 // controls under 48 px that aren't full-width rows (rows are their own target, patterns.md §8)
 const small = (page: Page) =>
   page.evaluate(() =>
-    [...document.querySelectorAll<HTMLElement>('main button, main a[href], main [role="switch"], [role="dialog"] button')]
+    [
+      ...document.querySelectorAll<HTMLElement>(
+        'main button, main a[href], main [role="switch"], [role="dialog"] button',
+      ),
+    ]
       .filter((el) => {
         const r = el.getBoundingClientRect();
         if (!r.width || !r.height) return false;

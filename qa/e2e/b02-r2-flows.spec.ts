@@ -244,12 +244,12 @@ test.describe('FLOW-10 opens offline', () => {
   test.use({ serviceWorkers: 'allow' });
   test('production, loaded once, then offline', async ({ page, context }) => {
     await page.goto(`${PROD}/`);
-    await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, { timeout: 30_000 }).catch(
-      async () => {
+    await page
+      .waitForFunction(() => navigator.serviceWorker.controller !== null, null, { timeout: 30_000 })
+      .catch(async () => {
         await page.reload();
         await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, { timeout: 30_000 });
-      },
-    );
+      });
     const n = await page.evaluate(async () => {
       const ks = await caches.keys();
       let c = 0;
