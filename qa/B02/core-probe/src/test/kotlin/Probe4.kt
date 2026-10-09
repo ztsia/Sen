@@ -25,6 +25,12 @@ class Probe4 {
         assertEquals(Decision.Drop(DropReason.OTP), decide(title, text, big))
     private fun kept(title: String?, text: String?, big: String? = null) =
         assertTrue(decide(title, text, big) is Decision.Keep)
+    /** Kept, but masked and marked maybe OTP (D116): no code is stored. Added after run 4. */
+    private fun masked(code: String, title: String?, text: String?, big: String? = null) {
+        val e = (decide(title, text, big) as Decision.Keep).event
+        assertTrue(e.maybeOtp)
+        assertFalse(listOf(e.title, e.text, e.bigText).any { it?.contains(code) == true })
+    }
 
     // ---- AC-17 (run 4): OTPs that must drop ----
     @Test fun t_amount_first() = dropped("Ryt Bank", "RM50.00 DuitNow to TAN WEI MING. TAC: 482910. Expires in 3 min.")
@@ -74,7 +80,8 @@ class Probe4 {
     @Test fun r4_code_to_log_in_colon() = dropped("ShopeePay", "Your code to log in to ShopeePay: 482910")
     @Test fun r4_pin_for_amount_is() = dropped("Ryt Bank", "Your PIN for the RM50.00 transfer is 4829")
     @Test fun r4_single_digit_spaced() = dropped("Ryt Bank", "Your OTP is 4 8 2 9 1 0")
-    @Test fun r4_keyword_only_in_advice() = dropped("Ryt Bank", "RM50.00 transfer to TAN WEI MING: 482910. Never share your TAC.")
+    // run 4 expected a drop; D116's net stores it masked instead (ledger, run 4)
+    @Test fun r4_keyword_only_in_advice() = masked("482910", "Ryt Bank", "RM50.00 transfer to TAN WEI MING: 482910. Never share your TAC.")
     @Test fun r4_kod_sah() = dropped("Ryt Bank", "Kod sah anda: 482910")
     @Test fun r4_hyphen_u2011() = dropped("Ryt Bank", "Your one\u2011time passcode: 482910")
     // payments (a footer that isn't "never share"; card auth codes; hyphen dates; a store number)

@@ -84,6 +84,11 @@ test('Captured on this phone lists what arrived, and shares the ones ticked', as
   await simulate(page, 'Post an OTP');
   await expect(page.getByText('3 notifications', { exact: false })).toBeVisible();
   await expect(page.getByText('RM38.15 paid at Petron using your Main Account.')).toBeVisible();
+  // maybe an OTP: stored, its numbers hidden, and marked (D116)
+  await simulate(page, 'Post a maybe-OTP');
+  await expect(page.getByText('4 notifications', { exact: false })).toBeVisible();
+  await expect(page.getByText('RM50.00 transfer to TAN WEI MING: ••••••. Never share your TAC.')).toBeVisible();
+  await expect(page.getByText('Maybe a one-time code, so its numbers are hidden')).toBeVisible();
   await page.getByRole('button', { name: 'Share samples' }).click();
   // nothing ticked: it says so, and stays ready to tick
   await page.getByRole('button', { name: 'Tick the ones to share' }).click();

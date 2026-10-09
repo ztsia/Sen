@@ -15,7 +15,10 @@ data class Posted(
     val isOngoing: Boolean = false,
 )
 
-/** A notification that passed every check: what the outbox stores, raw and unchanged (spec §6.2). */
+/**
+ * A notification that passed every check: what the outbox stores, raw and unchanged (spec §6.2), except
+ * that a *maybe OTP* has its code-like numbers masked (D116, OtpMask).
+ */
 data class RawEvent(
     val dedupeKey: String,
     val packageName: String,
@@ -26,6 +29,7 @@ data class RawEvent(
     val title: String?,
     val text: String?,
     val bigText: String?,
+    val maybeOtp: Boolean = false,
 )
 
 enum class DropReason { NOT_CHOSEN, GROUP_SUMMARY, ONGOING, CHANNEL, EMPTY, OTP }
@@ -40,9 +44,13 @@ sealed interface Decision {
  * from any other app is dropped before its text is even read, and the caller keeps no record of it.
  * Then group summaries, ongoing notifications (a ride in progress or a download: status, never a
  * payment), the channels a channel rule drops (B10 fills the list), notifications with no text, and
- * OTPs and TACs.
+ * OTPs and TACs. What's kept but might still hold a code is masked before it's stored, and its dedupe key
+ * is taken from the masked text, so a code never reaches storage, even as a hash.
  */
-class CaptureGate(private val otp: OtpFilter = OtpFilter.default()) {
+class CaptureGate(
+    private val otp: OtpFilter = OtpFilter.default(),
+    private val mask: OtpMask = OtpMask.default(),
+) {
     fun decide(p: Posted, chosen: Set<String>, droppedChannels: Set<ChannelRef> = emptySet()): Decision {
         if (p.packageName !in chosen) return Decision.Drop(DropReason.NOT_CHOSEN)
         if (p.isGroupSummary) return Decision.Drop(DropReason.GROUP_SUMMARY)
@@ -55,17 +63,20 @@ class CaptureGate(private val otp: OtpFilter = OtpFilter.default()) {
         }
         if (otp.isOtp(p.title, p.text, p.bigText)) return Decision.Drop(DropReason.OTP)
         val whenMillis = if (p.whenMillis > 0) p.whenMillis else p.postTime
+        val masked = mask.mask(p.title, p.text, p.bigText)
+        val (title, text, bigText) = masked ?: listOf(p.title, p.text, p.bigText)
         return Decision.Keep(
             RawEvent(
-                dedupeKey = DedupeKey.of(p.packageName, p.key, whenMillis, p.title, p.text, p.bigText),
+                dedupeKey = DedupeKey.of(p.packageName, p.key, whenMillis, title, text, bigText),
                 packageName = p.packageName,
                 channel = p.channel,
                 key = p.key,
                 postTime = p.postTime,
                 whenMillis = whenMillis,
-                title = p.title,
-                text = p.text,
-                bigText = p.bigText,
+                title = title,
+                text = text,
+                bigText = bigText,
+                maybeOtp = masked != null,
             ),
         )
     }

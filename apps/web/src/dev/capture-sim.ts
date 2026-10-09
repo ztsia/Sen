@@ -119,7 +119,7 @@ const APPS: Omit<CaptureApp, 'chosen'>[] = [
   },
 ];
 
-const SAMPLES: Omit<CapturedEvent, 'id' | 'postTime' | 'when' | 'capturedAt' | 'synced'>[] = [
+const SAMPLES: Omit<CapturedEvent, 'id' | 'postTime' | 'when' | 'capturedAt' | 'synced' | 'maybeOtp'>[] = [
   {
     package: 'my.rytbank.app',
     channel: 'transactions',
@@ -225,7 +225,14 @@ export const sim = {
     const last = get().events[0];
     if (!last) return toastDone('Simulated: nothing to post again yet');
     store(
-      { package: last.package, channel: last.channel, title: last.title, text: last.text, bigText: last.bigText },
+      {
+        package: last.package,
+        channel: last.channel,
+        title: last.title,
+        text: last.text,
+        bigText: last.bigText,
+        maybeOtp: last.maybeOtp,
+      },
       last.when,
     );
   },
@@ -248,6 +255,25 @@ export const sim = {
       Date.now(),
     );
   },
+  /**
+   * A payment-like notification that might hold a code: the shell's filter keeps it, and its mask
+   * (D116) stores it with the code-like numbers hidden. Made up, and already masked here, as the shell
+   * would store it.
+   */
+  maybeOtp() {
+    const pkg = get().chosen[0] ?? 'my.rytbank.app';
+    store(
+      {
+        package: pkg,
+        channel: 'transactions',
+        title: 'Ryt Bank',
+        text: 'RM50.00 transfer to TAN WEI MING: ••••••. Never share your TAC.',
+        bigText: null,
+        maybeOtp: true,
+      },
+      Date.now(),
+    );
+  },
   setBrand(brand: SimState['brand']) {
     set({ brand });
   },
@@ -256,7 +282,10 @@ export const sim = {
   },
 };
 
-type Posted = Omit<CapturedEvent, 'id' | 'postTime' | 'when' | 'capturedAt' | 'synced'> & { otp?: boolean };
+type Posted = Omit<CapturedEvent, 'id' | 'postTime' | 'when' | 'capturedAt' | 'synced' | 'maybeOtp'> & {
+  otp?: boolean;
+  maybeOtp?: boolean;
+};
 
 /** What the listener does with a notification: unchosen, then OTP, then the dedupe key (spec §6.2). */
 function store(posted: Posted, when: number) {
@@ -273,7 +302,8 @@ function store(posted: Posted, when: number) {
   }
   const key = (e: Pick<CapturedEvent, 'package' | 'title' | 'text' | 'bigText' | 'when'>) =>
     [e.package, e.title, e.text, e.bigText, e.when].join('\u0000');
-  const { otp: _otp, ...event } = posted;
+  const { otp: _otp, maybeOtp = false, ...rest } = posted;
+  const event = { ...rest, maybeOtp };
   if (s.events.some((e) => key(e) === key({ ...event, when }))) {
     toastDone('Simulated: the same notification again, not stored twice');
     return;
@@ -285,7 +315,9 @@ function store(posted: Posted, when: number) {
       ...s.events,
     ],
   });
-  toastDone('Simulated: a notification captured');
+  toastDone(
+    maybeOtp ? 'Simulated: maybe an OTP, stored with its numbers hidden' : 'Simulated: a notification captured',
+  );
 }
 
 const status = () => {

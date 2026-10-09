@@ -197,6 +197,9 @@ function CaptureSim() {
         <Button variant="outline" onClick={() => sim.otp()}>
           Post an OTP
         </Button>
+        <Button variant="outline" onClick={() => sim.maybeOtp()}>
+          Post a maybe-OTP
+        </Button>
         <Button variant="ghost" onClick={() => sim.reset()}>
           Reset
         </Button>

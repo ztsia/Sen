@@ -145,7 +145,8 @@ class SenCapturePlugin : Plugin() {
                     .put("text", e.text)
                     .put("bigText", e.bigText)
                     .put("capturedAt", e.capturedAt)
-                    .put("synced", e.synced),
+                    .put("synced", e.synced)
+                    .put("maybeOtp", e.maybeOtp),
             )
         }
         call.resolve(JSObject().put("events", out).put("total", outbox.count()))
@@ -175,6 +176,7 @@ class SenCapturePlugin : Plugin() {
                 buildString {
                     appendLine("App: ${e.packageName}")
                     appendLine("Channel: ${e.channel ?: "-"}")
+                    if (e.maybeOtp) appendLine("Maybe OTP: numbers masked on the phone")
                     appendLine("Posted: ${kl.format(Date(e.postTime))} (when: ${kl.format(Date(e.whenMillis))})")
                     appendLine("Title: ${e.title ?: ""}")
                     appendLine("Text: ${e.text ?: ""}")

@@ -224,8 +224,10 @@ them in its *Charts* section.
   version row may hold a long-press (B02's hidden tests). A switch row may lead with an app's icon and
   carry a line under its label, which, on a disabled switch, says why it can't be turned on.
 - **Raw notification row** (B02's *Captured on this phone* only, until B07 replaces it): the app and
-  the time on one line, then the title and the text exactly as the app wrote them, selectable. When
-  sharing, a checkbox leads and the whole row ticks it.
+  the time on one line, then the title and the text exactly as the app wrote them, selectable. A
+  notification that might hold a one-time code shows as stored, its numbers masked, with a muted line
+  under it: *Maybe a one-time code, so its numbers are hidden* (D116). When sharing, a checkbox leads
+  and the whole row ticks it.
 
 ### Detail page
 

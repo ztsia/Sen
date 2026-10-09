@@ -156,7 +156,7 @@ class OtpFilter(strong: List<String>, weak: List<String> = WEAK) {
         fun parse(list: String): List<String> =
             list.lineSequence().map { it.substringBefore('#').trim() }.filter { it.isNotEmpty() }.toList()
 
-        private fun alternation(phrases: List<String>): String =
+        internal fun alternation(phrases: List<String>): String =
             phrases.map { p ->
                 val words = normalise(p).split(Regex("[\\s-]+")).filter { it.isNotEmpty() }
                 require(words.isNotEmpty()) { "empty phrase" }

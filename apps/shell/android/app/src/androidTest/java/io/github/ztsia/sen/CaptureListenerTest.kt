@@ -92,6 +92,20 @@ class CaptureListenerTest {
     }
 
     @Test
+    fun a_notification_that_might_hold_a_code_is_stored_masked_and_marked() {
+        Chosen.set(ctx, setOf(shell, self))
+        // letters only, so the mask can't touch the test's own tag
+        val tag = run.map { if (it.isDigit()) 'g' + (it - '0') else it }.joinToString("")
+        post("maybe", "Ryt Bank", "RM50.00 transfer to TAN WEI MING: 482910. Never share your TAC. $tag")
+        settle()
+        val e = Outbox.get(ctx).events(500).single { it.text.orEmpty().endsWith(tag) }
+        assertEquals("RM50.00 transfer to TAN WEI MING: ••••••. Never share your TAC. $tag", e.text)
+        assertTrue(e.maybeOtp)
+        // the code is nowhere in the outbox
+        assertTrue(Outbox.get(ctx).events(500).none { listOf(it.title, it.text, it.bigText).any { t -> t.orEmpty().contains("482910") } })
+    }
+
+    @Test
     fun a_reconnect_replays_what_is_showing_without_duplicates_and_catches_what_it_missed() {
         Chosen.set(ctx, setOf(shell, self))
         val since = System.currentTimeMillis() - 1_000

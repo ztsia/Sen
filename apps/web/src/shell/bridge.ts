@@ -72,6 +72,8 @@ export interface CapturedEvent {
   bigText: string | null;
   capturedAt: number;
   synced: boolean;
+  /** Might hold a one-time code: stored with its code-like numbers masked (D116). */
+  maybeOtp: boolean;
 }
 
 export interface Beat {

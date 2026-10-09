@@ -9,7 +9,8 @@ import io.github.ztsia.sen.core.RawEvent
 
 /**
  * The phone's SQLite outbox (spec §5, §6.2). Raw events are stored first and never changed; B07 syncs
- * them as `bank_events`. The dedupe key is UNIQUE, so a replayed notification is a no-op.
+ * them as `bank_events`. The dedupe key is UNIQUE, so a replayed notification is a no-op. A *maybe OTP*
+ * arrives already masked, with `maybe_otp` set (D116).
  *
  * Also here: the heartbeat's log (B02's soak reads it) and the channel drop list (empty until B10).
  */
@@ -45,6 +46,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
             """.trimIndent(),
         )
         addDropColumns(db)
+        addMaybeOtp(db)
         db.execSQL(
             """
             CREATE TABLE channel_drops (
@@ -59,6 +61,12 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         // 2: the heartbeat logs each dropped one-time code, by app and once per notification (QA B02 run 4)
         if (oldVersion < 2) addDropColumns(db)
+        // 3: a notification that might hold a code is stored masked and marked (D116)
+        if (oldVersion < 3) addMaybeOtp(db)
+    }
+
+    private fun addMaybeOtp(db: SQLiteDatabase) {
+        db.execSQL("ALTER TABLE events ADD COLUMN maybe_otp INTEGER NOT NULL DEFAULT 0")
     }
 
     private fun addDropColumns(db: SQLiteDatabase) {
@@ -80,6 +88,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
                 put("title", e.title)
                 put("text", e.text)
                 put("big_text", e.bigText)
+                put("maybe_otp", if (e.maybeOtp) 1 else 0)
                 put("captured_at", now)
             }
         return writableDatabase.insertWithOnConflict("events", null, values, SQLiteDatabase.CONFLICT_IGNORE) != -1L
@@ -96,6 +105,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
         val bigText: String?,
         val capturedAt: Long,
         val synced: Boolean,
+        val maybeOtp: Boolean,
     )
 
     /** Newest first; `before` pages by id. */
@@ -112,7 +122,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
             args += ids.map { it.toString() }
         }
         val sql =
-            "SELECT id, package, channel, post_time, when_ms, title, text, big_text, captured_at, synced_at FROM events" +
+            "SELECT id, package, channel, post_time, when_ms, title, text, big_text, captured_at, synced_at, maybe_otp FROM events" +
                 (if (where.isEmpty()) "" else " WHERE " + where.joinToString(" AND ")) +
                 " ORDER BY id DESC LIMIT ?"
         args += limit.toString()
@@ -131,6 +141,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
                             bigText = c.getString(7),
                             capturedAt = c.getLong(8),
                             synced = !c.isNull(9),
+                            maybeOtp = c.getInt(10) == 1,
                         ),
                     )
                 }
@@ -186,7 +197,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
 
     companion object {
         private const val NAME = "outbox.db"
-        private const val VERSION = 2
+        private const val VERSION = 3
 
         @Volatile private var instance: Outbox? = null
 
