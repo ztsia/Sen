@@ -68,3 +68,25 @@ cases, and was checked against wording no run had listed before QA sees it again
 from Malaysian banks, e-wallets and apps; 14 payments with footers, dates, IDs, phone numbers and a
 promotion); QA's probes from all three runs (`Probe`, `Probe2`, `Probe3`) 91/91; unit 141/141; the
 branch's Playwright 100/100; QA's Playwright 44/44; all four APKs build; typecheck, lint, format clean.
+
+## Run 4 → fixes (9 Oct 2026)
+
+**Tier 3: a fresh full run 5 follows, if the owner wants one (see the handoff).** Run 4 found the
+evidence-based filter right on every case written from the spec before the code was read (37/37), and
+wrong on 18 of 20 written after reading it, all on the weak-keyword path and non-code numbers.
+
+| # | Finding | Fix | Tier, and why |
+|---|---|---|---|
+| 1 | Blocker: weak-keyword OTPs stored across an amount or a few words; digits spaced one by one never a code | QA's structural fix: a weak keyword (code, kod, password; PIN only when it reads as a PIN) and a code in the same sentence drop it, outside a promotion. Single-digit groups count | 3 (Blocker, non-negotiable) |
+| 2 | Major: payments dropped on hyphen dates, card auth codes, other footers | A hyphen date with a real day and month isn't a code; auth, authorisation, payment, txn and transaction codes are references (with or without "is"); "authorisation code" and "Secure2u" are no longer strong keywords (card receipts and Maybank's payments use them); advice now includes "keep … confidential", "protect your PIN", "rahsiakan" | 3 (non-negotiable) |
+| 3 | `heartbeats.package` added without a version bump | Outbox version 2; `onUpgrade` adds `package` and `drop_key`. Checked in SQLite on the version-1 schema: the columns arrive, a replayed drop is logged once, ordinary beats aren't touched | 2 on its own |
+| — | A reconnect would re-log an OTP still showing (run 4, not reported for want of an emulator) | Each drop carries a key hashed from the package, the notification's key and its `when` (no text), unique in the log; the emulator's replay test asserts one line | 2 |
+| 4 | No test pinned that a subdomain is another origin | `OriginTest`: `x.sen.vercel.app` and `vercel.app` refused | 1 |
+| 5 | Note: a code whose keyword is only in a footer is kept | Kept, deliberately: dropping it would drop every payment with a store number and a "never share your TAC" footer (run 2's Major). Spec §6.2 says so. `Probe4.r4_keyword_only_in_advice` stays red as the record of that choice | spec |
+| — | Note (listed for the owner, not counted): "TAC CAFE 2241" dropped | In doubt, so it drops, as §6.2 says; it's logged. `Probe4.r4_merchant_tac_store_no` stays red as the record | — |
+| 6 | Note: a stale `vite preview` made `pnpm e2e` test an old build | `playwright.config.ts` no longer reuses a running server unless `PW_REUSE=1` | 1 |
+| 7 | Note: no core journeys in `docs/flows.md` | For the owner (handoff) | — |
+
+**Evidence:** Kotlin core 31/31; QA's probes from all four runs 177/179 (the two red are the
+deliberate notes above); unit 141/141; Playwright 100/100 on fresh builds; QA's Playwright 45/45
+(AC-8, which needs its own server, not re-run); all four APKs build.

@@ -102,6 +102,34 @@ class OtpFilterTest {
     }
 
     @Test
+    fun `drops a weak keyword's code across an amount or a few words (QA run 4)`() {
+        listOf(
+            "Your code for DuitNow transfer of RM50.00 to TAN WEI MING is 482910",
+            "Code for your RM50.00 transfer: 482910",
+            "Your code to log in to ShopeePay: 482910",
+            "Your PIN for the RM50.00 transfer is 4829",
+            "Your OTP is 4 8 2 9 1 0",
+            "Kod sah anda: 482910",
+        ).forEach { assertTrue(filter.isOtp("Ryt Bank", it, null), it) }
+    }
+
+    @Test
+    fun `keeps payments with hyphen dates, card auth codes and other footers (QA run 4)`() {
+        listOf(
+            "MAE" to "Transfer of RM50.00 to TAN WEI MING approved via Secure2u on 09-10-2026.",
+            "Public Bank" to "PBe: Fund transfer RM100.00 to TAN WEI MING on 09-10-2026 successful (TAC verified).",
+            "Public Bank" to "Card ending 1234 charged RM38.15 at PETRON on 09 Oct. Auth code 482910.",
+            "Public Bank" to "Card ending 1234 charged RM38.15 at PETRON. Authorisation code: 482910.",
+            "Ryt Bank" to "Payment of RM12.90 to ZUS COFFEE successful. Payment code: 482910",
+            "Ryt Bank" to "Paid RM12.90 to ZUS COFFEE. Txn code 482910",
+            "Ryt Bank" to "RM12.90 paid at 7-ELEVEN 2241 KLCC. Keep your OTP and TAC confidential.",
+            "Ryt Bank" to "Bayaran RM12.90 di 7-ELEVEN 2241 KLCC berjaya. Rahsiakan TAC anda.",
+            "Public Bank" to "PBe: RM12.90 spent at SHELL 2241 PJ. Protect your PIN and OTP.",
+            "Ryt Bank" to "DuitNow to TAN PIN HUI: 48291077 RM50.00 successful",
+        ).forEach { (title, text) -> assertFalse(filter.isOtp(title, text, null), text) }
+    }
+
+    @Test
     fun `reads title and expanded text too`() {
         assertTrue(filter.isOtp("Your TAC", "123456", null))
         assertTrue(filter.isOtp(null, "Login", "Enter OTP 991122 to continue"))

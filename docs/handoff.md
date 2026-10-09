@@ -5,14 +5,16 @@ read this first, and rewrite it before you end.
 
 ## Where things stand
 
-- **B02 · The shell and the listener, on `B02/shell-listener`: code done; QA run 4 next, then the PR.**
+- **B02 · The shell and the listener, on `B02/shell-listener`: code done; four QA runs, run 4's fixes in;
+  the owner decides how to finish the OTP filter (below), then the PR.**
   The owner's part follows the PR: Vercel, the signing key, installing, and the week of soak
   (`docs/local.md`, *B02: the shell on your phone*). The next slice doesn't wait for the soak.
-- **QA so far:** three runs, each "fix first", all on the OTP/TAC filter, plus smaller findings now
-  fixed. Records: `qa/B02/report-run1.md`, `report-run2.md`, `report.md` (run 3), `ledger.md` (every
-  fix and its tier). Report with screenshots: https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA.
-- **Verified in the session:** Kotlin core 29/29; QA's core probes from all runs 91/91; unit 141/141;
-  Playwright 100/100; QA's Playwright 44/44; all four APKs build; typecheck, lint, format, hygiene.
+- **QA so far:** four runs, each "fix first", each on the OTP/TAC filter (each new run writes new made-up
+  wordings after reading the code, and finds a few), plus smaller findings, all fixed. Records:
+  `qa/B02/report-run1..3.md`, `report.md` (run 4), `ledger.md` (every fix and its tier). Report with screenshots: https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA.
+- **Verified in the session:** Kotlin core 31/31; QA's core probes from all runs 177/179 (two kept red
+  on purpose, ledger run 4); unit 141/141; Playwright 100/100; QA's Playwright 45/45; all four APKs
+  build; typecheck, lint, format, hygiene.
 - **Verified on GitHub Actions** (the `Shell` workflow, free on this public repo): the core, both APKs
   and the emulator tests on Android 14 (7/7) at `aa0ac73`; the latest push re-runs them.
 - **Not verified yet:** anything on the phone; the signed release (no key); the review alias (no Vercel).
@@ -35,6 +37,11 @@ read this first, and rewrite it before you end.
   rate-limits the VM, so `session-start.sh` installs a Gradle mirror script (`docs/cloud.md` §5).
 
 ## Open with the owner
+
+- **How to finish the OTP filter** (asked on 9 Oct; record the answer in D115): another QA run now; or
+  a masking safety net first (when a notification has any OTP word but isn't dropped, store it with its
+  code-like numbers masked, which amends §6.2's "raw text never changed"); or open the PR and tune the
+  filter from the soak's real samples.
 
 - **Which journeys in `docs/flows.md` are core?** None is marked, so QA guesses each run (QA B02 run 2's
   note, run 3's finding 4). Recommend: first run, a payment captured to Review, and Scan.

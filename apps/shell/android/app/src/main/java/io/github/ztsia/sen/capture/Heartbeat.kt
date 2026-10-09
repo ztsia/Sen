@@ -9,6 +9,8 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import io.github.ztsia.sen.core.DedupeKey
+import io.github.ztsia.sen.core.Posted
 import java.util.concurrent.TimeUnit
 
 /**
@@ -41,9 +43,12 @@ object Heartbeat {
     }
 
     /** A one-time code from a chosen app was dropped: its time and app go in the log, nothing else. */
-    fun dropped(context: Context, packageName: String) {
+    fun dropped(context: Context, posted: Posted) {
         val now = System.currentTimeMillis()
-        Capture.after { Outbox.get(context).beat("otp", CaptureListener.connected, now, packageName) }
+        // the notification's identity without any of its text: a replay hashes the same and logs nothing
+        val whenMillis = if (posted.whenMillis > 0) posted.whenMillis else posted.postTime
+        val key = DedupeKey.of(posted.packageName, posted.key, whenMillis, null, null, null)
+        Capture.after { Outbox.get(context).beat("otp", CaptureListener.connected, now, posted.packageName, key) }
     }
 
     fun event(context: Context) {

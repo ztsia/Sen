@@ -94,8 +94,10 @@ class CaptureListenerTest {
     @Test
     fun a_reconnect_replays_what_is_showing_without_duplicates_and_catches_what_it_missed() {
         Chosen.set(ctx, setOf(shell, self))
+        val since = System.currentTimeMillis() - 1_000
         val before = "You have successfully transferred RM 18.00 to LIM KAH HOE $run"
         post("before", "DuitNow Transfer is successful!", before)
+        post("otp", "Ryt Bank", "Your TAC is 482910 for DuitNow Transfer $run")
         settle()
         assertEquals(1, stored(before))
 
@@ -112,5 +114,7 @@ class CaptureListenerTest {
         settle()
         assertEquals(1, stored(before))
         assertEquals(1, stored(missed))
+        // the OTP still showing was replayed too, and dropped again, but its drop is logged once
+        assertEquals(1, Outbox.get(ctx).beats(200).count { it.kind == "otp" && it.packageName == shell && it.at >= since })
     }
 }

@@ -40,11 +40,11 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               at INTEGER NOT NULL,
               kind TEXT NOT NULL,
-              connected INTEGER NOT NULL,
-              package TEXT
+              connected INTEGER NOT NULL
             )
             """.trimIndent(),
         )
+        addDropColumns(db)
         db.execSQL(
             """
             CREATE TABLE channel_drops (
@@ -56,7 +56,16 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
         )
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        // 2: the heartbeat logs each dropped one-time code, by app and once per notification (QA B02 run 4)
+        if (oldVersion < 2) addDropColumns(db)
+    }
+
+    private fun addDropColumns(db: SQLiteDatabase) {
+        db.execSQL("ALTER TABLE heartbeats ADD COLUMN package TEXT")
+        db.execSQL("ALTER TABLE heartbeats ADD COLUMN drop_key TEXT")
+        db.execSQL("CREATE UNIQUE INDEX heartbeats_drop ON heartbeats (drop_key) WHERE drop_key IS NOT NULL")
+    }
 
     /** Stores a raw event; false when its dedupe key is already there. */
     fun insert(e: RawEvent, now: Long = System.currentTimeMillis()): Boolean {
@@ -132,12 +141,20 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
     fun count(): Long = readableDatabase.compileStatement("SELECT COUNT(*) FROM events").use { it.simpleQueryForLong() }
 
     /**
-     * One line of the heartbeat's log. `package` is set only for a drop ("otp"): which chosen app posted
-     * a one-time code, and when, never its text, so the soak can tell a dropped payment from a missing one.
+     * One line of the heartbeat's log. `package` and `dropKey` are set only for a drop ("otp"): which
+     * chosen app posted a one-time code, and when, never its text, so the soak can tell a dropped payment
+     * from a missing one. `dropKey` hashes the package, the notification's key and its `when`, no text, so
+     * a replay logs nothing new.
      */
-    fun beat(kind: String, connected: Boolean, at: Long = System.currentTimeMillis(), packageName: String? = null) {
+    fun beat(
+        kind: String,
+        connected: Boolean,
+        at: Long = System.currentTimeMillis(),
+        packageName: String? = null,
+        dropKey: String? = null,
+    ) {
         writableDatabase.apply {
-            insert(
+            insertWithOnConflict(
                 "heartbeats",
                 null,
                 ContentValues().apply {
@@ -145,7 +162,10 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
                     put("kind", kind)
                     put("connected", if (connected) 1 else 0)
                     put("package", packageName)
+                    put("drop_key", dropKey)
                 },
+                // a notification still showing is replayed at every reconnect; its drop is logged once
+                SQLiteDatabase.CONFLICT_IGNORE,
             )
             // Keep the last 2,000 beats: a few weeks at one an hour, plus every connect and boot.
             execSQL("DELETE FROM heartbeats WHERE id <= (SELECT MAX(id) - 2000 FROM heartbeats)")
@@ -166,7 +186,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
 
     companion object {
         private const val NAME = "outbox.db"
-        private const val VERSION = 1
+        private const val VERSION = 2
 
         @Volatile private var instance: Outbox? = null
 

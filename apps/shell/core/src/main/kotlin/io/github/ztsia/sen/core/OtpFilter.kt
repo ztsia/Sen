@@ -15,14 +15,13 @@ import java.util.Locale
  *    this message ("Do not share this code"), or holds a code itself, is.
  * 2. **A strong keyword** (OTP, TAC, verification code, kod pengesahan… in otp-keywords.txt) **and a code
  *    anywhere in the rest** make an OTP, whatever words sit between them.
- * 3. **A weak keyword** (PIN, kod, code, password) counts only when it's joined to its code: straight on
- *    ("Your PIN is 4829", "123456 is your code", "Gunakan kod 482910"), or across a few words to "is"
- *    ("Your PIN for card activation is 482910"); never for a code with a qualifier ("reference code",
- *    "kod rujukan") or in a promotion.
+ * 3. **A weak keyword** (code, kod, password, and PIN when it reads as a PIN: "your PIN", "PIN is")
+ *    and a code in the **same sentence** make an OTP, outside a promotion. A reference's own code isn't
+ *    a code at all ("reference code", "auth code", "kod rujukan"), so it never qualifies.
  *
  * A code is 4 to 8 digits, maybe grouped by single spaces or hyphens ("123 456"), maybe after `#` or a
  * letter and hyphen ("G-482910"), maybe run straight on from its keyword ("OTP123456"). A number isn't a
- * code when it's an amount, a date or a time (a year after its month too), longer than 8 digits in all
+ * code when it's an amount, a date (09-10-2026, or a year after its month) or a time, longer than 8 digits in all
  * (a phone number), masked (••1234), or when a reference, approval, booking, account or similar word
  * comes just before it.
  *
@@ -31,17 +30,10 @@ import java.util.Locale
  */
 class OtpFilter(strong: List<String>, weak: List<String> = WEAK) {
     private val strongWords = Regex("(?<![\\p{L}\\p{N}])(?:${alternation(strong)})(?![\\p{L}])")
-    private val weakWords = alternation(weak)
 
-    /** The text before a code ends with a weak keyword and only linking words: "your pin is ", "kod anda: ". */
-    private val weakJustBefore = Regex("(?<![\\p{L}\\p{N}])(?:$weakWords)(?:$GAP(?:$LINK)(?![\\p{L}]))*$GAP$")
-
-    /** A weak keyword, any few words in the same clause, then "is": "your pin for card activation is ". */
-    private val weakThenIs =
-        Regex("(?<![\\p{L}\\p{N}])(?:$weakWords)(?![\\p{L}])(?:\\s+[^\\s.,!?;:]+){0,6}\\s+(?:is|ialah|adalah)\\s*$")
-
-    /** The text after a code starts with linking words and a weak keyword: " is your code". */
-    private val weakJustAfter = Regex("^$GAP(?:(?:$LINK_BACK)(?![\\p{L}])$GAP)*(?:$weakWords)(?![\\p{L}])")
+    /** The weak keywords other than PIN, which has its own rule (PIN_AS_PIN). */
+    private val weakAny =
+        Regex("(?<![\\p{L}\\p{N}])(?:${alternation(weak.filter { it != "pin" })})(?![\\p{L}])")
 
     fun isOtp(vararg parts: String?): Boolean {
         val sentences = parts.filterNotNull().flatMap(::sentences)
@@ -55,22 +47,22 @@ class OtpFilter(strong: List<String>, weak: List<String> = WEAK) {
         if (pointed || rest.any { strongWords.containsMatchIn(it) }) return true
         // weak keywords: joined straight to their code, in the same sentence, outside a promotion
         if (sentences.any { PROMO.containsMatchIn(it) }) return false
-        return found.any { (s, code) -> joinedWeak(s, code) }
+        return found.any { (s, _) -> weakInSentence(s) }
     }
 
-    private fun joinedWeak(s: String, code: IntRange): Boolean {
-        val before = s.substring(0, code.first)
-        val after = s.substring(code.last + 1)
-        val ahead = weakJustBefore.containsMatchIn(before) || weakThenIs.containsMatchIn(before)
-        return (ahead && !QUALIFIED.containsMatchIn(before)) || weakJustAfter.containsMatchIn(after)
-    }
+    /**
+     * A weak keyword and a code in the same sentence. PIN must look like a PIN, not part of a name:
+     * "your PIN", "PIN is", "PIN:", "PIN for…" ("TAN PIN HUI" isn't one).
+     */
+    private fun weakInSentence(s: String): Boolean = weakAny.containsMatchIn(s) || PIN_AS_PIN.containsMatchIn(s)
 
     /** Where each code is in a sentence. */
     private fun codes(s: String): List<IntRange> =
         CANDIDATE.findAll(s).mapNotNull { m ->
             val digits = m.value.count { it.isDigit() }
             if (digits !in 4..8) return@mapNotNull null
-            if (m.value.split(' ', '-').any { g -> g.isNotEmpty() && g.all { it.isDigit() } && g.length == 1 }) return@mapNotNull null
+            // a date written with hyphens: 09-10-2026, 9-10-26
+            if (isDate(m.value)) return@mapNotNull null
             val start = m.range.first
             val prev = s.getOrNull(start - 1)
             // straight after letters: only a keyword's own code ("otp123456")
@@ -83,17 +75,26 @@ class OtpFilter(strong: List<String>, weak: List<String> = WEAK) {
     companion object {
         private const val RESOURCE = "/sen/otp-keywords.txt"
 
-        /** Keywords that count only when joined straight to their code. */
+        /** Keywords that count only with a code in the same sentence, outside a promotion. */
         val WEAK = listOf("pin", "nombor pin", "kod", "code", "password", "kata laluan")
 
-        private const val GAP = "[\\s:=#()\\[\\]\\-–—]*"
-        private const val LINK =
-            "is|are|your|the|for|login|log|in|masuk|sign|untuk|anda|ialah|adalah|ini|no\\.?|number|nombor|gunakan|use|enter|masukkan"
-        private const val LINK_BACK = "is|are|your|the|adalah|ialah|merupakan|anda|ini|as"
+        /** PIN as a PIN, not a syllable of a name. */
+        private val PIN_AS_PIN =
+            Regex(
+                "(?<![\\p{L}])((your|the|new|a|card|one-time|one time|atm|nombor) pin|pin (is|ialah|adalah|for|untuk|anda|number|no\\.?)|pin:)(?![\\p{L}])",
+            )
 
         /** 4 to 8 digits, maybe grouped by single spaces or hyphens, maybe after # or a letter and hyphen. */
         private val CANDIDATE =
             Regex("(?<![\\p{N}•*×#])(?<!\\p{N}[.,/:])(?:#|(?<![\\p{L}])[a-z]-)?\\p{N}+(?:[ \\-]\\p{N}+)*(?![\\p{N}]|[.,]\\p{N}|[/:]\\p{N})")
+        private val DATE = Regex("(\\p{N}{1,2})-(\\p{N}{1,2})-(\\p{N}{2}|\\p{N}{4})")
+
+        /** 09-10-2026 or 10-09-26: a day and a month, either way round, then a year. "48-29-10" isn't one. */
+        private fun isDate(s: String): Boolean {
+            val m = DATE.matchEntire(s) ?: return false
+            val (a, b) = m.groupValues[1].toInt() to m.groupValues[2].toInt()
+            return (a in 1..31 && b in 1..12) || (a in 1..12 && b in 1..31)
+        }
         private val GLUED = Regex("(?<![\\p{L}\\p{N}])(otp|tac|mtac|pin)$")
         private val NOT_A_CODE_BEFORE =
             Regex(
@@ -105,16 +106,20 @@ class OtpFilter(strong: List<String>, weak: List<String> = WEAK) {
                     "september|october|november|december|januari|februari|mac|mei|julai|ogos|okt|oktober|dis|disember)" +
                     "(?:[\\s:#.-]+(no\\.?|number|nombor))?[\\s:#.-]*$|" +
                     // a reference's own code: "approval code 482910", "kod rujukan: 48291077"
-                    "(?<![\\p{L}\\p{N}])((reference|ref|approval|booking|order|confirmation|tracking|transaction|merchant)[\\s-]+code|" +
-                    "kod[\\s-]+(rujukan|kelulusan|tempahan|transaksi))[\\s:#.-]*$",
+                    "(?<![\\p{L}\\p{N}])((reference|ref|approval|auth|authorisation|authorization|payment|txn|booking|order|confirmation|tracking|transaction|merchant)[\\s-]+code|" +
+                    "kod[\\s-]+(rujukan|kelulusan|tempahan|transaksi))(?:\\s+(is|ialah|adalah))?[\\s:#.-]*$",
             )
         private val TIME_AFTER = Regex("[ ]?(am|pm|h|hrs|min|mins|minutes|minit|saat|seconds|sec)(?![\\p{L}])")
 
         /** A sentence of advice: don't share, we never ask. */
         private val ADVICE =
             Regex(
+                // don't share, we never ask
                 "(?<![\\p{L}])(never|do not|don't|dont|jangan|usah|will not|won't|tidak akan|tidak pernah)(?![\\p{L}]).*" +
-                    "(?<![\\p{L}])(share|disclose|reveal|give|tell|ask|send|kongsi|kongsikan|dedahkan|beri|berikan|minta|meminta)(?![\\p{L}])",
+                    "(?<![\\p{L}])(share|disclose|reveal|give|tell|ask|send|kongsi|kongsikan|dedahkan|beri|berikan|minta|meminta)(?![\\p{L}])|" +
+                    // keep it safe: "Keep your OTP and TAC confidential", "Protect your PIN", "Rahsiakan TAC anda"
+                    "(?<![\\p{L}])(keep|protect|safeguard|guard|rahsiakan|lindungi|jaga|jagalah)(?![\\p{L}]).*" +
+                    "(?<![\\p{L}])(pin|otp|tac|password|passcode|code|codes|details|kod|kata laluan|maklumat)(?![\\p{L}])",
             )
 
         /** Advice that points at a code in this message. */
@@ -127,7 +132,7 @@ class OtpFilter(strong: List<String>, weak: List<String> = WEAK) {
         /** A code with a qualifier is somebody's reference, not a secret. */
         private val QUALIFIED =
             Regex(
-                "(?<![\\p{L}])(reference|ref|approval|promo|promotion|promotional|voucher|coupon|discount|booking|" +
+                "(?<![\\p{L}])(reference|ref|approval|auth|authorisation|authorization|payment|txn|transaction|promo|promotion|promotional|voucher|coupon|discount|booking|" +
                     "confirmation|tracking|referral|invite|gift|order|redemption|rujukan|kelulusan|promosi|baucar|" +
                     "diskaun|tempahan)[\\s-]+(code|kod|number|no\\.?|pin)(?![\\p{L}])[^\\p{N}]*$|" +
                     "(?<![\\p{L}])(code|kod)[\\s-]+(rujukan|kelulusan|promo|promosi|baucar|diskaun|tempahan)(?![\\p{L}])",

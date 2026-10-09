@@ -34,7 +34,7 @@ object Capture {
         return when (val d = gate.decide(posted, Chosen.get(context), outbox.droppedChannels())) {
             is Decision.Drop -> {
                 // a one-time code from a chosen app: logged by time and app, never its text (Outbox.beat)
-                if (d.reason == DropReason.OTP) Heartbeat.dropped(context, posted.packageName)
+                if (d.reason == DropReason.OTP) Heartbeat.dropped(context, posted)
                 false
             }
             is Decision.Keep -> {

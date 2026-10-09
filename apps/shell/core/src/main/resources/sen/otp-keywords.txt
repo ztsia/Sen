@@ -6,7 +6,8 @@
 #
 # Strong means: a notification that says this word and carries a code is about that code. Keep words
 # that a payment, a receipt or a merchant's name uses in other senses out of this list; make them weak
-# in OtpFilter.kt instead.
+# in OtpFilter.kt instead. Left out for that reason: "authorisation code" (a card receipt's approval),
+# "Secure2u" (Maybank's approval app, named in its payment notifications).
 #
 # Keywords match as whole words, in any case. English and Malay. One per line; '#' starts a comment.
 # OtpFilterTest checks the list against made-up OTPs and payments (QA B02's cases included), and against
@@ -30,13 +31,10 @@ transaction authorization code
 verification code
 security code
 authentication code
-authorisation code
-authorization code
 passcode
 login code
 log-in code
 sign-in code
-secure2u
 secure verification
 
 # Malay
