@@ -83,6 +83,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/dist/**',
       '**/dist-production/**',
+      'apps/web/dist-*/**',
       'docs/ui/directions/**',
       '.claude/**',
       'coverage/**',

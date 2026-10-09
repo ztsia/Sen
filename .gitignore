@@ -42,3 +42,5 @@ exports/
 Thumbs.db
 *.log
 *.tsbuildinfo
+# any other build of the web app (QA builds its own, such as dist-qa-prod)
+apps/web/dist-*/
