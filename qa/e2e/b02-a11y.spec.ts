@@ -42,6 +42,9 @@ for (const [look, mode] of [
     const r1 = { axe: await axe(page), small: await small(page) };
     await shot(page, `A11Y-captured-${look}-${mode}`);
     await page.getByRole('button', { name: 'Share samples' }).click();
+    // measured at rest: straight after the tap, the button is still fading back from :active (ledger, D116 round)
+    await page.waitForFunction(() => document.getAnimations().every((x) => x.playState !== 'running'));
+    await page.waitForTimeout(200);
     const r2 = { axe: await axe(page), small: await small(page) };
     await shot(page, `A11Y-captured-picking-${look}-${mode}`);
     await page.getByRole('button', { name: 'Cancel' }).click();

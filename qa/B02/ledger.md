@@ -90,3 +90,20 @@ wrong on 18 of 20 written after reading it, all on the weak-keyword path and non
 **Evidence:** Kotlin core 31/31; QA's probes from all four runs 177/179 (the two red are the
 deliberate notes above); unit 141/141; Playwright 100/100 on fresh builds; QA's Playwright 45/45
 (AC-8, which needs its own server, not re-run); all four APKs build.
+
+## The masking net, D116 (9 Oct 2026)
+
+The owner's answer to run 4's question (D116): rather than another round of filter rules, a miss is
+made harmless. The filter is unchanged; what it keeps but might hold a code is stored masked.
+
+| # | Change | Tier, and why |
+|---|---|---|
+| 1 | `OtpMask` in the core: an OTP word anywhere (advice included) and a run of four or more digits (grouped, glued to letters, with invisible characters) masks every such run as `•`, leaving amounts; `RawEvent.maybeOtp`; the dedupe key from the masked text. `OtpMaskTest` (8 tests) | 3 (the OTP non-negotiable) |
+| 2 | Outbox version 3 adds `events.maybe_otp`; the bridge, Share samples, *Captured on this phone* (a muted line, `patterns.md`) and the simulator (*Post a maybe-OTP*) show it. Emulator test: a doubtful OTP is stored masked and marked, and its code is nowhere in the outbox | 3, with 1 |
+| 3 | `Probe4.r4_keyword_only_in_advice` now expects the event kept masked, not raw (run 4's note 5 is settled by D116). `r4_merchant_tac_store_no` stays red: the filter is unchanged, so "TAC CAFE 2241" still drops | — |
+| 4 | QA's `b02-a11y` copper-dark picking check measured the button while it faded back from `:active` (4.04:1; at rest it passes). It failed at `820eadb` too. It now waits for animations to finish | 1 (test timing, no app change) |
+| 5 | Spec §6.2, D116, the B09 and B10 briefs | docs |
+
+**Evidence:** Kotlin core 39/39; QA's probes 147/148 test methods (the red one is the deliberate TAC CAFE
+drop); unit 141/141; Playwright 100/100 (with the maybe-OTP row); QA's Playwright 45/45 (AC-8 needs its own
+server, not re-run); all four APKs and the emulator tests build. The emulator runs on the next push.

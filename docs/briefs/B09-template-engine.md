@@ -56,6 +56,9 @@ drafts the real ones.
   outbox with its derived id. Nothing waits for the web app or the network.
 - **With no template:** `skipped` when there's no RM or MYR amount (§6.2 step 1); otherwise it waits
   for B10's drafting.
+- **`ignore: OTP` templates run in the listener (D116),** after B02's filter and before the mask: a
+  notification one matches is dropped and logged like any OTP, never stored. A wording a money
+  template reads is a payment, so it isn't masked.
 
 ### On the server
 - **A re-read:** when a template arrives or changes, the server re-reads that person's matching

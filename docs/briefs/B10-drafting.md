@@ -52,6 +52,11 @@ model writes is ever stored.**
    *Skipped*.
 5. **A money template starts `provisional` and books at once.** Its payments are marked *new
    wording*. `/sync` returns the new templates so the shell re-reads its own events.
+6. **A *maybe OTP* is drafted too (D116),** with or without an amount: it arrives already masked
+   (B02). The model judges it a payment, which gets a template as usual, or an OTP, which gets an
+   `ignore: OTP` template; the masked event is then deleted, and the shell drops that wording natively
+   before anything is stored. Learned OTP wordings are listed in Settings → Capture, with *This was a
+   payment* to undo, which retires the template.
 
 ### Confirming
 - ***Review* holds one item per provisional template,** such as *New Ryt wording: RM12.90 paid at ZUS
