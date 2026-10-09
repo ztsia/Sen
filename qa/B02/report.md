@@ -1,5 +1,7 @@
 # QA · B02 · The shell and the listener
 
+**Report with screenshots:** https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA
+
 Run 1, 9 Oct 2026, at `45aacca`, by the `qa-reviewer` subagent (its final message, saved here because
 the harness refused its own write). The HTML report with screenshots is linked below once published.
 
