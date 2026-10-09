@@ -52,11 +52,15 @@ model writes is ever stored.**
    *Skipped*.
 5. **A money template starts `provisional` and books at once.** Its payments are marked *new
    wording*. `/sync` returns the new templates so the shell re-reads its own events.
-6. **A *maybe OTP* is drafted too (D116),** with or without an amount: it arrives already masked
-   (B02). The model judges it a payment, which gets a template as usual, or an OTP, which gets an
-   `ignore: OTP` template; the masked event is then deleted, and the shell drops that wording natively
-   before anything is stored. Learned OTP wordings are listed in Settings → Capture, with *This was a
-   payment* to undo, which retires the template.
+6. **Classify first (D119).** A wording no template knows arrives with all its numbers masked (B02
+   masks every long number until then). A cheap-tier call classifies it: transaction, OTP, promotion,
+   order or delivery, account notice, or other. On the phone (B09), the raw digits wait in memory only
+   for the answer; a transaction is stored with them and drafted as a money template; an OTP is dropped
+   and drafted from the masked text as `ignore: OTP`; the rest become `ignore` or `context` templates.
+   Offline or late, the event is stored masked and classified at the next sync. Learned OTP wordings
+   are listed in Settings → Capture, with *This was a payment* to undo, which retires the template.
+   **Before fixing the classifier's model, test it (D94):** the cheap tier's candidates against Jev
+   (TypeSafe AI) on the soak's anonymised samples, for OTP-against-transaction accuracy, cost and speed.
 
 ### Confirming
 - ***Review* holds one item per provisional template,** such as *New Ryt wording: RM12.90 paid at ZUS
