@@ -1,55 +1,58 @@
 # Handoff
 
-Rewritten 9 Oct 2026 by a short session that prepared B02 and stopped, at the owner's word, before
-building anything. The protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it
-before you end.
+Rewritten 9 Oct 2026 by the session that built B02's code. The protocol is in `CLAUDE.md`, *Session
+rotation*: read this first, and rewrite it before you end.
 
 ## Where things stand
 
-- **B01 is merged** (ztsia/Sen PR #2). Its phone checks still wait on Vercel (below).
-- **B02 · The shell and the listener: not started.** Its branch `B02/shell-listener` exists, from
-  `main`, with one commit: the `capacitor-app-creation` skill, added with `npx skills add`, pinned in
-  `skills-lock.json` and listed in `CLAUDE.md`. Continue on that branch; don't make another.
-- The owner starts B02 in a later session.
+- **B02 · The shell and the listener, on `B02/shell-listener`: code done, QA run, PR next.** What's
+  left is the owner's: Vercel, the signing key, installing, and the week of soak (`docs/local.md`, *B02:
+  the shell on your phone*). The next slice doesn't wait for the soak; its answers are needed before B09.
+- **Verified in the session:** the core's Kotlin tests (22); all three APKs build here (release,
+  debug, e2e) and the emulator tests compile; unit 141/141; Playwright, the slice's capture journeys,
+  axe and 48 px targets in Minted and Copper, light and dark, and the service worker offline in
+  production; typecheck, lint, format, hygiene.
+- **Verified on GitHub Actions:** see the PR. The `Shell` workflow runs the core, both APKs and the
+  emulator tests (Android 14, KVM).
+- **Not verified yet:** anything on the phone; the debug build against a real review alias.
 
-## Decided on 9 Oct, and why
+## Decided in B02, and why
 
-- **The shell loads the web app from Vercel, with a service worker for offline**, not a bundled app
-  with live updates (the brief's choice; record it in `spec_v2.md` §5.1 when B02 starts). Why:
-  - the debug shell loading one review alias (§17) works only this way
-  - one deploy pipeline, not a second one for signed live-update bundles
-  - the web app and the API share one origin: no CORS, first-party cookies, headers set the CSP
-  - Capacitor 8 (checked in `@capacitor/android` 8.5.3's source) injects its bridge with
-    `addDocumentStartJavaScript` restricted to the app URL's origin, and answers messages through
-    `addWebMessageListener` with the allowed-origin rules, so the bridge works on pages the service
-    worker serves offline, and only for our origin
-  Covered in B02: a fallback page inside the APK (*Connect once to finish setting up Sen*) for a
-  first launch offline or a lost cache; the shell reports its version over the bridge and the web
-  app feature-detects methods, which are only ever added; a new version applies on the next launch,
-  never mid-session; all six look chunks precached.
-  **Test it first:** the airplane-mode check on GitHub Actions' emulator, serving the build on the
-  runner and reaching it as `localhost` through `adb reverse` (a secure context, so no Vercel
-  needed). If remote loading fails there, switch to bundling before building on it.
-- **Vercel is needed only to finish B02** (the release must point at production, and the owner
-  installs it), not to build or test it.
-- **If the emulator doesn't run on GitHub's runners**, record it in `docs/cloud.md` §5 and make the
-  emulator tests runnable from the owner's laptop with one command, listed in `docs/local.md`.
-- **Skills live committed in `.claude/skills/`, never installed by a setup script**: pinned, loaded
-  at startup, no network needed. No Android, Kotlin or Actions skill was worth adding (only
-  third-party ones of unknown quality).
+- **D114:** the shell loads the web app from Vercel; a service worker precaches every built file (2.5 MB
+  in a preview, fonts half of it) and takes over at the next launch. With nothing cached, the APK's own
+  page says *Connect once*. **D115** (proposed, owner confirms on the PR): id `io.github.ztsia.sen`;
+  ongoing notifications dropped natively; the review alias follows a `review` branch; the key is made
+  by a one-off workflow; an hourly heartbeat through WorkManager.
+- **Capacitor's own prefix check isn't trusted:** the shell keeps only the site's exact origin in
+  the WebView (`Origin.same`, in the core) and sends other https links to the browser.
+- **The address each build loads is in `apps/shell/sites.json`**, null until Vercel is linked; then the
+  APK shows *This build has no site yet*. A session fills it from the owner's message.
+- **Native code never trusts the page:** `setChosen` runs the classifier again; the chosen-apps check
+  runs before a notification's extras are read; no notification text is logged in any build.
+- **Capture's steps are screens** (`settings/capture/apps`, `access`, `running`), so B08's first run
+  reuses them; `settings/capture/captured` is the soak's, and B07 replaces it.
+- **In a browser,** development and previews simulate the shell (`dev/capture-sim.ts`, dev-panel
+  buttons); production says capture lives in the Android app.
 
 ## Open with the owner
 
-- **Nothing in `docs/local.md` is done yet**: Vercel, `DENYLIST`, secret scanning, the cloud
-  environment, the ESS capture, the samples. None blocks starting B02.
-- Copper's overspent figure is verdigris green against patterns.md §3; kept until the owner says.
+- **Vercel**, then the two addresses into a session; **the signing key** (one workflow run); install;
+  the soak; the hidden tests (island, icon, prompt). All in `docs/local.md`.
+- **Is the review alias behind Vercel's login?** If it is, the debug build can't log in inside the
+  WebView. Then either previews drop Vercel Authentication, or the debug build carries a bypass the
+  owner pastes once. Recommend the bypass. Decide when the owner reports it.
+- D115 on the PR. Copper's overspent green (from B01) still stands.
 
 ## What to do first
 
-- Start B02 from its brief, on `B02/shell-listener`. Measure first whether the Android SDK installs
-  in a session (`docs/cloud.md` §5 asks), so the APK can be built here, not only in Actions.
+- If the PR has red CI or comments, fix them on `B02/shell-listener`.
+- When the owner sends the Vercel addresses: write them into `sites.json`, push; the Shell workflow
+  builds APKs that load them.
+- When soak samples arrive: anonymise into `docs/notifications.md`, answer §21 Q2, Q3, Q26, Q27 and
+  the launcher test (D77), and record whether Android 16 still delivers payments in full.
+- Otherwise: B03, on `B03/skeleton-tabs` from `main` once B02 is merged.
 
 ## Don't reopen
 
-D1–D113, unless the owner raises one. In particular the slice order (D111), no screen mockups (D84),
-one brief, one branch; shadcn first, customised in place; and the remote-load decision above.
+D1–D115, unless the owner raises one. In particular remote against bundled (D114), the slice order
+(D111), no screen mockups (D84), one brief, one branch; shadcn first, customised in place.
