@@ -67,7 +67,7 @@ class CaptureGate(
         }
         val unread =
             try {
-                if (isOtp(p.title, p.text, p.bigText)) return Decision.Drop(DropReason.OTP)
+                if (isOtp(p.title?.take(FILTER_READS), p.text?.take(FILTER_READS), p.bigText?.take(FILTER_READS))) return Decision.Drop(DropReason.OTP)
                 false
             } catch (e: StackOverflowError) {
                 // text too long or odd for the filter's patterns: in doubt, keep it masked and marked
@@ -95,6 +95,13 @@ class CaptureGate(
         )
     }
 }
+
+/**
+ * How much of each part the OTP filter reads: Android cuts a notification's text at 1,024 characters
+ * anyway, and the filter's patterns slow down past a few thousand (QA B02 run 6's twin). What's beyond is
+ * masked all the same.
+ */
+private const val FILTER_READS = 2_000
 
 /** One app's notification channel, as a channel rule names it. */
 data class ChannelRef(val packageName: String, val channel: String)

@@ -82,9 +82,30 @@ class OtpMaskTest {
     }
 
     @Test
-    fun `short numbers and times stay, and a comma or dot before a space ends a run (QA run 5, 4)`() {
-        assertEquals("Paid RM12.90 at Table 12, No. 123, 9:47 PM.", one("Paid RM12.90 at Table 12, No. 123, 9:47 PM."))
-        assertEquals("Paid RM38.15 at 7-ELEVEN on 9 Oct, 2:30 PM", one("Paid RM38.15 at 7-ELEVEN on 9 Oct, 2:30 PM"))
+    fun `every digit outside an amount is masked, short ones too (D121)`() {
+        assertEquals("Paid RM12.90 at Table ••, No. •••, •:•• PM.", one("Paid RM12.90 at Table 12, No. 123, 9:47 PM."))
+        assertEquals("Paid RM38.15 at •-ELEVEN on • Oct, •:•• PM", one("Paid RM38.15 at 7-ELEVEN on 9 Oct, 2:30 PM"))
+        // QA run 7, 17: commas, dots and spelled-out digits can't split a code any more
+        listOf("Your TAC is 482, 913", "Your TAC is 4, 8, 2, 9, 1, 3", "Your TAC is 48, 29, 13", "Your TAC is 482 - - 913", "Your TAC is 482. 913", "Your TAC is 4a8b2c9d1e3")
+            .forEach { assertTrue(one(it).none(Char::isDigit), it) }
+        // QA run 6's twin, 2: a code split across the title and the text
+        val r = mask.apply("Your OTP 482", "913", null)
+        assertTrue(r.parts.filterNotNull().none { p -> p.any(Char::isDigit) })
+    }
+
+    @Test
+    fun `foreign amounts keep their digits too (QA run 6's twin, 4)`() {
+        assertEquals("Paid THB 2500 at ••-ELEVEN BKK", one("Paid THB 2500 at 77-ELEVEN BKK"))
+        assertEquals("Charged £40 and JPY 12,500 (RM 450.00)", one("Charged £40 and JPY 12,500 (RM 450.00)"))
+        assertEquals("Paid US$ 19.90. Ref •••", one("Paid US$ 19.90. Ref 123"))
+    }
+
+    @Test
+    fun `the gate masks every field it stores (QA run 7, 18)`() {
+        val e = keep("Payment 482913", "Ref 771204 for RM12.30", "Expanded 559210 and RM12.30")
+        assertEquals("Payment ••••••", e.title)
+        assertEquals("Ref •••••• for RM12.30", e.text)
+        assertEquals("Expanded •••••• and RM12.30", e.bigText)
     }
 
     @Test

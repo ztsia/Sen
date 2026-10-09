@@ -119,7 +119,7 @@ const APPS: Omit<CaptureApp, 'chosen'>[] = [
   },
 ];
 
-// As the shell stores them: long numbers outside amounts masked (D119).
+// As the shell stores them: every digit outside an amount masked (D121).
 const SAMPLES: Omit<CapturedEvent, 'id' | 'postTime' | 'when' | 'capturedAt' | 'synced' | 'maybeOtp'>[] = [
   {
     package: 'my.rytbank.app',
@@ -146,7 +146,7 @@ const SAMPLES: Omit<CapturedEvent, 'id' | 'postTime' | 'when' | 'capturedAt' | '
     package: 'my.rytbank.app',
     channel: 'transactions',
     title: 'Your money is in!',
-    text: "You've received RM42.50 from TAN WEI MING on ••/•/••••, 9:48 PM (GMT+8).",
+    text: "You've received RM42.50 from TAN WEI MING on ••/•/••••, •:•• PM (GMT+•).",
     bigText: null,
   },
 ];

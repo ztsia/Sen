@@ -12,7 +12,7 @@ const MASKED = 'RM50.00 transfer to TAN WEI MING: ••••••. Never shar
 const S = {
   tng: ['DuitNow Transfer is successful!', 'You have successfully transferred RM 18.00 to LIM KAH HOE.'],
   pbb: ['Money Received', 'PBB. You have received a DuitNow Transfer of RM150.00 from TAN WEI MING.'],
-  rytIn: ['Your money is in!', "You've received RM42.50 from TAN WEI MING on ••/•/••••, 9:48 PM (GMT+8)."],
+  rytIn: ['Your money is in!', "You've received RM42.50 from TAN WEI MING on ••/•/••••, •:•• PM (GMT+•)."],
   rytCard: ['Card payment completed 👍', 'RM38.15 paid at Petron using your Main Account.'],
 };
 

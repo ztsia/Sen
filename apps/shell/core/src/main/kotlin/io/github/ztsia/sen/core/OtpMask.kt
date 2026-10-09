@@ -3,23 +3,18 @@ package io.github.ztsia.sen.core
 import java.text.Normalizer
 
 /**
- * The safety net under the OTP/TAC filter (D116, D119, spec §6.2). Until the template drafter can classify
- * a new wording (B09, B10), nothing on the phone can tell a code from a reference, so every notification
- * the filter keeps is stored with its long numbers masked. A code the filter misses is then never stored,
- * whatever words it comes with. One that also carries an OTP word (advice included) is marked
- * *maybe OTP*, for the drafter to judge first.
+ * The safety net under the OTP/TAC filter (D116, D119, D121, spec §6.2). Until the template drafter can
+ * classify a new wording (B09, B10), nothing on the phone can tell a code from a reference, so every
+ * notification the filter keeps is stored with **every digit outside an amount masked** as `•`. No way of
+ * spacing, splitting or decorating a code can get one past it, since no digit is judged by its neighbours.
+ * One that also carries an OTP word (advice included) is marked *maybe OTP*, for the drafter to judge
+ * first. From B10 a new wording is masked like this only for the classifier, and a transaction is stored
+ * with its numbers.
  *
- * What's masked, on the text as posted: every run of digits with at least four digits outside amounts.
  * A digit is anything Unicode reads as one, the way the filter does after NFKC (fullwidth, Arabic-Indic,
- * circled, mathematical). Marks and format characters (keycaps, variation selectors, joiners, zero-width
- * spaces) are invisible: they never end a run. Between digits, up to three characters that aren't
- * letters join a run, a stretch of whitespace counting as one ("482 913", "48:29:13", "482•913",
- * "(482) 913"); a letter ends it ("OTP482913" still starts one). A comma or dot is a joiner only on its
- * own, so "No. 123, 9:47 PM" and "RM12.90. 2241" stay apart.
- *
- * Amounts are left: a decimal amount ("1,234.56", "50.00", "12,90") or the number straight after a
- * currency ("RM 2,500", "RM 2500"). Each masked digit becomes `•`; everything else stays. It reads
- * the text once, without regular expressions, so no notification can be too long for it.
+ * circled, mathematical). Amounts are left: a decimal amount ("1,234.56", "50.00", "12,90") or the number
+ * straight after a currency ("RM 2,500", "THB 2500", "£40"). Short numbers go too until B10: "7-ELEVEN"
+ * reads "•-ELEVEN", "9:47 PM" reads "•:•• PM"; the event's time is stored apart. It reads the text once.
  */
 class OtpMask(strong: List<String>) {
     private val words =
@@ -70,28 +65,21 @@ class OtpMask(strong: List<String>) {
         }
 
         private const val MASK = '•'
-        private const val MAX_SEPARATORS = 3
 
         /** The longest number read as an amount; anything longer is a number to mask. */
         private const val MAX_AMOUNT = 24
 
         fun default(): OtpMask = OtpMask(OtpFilter.parse(OtpFilter.load()))
 
-        private enum class Kind { DIGIT, OTHER_DIGIT, POINT, SPACE, SEPARATOR, INVISIBLE, LETTER }
+        private enum class Kind { DIGIT, OTHER_DIGIT, POINT, OTHER }
 
-        private fun kind(cp: Int): Kind {
-            val type = Character.getType(cp).toByte()
-            return when {
+        private fun kind(cp: Int): Kind =
+            when {
                 Character.isDigit(cp) -> Kind.DIGIT
-                type == Character.OTHER_NUMBER && nfkcDigits(cp) -> Kind.OTHER_DIGIT
-                type == Character.NON_SPACING_MARK || type == Character.ENCLOSING_MARK ||
-                    type == Character.COMBINING_SPACING_MARK || type == Character.FORMAT -> Kind.INVISIBLE
+                Character.getType(cp).toByte() == Character.OTHER_NUMBER && nfkcDigits(cp) -> Kind.OTHER_DIGIT
                 cp == '.'.code || cp == ','.code -> Kind.POINT
-                Character.isWhitespace(cp) || Character.isSpaceChar(cp) -> Kind.SPACE
-                Character.isLetter(cp) -> Kind.LETTER
-                else -> Kind.SEPARATOR
+                else -> Kind.OTHER
             }
-        }
 
         /** Circled, parenthesised and similar numbers: digits once NFKC has read them ("①" is "1"). */
         private fun nfkcDigits(cp: Int): Boolean {
@@ -99,87 +87,38 @@ class OtpMask(strong: List<String>) {
             return n.isNotEmpty() && n.all { it in '0'..'9' || it == '(' || it == ')' || it == '.' } && n.any { it.isDigit() }
         }
 
-
+        /** Every digit outside an amount becomes `•`. */
         internal fun maskDigits(s: String): String {
             val cps = s.codePoints().toArray()
             val kinds = Array(cps.size) { kind(cps[it]) }
             fun digit(i: Int) = kinds[i] == Kind.DIGIT || kinds[i] == Kind.OTHER_DIGIT
-            val masked = BooleanArray(cps.size)
-            var i = 0
-            while (i < cps.size) {
-                if (!digit(i)) {
-                    i++
+            if (cps.indices.none(::digit)) return s
+            val masked = BooleanArray(cps.size) { digit(it) }
+            // tokens: digits with the dots and commas between them; an amount among them keeps its digits
+            var t = 0
+            while (t < cps.size) {
+                if (!digit(t)) {
+                    t++
                     continue
                 }
-                // a run: from this digit to the last digit reachable through allowed gaps
-                val start = i
-                var end = i
-                var j = i + 1
-                while (j < cps.size) {
-                    if (digit(j)) {
-                        end = j
-                        j++
-                        continue
-                    }
-                    // a gap: invisible characters anywhere; up to three joiners (a stretch of whitespace is
-                    // one), or a single dot or comma; a letter ends the run
-                    var k = j
-                    var separators = 0
-                    var points = 0
-                    while (k < cps.size && !digit(k)) {
-                        when (kinds[k]) {
-                            Kind.INVISIBLE -> {}
-                            Kind.SPACE -> if (k == j || kinds[k - 1] != Kind.SPACE) separators++
-                            Kind.SEPARATOR -> separators++
-                            Kind.POINT -> points++
-                            Kind.LETTER, Kind.DIGIT, Kind.OTHER_DIGIT -> break
-                        }
-                        k++
-                    }
-                    val joins = k < cps.size && digit(k) && (if (points > 0) points == 1 && separators == 0 else separators <= MAX_SEPARATORS)
-                    if (!joins) break
-                    j = k
+                var u = t
+                while (u + 1 < cps.size && (digit(u + 1) || (kinds[u + 1] == Kind.POINT && u + 2 < cps.size && digit(u + 2)))) u++
+                val token = shape(cps, kinds, t, u)
+                if (isDecimalAmount(token) || (afterCurrency(cps, t) && isCurrencyAmount(token))) {
+                    for (n in t..u) masked[n] = false
                 }
-                maskRun(s, cps, kinds, start, end, masked)
-                i = end + 1
+                t = u + 1
             }
-            if (masked.none { it }) return s
             val out = StringBuilder(s.length)
             for (n in cps.indices) if (masked[n]) out.append(MASK) else out.appendCodePoint(cps[n])
             return out.toString()
         }
 
-        /** Masks one run's digits outside its amounts, when four or more of them are left. */
-        private fun maskRun(s: String, cps: IntArray, kinds: Array<Kind>, start: Int, end: Int, masked: BooleanArray) {
-            val amount = BooleanArray(end - start + 1)
-            // tokens: the run split at separators (dots and commas stay inside a token)
-            var t = start
-            var first = true
-            while (t <= end) {
-                while (t <= end && kinds[t] != Kind.DIGIT && kinds[t] != Kind.OTHER_DIGIT) t++
-                if (t > end) break
-                var u = t
-                while (u + 1 <= end && (kinds[u + 1] == Kind.DIGIT || kinds[u + 1] == Kind.POINT)) u++
-                val token = shape(cps, kinds, t, u)
-                if (isDecimalAmount(token) || (first && afterCurrency(cps, start) && isCurrencyAmount(token))) {
-                    for (n in t..u) amount[n - start] = true
-                }
-                first = false
-                t = u + 1
-            }
-            val loose = (start..end).filter { (kinds[it] == Kind.DIGIT || kinds[it] == Kind.OTHER_DIGIT) && !amount[it - start] }
-            val count = loose.sumOf { if (kinds[it] == Kind.OTHER_DIGIT) digitsIn(cps[it]) else 1 }
-            if (count >= 4) loose.forEach { masked[it] = true }
-        }
-
-        private fun digitsIn(cp: Int): Int =
-            Normalizer.normalize(String(Character.toChars(cp)), Normalizer.Form.NFKC).count { it.isDigit() }
-
         /** A token's shape: `d` for a digit, `.` and `,` as they are. Null when it's too long to be an amount. */
         private fun shape(cps: IntArray, kinds: Array<Kind>, from: Int, to: Int): String? {
             if (to - from + 1 > MAX_AMOUNT) return null
             return buildString {
-                for (n in from..to) append(if (kinds[n] == Kind.DIGIT) 'd' else cps[n].toChar())
+                for (n in from..to) append(if (kinds[n] == Kind.DIGIT) 'd' else if (kinds[n] == Kind.POINT) cps[n].toChar() else 'x')
             }
         }
 
@@ -196,7 +135,7 @@ class OtpMask(strong: List<String>) {
         private val THOUSANDS = Regex("d{1,3}(?:,ddd)+")
         private val WHOLE = Regex("d+")
 
-        /** RM, MYR, USD, SGD or $ just before the run, with any spaces between. */
+        /** A currency code or sign just before the number, with up to three spaces between. */
         private fun afterCurrency(cps: IntArray, start: Int): Boolean {
             var k = start - 1
             var spaces = 0
@@ -204,8 +143,9 @@ class OtpMask(strong: List<String>) {
                 k--
                 spaces++
             }
-            if (spaces > MAX_SEPARATORS || k < 0) return false
-            if (cps[k] == '$'.code) return true
+            if (spaces > 3 || k < 0) return false
+            // a currency sign: $ £ € ¥ ฿ ₹ ₩ ₫ …
+            if (Character.getType(cps[k]).toByte() == Character.CURRENCY_SYMBOL) return true
             val letters = StringBuilder()
             while (k >= 0 && Character.isLetter(cps[k]) && letters.length < 4) {
                 letters.insert(0, Character.toChars(Character.toLowerCase(cps[k])))
@@ -215,6 +155,11 @@ class OtpMask(strong: List<String>) {
             return letters.toString() in CURRENCIES
         }
 
-        private val CURRENCIES = setOf("rm", "myr", "usd", "sgd")
+        /** Ringgit, and the currencies a Malaysian's cards and wallets most often show. */
+        private val CURRENCIES =
+            setOf(
+                "rm", "myr", "usd", "sgd", "eur", "gbp", "jpy", "cny", "rmb", "hkd", "twd", "thb", "idr", "php",
+                "vnd", "krw", "inr", "aud", "nzd", "chf", "cad", "aed", "sar", "bnd",
+            )
     }
 }

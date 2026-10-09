@@ -48,7 +48,13 @@ object Capture {
             is Decision.Keep -> {
                 // only a new event moves "last captured": a replay or a duplicate isn't news (B07's
                 // watchdog reads this time)
-                outbox.insert(d.event).also { new -> if (new) Heartbeat.event(context) }
+                try {
+                    outbox.insert(d.event).also { new -> if (new) Heartbeat.event(context) }
+                } catch (e: Exception) {
+                    // a storage failure (a full disk, say) mustn't kill the capture thread: log it, keep going
+                    Heartbeat.dropped(context, posted, "unread")
+                    false
+                }
             }
         }
     }

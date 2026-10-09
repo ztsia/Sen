@@ -22,7 +22,7 @@ const BEATS: Record<Beat['kind'], string> = {
   boot: 'Phone started',
   updated: 'Sen updated',
   otp: 'Dropped a one-time code',
-  unread: 'Skipped a notification Sen couldn’t read',
+  unread: 'Skipped a notification Sen couldn’t read or store',
 };
 
 /**
@@ -82,8 +82,8 @@ export default function CapturedOnPhone() {
       {first.data ? (
         <div className="flex min-h-full flex-col">
           <p className="px-4 pt-2 pb-2 text-sm text-muted-foreground">
-            {total === 1 ? '1 notification' : `${total} notifications`}, newest first, as the apps wrote them, with long
-            numbers hidden. They stay on this phone.
+            {total === 1 ? '1 notification' : `${total} notifications`}, newest first, as the apps wrote them, with
+            their numbers hidden. They stay on this phone.
           </p>
           {events.length === 0 ? (
             <EmptyState
@@ -191,10 +191,12 @@ function EventRow({
         <span className="min-w-0 truncate">{app}</span>
         <span className="shrink-0">{momentLabel(new Date(e.postTime))}</span>
       </ItemDescription>
-      {e.title ? <ItemTitle className="selectable w-full text-base wrap-anywhere">{e.title}</ItemTitle> : null}
-      {e.text ? <p className="selectable text-base wrap-anywhere">{e.text}</p> : null}
+      {e.title ? (
+        <ItemTitle className="selectable w-full text-base wrap-anywhere whitespace-pre-line">{e.title}</ItemTitle>
+      ) : null}
+      {e.text ? <p className="selectable text-base wrap-anywhere whitespace-pre-line">{e.text}</p> : null}
       {e.bigText && e.bigText !== e.text ? (
-        <p className="selectable text-sm wrap-anywhere text-muted-foreground">{e.bigText}</p>
+        <p className="selectable text-sm wrap-anywhere whitespace-pre-line text-muted-foreground">{e.bigText}</p>
       ) : null}
       {e.maybeOtp ? (
         <p className="text-sm text-muted-foreground">Maybe a one-time code, so its numbers are hidden</p>

@@ -9,7 +9,14 @@ const RYT = 'my.rytbank.app';
 const rows = (page: Page) => page.getByRole('main').locator('ul > li');
 const LINE = 'Maybe a one-time code, so its numbers are hidden';
 
-type Ev = { title: string | null; text: string | null; bigText?: string | null; maybeOtp?: boolean; postTime?: number; pkg?: string };
+type Ev = {
+  title: string | null;
+  text: string | null;
+  bigText?: string | null;
+  maybeOtp?: boolean;
+  postTime?: number;
+  pkg?: string;
+};
 
 async function seed(page: Page, events: Ev[], chosen = [RYT]) {
   await page.evaluate(
@@ -68,7 +75,10 @@ test('R7-FLOW-1/4 rows show what is stored, as stored; the muted line is on the 
   await toCapture(page);
   const long = 'Statement note: ' + 'word '.repeat(190) + 'END';
   await seed(page, [
-    { title: 'Card payment completed 👍', text: 'RM12.90 paid at Kedai Kopi 椰 using your Main Account. Ref ••••••••.' },
+    {
+      title: 'Card payment completed 👍',
+      text: 'RM12.90 paid at Kedai Kopi 椰 using your Main Account. Ref ••••••••.',
+    },
     { title: 'Ryt Bank', text: 'RM50.00 transfer to TAN WEI MING: ••••••. Never share your TAC.', maybeOtp: true },
     { title: 'Order update', text: 'Short', bigText: 'Line one\nLine two\n\nLine four   spaced' },
     { title: 'Reference', text: 'a'.repeat(300) + '•'.repeat(40) },
@@ -77,7 +87,9 @@ test('R7-FLOW-1/4 rows show what is stored, as stored; the muted line is on the 
   ]);
   await openCaptured(page);
   await expect(rows(page)).toHaveCount(6);
-  await expect(page.getByText('6 notifications, newest first, as the apps wrote them, with long numbers hidden.')).toBeVisible();
+  await expect(
+    page.getByText('6 notifications, newest first, as the apps wrote them, with their numbers hidden.'),
+  ).toBeVisible();
   // R7-AC-21: exactly one muted line, under the marked row
   await expect(page.getByText(LINE)).toHaveCount(1);
   await expect(rows(page).nth(1).getByText(LINE)).toBeVisible();
@@ -88,23 +100,42 @@ test('R7-FLOW-1/4 rows show what is stored, as stored; the muted line is on the 
   // no horizontal scroll with a 300-character token and a 1,000-character note
   const overflow = await page.evaluate(() => {
     const el = document.scrollingElement!;
-    return { doc: el.scrollWidth - el.clientWidth, main: (document.querySelector('main') as HTMLElement).scrollWidth - (document.querySelector('main') as HTMLElement).clientWidth };
+    return {
+      doc: el.scrollWidth - el.clientWidth,
+      main:
+        (document.querySelector('main') as HTMLElement).scrollWidth -
+        (document.querySelector('main') as HTMLElement).clientWidth,
+    };
   });
   expect(overflow.doc).toBeLessThanOrEqual(0);
   expect(overflow.main).toBeLessThanOrEqual(0);
   await shot(page, 'R7-FLOW-9-step-1-long-wraps');
   // selectable
-  const sel = await rows(page).nth(0).getByText('RM12.90 paid at Kedai Kopi', { exact: false }).evaluate((el) => getComputedStyle(el).userSelect);
+  const sel = await rows(page)
+    .nth(0)
+    .getByText('RM12.90 paid at Kedai Kopi', { exact: false })
+    .evaluate((el) => getComputedStyle(el).userSelect);
   expect(sel).toBe('text');
   // R7-AC-20: newlines in expanded text are kept visually (record: this is the drift check)
   const big = rows(page).nth(2).getByText('Line one', { exact: false });
-  const h = await big.evaluate((el) => ({ h: el.getBoundingClientRect().height, lh: parseFloat(getComputedStyle(el).lineHeight), ws: getComputedStyle(el).whiteSpace }));
+  const h = await big.evaluate((el) => ({
+    h: el.getBoundingClientRect().height,
+    lh: parseFloat(getComputedStyle(el).lineHeight),
+    ws: getComputedStyle(el).whiteSpace,
+  }));
   console.log('R7 newline rendering', JSON.stringify(h));
-  expect.soft(h.h, `expanded text with 4 lines and a blank line renders ${Math.round(h.h / h.lh)} line(s), white-space=${h.ws}`).toBeGreaterThan(h.lh * 3.5);
+  expect
+    .soft(
+      h.h,
+      `expanded text with 4 lines and a blank line renders ${Math.round(h.h / h.lh)} line(s), white-space=${h.ws}`,
+    )
+    .toBeGreaterThan(h.lh * 3.5);
   await shot(page, 'R7-FLOW-1-step-2-newlines');
 });
 
-test('R7-FLOW-2/3 an OTP is dropped and logged; an unchosen app leaves no trace; no code is on the page', async ({ page }) => {
+test('R7-FLOW-2/3 an OTP is dropped and logged; an unchosen app leaves no trace; no code is on the page', async ({
+  page,
+}) => {
   await toCapture(page);
   await choose(page, ['Ryt Bank']);
   await sim(page, 'Grant access');
@@ -124,7 +155,12 @@ test('R7-FLOW-2/3 an OTP is dropped and logged; an unchosen app leaves no trace;
   await page.getByRole('button', { name: 'Back' }).click();
   await choose(page, []);
   await openCaptured(page);
-  const before = await (await beats(page)).getByRole('listitem').count().catch(() => 0);
+  const before = await (
+    await beats(page)
+  )
+    .getByRole('listitem')
+    .count()
+    .catch(() => 0);
   await page.keyboard.press('Escape');
   await sim(page, 'Post an OTP');
   await sim(page, 'Post a notification', 2);
@@ -134,13 +170,18 @@ test('R7-FLOW-2/3 an OTP is dropped and logged; an unchosen app leaves no trace;
   await shot(page, 'R7-FLOW-3-step-1-unchosen-no-trace');
   const state = await page.evaluate(async () => {
     const m = await import(/* @vite-ignore */ '/src/dev/capture-sim.ts');
-    return { events: m.useCaptureSim.getState().events.length, otpBeats: m.useCaptureSim.getState().beats.filter((b: { kind: string }) => b.kind === 'otp').length };
+    return {
+      events: m.useCaptureSim.getState().events.length,
+      otpBeats: m.useCaptureSim.getState().beats.filter((b: { kind: string }) => b.kind === 'otp').length,
+    };
   });
   expect(state).toEqual({ events: 0, otpBeats: 1 });
   void before;
 });
 
-test('R7-FLOW-4/5 a maybe-OTP is marked; a replay adds nothing; the same payment later is a second one', async ({ page }) => {
+test('R7-FLOW-4/5 a maybe-OTP is marked; a replay adds nothing; the same payment later is a second one', async ({
+  page,
+}) => {
   await toCapture(page);
   await choose(page, ['Ryt Bank', "Touch 'n Go eWallet"]);
   await sim(page, 'Grant access');
@@ -180,8 +221,12 @@ test('R7-FLOW-6 Share samples: nothing ticked is refused; a row ticks anywhere o
   await expect(page.getByText('Tick the notifications to share first.')).toBeVisible();
   await shot(page, 'R7-FLOW-6-step-1-nothing-ticked');
   // the label's overlay takes the tap, as intended: tap the row body anywhere
-  await rows(page).nth(0).click({ position: { x: 200, y: 30 } });
-  await rows(page).nth(2).click({ position: { x: 120, y: 40 } });
+  await rows(page)
+    .nth(0)
+    .click({ position: { x: 200, y: 30 } });
+  await rows(page)
+    .nth(2)
+    .click({ position: { x: 120, y: 40 } });
   await expect(page.getByRole('button', { name: 'Share 2 samples' })).toBeVisible();
   await expect(rows(page).nth(1).getByRole('checkbox')).not.toBeChecked();
   await shot(page, 'R7-FLOW-6-step-2-two-ticked');
@@ -192,7 +237,13 @@ test('R7-FLOW-6 Share samples: nothing ticked is refused; a row ticks anywhere o
 
 for (const tz of ['America/Los_Angeles', 'Pacific/Kiritimati', 'Asia/Kuala_Lumpur']) {
   test(`R7-FLOW-7 23:30 KL on 31 Oct reads 31 Oct, 23:30 in ${tz}`, async ({ browser }) => {
-    const ctx = await browser.newContext({ timezoneId: tz, viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, serviceWorkers: 'block' });
+    const ctx = await browser.newContext({
+      timezoneId: tz,
+      viewport: { width: 412, height: 915 },
+      isMobile: true,
+      hasTouch: true,
+      serviceWorkers: 'block',
+    });
     const page = await ctx.newPage();
     await toCapture(page);
     await seed(page, [
@@ -207,7 +258,10 @@ for (const tz of ['America/Los_Angeles', 'Pacific/Kiritimati', 'Asia/Kuala_Lumpu
   });
 }
 
-test('R7-FLOW-8 the simulator keeps nothing across a reload (record), and works offline in the page', async ({ page, context }) => {
+test('R7-FLOW-8 the simulator keeps nothing across a reload (record), and works offline in the page', async ({
+  page,
+  context,
+}) => {
   await toCapture(page);
   await choose(page, ['Ryt Bank']);
   await sim(page, 'Grant access');
@@ -221,7 +275,11 @@ test('R7-FLOW-8 the simulator keeps nothing across a reload (record), and works 
   await page.waitForLoadState();
   const left = await page.evaluate(async () => {
     const m = await import(/* @vite-ignore */ '/src/dev/capture-sim.ts');
-    return { events: m.useCaptureSim.getState().events.length, chosen: m.useCaptureSim.getState().chosen.length, ls: Object.keys(localStorage).join(','), }
+    return {
+      events: m.useCaptureSim.getState().events.length,
+      chosen: m.useCaptureSim.getState().chosen.length,
+      ls: Object.keys(localStorage).join(','),
+    };
   });
   console.log('R7 after reload', JSON.stringify(left));
   // the simulator holds events in memory only: a reload loses them. The shell's outbox is SQLite (emulator).
@@ -243,7 +301,12 @@ test('R7-FLOW-11 the empty and the error states', async ({ page }) => {
     };
   });
   await openCaptured(page);
-  await expect(page.getByRole('alert').or(page.getByRole('button', { name: /try again|retry/i })).first()).toBeVisible();
+  await expect(
+    page
+      .getByRole('alert')
+      .or(page.getByRole('button', { name: /try again|retry/i }))
+      .first(),
+  ).toBeVisible();
   await expect(page.getByText(/boom|Error:|at .*\.tsx/)).toHaveCount(0);
   await shot(page, 'R7-FLOW-11-step-2-error');
 });

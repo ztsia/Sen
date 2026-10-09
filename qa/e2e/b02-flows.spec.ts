@@ -76,7 +76,7 @@ test('FLOW-3 a chosen app is captured; FLOW-4 an unchosen app leaves nothing; FL
   const items = page.getByRole('main').locator('li');
   await expect(items.nth(0)).toContainText('Card payment completed 👍');
   await expect(items.nth(0)).toContainText('RM38.15 paid at Petron using your Main Account.');
-  await expect(items.nth(1)).toContainText("You've received RM42.50 from TAN WEI MING on ••/•/••••, 9:48 PM (GMT+8).");
+  await expect(items.nth(1)).toContainText("You've received RM42.50 from TAN WEI MING on ••/•/••••, •:•• PM (GMT+•).");
   await expect(items.nth(0)).toContainText(/Today, \d\d:\d\d/);
   await shot(page, 'FLOW-3-step-1-captured');
 
