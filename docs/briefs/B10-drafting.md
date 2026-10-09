@@ -86,8 +86,10 @@ model writes is ever stored.**
 - **Build the eval harness, `evals/`, the first slice to call a model** (D120): one golden set per job
   (anonymised cases with their expected answers, from `notifications.md` and the soak's samples), a
   runner that calls each candidate through the AI SDK, and scores by code (the class, whether the
-  template passes code's checks, the amount read), with tokens, cost and latency. Later phases add
-  their own job's set (receipts in P4, the agent in P6).
+  template passes code's checks, the amount read), with tokens, cost and latency. What code can't
+  score (how a template or merchant is named), the session reads in a blind side-by-side sample of
+  the candidates' answers and judges, recording why; the owner decides where it's a matter of taste.
+  Later phases add their own job's set (receipts in P4, the agent in P6).
 - **Benchmark the cheap candidates** on it: Claude Haiku 5.5, Gemini 3.5 Flash-Lite and, for
   classifying, Jev. Name the winner only in `ai/models.ts`, and record a decision.
 - **The live drafter test needs a key, so it runs in the benchmark session only.** CI replays
