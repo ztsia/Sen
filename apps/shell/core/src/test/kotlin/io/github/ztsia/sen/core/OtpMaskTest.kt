@@ -114,11 +114,31 @@ class OtpMaskTest {
                 "Your code: ٤٨٢٩١٣", // Arabic-Indic
                 "Your code: ④⑧②⑨①③", // circled
                 "Your code: 𝟒𝟖𝟐𝟗𝟏𝟑", // mathematical bold
+                // QA run 6: marks are invisible, any short non-letter gap joins, a stretch of spaces is one
+                "Your code: 4\uFE0F\u20E38\uFE0F\u20E32\uFE0F\u20E39\uFE0F\u20E31\uFE0F\u20E33\uFE0F\u20E3", // keycaps
+                "Your code: 4\uFE0E8\uFE0E2\uFE0E9\uFE0E1\uFE0E3", // variation selectors
+                "Your code: 482\u034F913", // combining grapheme joiner
+                "Your code: 482\u2022913", // bullet
+                "Your code: 48:29:13",
+                "Your code: 482    913", // four spaces
+                "Your code: 482 | 913",
+                "Your code: 482*913",
             )
         shapes.forEach { s ->
             val m = one(s)
             assertNoCode(m)
             assertTrue(m.contains('•'), s)
+        }
+    }
+
+    @Test
+    fun `a notification the filter can't read is kept masked and marked (QA run 6, 12)`() {
+        listOf<() -> Boolean>({ throw StackOverflowError() }, { throw IllegalStateException("regex") }).forEach { fail ->
+            val g = CaptureGate(isOtp = { _, _, _ -> fail() })
+            val d = g.decide(Posted(ryt, "k", "c", 1, 1, "Ryt Bank", "Ref 48291077 for RM12.30", null), setOf(ryt))
+            val e = assertIs<Decision.Keep>(d).event
+            assertTrue(e.maybeOtp, "unread must be marked")
+            assertEquals("Ref •••••••• for RM12.30", e.text)
         }
     }
 

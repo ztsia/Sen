@@ -11,10 +11,11 @@ import java.text.Normalizer
  *
  * What's masked, on the text as posted: every run of digits with at least four digits outside amounts.
  * A digit is anything Unicode reads as one, the way the filter does after NFKC (fullwidth, Arabic-Indic,
- * circled, mathematical). A run may be grouped by up to three spaces of any kind, tabs, dashes, middle
- * dots, underscores, slashes or brackets ("482 913", "48 - 29 - 13", "(482) 913"), or by a single dot or
- * comma ("48.29.13"), may hold invisible characters, and may follow letters ("OTP482913"). A comma or
- * dot followed by a space ends a run, so "No. 123, 9:47 PM" stays as it is.
+ * circled, mathematical). Marks and format characters (keycaps, variation selectors, joiners, zero-width
+ * spaces) are invisible: they never end a run. Between digits, up to three characters that aren't
+ * letters join a run, a stretch of whitespace counting as one ("482 913", "48:29:13", "482•913",
+ * "(482) 913"); a letter ends it ("OTP482913" still starts one). A comma or dot is a joiner only on its
+ * own, so "No. 123, 9:47 PM" and "RM12.90. 2241" stay apart.
  *
  * Amounts are left: a decimal amount ("1,234.56", "50.00", "12,90") or the number straight after a
  * currency ("RM 2,500", "RM 2500"). Each masked digit becomes `•`; everything else stays. It reads
@@ -76,19 +77,21 @@ class OtpMask(strong: List<String>) {
 
         fun default(): OtpMask = OtpMask(OtpFilter.parse(OtpFilter.load()))
 
-        private enum class Kind { DIGIT, OTHER_DIGIT, POINT, SEPARATOR, INVISIBLE, OTHER }
+        private enum class Kind { DIGIT, OTHER_DIGIT, POINT, SPACE, SEPARATOR, INVISIBLE, LETTER }
 
-        private fun kind(cp: Int): Kind =
-            when {
+        private fun kind(cp: Int): Kind {
+            val type = Character.getType(cp).toByte()
+            return when {
                 Character.isDigit(cp) -> Kind.DIGIT
-                Character.getType(cp) == Character.OTHER_NUMBER.toInt() && nfkcDigits(cp) -> Kind.OTHER_DIGIT
+                type == Character.OTHER_NUMBER && nfkcDigits(cp) -> Kind.OTHER_DIGIT
+                type == Character.NON_SPACING_MARK || type == Character.ENCLOSING_MARK ||
+                    type == Character.COMBINING_SPACING_MARK || type == Character.FORMAT -> Kind.INVISIBLE
                 cp == '.'.code || cp == ','.code -> Kind.POINT
-                cp in INVISIBLE -> Kind.INVISIBLE
-                Character.isWhitespace(cp) || Character.isSpaceChar(cp) -> Kind.SEPARATOR
-                Character.getType(cp) == Character.DASH_PUNCTUATION.toInt() -> Kind.SEPARATOR
-                cp in SEPARATORS -> Kind.SEPARATOR
-                else -> Kind.OTHER
+                Character.isWhitespace(cp) || Character.isSpaceChar(cp) -> Kind.SPACE
+                Character.isLetter(cp) -> Kind.LETTER
+                else -> Kind.SEPARATOR
             }
+        }
 
         /** Circled, parenthesised and similar numbers: digits once NFKC has read them ("①" is "1"). */
         private fun nfkcDigits(cp: Int): Boolean {
@@ -96,10 +99,6 @@ class OtpMask(strong: List<String>) {
             return n.isNotEmpty() && n.all { it in '0'..'9' || it == '(' || it == ')' || it == '.' } && n.any { it.isDigit() }
         }
 
-        private val INVISIBLE = setOf(0x200B, 0x200C, 0x200D, 0x200E, 0x200F, 0x2060, 0xFEFF, 0x00AD)
-
-        /** Besides spaces and dashes: middle dots, the minus sign, underscores, slashes and brackets. */
-        private val SEPARATORS = setOf(0x00B7, 0x2027, 0x30FB, 0x2212, '_'.code, '/'.code, '('.code, ')'.code)
 
         internal fun maskDigits(s: String): String {
             val cps = s.codePoints().toArray()
@@ -122,16 +121,18 @@ class OtpMask(strong: List<String>) {
                         j++
                         continue
                     }
-                    // a gap: invisible characters, then up to three separators, or a single dot or comma
+                    // a gap: invisible characters anywhere; up to three joiners (a stretch of whitespace is
+                    // one), or a single dot or comma; a letter ends the run
                     var k = j
                     var separators = 0
                     var points = 0
                     while (k < cps.size && !digit(k)) {
                         when (kinds[k]) {
                             Kind.INVISIBLE -> {}
+                            Kind.SPACE -> if (k == j || kinds[k - 1] != Kind.SPACE) separators++
                             Kind.SEPARATOR -> separators++
                             Kind.POINT -> points++
-                            else -> break
+                            Kind.LETTER, Kind.DIGIT, Kind.OTHER_DIGIT -> break
                         }
                         k++
                     }

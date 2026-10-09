@@ -39,6 +39,16 @@ class OtpFilterTest {
     }
 
     @Test
+    fun `reads digits through keycaps, variation selectors and joiners (QA run 6)`() {
+        listOf(
+            "Your TAC is 4\uFE0F\u20E38\uFE0F\u20E32\uFE0F\u20E39\uFE0F\u20E31\uFE0F\u20E33\uFE0F\u20E3.",
+            "Your TAC is 4\uFE0E8\uFE0E2\uFE0E9\uFE0E1\uFE0E3.",
+            "Your TAC is 482\u034F913.",
+            "Your TAC is 482\u2060913.",
+        ).forEach { assertTrue(filter.isOtp(it), it) }
+    }
+
+    @Test
     fun `drops codes split, prefixed or a few words from the keyword (QA run 2)`() {
         listOf(
             "Your OTP is 123 456. Valid for 3 minutes.",

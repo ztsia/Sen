@@ -50,8 +50,10 @@ sealed interface Decision {
  * notification at all, it's kept masked and marked *maybe OTP*: the mask reads any text.
  */
 class CaptureGate(
-    private val otp: OtpFilter = OtpFilter.default(),
+    otp: OtpFilter = OtpFilter.default(),
     private val mask: OtpMask = OtpMask.default(),
+    /** The OTP check; replaceable only so tests can make it fail. */
+    private val isOtp: (String?, String?, String?) -> Boolean = { t, x, b -> otp.isOtp(t, x, b) },
 ) {
     fun decide(p: Posted, chosen: Set<String>, droppedChannels: Set<ChannelRef> = emptySet()): Decision {
         if (p.packageName !in chosen) return Decision.Drop(DropReason.NOT_CHOSEN)
@@ -65,7 +67,7 @@ class CaptureGate(
         }
         val unread =
             try {
-                if (otp.isOtp(p.title, p.text, p.bigText)) return Decision.Drop(DropReason.OTP)
+                if (isOtp(p.title, p.text, p.bigText)) return Decision.Drop(DropReason.OTP)
                 false
             } catch (e: StackOverflowError) {
                 // text too long or odd for the filter's patterns: in doubt, keep it masked and marked

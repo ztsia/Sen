@@ -125,3 +125,23 @@ the `qa` skill's tier 2 (D117).
 **Evidence:** Kotlin core 41/41; QA's probes 217/218 (the red one is run 4's deliberate TAC CAFE drop);
 unit 141/141; Playwright 100/100; all four APKs and the emulator tests build. **Next:** run 6, scoped to
 the capture path, on Sonnet (D117, D118).
+
+## Run 6 (scoped, on Opus) → fixes (9 Oct 2026)
+
+Sixth round of findings in this area, so the mask's rule changed rather than gaining shapes: marks and
+format characters are invisible everywhere, and any short non-letter gap joins digits.
+
+| # | Finding | Fix | Tier, and why |
+|---|---|---|---|
+| 10 | Major: keycap marks, variation selectors, a CGJ, a bullet or colons let a TAC past both lines | The filter strips every mark and format character (`\p{Mn}\p{Me}\p{Cf}`); the mask treats them as invisible and joins digits across up to three non-letter characters (a dot or comma only alone) | 2 (OTP non-negotiable, one area) |
+| 11 | Minor: four spaces split a code for the mask | A stretch of whitespace is one joiner, as the filter reads it | 2 |
+| 12 | Minor: nothing guarded "unreadable is marked" | `CaptureGate` takes its OTP check as a parameter; `OtpMaskTest` makes it throw (overflow and exception) and asserts masked and marked; breaking the catch turns it red. The emulator's long text has no OTP word now | 1 |
+| 13 | Minor: "as the apps wrote them" | *…as the apps wrote them, with long numbers hidden*; patterns.md's raw row says D119 | 1 |
+| 14–16 | Notes | 14 stands (the simulator shows the screen, not the mask); 15 for B07 (no `when` falls back to the post time); 16 recorded here: bc2219f edited run 5's probes to fit D119 | — |
+
+`Probe6.ac25` passes alone but fails in the full probe suite: it needs the JVM's regex to overflow, and
+after warm-up the compiled frames are small enough that it doesn't, so the filter reads the text and it
+isn't unread (it's masked all the same, D119). The rule is guarded deterministically by finding 12's test.
+
+**Evidence:** core 43/43; QA's probes 265/267 (red: run 4's deliberate TAC CAFE drop, and `ac25` above);
+unit 141/141; Playwright 100/100; the e2e APK and the emulator tests build.

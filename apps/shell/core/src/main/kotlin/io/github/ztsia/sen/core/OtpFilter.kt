@@ -171,7 +171,8 @@ class OtpFilter(strong: List<String>, weak: List<String> = WEAK) {
         fun sentences(part: String): List<String> {
             val clean =
                 Normalizer.normalize(part, Normalizer.Form.NFKC)
-                    .replace(Regex("[\\u200B-\\u200D\\u2060\\uFEFF\\u00AD]"), "")
+                    // invisible: marks (keycaps, variation selectors, joiners) and format characters
+                    .replace(Regex("[\\p{Mn}\\p{Me}\\p{Cf}]"), "")
                     .replace('\u2019', '\'')
                     .replace('\u2018', '\'')
                     .lowercase(Locale.ROOT)
