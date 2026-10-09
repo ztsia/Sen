@@ -10,6 +10,7 @@ import io.github.ztsia.sen.capture.Outbox
 import io.github.ztsia.sen.moments.TestMoments
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -82,9 +83,12 @@ class CaptureListenerTest {
         post("pay", "Card payment completed", pay)
         val otp = "Your TAC is 482910 for DuitNow Transfer. Do not share it $run"
         post("otp", "Ryt Bank", otp)
+        val since = System.currentTimeMillis() - 60_000
         settle()
         assertEquals(1, stored(pay))
         assertEquals(0, stored(otp))
+        // the drop is logged by time and app only, so the soak can see it; its words are nowhere
+        assertTrue(Outbox.get(ctx).beats(50).any { it.kind == "otp" && it.packageName == shell && it.at >= since })
     }
 
     @Test

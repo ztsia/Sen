@@ -40,7 +40,8 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               at INTEGER NOT NULL,
               kind TEXT NOT NULL,
-              connected INTEGER NOT NULL
+              connected INTEGER NOT NULL,
+              package TEXT
             )
             """.trimIndent(),
         )
@@ -130,7 +131,11 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
 
     fun count(): Long = readableDatabase.compileStatement("SELECT COUNT(*) FROM events").use { it.simpleQueryForLong() }
 
-    fun beat(kind: String, connected: Boolean, at: Long = System.currentTimeMillis()) {
+    /**
+     * One line of the heartbeat's log. `package` is set only for a drop ("otp"): which chosen app posted
+     * a one-time code, and when, never its text, so the soak can tell a dropped payment from a missing one.
+     */
+    fun beat(kind: String, connected: Boolean, at: Long = System.currentTimeMillis(), packageName: String? = null) {
         writableDatabase.apply {
             insert(
                 "heartbeats",
@@ -139,6 +144,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
                     put("at", at)
                     put("kind", kind)
                     put("connected", if (connected) 1 else 0)
+                    put("package", packageName)
                 },
             )
             // Keep the last 2,000 beats: a few weeks at one an hour, plus every connect and boot.
@@ -146,11 +152,11 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
         }
     }
 
-    data class Beat(val at: Long, val kind: String, val connected: Boolean)
+    data class Beat(val at: Long, val kind: String, val connected: Boolean, val packageName: String?)
 
     fun beats(limit: Int): List<Beat> =
-        readableDatabase.rawQuery("SELECT at, kind, connected FROM heartbeats ORDER BY id DESC LIMIT ?", arrayOf(limit.toString())).use { c ->
-            buildList { while (c.moveToNext()) add(Beat(c.getLong(0), c.getString(1), c.getInt(2) == 1)) }
+        readableDatabase.rawQuery("SELECT at, kind, connected, package FROM heartbeats ORDER BY id DESC LIMIT ?", arrayOf(limit.toString())).use { c ->
+            buildList { while (c.moveToNext()) add(Beat(c.getLong(0), c.getString(1), c.getInt(2) == 1, c.getString(3))) }
         }
 
     fun droppedChannels(): Set<ChannelRef> =

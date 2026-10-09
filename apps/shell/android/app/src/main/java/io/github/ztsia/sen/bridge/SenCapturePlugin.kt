@@ -155,7 +155,7 @@ class SenCapturePlugin : Plugin() {
     fun heartbeats(call: PluginCall) {
         val out = JSArray()
         Outbox.get(context).beats((call.getInt("limit") ?: 100).coerceIn(1, 2000)).forEach { b ->
-            out.put(JSObject().put("at", b.at).put("kind", b.kind).put("connected", b.connected))
+            out.put(JSObject().put("at", b.at).put("kind", b.kind).put("connected", b.connected).put("package", b.packageName))
         }
         call.resolve(JSObject().put("beats", out))
     }

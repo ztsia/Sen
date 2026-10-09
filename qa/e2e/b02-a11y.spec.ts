@@ -30,9 +30,10 @@ for (const [look, mode] of [
   test(`Captured on this phone and Account: axe and 48 px, ${look} ${mode}`, async ({ page }) => {
     await page.goto(`/more?look=${look}&mode=${mode}`);
     await expect(page.locator('html')).toHaveAttribute('data-look', look);
+    await page.getByRole('link', { name: 'Settings' }).click();
     await page.getByRole('link', { name: 'Capture' }).click();
     await page.getByRole('button', { name: /Your apps/ }).click();
-    await page.getByRole('button', { name: 'Choose these 5' }).click();
+    await page.getByRole('button', { name: 'Choose these 4' }).click();
     await page.getByRole('button', { name: 'Back' }).click();
     await sim(page, 'Grant access');
     await sim(page, 'Post a notification', 4);

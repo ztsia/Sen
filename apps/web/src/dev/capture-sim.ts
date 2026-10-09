@@ -266,6 +266,8 @@ function store(posted: Posted, when: number) {
     return;
   }
   if (posted.otp) {
+    // dropped before anything is stored; only its time and app go in the heartbeat's log
+    set({ beats: [{ at: Date.now(), kind: 'otp', connected: s.connected, package: posted.package }, ...s.beats] });
     toastDone('Simulated: an OTP, dropped before anything was stored');
     return;
   }

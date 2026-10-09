@@ -15,10 +15,10 @@ test('FLOW-1 choosing your apps, and FLOW-2 messaging, email and social apps ref
   // the picker's own wording (spec §6.2)
   await expect(page.getByText(/stores what they say/)).toBeVisible();
   await expect(page.getByText(/goes to Google once, with long numbers masked/)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Choose these 5' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Choose these 4' })).toBeVisible();
   await shot(page, 'FLOW-1-step-1-suggested');
 
-  await page.getByRole('button', { name: 'Choose these 5' }).click();
+  await page.getByRole('button', { name: 'Choose these 4' }).click();
   for (const n of ["Touch 'n Go eWallet", 'Ryt Bank', 'MyPB by Public Bank', 'Grab'])
     await expect(page.getByRole('switch', { name: n })).toBeChecked();
   await shot(page, 'FLOW-1-step-2-chosen');
@@ -41,8 +41,8 @@ test('FLOW-1 choosing your apps, and FLOW-2 messaging, email and social apps ref
   }
   await search.fill('');
   await page.getByRole('button', { name: 'Back' }).click();
-  await expect(page.getByRole('button', { name: /Your apps/ })).toContainText('5 chosen');
-  await shot(page, 'FLOW-1-step-3-five-chosen');
+  await expect(page.getByRole('button', { name: /Your apps/ })).toContainText('4 chosen');
+  await shot(page, 'FLOW-1-step-3-four-chosen');
   expect(w.errors).toEqual([]);
   expect(w.external).toEqual([]);
 });

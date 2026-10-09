@@ -54,10 +54,11 @@ export async function touchHold(page: Page, x: number, y: number, ms: number) {
   await cdp.detach();
 }
 
-/** Capture's screen from More, by in-app navigation (the simulator lives in the page). */
+/** Capture's screen, More → Settings → Capture, by in-app navigation (the simulator lives in the page). */
 export async function toCapture(page: Page) {
   await page.goto('/more');
   await ready(page);
+  await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByRole('link', { name: 'Capture' }).click();
   await expect(page.getByRole('heading', { name: 'Capture' })).toBeVisible();
 }

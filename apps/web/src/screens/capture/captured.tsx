@@ -21,6 +21,7 @@ const BEATS: Record<Beat['kind'], string> = {
   beat: 'Hourly check',
   boot: 'Phone started',
   updated: 'Sen updated',
+  otp: 'Dropped a one-time code',
 };
 
 /**
@@ -149,13 +150,15 @@ export default function CapturedOnPhone() {
         open={beats !== null}
         onOpenChange={(o) => (o ? undefined : setBeats(null))}
         title="Heartbeat"
-        description="When the listener connected, each hourly check, and each restart, newest first."
+        description="When the listener connected, each hourly check, each restart, and each one-time code it dropped, newest first."
       >
         <div className="-mx-4 flex flex-col">
           {(beats ?? []).map((b, i) => (
             <SettingsRow
               key={`${b.at}-${i}`}
-              label={BEATS[b.kind]}
+              label={
+                b.kind === 'otp' && b.package ? `${BEATS.otp} from ${label.get(b.package) ?? b.package}` : BEATS[b.kind]
+              }
               value={`${momentLabel(new Date(b.at))}${b.kind === 'beat' ? (b.connected ? ' · listening' : ' · not connected') : ''}`}
             />
           ))}

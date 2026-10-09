@@ -94,6 +94,9 @@ test('Captured on this phone lists what arrived, and shares the ones ticked', as
   await expect(page.getByText('Simulated: the share sheet with 1 sample')).toBeVisible();
   await page.getByRole('button', { name: 'Heartbeat' }).click();
   await expect(page.getByText('Listener connected', { exact: true })).toBeVisible();
+  // the OTP left only its time and app in the log, never its words
+  await expect(page.getByText(/^Dropped a one-time code from /)).toBeVisible();
+  await expect(page.getByText('482910')).toHaveCount(0);
 });
 
 test('a phone brand with no steps gets the battery step and plain words', async ({ page }) => {

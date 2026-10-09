@@ -40,6 +40,12 @@ object Heartbeat {
         Capture.after { Outbox.get(context).beat(kind, connected, now) }
     }
 
+    /** A one-time code from a chosen app was dropped: its time and app go in the log, nothing else. */
+    fun dropped(context: Context, packageName: String) {
+        val now = System.currentTimeMillis()
+        Capture.after { Outbox.get(context).beat("otp", CaptureListener.connected, now, packageName) }
+    }
+
     fun event(context: Context) {
         prefs(context).edit().putLong("event_at", System.currentTimeMillis()).apply()
     }

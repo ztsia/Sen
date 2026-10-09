@@ -48,3 +48,23 @@ a number somewhere" can't be right both ways. The filter is redesigned rather th
 Verified before run 3: Kotlin core 27/27; QA's probes from both runs (`qa/B02/core-probe`, `Probe` and
 `Probe2`) 51/51 against the new filter; unit 141/141; the branch's Playwright 100/100; QA run 2's own
 Playwright specs 17/17 (FLOW-5's selectable title included); typecheck, lint, format clean.
+
+## Run 3 → fixes (9 Oct 2026)
+
+**Tier 3: a fresh full QA run 4 follows.** Run 3 found the filter failing both ways a third time, and
+said so plainly: each fix had patched the cases QA listed. So this round changed the approach, not the
+cases, and was checked against wording no run had listed before QA sees it again.
+
+| # | Finding | Fix | Tier, and why |
+|---|---|---|---|
+| 1 | Blocker: OTPs stored when an amount, a comma or a brand sits between keyword and code | **Evidence, not patterns.** Sentence by sentence (title apart from text), advice set aside; a strong keyword (otp-keywords.txt) outside advice and a code anywhere in the rest drop it, whatever sits between. Advice that holds a code or points at one ("share this code") drops it too. Zero-width characters are removed first | 3 (Blocker, non-negotiable) |
+| 2 | Major: payments dropped where `kod` / `code is` / `PIN` met a reference | `kod`, `code`, `pin`, `password` are weak: they count only joined to their code ("PIN is 4829", "Gunakan kod 482910", "123456 is your code", "PIN for card activation is 482910"), never after a qualifier (reference, approval, booking… code; kod rujukan, kelulusan…) or in a promotion. A number after a reference, approval, account, merchant, phone or month word isn't a code | 3 (non-negotiable) |
+| — | A dropped payment left no trace (run 3's note on finding 2) | Each OTP drop from a chosen app is logged by time and app, never text, in the heartbeat's log (*Dropped a one-time code from Ryt Bank*); the emulator test asserts it. The soak can now tell a dropped payment from a missing one | 3 (with the batch) |
+| 3 | The handoff predated runs 1–3; the ledger's owner question wasn't in it | Handoff rewritten with this commit | docs |
+| 4 | No core journey in `docs/flows.md` | In the handoff, for the owner | — |
+| 5 | QA run 1's `b02-prod`, `b02-rowtap` (and `b02-flows`, `b02-a11y`) stale | Updated for the changes QA itself asked for: Capture under Settings, *Choose these 4*, the version row no longer a button. 44/44 of QA's specs pass (`b02-update`'s AC-8 needs its own server on :4177 and wasn't re-run) | 1 |
+
+**Evidence before run 4:** Kotlin core 29/29, of which two sets are wording no QA run listed (19 OTPs
+from Malaysian banks, e-wallets and apps; 14 payments with footers, dates, IDs, phone numbers and a
+promotion); QA's probes from all three runs (`Probe`, `Probe2`, `Probe3`) 91/91; unit 141/141; the
+branch's Playwright 100/100; QA's Playwright 44/44; all four APKs build; typecheck, lint, format clean.

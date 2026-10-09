@@ -6,6 +6,7 @@ import android.os.Build
 import android.service.notification.StatusBarNotification
 import io.github.ztsia.sen.core.CaptureGate
 import io.github.ztsia.sen.core.Decision
+import io.github.ztsia.sen.core.DropReason
 import io.github.ztsia.sen.core.Posted
 import java.util.concurrent.Executors
 
@@ -31,7 +32,11 @@ object Capture {
     fun store(context: Context, posted: Posted): Boolean {
         val outbox = Outbox.get(context)
         return when (val d = gate.decide(posted, Chosen.get(context), outbox.droppedChannels())) {
-            is Decision.Drop -> false
+            is Decision.Drop -> {
+                // a one-time code from a chosen app: logged by time and app, never its text (Outbox.beat)
+                if (d.reason == DropReason.OTP) Heartbeat.dropped(context, posted.packageName)
+                false
+            }
             is Decision.Keep -> {
                 // only a new event moves "last captured": a replay or a duplicate isn't news (B07's
                 // watchdog reads this time)

@@ -3,7 +3,7 @@ import { shot, sim, toCapture } from './b02-helpers';
 test('a tap anywhere on a picking row ticks it (the row is the target)', async ({ page }) => {
   await toCapture(page);
   await page.getByRole('button', { name: /Your apps/ }).click();
-  await page.getByRole('button', { name: 'Choose these 5' }).click();
+  await page.getByRole('button', { name: 'Choose these 4' }).click();
   await page.getByRole('button', { name: 'Back' }).click();
   await sim(page, 'Grant access');
   await sim(page, 'Post a notification', 2);

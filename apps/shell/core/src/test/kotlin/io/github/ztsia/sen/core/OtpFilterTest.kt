@@ -56,6 +56,52 @@ class OtpFilterTest {
     }
 
     @Test
+    fun `drops wordings no QA run listed, from banks, e-wallets and apps`() {
+        listOf(
+            "RM0.00 Maybank2u: TAC for DuitNow Transfer to LIM KAH HOE A/C 1234 is 482910. Valid 3 mins. Do not share.",
+            "CIMB: Your TAC is 482910 for adding favourite. Never share your TAC with anyone.",
+            "PBe: Your TAC No. is 482910. Do not share your TAC.",
+            "[RHB] 482910 is your OTP to login. Valid for 5 minutes.",
+            "TNG eWallet: 482910 is your verification code. It expires in 3 minutes.",
+            "<#> 482910 is your Shopee verification code. Don't share it. AbCdEf12345",
+            "Your Grab code: 4829. Don't share it with anyone.",
+            "Use 482910 as your one-time password for Touch 'n Go eWallet.",
+            "Kod pengesahan TNG eWallet anda ialah 482910",
+            "OTP: 482 910",
+            "Your login code is 48-29-10",
+            "Masukkan kod 482910 untuk mengesahkan transaksi",
+            "482910 is your Microsoft account verification code",
+            "Apple ID Code: 482910. Don't share it with anyone.",
+            "Your PIN for card activation is 482910",
+            "Never share this OTP: 482910",
+            "Kod OTP anda adalah 482910.",
+            "Your Maybank2u TAC: 482910",
+            "482910 ialah kod TAC anda.",
+        ).forEach { assertTrue(filter.isOtp(it), it) }
+        assertTrue(filter.isOtp("Verification code", "482910", null))
+    }
+
+    @Test
+    fun `keeps payments no QA run listed`() {
+        listOf(
+            "You've received RM150.00 from TAN WEI MING. Ref: 48291077",
+            "Payment of RM50.00 to SHOPEE successful. Order 2410098812",
+            "TNG eWallet: RM10.00 reload successful. Transaction ID: 2026100912345678",
+            "DuitNow QR payment RM12.90 to KEDAI ABC (Merchant ID 482910) successful.",
+            "Card ending 4829 charged RM38.15 at PETRON. If this wasn't you, call 03-2178 8888. Never share your OTP/TAC.",
+            "Your OTP was used successfully for a transfer of RM500.00 to LIM KAH HOE. Ref 48291077.",
+            "TAC verified. RM500.00 sent to LIM KAH HOE on 09/10/2026.",
+            "Secure2u: You have approved a transfer of RM500.00 to LIM KAH HOE at 14:30.",
+            "Pembayaran RM12.90 kepada 7-ELEVEN 482910 berjaya. Jangan kongsi PIN anda.",
+            "RM100.00 has been credited to your account 1234567890",
+            "Your PIN has been changed successfully on 09 Oct 2026, 14:30.",
+            "Your OTP was used to approve RM500.00 on 9 Oct 2026",
+            "Cashback RM5.00 credited! Use promo code 482910",
+            "TAC request for RM50.00 transfer to LIM KAH HOE was cancelled.",
+        ).forEach { assertFalse(filter.isOtp(it), it) }
+    }
+
+    @Test
     fun `reads title and expanded text too`() {
         assertTrue(filter.isOtp("Your TAC", "123456", null))
         assertTrue(filter.isOtp(null, "Login", "Enter OTP 991122 to continue"))

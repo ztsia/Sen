@@ -76,7 +76,9 @@ test.describe('production build', () => {
       await expect(page.getByText("Capture works in Sen's Android app", { exact: false })).toBeVisible();
     }
     await page.goto('/s/settings/account');
-    const v = page.getByRole('button', { name: 'Version Web app' });
+    // outside the shell the version is information, not a control (run 1, finding 9)
+    await expect(page.getByRole('button', { name: /Version/ })).toHaveCount(0);
+    const v = page.getByText('Web app');
     await expect(v).toBeVisible();
     const box = (await v.boundingBox())!;
     await touchHold(page, box.x + 40, box.y + box.height / 2, 800);
@@ -127,7 +129,7 @@ test.describe('another timezone', () => {
     await page.clock.install({ time: new Date('2026-10-31T15:30:00Z') });
     await toCapture(page);
     await page.getByRole('button', { name: /Your apps/ }).click();
-    await page.getByRole('button', { name: 'Choose these 5' }).click();
+    await page.getByRole('button', { name: 'Choose these 4' }).click();
     await page.getByRole('button', { name: 'Back' }).click();
     await sim(page, 'Grant access');
     await sim(page, 'Post a notification');
