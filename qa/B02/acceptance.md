@@ -1,6 +1,12 @@
-# B02 · Acceptance criteria (QA run 2)
+# B02 · Acceptance criteria (QA run 3)
 
-Written from the docs only, before the implementation was opened: `spec_v2.md` §5, §5.1, §6.2, §9.5,
+Run 3 keeps run 2's criteria (re-read against the docs, unchanged where the docs are) and sharpens the
+OTP/TAC filter's, because D115 now states the rule: a keyword and a code must be *joined*. Run 3's
+reviewer read the ledger (a QA record, which describes the redesign in words) before writing these, but
+no implementation file. AC-17's cases below are new and adversarial, chosen from realistic Malaysian
+bank wording, not from the branch's tests.
+
+Originally written from the docs only, before the implementation was opened: `spec_v2.md` §5, §5.1, §6.2, §9.5,
 §17, §18, §21; `docs/briefs/B02-shell-listener.md`; `docs/decisions.md` D42, D77, D86, D101, D114,
 D115; `docs/screens.md` (Settings, Capture's screens); `docs/ui/patterns.md` §6–§8; `docs/local.md`
 (B02); `docs/cloud.md` §4–§5; `CLAUDE.md` non-negotiables. Run 1's ledger and report summary were
@@ -116,14 +122,32 @@ AC-16 Chosen apps first
 AC-16s When  app A posts the same text, it is stored
       Spec   §6.2; D86; CLAUDE.md non-negotiable; done-when 4
 
-AC-17 OTP/TAC dropped, English and Malay
-      When   a chosen app posts "Your OTP is 123456", "TAC: 482913 for transfer", "Kod TAC anda ialah 123456",
-             "Jangan kongsi kod 482913", "123456 is your verification code", "OTP123456"
-      Then   none is stored
-AC-17s When  a chosen app posts a payment that only mentions TAC/OTP ("Never share your TAC. You paid
-             RM12.90 to ZUS COFFEE"), or a merchant containing those letters
-      Then   it's stored
-      Spec   §6.2; D115; CLAUDE.md non-negotiable; done-when 4
+AC-17 OTP/TAC dropped, English and Malay, in the shapes banks actually send (run 3)
+      Given  a chosen app
+      When   it posts any of these (each alone):
+               a. "Your OTP is 123456"                         b. "TAC: 482913 for transfer"
+               c. "Kod TAC anda ialah 123456"                   d. "123456 is your verification code"
+               e. "OTP123456"                                    f. "Your OTP is 123 456. Valid for 3 minutes."
+               g. "G-482910 is your verification code."          h. "TAC No. 482910 for RM50.00 transfer"
+               i. "Your TAC for DuitNow Transfer of RM50.00 to TAN WEI MING is 482910. Valid for 3 mins."
+                  (an amount's decimal point inside the clause)
+               j. "Your one-time password is 482910"           k. "Your Ryt Bank OTP is 482910"
+               l. "482910 is your Grab verification code"     m. "Kod pengesahan anda ialah 482910"
+               n. "TAC anda: 482910"                            o. "Gunakan kod 482910 untuk log masuk"
+               p. title "One-Time Password", text "482910. Valid for 3 minutes." (keyword and code in
+                  different fields)
+               q. "Your OTP is\n482910" (a line break), "Your OTP is\u00A0482910" (a no-break space)
+               r. "YOUR TAC IS 482910" (case)                   s. "Your TAC is 4829. Do not share."
+      Then   none is stored (the filter says OTP)
+AC-17s When  a chosen app posts a real payment that merely shares words or digits with an OTP:
+               "RM12.90 paid at 7-ELEVEN 123456 KL using your Main Account. Never share your PIN."
+               "You've received RM42.50 from TAN PIN HUI. Reference number 20261009."
+               "Card payment RM38.15 at PETRON approved. Approval code 482910. Never share your OTP."
+               "Anda telah menerima RM50.00 daripada TAN WEI MING. No. Transaksi 48291077. Jangan kongsi TAC anda."
+               "Transfer to TAC TRADING is successful. Ref: 48291077"
+               "You've sent RM50.00 to OTP ENTERPRISE on 09 Oct, 14:30 (GMT+8) using your Main Account."
+      Then   each is stored (a payment is never silently dropped as an OTP)
+      Spec   §6.2; D115 (joined keyword and code); CLAUDE.md non-negotiable; done-when 4
 
 AC-18 The keyword list is in the repo and tested
       Then   a keyword file exists in English and Malay, and unit tests cover both languages

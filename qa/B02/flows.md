@@ -1,7 +1,7 @@
-# B02 · Flows (QA run 2)
+# B02 · Flows (QA run 3)
 
-Written from the docs before the implementation was opened. Each is walked in Chromium at 412×915
-(D42) with the dev panel standing in for the shell, in `qa/e2e/b02r2-*.spec.ts`. Native-only steps
+Written from the docs before the implementation was opened (run 2), re-read for run 3. Each is walked in
+Chromium at 412×915 (D42) with the dev panel standing in for the shell, in `qa/e2e/b02-r3-flows.spec.ts`. Native-only steps
 (the real listener, the emulator) are checked through the Kotlin core here and CI's emulator run.
 
 FLOW-1  Choosing your apps                                              (happy)
@@ -46,6 +46,13 @@ FLOW-6  An OTP and an unchosen app never arrive                          (sad)
         Steps  1. simulate an OTP from a chosen app  2. simulate a notification from an unchosen app
         Ends   Captured on this phone is unchanged after both
         Covers AC-16, AC-17   Spec §6.2, D86, non-negotiable
+
+FLOW-13 A batch of OTP shapes against the real filter                   (sad, native)
+        Actor  the listener (no UI: the pure Kotlin core is what the shell runs)
+        Entry  the core's `OtpFilter`/`CaptureGate`, from QA's own Gradle probe (`qa/B02/core-probe`)
+        Steps  1. each of AC-17's OTP shapes  2. each of AC-17s's payments
+        Ends   every OTP shape is dropped; every payment is kept
+        Covers AC-17, AC-17s   Spec §6.2, D115
 
 FLOW-7  Share samples                                                    (happy + sad)
         Entry  Captured on this phone → *Share samples*

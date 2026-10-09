@@ -2,9 +2,9 @@
   "module": "B02",
   "branch": "B02/shell-listener",
   "verdict": "fix first",
-  "generatedAt": "2026-10-09 05:06 UTC",
-  "phases": "1-6 (no server: phase 4 ran the outbox's SQLite schema and the APK manifests)",
-  "headline": "The shell, picker and soak screens hold up, and CI's emulator is 7/7. The OTP/TAC filter still fails both ways: six ordinary OTP shapes are stored (a Blocker under the non-negotiable), and five shapes of real payment are silently dropped.",
+  "generatedAt": "2026-10-09 05:55 UTC",
+  "phases": "1-6 (no server: phase 4 ran the outbox schema and the APK manifests)",
+  "headline": "Run 3 at aa0ac73. Everything outside the OTP/TAC filter holds, and the suites have teeth (7 of 7 probes caught). The redesigned filter still fails both ways on ordinary wording: an amount or a brand name inside the join lets an OTP through (Blocker), and 'kod'/'code is' drop payments that carry a reference code (Major).",
   "summary": {
     "criteria": 46,
     "pass": 35,
@@ -13,145 +13,112 @@
   },
   "suites": {
     "unit": "141/141 pass",
-    "kotlin-core": "25/25 pass",
-    "e2e": "branch 100/100; QA run 2: 17 specs, 16 pass (FLOW-5: finding 4)",
-    "emulator (CI 37884510996)": "7/7 pass",
+    "kotlin-core": "27/27 pass",
+    "e2e": "branch 100/100; QA run 3: 19 specs (17 flows/edges/a11y, AC-8 update, CORE), 19 pass",
+    "qa-core-probe": "91 cases: Probe 20/20, Probe2 31/31, Probe3 26/40",
+    "emulator (CI 37888315873, aa0ac73)": "7/7 pass",
     "typecheck": "clean",
     "lint": "clean",
     "format": "clean",
-    "hygiene": "pass (DENYLIST unset)"
+    "hygiene": "pass (DENYLIST unset)",
+    "apks": "release, debug, e2e and e2e-androidTest build here"
   },
   "findings": [
     {
       "id": 1,
       "severity": "Blocker",
       "status": "open",
-      "title": "The OTP/TAC filter stores OTPs and TACs in six ordinary shapes, so they reach the outbox",
-      "detail": "A notification is dropped only when it has a keyword **and** a code that `OtpFilter.isCode` accepts: 6–8 contiguous digits, or 4–5 straight after the keyword. Codes split by a space or hyphen (`123 456`, `123-456`) never match `NUMBER`. A code after `#` or `-` is refused by `GLUED_BEFORE` (`G-482910`, `TAC is #482910`). A code after `No.` is refused by `NOT_A_CODE_BEFORE` (`TAC No. 482910`). A 4-digit code with words between it and the keyword is ignored (`Your OTP for login: 4829`). Each of these from a chosen app is stored raw in the outbox. That breaks the CLAUDE.md non-negotiable: the listener discards OTP/TAC messages in native code before anything is stored. Android 15+ hiding OTPs from listeners is the first line; this filter is the second (§6.2), and it has to hold on its own.",
-      "repro": "gradle -p apps/shell/core jar && gradle -p qa/B02/core-probe test --tests Probe2",
-      "evidence": "isOtp=false  <- Your OTP is 123 456. Valid for 3 minutes.\nisOtp=false  <- Your verification code is 123-456\nisOtp=false  <- G-482910 is your verification code.\nisOtp=false  <- Your TAC is #482910 for DuitNow Transfer\nisOtp=false  <- TAC No. 482910 for RM50.00 transfer\nisOtp=false  <- Your OTP for login: 4829\n(caught, for contrast)\nisOtp=true  <- Nombor TAC anda: 482910\nisOtp=true  <- One-Time PIN (OTP): 482910. Do not share.\nisOtp=true  <- Your OTP is ４８２９１０\n31 tests completed, 11 failed",
-      "spec": "AC-17, spec_v2.md §6.2, §17, CLAUDE.md non-negotiables, D115",
+      "title": "The OTP/TAC filter still stores OTPs: an amount, a comma or a brand name inside the join breaks it",
+      "detail": "D115's redesign joins a keyword to a code through a closed list of linking words, or through up to 8 words in one clause before `is`/`ialah`/a colon. A clause word may not contain `.` or `,` (`[^\\s.,!?;]+`), so any amount (`RM50.00`, `RM1,250.00`) ends the clause; the backward join (`code is your ... keyword`) allows only `is|are|your|the|as|adalah|ialah|merupakan|anda|ini`, so a brand name between them (`G-482910 is your Google verification code`, Google's real wording) breaks it. A comma inside the clause, and a zero-width space, also defeat it. Each of these goes through `CaptureGate` as `Keep` and would be written to the outbox. Cases i and l were written into acceptance.md from the docs before the filter was read. This is the third run in a row in which the filter fails on ordinary wording; each fix has patched the shapes QA listed. Recommend testing against a broader corpus (each bank's real OTP wording, once the soak samples one: `docs/notifications.md` still has `OTP or TAC` as unknown for all four apps), and deciding with the owner which error the filter should prefer. Mitigation, not a waiver: Android 15+ hides most OTP notifications from listeners (§6.2), and the outbox stays on the phone until B07.",
+      "repro": "gradle -p apps/shell/core jar && gradle -p qa/B02/core-probe test --tests Probe3",
+      "evidence": "gradle -p apps/shell/core jar && gradle -p qa/B02/core-probe test --tests Probe3\nisOtp=false  <- Your TAC for DuitNow Transfer of RM50.00 to TAN WEI MING is 482910. Valid for 3 mins.\nisOtp=false  <- TAC for RM1,250.00 transfer is 482910\nisOtp=false  <- G-482910 is your Google verification code.\nisOtp=false  <- 482910 is your Grab verification code\nisOtp=false  <- Your OTP, valid for 3 minutes, is 482910\nisOtp=false  <- Use 482910 to approve your RM50.00 transfer. Do not share this code.\nisOtp=false  <- Your OTP is ​482910        (a zero-width space)\ngate(chosen, maybank-style TAC) = Keep(event=RawEvent(dedupeKey=f18211a2..., packageName=my.rytbank.app, ..., text=Your TAC for DuitNow Transfer of RM50.00 to TAN WEI MING is 482910. Valid for 3 mins., bigText=null))",
+      "spec": "AC-17 (cases i, l), spec_v2.md §6.2, D115, CLAUDE.md non-negotiable (OTP/TAC discarded in native code before anything is stored)",
       "screenshots": []
     },
     {
       "id": 2,
       "severity": "Major",
       "status": "open",
-      "title": "Real payments are silently dropped as OTPs when a security footer meets any 6–8 digit number",
-      "detail": "The phrases `never share`, `do not share`, `jangan kongsi` and `pin` are keywords, and any unprefixed 6–8 digit number counts as a code anywhere in the text. A bank's standard footer plus a store number, merchant id, approval code, `No. Transaksi …` or `Reference number …` (or a payee named PIN) therefore drops a genuine payment. It leaves no row and no trace, so neither the soak nor Review can show it was missed. D115's fix covers `Ref`, `No`, `ID` and `acc` only when they sit right before the number. The fix could look like this: require the code within a short distance of an OTP keyword, and stop footer phrases counting as keywords on their own.",
-      "repro": "gradle -p apps/shell/core jar && gradle -p qa/B02/core-probe test --tests Probe2",
-      "evidence": "isOtp=true  <- RM12.90 paid at 7-ELEVEN 123456 KL using your Main Account. Never share your PIN.\nisOtp=true  <- RM8.00 paid to MERCHANT 482910 via DuitNow QR. Do not share your TAC.\nisOtp=true  <- Card payment RM38.15 at PETRON approved. Approval code 482910. Never share your OTP.\nisOtp=true  <- You've received RM42.50 from TAN PIN HUI. Reference number 20261009.\nisOtp=true  <- Anda telah menerima RM50.00 daripada TAN WEI MING. No. Transaksi 48291077. Jangan kongsi TAC anda.\n(kept, for contrast)\nisOtp=false <- RM20.00 paid at KEDAI ABC 47301 PETALING JAYA. Never share your PIN.\nisOtp=false <- Pembayaran RM12.90 kepada KEDAI ABC berjaya. Kod rujukan 482910.\nisOtp=false <- Your GrabPay Wallet has been charged MYR 12.40 for booking A-482910. Never share your PIN.",
-      "spec": "AC-17s, spec_v2.md §6.2, D115",
+      "title": "Real payments are still dropped as OTPs: 'kod' alone and 'code is' are keywords, and reference and approval codes follow them",
+      "detail": "`kod` (Malay for *code*) and `code is` are keywords, so a payment's reference or approval code becomes an OTP code: `Kod rujukan: 48291077` (Malay *reference code*), `Your reference code is 48291077`, `Approval code is 482910`. `pin` as a keyword plus the colon join drops a transfer to a payee named PIN followed by a colon and a reference. The title and text are joined before matching, so a title ending in a keyword and a text starting with a number also join. A dropped payment leaves no trace (no row, no log), so nobody would notice during the soak. The branch's own test keeps `Kod rujukan 482910.` only because it has no colon.",
+      "repro": "gradle -p apps/shell/core jar && gradle -p qa/B02/core-probe test --tests Probe3 (cases ps7-ps10, ps14)",
+      "evidence": "isOtp=true  <- Pembayaran RM12.90 kepada ZUS COFFEE berjaya. Kod rujukan: 48291077\nisOtp=true  <- Payment of RM12.90 to ZUS COFFEE successful. Your reference code is 48291077\nisOtp=true  <- Card payment RM38.15 at PETRON approved. Approval code is 482910.\nisOtp=true  <- DuitNow to TAN PIN HUI: 48291077 RM50.00 successful\nisOtp=true  <- Payment to PIN | 482910 RM12.90 paid using your Main Account | null   (title | text)\n(the branch's own OtpFilterTest keeps \"Pembayaran RM12.90 kepada KEDAI ABC berjaya. Kod rujukan 482910.\" -- add a colon and it is dropped)",
+      "spec": "AC-17s, spec_v2.md §6.2, D115 ('a payment that carries [a footer], or only mentions TAC, is kept')",
       "screenshots": []
     },
     {
       "id": 3,
       "severity": "Minor",
       "status": "open",
-      "title": "The gate's tests don't pin chosen-first order or an exact package match (two probes stayed green)",
-      "detail": "`CaptureGateTest` says *even an OTP from it is NOT_CHOSEN: its text is never read*, but it posts `OTP 1`, which the filter doesn't treat as an OTP, so the order of the checks is never tested. Moving the chosen-apps check after the OTP check (P6) left 25/25 green. So did matching chosen packages by prefix (`my.rytbank.app.fake` accepted, P4). The real chosen-first check in `Capture.post` runs only on the emulator, where nothing asserts that extras aren't read.",
-      "repro": "In CaptureGate.kt move `if (p.packageName !in chosen) …` below the OTP line, then `gradle -p apps/shell/core test`; restore with git checkout",
-      "evidence": "P6 (order swapped): exit=0, no FAILED lines\nP4 (prefix match): exit=0, no FAILED lines",
-      "spec": "AC-16, spec_v2.md §6.2, D86",
+      "title": "The handoff predates both QA runs, and the ledger says it carries an owner question it doesn't",
+      "detail": "`docs/handoff.md` was last changed in 038a8bb (before QA run 1). It still says 'the core's Kotlin tests (22)' (27 now), says nothing of QA runs 1-2 or the OTP filter's redesign, and lacks the open question the ledger's run-2 row 7 says is 'For the owner: in the handoff' (which journeys in docs/flows.md are core). CLAUDE.md: every session rewrites the handoff before it ends.",
+      "repro": "git log --oneline -1 -- docs/handoff.md; grep -n -i 'core\\|journey' docs/handoff.md",
+      "evidence": "038a8bb Handoff: B02's code done, QA running, the PR next\n11:- **Verified in the session:** the core's Kotlin tests (22); ...\n(no line mentions core journeys)",
+      "spec": "AC-45s, CLAUDE.md Session rotation",
       "screenshots": []
     },
     {
       "id": 4,
-      "severity": "Minor",
+      "severity": "Note",
       "status": "open",
-      "title": "Captured on this phone: the notification's title can't be selected",
-      "detail": "patterns.md §7 *Raw notification row*: the title and the text exactly as the app wrote them, selectable. The text paragraphs carry `.selectable`, but the title (`ItemTitle`) inherits `user-select: none` from app.css, so the owner can't copy a title out for a session.",
-      "repro": "qa/e2e: playwright test -c b02.config.ts b02-r2-flows.spec.ts -g FLOW-5",
-      "evidence": "Error: the title must be selectable as patterns.md §7 says\nExpected: \"text\"\nReceived: \"none\"\n(annotation user-select: {\"title\":\"none\",\"text\":\"text\"})",
-      "spec": "AC-33, patterns.md §7",
+      "title": "No journey in docs/flows.md is marked core (still)",
+      "detail": "Asked in runs 1 and 2. This run walked the frame instead (five tabs, then Settings → Capture: CORE). For the owner.",
+      "repro": "grep -n -i core docs/flows.md",
+      "evidence": "(no match)",
+      "spec": "QA rules (phase 2)",
       "screenshots": [
-        "FLOW-5-step-2-selectable.png"
+        "CORE-step-1-home.png",
+        "CORE-step-2-more.png",
+        "CORE-step-3-capture.png"
       ]
     },
     {
       "id": 5,
-      "severity": "Minor",
-      "status": "open",
-      "title": "The simulator's *Post it again* and *Post an OTP* only show a toast; they exercise no dedupe and no filter",
-      "detail": "`sim.repost()` and `sim.otp()` (apps/web/src/dev/capture-sim.ts) call `toastDone('Simulated: … not stored twice')` and `toastDone('Simulated: an OTP, dropped…')` without posting anything. FLOW-5 step 3 and FLOW-6 step 1 therefore pass whatever the code does: a browser walk of those sad paths proves nothing. The real behaviour is covered only by the Kotlin core and the CI emulator. This is run 1's finding 8, fixed in words rather than in behaviour.",
-      "repro": "Dev panel → Post an OTP: the outbox count can't change, because nothing is posted",
-      "evidence": "FLOW-6 step 1 passed: '0 notifications' before and after 'Post an OTP' (the sim never calls store())",
-      "spec": "AC-17, AC-21, CLAUDE.md (native-only features get a simulator)",
-      "screenshots": [
-        "FLOW-5-step-3-replay.png",
-        "FLOW-6-step-1-otp.png"
-      ]
-    },
-    {
-      "id": 6,
       "severity": "Note",
       "status": "open",
-      "title": "Keep Sen running promises a Home warning that doesn't exist until B07",
-      "detail": "On a brand with no steps, and in the not-tried line, the screen says *if capture stops, Sen warns you on Home*. The watchdog and Home's warning come in B07; during the soak nothing warns. Similarly, *If Sen's switch is greyed out* shows whenever access is off on Android 13+, because `restrictedSettings` is `SDK_INT >= 33` rather than a detected state. That's acceptable as guidance.",
-      "repro": "Dev panel → A brand with no steps → Settings → Capture → Keep Sen running",
-      "evidence": "'Sen has no extra steps for Fairphone phones. The battery step above is usually enough; if capture stops, Sen warns you on Home.'",
-      "spec": "AC-29s, AC-32s, spec_v2.md §6.2 Health, §18",
-      "screenshots": [
-        "FLOW-4-step-3-no-brand.png"
-      ]
-    },
-    {
-      "id": 7,
-      "severity": "Note",
-      "status": "open",
-      "title": "No journey in docs/flows.md is marked core",
-      "detail": "The QA rules walk the *core* journeys every run. `docs/flows.md` marks none (no match for `core`). This run walked the parts of `first-run`, `capture-off` and `offline` that B02 touches. Open question for the owner or S2: which journeys are core.",
-      "repro": "grep -n -i '\\bcore\\b' docs/flows.md",
-      "evidence": "(no output)",
-      "spec": "docs/flows.md",
+      "title": "QA's own run-1 specs are stale (navigation moved Capture under Settings)",
+      "detail": "`qa/e2e/b02-prod.spec.ts` and `b02-rowtap.spec.ts` (run 1) look for Capture on More and fail; run 2's and run 3's specs replace them. QA housekeeping, not an app defect: delete them or point them at Settings.",
+      "repro": "cd qa/e2e && ./node_modules/.bin/playwright test -c b02.config.ts b02-prod b02-rowtap",
+      "evidence": "waiting for getByRole('link', { name: 'Capture' }) ... Test timeout of 90000ms exceeded (3 tests)",
+      "spec": "-",
       "screenshots": []
     }
   ],
   "probes": [
     {
-      "broke": "`when` dropped from the dedupe key (DedupeKey.kt)",
+      "broke": "The clause join removed from OtpFilter (the third regex)",
       "caught": true,
-      "note": "25 tests completed, 2 failed"
+      "note": "OtpFilterTest: 27 tests completed, 1 failed"
     },
     {
-      "broke": "6-digit codes no longer count as codes (OtpFilter `>= 7`)",
+      "broke": "Chosen-apps check moved below the OTP check (CaptureGate)",
       "caught": true,
-      "note": "25 tests completed, 1 failed"
+      "note": "CaptureGateTest: 27 tests completed, 1 failed (run 2's finding 3 now pinned)"
     },
     {
-      "broke": "Origin compares host only, ignoring scheme and port",
+      "broke": "`when` dropped from the dedupe key",
       "caught": true,
-      "note": "25 tests completed, 1 failed (OriginTest)"
+      "note": "27 tests completed, 2 failed (DedupeKeyTest pin, CaptureGateTest replay)"
     },
     {
-      "broke": "Chosen-apps check matches by package prefix",
-      "caught": false,
-      "note": "25/25 green: finding 3"
-    },
-    {
-      "broke": "The default SMS app no longer blocked (AppClassifier)",
+      "broke": "Expanded text dropped from the dedupe key",
       "caught": true,
-      "note": "25 tests completed, 1 failed"
+      "note": "27 tests completed, 1 failed (DedupeKeyTest pin)"
     },
     {
-      "broke": "Chosen-apps check moved after the OTP check (CaptureGate)",
-      "caught": false,
-      "note": "25/25 green: finding 3"
-    },
-    {
-      "broke": "Back on Home goes Home instead of leaving (native.ts backAction)",
+      "broke": "Email apps choosable (AppClassifier handlesEmail ignored)",
       "caught": true,
-      "note": "shell.test.ts: 1 failed | 5 passed"
+      "note": "AppClassifierTest: 1 failed"
     },
     {
-      "broke": "Service worker caches every GET at runtime, the API included",
+      "broke": "Origin ignores the port",
       "caught": true,
-      "note": "production.spec 'never caches the API' failed: /api/x cached. (A first attempt, deleting only the API exclusion, isn't a defect: the worker has no runtime cache.)"
+      "note": "OriginTest: 1 failed"
     },
     {
-      "broke": "Every Malay OTP keyword removed from otp-keywords.txt",
+      "broke": "Security footers ('never share', 'jangan kongsi') added as OTP keywords",
       "caught": true,
-      "note": "25 tests completed, 2 failed"
+      "note": "OtpFilterTest: 1 failed (payments with footers dropped; list test)"
     }
   ],
   "flows": [
@@ -159,8 +126,8 @@
       "id": "FLOW-1",
       "title": "Choosing your apps",
       "kind": "happy",
-      "actor": "owner",
-      "entry": "More → Settings → Capture → Your apps (simulated shell)",
+      "actor": "owner (preview, simulated shell)",
+      "entry": "More → Settings → Capture → Your apps",
       "covers": [
         "AC-26",
         "AC-29",
@@ -168,33 +135,33 @@
       ],
       "spec": "§6.2, D86",
       "status": "pass",
-      "ends": "The owner's four ticked, Google Wallet not, '4 chosen' kept on return",
+      "ends": "the four are ticked and stay ticked; wording says what Sen stores and that new wording goes to Google once, masked",
       "steps": [
         {
-          "n": 1,
+          "n": 0,
           "action": "Open Capture",
           "assertion": "Your apps reads 'None yet'",
           "status": "pass",
           "screenshot": "FLOW-1-step-0-capture.png"
         },
         {
-          "n": 2,
+          "n": 1,
           "action": "Open Your apps",
-          "assertion": "the picker's wording, and 'Choose these 4'",
+          "assertion": "'stores what they say', 'goes to Google once, with long numbers masked', 'Choose these 4' visible",
           "status": "pass",
           "screenshot": "FLOW-1-step-1-suggested.png"
         },
         {
-          "n": 3,
+          "n": 2,
           "action": "Tap Choose these 4",
-          "assertion": "TNG, Ryt, MyPB and Grab checked; Google Wallet not",
+          "assertion": "TNG, Ryt, MyPB, Grab checked; Google Wallet not",
           "status": "pass",
           "screenshot": "FLOW-1-step-2-chosen.png"
         },
         {
-          "n": 4,
+          "n": 3,
           "action": "Back, then reopen",
-          "assertion": "'4 chosen'; Ryt still checked; no suggestion card",
+          "assertion": "'4 chosen'; Ryt still checked; no Choose button",
           "status": "pass",
           "screenshot": "FLOW-1-step-3-kept.png"
         }
@@ -205,7 +172,7 @@
       "title": "A messaging app can't be chosen",
       "kind": "sad",
       "actor": "owner",
-      "entry": "Your apps → More search",
+      "entry": "Your apps → search",
       "covers": [
         "AC-27s",
         "AC-28",
@@ -213,19 +180,19 @@
       ],
       "spec": "§6.2, D86",
       "status": "pass",
-      "ends": "WhatsApp and Messages disabled with their reasons; still '1 chosen'",
+      "ends": "WhatsApp and Messages disabled with a reason; chosen list unchanged",
       "steps": [
         {
           "n": 1,
           "action": "Search 'whats'",
-          "assertion": "WhatsApp switch disabled, 'A messaging app can't be chosen', aria-describedby set",
+          "assertion": "WhatsApp switch disabled, \"A messaging app can't be chosen\", aria-describedby set",
           "status": "pass",
           "screenshot": "FLOW-2-step-1-search-whatsapp.png"
         },
         {
           "n": 2,
           "action": "Force-tap it; search 'messages'",
-          "assertion": "WhatsApp unchecked; Messages disabled with the SMS reason",
+          "assertion": "still unchecked; Messages disabled, 'Your SMS app can't be chosen'",
           "status": "pass",
           "screenshot": "FLOW-2-step-2-tap-refused.png"
         }
@@ -234,7 +201,7 @@
     {
       "id": "FLOW-3",
       "title": "Notification access, restricted",
-      "kind": "sad",
+      "kind": "happy",
       "actor": "owner",
       "entry": "Capture → Notification access",
       "covers": [
@@ -243,26 +210,26 @@
       ],
       "spec": "§6.2, §9.5",
       "status": "pass",
-      "ends": "Reads On; the restricted-settings section goes",
+      "ends": "reads granted",
       "steps": [
         {
           "n": 1,
-          "action": "Open the screen",
-          "assertion": "'Off' and 'Open settings'",
+          "action": "Open with access off",
+          "assertion": "Open settings offered",
           "status": "pass",
           "screenshot": "FLOW-3-step-1-off.png"
         },
         {
           "n": 2,
-          "action": "Open Sen's app info",
-          "assertion": "the simulator opens the app's info page",
+          "action": "Restricted route",
+          "assertion": "Sen's app info offered and opened",
           "status": "pass",
           "screenshot": "FLOW-3-step-2-app-info.png"
         },
         {
           "n": 3,
-          "action": "Open settings (granted)",
-          "assertion": "'On'; no greyed-out section",
+          "action": "Grant (simulated)",
+          "assertion": "screen reads granted",
           "status": "pass",
           "screenshot": "FLOW-3-step-3-on.png"
         }
@@ -270,7 +237,7 @@
     },
     {
       "id": "FLOW-4",
-      "title": "Keep Sen running on a Xiaomi and on an unknown brand",
+      "title": "Keep Sen running: Xiaomi, then a brand with no steps",
       "kind": "sad",
       "actor": "owner",
       "entry": "Capture → Keep Sen running",
@@ -280,26 +247,26 @@
       ],
       "spec": "§6.2, D86",
       "status": "pass",
-      "ends": "Battery step above the brand's steps; an unknown brand shows the generic step only",
+      "ends": "Xiaomi's three steps after the battery step; an unknown brand gets only the battery step and points to the heartbeat",
       "steps": [
         {
           "n": 1,
-          "action": "Open on a Xiaomi",
-          "assertion": "'Every phone' above 'Your Xiaomi'; Autostart, No restrictions, lock in recents",
+          "action": "Open",
+          "assertion": "'Every phone' above 'Your Xiaomi'; Autostart, No restrictions, Lock in recents",
           "status": "pass",
           "screenshot": "FLOW-4-step-1-battery-first.png"
         },
         {
           "n": 2,
-          "action": "Tap Open Autostart",
+          "action": "Open Autostart",
           "assertion": "'Simulated: Autostart'",
           "status": "pass",
           "screenshot": "FLOW-4-step-2-xiaomi-steps.png"
         },
         {
           "n": 3,
-          "action": "Switch to a brand with no steps, reopen",
-          "assertion": "'Your Fairphone: Sen has no extra steps', no error",
+          "action": "Switch to a brand with no steps",
+          "assertion": "'Sen has no extra steps'; 'the heartbeat under Captured on this phone'; no 'warns you on Home'",
           "status": "pass",
           "screenshot": "FLOW-4-step-3-no-brand.png"
         }
@@ -308,43 +275,44 @@
     {
       "id": "FLOW-5",
       "title": "A payment captured, replayed, then a second identical one",
-      "kind": "sad",
+      "kind": "happy",
       "actor": "owner",
       "entry": "dev panel",
       "covers": [
         "AC-20",
         "AC-21",
+        "AC-21s",
         "AC-33"
       ],
       "spec": "§6.2",
-      "status": "fail",
-      "ends": "1 row, raw text, KL time; still 1 after replay; the same text twice with new times",
+      "status": "pass",
+      "ends": "1 row, verbatim, KL time; replay: still 1 row; new when: 2 rows",
       "steps": [
         {
           "n": 1,
-          "action": "Post a TNG transfer; open Captured",
-          "assertion": "1 notification; title and text verbatim; 'Today, hh:mm'; app label",
+          "action": "Post a TNG notification, open Captured",
+          "assertion": "'1 notification', title and text verbatim, 'Today, hh:mm'",
           "status": "pass",
           "screenshot": "FLOW-5-step-1-captured.png"
         },
         {
           "n": 2,
-          "action": "Read the row's text selection",
-          "assertion": "the title is user-select none, so it can't be selected (finding 4)",
-          "status": "fail",
+          "action": "Read user-select",
+          "assertion": "title and text both 'text' (selectable)",
+          "status": "pass",
           "screenshot": "FLOW-5-step-2-selectable.png"
         },
         {
           "n": 3,
           "action": "Post it again",
-          "assertion": "still '1 notification', but the sim does nothing here (finding 5)",
+          "assertion": "toast 'not stored twice'; 1 row",
           "status": "pass",
           "screenshot": "FLOW-5-step-3-replay.png"
         },
         {
           "n": 4,
-          "action": "Post four more",
-          "assertion": "'5 notifications'; the TNG text appears twice",
+          "action": "Post 4 more (TNG again, new when)",
+          "assertion": "'5 notifications'; the TNG text twice",
           "status": "pass",
           "screenshot": "FLOW-5-step-4-second-payment.png"
         }
@@ -362,19 +330,19 @@
       ],
       "spec": "§6.2, D86",
       "status": "pass",
-      "ends": "0 notifications after both; nothing left the page",
+      "ends": "0 rows after both; nothing about either left the page",
       "steps": [
         {
           "n": 1,
-          "action": "Post an OTP",
-          "assertion": "still '0 notifications' (toast only: finding 5)",
+          "action": "Post an OTP (simulator's marked OTP)",
+          "assertion": "toast 'an OTP, dropped'; 0 notifications; '482910' absent",
           "status": "pass",
           "screenshot": "FLOW-6-step-1-otp.png"
         },
         {
           "n": 2,
-          "action": "Post a TNG notification with only Ryt chosen",
-          "assertion": "still '0 notifications'; no LIM KAH HOE; no request carried it",
+          "action": "Post from unchosen TNG",
+          "assertion": "0 notifications; no request carries the text",
           "status": "pass",
           "screenshot": "FLOW-6-step-2-unchosen.png"
         }
@@ -385,33 +353,33 @@
       "title": "Share samples",
       "kind": "sad",
       "actor": "owner",
-      "entry": "Captured on this phone",
+      "entry": "Captured → Share samples",
       "covers": [
         "AC-34",
         "AC-34s"
       ],
       "spec": "brief",
       "status": "pass",
-      "ends": "Nothing shared with none ticked; one row ticked by tapping it; one shared",
+      "ends": "none ticked: told to tick; one ticked: shares 1",
       "steps": [
         {
           "n": 1,
           "action": "Share with none ticked",
-          "assertion": "'Tick the notifications to share first.'; still picking (2 checkboxes)",
+          "assertion": "'Tick the notifications to share first.'",
           "status": "pass",
           "screenshot": "FLOW-7-step-1-none-ticked.png"
         },
         {
           "n": 2,
-          "action": "Tap the middle of row 2",
-          "assertion": "its checkbox checked, row 1's not",
+          "action": "Tap a row's text",
+          "assertion": "that checkbox ticked, the other not",
           "status": "pass",
           "screenshot": "FLOW-7-step-2-row-ticked.png"
         },
         {
           "n": 3,
           "action": "Share 1 sample",
-          "assertion": "'share sheet with 1 sample'; picking closes",
+          "assertion": "'the share sheet with 1 sample'",
           "status": "pass",
           "screenshot": "FLOW-7-step-3-shared.png"
         }
@@ -422,32 +390,32 @@
       "title": "The hidden tests",
       "kind": "sad",
       "actor": "owner",
-      "entry": "More → Settings → Account → Version",
+      "entry": "Settings → Account → Version",
       "covers": [
         "AC-36",
         "AC-36s"
       ],
       "spec": "brief, docs/local.md",
       "status": "pass",
-      "ends": "A tap opens nothing; a long-press shows three tests, each answering",
+      "ends": "tap opens nothing; long-press shows three tests, each answers",
       "steps": [
         {
           "n": 1,
           "action": "Tap the version",
-          "assertion": "no Tests sheet",
+          "assertion": "no 'Tests' heading",
           "status": "pass",
           "screenshot": "FLOW-8-step-1-tap.png"
         },
         {
           "n": 2,
-          "action": "Hold 800 ms",
-          "assertion": "Tests sheet with the three buttons",
+          "action": "Long-press 800 ms (CDP touch)",
+          "assertion": "three test buttons",
           "status": "pass",
           "screenshot": "FLOW-8-step-2-long-press.png"
         },
         {
           "n": 3,
-          "action": "Run each",
+          "action": "Tap each",
           "assertion": "prompt status, Live Update status, 'Now Instrument.'",
           "status": "pass",
           "screenshot": "FLOW-8-step-3-each-test.png"
@@ -458,27 +426,27 @@
       "id": "FLOW-9",
       "title": "Production in a browser",
       "kind": "happy",
-      "actor": "owner",
-      "entry": "production build :4176",
+      "actor": "anyone",
+      "entry": "production build, /s/settings/capture",
       "covers": [
         "AC-38",
         "AC-38s"
       ],
       "spec": "§5.1",
       "status": "pass",
-      "ends": "Capture says it lives in the Android app on all five routes; no dev panel; no external requests",
+      "ends": "capture lives in the Android app; no dev panel; no external requests",
       "steps": [
         {
           "n": 1,
-          "action": "Open /s/settings/capture",
-          "assertion": "'Capture works in Sen's Android app'",
+          "action": "Open Capture",
+          "assertion": "\"Capture works in Sen's Android app\"",
           "status": "pass",
           "screenshot": "FLOW-9-step-1-capture.png"
         },
         {
           "n": 2,
-          "action": "Open apps, access, running, captured",
-          "assertion": "the same line on each; no Dev panel button",
+          "action": "Each sub-route; look for the dev panel",
+          "assertion": "same text on all four; no Dev panel button",
           "status": "pass",
           "screenshot": "FLOW-9-step-2-no-dev-panel.png"
         }
@@ -488,8 +456,8 @@
       "id": "FLOW-10",
       "title": "Opens offline",
       "kind": "sad",
-      "actor": "owner",
-      "entry": "production build, loaded once",
+      "actor": "anyone",
+      "entry": "production, loaded once",
       "covers": [
         "AC-5",
         "AC-5s",
@@ -497,26 +465,26 @@
       ],
       "spec": "§5.1, D114",
       "status": "pass",
-      "ends": "Home and a deep route render offline; /api/health fails offline",
+      "ends": "Home and a deep route render offline; /api fails offline",
       "steps": [
         {
           "n": 1,
-          "action": "Load and wait for the worker",
-          "assertion": "controller set; more than 10 cached files",
+          "action": "Wait for the worker",
+          "assertion": "controller set; >10 cached files",
           "status": "pass",
           "screenshot": "FLOW-10-step-1-worker.png"
         },
         {
           "n": 2,
           "action": "Offline, reload Home",
-          "assertion": "'Not built yet' renders",
+          "assertion": "Home renders",
           "status": "pass",
           "screenshot": "FLOW-10-step-2-offline-home.png"
         },
         {
           "n": 3,
-          "action": "Offline, open Capture and fetch /api/health",
-          "assertion": "Capture renders; the fetch 'failed'",
+          "action": "Offline deep route, then /api/health",
+          "assertion": "Capture renders; fetch 'failed'",
           "status": "pass",
           "screenshot": "FLOW-10-step-3-offline-deep.png"
         }
@@ -524,7 +492,7 @@
     },
     {
       "id": "FLOW-11",
-      "title": "Back",
+      "title": "Back closes the sheet, then the screen",
       "kind": "happy",
       "actor": "owner",
       "entry": "Keep Sen running → The full guide",
@@ -533,7 +501,7 @@
       ],
       "spec": "patterns.md §6",
       "status": "pass",
-      "ends": "Back closes the sheet first, then the screen",
+      "ends": "sheet closes first, then back to Capture",
       "steps": [
         {
           "n": 1,
@@ -545,7 +513,7 @@
         {
           "n": 2,
           "action": "Back",
-          "assertion": "sheet gone, Keep Sen running stays",
+          "assertion": "sheet gone, screen stays",
           "status": "pass",
           "screenshot": "FLOW-11-step-2-sheet-closed.png"
         },
@@ -563,28 +531,92 @@
       "title": "Another timezone",
       "kind": "sad",
       "actor": "owner",
-      "entry": "browser in America/New_York, clock 2026-10-31T15:30Z",
+      "entry": "browser in America/New_York",
       "covers": [
         "AC-41",
         "AC-41s"
       ],
-      "spec": "CLAUDE.md conventions, D14",
+      "spec": "CLAUDE.md, D14",
       "status": "pass",
-      "ends": "23:30 KL shown, then 'Yesterday' once KL passes midnight while New York is still on 31 Oct",
+      "ends": "23:30 KL shows 23:30, then 'Yesterday, 23:30' once KL passes midnight",
       "steps": [
         {
           "n": 1,
-          "action": "Post at 23:30 KL",
+          "action": "Capture at 15:30Z on 31 Oct",
           "assertion": "'Today, 23:30', not 11:30",
           "status": "pass",
           "screenshot": "FLOW-12-step-1-kl-time.png"
         },
         {
           "n": 2,
-          "action": "Clock to 00:10 KL on 1 Nov",
+          "action": "Clock to 16:10Z",
           "assertion": "'Yesterday, 23:30'",
           "status": "pass",
           "screenshot": "FLOW-12-step-2-after-kl-midnight.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-13",
+      "title": "A batch of OTP shapes against the real filter",
+      "kind": "sad",
+      "actor": "the listener (Kotlin core)",
+      "entry": "qa/B02/core-probe Probe3",
+      "covers": [
+        "AC-17",
+        "AC-17s"
+      ],
+      "spec": "§6.2, D115",
+      "status": "fail",
+      "ends": "every OTP shape dropped; every payment kept",
+      "steps": [
+        {
+          "n": 1,
+          "action": "AC-17's OTP shapes",
+          "assertion": "all isOtp=true",
+          "status": "fail",
+          "screenshot": null
+        },
+        {
+          "n": 2,
+          "action": "AC-17s's payments, plus reference/approval codes",
+          "assertion": "all isOtp=false",
+          "status": "fail",
+          "screenshot": null
+        }
+      ]
+    },
+    {
+      "id": "CORE",
+      "title": "The frame: five tabs, then Settings → Capture",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/",
+      "covers": [],
+      "spec": "patterns.md §6",
+      "status": "pass",
+      "ends": "each tab current in turn; Capture reached",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Home",
+          "assertion": "tab bar visible",
+          "status": "pass",
+          "screenshot": "CORE-step-1-home.png"
+        },
+        {
+          "n": 2,
+          "action": "Review, Insights, More",
+          "assertion": "URL and aria-current per tab",
+          "status": "pass",
+          "screenshot": "CORE-step-2-more.png"
+        },
+        {
+          "n": 3,
+          "action": "Settings → Capture",
+          "assertion": "/s/settings/capture, heading Capture",
+          "status": "pass",
+          "screenshot": "CORE-step-3-capture.png"
         }
       ]
     }
@@ -595,21 +627,21 @@
       "title": "Application ids",
       "spec": "D115",
       "status": "pass",
-      "evidence": "aapt2: io.github.ztsia.sen / .debug / .e2e"
+      "evidence": "aapt2: io.github.ztsia.sen / .debug / .e2e (built here at aa0ac73)"
     },
     {
       "id": "AC-2",
       "title": "Each build loads exactly one address",
       "spec": "§17, D114",
       "status": "unreachable",
-      "evidence": "sites.json release and debug are null until Vercel is linked. Sad twin checked: assets/capacitor.config.json has no server.url or allowNavigation; ShellConfig sets allowNavigation []; offline.js shows 'This build has no site yet'"
+      "evidence": "sites.json release and debug null until Vercel is linked"
     },
     {
       "id": "AC-3",
       "title": "The bridge answers only our origin",
-      "spec": "§17, done-when 3",
+      "spec": "§17",
       "status": "pass",
-      "evidence": "OriginTest + Probe2 (8 parser cases refused); CI run 37884510996 ShellTest c passed (androidBridge undefined on 127.0.0.1)"
+      "evidence": "OriginTest; probe (port ignored) caught; CI 37888315873 emulator ShellTest c passed"
     },
     {
       "id": "AC-4",
@@ -620,31 +652,31 @@
     },
     {
       "id": "AC-5",
-      "title": "The app opens offline",
+      "title": "Opens offline",
       "spec": "§5.1, D114",
       "status": "pass",
-      "evidence": "FLOW-10; production.spec SW tests; CI ShellTest d"
+      "evidence": "FLOW-10; production.spec worker tests; CI ShellTest d"
     },
     {
       "id": "AC-6",
-      "title": "A new deploy waits for the next launch",
+      "title": "New deploy at the next launch",
       "spec": "§5.1, D114",
       "status": "pass",
-      "evidence": "Chromium: v2 waiting, page kept; after relaunch caches ['sen-qa0000000000v002'] (b02-update.spec). Not run in a WebView"
+      "evidence": "b02-update.spec: v2 waiting, page kept; after relaunch caches ['sen-qa0000000000v002'] (Chromium)"
     },
     {
       "id": "AC-7",
       "title": "First launch with no network",
       "spec": "§5.1",
       "status": "pass",
-      "evidence": "CI ShellTest a passed; www/index.html CSP default-src 'none', no remote URLs"
+      "evidence": "CI ShellTest a passed"
     },
     {
       "id": "AC-8",
       "title": "Back follows patterns.md §6",
       "spec": "patterns.md §6",
       "status": "pass",
-      "evidence": "shell.test.ts + probe P7 caught; FLOW-11"
+      "evidence": "FLOW-11; shell.test.ts"
     },
     {
       "id": "AC-9",
@@ -655,7 +687,7 @@
     },
     {
       "id": "AC-10",
-      "title": "Haptics",
+      "title": "Haptics through the bridge",
       "spec": "brief",
       "status": "unreachable",
       "evidence": "needs a device"
@@ -663,135 +695,135 @@
     {
       "id": "AC-11",
       "title": "CI builds and signs",
-      "spec": "§17, done-when 1",
+      "spec": "§17",
       "status": "unreachable",
-      "evidence": "apks job green, unsigned: 'No SEN_KEYSTORE_B64 secret yet'. Sad twin: no .jks/.p12 tracked; no pull_request_target"
+      "evidence": "apks job green; release unsigned until SEN_KEYSTORE_B64 is set"
     },
     {
       "id": "AC-12",
       "title": "Debug build has capture off",
       "spec": "§17",
       "status": "pass",
-      "evidence": "aapt2: debug CaptureListener enabled=false, BootReceiver false; release true"
+      "evidence": "aapt2: debug CaptureListener enabled=false, BootReceiver false; release and e2e true"
     },
     {
       "id": "AC-13",
       "title": "Bridge version; methods only added",
-      "spec": "§5.1, D114",
+      "spec": "§5.1",
       "status": "unreachable",
-      "evidence": "only bridge 1 exists; nothing newer to gate"
+      "evidence": "only bridge 1 exists"
     },
     {
       "id": "AC-14",
       "title": "Secrets never ship",
       "spec": "CLAUDE.md, §17",
       "status": "pass",
-      "evidence": "grep of release APK and production bundle for keys/tokens: none"
+      "evidence": "grep of release/debug APKs and dist-production for keys, tokens, postgres URLs, SEN_KEYSTORE: none"
     },
     {
       "id": "AC-15",
       "title": "Strict CSP, no third-party scripts",
       "spec": "§5.1, §17",
       "status": "pass",
-      "evidence": "production.spec CSP test; one same-origin script; FLOW-9 no external requests"
+      "evidence": "production.spec CSP test; no external script src; FLOW-9 no external requests"
     },
     {
       "id": "AC-16",
       "title": "Chosen apps first",
       "spec": "§6.2, D86",
       "status": "pass",
-      "evidence": "CI CaptureListenerTest unchosen test passed; Probe2 exact and case-sensitive. Tests don't pin order (finding 3)"
+      "evidence": "CaptureGateTest; probe (chosen check moved below OTP) caught; CI unchosen test passed"
     },
     {
       "id": "AC-17",
       "title": "OTP/TAC dropped, and payments kept",
       "spec": "§6.2, D115",
       "status": "fail",
-      "evidence": "6 OTP shapes stored (finding 1); 5 payments dropped (finding 2)"
+      "evidence": "Probe3: 7 OTP shapes kept (finding 1), 5 payments dropped (finding 2)"
     },
     {
       "id": "AC-18",
-      "title": "Keyword list in the repo, tested",
+      "title": "Keyword list in the repo and tested",
       "spec": "brief",
       "status": "pass",
-      "evidence": "otp-keywords.txt English + Malay; P9 (Malay removed) → 2 failed"
+      "evidence": "otp-keywords.txt English + Malay; OtpFilterTest; footer probe caught"
     },
     {
       "id": "AC-19",
       "title": "Summaries, ongoing, conversations dropped",
       "spec": "§6.2, D115",
       "status": "pass",
-      "evidence": "aapt2: disabled_filter_types=conversations; CaptureGateTest; CI stores an ordinary one"
+      "evidence": "aapt2: disabled_filter_types=conversations; CaptureGateTest"
     },
     {
       "id": "AC-20",
       "title": "Raw event fields",
       "spec": "§6.2",
       "status": "pass",
-      "evidence": "outbox DDL exercised: all fields; big_text NULL stored as NULL"
+      "evidence": "outbox DDL in SQLite: all fields, NULLs kept"
     },
     {
       "id": "AC-21",
       "title": "Dedupe key and UNIQUE",
       "spec": "§6.2",
       "status": "pass",
-      "evidence": "SQLite: replay ignored (1 row), new when → 2 rows, plain dup IntegrityError; CI reconnect test; P1 caught"
+      "evidence": "SQLite: replay rowcount 0, plain duplicate IntegrityError, new when → 2 rows; probes (when, bigText) caught; CI reconnect test"
     },
     {
       "id": "AC-22",
       "title": "Channel drop list",
       "spec": "brief",
       "status": "pass",
-      "evidence": "channel_drops table empty; gate test; Probe2 per-package"
+      "evidence": "channel_drops empty at start; CaptureGateTest CHANNEL"
     },
     {
       "id": "AC-23",
       "title": "Local heartbeat",
-      "spec": "§6.2",
+      "spec": "§6.2, D115",
       "status": "unreachable",
-      "evidence": "needs a device (sim covers the display, AC-35)"
+      "evidence": "needs a device"
     },
     {
       "id": "AC-24",
       "title": "No notification text logged",
-      "spec": "§6.2, D115",
+      "spec": "§6.2",
       "status": "unreachable",
-      "evidence": "runtime unchecked; grep of app/src/main/java for Log./println/Logger.: no matches; Capacitor logging off in release"
+      "evidence": "runtime unchecked; grep for Log./println in app/src/main/java: none"
     },
     {
       "id": "AC-25",
-      "title": "Native re-checks setChosen",
+      "title": "Native re-checks the chosen list",
       "spec": "§6.2",
       "status": "unreachable",
-      "evidence": "needs PackageManager; the sim refuses the same"
+      "evidence": "needs PackageManager"
     },
     {
       "id": "AC-26",
-      "title": "Curated list",
+      "title": "Curated list data file",
       "spec": "§6.2, Q2",
       "status": "pass",
-      "evidence": "27 apps with the four Q2 packages; overlap with the 40-entry denylist: []"
+      "evidence": "27 apps incl. the four Q2 packages; overlap with the 40-entry denylist: []"
     },
     {
       "id": "AC-27",
       "title": "No QUERY_ALL_PACKAGES",
-      "spec": "D86",
+      "spec": "§6.2, D86",
       "status": "pass",
-      "evidence": "aapt2: 0 matches; <queries> launcher intent; FLOW-2 More lists others"
+      "evidence": "aapt2: 0 matches; FLOW-2 More lists others"
     },
     {
       "id": "AC-28",
-      "title": "Classifier",
-      "spec": "D86, done-when 5",
+      "title": "Classifier: unchoosable apps",
+      "spec": "§6.2, D86",
       "status": "pass",
-      "evidence": "AppClassifierTest; P5 caught; FLOW-2"
+      "evidence": "AppClassifierTest; email probe caught; FLOW-2"
     },
     {
       "id": "AC-29",
-      "title": "Picker wording",
+      "title": "The picker's wording",
       "spec": "§6.2",
       "status": "pass",
-      "evidence": "FLOW-1 step 2"
+      "evidence": "FLOW-1 step 1"
     },
     {
       "id": "AC-30",
@@ -802,14 +834,14 @@
     },
     {
       "id": "AC-31",
-      "title": "Notification access + restricted route",
+      "title": "Notification access screen",
       "spec": "§6.2, §9.5",
       "status": "pass",
       "evidence": "FLOW-3"
     },
     {
       "id": "AC-32",
-      "title": "Keep Sen running per brand",
+      "title": "Keep Sen running, per brand",
       "spec": "§6.2, D86",
       "status": "pass",
       "evidence": "FLOW-4"
@@ -817,9 +849,9 @@
     {
       "id": "AC-33",
       "title": "Captured on this phone",
-      "spec": "patterns.md §7",
-      "status": "fail",
-      "evidence": "title not selectable (finding 4); otherwise verbatim, KL time, empty state"
+      "spec": "screens.md, patterns.md §7",
+      "status": "pass",
+      "evidence": "FLOW-5: title and text user-select 'text'; verbatim; KL time"
     },
     {
       "id": "AC-34",
@@ -833,7 +865,7 @@
       "title": "Heartbeat visible",
       "spec": "§6.2",
       "status": "pass",
-      "evidence": "b02-r2-edges AC-35: 'Nothing captured yet', then 'Last notification captured Today, hh:mm', log rows, no Invalid Date"
+      "evidence": "b02-r2-edges AC-35"
     },
     {
       "id": "AC-36",
@@ -847,28 +879,28 @@
       "title": "Switch icon aliases",
       "spec": "D77",
       "status": "pass",
-      "evidence": "aapt2: two activity-aliases, one enabled. Toggling unreachable (device)"
+      "evidence": "aapt2: two aliases, Minted enabled, Instrument disabled (toggling needs a device)"
     },
     {
       "id": "AC-38",
       "title": "Simulated in dev, explained in production",
       "spec": "CLAUDE.md, §5.1",
       "status": "pass",
-      "evidence": "FLOW-9; prod bundle grep for 'Simulated:' and 'Dev panel': none"
+      "evidence": "FLOW-9; dist-production grep for simulator/dev panel strings: none"
     },
     {
       "id": "AC-39",
       "title": "Capture's screens reachable",
       "spec": "screens.md",
       "status": "pass",
-      "evidence": "FLOW-1..8; an unknown route goes to Home without errors"
+      "evidence": "FLOW-1..8; AC-39s unknown route no crash"
     },
     {
       "id": "AC-40",
-      "title": "Patterns, axe, 48 px",
-      "spec": "patterns.md §7–8",
+      "title": "Patterns, a11y, targets",
+      "spec": "patterns.md §7-8",
       "status": "pass",
-      "evidence": "axe [] and no target under 48 px on 6 screens, Minted light and Copper dark"
+      "evidence": "b02-r2-a11y: axe and 48 px, Minted light and Copper dark"
     },
     {
       "id": "AC-41",
@@ -882,35 +914,35 @@
       "title": "Offline banner",
       "spec": "patterns.md §7",
       "status": "pass",
-      "evidence": "'You're offline…' status; Capture renders with the worker"
+      "evidence": "b02-r2-edges AC-42"
     },
     {
       "id": "AC-43",
       "title": "Pure Kotlin module",
       "spec": "brief",
       "status": "pass",
-      "evidence": "gradle -p apps/shell/core test: 25/25; probes caught"
+      "evidence": "gradle -p apps/shell/core test: 27/27; 7 probes caught"
     },
     {
       "id": "AC-44",
       "title": "No real data in the repo",
       "spec": "CLAUDE.md",
       "status": "pass",
-      "evidence": "pnpm hygiene passed (DENYLIST not set)"
+      "evidence": "pnpm hygiene passed (DENYLIST unset)"
     },
     {
       "id": "AC-45",
       "title": "Docs recorded",
-      "spec": "brief done-when 9",
-      "status": "pass",
-      "evidence": "D114/D115, local.md B02 steps, cloud.md §5 rows present"
+      "spec": "brief, CLAUDE.md",
+      "status": "fail",
+      "evidence": "D114/D115, local.md, cloud.md present; handoff stale (finding 3)"
     },
     {
       "id": "AC-46",
       "title": "Suites green",
       "spec": "brief",
       "status": "pass",
-      "evidence": "unit 141/141, Kotlin 25/25, e2e 100/100, typecheck/lint/format clean, CI emulator 7/7"
+      "evidence": "unit 141/141, Kotlin 27/27, e2e 100/100, typecheck/lint/format clean, CI 37888315873 emulator 7/7"
     }
   ],
   "notTested": [
@@ -919,16 +951,12 @@
       "why": "needs the device; queued in docs/local.md (B02 soak)"
     },
     {
-      "what": "Probes on the emulator-only paths: dropping UNIQUE from the outbox, or the chosen check from Capture.post",
-      "why": "no KVM here; probing on CI would mean pushing a defect to the branch, which QA never does"
+      "what": "Probes on emulator-only paths (outbox UNIQUE dropped, chosen check removed from Capture.post)",
+      "why": "no KVM here; probing on CI would mean pushing a defect to the branch"
     },
     {
-      "what": "openInBrowser, status-bar style, insets, haptics, Switch icon toggling, Live Update, the test prompt's buttons",
+      "what": "openInBrowser, status bar, insets, haptics, Switch icon toggling, Live Update, the test prompt's buttons",
       "why": "need Android; the hidden tests are in docs/local.md"
-    },
-    {
-      "what": "A new deploy taking over in the WebView",
-      "why": "checked in Chromium only. In the shell, back on Home minimises rather than finishing, so a waiting worker may wait until Android kills the process"
     },
     {
       "what": "The release loading production; the debug build loading the review alias",
@@ -936,11 +964,15 @@
     },
     {
       "what": "Signed release and the download link",
-      "why": "SEN_KEYSTORE_B64 not set yet (owner's one-off workflow)"
+      "why": "SEN_KEYSTORE_B64 not set yet"
     },
     {
-      "what": "Captured list order after a reconnect replay (ordered by capture id, not post time)",
-      "why": "a replay can't be produced in the simulator"
+      "what": "Real OTP wording from TNG, Ryt, Public Bank and Grab",
+      "why": "none sampled yet (docs/notifications.md: 'OTP or TAC' unknown for all four); the filter's cases are all made up, QA's included"
+    },
+    {
+      "what": "Offline capture that syncs exactly once",
+      "why": "sync is B07; in B02 the outbox never leaves the phone"
     }
   ]
 }
