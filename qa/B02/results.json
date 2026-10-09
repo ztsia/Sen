@@ -2,691 +2,844 @@
  "module": "B02",
  "branch": "B02/shell-listener",
  "verdict": "fix first",
- "generatedAt": "2026-10-09 12:05 UTC",
- "phases": "1-6 (scoped: the capture path; phase 4 is the outbox's SQLite schema, as there's no server)",
- "headline": "Run 5's five findings are fixed. With D119 the mask now covers every long number, the amounts survive, and no code or raw-text key reaches the outbox. One Major remains: a TAC whose digits carry keycap or variation marks, an invisible joiner, or bullet or colon grouping is kept and stored readable. Both lines of defence miss it.",
+ "generatedAt": "2026-10-09 15:30 UTC",
+ "phases": "1-3 and 5, scoped to the capture path (§6.2); phase 4 had no server, so the outbox's UNIQUE key was checked in SQLite with the Kotlin schema (run 7)",
+ "headline": "Run 6's findings 10-13 are fixed and the mask holds against every shape the criteria listed (39 digit forms, 11 hostile inputs, amounts, replays). Two Majors remain: a TAC grouped with commas ('Your TAC is 4, 8, 2, 9, 1, 3') is stored readable, and no test would notice if the gate stored the title or expanded text unmasked.",
  "summary": {
-  "criteria": 27,
-  "pass": 24,
-  "fail": 1,
-  "unreachable": 2
+  "criteria": 35,
+  "pass": 28,
+  "fail": 3,
+  "unreachable": 4
  },
  "suites": {
-  "unit": "web 141/141 pass; capture core 41/41 pass",
-  "e2e": "QA run 6: 7/7 pass; apps/web/e2e/capture.spec.ts 9/9 pass; QA run 5 specs 5/5 pass (all on QA's preview at :4196)",
-  "typecheck": "clean",
-  "lint": "clean",
-  "qaProbes": "Probe1-6: 267 tests; the JUnit XML shows 13 red: Probe4's deliberate TAC CAFE drop and 12 Probe6 shape probes (findings 10, 11). Probe1-3 and Probe5 all green"
+  "unit": "web 141/141 pass; capture core 43/43 pass",
+  "e2e": "QA run 7: 9 specs, 8 pass (1 red = finding 19); apps/web/e2e/capture.spec.ts pass on QA's dev server",
+  "typecheck": "not run (no app source changed)",
+  "lint": "not run (no app source changed)",
+  "qaProbes": "Probe7: 30 tests, 29 pass, 1 red on purpose (after_strong_keyword_odd_gaps = finding 17)"
  },
  "findings": [
   {
-   "id": 10,
+   "id": 17,
    "severity": "Major",
    "status": "open",
-   "title": "A TAC with the strongest keyword is stored readable, unmasked and unmarked, when its digits carry combining or invisible marks, or are grouped by a bullet or colons",
-   "detail": "D119 says the mask reads digits \"as the filter reads them (any Unicode digit, across spaces, dashes, dots, brackets and invisible characters)\", so that \"a code never reaches storage\". Some shapes get past both lines of defence. The filter's `CANDIDATE` needs `\\p{N}+` runs joined only by a space or hyphen. NFKC removes none of U+FE0F, U+20E3, U+FE0E or U+034F. The mask's `kind()` classes these as `OTHER`, which ends a run. So `Your TAC is 4️⃣8️⃣2️⃣9️⃣1️⃣3️⃣.` (keycap emoji digits), `Your TAC is 4︎8︎2︎9︎1︎3.` (variation selector), `Your TAC is 482\\u034F913.` (combining grapheme joiner, invisible), `Your TAC is 482•913.` and `Your TAC is 48:29:13.` are all **kept**, with the code readable on screen and `maybe_otp = 0`. Nothing was masked, so nothing is marked.\n\nIn fairness, none of these is a shape a Malaysian bank is known to use. But the gate also runs on any app chosen through *More*. The CLAUDE.md rule is about the OTP itself (\"discarded … before anything is stored\"), and D116/D119 exist so that a shape nobody predicted can't leak. The variation selector and CGJ fall squarely under D119's \"invisible characters\".\n\nSuggested fix: in both `OtpFilter.sentences` and `OtpMask.kind`, treat every `\\p{M}` (combining and enclosing marks) and every default-ignorable code point (U+034F, U+FE00–FE0F, U+180B–180F, U+2060–206F, U+E0000 block) as invisible. Consider treating `•` (U+2022) and `:` between single digits as separators in the mask too. Then add these cases to `OtpMaskTest` and `OtpFilterTest`.",
-   "repro": "gradle -p apps/shell/core jar && gradle -p qa/B02/core-probe test --tests 'Probe6.after_strong_keyword*' --tests 'Probe6.after_keycap_digits' --tests 'Probe6.after_variation_selector' --tests 'Probe6.after_combining_grapheme_joiner' --tests 'Probe6.after_bullet_separator' --tests 'Probe6.after_colon_groups'",
-   "evidence": "Keep(maybeOtp=false) -> Ryt Bank | Your TAC is 4️⃣8️⃣2️⃣9️⃣1️⃣3️⃣. | null  <- Ryt Bank | Your TAC is 4️⃣8️⃣2️⃣9️⃣1️⃣3️⃣. | null\nKeep(maybeOtp=false) -> Ryt Bank | Your TAC is 4︎8︎2︎9︎1︎3. | null  <- Ryt Bank | Your TAC is 4︎8︎2︎9︎1︎3. | null\nKeep(maybeOtp=false) -> Ryt Bank | Your TAC is 482͏913. | null  <- Ryt Bank | Your TAC is 482͏913. | null\nKeep(maybeOtp=false) -> Ryt Bank | Your TAC is 482•913. | null  <- Ryt Bank | Your TAC is 482•913. | null\nKeep(maybeOtp=false) -> Ryt Bank | Your TAC is 48:29:13. | null  <- Ryt Bank | Your TAC is 48:29:13. | null\norg.opentest4j.AssertionFailedError: code readable in: Masukkan 4️⃣8️⃣2️⃣9️⃣1️⃣3️⃣ untuk sahkan.\n(Probe6: 49 tests, 12 failed, all of them after_* shape probes for findings 10 and 11)",
-   "spec": "R6-AC-24, spec_v2.md §6.2 (D119 paragraph), D116, D119, CLAUDE.md non-negotiable (OTP/TAC)",
+   "title": "A TAC with the strongest keyword is stored readable when its digits are grouped with commas: 'Your TAC is 482, 913', 'Your TAC is 4, 8, 2, 9, 1, 3', 'Your TAC is 48, 29, 13'",
+   "detail": "The filter's code pattern groups digits only by a single space or hyphen. The mask joins digits across up to three non-letter characters, except that a comma or dot joins only when it stands alone (so 'No. 123, 9:47 PM' and 'RM12.90, 3 items' stay apart). A comma followed by a space therefore ends the run for the mask, and each group of 1-3 digits is too short to mask. Both lines of defence miss: the notification is kept, unmasked and with maybeOtp = false. Same class as run 6's finding 10 (fixed): a gap shape neither line reads. How likely: no bank is known to print these, but '4, 8, 2, 9, 1, 3' is how a screen reader or a voice message reads a code, and the gate also runs on any app chosen through *More*. D119's reason for masking everything is the shape nobody predicted. Also readable: '482 , 913', '482 - - 913' (four separators), '482. 913', '482 / / 913', '482 ,913', '482,, 913'.\n\nSuggested fix: count a comma, or a dot followed by a space, as a joiner between digits in the mask. Decimal amounts are already carved out per token ('12.90' stays), so 'RM12.90, 3 items' still keeps its amount and its 3. Add the shapes to OtpMaskTest and OtpFilterTest.",
+   "repro": "gradle -p apps/shell/core jar && gradle -p qa/B02/core-probe test --tests 'Probe7.after_strong_keyword_odd_gaps'",
+   "evidence": "odd_gaps [482, 913] -> READABLE Your TAC is 482, 913 maybe=false\nodd_gaps [4, 8, 2, 9, 1, 3] -> READABLE Your TAC is 4, 8, 2, 9, 1, 3 maybe=false\nodd_gaps [48, 29, 13] -> READABLE Your TAC is 48, 29, 13 maybe=false\nodd_gaps [482 - - 913] -> READABLE Your TAC is 482 - - 913 maybe=false\nreadable: [482, 913, 482 , 913, 482 - - 913, 4 - - 8 - - 2 - - 9 - - 1 - - 3, 48, 29, 13, 482. 913, ...]",
+   "spec": "R7-AC-34, spec_v2.md §6.2 ¶6, D119, CLAUDE.md (listener)",
    "screenshots": []
   },
   {
-   "id": 11,
-   "severity": "Minor",
+   "id": 18,
+   "severity": "Major",
    "status": "open",
-   "title": "The mask joins digits across at most three spaces, but the filter reads any run of whitespace as one, so '482    913' with unlisted wording is stored readable",
-   "detail": "`OtpMask.MAX_SEPARATORS = 3`. `OtpFilter.sentences` collapses `\\s+` to a single space before it looks for codes. So a code split by four or more spaces, or by spaces around a line break, is one code to the filter and two short numbers to the mask. When the wording has a strong keyword the filter drops it (`Your TAC is 482    913.` → `Drop(reason=OTP)`). With wording the lists don't hold (D119's whole reason for masking everything), it is kept unmasked: `Masukkan 482    913 untuk sahkan.` is stored exactly as posted. D119 says the mask reads digits \"as the filter reads them … across spaces\". Suggested fix: count any run of whitespace as one separator, as the filter does.",
-   "repro": "gradle -p qa/B02/core-probe test --tests 'Probe6.after_four_spaces' --tests 'Probe6.after_newlines_and_spaces'",
-   "evidence": "Keep(maybeOtp=false) -> Ryt Bank | Masukkan 482    913 untuk sahkan. | null  <- Ryt Bank | Masukkan 482    913 untuk sahkan. | null\nDrop(reason=OTP)  <- Ryt Bank | Your TAC is 482    913. | null",
-   "spec": "R6-AC-24, spec_v2.md §6.2, D119",
+   "title": "No test checks that CaptureGate stores the title and the expanded text masked: storing either as posted leaves all 43 core tests green",
+   "detail": "OtpMaskTest calls `OtpMask.apply` directly, including on three parts at once, but nothing asserts what the gate stores. The gate takes `masked.parts` and builds the RawEvent from it. If that line reads `p.title` or `p.bigText`, a code in the title or the expanded text is stored raw and the key is hashed from it: the whole of D119 gone for two of three fields. The emulator tests post only a title and a text, and assert on `text`. Banks put codes in the expanded text (BigTextStyle) as readily as in the text. Probe7's test goes red for all three fields; the suite does for the text field only.\n\nSuggested fix: a CaptureGateTest that keeps a notification with a number in each of title, text and expanded text and asserts none is left in any field.",
+   "repro": "In apps/shell/core/.../CaptureGate.kt change `val (title, text, bigText) = masked.parts` to `val (title, text) = masked.parts; val bigText = p.bigText`; gradle -p apps/shell/core test --rerun-tasks (green); git checkout -- the file. Same with `val (_, text, bigText) = masked.parts; val title = p.title`. Then gradle -p qa/B02/core-probe test --tests Probe7.after_gate_masks_every_stored_field (red).",
+   "evidence": "expanded text as posted: BUILD SUCCESSFUL, 43 tests, 0 failed\ntitle as posted:         BUILD SUCCESSFUL, 43 tests, 0 failed\ntext as posted:          43 tests completed, 7 failed\nProbe7.after_gate_masks_every_stored_field: FAILED for each of the three",
+   "spec": "R7-AC-35, D119, phase 3",
    "screenshots": []
   },
   {
-   "id": 12,
+   "id": 19,
    "severity": "Minor",
    "status": "open",
-   "title": "'A notification the filter can't read is kept masked and marked' has no test with teeth: making that branch unmark leaves every app test green",
-   "detail": "`CaptureGate.decide` sets `unread = true` when the filter throws. That covers `StackOverflowError` on the JVM and, since a6a2437, `RuntimeException`, Android's ICU regex failure. The flag ORs into `maybeOtp`. Changing either branch to `false`, or no longer catching `RuntimeException`, leaves all 41 core tests green (probes P8a, P8, P7b). `OtpMaskTest`'s long inputs assert no code is left, never the mark. The emulator test `a_very_long_notification_is_read_without_crashing_the_listener` asserts `maybeOtp`, but its text begins `Never share your TAC.`, so the mark comes from the OTP word whether or not the catch ran. That is how bc2219f shipped with the emulator dropping the 5,000-character notification as *unread*, which only a6a2437 caught. QA's `Probe6.ac25_unreadable_kept_masked_and_marked` uses a long sentence with **no** OTP word. It goes red when the overflow branch returns false. Suggested: add that case to `CaptureGateTest`. Make the emulator test's text word-free too (\"Paid RM12.90 at KEDAI MAJU. \" + digits), so it proves the catch on ART.",
-   "repro": "In CaptureGate.kt change the comment-and-`true` after `catch (e: StackOverflowError)` to `false`; gradle -p apps/shell/core test (green); gradle -p apps/shell/core jar && gradle -p qa/B02/core-probe test --tests 'Probe6.ac25*' (red); git checkout -- the file",
-   "evidence": "P8a the filter's overflow keeps the event unmarked: SUITE GREEN (decorative)\nP8 the filter's failure keeps the event unmarked (a6a2437): SUITE GREEN (decorative)\nP7b a RuntimeException from the filter no longer caught (a6a2437): SUITE GREEN (decorative)\nProbe6 > ac25_unreadable_kept_masked_and_marked() FAILED   (under P8a)\nProbe6 > ac25_unreadable_kept_masked_and_marked() PASSED   (restored)",
-   "spec": "R6-AC-25, spec_v2.md §6.2 (D119: \"a notification the filter can't read is kept masked and marked\")",
-   "screenshots": []
-  },
-  {
-   "id": 13,
-   "severity": "Minor",
-   "status": "open",
-   "title": "Captured on this phone still says 'as the apps wrote them', and patterns.md §7 still says 'exactly as the app wrote them', but under D119 every row may carry masked numbers with no line to explain them",
-   "detail": "Since D119, every kept notification has its 4+ digit runs masked, marked or not. Ryt's *Your money is in!* now reads `… on ••/•/••••, 9:48 PM (GMT+8).`, and a Grab charge reads `for booking •••••••••••-K4XQ2PLM7RTWA-G-1`. The muted line appears only under a *maybe OTP* row, as D119 says. The screen's intro still promises `N notifications, newest first, as the apps wrote them.`, and `docs/ui/patterns.md` §7 (*Raw notification row*) still says \"the title and the text exactly as the app wrote them\". During the soak the owner reads this screen and shares from it, and will see bullets in Ryt dates under a claim that the text is verbatim. That is pattern drift: the screen and the pattern doc disagree with the spec. Suggested: intro copy such as *as the apps wrote them, with long numbers hidden*, and a D119 line in patterns.md §7.",
-   "repro": "qa/e2e: R6_PORT=4196 ./node_modules/.bin/playwright test -c b02-r6.config.ts -g R6-FLOW-5",
-   "evidence": "R6-FLOW-5 intro: 3 notifications, newest first, as the apps wrote them. They stay on this phone.\nrow 0: \"You've received RM42.50 from TAN WEI MING on ••/•/••••, 9:48 PM (GMT+8).\" with no muted line (getByText(LINE) count 0)",
-   "spec": "R6-AC-14, R6-AC-19, spec_v2.md §6.2 (D119), docs/ui/patterns.md §7, CLAUDE.md (one set of UI patterns)",
+   "title": "Captured on this phone collapses line breaks and repeated spaces in the expanded text, though it says 'as the apps wrote them'",
+   "detail": "The rows are plain paragraphs (white-space: normal). Android's expanded text for an inbox-style notification is the lines joined with a newline (Capture.read), and Share samples keeps those newlines, so the soak owner sees one thing on screen and pastes another. A stored 'Line one / Line two / (blank) / Line four   spaced' shows as 'Line one Line two Line four spaced'. The numbers are masked correctly; this is only layout. Suggested: `whitespace-pre-line` (or pre-wrap) on the title, text and expanded text paragraphs.",
+   "repro": "qa/e2e: R7_PORT=4300 ./node_modules/.bin/playwright test -c b02-r7.config.ts -g 'FLOW-1/4'",
+   "evidence": "Error: expanded text with 4 lines and a blank line renders 1 line(s), white-space=normal   (R7 newline rendering {\"h\":20,\"lh\":20,\"ws\":\"normal\"})",
+   "spec": "R7-AC-20, patterns.md §7",
    "screenshots": [
-    "R6-FLOW-5-step-2-masked-unmarked.png"
+    "R7-FLOW-1-step-2-newlines.png"
    ]
   },
   {
-   "id": 14,
+   "id": 20,
+   "severity": "Minor",
+   "status": "open",
+   "title": "A group summary, an ongoing notification, a dropped channel or an empty one from a chosen app is dropped with no trace, though §6.2 and D115 say each drop from a chosen app is logged",
+   "detail": "D115: 'Each drop from a chosen app is logged by time and app, never text, so a dropped payment can be found'. `Capture.store` logs only `DropReason.OTP` and a gate failure ('unread'). A payment posted as an ongoing notification (D115 assumes none is) or inside a group summary would vanish with nothing in the heartbeat, and the soak is exactly where that assumption gets tested. Read from Capture.kt, not run on a device. Either log those drops by time and app too (no text), or amend D115 and §6.2 to say only OTP and unread drops are logged.",
+   "repro": "apps/shell/android/app/src/main/java/io/github/ztsia/sen/capture/Capture.kt, `is Decision.Drop ->`",
+   "evidence": "if (d.reason == DropReason.OTP) Heartbeat.dropped(context, posted)   // the only drop reason that is logged",
+   "spec": "spec_v2.md §6.2 ¶5, D115",
+   "screenshots": []
+  },
+  {
+   "id": 21,
    "severity": "Note",
    "status": "open",
-   "title": "The simulator still can't post arbitrary text, and its dedupe identity isn't the shell's",
-   "detail": "Run 5's note 6 still stands. The dev panel posts four fixed samples, a fixed OTP and a fixed, already-masked maybe-OTP, so a browser walk proves the screen, never the mask. The fixed samples do match the core: `Probe6.after_sim_sample_parity` checks Ryt's masked date, and `Probe5.ac59s` checks the maybe-OTP. The simulator also dedupes on `package, title, text, bigText, when` joined by NUL. It omits the notification key and isn't length-prefixed, so it isn't §6.2's key. That's harmless today, but a future flow that relies on the key in the browser would be misled. A dev-panel text field that posts through a TypeScript copy of the gate is out of scope for B02; recorded for B07/B09.",
-   "repro": "apps/web/src/dev/capture-sim.ts, `store()` and `sim.maybeOtp()`",
-   "evidence": "const key = (e) => [e.package, e.title, e.text, e.bigText, e.when].join('\\u0000');",
-   "spec": "R6-AC-22, CLAUDE.md (simulator panel)",
+   "title": "Capture.store's insert is outside the try, so a SQLite failure on the capture thread is uncaught (read, not run)",
+   "detail": "`gate.decide` and `outbox.droppedChannels()` are guarded ('never crash the listener over one notification'), but `outbox.insert(d.event)` and the heartbeat writes run on `worker.execute { ... }` unguarded. An uncaught exception on that thread (disk full, a corrupt database) reaches Android's default handler and ends the process; the listener restarts, but the notification may already be gone from the tray's replay. Rare. Not run: no device.",
+   "repro": "Capture.kt `is Decision.Keep -> outbox.insert(d.event)`",
+   "evidence": "worker.execute { store(app, posted) }   // no catch around the insert",
+   "spec": "spec_v2.md §6.2 (background execution)",
+   "screenshots": []
+  },
+  {
+   "id": 22,
+   "severity": "Note",
+   "status": "open",
+   "title": "The mask joins digits across any short non-letter gap (slash, colon, bullet, underscore), so dates and times lose digits §6.2 doesn't list",
+   "detail": "§6.2 and D119 list 'spaces, dashes, dots, brackets and invisible characters'. Since run 6 the mask joins across any non-letter character, so '12/9/2026' becomes '••/•/••••', '9:47:05 PM' becomes '•:••:•• PM' and 'Ref 12 34 56' becomes 'Ref •• •• ••'. That is the safe direction (D119 accepts over-masking), but §6.2 should say it, since the template drafter and the soak will meet it.",
+   "repro": "gradle -p qa/B02/core-probe test --tests Probe7.after_time_and_date_overmask",
+   "evidence": "after_overmask: Paid on 12/9/2026 at 9:47:05 PM -> Paid on ••/•/•••• at •:••:•• PM\nafter_overmask: Posted 2026-10-09T21:47:05 -> Posted ••••-••-••T••:••:••",
+   "spec": "spec_v2.md §6.2 ¶6, D119",
+   "screenshots": []
+  },
+  {
+   "id": 23,
+   "severity": "Note",
+   "status": "open",
+   "title": "The simulator keeps nothing across a reload and posts only six fixed notifications, so a browser walk proves the screen, never the mask or the offline outbox (carries run 6's finding 14)",
+   "detail": "After a reload the simulator's events, chosen apps and access are all gone (zustand, memory only; localStorage is empty). Its dedupe identity omits the notification key and isn't length-prefixed. The Kotlin core and the emulator are the only places the gate and the outbox are exercised. The criteria that need a device (R7-AC-7, 19, 22, 26) are 'unreachable' here for that reason.",
+   "repro": "qa/e2e: -g 'FLOW-8'",
+   "evidence": "R7 after reload {\"events\":0,\"chosen\":0,\"ls\":\"\"}",
+   "spec": "R7-AC-26, docs/cloud.md §4",
+   "screenshots": [
+    "R7-FLOW-8-step-2-after-reload.png"
+   ]
+  },
+  {
+   "id": 24,
+   "severity": "Note",
+   "status": "open",
+   "title": "Two tests that can't fail for the reason they name: DedupeKeyTest 'counts bytes, not characters', CaptureGateTest 'a payment is kept raw'",
+   "detail": "'counts bytes' compares 'é' precomposed with 'e' + U+0301, which differ by characters and by bytes alike, so a character-counting prefix would still pass. 'a payment is kept raw' asserts only the title and the key's length, though its text now holds a masked date. Neither hides a bug today. Suggested: pin a key for a multi-byte field against a known hash, and rename the second test.",
+   "repro": "apps/shell/core/src/test/kotlin/.../DedupeKeyTest.kt, CaptureGateTest.kt",
+   "evidence": "assertNotEquals(DedupeKey.of(\"p\",\"k\",1,\"é\",\"\",null), DedupeKey.of(\"p\",\"k\",1,\"é\",\"\",null))   // two different spellings of é",
+   "spec": "phase 3",
+   "screenshots": []
+  },
+  {
+   "id": 25,
+   "severity": "Note",
+   "status": "open",
+   "title": "By design, a number straight after a currency and any number with exactly two decimals are never masked, however long: 'Your pass is RM482913', 'Ref 48291375.99'",
+   "detail": "§6.2: 'a decimal amount, or the number after a currency, is left'. The carve-outs hold any length up to 24 digits ('USD 48291375' stays). No bank is known to word a code that way, and the filter would drop one that also carries a keyword and isn't read as an amount; recorded because it is the one place a code can sit unmasked by rule. Probe7.after_currency_whole_number, after_decimal_shaped_code.",
+   "repro": "gradle -p qa/B02/core-probe test --tests 'Probe7.after_currency*' --tests 'Probe7.after_decimal*'",
+   "evidence": "after_currency: Your pass is RM482913 -> Your pass is RM482913\nafter_decimal_shaped_code long: Ref 48291375.99",
+   "spec": "spec_v2.md §6.2 ¶6",
    "screenshots": []
   },
   {
    "id": 15,
    "severity": "Note",
    "status": "open",
-   "title": "A notification with no `when` is stored with its post time as `when`, so the outbox can't tell 'none' from a real stamp",
-   "detail": "`CaptureGate`: `val whenMillis = if (p.whenMillis > 0) p.whenMillis else p.postTime`. That value goes into both the dedupe key and `when_ms`. §6.2 lists the post time and `when` (\"the time the app stamped on it\") as separate raw fields. A replay of a notification with no `when` still dedupes, because Android keeps `postTime` across a replay. But the soak question about how each app updates a notification (§6.2: \"an update may get a new `when`\") can't be answered for apps that stamp none. Worth a line in D115 or the handoff, or storing 0 in `when_ms` and using the fallback only for the key. B07 derives ids from the key, so decide before events sync.",
-   "repro": "CaptureGateTest `no when falls back to the post time`",
-   "evidence": "assertEquals(1_757_000_000_500, e.whenMillis)  // posted with whenMillis = 0",
-   "spec": "spec_v2.md §6.2 (Raw text is stored first; Dedupe key)",
+   "title": "A notification with no `when` is stored with its post time as `when` (run 6, still open)",
+   "detail": "Unchanged since run 6; decide before B07 derives ids from the key.",
+   "repro": "gradle -p qa/B02/core-probe test --tests Probe7.ac32_no_when",
+   "evidence": "AC-32: when_ms stored = 1000 (postTime 1000); replay same key: true",
+   "spec": "R7-AC-32, §6.2 ¶7",
    "screenshots": []
   },
   {
-   "id": 16,
-   "severity": "Note",
-   "status": "open",
-   "title": "The run-5 fix commit rewrote QA's earlier records to fit D119",
-   "detail": "bc2219f changed `qa/B02/core-probe/src/test/kotlin/Probe5.kt` (three `untouched` checks became `maskedUnmarked`, with an `// untouched before D119` comment), `qa/e2e/b02-flows.spec.ts` (the Ryt date expectation became `••/•/••••`) and `qa/e2e/b02-r5-flows.spec.ts` (formatting). The changes are honest and commented, and match D119. But run 5's record no longer shows what run 5 ran, and QA's earlier probes now pass partly because the build session edited them. Suggest: leave earlier runs' probes alone, and let the next QA run supersede them, or put such edits in the ledger.",
-   "repro": "git show bc2219f -- qa/",
-   "evidence": "-    @Test fun ac50s_no_word_untouched() = untouched(\"Ryt Bank\", \"Paid RM12.90 at KEDAI MAJU 482913. Thank you.\")\n+    @Test fun ac50s_no_word_untouched() = maskedUnmarked(\"Ryt Bank\", \"Paid RM12.90 at KEDAI MAJU 482913. Thank you.\") // untouched before D119",
-   "spec": "qa skill (earlier runs' files are records)",
-   "screenshots": []
-  },
-  {
-   "id": 1,
+   "id": 10,
    "severity": "Major",
    "status": "fixed",
-   "title": "Run 5: the mask missed codes the filter reads as codes (thin/en/ideographic space, tab, circled and math-bold digits, rarer groupings)",
-   "detail": "Re-checked at 07e1ad7 with the jar rebuilt after a6a2437. All of Probe5's `ac52_*` cases pass, and so do Probe6's `ac24_shapes_masked` cases: thin space, fullwidth, `(482) 913`, underscore, zero-width, math bold, circled, superscript and Devanagari. Shapes outside that list still leak (findings 10 and 11).",
-   "repro": "gradle -p qa/B02/core-probe test --tests 'Probe5.ac52*' --tests 'Probe6.ac24*'",
-   "evidence": "Probe5: 68 tests, 0 failures; Probe6 > ac24_shapes_masked() PASSED",
-   "spec": "R6-AC-24, D119",
+   "title": "Run 6: a TAC with keycap marks, variation selectors, a CGJ, a bullet or colon grouping was stored readable",
+   "detail": "Re-checked from the spec's side: every one of those shapes is now masked (Probe7.ac10_digit_forms, 39 forms). The same class survives for commas and spaced separators: finding 17.",
+   "repro": "Probe7.ac10_digit_forms",
+   "evidence": "ac10_digit_forms PASSED",
+   "spec": "R7-AC-30",
    "screenshots": []
   },
   {
-   "id": 2,
-   "severity": "Major",
-   "status": "fixed",
-   "title": "Run 5: an OTP worded without a listed word was stored raw",
-   "detail": "D119 now masks every long number whatever the words. `Masukkan 482913 untuk sahkan transaksi.`, `Nombor pengesahan anda ialah 482913.` and `您的验证码是482913` are stored with the code masked. This also fixes run 5's note 8 (Chinese).",
-   "repro": "gradle -p qa/B02/core-probe test --tests 'Probe5.ac63*' --tests 'Probe6.ac26*'",
-   "evidence": "Probe6 > ac26_unlisted_wordings() PASSED; Probe5 ac63_* all pass",
-   "spec": "R6-AC-26, D119",
-   "screenshots": []
-  },
-  {
-   "id": 3,
+   "id": 11,
    "severity": "Minor",
    "status": "fixed",
-   "title": "Run 5: ~2 KB of digit-heavy text overflowed the mask's regex stack",
-   "detail": "The mask has no regular expressions now. On the JVM, every hostile 5,000-character input is decided in 6–21 ms. Two parts can only be verified on Android: `Capture.store`'s catch-all, and a6a2437's `RuntimeException` catch for ART's regex. The emulator caught the latter at bc2219f, per the main session. See finding 12 for the missing unit test.",
-   "repro": "gradle -p qa/B02/core-probe test --tests Probe5Overflow --tests 'Probe6.after_timing'",
-   "evidence": "timing (1)(1)(1)(1)… 5100 chars -> Keep in 9 ms\ntiming 1 1 1 1 1 1 … 5120 chars -> Keep in 21 ms\ntiming 444444444444… 5120 chars -> Keep in 6 ms\ntiming 482 913 482 … 5120 chars -> Keep in 8 ms\ntiming Never share … 5022 chars -> Keep in 9 ms",
-   "spec": "R6-AC-18",
+   "title": "Run 6: four or more spaces split a code for the mask",
+   "detail": "'482    913', '482\\n913' and '482 NBSP tab 913' are masked.",
+   "repro": "Probe7.ac10_digit_forms",
+   "evidence": "ac10_digit_forms PASSED",
+   "spec": "R7-AC-29",
    "screenshots": []
   },
   {
-   "id": 4,
+   "id": 12,
    "severity": "Minor",
    "status": "fixed",
-   "title": "Run 5: the mask joined unrelated numbers and ate a whole-ringgit amount after a no-break space",
-   "detail": "`No. 123, 9:47 PM` and `Table 12, No. 123, 9:47 PM` are stored unchanged. `RM\\u00A02500`, `RM  2500` and `RM\\u00A02,500` keep their amounts.",
-   "repro": "gradle -p qa/B02/core-probe test --tests 'Probe6.after_nbsp_currency' --tests 'Probe6.ac24s*' --tests 'Probe5.ac51_amount_after_nbsp'",
-   "evidence": "Keep(maybeOtp=true) -> Ryt Bank | Paid RM  2500 at KEDAI MAJU. Ref ••••••. Never share your TAC. | null\nKeep(maybeOtp=false) -> Ryt Bank | No. 123, 9:47 PM. Never share your TAC. | null",
-   "spec": "R6-AC-11, R6-AC-24",
+   "title": "Run 6: the 'unread' branch had no test with teeth",
+   "detail": "Deliberate defect: the gate stops ORing `unread` into maybeOtp. OtpMaskTest goes red.",
+   "repro": "CaptureGate.kt `maybeOtp = masked.maybeOtp || unread` -> `masked.maybeOtp`; gradle -p apps/shell/core test",
+   "evidence": "OtpMaskTest > a notification the filter can't read is kept masked and marked (QA run 6, 12)() FAILED\n43 tests completed, 1 failed",
+   "spec": "R7-AC-31",
    "screenshots": []
   },
   {
-   "id": 5,
+   "id": 13,
    "severity": "Minor",
    "status": "fixed",
-   "title": "Run 5: OtpMaskTest's invisible-character case had no teeth",
-   "detail": "Probe P6 sets `INVISIBLE = setOf(0x00AD)`, and `OtpMaskTest` now goes red.",
-   "repro": "In OtpMask.kt set INVISIBLE = setOf(0x00AD); gradle -p apps/shell/core test; git checkout -- the file",
-   "evidence": "P6 invisible characters no longer join a run (run 5 #5 re-check): SUITE RED\nOtpMaskTest > codes in every shape the filter reads as codes are masked (QA run 5, 1 and 5)() FAILED\n41 tests completed, 1 failed",
-   "spec": "phase 3",
-   "screenshots": []
+   "title": "Run 6: the screen and patterns.md promised verbatim text",
+   "detail": "The intro now reads 'as the apps wrote them, with long numbers hidden'; patterns.md §7 names D119.",
+   "repro": "qa/e2e FLOW-1/4",
+   "evidence": "6 notifications, newest first, as the apps wrote them, with long numbers hidden. They stay on this phone.",
+   "spec": "R7-AC-33",
+   "screenshots": [
+    "R7-FLOW-1-step-1-rows.png"
+   ]
   }
  ],
  "probes": [
   {
-   "broke": "Dedupe key taken from the raw text, not the masked text (CaptureGate)",
+   "broke": "Dedupe key taken from the raw text instead of the masked text",
    "caught": true,
-   "note": "OtpMaskTest `the dedupe key is taken from the masked text` went red (1 of 41)"
+   "note": "OtpMaskTest 'the dedupe key is taken from the masked text' red (1 of 43)"
   },
   {
-   "broke": "Mask only when an OTP word is present (D116 without D119)",
+   "broke": "Chosen check by package prefix instead of exact",
    "caught": true,
-   "note": "3 OtpMaskTest tests red"
+   "note": "CaptureGateTest 'the chosen check matches the exact package' red (1 of 43)"
   },
   {
-   "broke": "Length prefix dropped from the dedupe key",
-   "caught": true,
-   "note": "DedupeKeyTest: 2 red"
-  },
-  {
-   "broke": "OTP filter run before the chosen-apps check",
-   "caught": true,
-   "note": "CaptureGateTest `the chosen check comes before every other` red"
-  },
-  {
-   "broke": "Amounts never recognised by the mask",
-   "caught": true,
-   "note": "6 OtpMaskTest tests red"
-  },
-  {
-   "broke": "Invisible characters no longer join a run (run 5 #5)",
-   "caught": true,
-   "note": "OtpMaskTest `codes in every shape` red"
-  },
-  {
-   "broke": "Filter's StackOverflowError no longer caught",
-   "caught": true,
-   "note": "OtpMaskTest `any length of text` red"
-  },
-  {
-   "broke": "Filter's overflow keeps the event unmarked (unread=false)",
+   "broke": "The gate stores the expanded text as posted (not masked)",
    "caught": false,
-   "note": "41/41 core tests green; QA's Probe6.ac25 goes red (finding 12)"
+   "note": "core suite 43/43 green. Probe7.after_gate_masks_every_stored_field red. Finding 18"
   },
   {
-   "broke": "Filter's RuntimeException branch (a6a2437) returns unmarked / is no longer caught",
+   "broke": "The gate stores the title as posted (not masked)",
    "caught": false,
-   "note": "41/41 green both ways: no JVM input makes the filter throw a RuntimeException; only the emulator exercises it (finding 12)"
+   "note": "core suite 43/43 green. Probe7 red. Finding 18"
   },
   {
-   "broke": "Captured's maybe-OTP line removed (captured.tsx)",
+   "broke": "The gate stores the text as posted (not masked)",
    "caught": true,
-   "note": "apps/web/e2e/capture.spec.ts 'Captured on this phone…' red; QA r5 specs 3 red"
+   "note": "7 of 43 red"
   },
   {
-   "broke": "Simulator lets an OTP through to storage (capture-sim.ts)",
+   "broke": "`unread` no longer ORed into maybeOtp",
    "caught": true,
-   "note": "apps/web/e2e/capture.spec.ts red; QA r5 specs 1 red"
+   "note": "OtpMaskTest run-6-12 test red (1 of 43)"
+  },
+  {
+   "broke": "Any number with decimals counts as an amount (PLAIN_DECIMAL d+[.,]d+)",
+   "caught": true,
+   "note": "OtpMaskTest 'codes in every shape...' red (1 of 43)"
+  },
+  {
+   "broke": "maybeOtp never set",
+   "caught": true,
+   "note": "4 of 43 red"
+  },
+  {
+   "broke": "MAX_SEPARATORS 3 -> 0 (no separator joins digits)",
+   "caught": true,
+   "note": "4 of 43 red"
+  },
+  {
+   "broke": "Expanded text left out of the dedupe key",
+   "caught": true,
+   "note": "DedupeKeyTest pinned hash red (1 of 43)"
+  },
+  {
+   "broke": "Ongoing notifications no longer dropped",
+   "caught": true,
+   "note": "CaptureGateTest 'group summaries, ongoing, empty...' red (1 of 43)"
+  },
+  {
+   "broke": "Web: the muted line shown on every row",
+   "caught": true,
+   "note": "apps/web/e2e/capture.spec.ts: strict mode violation, 4 elements"
+  },
+  {
+   "broke": "Web: the simulator stores the OTP instead of dropping it",
+   "caught": true,
+   "note": "capture.spec red"
+  },
+  {
+   "broke": "Web: the simulator's replay stores a second row",
+   "caught": true,
+   "note": "capture.spec red"
+  },
+  {
+   "broke": "Web: the time formatter loses Asia/Kuala_Lumpur",
+   "caught": true,
+   "note": "shell.test.ts 2 of 6 red with TZ=America/Los_Angeles; green restored"
   }
  ],
  "flows": [
   {
-   "id": "R6-FLOW-1",
-   "title": "Payments from chosen apps land on Captured, exactly, newest first",
+   "id": "R7-FLOW-1",
+   "title": "Rows show what is stored, as stored; marked row only has the muted line",
    "kind": "happy",
-   "actor": "owner (dev build)",
-   "entry": "Settings → Capture → Your apps; dev panel → Post a notification ×4",
+   "actor": "owner (dev build, simulated shell)",
+   "entry": "Captured on this phone, seeded with six made-up stored events",
    "covers": [
-    "R6-AC-14",
-    "R6-AC-19",
-    "R6-AC-21"
+    "R7-AC-20",
+    "R7-AC-21",
+    "R7-AC-33"
    ],
-   "spec": "§6.2, patterns.md §7",
-   "status": "pass",
-   "ends": "4 rows, newest first, each title and text exact, app label and 'Today, HH:MM' KL, no muted line; text selectable",
+   "spec": "patterns.md §7, D119",
+   "status": "fail",
+   "ends": "Six rows newest first, bullets where numbers were hidden, one muted line (the marked row), selectable text, no 4-digit run outside an amount; but multi-line expanded text renders as one line (finding 19)",
    "steps": [
     {
      "n": 1,
-     "action": "Choose Ryt, TNG, MyPB; grant access; open Captured",
-     "assertion": "'0 notifications, newest first' and the empty state line",
+     "action": "Open Captured with six events",
+     "assertion": "6 rows; intro reads '6 notifications, newest first, as the apps wrote them, with long numbers hidden.'; exactly 1 muted line, under row 2; no 4-digit run outside amounts",
      "status": "pass",
-     "screenshot": "R6-FLOW-1-step-1-before.png"
+     "screenshot": "R7-FLOW-1-step-1-rows.png"
     },
     {
      "n": 2,
-     "action": "Dev panel: Post a notification ×4",
-     "assertion": "'4 notifications, newest first'",
-     "status": "pass",
-     "screenshot": "R6-FLOW-1-step-2-four-posted.png"
-    },
-    {
-     "n": 3,
-     "action": "Read the rows",
-     "assertion": "row 0 Ryt card 'Card payment completed 👍'…, row 1 Ryt in (date ••/•/••••), row 2 MyPB, row 3 TNG; 0 muted lines; 'Today, \\d\\d:\\d\\d'; user-select: text",
-     "status": "pass",
-     "screenshot": "R6-FLOW-1-step-3-newest-first.png"
+     "action": "Look at the row whose expanded text is 'Line one / Line two / (blank) / Line four   spaced'",
+     "assertion": "renders as 4 lines with a blank line: got 1 line, white-space: normal ('Line one Line two Line four spaced')",
+     "status": "fail",
+     "screenshot": "R7-FLOW-1-step-2-newlines.png"
     }
    ]
   },
   {
-   "id": "R6-FLOW-2",
-   "title": "An unchosen app and an OTP leave nothing",
+   "id": "R7-FLOW-2",
+   "title": "A clear OTP from a chosen app is dropped and logged",
    "kind": "sad",
-   "actor": "owner (dev build)",
-   "entry": "dev panel",
+   "actor": "owner",
+   "entry": "dev panel -> Post an OTP",
    "covers": [
-    "R6-AC-1",
-    "R6-AC-2",
-    "R6-AC-3",
-    "R6-AC-8",
-    "R6-AC-22"
+    "R7-AC-6",
+    "R7-AC-7",
+    "R7-AC-17",
+    "R7-AC-24"
    ],
-   "spec": "§6.2, D86",
+   "spec": "§6.2 ¶5",
    "status": "pass",
-   "ends": "0 rows; '482910' nowhere in the page; one drop line for Ryt, nothing about TNG",
+   "ends": "0 rows; Heartbeat sheet shows one 'Dropped a one-time code from Ryt Bank'; '482910' is nowhere in the page's HTML",
    "steps": [
     {
      "n": 1,
-     "action": "Choose only Ryt; grant access; open Captured",
-     "assertion": "0 notifications",
+     "action": "Choose Ryt, grant access, open Captured",
+     "assertion": "0 rows and the empty state",
      "status": "pass",
-     "screenshot": "R6-FLOW-2-step-1-before.png"
+     "screenshot": "R7-FLOW-2-step-1-empty.png"
     },
     {
      "n": 2,
-     "action": "Post a notification (TNG sample, unchosen)",
-     "assertion": "toast 'not stored, its app isn’t chosen'; still 0",
+     "action": "Post an OTP; open Heartbeat",
+     "assertion": "0 rows; one 'Dropped a one-time code from Ryt Bank' line; body HTML lacks the code",
      "status": "pass",
-     "screenshot": "R6-FLOW-2-step-2-unchosen.png"
-    },
-    {
-     "n": 3,
-     "action": "Post an OTP",
-     "assertion": "toast 'an OTP, dropped before anything was stored'; 0 rows; page HTML lacks 482910",
-     "status": "pass",
-     "screenshot": "R6-FLOW-2-step-3-otp.png"
-    },
-    {
-     "n": 4,
-     "action": "Open the heartbeat",
-     "assertion": "exactly 1 'Dropped a one-time code from Ryt Bank'; no 482910, TAC or TNG in the sheet",
-     "status": "pass",
-     "screenshot": "R6-FLOW-2-step-4-heartbeat.png"
+     "screenshot": "R7-FLOW-2-step-2-dropped-logged.png"
     }
    ]
   },
   {
-   "id": "R6-FLOW-3",
-   "title": "A payment with a TAC footer and a code-like number is masked and marked",
+   "id": "R7-FLOW-3",
+   "title": "An unchosen app leaves no trace",
    "kind": "sad",
-   "actor": "owner (dev build)",
-   "entry": "dev panel → Post a maybe-OTP",
+   "actor": "owner",
+   "entry": "dev panel with nobody chosen: Post an OTP, Post a notification x2",
    "covers": [
-    "R6-AC-10",
-    "R6-AC-11",
-    "R6-AC-20"
+    "R7-AC-1",
+    "R7-AC-24"
    ],
-   "spec": "§6.2, D116, D119",
+   "spec": "§6.2 ¶3, D86",
    "status": "pass",
-   "ends": "one row 'RM50.00 transfer to TAN WEI MING: ••••••. Never share your TAC.' with the muted line, amount kept, no 4-digit run",
+   "ends": "events = 0 and exactly 1 otp beat in the simulator's store (the earlier one); the Heartbeat sheet still lists one drop",
    "steps": [
     {
      "n": 1,
-     "action": "Open Captured (Ryt chosen, access on)",
-     "assertion": "heading 'Captured on this phone'",
+     "action": "Un-choose all apps; post an OTP and two payments",
+     "assertion": "0 rows; Heartbeat lists still 1 drop; store has events 0, otp beats 1",
      "status": "pass",
-     "screenshot": "R6-FLOW-3-step-1-before.png"
-    },
+     "screenshot": "R7-FLOW-3-step-1-unchosen-no-trace.png"
+    }
+   ]
+  },
+  {
+   "id": "R7-FLOW-4",
+   "title": "A doubtful message is kept masked and marked",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "dev panel -> Post a maybe-OTP",
+   "covers": [
+    "R7-AC-12",
+    "R7-AC-21"
+   ],
+   "spec": "§6.2 ¶6, D116",
+   "status": "pass",
+   "ends": "One row with its number as bullets and one muted line",
+   "steps": [
     {
-     "n": 2,
+     "n": 1,
      "action": "Post a maybe-OTP",
-     "assertion": "1 row: masked text exact, 'Maybe a one-time code, so its numbers are hidden', RM50.00 visible, innerText has no \\d{4,}",
+     "assertion": "1 row 'RM50.00 transfer to TAN WEI MING: ••••••. Never share your TAC.' and 1 muted line",
      "status": "pass",
-     "screenshot": "R6-FLOW-3-step-2-masked-row.png"
+     "screenshot": "R7-FLOW-4-step-1-maybe-otp.png"
     }
    ]
   },
   {
-   "id": "R6-FLOW-4",
-   "title": "The same notification twice is stored once",
-   "kind": "sad",
-   "actor": "owner (dev build)",
-   "entry": "dev panel → Post it again",
+   "id": "R7-FLOW-5",
+   "title": "A replay is a no-op; the same payment later is a second one",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "dev panel -> Post it again; Post a notification x8",
    "covers": [
-    "R6-AC-15",
-    "R6-AC-16"
+    "R7-AC-15",
+    "R7-AC-24"
    ],
-   "spec": "§6.2, §6.5",
+   "spec": "§6.2 ¶8, §6.5",
    "status": "pass",
-   "ends": "1 row after a replay and a reload",
+   "ends": "1 row after the replay; 4 after four posts; 7 after eight (the unchosen app's are not stored); all (text, when) pairs unique",
    "steps": [
     {
      "n": 1,
-     "action": "Post a notification; open Captured",
-     "assertion": "1 notification",
-     "status": "pass",
-     "screenshot": "R6-FLOW-4-step-1-one.png"
-    },
-    {
-     "n": 2,
      "action": "Post it again",
-     "assertion": "toast 'the same notification again, not stored twice'; 1 row",
+     "assertion": "still 1 row",
      "status": "pass",
-     "screenshot": "R6-FLOW-4-step-2-replayed.png"
-    },
-    {
-     "n": 3,
-     "action": "Back, reopen Captured",
-     "assertion": "still 1 notification",
-     "status": "pass",
-     "screenshot": "R6-FLOW-4-step-3-still-one.png"
-    }
-   ]
-  },
-  {
-   "id": "R6-FLOW-5",
-   "title": "A masked number with no OTP word: bullets, no line (D119)",
-   "kind": "sad",
-   "actor": "owner (dev build)",
-   "entry": "dev panel → Post a notification ×3",
-   "covers": [
-    "R6-AC-14",
-    "R6-AC-20"
-   ],
-   "spec": "§6.2 D119, patterns.md §7",
-   "status": "pass",
-   "ends": "Ryt's date masked '••/•/••••', time and amount kept, no muted line. The intro still says 'as the apps wrote them' (finding 13). The Grab-reference case isn't in the simulator; Probe6.ac14s_grab_reference_masked_unmarked covers it in the core",
-   "steps": [
-    {
-     "n": 1,
-     "action": "Choose Ryt, TNG, MyPB; post 3",
-     "assertion": "3 notifications",
-     "status": "pass",
-     "screenshot": "R6-FLOW-5-step-1-posted.png"
+     "screenshot": "R7-FLOW-5-step-1-replay-no-op.png"
     },
     {
      "n": 2,
-     "action": "Read Ryt's row and the intro",
-     "assertion": "row text \"You've received RM42.50 from TAN WEI MING on ••/•/••••, 9:48 PM (GMT+8).\"; 0 muted lines; intro contains 'as the apps wrote them'",
+     "action": "Post 8 notifications",
+     "assertion": "7 rows; no duplicate (text|when)",
      "status": "pass",
-     "screenshot": "R6-FLOW-5-step-2-masked-unmarked.png"
+     "screenshot": "R7-FLOW-5-step-2-later-is-new.png"
     }
    ]
   },
   {
-   "id": "R6-FLOW-6",
-   "title": "Share samples: tapping a masked row's body ticks it",
-   "kind": "sad",
-   "actor": "owner (dev build)",
-   "entry": "Captured → Share samples",
+   "id": "R7-FLOW-6",
+   "title": "Share samples: nothing ticked is refused; a tap anywhere on a row ticks it",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Captured -> Share samples",
    "covers": [
-    "R6-AC-23"
+    "R7-AC-22"
    ],
    "spec": "brief, patterns.md §7",
    "status": "pass",
-   "ends": "the row is ticked by a touch on its text; 'Share 1 sample' opens the (simulated) share sheet. The shared text itself is built natively and isn't reachable in a browser",
+   "ends": "Refusal toast, then 2 of 3 ticked by tapping the row body; the simulator's share toast says 2 samples. The payload itself (Kotlin shareSamples) was not run",
    "steps": [
     {
      "n": 1,
-     "action": "Post a maybe-OTP; open Captured; Share samples",
-     "assertion": "1 checkbox, unchecked",
+     "action": "Tap 'Tick the ones to share' with nothing ticked",
+     "assertion": "'Tick the notifications to share first.' shown",
      "status": "pass",
-     "screenshot": "R6-FLOW-6-step-1-picking.png"
+     "screenshot": "R7-FLOW-6-step-1-nothing-ticked.png"
     },
     {
      "n": 2,
-     "action": "Touch the row's masked text",
-     "assertion": "checkbox checked; muted line still visible",
+     "action": "Tap row 1 and row 3 on their bodies",
+     "assertion": "button reads 'Share 2 samples'; row 2's checkbox unchecked",
      "status": "pass",
-     "screenshot": "R6-FLOW-6-step-2-ticked-by-body.png"
+     "screenshot": "R7-FLOW-6-step-2-two-ticked.png"
     },
     {
      "n": 3,
-     "action": "Share 1 sample",
-     "assertion": "toast 'the share sheet with 1 sample'",
+     "action": "Share",
+     "assertion": "toast 'Simulated: the share sheet with 2 samples'",
      "status": "pass",
-     "screenshot": "R6-FLOW-6-step-3-shared.png"
+     "screenshot": "R7-FLOW-6-step-3-shared.png"
     }
    ]
   },
   {
-   "id": "R6-FLOW-7",
-   "title": "A capture at 23:30 KL on 31 Oct, browser in New York",
+   "id": "R7-FLOW-7",
+   "title": "23:30 KL on the last day of the month, in other time zones",
    "kind": "sad",
-   "actor": "owner (dev build)",
-   "entry": "browser timezone America/New_York, clock fixed at 2026-10-31T15:30Z",
+   "actor": "owner",
+   "entry": "Chromium timezone America/Los_Angeles, Pacific/Kiritimati, Asia/Kuala_Lumpur; event at 2026-10-31T15:30Z",
    "covers": [
-    "R6-AC-21"
+    "R7-AC-23"
    ],
-   "spec": "CLAUDE.md conventions, D14",
+   "spec": "D14",
    "status": "pass",
-   "ends": "the row shows 'Today, 23:30' (not 11:30); an hour later on KL's calendar (1 Nov), 'Yesterday, 23:30'",
+   "ends": "Every zone reads 'Sat, 31 Oct, 23:30', and an event at 16:05Z reads 'Sun, 1 Nov, 00:05'",
    "steps": [
     {
      "n": 1,
-     "action": "Open Captured in New York time",
-     "assertion": "resolved timezone America/New_York",
+     "action": "Los Angeles",
+     "assertion": "Sat, 31 Oct, 23:30 and Sun, 1 Nov, 00:05",
      "status": "pass",
-     "screenshot": "R6-FLOW-7-step-1-before.png"
+     "screenshot": "R7-FLOW-7-step-1-America-Los_Angeles.png"
     },
     {
      "n": 2,
-     "action": "Post a notification",
-     "assertion": "row 'Today, 23:30'; no '11:30'",
+     "action": "Kiritimati (UTC+14)",
+     "assertion": "same",
      "status": "pass",
-     "screenshot": "R6-FLOW-7-step-2-kl-time.png"
+     "screenshot": "R7-FLOW-7-step-1-Pacific-Kiritimati.png"
     },
     {
      "n": 3,
-     "action": "Clock → 16:30Z (00:30 KL, 1 Nov; still 31 Oct in New York); reopen",
-     "assertion": "row 'Yesterday, 23:30'",
+     "action": "Kuala Lumpur",
+     "assertion": "same",
      "status": "pass",
-     "screenshot": "R6-FLOW-7-step-3-next-kl-day.png"
+     "screenshot": "R7-FLOW-7-step-1-Asia-Kuala_Lumpur.png"
+    }
+   ]
+  },
+  {
+   "id": "R7-FLOW-8",
+   "title": "Captured offline, reloaded, back online (the simulator)",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "context offline; Post a maybe-OTP; reload",
+   "covers": [
+    "R7-AC-26"
+   ],
+   "spec": "§6.2, §18",
+   "status": "fail",
+   "ends": "Capturing in the page works offline (1 row), but the simulator keeps nothing: after a reload events = 0, chosen = 0. The browser can't show the outbox surviving; only the emulator can (finding 23)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Go offline in the open page; post",
+     "assertion": "1 row",
+     "status": "pass",
+     "screenshot": "R7-FLOW-8-step-1-offline-captured.png"
+    },
+    {
+     "n": 2,
+     "action": "Back online; reload",
+     "assertion": "the row survives the reload: got events 0 (simulator is in memory only)",
+     "status": "fail",
+     "screenshot": "R7-FLOW-8-step-2-after-reload.png"
+    }
+   ]
+  },
+  {
+   "id": "R7-FLOW-9",
+   "title": "A very long notification",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "seeded rows with a 340-character unbroken token and a ~1,000-character note",
+   "covers": [
+    "R7-AC-16",
+    "R7-AC-20"
+   ],
+   "spec": "§6.2 ¶6",
+   "status": "pass",
+   "ends": "No horizontal scroll at 412 px (document and main scrollWidth <= clientWidth). The masking of long input is Probe7.ac16_hostile (11 shapes, none threw, 1.6 MB in 0.5-1.1 s)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Captured with the long rows",
+     "assertion": "scrollWidth - clientWidth <= 0 for document and main",
+     "status": "pass",
+     "screenshot": "R7-FLOW-9-step-1-long-wraps.png"
+    }
+   ]
+  },
+  {
+   "id": "R7-FLOW-10",
+   "title": "The simulator and the shell agree",
+   "kind": "happy",
+   "actor": "QA",
+   "entry": "the simulator's six fixed notifications, raw, through the Kotlin gate (Probe7.ac25_simulator_parity)",
+   "covers": [
+    "R7-AC-25"
+   ],
+   "spec": "CLAUDE.md (simulator)",
+   "status": "pass",
+   "ends": "Same keep/drop and same stored text for all six, including the masked Ryt date and the maybe-OTP. Limit: the simulator posts only these six, so no arbitrary corpus could go through it (finding 23)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Run the six raw samples through CaptureGate",
+     "assertion": "each equals what the simulator stores; the OTP is dropped",
+     "status": "pass",
+     "screenshot": "R7-FLOW-4-step-1-maybe-otp.png"
+    }
+   ]
+  },
+  {
+   "id": "R7-FLOW-11",
+   "title": "The empty and the error states",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Captured with nothing; Captured when the read throws",
+   "covers": [
+    "R7-AC-27"
+   ],
+   "spec": "patterns.md §7",
+   "status": "pass",
+   "ends": "Empty state line, then the pattern's error state with a retry, and no stack trace or error text",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Captured with no events",
+     "assertion": "'Notifications from your chosen apps appear here as they arrive.'",
+     "status": "pass",
+     "screenshot": "R7-FLOW-11-step-1-empty.png"
+    },
+    {
+     "n": 2,
+     "action": "Make events() throw; open Captured",
+     "assertion": "an alert or retry control is shown; no 'boom', 'Error:' or '.tsx' text",
+     "status": "pass",
+     "screenshot": "R7-FLOW-11-step-2-error.png"
     }
    ]
   }
  ],
  "criteria": [
   {
-   "id": "R6-AC-1",
-   "title": "An unchosen app is dropped before anything",
-   "spec": "§6.2, D86",
+   "id": "R7-AC-1",
+   "title": "An unchosen app is dropped before anything, with no trace",
+   "spec": "§6.2 ¶3, D86",
    "status": "pass",
-   "evidence": "Probe6.ac1 NOT_CHOSEN; ac1s Keep; R6-FLOW-2 step 2 0 rows"
+   "evidence": "Probe7.ac1: payment, OTP, summary, ongoing and empty from an unchosen app are all NOT_CHOSEN; twin Keep. R7-FLOW-3: simulator store events 0, otp beats 1"
   },
   {
-   "id": "R6-AC-2",
-   "title": "The chosen-apps check runs before the OTP filter",
+   "id": "R7-AC-2",
+   "title": "The chosen check is an exact match",
+   "spec": "§6.2 ¶3",
+   "status": "pass",
+   "evidence": "Probe7.ac2: 10 near-miss packages (case, suffix, prefix, padding, NUL, newline, Cyrillic a) all dropped; exact kept"
+  },
+  {
+   "id": "R7-AC-3",
+   "title": "An empty chosen list stores nothing; a change applies to the next one",
+   "spec": "§6.2 ¶3",
+   "status": "pass",
+   "evidence": "Probe7.ac3 at the gate: Drop, Keep, Drop. A live change on a device was not run"
+  },
+  {
+   "id": "R7-AC-4",
+   "title": "Group summaries and ongoing from a chosen app are dropped",
+   "spec": "§6.2 ¶4, D115",
+   "status": "pass",
+   "evidence": "Probe7.ac4: GROUP_SUMMARY, ONGOING; unflagged Keep"
+  },
+  {
+   "id": "R7-AC-5",
+   "title": "The channel drop list starts empty and drops only its own channel of its own app",
+   "spec": "§6.2 ¶4",
+   "status": "pass",
+   "evidence": "Probe7.ac5: five cases incl. same channel on another app and a null channel"
+  },
+  {
+   "id": "R7-AC-6",
+   "title": "A clear OTP/TAC from a chosen app is dropped, new wordings",
+   "spec": "§6.2 ¶5",
+   "status": "pass",
+   "evidence": "Probe7.ac6: 11 of 12 made-up OTPs dropped; the 12th ('Enter 739204 to confirm your login to Grab.') kept masked, no digit readable. Twin: 12 of 12 payments with footers and references kept"
+  },
+  {
+   "id": "R7-AC-7",
+   "title": "A drop is logged once, by time and app, never text",
+   "spec": "§6.2 ¶5, D115",
+   "status": "unreachable",
+   "evidence": "The simulator half passes (R7-FLOW-2: one line naming Ryt Bank, no code in the page). The once-only drop log is Heartbeat and SQLite on Android (CaptureListenerTest), not run here"
+  },
+  {
+   "id": "R7-AC-8",
+   "title": "Every long number is masked, whatever the words",
+   "spec": "§6.2 ¶6, D119",
+   "status": "pass",
+   "evidence": "Probe7.ac8: five wordings, twin untouched. SQLite stand-in: 4 codes not found as bytes in the db file"
+  },
+  {
+   "id": "R7-AC-9",
+   "title": "Amounts are left; the carve-out is exact",
+   "spec": "§6.2 ¶6",
+   "status": "pass",
+   "evidence": "Probe7.ac9: nine amount shapes unchanged; 'RM12.90 482913' keeps 12.90, masks 482913; 'Ref 482.913' masked"
+  },
+  {
+   "id": "R7-AC-10",
+   "title": "Digits are read as the filter reads them",
+   "spec": "§6.2 ¶6",
+   "status": "pass",
+   "evidence": "Probe7.ac10: 39 forms (fullwidth, Arabic-Indic, Devanagari, circled, math, sub/superscript, every joiner and invisible listed, keycaps) none readable; twins untouched"
+  },
+  {
+   "id": "R7-AC-11",
+   "title": "Everything but the digit runs is stored exactly as posted",
    "spec": "§6.2",
    "status": "pass",
-   "evidence": "Probe6.ac2 NOT_CHOSEN for an unchosen TAC; probe P4 caught by CaptureGateTest; R6-FLOW-2 heartbeat names Ryt only"
+   "evidence": "Probe7.ac11: emoji, ZWJ family, CJK, curly apostrophe, CRLF, tab, NBSP, decomposed e, ZWSP, RTL mark, lone surrogate, leading and trailing spaces all byte-identical"
   },
   {
-   "id": "R6-AC-3",
-   "title": "A clear OTP/TAC from a chosen app is dropped, English and Malay",
-   "spec": "§6.2, D115",
+   "id": "R7-AC-12",
+   "title": "Maybe OTP is set exactly by an OTP word plus a masked number",
+   "spec": "§6.2 ¶6, D116",
    "status": "pass",
-   "evidence": "Probe6.ac3 Drop(OTP) ×3; ac3s footer-only kept unchanged, maybe_otp false"
+   "evidence": "Probe7.ac12: (a) marked (b) not (c) title-only marked (d) not; 'Starbucks Tacoma', 'TACTILE', 'Sepinning' not marked"
   },
   {
-   "id": "R6-AC-4",
-   "title": "Advice that points at a code is evidence",
-   "spec": "§6.2",
+   "id": "R7-AC-13",
+   "title": "The dedupe key comes from the masked text",
+   "spec": "§6.2 ¶6, ¶8",
    "status": "pass",
-   "evidence": "Probe6.ac4 Drop(OTP)"
+   "evidence": "Probe7.ac13: same key differing only in a long number -> same key; different `when`, amount or word -> different"
   },
   {
-   "id": "R6-AC-5",
-   "title": "A weak keyword only with its code, outside a promotion",
-   "spec": "§6.2",
+   "id": "R7-AC-14",
+   "title": "The key's fields don't collide",
+   "spec": "§6.2 ¶8, D115",
    "status": "pass",
-   "evidence": "Probe6.ac5 PIN dropped; ac5s promo kept"
+   "evidence": "Probe7.ac14: five splits of 'ABC' -> five keys"
   },
   {
-   "id": "R6-AC-6",
-   "title": "A reference's own code is never a code",
-   "spec": "§6.2",
+   "id": "R7-AC-15",
+   "title": "A replay is a no-op; an in-place rewrite is new; two payments minutes apart are two",
+   "spec": "§6.2 ¶8, §6.5",
    "status": "pass",
-   "evidence": "Probe6.ac6 kept ×2; ac6s verification code dropped"
+   "evidence": "Probe7.ac15 and the SQLite stand-in: 8 gate-kept lines -> 6 rows (replay and a long-number-only difference collapse). The heartbeat's last-event time was not run (Android)"
   },
   {
-   "id": "R6-AC-7",
-   "title": "Code shapes the filter must read; amounts, dates, times, phones aren't codes",
-   "spec": "§6.2",
+   "id": "R7-AC-16",
+   "title": "An unreadable or hostile notification never throws, never stores a raw digit",
+   "spec": "§6.2 ¶6",
    "status": "pass",
-   "evidence": "Probe6.ac7 Drop ×4; ac7s Keep ×4 (date and phone stored masked, D119)"
+   "evidence": "Probe7.ac16: 1.6 MB, 200k digits (also spaced), 200k ZWSP, 50k NULs, lone surrogates, 1,000 nested brackets, 1.6 MB with a TAC word, 20k sentences, 200k joiners, 1 MB after an OTP: none threw, all < 2 s (slowest 1.1 s cold); a normal one after is stored normally"
   },
   {
-   "id": "R6-AC-8",
-   "title": "Each drop is logged once, by time and app, never text",
-   "spec": "§6.2",
+   "id": "R7-AC-17",
+   "title": "No code leaks into any side channel",
+   "spec": "§6.2, CLAUDE.md",
    "status": "pass",
-   "evidence": "SQLite on Outbox.kt's schema: drop_key dk1, dk1, dk2 → 2 rows; heartbeats columns id, at, kind, connected, package, drop_key (no text). The listener's own replay-once is the emulator test, not run here"
+   "evidence": "SQLite stand-in db file lacks all four codes; the page HTML lacks the OTP; grep of Kotlin for Log./println/printStackTrace: none. The Android drop-log table and bridge were not run"
   },
   {
-   "id": "R6-AC-9",
-   "title": "Group summaries, ongoing and dropped channels never reach storage",
-   "spec": "§6.2, D115",
+   "id": "R7-AC-18",
+   "title": "The non-text fields are stored as posted",
+   "spec": "§6.2 ¶7",
    "status": "pass",
-   "evidence": "Probe6.ac9: GROUP_SUMMARY, ONGOING, CHANNEL; other channel and the same channel name on another app kept"
+   "evidence": "Probe7.ac18: null title/expanded stored empty, channel and `when` kept; blank-only is EMPTY"
   },
   {
-   "id": "R6-AC-10",
-   "title": "Kept + OTP word + 4+ digits: masked and marked",
-   "spec": "§6.2, D116, D119",
-   "status": "pass",
-   "evidence": "'Paid RM12.90 at KEDAI ••••. Never share your TAC.', maybe_otp true; 3 digits unchanged and unmarked"
+   "id": "R7-AC-19",
+   "title": "The debug build captures nothing",
+   "spec": "§17",
+   "status": "unreachable",
+   "evidence": "Read only: the manifest's service and boot receiver are enabled=${captureEnabled}, false in the debug flavour. Not run (no device)"
   },
   {
-   "id": "R6-AC-11",
-   "title": "Amounts are left in a masked notification",
-   "spec": "§6.2",
-   "status": "pass",
-   "evidence": "'RM 1,250.00 / MYR 12.40 / RM12.40 / RM 4829 / 12.40 / ••••. Never share your TAC.'"
+   "id": "R7-AC-20",
+   "title": "The raw notification row shows what is stored, as stored",
+   "spec": "patterns.md §7, D119, D14",
+   "status": "fail",
+   "evidence": "R7-FLOW-1 step 2: expanded text with newlines and a blank line renders as one line, 'Line one Line two Line four spaced' (white-space: normal). Everything else holds: KL time, selectable, no horizontal scroll, no 4-digit run"
   },
   {
-   "id": "R6-AC-12",
-   "title": "Every field is masked",
-   "spec": "§6.2",
-   "status": "pass",
-   "evidence": "bigText 'Store KEDAI ••••••', title 'KEDAI ••••••', both marked"
-  },
-  {
-   "id": "R6-AC-13",
-   "title": "Dedupe key from the masked text; the code never reaches storage",
-   "spec": "§6.2",
-   "status": "pass",
-   "evidence": "same key for texts differing only in masked digits; SQLite: 61 rows from 63 posts, 1 row with the masked-text key, 0 with the raw-text key; '771204' and the raw-text key absent from the db file"
-  },
-  {
-   "id": "R6-AC-14",
-   "title": "Raw text stored exactly, apart from masking",
-   "spec": "§6.2, D119",
-   "status": "pass",
-   "evidence": "curly apostrophe, trailing spaces, Chinese, emoji, \\n, \\u00A0, \\r\\n byte-identical; Grab 'booking •••••••••••-K4XQ2PLM7RTWA-G-1', MYR 12.40 kept, unmarked; null title stays null"
-  },
-  {
-   "id": "R6-AC-15",
-   "title": "Dedupe key: package + key + when + text, length-prefixed",
-   "spec": "§6.2, §6.5, D115",
-   "status": "pass",
-   "evidence": "Probe6.ac15: replay equal; AB|C vs A|BC, other when, other package → 4 distinct keys; probe P3 caught"
-  },
-  {
-   "id": "R6-AC-16",
-   "title": "A reconnect replay adds nothing",
-   "spec": "§6.2",
-   "status": "pass",
-   "evidence": "same Posted → same key (ac15); R6-FLOW-4 one row after 'Post it again'; the listener's real reconnect is the emulator test, not run here"
-  },
-  {
-   "id": "R6-AC-17",
-   "title": "The outbox enforces uniqueness itself",
-   "spec": "brief, CLAUDE.md",
-   "status": "pass",
-   "evidence": "SQLite: 'UNIQUE constraint failed: events.dedupe_key' on a plain INSERT"
-  },
-  {
-   "id": "R6-AC-18",
-   "title": "Hostile input never crashes and never stores a code",
-   "spec": "§6.2, §18",
-   "status": "pass",
-   "evidence": "5,000 x's kept; empty → EMPTY; zero-width code masked; 5,000-char digit runs decided in 6–21 ms (JVM)"
-  },
-  {
-   "id": "R6-AC-19",
-   "title": "Captured shows what was stored, newest first; empty state",
-   "spec": "screens.md, patterns.md §7",
-   "status": "pass",
-   "evidence": "R6-FLOW-1: 4 rows in reverse order, exact; empty state line at 0"
-  },
-  {
-   "id": "R6-AC-20",
-   "title": "A maybe-OTP row says so; others don't",
+   "id": "R7-AC-21",
+   "title": "The muted line is exactly the marked rows",
    "spec": "patterns.md §7, D116",
    "status": "pass",
-   "evidence": "R6-FLOW-3 line present; R6-FLOW-1/5 0 lines on unmarked rows"
+   "evidence": "R7-FLOW-1/4: 1 line for 1 marked row of 6; capture.spec red if shown on all rows"
   },
   {
-   "id": "R6-AC-21",
-   "title": "Row time is KL time whatever the device timezone",
+   "id": "R7-AC-22",
+   "title": "Share samples shares exactly the ticked rows, as stored",
+   "spec": "brief, patterns.md §7",
+   "status": "unreachable",
+   "evidence": "UI half passes (R7-FLOW-6: refusal toast; a tap on the body ticks; 'Share 2 samples'). The payload is Kotlin's shareSamples (reads e.text/e.bigText, the masked columns) and the share sheet: not run"
+  },
+  {
+   "id": "R7-AC-23",
+   "title": "Time is Kuala Lumpur whatever the device zone",
+   "spec": "D14",
+   "status": "pass",
+   "evidence": "R7-FLOW-7: LA, Kiritimati and KL all read Sat, 31 Oct, 23:30 and Sun, 1 Nov, 00:05"
+  },
+  {
+   "id": "R7-AC-24",
+   "title": "The heartbeat tells a dropped payment from a missing one",
+   "spec": "§6.2 Health, D115",
+   "status": "pass",
+   "evidence": "Simulator: one 'Dropped a one-time code from Ryt Bank'; unchosen OTP adds none. The last-event time on Android was not run"
+  },
+  {
+   "id": "R7-AC-25",
+   "title": "The simulator walks the same rules as the shell",
    "spec": "CLAUDE.md",
    "status": "pass",
-   "evidence": "R6-FLOW-7 in America/New_York: 'Today, 23:30', then 'Yesterday, 23:30' after KL's midnight"
+   "evidence": "Probe7.ac25: its six fixed notifications through CaptureGate give the stored text it shows. Limit: it can post only those six"
   },
   {
-   "id": "R6-AC-22",
-   "title": "The simulator goes through the same gate",
-   "spec": "CLAUDE.md, screens.md",
-   "status": "pass",
-   "evidence": "on its fixed samples only: unchosen, OTP, maybe-OTP, replay walked (R6-FLOW-2/3/4); Probe6.after_sim_sample_parity equals the core for Ryt's date. It can't post arbitrary text (finding 14)"
-  },
-  {
-   "id": "R6-AC-23",
-   "title": "Share samples shares what was stored, never more",
-   "spec": "brief, patterns.md §7, D116",
+   "id": "R7-AC-26",
+   "title": "Captured offline, kept across a reload",
+   "spec": "§6.2, §18",
    "status": "unreachable",
-   "evidence": "Ticking by the row body passes (R6-FLOW-6), but the shared text is built in SenCapturePlugin.shareSamples on Android, so it can't be run in a browser"
+   "evidence": "The simulator is memory-only (reload -> events 0, chosen 0); the SQLite outbox survives only on a device. Not reachable in a browser"
   },
   {
-   "id": "R6-AC-24",
-   "title": "Digits are read as the filter reads them (D119)",
-   "spec": "§6.2 D119",
+   "id": "R7-AC-27",
+   "title": "Empty and error states follow the patterns",
+   "spec": "patterns.md §7",
+   "status": "pass",
+   "evidence": "R7-FLOW-11: empty line; error shows an alert/retry with no stack text"
+  },
+  {
+   "id": "R7-AC-28",
+   "title": "The capture path never turns an amount into a number",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "grep parseFloat|toFixed|Number(|toDouble|toFloat|Double|Float over core, Android main, capture-sim.ts, screens/capture, shell: no matches"
+  },
+  {
+   "id": "R7-AC-29",
+   "title": "Whitespace of any length and line breaks group digits",
+   "spec": "§6.2 ¶6",
+   "status": "pass",
+   "evidence": "Probe7.ac10 forms '482    913', '482\\n913', '482 NBSP tab 913' not readable; twin 'Order 12\\nShip 34' untouched"
+  },
+  {
+   "id": "R7-AC-30",
+   "title": "Marks and odd separators don't hide a code",
+   "spec": "§6.2 ¶6, D119",
+   "status": "pass",
+   "evidence": "Probe7.ac10: keycaps, FE0E, U+034F, bullet, colons, combining acute, slashes all masked"
+  },
+  {
+   "id": "R7-AC-31",
+   "title": "The 'unread' branch is tested with teeth",
+   "spec": "phase 3",
+   "status": "pass",
+   "evidence": "Probe: maybeOtp = masked.maybeOtp (unread not ORed) -> OtpMaskTest 'a notification the filter can't read is kept masked and marked' red (43 tests, 1 failed)"
+  },
+  {
+   "id": "R7-AC-32",
+   "title": "A notification with no `when` is stored once, honestly",
+   "spec": "§6.2 ¶7-¶8",
+   "status": "pass",
+   "evidence": "Probe7.ac32: stored once and replays to the same key; when_ms holds the post time (1000 = 1000), so 'none' and a real stamp look alike (finding 15, still open)"
+  },
+  {
+   "id": "R7-AC-33",
+   "title": "The screen's wording doesn't promise verbatim text",
+   "spec": "D119, patterns.md §7",
+   "status": "pass",
+   "evidence": "Intro reads '...as the apps wrote them, with long numbers hidden.'; patterns.md §7 says 'masked as stored (D119)'"
+  },
+  {
+   "id": "R7-AC-34",
+   "title": "A code grouped with commas is not stored readable",
+   "spec": "§6.2 ¶6, D119",
    "status": "fail",
-   "evidence": "Listed shapes pass (ac24). Four or more spaces, keycap digits, a variation selector, a CGJ, bullet and colon groups stay readable, five of them with 'TAC' (findings 10, 11)"
+   "evidence": "Probe7.after_strong_keyword_odd_gaps: 12 of 12 shapes READABLE, e.g. 'Your TAC is 482, 913' and 'Your TAC is 4, 8, 2, 9, 1, 3' kept, maybeOtp=false"
   },
   {
-   "id": "R6-AC-25",
-   "title": "What the filter can't read is kept masked and marked; unreadable dropped as unread",
-   "spec": "§6.2 D119",
-   "status": "pass",
-   "evidence": "Probe6.ac25: no OTP word, filter overflows on the JVM → Keep(maybeOtp=true). The *unread* drop and the RuntimeException branch run on Android only; the app's own tests don't guard the mark (finding 12)"
-  },
-  {
-   "id": "R6-AC-26",
-   "title": "OTP wording without a listed word is never stored readable",
-   "spec": "CLAUDE.md, D116, D119",
-   "status": "pass",
-   "evidence": "Probe6.ac26: Malay ×2 and Chinese stored masked"
-  },
-  {
-   "id": "R6-AC-27",
-   "title": "The bridge hands the page only stored, masked text",
-   "spec": "§6.2, CLAUDE.md",
-   "status": "unreachable",
-   "evidence": "SenCapturePlugin.events reads Outbox.events; Android-only, not run here. In the browser the simulator stands in for it"
+   "id": "R7-AC-35",
+   "title": "The suite would notice if the gate stored a field unmasked",
+   "spec": "phase 3, D119",
+   "status": "fail",
+   "evidence": "Probes: title as posted -> core 43/43 green; expanded text as posted -> core 43/43 green (text as posted -> 7 red). Probe7.after_gate_masks_every_stored_field goes red for all three"
   }
  ],
  "notTested": [
   {
-   "what": "The listener, outbox, drop log, bridge and share sheet on Android (emulator tests CaptureListenerTest)",
-   "why": "No KVM in a cloud session (docs/cloud.md §5); they run on GitHub Actions. The main session reports the emulator failed the long-notification test at bc2219f/d787078, fixed by a6a2437. This run didn't see a green emulator run after a6a2437"
+   "what": "The listener, outbox, drop log, bridge and share sheet on Android (CaptureListenerTest)",
+   "why": "No KVM in a cloud session (docs/cloud.md §5). Covers R7-AC-7, 19, 22 and the Android half of 15, 17, 24. The outbox's UNIQUE key was checked in Python's SQLite with the schema copied from Outbox.kt"
   },
   {
-   "what": "ART's regex behaviour on the hostile inputs (findings 3, 12)",
-   "why": "Needs Android; the JVM uses java.util.regex, ART uses ICU"
+   "what": "A live change of the chosen list while notifications arrive",
+   "why": "needs the real listener"
   },
   {
-   "what": "The shared text of Share samples (R6-AC-23)",
-   "why": "Built natively into an ACTION_SEND intent; the simulator stands in"
+   "what": "The debug build's listener being off",
+   "why": "read in the manifest (enabled=${captureEnabled}); never run"
   },
   {
-   "what": "Real notifications on the owner's Xiaomi",
-   "why": "Owner's soak (docs/local.md); unchanged by this run"
+   "what": "An arbitrary notification through the simulator",
+   "why": "it posts six fixed ones; Probe7 drives the real gate instead"
   },
   {
-   "what": "Offline and app-killed outbox survival",
-   "why": "Outside the scoped area (no sync until B07); the outbox is native SQLite"
-  },
-  {
-   "what": "Logcat holds no notification text",
-   "why": "Checked statically only: no Log./println/printStackTrace in apps/shell/android/app/src/main/java. No device to read logcat"
-  },
-  {
-   "what": "Everything outside the capture path (shell, picker, Keep Sen running, hidden tests)",
-   "why": "Scoped run; covered by runs 1-4"
+   "what": "Sen's capture on the owner's Xiaomi (Android 16 may hide OTP notifications from listeners)",
+   "why": "needs the device; queued in docs/local.md"
   }
  ]
 }

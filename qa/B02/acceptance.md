@@ -982,3 +982,19 @@ R7-AC-33 The screen's wording doesn't promise verbatim text (run 6 #13)
          Then   *Captured on this phone*'s intro says the numbers are hidden; patterns.md §7 agrees
          Spec   D119, patterns.md §7
 ```
+
+### Added after reading the source (run 7)
+
+```
+R7-AC-34 A code grouped with commas is not stored readable
+         When   "Your TAC is 482, 913", "Your TAC is 4, 8, 2, 9, 1, 3" (how a screen reader reads a code),
+                "Your TAC is 48, 29, 13", "Your TAC is 482 - - 913"
+         Then   dropped, or stored with no digit of the code readable
+         Twin   "Paid RM12.90, 3 items, 9:47 PM" keeps its amount and count
+         Spec   §6.2 ¶6, D119, CLAUDE.md (a code never reaches storage)
+
+R7-AC-35 The test suite would notice if the gate stored a field unmasked
+         When   CaptureGate is changed to store the title (or the expanded text) as posted
+         Then   at least one test goes red
+         Spec   phase 3; D119 (every kept notification is masked, all three fields)
+```
