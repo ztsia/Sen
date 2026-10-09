@@ -115,18 +115,15 @@ class CaptureListenerTest {
     @Test
     fun a_very_long_notification_is_read_without_crashing_the_listener() {
         Chosen.set(ctx, setOf(shell, self))
-        // 5,000 characters of digits and no OTP word: the filter's patterns may give up, the mask never
-        // does, and the listener never drops it (QA B02 runs 5, 6)
-        post("long", "Ryt Bank", "Never mind. " + "1 ".repeat(2_500) + run)
+        // 5,000 characters of digits and no OTP word: stored, masked, never dropped (QA B02 runs 5, 6).
+        // The tag leads, because Android cuts a notification's text at 1,024 characters.
+        post("long", "Ryt Bank", "$run never mind. " + "1 ".repeat(2_500))
         settle()
-        val e =
-            Outbox.get(ctx).events(500).singleOrNull { it.text.orEmpty().endsWith(run) && it.text.orEmpty().startsWith("Never") }
-        // if it was dropped instead, say how: the heartbeat logs an unreadable one as "unread"
-        val near = Outbox.get(ctx).events(20).filter { it.text.orEmpty().startsWith("Never") }.map { it.text.orEmpty().length to it.text.orEmpty().takeLast(12) }
-        assertTrue("not stored; recent beats: ${Outbox.get(ctx).beats(5).map { it.kind }}; similar rows (length, end): $near", e != null)
-        e!!
-        assertTrue(e.text.orEmpty().none { it.isDigit() })
+        val e = Outbox.get(ctx).events(500).singleOrNull { it.text.orEmpty().startsWith("$run never mind.") }
+        assertTrue("not stored; recent beats: ${Outbox.get(ctx).beats(5).map { it.kind }}", e != null)
+        assertTrue(e!!.text.orEmpty().none { it.isDigit() })
     }
+
 
     @Test
     fun a_reconnect_replays_what_is_showing_without_duplicates_and_catches_what_it_missed() {

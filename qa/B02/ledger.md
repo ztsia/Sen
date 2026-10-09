@@ -145,3 +145,8 @@ isn't unread (it's masked all the same, D119). The rule is guarded deterministic
 
 **Evidence:** core 43/43; QA's probes 265/267 (red: run 4's deliberate TAC CAFE drop, and `ac25` above);
 unit 141/141; Playwright 100/100; the e2e APK and the emulator tests build.
+
+**Correction (emulator, 9 Oct):** the long-notification test failed on CI at `bc2219f`, `a6a2437` and
+`9e4c72a` not because Android's regex threw (as `a6a2437`'s message guessed), but because Android cuts a
+notification's text at 1,024 characters, and the test looked for its tag at the end. The row was stored
+and masked all along. The tag now leads. `a6a2437`'s extra catch (`RuntimeException`) stays, as defence.
