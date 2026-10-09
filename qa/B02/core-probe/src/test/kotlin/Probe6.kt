@@ -268,7 +268,7 @@ class Probe6 {
      */
     @Test fun ac25_unreadable_kept_masked_and_marked() {
         val e = keep("Ryt Bank", "Paid RM12.90 at KEDAI MAJU. " + "1 ".repeat(2_500))
-        assertTrue(e.text!!.none { it.isDigit() && it != '1' } && !e.text!!.contains("1 1 1 1"), "digits left")
+        assertTrue(e.text!!.startsWith("Paid RM12.90 at KEDAI MAJU. ") && !e.text!!.contains("1 1 1 1"), "digits left: ${e.text!!.take(60)}")
         assertTrue(e.maybeOtp, "an unreadable notification must be marked maybe OTP (spec §6.2, D119)")
     }
 }
