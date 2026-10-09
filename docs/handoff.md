@@ -5,10 +5,10 @@ read this first, and rewrite it before you end.
 
 ## Where things stand
 
-- **B02 · The shell and the listener, on `B02/shell-listener`: done, apart from the PR.** QA runs 1–4
+- **B02 · The shell and the listener, on `B02/shell-listener`: done; the PR is open, waiting for the
+  owner's merge** (https://github.com/ztsia/Sen/pull/3; the emulator green at `eaa6841`). QA runs 1–4
   were full, 5–7 scoped on the capture path; run 7's fixes and D121 (mask every digit outside an amount)
-  are in, self-verified as tier 1 by the owner's call. Next: confirm the `Shell` workflow on `eaa6841`
-  (it was running), then open the PR, *B02 · The shell and the listener*. The owner's part follows:
+  are in, self-verified as tier 1 by the owner's call. The owner's part follows the merge:
   Vercel, the signing key, installing, the week of soak (`docs/local.md`).
 - **QA records:** `qa/B02/report-run1..6.md`, `report.md` (run 7), `ledger.md` (every fix and tier,
   and the probes D121 superseded), `compare-sonnet/` (run 6's twin on Sonnet). Report:
@@ -45,9 +45,8 @@ read this first, and rewrite it before you end.
 
 ## What to do first
 
-1. Check the `Shell` workflow on the latest push; fix anything red.
-2. Open the PR, *B02 · The shell and the listener*, with the phone checks from the brief.
-3. Then B03, on `B03/skeleton-tabs` from `main`, once B02 is merged.
+1. If the PR has review comments or red CI, address them on `B02/shell-listener`.
+2. Once it's merged: B03, on `B03/skeleton-tabs` from `main`.
 
 ## Don't reopen
 
