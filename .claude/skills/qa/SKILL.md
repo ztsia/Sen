@@ -22,8 +22,8 @@ Skip it for a docs-only change. If `git diff --stat main...HEAD` shows nothing o
 
 1. Start the QA database and the web app as `CLAUDE.md` § Commands describes. The foundations
    slice adds those commands.
-2. Spawn `qa-reviewer` with the Agent tool, `subagent_type: "qa-reviewer"`. **Keep the agent ID**,
-   because a medium-tier re-check resumes this same agent.
+2. Spawn `qa-reviewer` with the Agent tool, `subagent_type: "qa-reviewer"`. It runs on Sonnet by
+   default; pass `model: "opus"` when the slice's risk calls for it.
 3. **Keep the prompt thin:** the branch, the slice label, and the slice's row in `docs/modules.md`.
    Nothing else. A scoped run (tier 2) adds only its area and the finding IDs, below.
 4. **Keep the last run's record:** before a new run, rename `qa/<slice>/report.md` to
@@ -116,9 +116,9 @@ a `CLAUDE.md` non-negotiable, as long as it stays inside one area of the slice.
    area and the journeys that pass through it. It re-checks the fixed findings, then attacks the
    area anew.
 
-**Escalation:** if two scoped rounds in a row on the same area each find something new, fix it, then
-check whether the area is the whole flow after all. If it is, the next round is tier 3. Repeated misses
-mean the area isn't understood yet.
+**When an area keeps failing, question its design** before patching it again. Repeated misses
+usually mean the approach is wrong, not that it needs another rule; take the design question to the
+owner. If the area turns out to be the whole flow, the next round is tier 3.
 
 ### Tier 1, small: the main session verifies itself
 

@@ -212,6 +212,15 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | `apps/worker/` | The Cloudflare Worker: schedules and the realtime relay (B06) |
   | `scripts/` | The session hooks, the hygiene check and the QA report |
 
+### Models and subagents
+
+The main session (Opus) decides, talks with the owner, works on the non-negotiables, and reviews what
+comes back. It hands work down by judgement, never by ritual. `.claude/agents/` has `implementer`
+(Sonnet), for a change already decided and big enough to be worth a brief; `scout` (Haiku), for
+lookups, logs and summaries; and `qa-reviewer` (Sonnet by default; the main session picks Opus for a
+run when it judges one needs it). A brief costs a cold start, so a small edit is quicker done in place.
+No per-task review loops: the main session reads a subagent's diff itself, and QA checks the slice.
+
 ## Skills
 
 | Skill | Use it when |

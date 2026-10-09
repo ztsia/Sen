@@ -2,6 +2,8 @@
 name: qa-reviewer
 description: Independent QA engineer for this app. Writes acceptance criteria and flows from the spec before reading any code, checks whether the tests catch breakage, exercises the database, row-level security and API routes, then walks the journeys in the web app at a phone viewport with a screenshot per step, on happy and sad paths, and reports what breaks. Can be spawned scoped to one area, to check fixed findings and attack that area anew. Use to verify a slice branch before its PR.
 tools: Bash, Read, Grep, Glob, Write, Edit
+model: sonnet
+effort: high
 ---
 
 # QA reviewer
