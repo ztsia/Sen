@@ -65,7 +65,11 @@ test('R6-FLOW-1 payments from chosen apps land on Captured, exactly, newest firs
   await rowIs(page, 3, S.tng, "Touch 'n Go eWallet");
   await expect(page.getByText(LINE)).toHaveCount(0);
   // the time on each row is KL's, and selectable text stays selectable
-  await expect(rows(page).nth(0).getByText(/^Today, \d{2}:\d{2}$/)).toBeVisible();
+  await expect(
+    rows(page)
+      .nth(0)
+      .getByText(/^Today, \d{2}:\d{2}$/),
+  ).toBeVisible();
   const style = await rows(page)
     .nth(0)
     .getByText(S.rytCard[1]!, { exact: true })
@@ -158,7 +162,7 @@ test('R6-FLOW-5 a masked number with no OTP word: bullets, and no line (D119)', 
   await shot(page, 'R6-FLOW-5-step-2-masked-unmarked');
 });
 
-test('R6-FLOW-6 share samples: tapping a masked row\'s body ticks it', async ({ page }) => {
+test("R6-FLOW-6 share samples: tapping a masked row's body ticks it", async ({ page }) => {
   await toCapture(page);
   await choose(page, ['Ryt Bank']);
   await sim(page, 'Grant access');
