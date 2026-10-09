@@ -19,7 +19,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
-  use: { ...phone, trace: 'retain-on-failure' },
+  // The service worker caches every file; the journeys run without it, so each sees the network as it
+  // is. production.spec's offline test turns it on.
+  use: { ...phone, trace: 'retain-on-failure', serviceWorkers: 'block' },
   projects: [
     { name: 'preview', testIgnore: /production\.spec/, use: { baseURL: 'http://localhost:4173' } },
     { name: 'production', testMatch: /production\.spec/, use: { baseURL: 'http://localhost:4174' } },

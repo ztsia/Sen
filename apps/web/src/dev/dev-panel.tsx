@@ -10,6 +10,8 @@ import { SettingsRow } from '@/blocks/rows';
 import { DEV_STATES, useUi, type DevState } from '@/frame/ui-store';
 import { LOOK_IDS, LOOK_NAMES, isLookId } from '@/looks/ids';
 import { useTheme, type ModePref } from '@/theme/store';
+import { inShell } from '@/shell/bridge';
+import { sim, useCaptureSim } from './capture-sim';
 
 /** The counts the dev panel can put on Review's badge: none, a few, and past 99+. */
 const REVIEW_COUNTS = [0, 5, 120];
@@ -159,6 +161,7 @@ export default function DevPanel() {
             ))}
           </ToggleGroup>
         </Group>
+        {inShell() ? null : <CaptureSim />}
         <div className="py-3">
           <Button asChild variant="outline" className="w-full">
             <Link to="/dev/gallery" onClick={() => setOpen(false)}>
@@ -168,5 +171,29 @@ export default function DevPanel() {
         </div>
       </Sheet>
     </>
+  );
+}
+
+/** The shell's capture, simulated in a browser (dev/capture-sim.ts): what the phone would do. */
+function CaptureSim() {
+  const access = useCaptureSim((s) => s.access);
+  const events = useCaptureSim((s) => s.events.length);
+  return (
+    <Group label="Capture (simulated)">
+      <p className="text-sm text-muted-foreground">
+        {access ? 'Notification access on' : 'Notification access off'} · {events} captured
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={() => sim.grantAccess(!access)}>
+          {access ? 'Turn access off' : 'Grant access'}
+        </Button>
+        <Button variant="outline" onClick={() => sim.post()}>
+          Post a notification
+        </Button>
+        <Button variant="ghost" onClick={() => sim.reset()}>
+          Reset
+        </Button>
+      </div>
+    </Group>
   );
 }

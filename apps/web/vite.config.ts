@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import { serviceWorker } from './sw/plugin';
 
 // The production headers live in vercel.json, the one source. `vite preview` serves the same ones,
 // so Playwright tests the built app under the real content security policy.
@@ -33,7 +34,7 @@ export default defineConfig(({ command }) => {
   const env = senEnv(command);
   return {
     define: { __SEN_ENV__: JSON.stringify(env) },
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), serviceWorker()],
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
     // The fonts are self-hosted from docs/ui/directions/assets/fonts/, the one copy (spec §17).
     server: { fs: { allow: [fileURLToPath(new URL('../..', import.meta.url))] } },

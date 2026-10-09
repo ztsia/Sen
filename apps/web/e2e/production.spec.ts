@@ -44,3 +44,56 @@ test('the site sends a strict content security policy and no referrer', async ({
       );
   expect(r.headers()['referrer-policy']).toBe('no-referrer');
 });
+
+test('outside the shell, production says capture lives in the Android app', async ({ page }) => {
+  const errors = watchErrors(page);
+  await page.goto('/s/settings/capture');
+  await expect(page.getByText("Capture works in Sen's Android app", { exact: false })).toBeVisible();
+  await page.goto('/s/settings/account');
+  await expect(page.getByRole('button', { name: 'Version Web app' })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test.describe('the service worker', () => {
+  test.use({ serviceWorkers: 'allow' });
+
+  test('caches every file once, so the app opens offline, every look included', async ({ page, context }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+    await expect(page.getByTestId('not-built')).toBeVisible();
+    // installed and in control of the page
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller)
+        await new Promise((r) => navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }));
+    });
+    const cached = await page.evaluate(async () => {
+      const keys = await caches.keys();
+      const c = await caches.open(keys.find((k) => k.startsWith('sen-'))!);
+      return (await c.keys()).map((r) => new URL(r.url).pathname);
+    });
+    // the app shell, and all six looks' chunks
+    expect(cached).toContain('/index.html');
+    for (const look of ['minted', 'instrument', 'firefly', 'line', 'mercury', 'copper'])
+      expect(
+        cached.some((p) => new RegExp(`/assets/${look}-[\\w-]+\\.js$`).test(p)),
+        look,
+      ).toBe(true);
+
+    await context.setOffline(true);
+    await page.reload();
+    await expect(page.getByTestId('not-built')).toBeVisible();
+    await page.goto('/s/settings/capture');
+    await expect(page.getByText("Capture works in Sen's Android app", { exact: false })).toBeVisible();
+    await context.setOffline(false);
+    expect(errors.filter((e) => !/ERR_INTERNET_DISCONNECTED|Failed to fetch/.test(e))).toEqual([]);
+  });
+
+  test('the worker is served fresh and never caches the API', async ({ request }) => {
+    const sw = await request.get('/sw.js');
+    expect(sw.headers()['content-type']).toMatch(/javascript/);
+    const body = await sw.text();
+    expect(body).toContain("'/api/'");
+    expect(body).not.toContain('__SEN_FILES__ =');
+  });
+});

@@ -1,4 +1,4 @@
-import type { ComponentType, ReactNode } from 'react';
+import { useId, type ComponentType, type ReactNode } from 'react';
 import { ChevronRightIcon, CloudOffIcon, InboxIcon, ReceiptTextIcon, SparklesIcon, SplitIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -162,23 +162,66 @@ export function ReviewRow({
 }
 
 type SettingsRowProps =
-  | { label: string; value?: string; onOpen: () => void; checked?: never; onCheckedChange?: never }
-  | { label: string; value?: never; onOpen?: never; checked: boolean; onCheckedChange: (on: boolean) => void };
+  | {
+      label: string;
+      value?: string;
+      onOpen: () => void;
+      checked?: never;
+      onCheckedChange?: never;
+      media?: never;
+      description?: never;
+      disabled?: never;
+    }
+  | {
+      label: string;
+      value?: never;
+      onOpen?: never;
+      checked: boolean;
+      onCheckedChange: (on: boolean) => void;
+      /** A leading mark, such as an app's icon (the picker, B02). */
+      media?: ReactNode;
+      /** A line under the label; for a disabled switch, why it can't be turned on. */
+      description?: string;
+      disabled?: boolean;
+    };
 
 /** A label, its current value or a switch on the right, and a chevron when it opens a screen. */
 export function SettingsRow(props: SettingsRowProps) {
+  const id = useId();
   if (props.onCheckedChange) {
-    const id = `set-${props.label.replace(/\W+/g, '-').toLowerCase()}`;
+    const about = props.description ? `${id}-about` : undefined;
     return (
       // the label stretches over the whole row, so a tap anywhere on it flips the switch (patterns.md §8)
-      <Item size="sm" className="relative min-h-14 flex-nowrap rounded-none py-0 pr-2 text-base active:bg-accent">
-        <ItemContent className="min-w-0">
-          <label htmlFor={id} className="py-3 after:absolute after:inset-0">
+      <Item
+        size="sm"
+        className={cn(
+          'relative min-h-14 flex-nowrap rounded-none py-0 pr-2 text-base',
+          props.disabled ? 'opacity-70' : 'active:bg-accent',
+        )}
+      >
+        {props.media ? (
+          <ItemMedia className="size-10 shrink-0 overflow-hidden rounded-xl" aria-hidden="true">
+            {props.media}
+          </ItemMedia>
+        ) : null}
+        <ItemContent className="min-w-0 gap-0 py-3">
+          <label htmlFor={id} className="wrap-anywhere after:absolute after:inset-0">
             {props.label}
           </label>
+          {props.description ? (
+            <ItemDescription id={about} className="text-sm">
+              {props.description}
+            </ItemDescription>
+          ) : null}
         </ItemContent>
         <ItemActions className="relative">
-          <Switch id={id} checked={props.checked} onCheckedChange={props.onCheckedChange} />
+          <Switch
+            id={id}
+            checked={props.checked}
+            disabled={props.disabled}
+            aria-describedby={about}
+            onCheckedChange={props.onCheckedChange}
+          />
         </ItemActions>
       </Item>
     );

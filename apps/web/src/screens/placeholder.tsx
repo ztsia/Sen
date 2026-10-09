@@ -12,7 +12,11 @@ import { SCREENS, showsSenButton, type ScreenDef } from './registry';
  * leads to, so every screen can be reached.
  */
 export function Placeholder({ screen }: { screen: ScreenDef }) {
-  const children = screen.kind === 'tab' ? SCREENS.filter((d) => d.tab === screen.id && d.kind === 'pushed') : [];
+  // a step inside a screen (settings/capture/apps) is reached from that screen, not listed on the tab
+  const children =
+    screen.kind === 'tab'
+      ? SCREENS.filter((d) => d.tab === screen.id && d.kind === 'pushed' && d.id.split('/').length < 3)
+      : [];
   return (
     <Screen bar={<AppBar title={screen.title} home={screen.id === 'home'} />} senRoom={showsSenButton(screen)}>
       {screen.id === 'home' ? <h2 className="sr-only">Home</h2> : null}
