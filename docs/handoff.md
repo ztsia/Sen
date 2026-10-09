@@ -5,33 +5,27 @@ read this first, and rewrite it before you end.
 
 ## Where things stand
 
-- **B02 · The shell and the listener, on `B02/shell-listener` (last commit before this handoff
-  `820eadb`): code done; four QA runs, all their fixes in. One piece left: the masking net (D116), then
-  QA run 5, then the PR.** The owner's part follows the PR: Vercel, the signing key, installing, and the
-  week of soak (`docs/local.md`, *B02: the shell on your phone*). The next slice doesn't wait for the soak.
-- **QA so far:** four runs, each "fix first", each on the OTP/TAC filter (each run invents new wordings
-  after reading the code), plus smaller findings, all fixed. Records: `qa/B02/report-run1..3.md`,
-  `report-run4.md`, `ledger.md`. Report with screenshots: https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA.
-- **Verified at `820eadb` in the session:** Kotlin core 31/31; QA's core probes 177/179 (two kept red
-  on purpose, ledger run 4); unit 141/141; Playwright 100/100; QA's Playwright 45/45; all APKs build;
-  typecheck, lint, format, hygiene. **On GitHub Actions** (`Shell` workflow, free on this public repo):
-  emulator 7/7 at `a4fd670`; check the run for `820eadb` first.
+- **B02 · The shell and the listener, on `B02/shell-listener`: code done, the masking net (D116) built
+  and pushed. QA run 5 is running, scoped by the owner to the capture path only (filter, mask,
+  storage, *Captured on this phone*). Then fix by the `qa` skill's tiers, then the PR.** The owner's
+  part follows the PR: Vercel, the signing key, installing, the week of soak (`docs/local.md`).
+- **QA so far:** runs 1–4 full, each on the OTP/TAC filter. Records: `qa/B02/report-run1..4.md`,
+  `ledger.md` (every fix and its tier, the D116 round included). Run 5 writes `report.md`. Report
+  with screenshots: https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA (publish run 5 to the same URL).
+- **Verified after D116 in the session:** Kotlin core 39/39; QA's probes 147/148 (the red one is the
+  deliberate TAC CAFE drop); unit 141/141; Playwright 100/100; QA's Playwright 45/45 (AC-8 needs its
+  own server); all APKs and the emulator tests build. The emulator runs on GitHub Actions (`Shell`).
 - **Not verified yet:** anything on the phone; the signed release (no key); the review alias (no Vercel).
 
 ## Decided, and why
 
 - **D116 (owner's call, 9 Oct): a doubtful OTP is masked; the drafter learns OTP wordings.** A filter
   of rules keeps losing to invented wordings, so a miss is made harmless instead:
-  - **B02 (now):** the native filter still drops clear OTPs. A chosen app's notification with an OTP
-    word (strong or weak list) and a code-like number that isn't dropped is stored with those numbers
-    masked `••••••` and a `maybe_otp` flag on the outbox row. Mask in the core (pure Kotlin, testable),
-    before the dedupe key and the insert; the dedupe key is computed on the masked text. Outbox VERSION 3
-    adds the column. The two red probes from run 4 should end up masked, not stored raw: turn them green
-    as "masked". Show *maybe OTP* on *Captured on this phone*. Spec §6.2 and the ledger record it.
-  - **B09/B10 (later, their briefs):** the template drafter gets a second job. A masked event is drafted
-    as a payment template, or as `ignore: OTP`, after which the event is deleted and the phone drops that
-    wording natively. Learned OTP wordings appear in Settings → Capture with *This was a payment*. Add
-    a line to those briefs.
+  - **B02 (built):** `OtpMask` in the core. The filter is unchanged; what it keeps but carries an OTP
+    word and a run of 4+ digits is stored with those digits masked (amounts left), `maybe_otp` set,
+    the dedupe key from the masked text. Outbox version 3. Spec §6.2.
+  - **B09/B10 (their briefs say so):** the drafter judges each masked event; an OTP gets an
+    `ignore: OTP` template that the listener applies natively; *This was a payment* undoes it.
 - **D114:** remote load with a service worker; a page in the APK when nothing is cached.
 - **D115** (proposed, the owner confirms on the PR): ids, ongoing notifications dropped, review alias on
   a `review` branch, key from a one-off workflow, the dedupe key's fields, the evidence-based filter.
@@ -50,11 +44,11 @@ read this first, and rewrite it before you end.
 
 ## What to do first
 
-1. Check the `Shell` run for `820eadb`; fix anything red.
-2. Build the masking net (above): core, outbox, the captured screen, tests (core, emulator: a doubtful
-   OTP stored masked), spec §6.2, ledger. Commit and push.
-3. QA run 5, a fresh full run (tier 3, the `qa` skill); fix by its tiers.
-4. Open the PR, *B02 · The shell and the listener*, with the phone checks from the brief's *On your phone*.
+1. If QA run 5 finished: commit its record, publish its report, fix by its tiers (the `qa` skill).
+   If it didn't: start it again with the same thin, capture-only prompt.
+2. Check the `Shell` workflow on the latest push (the emulator's new masking test).
+3. Open the PR, *B02 · The shell and the listener*, with the phone checks from the brief's *On your phone*.
+- When the owner sends the Vercel addresses: write them into `apps/shell/sites.json` and push.
 - When soak samples arrive: anonymise into `docs/notifications.md`; add their OTPs and payments to
   `OtpFilterTest`; answer §21 Q2, Q3, Q26, Q27 and the launcher test (D77).
 - Then B03, on `B03/skeleton-tabs` from `main`, once B02 is merged.
