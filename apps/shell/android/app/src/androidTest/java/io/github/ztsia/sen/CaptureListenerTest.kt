@@ -118,7 +118,12 @@ class CaptureListenerTest {
         // 5,000 characters of digits: the filter's patterns may give up, the mask never does (QA B02 run 5)
         post("long", "Ryt Bank", "Never share your TAC. " + "1 ".repeat(2_500) + run)
         settle()
-        val e = Outbox.get(ctx).events(500).single { it.text.orEmpty().endsWith(run) && it.text.orEmpty().startsWith("Never") }
+        val e =
+            Outbox.get(ctx).events(500).singleOrNull { it.text.orEmpty().endsWith(run) && it.text.orEmpty().startsWith("Never") }
+        // if it was dropped instead, say how: the heartbeat logs an unreadable one as "unread"
+        val near = Outbox.get(ctx).events(20).filter { it.text.orEmpty().startsWith("Never") }.map { it.text.orEmpty().length to it.text.orEmpty().takeLast(12) }
+        assertTrue("not stored; recent beats: ${Outbox.get(ctx).beats(5).map { it.kind }}; similar rows (length, end): $near", e != null)
+        e!!
         assertTrue(e.maybeOtp)
         assertTrue(e.text.orEmpty().none { it.isDigit() })
     }

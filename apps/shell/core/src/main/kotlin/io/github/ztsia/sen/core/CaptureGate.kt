@@ -70,6 +70,9 @@ class CaptureGate(
             } catch (e: StackOverflowError) {
                 // text too long or odd for the filter's patterns: in doubt, keep it masked and marked
                 true
+            } catch (e: RuntimeException) {
+                // the same on Android, whose ICU-backed patterns fail with an exception instead
+                true
             }
         val whenMillis = if (p.whenMillis > 0) p.whenMillis else p.postTime
         val masked = mask.apply(p.title, p.text, p.bigText)
