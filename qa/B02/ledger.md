@@ -110,3 +110,18 @@ server, not re-run); all four APKs and the emulator tests build. The emulator ru
 
 **QA after the D116 round:** run 5, scoped to the capture path (spec §6.2), by the owner's choice, which became
 the `qa` skill's tier 2 (D117).
+
+## Run 5 (scoped) → fixes (9 Oct 2026)
+
+| # | Finding | Fix | Tier, and why |
+|---|---|---|---|
+| 1 | Major: the mask missed digits and gaps the filter reads (thin, en, ideographic spaces, tabs, dashes, middle dots, brackets; circled, mathematical digits) | The mask classifies each code point as Unicode does (NFKC digits included) and joins runs across up to three spaces, dashes, dots, brackets or underscores | 2 (OTP non-negotiable, inside the capture path) |
+| 2 | Major: an OTP worded without a listed word was stored raw | D119, the owner's call: every long number outside amounts is masked, whatever the words; *maybe OTP* is a hint only (with verify/login words, Chinese terms and spelled-apart letters) | 2 |
+| 3 | Minor: the mask's regex overflowed near 2 KB | The mask reads text once without regular expressions (QA's probe: none up to 1.6 MB); the gate keeps a notification the filter can't read, masked and marked; `Capture.store` drops and logs as *unread* anything else that throws; an emulator test posts 5,000 characters | 2 |
+| 4 | Minor: over-masking (`No. 123, 9:47 PM`; `RM 2500` after a no-break space) | A comma or dot before a space ends a run; a currency after any spaces keeps its amount | 2 |
+| 5 | Minor: the zero-width test had no teeth | `48​29​13`, so neither half has four digits | 1 |
+| — | Run 5's `ac62_substrings_untouched`, `ac50s_no_word_untouched` expected raw numbers without an OTP word | Superseded by D119: now masked and unmarked (`maskedUnmarked`) | — |
+
+**Evidence:** Kotlin core 41/41; QA's probes 217/218 (the red one is run 4's deliberate TAC CAFE drop);
+unit 141/141; Playwright 100/100; all four APKs and the emulator tests build. **Next:** run 6, scoped to
+the capture path, on Sonnet (D117, D118).
