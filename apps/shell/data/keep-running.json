@@ -1,0 +1,859 @@
+{
+  "source": "https://dontkillmyapp.com (API v2), with credit",
+  "tested": [
+    "xiaomi"
+  ],
+  "brands": [
+    {
+      "id": "xiaomi",
+      "name": "Xiaomi",
+      "manufacturers": [
+        "xiaomi"
+      ],
+      "sections": [
+        {
+          "heading": "App pinning / App locking",
+          "steps": [
+            "When you open the recent apps tray, drag your app downwards (it will be locked). Locked/pinned apps will gain further protection and not be cleared from the background, even if you clear recent apps. Drag downwards again to clear your app from the background. \nOn some phones, you need to long-press Your app and then choose the padlock icon from the menu:",
+            "Another method of app locking is hidden a little deeper:"
+          ]
+        },
+        {
+          "heading": "Autostart permission",
+          "steps": [
+            "On MIUI 14, there is a new permission to start from the background for each app, in Settings > Apps > Your app > App permissions > Background autostart."
+          ]
+        },
+        {
+          "heading": "Boost speed",
+          "steps": [
+            "If the app is locked here in this “Boost speed” feature, it may be spared by Ultra battery saver."
+          ]
+        },
+        {
+          "heading": "MIUI Optimizations",
+          "steps": [
+            "MIUI Optimizations were reported on MIUI 12 so far, but this option may be present on older versions too (let us know, if you have found this option on your phone). It is hidden in the Developers settings, so you need to switch to developer mode first (10x tap on MIUI version in About phone). As with all “optimizations”, the MIUI optimizations can break the background tasks.",
+            "There were some reports, that the MIUI optimization was missing in the menu - here is a workaround guide."
+          ]
+        },
+        {
+          "heading": "MIUI 12",
+          "steps": [
+            "To let your app run in the background, make sure settings for your app look like the following:"
+          ]
+        },
+        {
+          "heading": "MIUI 11",
+          "steps": [
+            "To let your app run in the background, make sure settings for your app look like the following:"
+          ]
+        },
+        {
+          "heading": "MIUI 10",
+          "steps": [
+            "To let your app run in the background, make sure your settings look like the following (here for example is Sleep as Android):"
+          ]
+        },
+        {
+          "heading": "Power management",
+          "steps": [
+            "Please enable:",
+            "Settings > Advanced Settings > Battery manager > Power plan is set to Performance",
+            "Device Settings > Advanced Settings > Battery Manager > Protected apps – your app needs to be Protected",
+            "Device Settings > Apps > your app > Battery > Power-intensive prompt and Keep running after screen off",
+            "Settings > Additional Settings > Battery & Performance > Manage apps’ battery usage and here:",
+            "Switch Power Saving Modes to Off",
+            "Choose the next options: Saving Power in The Background > Choose apps > select your app > Background Settings > No restrictions"
+          ]
+        },
+        {
+          "heading": "App battery saver",
+          "steps": [
+            "Security > Battery > App Battery Saver > your app > No restriction"
+          ]
+        },
+        {
+          "heading": "Autostart",
+          "steps": [
+            "(according to Xiaomi:",
+            "Open Security app > Permissions > Auto-start",
+            "Enable “Autostart” for desired apps."
+          ]
+        },
+        {
+          "heading": "Hidden settings",
+          "steps": [
+            "On some XiaoMi phones, several settings options are hidden from you. Luckily, there are several apps on Play Store designed specifically for revealing these secret options and menus.",
+            "Hidden Settings For MIUI from Yunus Ceyhan",
+            "MIUI Hidden Settings Activity Launcher, poco, note from More by NetVor - Android Solutions",
+            "MQS - Quick Settings for MIUI from Ruby Faick"
+          ]
+        }
+      ],
+      "opens": [
+        {
+          "label": "Autostart",
+          "component": "com.miui.securitycenter/com.miui.permcenter.autostart.AutoStartManagementActivity"
+        },
+        {
+          "label": "Battery saver",
+          "component": "com.miui.powerkeeper/com.miui.powerkeeper.ui.HiddenAppsConfigActivity",
+          "extras": {
+            "package_name": "{package}",
+            "package_label": "{label}"
+          }
+        }
+      ],
+      "url": "https://dontkillmyapp.com/xiaomi"
+    },
+    {
+      "id": "samsung",
+      "name": "Samsung",
+      "manufacturers": [
+        "samsung"
+      ],
+      "sections": [
+        {
+          "heading": "What optimization apps does Samsung have?",
+          "steps": [
+            "Android 13: per-app battery optimization, Adaptive battery, Remove permissions, List of Alarms&Reminders, Adaptive power-saving, lists of Sleeping apps, Unused apps, Deep sleeping apps, Never sleeping apps",
+            "Android 11 + 12: Battery optimization, Auto-optimize, Adaptive battery, Adaptive power-saving, Background restrictions, lists of Sleeping apps, Unused apps, Deep sleeping apps, Never sleeping apps",
+            "Android Pie and higher: Device care, Background restrictions, lists of Sleeping apps, Unused apps, Auto-disable unused apps",
+            "Android Oreo and Nougat: App power monitor, Background restrictions",
+            "Android Marshmallow or below: Smart manager",
+            "Android 14",
+            "Android 13",
+            "Android 11",
+            "Android Pie and 10",
+            "Android Oreo and Nougat",
+            "Android Marshmallow and older"
+          ]
+        },
+        {
+          "heading": "Android 14",
+          "steps": [
+            "Not only does one need to toggle the system setting - but you can install additional Samsung “apps”, and that will “most likely” let other apps run in the background."
+          ]
+        },
+        {
+          "heading": "Good Guardians",
+          "steps": [
+            "Samsung developed an app named Good Guardians. This app is tightly integrated with the phone on a low level and has many modules. Any feedback about these features is welcomed.",
+            "Memory Guardian: in the “Customize” tab of the module, there are two modes: “Default” and “Quick switching mode”.",
+            "“Keep more apps in the background. When using the previously used app again, it is more likely to run with the last state of the app, not starting from the beginning.”",
+            "Battery Guardian: offers a few battery-saving controls, the option App power saving can close any app, if it uses an increased amount of battery (the system decides).",
+            "Galaxy app booster: no information so far…"
+          ]
+        },
+        {
+          "heading": "Good Lock apps",
+          "steps": [
+            "Yet another extra app you may need to keep the apps running on Samsung phones. It was developed with the cooperation with Samsung. Any feedback about this app or its features is welcomed.",
+            "The long live app: might protect the apps from killing in the background."
+          ]
+        },
+        {
+          "heading": "Keep open",
+          "steps": [
+            "You can “lock” one app in the Recent apps to prevent it from being terminated."
+          ]
+        },
+        {
+          "heading": "Turning off the screen trick",
+          "steps": [
+            "If you want an app to keep running in the background when you turn off your phone’s screen/lock your phone, then don’t go to Home (Home screen) of your phone and then turn off the screen. Open the app and let it stay in the foreground, and only then turn off your screen/lock your phone. This might prevent the app from closing. When you unlock your phone, you will see that the app is running in the same state."
+          ]
+        },
+        {
+          "heading": "Android 13",
+          "steps": [
+            "The settings are mostly the same as Android 11 below, with a few changes:",
+            "The “Optimize battery usage” option doesn’t exist anymore under “Special Access”.",
+            "Under “Device Care” there is no “Automation” or “Advanced” option anymore.",
+            "Lock Recent App is not available.",
+            "“Auto-optimize daily”, “Adaptive power saving”, and “Optimize battery usage” are not available"
+          ]
+        },
+        {
+          "heading": "Lists of Sleeping apps, Unused apps, Deep sleeping apps, Never sleeping apps",
+          "steps": [
+            "The “Put unused apps to sleep” option is the major headache we see on Samsung - a non-standard app-killing feature that isn’t present in AOSP implemented only by Samsung which puts an app you did not use for X days to a mode with restricted background processing. On some releases, the period was as short as 3 days. So if you did not use your alarm clock over the weekend your alarm would not ring."
+          ]
+        },
+        {
+          "heading": "Android 11",
+          "steps": [
+            "On Android 11 Samsung will prevent apps work in the background by default unless you exclude apps from battery optimizations. This is a severe divergence from standard Android process management policies.\nYes, this is a long way to go! Devs cannot ask for it automatically as they risk being kicked out from the Play Store due to policy violations."
+          ]
+        },
+        {
+          "heading": "Lock the app in Recent",
+          "steps": [
+            "Open Recent apps.",
+            "Find Your app.",
+            "Long-press the icon of the app."
+          ]
+        },
+        {
+          "heading": "Battery optimization",
+          "steps": [
+            "To keep your apps working properly make sure you enable:\nSettings -> Apps -> Your App -> Battery -> Battery optimization -> All apps -> Your app -> Don’t optimize."
+          ]
+        },
+        {
+          "heading": "Optimize battery usage",
+          "steps": [
+            "Settings > Apps > (⁝) menu > Special Access > Optimize battery usage"
+          ]
+        },
+        {
+          "heading": "Auto-optimize daily + Adaptive power saving",
+          "steps": [
+            "On some phones the route differs:"
+          ]
+        },
+        {
+          "heading": "Android Pie and 10",
+          "steps": [
+            "Battery optimizations are turned on by default. It is possible the disabled restrictions might get revert after OS update or reboot.\nBy default any app which is not started in 3 days is put to sleep and background tasks including alarms will stop working."
+          ]
+        },
+        {
+          "heading": "Put unused apps to sleep",
+          "steps": [
+            "Phone settings -> Device care -> Tap on the Battery item -> (⁝) 3-dot menu > Settings\nUncheck Your app from this list."
+          ]
+        },
+        {
+          "heading": "Auto-disable unused apps",
+          "steps": [
+            "Phone settings -> Device care -> Tap on the Battery item -> (⁝) 3-dot menu > Settings\nUncheck Your app from this list."
+          ]
+        },
+        {
+          "heading": "Background restrictions",
+          "steps": [
+            "Check that Phone settings -> Apps -> Sleep as Android -> Battery -> Background restriction state as App can use battery in background for the apps you need to run in the background."
+          ]
+        },
+        {
+          "heading": "Sleeping apps",
+          "steps": [
+            "Sleeping apps menu is the sniper’s nest for Samsung’s app killing policies. Make sure to follow the instructions very carefully to prevent the apps from being killed.",
+            "On some phones, the layout may differ:"
+          ]
+        },
+        {
+          "heading": "Game Boosting features",
+          "steps": [
+            "Samsung optimizing features that monitor your phone usage and can alter your settings. Although such feature might be useful, in some cases you don’t wish to loose all background processed. This can results in termination of background processes when you play games (for example blue light filter apps will stop, or notification are delayed).\nThere are Game Booster app, Game optimizing service, and Game Launcher.",
+            "Go to Apps and then click the Samsung app settings. Scroll to the Game Booster.",
+            "Turn off as much as you can. Then click Block During Game and shut off everything.",
+            "Next, in apps, find the game optimizing service - this cannot be disabled, but you can remove all permissions.",
+            "Last, search apps again and find the Game Launcher. You can remove the permissions and then disabled it."
+          ]
+        },
+        {
+          "heading": "Optimize battery usage",
+          "steps": [
+            "Battery optimizations are hidden under each app’s settings section. To disable the optimization for the app, you need to expand the sub-menu, so the list reveals the apps, that are restricted.\nOpen System settings -> Apps -> Your app -> Optimize battery usage, expand the list, and then set the app to “not optimized” with the toggle."
+          ]
+        },
+        {
+          "heading": "Android Oreo and Nougat 8 + 7",
+          "steps": [
+            "With the introduction of their flagship Galaxy S8 (and with some earlier experiments), Samsung has introduced an attempt at prolonging battery life called App power monitor."
+          ]
+        },
+        {
+          "heading": "App power monitor",
+          "steps": [
+            "App power monitor can be turned off completely, or you can manage the apps individually.\nFor your apps to work correctly in the background, you need to whitelist them in App power monitor and add them to Unmonitored apps:\nOpen the Settings -> Device maintenance -> Battery, and at the bottom you’ll see a list of your most frequently used apps.\nApps that are sleeping will appear in the Sleeping apps list at the bottom (tap it to expand the list).\nList of Unmonitored apps is at the very bottom (longer scrolling is needed) - these are apps that you specifically want to exclude (whitelist) from App power monitor evil reach. \nWhen inside the Unmonitored apps menu, you can tap the 3-dot menu to add or delete apps from the list."
+          ]
+        },
+        {
+          "heading": "Android Marshmallow and below",
+          "steps": [
+            "On other Samsung phones, the path may look like this:",
+            "Phone settings > Applications > select three dot menu (top right corner) > Special Access > Optimize Battery usage > Find your app on the list and make sure that it is not selected.",
+            "Note: If you enable “Edge Lighting” for your app, the app will not be able to wake up your screen. To allow your app to wake up your screen, please remove it from the Edge Lighting applications list."
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/samsung"
+    },
+    {
+      "id": "oppo",
+      "name": "Oppo",
+      "manufacturers": [
+        "oppo"
+      ],
+      "sections": [
+        {
+          "heading": "Oppo F1S",
+          "steps": [
+            "Background services are being killed (including accessibility services, which then need re-enabling) every time you turn the screen off. So far, a workaround for this is:",
+            "Pin your app to the recent apps screen.",
+            "Enable your app in the app list inside the security app’s “startup manager” and “floating app list” (com.coloros.safecenter / com.coloros.safecenter.permission.Permission).",
+            "Turn off battery optimizations.",
+            "Give the service a persistent notification to remain in the foreground.",
+            "All four of those need to be done before the app would function.",
+            "Here are links to some other resources verifying that some of the above steps work on other Oppo devices:",
+            "XDA developers",
+            "XDA developers",
+            "Oppo customer service portal",
+            "Quora"
+          ]
+        },
+        {
+          "heading": "Allow Auto Start-up",
+          "steps": [
+            "On Color OS 6, you need to enable automatic start from the background in the App’s info page."
+          ]
+        },
+        {
+          "heading": "Power Saver modes",
+          "steps": [
+            "You can choose one of three power-saving options under each app and allow the app to run in the background. If something like smart restriction is enabled and if the app is not cleared from the tasks, it should be running background processes but if the app is closed, the background services are paused and are resumed immediately when the app is opened again."
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/oppo"
+    },
+    {
+      "id": "realme",
+      "name": "realme",
+      "manufacturers": [
+        "realme"
+      ],
+      "sections": [
+        {
+          "heading": "",
+          "steps": [
+            "Luckily, the system restrictions are all gathered at one place in the system settings in the Battery section, and also have some description there."
+          ]
+        },
+        {
+          "heading": "Power saving options",
+          "steps": [
+            "Power saving mode - reduces screen brightness, changes auto screen-off time to 15s and disables background sync.\nCan be set to launch automatically at a set battery level.\nIt may terminate background processes.",
+            "Super power saving mode - extra saving option, allows you to have at most 6 apps to use.\nIt will disrupt background processes."
+          ]
+        },
+        {
+          "heading": "App battery management",
+          "steps": [
+            "On newer versions, the App battery management was moved to system settings → Battery → Power saving settings → App battery management.",
+            "Allow auto-launch",
+            "Allow foreground activity",
+            "Allow background activity",
+            "Optimize battery use"
+          ]
+        },
+        {
+          "heading": "Power saver options",
+          "steps": [
+            "Sleep stand-by optimization - automatically enables low power mode when the system thinks you are asleep."
+          ]
+        },
+        {
+          "heading": "Display pop-up windows of applications running in the background",
+          "steps": [
+            "This feature needs to be turned on for alarm apps, so they can launch the alarm screen even if you are not actively using the alarm app at the moment."
+          ]
+        },
+        {
+          "heading": "Performance mode",
+          "steps": [
+            "High-performance - consumes more power, mode for online gaming, for example",
+            "Smart Performance Mode - optimized mode depending on the workload, may break background processes",
+            "No Performance Improvement - no additional boost of performance"
+          ]
+        },
+        {
+          "heading": "Battery mode",
+          "steps": [
+            "Similar to the previous Performance mode on older versions, with a different name."
+          ]
+        },
+        {
+          "heading": "App quick freeze",
+          "steps": [
+            "Casts a ‘freeze’ spell the apps from this list - they cannot receive or send notifications and cannot run on the background."
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/realme"
+    },
+    {
+      "id": "oneplus",
+      "name": "OnePlus",
+      "manufacturers": [
+        "oneplus"
+      ],
+      "sections": [
+        {
+          "heading": "App locking",
+          "steps": [
+            "Locking the app in the Recent apps may prevent the app from being killed in the background and the Battery optimisation setting from being reverted.",
+            "This is however, not 100%. You may have to check system settings every once in a while. See a bug report filed to OnePlus.",
+            "Start the app you want to protect. Go to Recent apps - swipe up and hold to open recent apps (Apps switcher).",
+            "Long-press anywhere on the window and tap the Lock button on the upper right corner of the app.",
+            "The locked app will have the closed padlock icon."
+          ]
+        },
+        {
+          "heading": "Battery optimization",
+          "steps": [
+            "Turn off System Settings > Apps > Gear Icon > Special Access > Battery Optimization.\nWARNING: Recently, OnePlus phones started reverting this setting randomly for random apps. So if you set it to be not optimized, the next day it may be back to optimized. \nTo avoid the system from automatically reverting the not optimized setting, you must also lock the app into the ‘Recent App’ list; see the solution above or here.",
+            "Turn off System settings > Battery > Battery optimization, switch to ‘All apps’ in top right menu > Your app > Don’t optimize\nNOTE: Some of our users indicated that you need to disable Doze mode in Developer options in 1+3 and earlier."
+          ]
+        },
+        {
+          "heading": "App Auto-Launch",
+          "steps": [
+            "App Auto-Launch (on some OnePlus phones) essentially prevents apps from working in the background. Please disable it for your app."
+          ]
+        },
+        {
+          "heading": "Enhanced / Advanced optimization",
+          "steps": [
+            "OnePlus 6 and later: \nSystem settings > Battery > Battery optimization > (three dots) > Advanced optimization. \nYou’ll see two options there. Both are enabled by default:",
+            "Deep optimization or Adaptive Battery\nThis is the main app killer. \nIf you need any apps to run in the background, disable it.",
+            "Sleep standby optimization\nOnePlus tries to learn when you are usually asleep, and in those times it will then disable the phone’s network connections. \nThis setting will prevent push notifications from being delivered.",
+            "OnePlus below 6: \nTurn off System settings > Battery > Battery optimization > (three dots) > Enhanced optimization.\nNOTE: This should help with the problem where you lose Bluetooth connection to your smartwatch/fitness tracker (e.g. for sleep tracking)."
+          ]
+        },
+        {
+          "heading": "Recent apps clearing behaviour",
+          "steps": [
+            "Normally when you swipe an app away, it won’t close. Android handles that well on its own. On OnePlus, this may, however, work in a different way. The recent app clear behaviour manager might be set up in a way that swiping the app to close will kill it."
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/oneplus"
+    },
+    {
+      "id": "vivo",
+      "name": "Vivo",
+      "manufacturers": [
+        "vivo"
+      ],
+      "sections": [
+        {
+          "heading": "Autostart",
+          "steps": [
+            "Based on the information by Vivo, this option should be present on all Vivo phones.\nNewer OS version: Settings > More settings > Applications > Autostart to turn on/off the app switch.\nFor Funtouch OS 2.6 and lower version: i Manager > App manager > Autostart manager to turn on/off the app switch."
+          ]
+        },
+        {
+          "heading": "Unrestricted battery usage",
+          "steps": [
+            "As reported from the Android 13 version; you can set a non-restricted battery usage for each app individually."
+          ]
+        },
+        {
+          "heading": "Background power usage restrictions",
+          "steps": [
+            "Also reported from Android 13, can be set up for each app in the Battery section."
+          ]
+        },
+        {
+          "heading": "Lock the app in the taskbar",
+          "steps": [
+            "Apps locked in the taskbar are safe from getting terminated when they run in the background.",
+            "Swipe up in your home screen while the app is open in the background, and swipe the app icon down.",
+            "Tap the lock icon.",
+            "Done - now the app is locked in the taskbar."
+          ]
+        },
+        {
+          "heading": "Lock the app in the Recent Apps",
+          "steps": [
+            "Locking the app in the Recent Apps screen can look slightly different on each version of Android - in the Recent Apps screen, find the app you wish to lock, tap its sub-menu, and find the “lock” / “lockdown” option"
+          ]
+        },
+        {
+          "heading": "Allow the app to keep running even during high power consumption",
+          "steps": [
+            "Go to system Settings > Battery.",
+            "Go to High background power consumption.",
+            "Find your app in the list and enable the high battery consumption.",
+            "Another layout for the similar feature, this time unde the name Background power consumption management."
+          ]
+        },
+        {
+          "heading": "Battery optimization",
+          "steps": [
+            "In the Battery section for each app, you can put the app into not-optimized pile of apps, which will prevent the app from being closed by the optimization processes."
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/vivo"
+    },
+    {
+      "id": "huawei",
+      "name": "Huawei",
+      "manufacturers": [
+        "huawei"
+      ],
+      "sections": [
+        {
+          "heading": "Smart Tune-up",
+          "steps": [
+            "There is a pre-installed app called system manager which also might kill apps depending on a setting within the app, and it has “smart” feature killing apps."
+          ]
+        },
+        {
+          "heading": "App Launch on some EMUI 8, 9 and 10 devices (Huawei P20, Huawei P20 Lite, Huawei Mate 10…)",
+          "steps": [
+            "Phone settings > Battery > App launch and then set your app to “Manage manually” and make sure everything is turned on.",
+            "Also for reliable background processes you may need to uninstall PowerGenie as described below."
+          ]
+        },
+        {
+          "heading": "Startup manager",
+          "steps": [
+            "Startup manager seems to be a new kid on the block, preventing apps run automatically after the phone starts up.",
+            "Go to Settings > All > Startup manager."
+          ]
+        },
+        {
+          "heading": "Classic battery optimization",
+          "steps": [
+            "Open Settings, and search for and access Battery optimization. Touch the little inverted triangle next to Don’t allow, touch All apps, locate and touch your app, and select Don’t allow."
+          ]
+        },
+        {
+          "heading": "PowerGenie",
+          "steps": [
+            "Huawei is extremely inventive in breaking apps on their devices. In addition to all the non-standard power management measures described below, they introduced a new task killer app build right into EMUI 9 on Android Pie.",
+            "It is called PowerGenie and it kills all apps that are not on its whitelist. You cannot add custom apps on their pre-defined whitelist. This means there is no other way to fix proper app functionality on Huawei than uninstalling PowerGenie.",
+            "Unfortunately this is a system app and can only be fully uninstalled using ADB (Android Debug Bridge) Source: XDA.",
+            "You need to:",
+            "install ADB on your computer",
+            "Connect your phone with a data cable",
+            "Enable Developer options",
+            "Enable USB debugging within Developer options on your device",
+            "Run the following commands on your computer:",
+            "adb shell pm uninstall -k --user 0 com.huawei.powergenie",
+            "adb shell pm uninstall -k --user 0 com.huawei.android.hwaps",
+            "If apps keep getting killed try running adb shell am stopservice hwPfwService.",
+            "We did not yet have this confirmed but it is possible you can alternatively just disable PowerGenie in Phone settings > Apps. This setting would need to be re-applied every time you reboot your device."
+          ]
+        },
+        {
+          "heading": "Classic battery optimization",
+          "steps": [
+            "Open Settings, and search for and access Ignore battery optimization. Touch the little inverted triangle next to Allow, touch All apps, locate and touch the app, and select Allow."
+          ]
+        },
+        {
+          "heading": "EMUI 6+ devices (and some EMUI 5 devices)",
+          "steps": [
+            "Phone settings > Advanced Settings > Battery manager > Power plan set to Performance",
+            "Phone Settings > Advanced Settings > Battery Manager > Protected apps – set your app as Protected",
+            "Phone Settings > Apps > Your app > Battery > Power-intensive prompt [uncheck] and Keep running after screen off [check]",
+            "Phone settings > Apps > Advanced (At the bottom) > Ignore optimisations > Press Allowed > All apps > Find your app on the list and set to Allow"
+          ]
+        },
+        {
+          "heading": "Huawei P9 Plus",
+          "steps": [
+            "Phone settings > Apps > Settings > Special access > Ignore battery optimisation > select allow for your app."
+          ]
+        },
+        {
+          "heading": "Huawei Honor 9 Lite, Huawei Mate 9 Pro",
+          "steps": [
+            "Phone settings > Battery > Launch and then set your app to “Manage manually” and make sure everything is turned on.",
+            "On EMUI 4 there is no way out, sorry, but you can ask developers of your apps to implement the workaround described in Developer section"
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/huawei"
+    },
+    {
+      "id": "motorola",
+      "name": "Motorola",
+      "manufacturers": [
+        "motorola"
+      ],
+      "sections": [
+        {
+          "heading": "Improve battery while inactive",
+          "steps": [
+            "A new option in some of the Motorola phones, enhanced by unknown AI algorithms. It is added by the Battery care app and does seem to kill the apps even if you disable the option in Settings -> Battery -> Improve battery while inactive. The only fix is to uninstall the com.motorola.batterycare package using adb: adb shell pm uninstall -k –user 0 com.motorola.batterycare."
+          ]
+        },
+        {
+          "heading": "Allow background usage",
+          "steps": [
+            "Another new option on newer Android version on Motorolas, hidden from the plain sight. In setting for each app, you can find App battery usage toggle. But it did not stop there, you need to tap the option with the toggle to get to the hidden menu with Unrestricted battery usage.",
+            "Go to your phone’s settings -> Apps -> Find your app.",
+            "Open Apps battery usage.",
+            "Allow Background battery usage.",
+            "Tap the option with the toggle.",
+            "Set the battery usage as ‘Unrestricted’."
+          ]
+        },
+        {
+          "heading": "Adaptive battery",
+          "steps": [
+            "The Adaptive battery might be quite aggresive on some phones. It is designed for “infrequently used apps”, but from the feedback it looks like the definition of infrequently used apps is quite wide.",
+            "Go to your phone’s settings.",
+            "Open the Battery section.",
+            "Disable the Adaptive battery option."
+          ]
+        },
+        {
+          "heading": "Background activity restrictions",
+          "steps": [
+            "There can be a restriction on background activity enabled for each app.",
+            "Go to your phone’s settings.",
+            "Scroll down and tap on ‘Apps & notifications’.",
+            "Tap on the your app.",
+            "Tap on ‘Advanced’.",
+            "Tap on ‘Battery’.",
+            "Tap on ‘Background restriction’ or ‘Background limits’.",
+            "If it says ‘Background activity restricted’, tap on it and then tap ‘Remove’."
+          ]
+        },
+        {
+          "heading": "Managing background apps",
+          "steps": [
+            "This option does not seem to be found in the layout, but rather with the search tool…",
+            "Go to phone preferences and type “managing background apps” in the search bar. This is kind of an app where you can select apps that you want to run in the background.",
+            "Switch the toggle to the active position to allow the app in the background."
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/motorola"
+    },
+    {
+      "id": "asus",
+      "name": "Asus",
+      "manufacturers": [
+        "asus"
+      ],
+      "sections": [
+        {
+          "heading": "",
+          "steps": [
+            "The evil app on Asus is called Power Master - see the screenshots below. To make sure apps background processing works, set up the following:",
+            "Uncheck Mobile Manager > PowerMaster > Settings (or Battery-saving options) > Clean up in suspend",
+            "Uncheck Mobile Manager > PowerMaster > Settings (or Battery-saving options) > Auto-deny apps from auto starting.",
+            "See below for screenshots."
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/asus"
+    },
+    {
+      "id": "nokia",
+      "name": "Nokia",
+      "manufacturers": [
+        "nokia",
+        "hmd global"
+      ],
+      "sections": [
+        {
+          "heading": "Most Nokia phones (Power saver AKA com.evenwell.powersaving.g3)",
+          "steps": [
+            "To fix this issue, please do the following:",
+            "Go to Phone settings > Apps > See all apps.",
+            "Tap on the right top corner menu > Show system.",
+            "Find Power saver app in the list, select it and Force close. It will remain stopped for a while, but will restart itself eventually.",
+            "From now on, background apps should work normally and use the standard Android battery optimizations.",
+            "Still 3rd party alarm clocks or any task scheduling of foreground tasks at a particular time won’t work. We do not have any solution for this at the moment UPDATE: in our preliminary tests it seems that force stopping or uninstalling the Power saver app also fixes alarms and starting of foreground services, until the Power saver restarts.",
+            "Alternative solution for tech-savvy users:"
+          ]
+        },
+        {
+          "heading": "Most Nokia models",
+          "steps": [
+            "Disable the com.evenwell.powersaving.g3 package via the following adb commands:",
+            "adb shell\npm disable-user com.evenwell.powersaving.g3"
+          ]
+        },
+        {
+          "heading": "Nokia 1 (Android Go)",
+          "steps": [
+            "Disable the com.evenwell.emm package via the following adb commands:",
+            "adb shell\npm disable-user com.evenwell.emm"
+          ]
+        },
+        {
+          "heading": "Nokia 3.1 and 5.1",
+          "steps": [
+            "Regrettably, HMD did not include any sort of Settings switch to control DuraSpeed’s operation. And since the task killer is a system service and not an app, it cannot simply be uninstalled. Fortunately, DuraSpeed does have a hidden kill switch: It watches the setting.duraspeed.enabled setting and will stop itself when the flag is set to any value that does not equal 1. Once DuraSpeed stops itself, the phone is cured and all background apps will function normally. However, this workaround does not stick across reboots, so the flag has to be cycled at every boot using an automation app like MacroDroid.",
+            "First, use adb to grant MacroDroid (or your choice of automation app) the ability to write to the global settings store:",
+            "adb shell pm grant com.arlosoft.macrodroid android.permission.WRITE_SECURE_SETTINGS\nThen create a task, triggered at Device Boot, that performs the following:",
+            "System Setting: type Global, name setting.duraspeed.enabled, value 2",
+            "System Setting: type System, name setting.duraspeed.enabled, value 2",
+            "System Setting: type Global, name setting.duraspeed.enabled, value 0",
+            "System Setting: type System, name setting.duraspeed.enabled, value 0",
+            "NOTE: You need both ‘Global’ and ‘System’ type settings (the screenshots below show only Global - you get the idea).",
+            "Run this task and verify there are no errors. If all is well, then DuraSpeed will be immediately disabled, and it will also be disabled on reboot."
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/nokia"
+    },
+    {
+      "id": "sony",
+      "name": "Sony",
+      "manufacturers": [
+        "sony"
+      ],
+      "sections": [
+        {
+          "heading": "“Prefer battery time”",
+          "steps": [
+            "Newer Android versions on Sony devices have an extra “STAMINA level” setting under STAMINA mode. Avoid setting it to “Prefer battery time” if you need AOSP behaviour.",
+            "For older Android versions, never use STAMINA mode if you want your device to do something useful when not actively using it. Despite the official description, it does not affect only mobile data and WiFi, it also terminates any background processes.\nStamine mode can be found (and disabled) in either the Battery section or the Power management section."
+          ]
+        },
+        {
+          "heading": "Intelligence Engine",
+          "steps": [
+            "On some phones, this alteration of stamina mode was reported - it can also break background tasks, or break DND mode schedules."
+          ]
+        },
+        {
+          "heading": "Adaptive battery",
+          "steps": [
+            "Adaptive battery was reported on Android 11, but it can be present on earlier versions too."
+          ]
+        },
+        {
+          "heading": "Power-saving feature",
+          "steps": [
+            "The app you need to run in the background needs to be set as Excepted from the Power-saving feature.",
+            "System settings ​→ Apps & Notifications ​→ Advanced ​→ Special app access ​→ Power saving feature"
+          ]
+        },
+        {
+          "heading": "Battery optimisation",
+          "steps": [
+            "Try to make your app not battery optimized in Phone settings > Battery > Three dots in the top right corner > Battery optimisation > Apps > your app.”"
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/sony"
+    },
+    {
+      "id": "google",
+      "name": "AOSP",
+      "manufacturers": [
+        "stock_android",
+        "google"
+      ],
+      "sections": [
+        {
+          "heading": "Android P",
+          "steps": [
+            "There’s a special option in Settings > Apps > Your app > Advanced > Battery > Background restrictions. If users accidentally enable this option, it will break their apps. And users do enable that option!"
+          ]
+        },
+        {
+          "heading": "Pie and pre-Pie",
+          "steps": [
+            "If you see background processing issues, overall it is a good idea to make your app not battery optimized to ensure it gets the freedom it needs to perform in the background.",
+            "For that:",
+            "Go to Settings > Apps > Your app > Advanced > Battery > Battery optimization",
+            "Change view to All apps",
+            "Search for your app",
+            "Choose Not optimized"
+          ]
+        },
+        {
+          "heading": "Android O",
+          "steps": [
+            "Make sure Settings > Apps > Your app > Advanced > Battery > Background limitations is not enabled. If the app is not yet optimized for Oreo API level it will break their background processing."
+          ]
+        },
+        {
+          "heading": "If all fails",
+          "steps": [
+            "If all fails you can turn doze mode completely off in Settings > Developer options. (If you don’t know how to enable developer options, a web search-engine should help.)"
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/stock_android"
+    },
+    {
+      "id": "tecno",
+      "name": "Tecno",
+      "manufacturers": [
+        "tecno"
+      ],
+      "sections": [
+        {
+          "heading": "Power Saving Management",
+          "steps": [
+            "Go to Settings → Battery Lab → Battery Saving Settings → Disable Power Saving Management For Apps"
+          ]
+        },
+        {
+          "heading": "Allow app to run in the background",
+          "steps": [
+            "Go to Phone Master → Toolbox → Auto-start management → Allow app to run in background"
+          ]
+        },
+        {
+          "heading": "Lock the app in the Recent apps",
+          "steps": [
+            "Head to recent apps with the navigation bar or using gestures press the down arrow on the top of microg.",
+            "Press the first option with the 🔒 icon."
+          ]
+        },
+        {
+          "heading": "Options in Phone Master",
+          "steps": [
+            "Open Power Marathon → and disabled Power Boost",
+            "App Booster = Add in your messaging apps, email apps, and apps that run in the background like AccuBattery, or in startup-like launchers. You can only put 4 apps.",
+            "Auto-start Management = Enable all of them :)"
+          ]
+        },
+        {
+          "heading": "Sleep Mode Optimization",
+          "steps": [
+            "The Sleep Mode optimization will automatically turn on airplane mode at night when you are not using the phone. Can break the BT connection to the wearables."
+          ]
+        },
+        {
+          "heading": "Advanced Settings",
+          "steps": [
+            "Power Boost Reminder = OFF (Optional)",
+            "Screen off push block = OFF",
+            "Screen off sleep = OFF",
+            "Screen off scheduled push = OFF",
+            "Battery Optimization = Optional",
+            "Battery Saver = OFF"
+          ]
+        },
+        {
+          "heading": "Smart Scenes",
+          "steps": [
+            "Disable Short Video Optimization - this option is probably for apps like TikTok."
+          ]
+        }
+      ],
+      "opens": [],
+      "url": "https://dontkillmyapp.com/tecno"
+    }
+  ]
+}

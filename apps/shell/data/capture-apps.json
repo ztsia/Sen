@@ -1,0 +1,63 @@
+{
+  "$comment": "Malaysian banks and e-wallets the picker suggests, ticked, when installed (spec §6.2, D86). Each package was checked on Google Play (gl=MY) on the date below; its label is the Play listing's. accounts are the account names first run suggests for it (B08). kind: bank, ewallet or wallet (a card wallet that notifies alongside the bank's own app, D88). Add an app with its Play-checked package.",
+  "checked": "2026-10-09",
+  "apps": [
+    {
+      "package": "my.com.tngdigital.ewallet",
+      "label": "Touch 'n Go eWallet",
+      "kind": "ewallet",
+      "accounts": ["TNG eWallet", "GO+"]
+    },
+    { "package": "my.rytbank.app", "label": "Ryt Bank", "kind": "bank", "accounts": ["Ryt Main Account"] },
+    { "package": "com.pbb.mypb", "label": "MyPB by Public Bank", "kind": "bank", "accounts": ["Public Bank"] },
+    { "package": "com.grabtaxi.passenger", "label": "Grab", "kind": "ewallet", "accounts": ["GrabPay Wallet"] },
+    {
+      "package": "com.maybank2u.life",
+      "label": "MAE by Maybank2u",
+      "kind": "bank",
+      "accounts": ["Maybank", "MAE Wallet"]
+    },
+    { "package": "com.cimb.cimbocto", "label": "CIMB OCTO MY", "kind": "bank", "accounts": ["CIMB"] },
+    { "package": "com.rhbgroup.rhbmobilebanking", "label": "RHB Mobile Banking", "kind": "bank", "accounts": ["RHB"] },
+    {
+      "package": "my.com.hongleongconnect.mobileconnect",
+      "label": "HLB Connect",
+      "kind": "bank",
+      "accounts": ["Hong Leong Bank"]
+    },
+    { "package": "com.ambank.ambankonline", "label": "AmOnline", "kind": "bank", "accounts": ["AmBank"] },
+    { "package": "com.bankislam.bimbmobile", "label": "BIMB Mobile", "kind": "bank", "accounts": ["Bank Islam"] },
+    { "package": "com.bsn.mybsn", "label": "myBSN", "kind": "bank", "accounts": ["BSN"] },
+    {
+      "package": "com.irakyatmob.bkrm",
+      "label": "iRakyat Mobile Banking",
+      "kind": "bank",
+      "accounts": ["Bank Rakyat"]
+    },
+    { "package": "com.uob.mightymy", "label": "UOB TMRW Malaysia", "kind": "bank", "accounts": ["UOB"] },
+    { "package": "com.ocbc.mobilemy", "label": "OCBC Malaysia", "kind": "bank", "accounts": ["OCBC"] },
+    { "package": "com.affin.mobilebanking", "label": "AffinAlwaysX", "kind": "bank", "accounts": ["Affin Bank"] },
+    {
+      "package": "com.alliance.AOPMobileApp",
+      "label": "allianceonline Mobile",
+      "kind": "bank",
+      "accounts": ["Alliance Bank"]
+    },
+    { "package": "my.com.hsbc.hsbcmalaysia", "label": "HSBC Malaysia", "kind": "bank", "accounts": ["HSBC"] },
+    {
+      "package": "air.app.scb.breeze.android.main.my.prod",
+      "label": "SC Mobile Malaysia",
+      "kind": "bank",
+      "accounts": ["Standard Chartered"]
+    },
+    { "package": "com.cedarplus.agro", "label": "AGRONet Mobile", "kind": "bank", "accounts": ["Agrobank"] },
+    { "package": "my.com.gxbank.app", "label": "GXBank", "kind": "bank", "accounts": ["GXBank"] },
+    { "package": "com.personal.adb", "label": "AEON Bank", "kind": "bank", "accounts": ["AEON Bank"] },
+    { "package": "co.myboostbank.boostberhad", "label": "Boost Bank", "kind": "bank", "accounts": ["Boost Bank"] },
+    { "package": "my.com.myboost", "label": "Boost App Malaysia", "kind": "ewallet", "accounts": ["Boost Wallet"] },
+    { "package": "com.shopeepay.my", "label": "ShopeePay", "kind": "ewallet", "accounts": ["ShopeePay"] },
+    { "package": "com.tpaay.bigpay", "label": "BigPay", "kind": "ewallet", "accounts": ["BigPay"] },
+    { "package": "com.setel.mobile", "label": "Setel", "kind": "ewallet", "accounts": ["Setel"] },
+    { "package": "com.google.android.apps.walletnfcrel", "label": "Google Wallet", "kind": "wallet", "accounts": [] }
+  ]
+}

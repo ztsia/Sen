@@ -1,0 +1,6 @@
+{
+  "$comment": "The one address each build loads (spec §17). release: production. debug: the review alias, a .vercel.app domain assigned to the review branch (docs/local.md). e2e: the test server on the emulator's host. null until Vercel is linked: the app then says so instead of loading anything.",
+  "release": null,
+  "debug": null,
+  "e2e": "http://localhost:4173"
+}

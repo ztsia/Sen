@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- The category prompt and the island's moments (B02's hidden tests now, B12 later). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <!-- Keep Sen running: Android's own "ignore battery optimisations" dialog (spec §6.2). Sen isn't on
+         Play, whose policy limits this permission. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- The heartbeat notes each boot, so the soak can show capture surviving one. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Installed apps are found through these, never QUERY_ALL_PACKAGES (D86): launchable apps for
+         the picker, and the SMS and email handlers the classifier refuses. https is for openInBrowser. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="smsto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mmsto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
+    <!-- Nothing on the phone is backed up: the outbox holds raw bank notifications (spec §17). -->
+    <application
+        android:name=".SenApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher_minted"
+        android:roundIcon="@mipmap/ic_launcher_minted"
+        android:label="${appLabel}"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        tools:targetApi="36">
+
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+            android:exported="false"
+            android:label="${appLabel}"
+            android:launchMode="singleTask"
+            android:theme="@style/AppTheme.Launch"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- The launcher icon, one alias per look (D77). Minted is the default; Switch icon (a hidden
+             test, docs/local.md) toggles to Instrument and back. -->
+        <activity-alias
+            android:name=".LauncherMinted"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_minted"
+            android:label="${appLabel}"
+            android:roundIcon="@mipmap/ic_launcher_minted"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherInstrument"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_instrument"
+            android:label="${appLabel}"
+            android:roundIcon="@mipmap/ic_launcher_instrument"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- The listener (spec §6.2). Off in the debug build, so nothing is recorded twice (§17).
+             Conversation notifications are refused here, and can't be turned back on in Settings;
+             ongoing ones aren't asked for either. -->
+        <service
+            android:name=".capture.CaptureListener"
+            android:enabled="${captureEnabled}"
+            android:exported="true"
+            android:label="${appLabel}"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.notification.default_filter_types"
+                android:value="alerting|silent" />
+            <meta-data
+                android:name="android.service.notification.disabled_filter_types"
+                android:value="conversations" />
+        </service>
+
+        <receiver
+            android:name=".capture.BootReceiver"
+            android:enabled="${captureEnabled}"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".moments.TestActionReceiver"
+            android:exported="false" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- WorkManager starts itself; the heartbeat schedules its work from SenApplication. -->
+    </application>
+</manifest>

@@ -1,0 +1,129 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+
+import groovy.json.JsonSlurper
+
+// The one address each build loads (spec §17), from apps/shell/sites.json. Empty means "not set yet":
+// the app then shows its own page saying so, and loads nothing.
+def sites = new JsonSlurper().parse(file('../../sites.json'))
+def site = { String build -> (sites[build] ?: '') as String }
+
+// CI numbers each build (github.run_number); a local build is 1.
+def versionCodeEnv = (System.getenv('SEN_VERSION_CODE') ?: '1') as int
+
+// The release key lives only in GitHub Actions' secrets (spec §17, docs/local.md). Without it, the
+// release builds unsigned and the debug build uses Android's own debug key.
+def keystore = System.getenv('SEN_KEYSTORE_FILE')
+def signed = keystore && file(keystore).exists()
+
+android {
+    namespace = "io.github.ztsia.sen"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "io.github.ztsia.sen"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode versionCodeEnv
+        versionName "0.2.${versionCodeEnv}"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    buildFeatures {
+        buildConfig true
+    }
+    signingConfigs {
+        if (signed) {
+            sen {
+                storeFile file(keystore)
+                storePassword System.getenv('SEN_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('SEN_KEY_ALIAS') ?: 'sen'
+                keyPassword System.getenv('SEN_KEY_PASSWORD') ?: System.getenv('SEN_KEYSTORE_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        // Production, capture on. What the owner installs.
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField "String", "SEN_URL", "\"${site('release')}\""
+            buildConfigField "boolean", "CAPTURE", "true"
+            buildConfigField "String", "BUILD_NAME", "\"release\""
+            manifestPlaceholders = [captureEnabled: "true", appLabel: "Sen"]
+            if (signed) signingConfig signingConfigs.sen
+        }
+        // The review alias, capture off so nothing is recorded twice, its own id so both install.
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+            buildConfigField "String", "SEN_URL", "\"${site('debug')}\""
+            buildConfigField "boolean", "CAPTURE", "false"
+            buildConfigField "String", "BUILD_NAME", "\"debug\""
+            manifestPlaceholders = [captureEnabled: "false", appLabel: "Sen review"]
+            if (signed) signingConfig signingConfigs.sen
+        }
+        // GitHub Actions' emulator tests: the web build served on the runner as localhost, capture on.
+        // Never installed on a phone.
+        e2e {
+            initWith debug
+            applicationIdSuffix ".e2e"
+            versionNameSuffix "-e2e"
+            buildConfigField "String", "SEN_URL", "\"${site('e2e')}\""
+            buildConfigField "boolean", "CAPTURE", "true"
+            buildConfigField "String", "BUILD_NAME", "\"e2e\""
+            manifestPlaceholders = [captureEnabled: "true", appLabel: "Sen e2e"]
+            signingConfig signingConfigs.debug
+            matchingFallbacks = ['debug']
+        }
+    }
+    testBuildType "e2e"
+    sourceSets {
+        // The curated apps and the brands' steps, from apps/shell/data/.
+        main.assets.srcDirs += file('../../data')
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+    packaging {
+        resources.excludes += ['META-INF/*.kotlin_module']
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+    }
+}
+
+repositories {
+    flatDir {
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "io.github.ztsia.sen:capture-core:1"
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-ktx:$androidxCoreVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation "androidx.webkit:webkit:$androidxWebkitVersion"
+    implementation "androidx.work:work-runtime-ktx:$workVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test:runner:$androidxTestRunnerVersion"
+    androidTestImplementation "androidx.test:rules:$androidxTestRunnerVersion"
+    androidTestImplementation "androidx.test.uiautomator:uiautomator:$uiautomatorVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'

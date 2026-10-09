@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Written by apps/shell/scripts/icons.mjs from docs/ui/directions/assets/instrument/launcher/. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@mipmap/ic_launcher_instrument_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_instrument_foreground" />
+    <monochrome android:drawable="@mipmap/ic_launcher_instrument_monochrome" />
+</adaptive-icon>

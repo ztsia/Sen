@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sen</string>
+    <string name="title_activity_main">Sen</string>
+    <string name="package_name">io.github.ztsia.sen</string>
+    <string name="custom_url_scheme">io.github.ztsia.sen</string>
+    <string name="channel_tests">Tests</string>
+    <string name="channel_tests_about">Sen\'s hidden tests, while the shell is being tried out</string>
+    <string name="channel_moments">Live moments</string>
+    <string name="channel_moments_about">A payment just made, a receipt being read: shown in the island on phones that have one</string>
+</resources>

@@ -11,3 +11,8 @@ qa-artifacts/
 apps/web/src/styles/looks.gen.css
 **/dist-production/
 qa/*/results.json
+# The shell's build outputs, Gradle's and Capacitor's copies; the data files are generated
+apps/shell/android/
+apps/shell/core/build/
+apps/shell/core/.gradle/
+apps/shell/data/keep-running.json
