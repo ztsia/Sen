@@ -222,8 +222,9 @@ Works from a phone through cloud sessions, rarely at a laptop.
 The stack's own skills came with `npx skills add` (B01), because cloud sessions don't load plugins:
 `shadcn` (shadcn/ui's CLI and components), `vercel-react-best-practices` and `web-design-guidelines`
 (vercel-labs), and `capacitor-app-development`, `capacitor-plugins`, `capacitor-plugin-development`,
-`capacitor-react` and `capacitor-push-notifications` (Capawesome). Where one disagrees with `uiux`,
-`patterns.md` or a decision, ours win.
+`capacitor-react` and `capacitor-push-notifications` (Capawesome), with `capacitor-app-creation` added
+in B02 for creating the shell. Where one disagrees with `uiux`, `patterns.md` or a decision, ours
+win; a build session never stops to ask the questions a skill says to ask.
 
 Skills are model-invoked from their descriptions, so no session needs to be told to use one.
 **Our own skills are knowledge, not modes (D82).** Invoking one loads what to do and what must be
