@@ -727,3 +727,258 @@ R6-AC-23 Share samples shares what was stored, never more
                 whole row ticks it
          Spec   brief *Share samples*, patterns.md §7, D116
 ```
+
+## Run 7: the capture path only (scoped; spec §6.2, §6.5, D86, D115, D116, D119)
+
+Written from `spec_v2.md` §6.2 and §6.5, `docs/decisions.md` D86, D115, D116, D119, D14,
+`docs/screens.md` (`settings/capture/captured`) and `docs/ui/patterns.md` §7 (*Raw notification row*),
+**before reading any implementation or any earlier run's findings**. (Before writing I did read the
+ledger's run 1-5 fix tables and run 6's criteria headers, which describe what was fixed, not how; I did not
+open `results.json`, the run-6 report or any source. Findings 10-13 of run 6 were not read until after
+this section was written.) Every notification in this section is made up.
+
+Reading of the spec that the criteria rest on, stated so a reviewer can disagree with it:
+- Stored text is `title`, `text` and `expanded text`; each is the raw text **except** that every run of 4 or
+  more digits outside amounts becomes `•` (D119). A run is read as the filter reads it: any Unicode digit,
+  across spaces, dashes, dots, brackets and invisible characters. An amount is a decimal amount, or the number
+  right after a currency. Everything else is untouched (§6.2: "raw text is never changed").
+- The spec doesn't say how many `•` a run becomes. The criteria check that no digit of the run survives and
+  that nothing else changed, not the bullet count.
+- Read literally, a 4-digit year (`2026`) is a run of 4 digits outside an amount, so it is masked. That is
+  D119's trade (a reference matters less than a stored code); the criteria follow the spec, not taste.
+
+```
+R7-AC-1  An unchosen app is dropped before anything, with no trace
+         Given  chosen apps = {Ryt Bank}
+         When   an unchosen package posts: a payment, an OTP, a group summary, an ongoing, an empty one
+         Then   0 outbox rows; 0 drop-log entries; heartbeat's last-event time unmoved
+         Twin   the same payment from Ryt Bank -> exactly 1 row
+         Spec   §6.2 ¶3, D86, CLAUDE.md (listener)
+
+R7-AC-2  The chosen check is an exact match on the package name
+         When   packages "MY.RYTBANK.APP", "my.rytbank.app.debug", "my.rytbank.apps", "my.rytbank",
+                " my.rytbank.app", "my.rytbank.app " and "" post a payment
+         Then   0 rows each, and nothing logged
+         Twin   "my.rytbank.app" -> 1 row
+         Spec   §6.2 ¶3, D86
+
+R7-AC-3  An empty chosen list stores nothing; a change applies to the next notification
+         When   chosen = {} and a payment arrives; then Ryt is chosen and the same payment (new `when`)
+                arrives; then Ryt is un-chosen and a third arrives
+         Then   rows after each step: 0, 1, 1
+         Twin   the third payment must not be stored retroactively when Ryt is chosen again later
+         Spec   §6.2 ¶3, D86
+
+R7-AC-4  Group summaries and ongoing notifications from a chosen app are dropped
+         When   a chosen app posts a payment-worded notification flagged group-summary; another flagged
+                ongoing
+         Then   0 rows each
+         Twin   the same wording not flagged -> 1 row
+         Spec   §6.2 ¶4, D115
+
+R7-AC-5  The channel drop list starts empty and drops only its own channel of its own app
+         Given  a drop list of {(Ryt, "promos")}
+         When   Ryt posts on "promos"; Ryt posts on "payments"; Grab posts on "promos"
+         Then   rows: 0, 1, 1. With the list empty, Ryt on "promos" -> 1 row
+         Spec   §6.2 ¶4, brief ("starts empty; B10 fills it")
+
+R7-AC-6  A clear OTP/TAC from a chosen app is dropped: new wordings, English and Malay, title or text
+         When   twelve made-up OTPs post from a chosen app, e.g. "Your TAC for the RM250.00 transfer is
+                739204" ; "Gunakan 739204 sebagai kod pengesahan anda" ; title "OTP" text "739 204" ;
+                "739204 is your one-time password"
+         Then   0 rows; the code (any contiguous 4+ digit chunk of it) appears in no stored string
+         Twin   twelve made-up payments with security footers and store/reference numbers, no code ->
+                twelve rows (masked: AC-9)
+         Spec   §6.2 ¶5, D115, CLAUDE.md (OTP in native code)
+
+R7-AC-7  A drop from a chosen app is logged once, by time and app, never text
+         When   an OTP from Ryt is dropped, then posted again identically (a replay)
+         Then   1 drop-log entry naming Ryt and a time; it contains none of the notification's words
+                or digits; the replay adds none
+         Twin   an unchosen app's OTP -> no entry (AC-1)
+         Spec   §6.2 ¶5, D115
+
+R7-AC-8  Every kept notification has its long digit runs outside amounts masked, whatever its words
+         When   (a) "Your reference number is 48291375" (b) "Order 5829 4417 has been packed"
+                (c) title "Booking confirmed" text "Confirmation 20261009-4417"
+                (d) "Paid RM12.90 to KEDAI KOPI. Receipt 000412873"
+         Then   title, text and expanded text hold no run of 4+ digits; the surrounding words are intact
+         Twin   "Paid RM12.90 at 7 stores, 3 items, 9:47 PM, No. 12" -> stored exactly as written
+         Spec   §6.2 ¶6, D119
+
+R7-AC-9  Amounts are left; the carve-out is exact
+         When   "RM12.90", "RM 1,234.50", "MYR 5000.00", "RM1234", "rm 99.00", "Balance 1,234.50"
+                (decimal, no currency)
+         Then   each amount unchanged in the stored text
+         Twin   "Paid RM12.90 ref 482913" -> 12.90 kept, 482913 masked. "RM12.90 482913" (a code
+                after an amount, one space) -> 482913 masked. "TAC 482.913" (not money: three
+                decimals) -> masked
+         Spec   §6.2 ¶6 ("a decimal amount, or the number after a currency, is left")
+
+R7-AC-10 Digits are read as the filter reads them
+         When   the same six-digit code is written as: fullwidth ４８２９１３; Arabic-Indic ٤٨٢٩١٣;
+                Devanagari ४८२९१३; circled ①②③④⑤⑥ ; mathematical bold 𝟒𝟖𝟐𝟗𝟏𝟑 ;
+                "482 913"; "482-913"; "482.913" ; "(482) 913"; "4 8 2 9 1 3"; "4‑8‑2‑9‑1‑3" (U+2011);
+                with NBSP, thin space U+2009, ideographic space U+3000, tab, en dash, middle dot ·;
+                with a zero-width space, zero-width joiner, soft hyphen, BOM, LRM/RLM, word joiner
+                between digits
+         Then   no digit of the code is in the stored text, for each form
+         Twin   "Buy 12 apples and 34 pears" and "Room 12, level 34" are untouched
+                (words and commas end a run)
+         Spec   §6.2 ¶6 ("any Unicode digit, across spaces, dashes, dots, brackets and invisible characters")
+
+R7-AC-11 Everything but the digit runs is stored exactly as posted
+         When   a payment text holds emoji (👍 and a ZWJ family), CJK (椰), curly apostrophes, a newline
+                and a CRLF, leading and trailing spaces, double spaces, a tab, an NBSP outside any
+                digit run, a decomposed é (e + U+0301), a ZWSP outside any digit run, an RTL mark, a
+                lone surrogate, and a 5-digit reference
+         Then   every character outside the reference is byte-identical in the stored text: no trim,
+                no normalisation, no collapsing, no case change, no re-encoding
+         Twin   the reference is masked (AC-8) in the same row
+         Spec   §6.2 ("raw text is never changed, except its long numbers masked")
+
+R7-AC-12 *Maybe OTP* is set exactly by an OTP word plus a masked number, advice included
+         When   a kept row (a) carries "never share your TAC" and a masked reference (b) carries no OTP
+                word but a masked reference (c) has an OTP word in the title only (d) has an OTP word
+                and no long number at all
+         Then   (a) marked (b) not marked (c) marked (d) not marked (nothing to hide, so no line saying
+                "its numbers are hidden") [(d) is my reading; record what happens]
+         Spec   §6.2 ¶6, D116, D119, patterns.md §7
+
+R7-AC-13 The dedupe key comes from the masked text, so a code is never in storage, even as a hash
+         When   two posts share package, notification key and `when`, and differ only in a long number
+         Then   same dedupe key; one row
+         Twin   same, but a different `when` -> two rows; different amount -> two rows; different
+                masked-visible word -> two rows
+         Spec   §6.2 ¶6 and ¶8 (dedupe key), §6.5
+
+R7-AC-14 The key's fields don't collide
+         When   (title, text, expanded) = ("A","BC",""), ("AB","C",""), ("A","B","C"), ("","ABC",""),
+                ("A","","BC") with equal package, key and `when`
+         Then   five different keys, five rows
+         Spec   §6.2 ¶8, D115
+
+R7-AC-15 A replay is a no-op; an in-place rewrite is new wording; two payments minutes apart are two
+         When   the identical notification is posted again (reconnect); then with the same key and
+                `when` but different text; then the original text with a `when` 3 minutes later
+         Then   rows: 1, 1, 2, 3. The heartbeat's last-event time moves only on the new rows
+         Spec   §6.2 ¶8, §6.5, brief done-when 4
+
+R7-AC-16 An unreadable or hostile notification never throws, never stores a raw digit
+         When   a 1.6 MB text; 200,000 digits; 200,000 ZWSPs; a text of NULs; a lone-surrogate title;
+                1,000 nested brackets around a code; an empty title, text and expanded text
+         Then   the listener call returns (no exception); each is stored masked (and marked) or dropped
+                and logged "unread" by time and app; no run of 4+ digits is in storage; finishes in
+                under 2 s
+         Twin   a normal notification right after is stored normally
+         Spec   §6.2 ¶6 ("one that can't be read at all is dropped and logged ... as unread")
+
+R7-AC-17 No code leaks into any side channel
+         When   an OTP is dropped and a doubtful payment is stored masked
+         Then   the drop log, the heartbeat lines, the bridge's list to JavaScript, the share-samples
+                text and the console contain none of the code's digits; the persisted store (outbox
+                for Kotlin, localStorage and IndexedDB for the simulator) contains none
+         Spec   §6.2 ¶3, ¶6, CLAUDE.md
+
+R7-AC-18 The non-text fields are stored as posted
+         When   a notification arrives with package, channel, key, postTime, `when`, title, text,
+                expanded text
+         Then   each is in the row as posted (title/text/expanded as AC-8, AC-11)
+         Twin   a notification with no title and no expanded text is stored with them empty, not dropped
+         Spec   §6.2 ¶7
+
+R7-AC-19 The debug build captures nothing
+         Given  the debug build (capture off)
+         When   a chosen app posts a payment
+         Then   0 rows
+         Spec   §17, brief ("debug: capture off")
+
+R7-AC-20 The raw notification row shows what is stored, as stored
+         Given  the *Captured on this phone* screen (412x915)
+         Then   each row: app and time on one line, in Asia/Kuala_Lumpur; the title and text exactly as
+                stored (masked), whitespace and newlines preserved, selectable; no horizontal scroll
+                on a 1,000-character text; newest first. The intro says once that long numbers are
+                hidden
+         Twin   no row shows a run of 4+ digits outside an amount
+         Spec   patterns.md §7 (raw notification row), D119, D14
+
+R7-AC-21 The muted line is exactly the marked rows
+         Then   *Maybe a one-time code, so its numbers are hidden* sits under every row marked
+                *maybe OTP* and under no other
+         Spec   patterns.md §7, D116
+
+R7-AC-22 Share samples shares exactly the ticked rows, as stored
+         When   no row ticked, tap share; then tick two of three rows (tapping anywhere on the row
+                ticks it), share
+         Then   no ticks -> *Tick the notifications to share first.*, nothing shared; ticked -> the
+                payload holds those two rows' stored (masked) text and not the third; no digit run of 4+
+                outside amounts
+         Spec   brief ("Share samples"), patterns.md §7
+
+R7-AC-23 Time is Kuala Lumpur whatever the device zone (D14)
+         When   a notification at 2026-10-31 23:30 KL (15:30 UTC) is shown with the browser in
+                America/Los_Angeles and in Asia/Kuala_Lumpur
+         Then   both show 31 Oct, 23:30, and not 1 Nov
+         Spec   D14, CLAUDE.md
+
+R7-AC-24 The heartbeat on the screen tells a dropped payment from a missing one
+         When   a Ryt OTP is dropped; a Ryt payment is stored; an unchosen app's OTP is posted
+         Then   one *Dropped a one-time code from Ryt Bank* line; the last-event time moves for the
+                payment only; nothing about the unchosen app
+         Spec   §6.2 ¶5 and Health, D115
+
+R7-AC-25 The simulator walks the same rules as the shell
+         When   the same made-up corpus (AC-6, AC-8..12) goes through the dev simulator and through the
+                Kotlin core
+         Then   the same drop/keep decision, and the same stored text, for every item
+         Twin   a corpus item the shell drops must not appear in the simulator's list
+         Spec   CLAUDE.md ("native-only features get a simulator"), docs/cloud.md §4
+
+R7-AC-26 Captured offline, kept across a reload, synced (stored) once
+         When   in the browser, context offline: simulate a payment; reload; go online; simulate the
+                same payment again (a replay)
+         Then   exactly 1 row before and after the reload and after the replay
+         Spec   §6.2, §18, brief
+
+R7-AC-27 Empty and error states follow the patterns
+         Then   no captured events -> the pattern's empty state (one sentence, one next action);
+                a failed read -> the pattern's error state, not a blank
+         Spec   patterns.md §7
+
+R7-AC-28 The capture path never turns an amount into a number
+         When   grep the capture path (Kotlin core, the bridge plugin, the simulator store, the
+                captured screen) for parseFloat, toFixed, Number(, toDouble, toFloat, Double
+         Then   none touches an amount; money is parsed only by B09's templates later
+         Spec   CLAUDE.md (money is integer sen)
+```
+
+### Added after reading run 6's findings 10-16 (criteria my first draft missed)
+
+```
+R7-AC-29 Whitespace of any length, and line breaks, group digits (run 6 #11)
+         When   "Masukkan 482    913 untuk sahkan." (4 spaces); "Kod: 482\n913"; "482   \t 913"
+         Then   no digit of the code is stored (masked, or the notification dropped)
+         Twin   "Order 12\nShip 34" (words between) untouched
+         Spec   §6.2 ¶6 ("across spaces")
+
+R7-AC-30 Marks and odd separators don't hide a code (run 6 #10)
+         When   keycap digits 4️⃣8️⃣2️⃣9️⃣1️⃣3️⃣; digits with U+FE0E/U+FE0F; 482 + U+034F + 913;
+                "482•913"; "48:29:13"; "482́913" (combining acute); "4/8/2/9/1/3"
+         Then   no digit of the code is stored, whether or not the filter drops the notification
+         Twin   "Paid RM12.90 at 9:47 PM, 3 items" -> amount, time and count intact
+         Spec   §6.2 ¶6, D119, CLAUDE.md
+
+R7-AC-31 The "unread" branch is tested with teeth (run 6 #12)
+         When   the branch that marks an unreadable notification is made to return false
+         Then   at least one test goes red
+         Spec   phase 3
+
+R7-AC-32 A notification with no `when` is stored with an honest `when` (run 6 #15)
+         When   a chosen app posts with `when` = 0
+         Then   it is stored once; a replay is a no-op; (record what `when_ms` holds)
+         Spec   §6.2 ¶7-¶8
+
+R7-AC-33 The screen's wording doesn't promise verbatim text (run 6 #13)
+         Then   *Captured on this phone*'s intro says the numbers are hidden; patterns.md §7 agrees
+         Spec   D119, patterns.md §7
+```

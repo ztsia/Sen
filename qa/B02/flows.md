@@ -214,3 +214,84 @@ R6-FLOW-7  Another timezone                                               (sad)
 `docs/flows.md` still marks no journey as core (open with the owner, `docs/handoff.md`). None of the
 candidate journeys (`pay-known`, `pay-new`, `scan-after`) is reachable in B02, whose capture stops at
 the outbox. R6-FLOW-1 is the capture path's end-to-end walk and stands in for them.
+
+## Run 7: the capture path only (scoped)
+
+Written from the docs before reading the implementation. Walked in Chromium at 412×915 through the dev
+simulator panel and `settings/capture/captured`; the Kotlin core is driven directly by `Probe7.kt`.
+Every notification is made up. Ports 4300-4309.
+
+```
+R7-FLOW-1  A payment with a reference lands masked, the rest as posted      (happy)
+           Actor  owner (simulated shell, Ryt Bank chosen)
+           Entry  dev panel -> simulate a Ryt Bank card payment whose text has a 8-digit receipt
+           Steps  1. open settings/capture/captured  2. simulate  3. reload
+           Ends   one new top row: Ryt Bank + KL time; title/text as posted except the receipt number
+                  shown as bullets; RM amount intact; no muted line; one row after reload
+           Covers R7-AC-8, R7-AC-9, R7-AC-11, R7-AC-20, R7-AC-21   Spec §6.2 ¶6, D119
+
+R7-FLOW-2  A clear OTP from a chosen app is dropped and logged               (sad)
+           Entry  dev panel -> Post an OTP (and a made-up OTP in a new wording)
+           Steps  1. note the row count  2. post  3. read the heartbeat lines
+           Ends   count unchanged; one *Dropped a one-time code from Ryt Bank* line; no digit of the
+                  code anywhere on the page, in localStorage or in IndexedDB
+           Covers R7-AC-6, R7-AC-7, R7-AC-17, R7-AC-24   Spec §6.2 ¶5
+
+R7-FLOW-3  An unchosen app leaves no trace                                   (sad)
+           Entry  dev panel -> post from an app not chosen (payment and OTP)
+           Ends   count unchanged, no drop line, last-event time unmoved
+           Covers R7-AC-1, R7-AC-24   Spec §6.2 ¶3, D86
+
+R7-FLOW-4  A doubtful message is kept masked and marked                      (happy)
+           Entry  dev panel -> Post a maybe-OTP; and a payment with "never share your TAC" plus a
+                  store number
+           Ends   both rows show their numbers as bullets and the muted line; a payment with a
+                  reference and no OTP word shows bullets and no line
+           Covers R7-AC-12, R7-AC-21   Spec §6.2 ¶6, D116
+
+R7-FLOW-5  A replay is a no-op; the same payment later is a second one       (happy + sad)
+           Entry  dev panel -> simulate, Post it again, simulate again later
+           Ends   1 row after the replay, 2 rows after the later one; last-event moves on new rows only
+           Covers R7-AC-15, R7-AC-24   Spec §6.2 ¶8, §6.5
+
+R7-FLOW-6  Share samples                                                     (happy + sad)
+           Entry  Captured -> Share samples
+           Steps  1. tap share with nothing ticked  2. tick two of three rows by tapping the row body
+                  3. share
+           Ends   step 1 says *Tick the notifications to share first.* and shares nothing; step 3's
+                  payload is those two rows' stored text, masked, and not the third
+           Covers R7-AC-22   Spec brief, patterns.md §7
+
+R7-FLOW-7  A payment at 23:30 KL on the last day of a month, under another timezone   (sad)
+           Entry  browser timezone America/Los_Angeles; simulate with `when` = 2026-10-31T15:30Z
+           Ends   the row reads 31 Oct, 23:30 (KL), not 1 Nov and not 30 Oct
+           Covers R7-AC-23   Spec D14
+
+R7-FLOW-8  Captured offline, reloaded, back online                           (sad)
+           Entry  context offline; simulate; reload; online; Post it again
+           Ends   one row throughout; the row survives the reload
+           Covers R7-AC-26   Spec §6.2, §18
+
+R7-FLOW-9  A very long notification                                          (sad)
+           Entry  simulate a 1,000-character and a 5,000-character text with codes in them
+           Ends   stored masked; the row wraps inside 412 px with no horizontal scroll; the page stays
+                  responsive
+           Covers R7-AC-16, R7-AC-20   Spec §6.2 ¶6
+
+R7-FLOW-10 The simulator and the shell agree                                 (differential)
+           Entry  one made-up corpus through the simulator's store (Playwright) and the Kotlin core
+                  (`Probe7.kt`)
+           Ends   the same keep/drop per item and the same stored text
+           Covers R7-AC-25   Spec CLAUDE.md (simulator)
+
+R7-FLOW-11 The empty and error states                                        (sad)
+           Entry  Captured with nothing captured; Captured when the bridge read fails
+           Ends   the patterns' empty and error states, not a blank list
+           Covers R7-AC-27   Spec patterns.md §7
+```
+
+### Core journeys, run 7
+
+`docs/flows.md` marks no journey as core (the handoff already asks the owner which). The three that the
+handoff recommends (first run, a payment to Review, Scan) belong to B08, B12 and B15 and aren't built in B02;
+nothing to walk.
