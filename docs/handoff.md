@@ -1,52 +1,55 @@
 # Handoff
 
-Rewritten 8 Oct 2026 by the second B01 session, which fixed both QA runs' findings and opened the PR.
-The protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it before you end.
+Rewritten 9 Oct 2026 by a short session that prepared B02 and stopped, at the owner's word, before
+building anything. The protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it
+before you end.
 
 ## Where things stand
 
-- **B01 · Design system and the six looks, on `B01/design-system`: done, with its PR open to `main`.**
-  It waits on the owner's merge and the phone checks in the PR's *Try it on your phone*.
-- QA ran twice. Run 1 (9 failed criteria) and run 2 (3 failed, 2 Majors about the guards themselves)
-  are both fixed. `qa/B01/ledger.md` has each fix, its tier, and its red and green evidence. Run 2's
-  report: https://claude.ai/artifact/3tyzFqm3v81jS1GDM4sYSe.
-- **Verified:** unit 135/135; the slice's e2e 88/88; QA's specs 76/76; typecheck, lint, format,
-  `looks.gen.css` and hygiene clean.
-- **Not verified yet:** CI on GitHub (it runs on the PR), the Vercel deploys, the phone.
+- **B01 is merged** (ztsia/Sen PR #2). Its phone checks still wait on Vercel (below).
+- **B02 · The shell and the listener: not started.** Its branch `B02/shell-listener` exists, from
+  `main`, with one commit: the `capacitor-app-creation` skill, added with `npx skills add`, pinned in
+  `skills-lock.json` and listed in `CLAUDE.md`. Continue on that branch; don't make another.
+- The owner starts B02 in a later session.
 
-## Decided in B01's second session, and why
+## Decided on 9 Oct, and why
 
-- **Owner: after run 2's fixes, no further QA run.** The implementer reproduces each finding first
-  (red), fixes it, shows it green, and re-runs every suite. For B01 only, unless the owner extends it.
-- **A build is production unless it says preview** (`SEN_ENV=preview`, or `VERCEL_ENV=preview`), and
-  dev-only chunks are imported behind `__SEN_ENV__` compared in place, so production has none.
-- **The no-float lint bans routes, not only names**, everywhere amounts flow. Only
-  `packages/core/src/money.ts` turns sen into ringgit text and back (`formatSen`, `parseSen`,
-  `percent`), and only the looks' drawing code is exempt.
-- **The hygiene check reads paths, binary and UTF-16 files, and every commit and message in the range.**
-- **Colours keep one meaning** (patterns.md §2): errors and status cards are in the text colours;
-  the health bar uses the warn pair through `warning` variants on shadcn's alert and button.
-- **A Review row raises its own Undo**: an answer returns what it said and how to undo it.
-- `tokens`, `extra` and `fonts` are CSS, not `DIR` fields (patterns.md §1).
-- **Buttons are pills unless the look sets `--radius-btn`** (Instrument and Copper: 10 px), as
-  `engine.css` draws them. The shadcn files carry that default; a self-referring fallback once made
-  four looks square.
+- **The shell loads the web app from Vercel, with a service worker for offline**, not a bundled app
+  with live updates (the brief's choice; record it in `spec_v2.md` §5.1 when B02 starts). Why:
+  - the debug shell loading one review alias (§17) works only this way
+  - one deploy pipeline, not a second one for signed live-update bundles
+  - the web app and the API share one origin: no CORS, first-party cookies, headers set the CSP
+  - Capacitor 8 (checked in `@capacitor/android` 8.5.3's source) injects its bridge with
+    `addDocumentStartJavaScript` restricted to the app URL's origin, and answers messages through
+    `addWebMessageListener` with the allowed-origin rules, so the bridge works on pages the service
+    worker serves offline, and only for our origin
+  Covered in B02: a fallback page inside the APK (*Connect once to finish setting up Sen*) for a
+  first launch offline or a lost cache; the shell reports its version over the bridge and the web
+  app feature-detects methods, which are only ever added; a new version applies on the next launch,
+  never mid-session; all six look chunks precached.
+  **Test it first:** the airplane-mode check on GitHub Actions' emulator, serving the build on the
+  runner and reaching it as `localhost` through `adb reverse` (a secure context, so no Vercel
+  needed). If remote loading fails there, switch to bundling before building on it.
+- **Vercel is needed only to finish B02** (the release must point at production, and the owner
+  installs it), not to build or test it.
+- **If the emulator doesn't run on GitHub's runners**, record it in `docs/cloud.md` §5 and make the
+  emulator tests runnable from the owner's laptop with one command, listed in `docs/local.md`.
+- **Skills live committed in `.claude/skills/`, never installed by a setup script**: pinned, loaded
+  at startup, no network needed. No Android, Kotlin or Actions skill was worth adding (only
+  third-party ones of unknown quality).
 
 ## Open with the owner
 
-- **Copper's overspent figure is verdigris green**, as its design intends, against patterns.md §3
-  (green means money in). Kept as designed until the owner says otherwise.
-- **Link Vercel** and **add the `DENYLIST` secret** (`docs/local.md`), then the PR's phone checks.
-- Secret scanning and push protection, any time (`docs/local.md`).
-- The laptop ESS capture (D110) is still open; it matters only for B34.
+- **Nothing in `docs/local.md` is done yet**: Vercel, `DENYLIST`, secret scanning, the cloud
+  environment, the ESS capture, the samples. None blocks starting B02.
+- Copper's overspent figure is verdigris green against patterns.md §3; kept until the owner says.
 
 ## What to do first
 
-- If the PR has review comments or red CI, fix them on `B01/design-system`.
-- Once merged: **B02 · The shell and the listener**, on `B02/shell-listener` from `main`. Its service
-  worker should precache all six look chunks (about 70 kB), so a quarter's change works offline (B14).
+- Start B02 from its brief, on `B02/shell-listener`. Measure first whether the Android SDK installs
+  in a session (`docs/cloud.md` §5 asks), so the APK can be built here, not only in Actions.
 
 ## Don't reopen
 
 D1–D113, unless the owner raises one. In particular the slice order (D111), no screen mockups (D84),
-and from 8 Oct: one brief, one branch; shadcn first, customised in place.
+one brief, one branch; shadcn first, customised in place; and the remote-load decision above.
