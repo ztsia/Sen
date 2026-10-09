@@ -33,8 +33,9 @@ object Capture {
         return when (val d = gate.decide(posted, Chosen.get(context), outbox.droppedChannels())) {
             is Decision.Drop -> false
             is Decision.Keep -> {
-                Heartbeat.event(context)
-                outbox.insert(d.event)
+                // only a new event moves "last captured": a replay or a duplicate isn't news (B07's
+                // watchdog reads this time)
+                outbox.insert(d.event).also { new -> if (new) Heartbeat.event(context) }
             }
         }
     }

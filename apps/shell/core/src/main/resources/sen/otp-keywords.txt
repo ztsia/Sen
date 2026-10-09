@@ -1,17 +1,18 @@
-# The OTP and TAC filter's phrases (spec §6.2, D86, brief B02). A notification whose title, text or
-# expanded text contains any of them, as whole words and in any case, is dropped in native code before
-# anything is stored. English and Malay. One phrase per line; '#' starts a comment.
+# The OTP and TAC filter's keywords (spec §6.2, D86). A notification is dropped in native code, before
+# anything is stored, when its title, text or expanded text has one of these AND a code: a 6 to 8 digit
+# number anywhere, or a 4 or 5 digit number right after the keyword (OtpFilter.kt). A keyword alone
+# drops nothing, so a payment that says "we never ask for your TAC" is kept.
 #
-# Erring towards dropping is safe here: a dropped message is an OTP, an approval request or a security
-# warning, never a completed payment. Each phrase is tested against every anonymised sample in
-# docs/notifications.md, none of which may be dropped (OtpFilterTest).
-#
-# Add a phrase when a new sample shows one, with the sample anonymised in docs/notifications.md.
+# Keywords match as whole words, in any case. English and Malay. One per line; '#' starts a comment.
+# OtpFilterTest checks the list against made-up OTPs, and against every anonymised sample in
+# docs/notifications.md, none of which may be dropped. Add a keyword when a new sample shows one, with
+# the sample anonymised in docs/notifications.md.
 
 # English
 otp
 tac
 mtac
+pin
 one-time password
 one time password
 one-time passcode
@@ -31,6 +32,8 @@ passcode
 login code
 log-in code
 sign-in code
+code is
+your code
 secure2u
 secure verification
 do not share
@@ -38,11 +41,14 @@ don't share
 never share
 
 # Malay
+kod
+kod anda
 kod tac
 kod otp
 kod pengesahan
 kod keselamatan
 kod sekali guna
 kata laluan sekali
+nombor pin
 jangan kongsi
 jangan dedahkan

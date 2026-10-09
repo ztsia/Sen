@@ -50,7 +50,9 @@ test('outside the shell, production says capture lives in the Android app', asyn
   await page.goto('/s/settings/capture');
   await expect(page.getByText("Capture works in Sen's Android app", { exact: false })).toBeVisible();
   await page.goto('/s/settings/account');
-  await expect(page.getByRole('button', { name: 'Version Web app' })).toBeVisible();
+  // outside the shell the version is only information: no long-press, no hidden tests
+  await expect(page.getByText('Web app')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Version/ })).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
@@ -89,11 +91,37 @@ test.describe('the service worker', () => {
     expect(errors.filter((e) => !/ERR_INTERNET_DISCONNECTED|Failed to fetch/.test(e))).toEqual([]);
   });
 
-  test('the worker is served fresh and never caches the API', async ({ request }) => {
-    const sw = await request.get('/sw.js');
+  test('the worker is served fresh, and never caches the API, online or off', async ({ page, context }) => {
+    const sw = await page.request.get('/sw.js');
     expect(sw.headers()['content-type']).toMatch(/javascript/);
-    const body = await sw.text();
-    expect(body).toContain("'/api/'");
-    expect(body).not.toContain('__SEN_FILES__ =');
+    await page.goto('/');
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller)
+        await new Promise((r) => navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }));
+    });
+    // two calls to the API through the worker, then: nothing of it in any cache
+    const statuses = await page.evaluate(async () => [
+      (await fetch('/api/health')).status,
+      (await fetch('/api/x?y=1')).status,
+    ]);
+    expect(statuses).toHaveLength(2);
+    const cached = await page.evaluate(async () => {
+      const all: string[] = [];
+      for (const k of await caches.keys())
+        for (const r of await (await caches.open(k)).keys()) all.push(new URL(r.url).pathname);
+      return all;
+    });
+    expect(cached.filter((p) => p.startsWith('/api/'))).toEqual([]);
+    // offline, the API fails as the network does, rather than answering from a cache
+    await context.setOffline(true);
+    const offline = await page.evaluate(() =>
+      fetch('/api/health').then(
+        () => 'answered',
+        () => 'failed',
+      ),
+    );
+    expect(offline).toBe('failed');
+    await context.setOffline(false);
   });
 });

@@ -170,6 +170,8 @@ const XIAOMI: Brand = {
 };
 
 interface SimState {
+  /** The phone's maker: the one tested brand, or one dontkillmyapp has no steps for. */
+  brand: 'xiaomi' | 'none';
   access: boolean;
   connected: boolean;
   ignoringBattery: boolean;
@@ -183,6 +185,7 @@ interface SimState {
 export const useCaptureSim = create<SimState>(() => {
   const now = Date.now();
   return {
+    brand: 'xiaomi' as const,
     access: false,
     connected: false,
     ignoringBattery: false,
@@ -213,19 +216,38 @@ export const sim = {
   post() {
     const s = get();
     const sample = SAMPLES[s.next % SAMPLES.length]!;
-    const at = Date.now();
     set({ next: s.next + 1 });
-    if (!s.access || !s.chosen.includes(sample.package)) {
-      toastDone('Simulated: not stored, its app isn’t chosen or access is off');
-      return;
-    }
-    set({ events: [{ ...sample, id: s.next, postTime: at, when: at, capturedAt: at, synced: false }, ...s.events] });
-    toastDone('Simulated: a notification captured');
+    store(sample, Date.now());
+  },
+  /** The last notification again, as a listener reconnect replays it: the same dedupe key, so nothing new. */
+  repost() {
+    const last = get().events[0];
+    if (!last) return toastDone('Simulated: nothing to post again yet');
+    toastDone('Simulated: the same notification again, not stored twice');
+  },
+  /** An OTP from a chosen app: dropped before anything is stored. */
+  otp() {
+    toastDone('Simulated: an OTP, dropped before anything was stored');
+  },
+  setBrand(brand: SimState['brand']) {
+    set({ brand });
   },
   reset() {
     useCaptureSim.setState(useCaptureSim.getInitialState(), true);
   },
 };
+
+function store(sample: (typeof SAMPLES)[number], at: number) {
+  const s = get();
+  if (!s.access || !s.chosen.includes(sample.package)) {
+    toastDone('Simulated: not stored, its app isn’t chosen or access is off');
+    return;
+  }
+  set({
+    events: [{ ...sample, id: s.next + 1000, postTime: at, when: at, capturedAt: at, synced: false }, ...s.events],
+  });
+  toastDone('Simulated: a notification captured');
+}
 
 const status = () => {
   const s = get();
@@ -280,7 +302,12 @@ export const captureSim: SenCapturePlugin = {
   },
   async keepRunning() {
     await pause();
-    return { manufacturer: 'Xiaomi', ignoringBattery: get().ignoringBattery, brand: XIAOMI };
+    const xiaomi = get().brand === 'xiaomi';
+    return {
+      manufacturer: xiaomi ? 'Xiaomi' : 'Fairphone',
+      ignoringBattery: get().ignoringBattery,
+      brand: xiaomi ? XIAOMI : null,
+    };
   },
   async openBrandStep({ index }) {
     toastDone(`Simulated: ${XIAOMI.opens[index]?.label ?? 'the app’s info page'}`);
@@ -295,6 +322,8 @@ export const captureSim: SenCapturePlugin = {
     return { beats: get().beats };
   },
   async shareSamples({ ids }) {
+    // as the shell does: nothing chosen is refused
+    if (!ids.length) throw Object.assign(new Error('Nothing chosen'), { code: 'EMPTY' });
     toastDone(`Simulated: the share sheet with ${ids.length} sample${ids.length === 1 ? '' : 's'}`);
   },
 };

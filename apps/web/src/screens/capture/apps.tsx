@@ -36,6 +36,8 @@ export default function CaptureApps() {
   const list = apps ?? data?.apps;
   const chosen = useMemo(() => new Set(list?.filter((a) => a.chosen).map((a) => a.package)), [list]);
   const curated = list?.filter((a) => a.curated) ?? [];
+  // banks and e-wallets are suggested; a card wallet (Google Wallet) may be chosen, never ticked for you (D88)
+  const suggested = curated.filter((a) => !a.blocked && a.kind !== 'wallet');
   const q = query.trim().toLowerCase();
   const others = (list ?? []).filter(
     (a) => !a.curated && (!q || a.label.toLowerCase().includes(q) || a.package.includes(q)),
@@ -88,18 +90,15 @@ export default function CaptureApps() {
       {!list && !error ? <ListSkeleton rows={4} /> : null}
       {list ? (
         <>
-          {chosen.size === 0 && curated.some((a) => !a.blocked) ? (
+          {chosen.size === 0 && suggested.length ? (
             <div className="px-4 pt-4">
               <StatusCard
                 icon={SparklesIcon}
                 state="Suggested"
-                title={`Sen found ${curated.length} ${curated.length === 1 ? 'bank or e-wallet' : 'banks and e-wallets'} on this phone.`}
+                title={`Sen found ${suggested.length} ${suggested.length === 1 ? 'bank or e-wallet' : 'banks and e-wallets'} on this phone.`}
               >
-                <Button
-                  className="mt-2 self-start"
-                  onClick={() => void save(new Set(curated.filter((a) => !a.blocked).map((a) => a.package)))}
-                >
-                  Choose {curated.length === 1 ? 'it' : `these ${curated.length}`}
+                <Button className="mt-2 self-start" onClick={() => void save(new Set(suggested.map((a) => a.package)))}>
+                  Choose {suggested.length === 1 ? 'it' : `these ${suggested.length}`}
                 </Button>
               </StatusCard>
             </div>

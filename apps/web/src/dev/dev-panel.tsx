@@ -178,6 +178,7 @@ export default function DevPanel() {
 function CaptureSim() {
   const access = useCaptureSim((s) => s.access);
   const events = useCaptureSim((s) => s.events.length);
+  const brand = useCaptureSim((s) => s.brand);
   return (
     <Group label="Capture (simulated)">
       <p className="text-sm text-muted-foreground">
@@ -190,10 +191,27 @@ function CaptureSim() {
         <Button variant="outline" onClick={() => sim.post()}>
           Post a notification
         </Button>
+        <Button variant="outline" onClick={() => sim.repost()}>
+          Post it again
+        </Button>
+        <Button variant="outline" onClick={() => sim.otp()}>
+          Post an OTP
+        </Button>
         <Button variant="ghost" onClick={() => sim.reset()}>
           Reset
         </Button>
       </div>
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        spacing={2}
+        aria-label="Phone brand"
+        value={brand}
+        onValueChange={(v) => (v === 'xiaomi' || v === 'none') && sim.setBrand(v)}
+      >
+        <ToggleGroupItem value="xiaomi">Xiaomi</ToggleGroupItem>
+        <ToggleGroupItem value="none">A brand with no steps</ToggleGroupItem>
+      </ToggleGroup>
     </Group>
   );
 }

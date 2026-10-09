@@ -20,22 +20,25 @@ async function simulate(page: Page, button: string, times = 1) {
 test('Capture says what stops the listener, and each step fixes one thing', async ({ page }) => {
   const errors = watchErrors(page);
   await open(page, '/more');
+  await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByRole('link', { name: 'Capture' }).click();
   await expect(page.getByText('Not listening')).toBeVisible();
   await expect(page.getByText('Sen needs notification access to read your bank apps.')).toBeVisible();
 
-  // your apps: the suggestion chooses the installed banks and e-wallets; blocked apps can't be chosen
+  // your apps: the suggestion chooses the installed banks and e-wallets, not a card wallet (D88);
+  // blocked apps can't be chosen
   await page.getByRole('button', { name: /Your apps/ }).click();
-  await page.getByRole('button', { name: 'Choose these 5' }).click();
+  await page.getByRole('button', { name: 'Choose these 4' }).click();
   await expect(page.getByRole('switch', { name: 'Ryt Bank' })).toBeChecked();
+  await expect(page.getByRole('switch', { name: 'Google Wallet' })).not.toBeChecked();
   await page.getByLabel('Search every app').fill('whats');
   await expect(page.getByRole('switch', { name: 'WhatsApp' })).toBeDisabled();
   await expect(page.getByText("A messaging app can't be chosen")).toBeVisible();
   await page.getByLabel('Search every app').fill('');
-  await page.getByRole('switch', { name: 'Google Wallet' }).click();
-  await expect(page.getByRole('switch', { name: 'Google Wallet' })).not.toBeChecked();
+  await page.getByRole('switch', { name: 'Grab' }).click();
+  await expect(page.getByRole('switch', { name: 'Grab' })).not.toBeChecked();
   await page.getByRole('button', { name: 'Back' }).click();
-  await expect(page.getByRole('button', { name: /Your apps/ })).toContainText('4 chosen');
+  await expect(page.getByRole('button', { name: /Your apps/ })).toContainText('3 chosen');
 
   // notification access: Open settings (simulated) turns it on, and the listener starts
   await page.getByRole('button', { name: /Notification access/ }).click();
@@ -44,7 +47,7 @@ test('Capture says what stops the listener, and each step fixes one thing', asyn
   await expect(page.getByText('Sen can read notifications.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Back' }).click();
   await expect(page.getByText('Listening')).toBeVisible();
-  await expect(page.getByText('Reading 4 apps.')).toBeVisible();
+  await expect(page.getByText('Reading 3 apps.')).toBeVisible();
 
   // keep Sen running: the battery step, then the brand's
   await page.getByRole('button', { name: /Keep Sen running/ }).click();
@@ -63,6 +66,7 @@ test('Capture says what stops the listener, and each step fixes one thing', asyn
 test('Captured on this phone lists what arrived, and shares the ones ticked', async ({ page }) => {
   // in-app navigation throughout: the simulator lives in the page, as the shell lives on the phone
   await open(page, '/more');
+  await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByRole('link', { name: 'Capture' }).click();
   await page.getByRole('button', { name: /Captured on this phone/ }).click();
   await expect(page.getByText('Notifications from your chosen apps appear here as they arrive.')).toBeVisible();
@@ -71,17 +75,37 @@ test('Captured on this phone lists what arrived, and shares the ones ticked', as
   await simulate(page, 'Post a notification');
   await expect(page.getByText('0 notifications', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Choose your apps' }).click();
-  await page.getByRole('button', { name: 'Choose these 5' }).click();
+  await page.getByRole('button', { name: 'Choose these 4' }).click();
   await page.getByRole('button', { name: 'Back' }).click();
   await simulate(page, 'Post a notification', 3);
   await expect(page.getByText('3 notifications', { exact: false })).toBeVisible();
+  // the same one again, as a reconnect replays it, and an OTP: neither adds a row
+  await simulate(page, 'Post it again');
+  await simulate(page, 'Post an OTP');
+  await expect(page.getByText('3 notifications', { exact: false })).toBeVisible();
   await expect(page.getByText('RM38.15 paid at Petron using your Main Account.')).toBeVisible();
   await page.getByRole('button', { name: 'Share samples' }).click();
+  // nothing ticked: it says so, and stays ready to tick
+  await page.getByRole('button', { name: 'Tick the ones to share' }).click();
+  await expect(page.getByText('Tick the notifications to share first.')).toBeVisible();
+  await expect(page.getByRole('checkbox').first()).toBeVisible();
   await page.getByRole('checkbox').first().click();
   await page.getByRole('button', { name: 'Share 1 sample' }).click();
   await expect(page.getByText('Simulated: the share sheet with 1 sample')).toBeVisible();
   await page.getByRole('button', { name: 'Heartbeat' }).click();
   await expect(page.getByText('Listener connected', { exact: true })).toBeVisible();
+});
+
+test('a phone brand with no steps gets the battery step and plain words', async ({ page }) => {
+  await open(page, '/more');
+  await page.getByRole('button', { name: 'Dev panel' }).click();
+  await page.getByRole('radio', { name: 'A brand with no steps' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await page.getByRole('link', { name: 'Capture' }).click();
+  await page.getByRole('button', { name: /Keep Sen running/ }).click();
+  await expect(page.getByText('Sen has no extra steps for Fairphone phones.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Allow' })).toBeVisible();
 });
 
 test('a long-press on the version opens the hidden tests', async ({ page }) => {
@@ -99,6 +123,16 @@ test('a long-press on the version opens the hidden tests', async ({ page }) => {
   await expect(page.getByText('Now Instrument.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Test island' }).click();
   await expect(page.getByText('Posted as a Live Update.', { exact: false })).toBeVisible();
+});
+
+test('More lists each screen once; Settings lists its own sections', async ({ page }) => {
+  await open(page, '/more');
+  const labels = await page.getByRole('main').getByRole('link').allTextContents();
+  expect(labels.length).toBe(new Set(labels).size);
+  expect(labels).not.toContain('Capture');
+  await page.getByRole('link', { name: 'Settings' }).click();
+  for (const name of ['Capture', 'Appearance', 'Account'])
+    await expect(page.getByRole('link', { name, exact: true })).toBeVisible();
 });
 
 for (const look of [LOOKS[0], LOOKS[5]]) {

@@ -4,7 +4,10 @@ import { PROD, ready, shot, sim, toCapture, touchHold, watch } from './b02-helpe
 test.describe('production build', () => {
   test.use({ baseURL: PROD, serviceWorkers: 'allow' });
 
-  test('FLOW-10 opens offline from the service worker; the API is never served from cache', async ({ page, context }) => {
+  test('FLOW-10 opens offline from the service worker; the API is never served from cache', async ({
+    page,
+    context,
+  }) => {
     const w = watch(page, PROD);
     await page.goto('/');
     await expect(page.getByTestId('not-built')).toBeVisible();
@@ -16,9 +19,14 @@ test.describe('production build', () => {
     await shot(page, 'FLOW-10-step-1-online');
     // online: two API calls go through the network and nothing about them is cached
     const online = await page.evaluate(async () => {
-      const a = await fetch('/api/qa-probe?n=1'); const b = await fetch('/api/qa-probe?n=1');
+      const a = await fetch('/api/qa-probe?n=1');
+      const b = await fetch('/api/qa-probe?n=1');
       const names = await caches.keys();
-      const all = (await Promise.all(names.map(async (n) => (await (await caches.open(n)).keys()).map((r) => new URL(r.url).pathname)))).flat();
+      const all = (
+        await Promise.all(
+          names.map(async (n) => (await (await caches.open(n)).keys()).map((r) => new URL(r.url).pathname)),
+        )
+      ).flat();
       return { a: a.status, b: b.status, cachedApi: all.filter((p) => p.startsWith('/api/')), total: all.length };
     });
     expect(online.cachedApi).toEqual([]);
@@ -29,15 +37,28 @@ test.describe('production build', () => {
     await expect(page.getByTestId('not-built')).toBeVisible();
     await shot(page, 'FLOW-10-step-2-offline-reload');
     // the five tabs, offline
-    for (const [tab, path] of [['Review', '/review'], ['Insights', '/insights'], ['More', '/more'], ['Home', '/']] as const) {
-      await page.getByRole('navigation', { name: 'Tabs' }).getByRole('link', { name: new RegExp(tab) }).click();
+    for (const [tab, path] of [
+      ['Review', '/review'],
+      ['Insights', '/insights'],
+      ['More', '/more'],
+      ['Home', '/'],
+    ] as const) {
+      await page
+        .getByRole('navigation', { name: 'Tabs' })
+        .getByRole('link', { name: new RegExp(tab) })
+        .click();
       await expect(page).toHaveURL(new RegExp(`${path === '/' ? '/$' : path}`));
     }
     await shot(page, 'FLOW-10-step-3-offline-tabs');
     // a deep link offline gets the app shell
     await page.goto('/s/settings/capture');
     await expect(page.getByText("Capture works in Sen's Android app", { exact: false })).toBeVisible();
-    const offlineApi = await page.evaluate(() => fetch('/api/qa-probe?n=1').then((r) => `status ${r.status}`, (e) => `rejected: ${e}`));
+    const offlineApi = await page.evaluate(() =>
+      fetch('/api/qa-probe?n=1').then(
+        (r) => `status ${r.status}`,
+        (e) => `rejected: ${e}`,
+      ),
+    );
     expect(offlineApi).toMatch(/^rejected/);
     await shot(page, 'FLOW-10-step-4-offline-deep-link');
     await context.setOffline(false);
@@ -72,12 +93,25 @@ test.describe('production build', () => {
     const w = watch(page, PROD);
     await page.goto('/');
     await ready(page);
-    for (const [tab, path] of [['Review', '/review'], ['Insights', '/insights'], ['More', '/more'], ['Home', '/']] as const) {
-      await page.getByRole('navigation', { name: 'Tabs' }).getByRole('link', { name: new RegExp(tab) }).click();
+    for (const [tab, path] of [
+      ['Review', '/review'],
+      ['Insights', '/insights'],
+      ['More', '/more'],
+      ['Home', '/'],
+    ] as const) {
+      await page
+        .getByRole('navigation', { name: 'Tabs' })
+        .getByRole('link', { name: new RegExp(tab) })
+        .click();
       await expect(page).toHaveURL(new RegExp(`${path === '/' ? '/$' : path}`));
       await shot(page, `CORE-step-${tab.toLowerCase()}`);
     }
-    await page.getByRole('navigation', { name: 'Tabs' }).getByRole('button', { name: /^Scan/ }).or(page.getByRole('navigation', { name: 'Tabs' }).getByRole('link', { name: /^Scan/ })).first().click();
+    await page
+      .getByRole('navigation', { name: 'Tabs' })
+      .getByRole('button', { name: /^Scan/ })
+      .or(page.getByRole('navigation', { name: 'Tabs' }).getByRole('link', { name: /^Scan/ }))
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/scan/);
     await shot(page, 'CORE-step-scan');
     expect(w.external).toEqual([]);

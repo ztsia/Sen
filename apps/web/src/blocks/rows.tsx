@@ -1,4 +1,4 @@
-import { useId, type ComponentType, type ReactNode } from 'react';
+import { useId, type ComponentType, type HTMLAttributes, type ReactNode } from 'react';
 import { ChevronRightIcon, CloudOffIcon, InboxIcon, ReceiptTextIcon, SparklesIcon, SplitIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -161,11 +161,22 @@ export function ReviewRow({
   );
 }
 
+/** The handlers of lib/long-press.ts's useLongPress, for a row with a hidden long-press (B02's version row). */
+type PressHandlers = Partial<
+  Pick<
+    HTMLAttributes<HTMLButtonElement>,
+    'onPointerDown' | 'onPointerMove' | 'onPointerUp' | 'onPointerLeave' | 'onPointerCancel' | 'onClick'
+  >
+>;
+
 type SettingsRowProps =
   | {
       label: string;
       value?: string;
-      onOpen: () => void;
+      /** Opens a screen: the row shows a chevron. With neither this nor press, the row only shows its value. */
+      onOpen?: () => void;
+      /** A long-press on a row that opens nothing, such as the version (B02's hidden tests). */
+      press?: PressHandlers;
       checked?: never;
       onCheckedChange?: never;
       media?: never;
@@ -176,6 +187,7 @@ type SettingsRowProps =
       label: string;
       value?: never;
       onOpen?: never;
+      press?: never;
       checked: boolean;
       onCheckedChange: (on: boolean) => void;
       /** A leading mark, such as an app's icon (the picker, B02). */
@@ -226,16 +238,28 @@ export function SettingsRow(props: SettingsRowProps) {
       </Item>
     );
   }
+  const inner = (
+    <>
+      <ItemContent className="min-w-0">
+        <ItemTitle className="text-base font-normal">{props.label}</ItemTitle>
+      </ItemContent>
+      <ItemActions className="max-w-[50%] text-right text-sm text-muted-foreground">
+        {props.value ? <span>{props.value}</span> : null}
+        {props.onOpen ? <ChevronRightIcon className="size-5 shrink-0 text-icon" aria-hidden="true" /> : null}
+      </ItemActions>
+    </>
+  );
+  // a row that opens nothing and holds no long-press is information, not a control
+  if (!props.onOpen && !props.press)
+    return (
+      <Item size="sm" className="min-h-14 flex-nowrap rounded-none text-base">
+        {inner}
+      </Item>
+    );
   return (
     <Item asChild size="sm" className="min-h-14 w-full flex-nowrap rounded-none text-left text-base active:bg-accent">
-      <button type="button" onClick={props.onOpen}>
-        <ItemContent className="min-w-0">
-          <ItemTitle className="text-base font-normal">{props.label}</ItemTitle>
-        </ItemContent>
-        <ItemActions className="max-w-[50%] text-right text-sm text-muted-foreground">
-          {props.value ? <span>{props.value}</span> : null}
-          <ChevronRightIcon className="size-5 shrink-0 text-icon" aria-hidden="true" />
-        </ItemActions>
+      <button type="button" onClick={props.onOpen} {...props.press}>
+        {inner}
       </button>
     </Item>
   );

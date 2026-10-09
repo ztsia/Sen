@@ -29,7 +29,11 @@ test('AC-8 a new deploy waits for the next launch', async ({ context }) => {
       const reg = (await navigator.serviceWorker.getRegistration())!;
       await reg.update();
       for (let i = 0; i < 100 && !reg.waiting; i++) await new Promise((r) => setTimeout(r, 100));
-      return { waiting: !!reg.waiting, activeIsController: reg.active === navigator.serviceWorker.controller, keys: await caches.keys() };
+      return {
+        waiting: !!reg.waiting,
+        activeIsController: reg.active === navigator.serviceWorker.controller,
+        keys: await caches.keys(),
+      };
     });
     expect(state.waiting).toBe(true);
     // in-app navigation and a reload of the same page: still v1, the page wasn't swapped under the person
@@ -50,7 +54,10 @@ test('AC-8 a new deploy waits for the next launch', async ({ context }) => {
       }
       return caches.keys();
     });
-    test.info().annotations.push({ type: 'caches', description: `before ${JSON.stringify(before)} after ${JSON.stringify(after)}` });
+    test.info().annotations.push({
+      type: 'caches',
+      description: `before ${JSON.stringify(before)} after ${JSON.stringify(after)}`,
+    });
     expect(after).toEqual(['sen-qa0000000000v002']);
     await shot(next, 'AC-8-step-2-v2-after-relaunch');
   } finally {

@@ -9,17 +9,24 @@ fs.mkdirSync(OUT, { recursive: true });
 export const shot = (page: Page, name: string) => page.screenshot({ path: `${OUT}${name}.png` });
 
 export function watch(page: Page, origin: string) {
-  const out = { external: [] as string[], errors: [] as string[], requests: [] as { url: string; body: string | null }[] };
+  const out = {
+    external: [] as string[],
+    errors: [] as string[],
+    requests: [] as { url: string; body: string | null }[],
+  };
   page.on('request', (r) => {
     out.requests.push({ url: r.url(), body: r.postData() });
-    if (!r.url().startsWith(origin) && !r.url().startsWith('data:') && !r.url().startsWith('blob:')) out.external.push(r.url());
+    if (!r.url().startsWith(origin) && !r.url().startsWith('data:') && !r.url().startsWith('blob:'))
+      out.external.push(r.url());
   });
   page.on('pageerror', (e) => out.errors.push(`pageerror: ${e.message}`));
   page.on('console', (m) => {
     if (m.type() === 'error') out.errors.push(`console: ${m.text()}`);
   });
   void page.addInitScript(() => {
-    document.addEventListener('securitypolicyviolation', (e) => console.error(`CSP: ${e.violatedDirective} ${e.blockedURI}`));
+    document.addEventListener('securitypolicyviolation', (e) =>
+      console.error(`CSP: ${e.violatedDirective} ${e.blockedURI}`),
+    );
   });
   return out;
 }

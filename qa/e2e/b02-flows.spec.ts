@@ -47,7 +47,9 @@ test('FLOW-1 choosing your apps, and FLOW-2 messaging, email and social apps ref
   expect(w.external).toEqual([]);
 });
 
-test('FLOW-3 a chosen app is captured; FLOW-4 an unchosen app leaves nothing; FLOW-9 share samples', async ({ page }) => {
+test('FLOW-3 a chosen app is captured; FLOW-4 an unchosen app leaves nothing; FLOW-9 share samples', async ({
+  page,
+}) => {
   const w = watch(page, ORIGIN);
   await toCapture(page);
   // only Ryt chosen
@@ -87,7 +89,10 @@ test('FLOW-3 a chosen app is captured; FLOW-4 an unchosen app leaves nothing; FL
   // expected (patterns.md §7 Forms): nothing acts, picking stays open, the button keeps saying what's missing
   const stillPicking = await page.getByRole('checkbox').count();
   await shot(page, 'FLOW-9-step-2-share-none');
-  test.info().annotations.push({ type: 'share-with-none', description: `checkboxes still shown after tapping with none ticked: ${stillPicking}` });
+  test.info().annotations.push({
+    type: 'share-with-none',
+    description: `checkboxes still shown after tapping with none ticked: ${stillPicking}`,
+  });
   if (!stillPicking) await page.getByRole('button', { name: 'Share samples' }).click();
   const zeroShared = stillPicking === 0;
   await page.getByRole('checkbox').nth(0).click();
@@ -108,7 +113,10 @@ test('FLOW-3 a chosen app is captured; FLOW-4 an unchosen app leaves nothing; FL
   expect(w.requests.filter((r) => r.body !== null)).toEqual([]);
   expect(w.external).toEqual([]);
   expect(w.errors).toEqual([]);
-  if (zeroShared) throw new Error('With nothing ticked, tapping the share button acted: picking mode closed as if 0 samples were shared (the native shell rejects EMPTY instead)');
+  if (zeroShared)
+    throw new Error(
+      'With nothing ticked, tapping the share button acted: picking mode closed as if 0 samples were shared (the native shell rejects EMPTY instead)',
+    );
 });
 
 test('FLOW-6 notification access, with the restricted-settings route', async ({ page }) => {
@@ -158,7 +166,8 @@ test('FLOW-8 the hidden tests: a tap does nothing, a long-press opens three', as
   const box = (await v.boundingBox())!;
   await touchHold(page, box.x + 40, box.y + box.height / 2, 800);
   await expect(page.getByRole('heading', { name: 'Tests' })).toBeVisible();
-  for (const n of ['Test category prompt', 'Test island', 'Switch icon']) await expect(page.getByRole('button', { name: n })).toBeVisible();
+  for (const n of ['Test category prompt', 'Test island', 'Switch icon'])
+    await expect(page.getByRole('button', { name: n })).toBeVisible();
   await shot(page, 'FLOW-8-step-2-tests');
   await page.getByRole('button', { name: 'Test category prompt' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Pull down the notifications' })).toBeVisible();

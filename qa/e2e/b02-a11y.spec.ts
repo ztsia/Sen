@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { shot, sim, toCapture } from './b02-helpers';
+import { shot, sim } from './b02-helpers';
 
 const axe = async (page: Page) =>
   (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()).violations.map(
@@ -8,15 +8,25 @@ const axe = async (page: Page) =>
   );
 const small = (page: Page) =>
   page.evaluate(() =>
-    [...document.querySelectorAll<HTMLElement>('main a[href], main button, main [role="switch"], main [role="checkbox"], [role="dialog"] button')]
+    [
+      ...document.querySelectorAll<HTMLElement>(
+        'main a[href], main button, main [role="switch"], main [role="checkbox"], [role="dialog"] button',
+      ),
+    ]
       .filter((el) => {
         const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0 && (r.width < 47.5 || r.height < 47.5);
       })
-      .map((el) => `${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30)}" ${Math.round(el.getBoundingClientRect().width)}×${Math.round(el.getBoundingClientRect().height)}`),
+      .map(
+        (el) =>
+          `${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30)}" ${Math.round(el.getBoundingClientRect().width)}×${Math.round(el.getBoundingClientRect().height)}`,
+      ),
   );
 
-for (const [look, mode] of [['minted', 'light'], ['copper', 'dark']] as const) {
+for (const [look, mode] of [
+  ['minted', 'light'],
+  ['copper', 'dark'],
+] as const) {
   test(`Captured on this phone and Account: axe and 48 px, ${look} ${mode}`, async ({ page }) => {
     await page.goto(`/more?look=${look}&mode=${mode}`);
     await expect(page.locator('html')).toHaveAttribute('data-look', look);
@@ -43,6 +53,11 @@ for (const [look, mode] of [['minted', 'light'], ['copper', 'dark']] as const) {
     const r4 = { axe: await axe(page), small: await small(page) };
     console.log(JSON.stringify({ look, mode, captured: r1, picking: r2, heartbeat: r3, account: r4 }));
     // picking rows: the checkbox is 20 px but the label covers the row (b02-rowtap), so only axe is asserted there
-    expect([r1, { ...r2, small: [] }, r3, r4]).toEqual([{ axe: [], small: [] }, { axe: [], small: [] }, { axe: [], small: [] }, { axe: [], small: [] }]);
+    expect([r1, { ...r2, small: [] }, r3, r4]).toEqual([
+      { axe: [], small: [] },
+      { axe: [], small: [] },
+      { axe: [], small: [] },
+      { axe: [], small: [] },
+    ]);
   });
 }

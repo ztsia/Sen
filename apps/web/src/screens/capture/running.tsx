@@ -154,8 +154,8 @@ function BrandSteps({
         <p className="text-sm text-muted-foreground">
           Steps from dontkillmyapp.com.{' '}
           {brand.tested
-            ? 'Tested on a Xiaomi.'
-            : `Not tested on a ${brand.name} yet; if capture stops, Sen warns you on Home.`}
+            ? `Sen is tried on a ${brand.name} first; the heartbeat shows whether capture keeps running.`
+            : `Not tried on a ${brand.name} yet; if capture stops, Sen warns you on Home.`}
         </p>
       </div>
     </Section>

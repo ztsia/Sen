@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
+import { SettingsRow } from '@/blocks/rows';
 import { Sheet } from '@/blocks/sheet';
 import { EmptyState, ListSkeleton } from '@/blocks/states';
 import { toastDone } from '@/blocks/toast';
@@ -51,6 +52,10 @@ export default function CapturedOnPhone() {
     setOlder((o) => [...o, ...r.events]);
   };
   const share = async () => {
+    if (!picked.size) {
+      toastDone('Tick the notifications to share first.');
+      return;
+    }
     try {
       await SenCapture.shareSamples({ ids: [...picked] });
       setPicking(false);
@@ -146,20 +151,15 @@ export default function CapturedOnPhone() {
         title="Heartbeat"
         description="When the listener connected, each hourly check, and each restart, newest first."
       >
-        <ul className="flex flex-col">
+        <div className="-mx-4 flex flex-col">
           {(beats ?? []).map((b, i) => (
-            <li
+            <SettingsRow
               key={`${b.at}-${i}`}
-              className="flex min-h-12 items-center justify-between gap-3 border-b border-border py-2 text-base last:border-0"
-            >
-              <span>{BEATS[b.kind]}</span>
-              <span className="text-right text-sm text-muted-foreground">
-                {momentLabel(new Date(b.at))}
-                {b.kind === 'beat' ? (b.connected ? ' · listening' : ' · not connected') : ''}
-              </span>
-            </li>
+              label={BEATS[b.kind]}
+              value={`${momentLabel(new Date(b.at))}${b.kind === 'beat' ? (b.connected ? ' · listening' : ' · not connected') : ''}`}
+            />
           ))}
-        </ul>
+        </div>
       </Sheet>
     </CaptureScreen>
   );

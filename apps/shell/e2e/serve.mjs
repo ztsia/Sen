@@ -19,7 +19,15 @@ const headersFor = (p) =>
       .filter((h) => new RegExp('^' + h.source.replace('(.*)', '.*') + '$').test(p))
       .flatMap((h) => h.headers.map((x) => [x.key, x.value])),
   );
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.json': 'application/json', '.png': 'image/png' };
+const TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript',
+  '.css': 'text/css',
+  '.svg': 'image/svg+xml',
+  '.woff2': 'font/woff2',
+  '.json': 'application/json',
+  '.png': 'image/png',
+};
 
 let offline = false;
 http
@@ -35,8 +43,12 @@ http
       return;
     }
     let file = path.join(dist, decodeURIComponent(url.pathname));
-    if (!file.startsWith(dist) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(dist, 'index.html');
-    res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream', ...headersFor(url.pathname) });
+    if (!file.startsWith(dist) || !fs.existsSync(file) || fs.statSync(file).isDirectory())
+      file = path.join(dist, 'index.html');
+    res.writeHead(200, {
+      'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream',
+      ...headersFor(url.pathname),
+    });
     fs.createReadStream(file).pipe(res);
   })
   .listen(port, () => console.log(`serving ${dist} on :${port}`));

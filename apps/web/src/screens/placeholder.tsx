@@ -12,11 +12,15 @@ import { SCREENS, showsSenButton, type ScreenDef } from './registry';
  * leads to, so every screen can be reached.
  */
 export function Placeholder({ screen }: { screen: ScreenDef }) {
-  // a step inside a screen (settings/capture/apps) is reached from that screen, not listed on the tab
+  // A tab lists the screens pushed from it; Settings lists its own sections (settings/…), which the More
+  // tab leaves to it, so no title shows twice there. A step inside a section (settings/capture/apps) is
+  // reached from that section.
   const children =
     screen.kind === 'tab'
-      ? SCREENS.filter((d) => d.tab === screen.id && d.kind === 'pushed' && d.id.split('/').length < 3)
-      : [];
+      ? SCREENS.filter((d) => d.tab === screen.id && d.kind === 'pushed' && !d.id.startsWith('settings/'))
+      : screen.id === 'settings'
+        ? SCREENS.filter((d) => d.id.startsWith('settings/') && d.id.split('/').length === 2)
+        : [];
   return (
     <Screen bar={<AppBar title={screen.title} home={screen.id === 'home'} />} senRoom={showsSenButton(screen)}>
       {screen.id === 'home' ? <h2 className="sr-only">Home</h2> : null}

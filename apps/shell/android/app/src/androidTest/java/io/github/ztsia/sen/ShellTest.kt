@@ -93,11 +93,17 @@ class ShellTest {
             js(s, "location.href = '$other/'; true")
             Thread.sleep(2_000)
             assertEquals("\"$site\"", js(s, "location.origin"))
-            // loaded anyway (as if by a bug): neither Capacitor nor its message channel exists there
+            // loaded anyway (as if by a bug): no message channel to native code exists there. The page is
+            // the same web build, so its own @capacitor/core defines window.Capacitor, but only as a
+            // plain web page: no native platform, and a call through it never reaches Kotlin.
             s.onActivity { it.bridge.webView.loadUrl("$other/") }
             waitJs(s, "the other origin", "location.origin === '$other' && document.readyState === 'complete'")
-            assertEquals("\"undefined\"", js(s, "typeof window.Capacitor"))
             assertEquals("\"undefined\"", js(s, "typeof window.androidBridge"))
+            assertEquals("\"web\"", js(s, "window.Capacitor.getPlatform()"))
+            assertEquals("false", js(s, "window.Capacitor.isNativePlatform()"))
+            js(s, "window.__senT = null; Promise.resolve().then(() => window.Capacitor.nativePromise('SenShell','info',{})).then(r => window.__senT = 'ANSWERED ' + JSON.stringify(r), e => window.__senT = 'REFUSED'); true")
+            Device.waitFor("the call to settle") { js(s, "window.__senT !== null") == "true" }
+            assertEquals("\"REFUSED\"", js(s, "window.__senT"))
         }
     }
 

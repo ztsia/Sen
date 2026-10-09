@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Item, ItemActions, ItemContent, ItemTitle } from '@/components/ui/item';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
+import { SettingsRow } from '@/blocks/rows';
 import { Sheet } from '@/blocks/sheet';
 import { toastDone } from '@/blocks/toast';
 import { useLongPress } from '@/lib/long-press';
@@ -28,18 +28,7 @@ export default function AccountSettings() {
   return (
     <Screen bar={<AppBar title="Account" />}>
       <Section title="About">
-        <Item
-          asChild
-          size="sm"
-          className="min-h-14 w-full flex-nowrap rounded-none text-left text-base active:bg-accent"
-        >
-          <button type="button" aria-label={`Version ${version}`} {...press}>
-            <ItemContent className="min-w-0">
-              <ItemTitle className="text-base font-normal">Version</ItemTitle>
-            </ItemContent>
-            <ItemActions className="text-sm text-muted-foreground">{version}</ItemActions>
-          </button>
-        </Item>
+        <SettingsRow label="Version" value={version} press={shell ? press : undefined} />
       </Section>
       <Sheet
         open={tests}

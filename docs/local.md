@@ -80,25 +80,25 @@ follow on a phone, and commit.
       3. **Install and set up.** The *Shell* workflow builds both apps on every push. After B02 is
          merged, *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* → tap `sen-0.2.N.apk` (Chrome asks
          to allow installing unknown apps: allow it for Chrome). Before the merge, the run's page has
-         them under *Artifacts* (a zip). Then in Sen: *More* → *Capture*:
+         them under *Artifacts* (a zip). Then in Sen: *More* → *Settings* → *Capture*:
          - *Your apps*: tap *Choose these*, or tick yours.
          - *Notification access* → *Open settings*, find Sen, switch it on. **Greyed out?** Back in
            Sen, *Open Sen's app info*, tap ⋮ at the top right → *Allow restricted settings*, then try
            again.
          - *Keep Sen running*: *Allow*, then *Autostart* on, *Battery saver* → *No restrictions*,
            and lock Sen in recent apps (open recents, drag Sen's card down or long-press → padlock).
-      4. **The soak, a week** (B02 done-when 6). Pay as you normally do. Now and then open *Capture* →
-         *Captured on this phone*: each payment should be there, and the ♥ (*Heartbeat*) at the top
+      4. **The soak, a week** (B02 done-when 6). Pay as you normally do. Now and then open *Settings* →
+         *Capture* → *Captured on this phone*: each payment should be there, and the ♥ (*Heartbeat*) at the top
          shows the listener's checks. **Reboot once**, and **leave the phone alone for a day once**;
          the heartbeat should show it carrying on after both. Then:
          - *Share samples*: tick the new notifications (Ryt's duplicates with their times, a TNG QR
            payment, a toll, …) and share them into a cloud session, which anonymises them into
            `docs/notifications.md`. Real text never goes into the repo.
          - Say whether anything from an app you didn't choose ever showed up (it must not).
-      The **hidden tests** are behind a long-press on *Version* in *More* → *Account* (the lower of
-      the two *Account* rows, Settings' own, until B04 builds Settings), in the next two items.
+      The **hidden tests** are behind a long-press on *Version* in *More* → *Settings* → *Account*,
+      in the next two items.
 - [ ] **Does your launcher keep Sen's icon when the look changes?** (D77) In the installed release, long-press
-      *Version* (*More* → the lower *Account*) and tap **Switch icon**. Put Sen on your home screen first,
+      *Version* (*More* → *Settings* → *Account*) and tap **Switch icon**. Put Sen on your home screen first,
       then press Home after tapping and check, on the home screen and in the app drawer:
       - Sen's icon changed (Minted ↔ Instrument) and stayed where it was
       - no second Sen icon appeared, and nothing went missing
