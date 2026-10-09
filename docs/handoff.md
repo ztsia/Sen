@@ -5,17 +5,15 @@ read this first, and rewrite it before you end.
 
 ## Where things stand
 
-- **B02 · The shell and the listener, on `B02/shell-listener`: code done; run 5's findings fixed (D119:
-  every long number outside amounts masked). QA run 6 is running, scoped to the capture path (tier 2).
-  Then fix by the `qa` skill's tiers, then the PR.** The owner's part follows the PR: Vercel, the
-  signing key, installing, the week of soak (`docs/local.md`).
-- **QA so far:** runs 1–4 full, 5 scoped (all on the OTP filter, then the mask). Records:
-  `qa/B02/report-run1..5.md`, `ledger.md` (every fix and its tier). Run 6 writes `report.md`. Report
-  with screenshots: https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA (publish run 6 to the same URL).
-- **Verified in the session at `a6a2437`:** core 41/41; QA's probes 217/218 (red: the deliberate TAC
-  CAFE drop); unit 141/141; Playwright 100/100; APKs build. **CI's emulator** failed at `bc2219f`: a
-  5,000-character notification was dropped as *unread* (Android's regex throws where the JVM overflows);
-  `a6a2437` catches both. Check that run first.
+- **B02 · The shell and the listener, on `B02/shell-listener`: code done; QA runs 5 and 6 (scoped, the
+  capture path) fixed. Next: QA run 7, scoped, on Sonnet, but only on the owner's nod (quota). Then the
+  PR.** The owner's part follows the PR: Vercel, the signing key, installing, the soak (`docs/local.md`).
+- **QA so far:** runs 1–4 full, 5–6 scoped. Records: `qa/B02/report-run1..5.md`, `report.md` (run 6),
+  `ledger.md`. Report: https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA (run 7 to the same URL; rename
+  `report.md` to `report-run6.md` first).
+- **Verified at `9e4c72a`:** core 43/43; QA's probes 265/267 (red: run 4's TAC CAFE choice and
+  `Probe6.ac25`, which needs a JVM overflow that warm-up removes: ledger); unit 141/141; Playwright
+  100/100; the e2e APK builds. **Check the `Shell` workflow** (the emulator) on the latest push first.
 - **Not verified yet:** anything on the phone; the signed release (no key); the review alias (no Vercel).
 
 ## Decided, and why
@@ -36,9 +34,10 @@ read this first, and rewrite it before you end.
 
 ## Open with the owner
 
-- **The Sonnet comparison run: wait for the owner's nod** (quota). Once run 6 is done: the same thin
-  prompt as run 6, `model: sonnet`, in its own worktree at the commit run 6 checked, writing to
-  `qa/B02/compare-sonnet/`. Compare findings, misses, false alarms, tokens and time.
+- **Two QA runs wait for the owner's nod** (quota): run 7 (scoped, the capture path, Sonnet, findings
+  10–13 fixed), and the Sonnet comparison: run 6's thin prompt, `model: sonnet`, in its own worktree at
+  `07e1ad7`, writing to `qa/B02/compare-sonnet/`; compare with run 6 (Opus, about 240k tokens, 102 tool
+  calls, 31 minutes): findings, misses, false alarms, tokens, time.
 - **Which journeys in `docs/flows.md` are core?** Recommend: first run, a payment to Review, and Scan.
 - Vercel and its two addresses into `apps/shell/sites.json`; the signing key; install; the soak; the
   hidden tests. All in `docs/local.md`. Is the review alias behind Vercel's login?
@@ -46,8 +45,8 @@ read this first, and rewrite it before you end.
 
 ## What to do first
 
-1. If QA run 6 finished: commit its record (a subagent can't write `report.md`: save it from its
-   message), publish the report, fix by its tiers. If it didn't: start it again, same prompt.
+1. On the owner's nod: QA run 7 (save `report.md` from its message: a subagent can't write it), publish,
+   fix by its tiers; and the Sonnet comparison.
 2. Check the `Shell` workflow on the latest push.
 3. Open the PR, *B02 · The shell and the listener*, with the phone checks from the brief.
 - Then B03, on `B03/skeleton-tabs` from `main`, once B02 is merged.
