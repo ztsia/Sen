@@ -4,7 +4,9 @@ import { readFileSync, readdirSync } from 'node:fs';
 const SHOTS = '/home/user/Sen/.claude/worktrees/agent-a4be4889e0dd8b315/qa-artifacts/B02-shell-listener/screens';
 test.use({ baseURL: 'http://localhost:4311' });
 
-test('FLOW-11/12: production has no simulator, no dev panel; capture screens say the app is needed', async ({ page }) => {
+test('FLOW-11/12: production has no simulator, no dev panel; capture screens say the app is needed', async ({
+  page,
+}) => {
   await page.goto('/s/settings/capture');
   await expect(page.getByText("Capture works in Sen's Android app", { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Dev panel' })).toHaveCount(0);

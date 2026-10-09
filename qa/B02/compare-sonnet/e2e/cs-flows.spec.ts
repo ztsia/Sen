@@ -24,7 +24,12 @@ const rows = (page: Page) => evLi(page).allInnerTexts();
 const bodyText = (page: Page) => page.locator('body').innerText();
 /** Four or more digits in a row (across single spaces, dashes, slashes), outside RM amounts. */
 const longRuns = (s: string) =>
-  [...s.replace(/(RM|MYR)\s?[\d,]+(\.\d{2})?/gi, '').replace(/\d{1,3}(,\d{3})*\.\d{2}/g, '').matchAll(/\d(?:[\s\-/.]?\d){3,}/g)].map((m) => m[0]);
+  [
+    ...s
+      .replace(/(RM|MYR)\s?[\d,]+(\.\d{2})?/gi, '')
+      .replace(/\d{1,3}(,\d{3})*\.\d{2}/g, '')
+      .matchAll(/\d(?:[\s\-/.]?\d){3,}/g),
+  ].map((m) => m[0]);
 
 async function chooseRytOnly(page: Page) {
   await page.getByRole('button', { name: 'Choose your apps' }).click();
@@ -133,7 +138,9 @@ test('FLOW-9: offline capture, reload, back online', async ({ page, context }) =
   await page.waitForLoadState('networkidle');
   await shot(page, 'FLOW-9-step-2-after-reload');
   const afterText = await bodyText(page);
-  console.log(`FLOW-9: rows before reload ${before}; after reload body mentions: ${/(\d+) notifications?/.exec(afterText)?.[0] ?? '(no captured screen)'}`);
+  console.log(
+    `FLOW-9: rows before reload ${before}; after reload body mentions: ${/(\d+) notifications?/.exec(afterText)?.[0] ?? '(no captured screen)'}`,
+  );
 });
 
 test('FLOW-10: browser timezone America/New_York still shows Kuala Lumpur time', async ({ browser }) => {
@@ -151,14 +158,29 @@ test('FLOW-10: browser timezone America/New_York still shows Kuala Lumpur time',
   await chooseRytOnly(page);
   await sim(page, 'Post a notification', 3);
   await expect(page.getByText('1 notification', { exact: false })).toBeVisible();
-  const klNow = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kuala_Lumpur', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
-  const nyNow = new Intl.DateTimeFormat('en-GB', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
-  const r = (await rows(page))[0] ?? '(none)'; console.log('FLOW-10 rows:', JSON.stringify(await rows(page)));
+  const klNow = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kuala_Lumpur',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date());
+  const nyNow = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'America/New_York',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date());
+  const r = (await rows(page))[0] ?? '(none)';
+  console.log('FLOW-10 rows:', JSON.stringify(await rows(page)));
   const m = /(Today|Yesterday), (\d\d):(\d\d)/.exec(r);
   console.log(`FLOW-10: row says [${m?.[0]}], KL now ${klNow}, NY now ${nyNow}`);
   expect(m).not.toBeNull();
   const shown = `${m![2]}:${m![3]}`;
-  const diff = Math.abs(parseInt(shown.slice(0, 2)) * 60 + parseInt(shown.slice(3)) - (parseInt(klNow.slice(0, 2)) * 60 + parseInt(klNow.slice(3))));
+  const diff = Math.abs(
+    parseInt(shown.slice(0, 2)) * 60 +
+      parseInt(shown.slice(3)) -
+      (parseInt(klNow.slice(0, 2)) * 60 + parseInt(klNow.slice(3))),
+  );
   expect(Math.min(diff, 1440 - diff)).toBeLessThanOrEqual(2);
   await shot(page, 'FLOW-10-step-1-kl-time-under-ny-browser');
   await ctx.close();
@@ -175,7 +197,9 @@ test('FLOW-5: the stand-in samples never show a 4+ digit run outside amounts', a
   const t = (await rows(page)).join('\n');
   expect(longRuns(t)).toEqual([]);
   // the Ryt "Your money is in!" sample: its date is masked to bullets by the mask
-  await expect(page.getByText("You've received RM42.50 from TAN WEI MING on ••/•/••••, 9:48 PM (GMT+8).")).toBeVisible();
+  await expect(
+    page.getByText("You've received RM42.50 from TAN WEI MING on ••/•/••••, 9:48 PM (GMT+8)."),
+  ).toBeVisible();
   await shot(page, 'FLOW-5-step-1-samples-masked');
 });
 

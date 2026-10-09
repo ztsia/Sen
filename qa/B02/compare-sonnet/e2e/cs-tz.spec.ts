@@ -11,7 +11,9 @@ async function sim(page: Page, button: string, times = 1) {
 }
 const evLi = (page: Page) => page.locator('li').filter({ has: page.locator('.selectable') });
 
-test('FLOW-10b: 23:30 KL on 31 Oct, browser in New_York: Today 23:30, then Yesterday after KL midnight', async ({ browser }) => {
+test('FLOW-10b: 23:30 KL on 31 Oct, browser in New_York: Today 23:30, then Yesterday after KL midnight', async ({
+  browser,
+}) => {
   const ctx = await browser.newContext({
     viewport: { width: 412, height: 915 },
     isMobile: true,
