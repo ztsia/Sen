@@ -95,6 +95,9 @@ follow on a phone, and commit.
            payment, a toll, …) and share them into a cloud session, which anonymises them into
            `docs/notifications.md`. Real text never goes into the repo.
          - Say whether anything from an app you didn't choose ever showed up (it must not).
+         - Say whether any row shows a one-time code or TAC you could read (it must not: long
+           numbers show as `•`, D119). Expect Ryt's dates as `••/•/••••`; that's the mask, not a fault.
+           (QA B02 run 6)
       The **hidden tests** are behind a long-press on *Version* in *More* → *Settings* → *Account*,
       in the next two items.
 - [ ] **Does your launcher keep Sen's icon when the look changes?** (D77) In the installed release, long-press
