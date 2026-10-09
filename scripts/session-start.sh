@@ -31,6 +31,10 @@ if [ -f pnpm-lock.yaml ] && [ ! -d node_modules ]; then
     || echo "session-start: pnpm install failed, see /tmp/session-pnpm.log"
 fi
 
+# Gradle in a session: Maven Central rate-limits the VM, Google's mirror of it doesn't (docs/cloud.md §5).
+# The Android SDK itself is a separate step, scripts/android-sdk.sh, for slices that build the shell.
+mkdir -p "$HOME/.gradle/init.d" && cp scripts/gradle-maven-mirror.gradle "$HOME/.gradle/init.d/maven-mirror.gradle"
+
 # The local database for SQL and RLS tests. The foundations slice adds scripts/local-db.sh;
 # docs/cloud.md §5 records how a local Postgres runs in a session.
 if [ -x scripts/local-db.sh ]; then

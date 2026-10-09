@@ -45,7 +45,7 @@ text but not necessarily every field the listener receives. P1 confirms which fi
 
 ## 1. Ryt Bank
 
-App label `Ryt Bank`. Package name: confirm in P1.
+App label `Ryt Bank`. Package `my.rytbank.app` (checked on Play, 9 Oct; the soak confirms it on the phone).
 
 | Event | Title | Text |
 |---|---|---|
@@ -90,7 +90,7 @@ stops each transfer being counted twice. Keep Gmail off the allowlist.
 
 ## 2. TNG eWallet
 
-App label `TNG eWallet`. Package name: confirm in P1.
+App label `TNG eWallet`. Package `my.com.tngdigital.ewallet` (checked on Play, 9 Oct).
 
 | Event | Title | Text |
 |---|---|---|
@@ -119,7 +119,7 @@ You have successfully cashed in RM25.00 into your GO+ account.
 
 ## 3. Public Bank
 
-App label `MyPB`. Package name: confirm in P1.
+App label `MyPB`. Package `com.pbb.mypb` (checked on Play, 9 Oct).
 
 | Event | Title | Text |
 |---|---|---|
@@ -136,7 +136,7 @@ PBB. You have received a DuitNow Transfer of RM150.00 from TAN WEI MING.
 
 ## 4. Grab
 
-App label `Grab`. Package name: confirm in P1. A GrabFood group order produced this sequence, top to
+App label `Grab`. Package `com.grabtaxi.passenger` (checked on Play, 9 Oct). A GrabFood group order produced this sequence, top to
 bottom. In a group order each member pays their own part, charged to their own GrabPay Wallet.
 
 | When | Title | Text | What it is |

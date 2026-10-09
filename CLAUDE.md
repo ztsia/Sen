@@ -89,7 +89,8 @@ built module by module, and every feature worked but the app didn't hang togethe
 starts in `ztsia/Sen`. The next slice waits only for the owner's merge.
 
 **Built so far:** B01, the design system and the six looks (the workspace, money, the frame, the
-building blocks, the dev panel and the gallery). Next: B02, the shell and the listener.
+building blocks, the dev panel and the gallery). In progress: B02, the shell and the listener, on
+`B02/shell-listener`.
 
 ## Non-negotiables
 
@@ -193,6 +194,9 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |
   | `pnpm looks` | Regenerates `apps/web/src/styles/looks.gen.css` from `docs/ui/directions/assets/`; CI fails if it's stale |
   | `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
+  | `gradle -p apps/shell/core test` | The capture core's Kotlin tests; needs no Android SDK |
+  | `bash scripts/android-sdk.sh` | Installs the Android SDK in a cloud session (about 2 minutes), to build the shell's APKs there: then `pnpm --filter @sen/shell sync` and `gradle assembleDebug` in `apps/shell/android` |
+  | `node apps/shell/scripts/icons.mjs` | Renders the launcher and notification icons from the looks' SVGs into the Android resources |
   | `node apps/web/scripts/frame-times.mjs` | Each look's frame times at 390×844 with the CPU slowed 4×, against a running `vite preview` |
 
   The QA database arrives with the server (B05).
@@ -204,7 +208,7 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | `packages/core/` | Pure TypeScript shared by the app, the API and the worker: the money module now; cycles and the template engine later |
   | `packages/looks/` | The six looks as `DIR` modules, ported from `docs/ui/directions/src/`, each loaded only when shown |
   | `apps/api/` | The Hono API (B05) |
-  | `apps/shell/` | The Capacitor shell for Android, with the Kotlin capture plugin (B02) |
+  | `apps/shell/` | The Capacitor shell for Android (B02): application id **`io.github.ztsia.sen`**, name **Sen** (`.debug`, *Sen review*, for the review build). `android/` is the app, with our Kotlin in `app/src/main/java/io/github/ztsia/sen/` (the listener, the outbox, the bridge's two plugins `SenShell` and `SenCapture`) and its emulator tests in `app/src/androidTest/`; `core/` the pure Kotlin capture core (no Android SDK); `data/` the curated apps and the brands' steps; `sites.json` the one address each build loads; `www/` the page shown when the site can't load |
   | `apps/worker/` | The Cloudflare Worker: schedules and the realtime relay (B06) |
   | `scripts/` | The session hooks, the hygiene check and the QA report |
 
