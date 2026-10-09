@@ -141,6 +141,12 @@ class Probe5 {
     @Test fun ac52_circled() = disguised("④⑧②⑨①③")
     @Test fun ac52_math_bold() = disguised("𝟒𝟖𝟐𝟗𝟏𝟑")
     @Test fun ac52_arabic_indic() = disguised("٤٨٢٩١٣")
+    /** (after reading) the filter itself reads these as a code: so the mask and the filter disagree on what a code is. */
+    @Test fun ac52_filter_reads_them_as_codes() {
+        listOf("482\u2009913", "482\u2002913", "482\u3000913", "④⑧②⑨①③", "𝟒𝟖𝟐𝟗𝟏𝟑").forEach { c ->
+            assertEquals(Decision.Drop(DropReason.OTP), decide(posted("Ryt Bank", "Your TAC is $c.")), c)
+        }
+    }
     @Test fun ac52s_short_numbers_stay() = untouched("Ryt Bank", "Paid RM12.90 at Table 12, No. 123, 9:47 PM. Never share your TAC.")
 
     // ---- AC-53: only the masked digits change ----
@@ -278,5 +284,22 @@ class Probe5Overflow {
             threshold("mask/$name", make) { mask.mask("Ryt Bank", it, null) }
             threshold("gate/$name", make) { gate.decide(Posted("p", "k", "c", 1, 1, "Ryt Bank", it, null), setOf("p")) }
         }
+    }
+}
+
+/** Rows for phase 4's SQLite check (AC-54, AC-55): what the gate hands the outbox, one per line. */
+class Probe5Rows {
+    @Test fun rows() {
+        val gate = CaptureGate()
+        val ryt = "my.rytbank.app"
+        fun row(key: String, w: Long, text: String) {
+            val e = (gate.decide(Posted(ryt, key, "transactions", w, w, "Ryt Bank", text, null), setOf(ryt)) as Decision.Keep).event
+            println("ROW\t${e.dedupeKey}\t${e.packageName}\t${e.channel}\t${e.key}\t${e.postTime}\t${e.whenMillis}\t${e.title}\t${e.text}\t${if (e.maybeOtp) 1 else 0}")
+        }
+        row("0|my.rytbank.app|7|null|10123", 1_760_000_000_000, "Paid RM12.90 at KEDAI MAJU 482913. Never share your TAC.")
+        row("0|my.rytbank.app|7|null|10123", 1_760_000_000_000, "Paid RM12.90 at KEDAI MAJU 771204. Never share your TAC.")
+        row("0|my.rytbank.app|7|null|10123", 1_760_000_000_000, "Paid RM12.90 at KEDAI MAJU 482913. Never share your TAC.")
+        row("0|my.rytbank.app|8|null|10123", 1_760_000_060_000, "Paid RM12.90 at KEDAI MAJU 482913. Never share your TAC.")
+        row("0|my.rytbank.app|9|null|10123", 1_760_000_120_000, "You've sent RM42.50 to TAN WEI MING. Ref 48291077.")
     }
 }
