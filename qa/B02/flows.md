@@ -1,7 +1,7 @@
-# B02 · Flows (QA run 3)
+# B02 · Flows (QA run 4)
 
-Written from the docs before the implementation was opened (run 2), re-read for run 3. Each is walked in
-Chromium at 412×915 (D42) with the dev panel standing in for the shell, in `qa/e2e/b02-r3-flows.spec.ts`. Native-only steps
+Written from the docs before the implementation was opened (run 2), re-read for runs 3 and 4. Each is walked in
+Chromium at 412×915 (D42) with the dev panel standing in for the shell, in `qa/e2e/b02-r4-flows.spec.ts` (run 4). Native-only steps
 (the real listener, the emulator) are checked through the Kotlin core here and CI's emulator run.
 
 FLOW-1  Choosing your apps                                              (happy)
@@ -50,9 +50,17 @@ FLOW-6  An OTP and an unchosen app never arrive                          (sad)
 FLOW-13 A batch of OTP shapes against the real filter                   (sad, native)
         Actor  the listener (no UI: the pure Kotlin core is what the shell runs)
         Entry  the core's `OtpFilter`/`CaptureGate`, from QA's own Gradle probe (`qa/B02/core-probe`)
-        Steps  1. each of AC-17's OTP shapes  2. each of AC-17s's payments
-        Ends   every OTP shape is dropped; every payment is kept
+        Steps  1. each of AC-17's OTP shapes (a–s, and run 4's t–ap)  2. each of AC-17s's payments (1–20)
+        Ends   every OTP shape is dropped; every payment is kept (`Probe4.kt` for run 4's cases; `Probe`–`Probe3` re-run)
         Covers AC-17, AC-17s   Spec §6.2, D115
+
+FLOW-14 A dropped OTP is visible on the phone, without its text          (sad, run 4)
+        Entry  dev panel → *Post an OTP* from a chosen app; then from an unchosen app
+        Steps  1. post an OTP from a chosen app  2. open Captured on this phone
+               3. post an OTP from an unchosen app  4. reload Captured on this phone
+        Ends   step 2: no event row; the heartbeat log has one drop entry naming the app and a time, with
+               none of the OTP's text or digits; step 4: the log is unchanged (no entry for the unchosen app)
+        Covers AC-47, AC-47s   Spec §6.2, D115
 
 FLOW-7  Share samples                                                    (happy + sad)
         Entry  Captured on this phone → *Share samples*
@@ -92,7 +100,8 @@ FLOW-12 Another timezone                                                 (sad)
 
 ## The core journeys
 
-`docs/flows.md` marks no journey as **core** (searched: no match for "core"). Run 1 noted the same.
+`docs/flows.md` marks no journey as **core** (run 4 searched again: `grep -i core docs/flows.md` has no
+match). Runs 1–3 noted the same; the handoff now holds it for the owner.
 So this run walks the journeys B02 touches instead: `first-run` steps 2–4 (FLOW-1 to FLOW-4, as
 Settings → Capture's screens, which B08 reuses), `capture-off` step 3 (FLOW-3) and `offline`
 (FLOW-10). Recorded as an open question: which journeys are core.

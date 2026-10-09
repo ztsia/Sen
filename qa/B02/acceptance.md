@@ -1,10 +1,13 @@
-# B02 · Acceptance criteria (QA run 3)
+# B02 · Acceptance criteria (QA run 4)
 
-Run 3 keeps run 2's criteria (re-read against the docs, unchanged where the docs are) and sharpens the
-OTP/TAC filter's, because D115 now states the rule: a keyword and a code must be *joined*. Run 3's
-reviewer read the ledger (a QA record, which describes the redesign in words) before writing these, but
-no implementation file. AC-17's cases below are new and adversarial, chosen from realistic Malaysian
-bank wording, not from the branch's tests.
+Run 4 keeps run 3's criteria, re-read against the docs as they now stand. Since run 3, spec §6.2 and D115
+state the filter's rule in words: evidence sentence by sentence, the title apart from the text; advice
+isn't evidence unless it points at a code; a strong keyword with a code anywhere in the rest drops; a weak
+one (PIN, kod, code) only when joined to its code; a code is 4 to 8 digits, never an amount, date, time,
+phone number or reference; in doubt it drops; each drop from a chosen app is logged by time and app, never
+text. Run 4 adds AC-17 cases t–z and aa–ap, AC-17s payments 7–20, and AC-47 (the drop log). All were
+written from the spec and decisions before `OtpFilter.kt` or `otp-keywords.txt` was opened. The reviewer
+had read QA's own records first (run 3's report, the ledger, QA's `Probe3.kt`) to avoid repeating cases.
 
 Originally written from the docs only, before the implementation was opened: `spec_v2.md` §5, §5.1, §6.2, §9.5,
 §17, §18, §21; `docs/briefs/B02-shell-listener.md`; `docs/decisions.md` D42, D77, D86, D101, D114,
@@ -148,6 +151,54 @@ AC-17s When  a chosen app posts a real payment that merely shares words or digit
                "You've sent RM50.00 to OTP ENTERPRISE on 09 Oct, 14:30 (GMT+8) using your Main Account."
       Then   each is stored (a payment is never silently dropped as an OTP)
       Spec   §6.2; D115 (joined keyword and code); CLAUDE.md non-negotiable; done-when 4
+
+AC-17 (run 4) More OTP shapes, none of them in any earlier QA run or the branch's tests
+      Given  a chosen app
+      When   it posts any of these (title | text | big text; "-" is absent):
+               t.  "RM50.00 DuitNow to TAN WEI MING. TAC: 482910. Expires in 3 min."   (amount first)
+               u.  "PBe: TAC 482910 for Fund Transfer RM100.00 to acct ending 1234. Not you? Call 03-2176 7000"
+               v.  "Kod OTP anda untuk transaksi RM100.00 ialah 482910. Sah selama 5 minit."
+               w.  "Masukkan 482910 sebagai kod pengesahan anda."  (code before a Malay keyword)
+               x.  "Use one-time PIN 482910 to complete your RM120.00 purchase at SHOPEE"
+               y.  "482910 adalah OTP anda. Jangan kongsi."
+               z.  "Approve login? Code 482910 expires in 60s"   (weak keyword joined)
+               aa. "Your OTP for TNG eWallet is 482910 (valid 5 mins). Ref: 8812"
+               ab. "TAC=482910"
+               ac. "OTP: 48 29 10"   (pairs)
+               ad. "Do not share this OTP with anyone: 482910"   (advice that holds the code)
+               ae. "Transaction Authorisation Code (TAC) 482910 for transfer RM100.00"
+               af. "Kata laluan sekali (OTP) anda: 482910"
+               ag. title "Your OTP" | text "482910"
+               ah. "Your 2FA code is 482910"
+               ai. "One Time Passcode (OTP): 482910"
+               aj. "Your login code is 482910"
+               ak. "Your TAC is ready! 482910"
+               al. "otp 482910"
+               am. "🔐 Your OTP is 482910"
+               an. "482910 is your TAC for RM50.00 to TAN WEI MING"
+               ao. title "Public Bank" | text "You have a new message" | big text "Your TAC is 482910"
+               ap. "PIN: 4829"
+      Then   none is stored (the gate's decision is a drop, not Keep)
+AC-17s (run 4) More payments that share words or digits with an OTP
+      When   a chosen app posts any of these:
+               7.  "You've paid RM12.90 to ZUS COFFEE. Never share your OTP or TAC with anyone."
+               8.  "Payment of RM1,250.00 to TAN WEI MING successful on 09/10/2026 14:30. Ref 482910."
+               9.  "DuitNow QR payment RM8.50 to KEDAI TAC SENG. Transaction ID 20261009482910"
+               10. "Received RM100.00 from TAN WEI MING. If you did not authorise this, call 03-2176 7000."
+               11. "Ryt Bank: RM25.00 spent at GRAB*FOOD 482910 using card ending 1234."
+               12. "Your card ending 4829 was charged RM38.15 at PETRON. Do not reveal your PIN or TAC to anyone."
+               13. "Bayaran RM12.90 kepada ZUS COFFEE berjaya pada 09/10/2026. Jangan dedahkan OTP anda kepada sesiapa."
+               14. "TNG eWallet: Reload of RM50.00 successful. Transaction No. 2026100914301234."
+               15. "GrabPay: You paid RM15.00 to MAKCIK NASI LEMAK. Order code A-482910."
+               16. "Pembayaran RM30.00 kepada TNB berjaya. Nombor akaun 220012345678."
+               17. "Transfer of RM200.00 to 1234 5678 9012 successful."
+               18. title "Public Bank" | "PBe: RM120.00 debited from acct 4829xxxx1234 on 09-10-26 14:30. Ref 482910. Never share your TAC."
+               19. "Anda telah membayar RM12.90 kepada ZUS COFFEE. Rujukan: 482910."
+               20. "Payment successful. RM12.90 to ZUS COFFEE. Reference code: 482910"
+      Then   each is stored. (Spec §6.2 lets the filter drop *in doubt*; none of these is in doubt by the
+             spec's own definition, since every number is an amount, date, time, phone number, account digits
+             or a labelled reference, and every strong keyword sits in advice.)
+      Spec   §6.2 *How the OTP/TAC filter decides*; D115
 
 AC-18 The keyword list is in the repo and tested
       Then   a keyword file exists in English and Malay, and unit tests cover both languages
@@ -324,3 +375,13 @@ AC-46 Suites green
       Then   `pnpm test`, `pnpm typecheck`, `pnpm lint`, Kotlin core tests, `pnpm e2e` pass
 AC-46s Then  the shell's emulator tests pass on CI (latest run for HEAD)
       Spec   brief done-when 1–5
+
+## Added in run 4
+
+AC-47 A drop from a chosen app leaves a trace, never text
+      Given  a chosen app
+      When   it posts an OTP that the filter drops
+      Then   the phone's log gains one entry with the time and the app, and the soak screen can show it
+AC-47s Then  the entry holds no title, text, big text or digits from the notification; and a notification
+             from an unchosen app (OTP or not) leaves no entry at all
+      Spec   §6.2 *How the OTP/TAC filter decides* (last sentence), *The chosen list … never stored or logged*; D115
