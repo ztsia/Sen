@@ -51,6 +51,8 @@ test('R6-FLOW-1 payments from chosen apps land on Captured, exactly, newest firs
   await sim(page, 'Grant access');
   await captured(page);
   await count(page, 0);
+  // the empty state from patterns.md, not a blank list
+  await expect(page.getByText('Notifications from your chosen apps appear here as they arrive.')).toBeVisible();
   await shot(page, 'R6-FLOW-1-step-1-before');
   // step 2: four posts: TNG, MyPB, Ryt in, Ryt card (the simulator's order)
   await sim(page, 'Post a notification', 4);
