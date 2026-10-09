@@ -107,8 +107,8 @@ function BrandSteps({
     return (
       <Section title={`Your ${manufacturer}`}>
         <p className="px-4 text-base text-pretty">
-          Sen has no extra steps for {manufacturer} phones. The battery step above is usually enough; if capture stops,
-          Sen warns you on Home.
+          Sen has no extra steps for {manufacturer} phones. The battery step above is usually enough. If capture stops,
+          the heartbeat under Captured on this phone shows when it last ran.
         </p>
       </Section>
     );
@@ -155,7 +155,7 @@ function BrandSteps({
           Steps from dontkillmyapp.com.{' '}
           {brand.tested
             ? `Sen is tried on a ${brand.name} first; the heartbeat shows whether capture keeps running.`
-            : `Not tried on a ${brand.name} yet; if capture stops, Sen warns you on Home.`}
+            : `Not tried on a ${brand.name} yet. If capture stops, the heartbeat under Captured on this phone shows when it last ran.`}
         </p>
       </div>
     </Section>

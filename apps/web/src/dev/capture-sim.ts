@@ -217,17 +217,36 @@ export const sim = {
     const s = get();
     const sample = SAMPLES[s.next % SAMPLES.length]!;
     set({ next: s.next + 1 });
-    store(sample, Date.now());
+    store(sample, Date.now() + s.next);
   },
   /** The last notification again, as a listener reconnect replays it: the same dedupe key, so nothing new. */
   repost() {
+    // the newest event's own fields, `when` included: the same dedupe identity, as a reconnect replays it
     const last = get().events[0];
     if (!last) return toastDone('Simulated: nothing to post again yet');
-    toastDone('Simulated: the same notification again, not stored twice');
+    store(
+      { package: last.package, channel: last.channel, title: last.title, text: last.text, bigText: last.bigText },
+      last.when,
+    );
   },
-  /** An OTP from a chosen app: dropped before anything is stored. */
+  /**
+   * An OTP from a chosen app. The browser can't run the shell's Kotlin filter, so this made-up OTP is
+   * marked as one and dropped the way the shell drops it: before anything is stored. The filter itself
+   * is tested in apps/shell/core and on the emulator.
+   */
   otp() {
-    toastDone('Simulated: an OTP, dropped before anything was stored');
+    const pkg = get().chosen[0] ?? 'my.rytbank.app';
+    store(
+      {
+        package: pkg,
+        channel: 'security',
+        title: 'Ryt Bank',
+        text: 'Your TAC is 482910. Do not share it.',
+        bigText: null,
+        otp: true,
+      },
+      Date.now(),
+    );
   },
   setBrand(brand: SimState['brand']) {
     set({ brand });
@@ -237,14 +256,32 @@ export const sim = {
   },
 };
 
-function store(sample: (typeof SAMPLES)[number], at: number) {
+type Posted = Omit<CapturedEvent, 'id' | 'postTime' | 'when' | 'capturedAt' | 'synced'> & { otp?: boolean };
+
+/** What the listener does with a notification: unchosen, then OTP, then the dedupe key (spec §6.2). */
+function store(posted: Posted, when: number) {
   const s = get();
-  if (!s.access || !s.chosen.includes(sample.package)) {
+  if (!s.access || !s.chosen.includes(posted.package)) {
     toastDone('Simulated: not stored, its app isn’t chosen or access is off');
     return;
   }
+  if (posted.otp) {
+    toastDone('Simulated: an OTP, dropped before anything was stored');
+    return;
+  }
+  const key = (e: Pick<CapturedEvent, 'package' | 'title' | 'text' | 'bigText' | 'when'>) =>
+    [e.package, e.title, e.text, e.bigText, e.when].join('\u0000');
+  const { otp: _otp, ...event } = posted;
+  if (s.events.some((e) => key(e) === key({ ...event, when }))) {
+    toastDone('Simulated: the same notification again, not stored twice');
+    return;
+  }
+  const now = Date.now();
   set({
-    events: [{ ...sample, id: s.next + 1000, postTime: at, when: at, capturedAt: at, synced: false }, ...s.events],
+    events: [
+      { ...event, id: (s.events[0]?.id ?? 1000) + 1, postTime: now, when, capturedAt: now, synced: false },
+      ...s.events,
+    ],
   });
   toastDone('Simulated: a notification captured');
 }

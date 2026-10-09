@@ -3,65 +3,65 @@ package io.github.ztsia.sen.core
 /**
  * Drops one-time passwords, TACs and the like before anything is stored (spec §6.2, D86). It runs after
  * the chosen-apps check, in native code. Since Android 15 the system hides most OTP notifications from
- * listeners anyway; this is the second line.
+ * listeners anyway; this is the second line, and holds on its own.
  *
- * A notification is an OTP when it has **both** a keyword (otp-keywords.txt) and a code:
- * - a 6 to 8 digit number anywhere, or
- * - a 4 or 5 digit number straight after a keyword ("PIN is 4829", "OTP: 4829", "OTP4829").
+ * A notification is an OTP when a keyword (otp-keywords.txt) and a code are **joined**, in either order:
+ * - the keyword, then a few linking words from a closed list, then the code:
+ *   "Your OTP is 123 456", "TAC No. 482910", "Your OTP for login: 4829", "Kod anda ialah 482910";
+ * - or the code, then a few linking words, then the keyword: "G-482910 is your verification code",
+ *   "482910 adalah kod anda";
+ * - or the keyword, then any few words in the same clause (no comma or full stop), then "is",
+ *   "ialah" or a colon, then the code: "TAC for DuitNow Transfer to LIM KAH HOE is 482910".
  *
- * Needing both is what keeps payments: a transfer that ends "We never ask for your TAC", or a café
- * called TAC CAFE, has a keyword but no code. A number isn't a code when it's an amount (RM, MYR, or
- * with decimals or thousands), a date or a time, a reference, an account's last digits, or part of a
- * longer number such as a phone number.
+ * A code is 4 to 8 digits, which may be grouped by single spaces or hyphens ("123 456", "123-456"), and
+ * may carry `#` or a letter and hyphen in front ("#482910", "G-482910"). It's never part of an amount (a
+ * decimal point or thousands comma after it) or of a longer number.
  *
- * Keywords match as whole words, in any case; a space or hyphen in one matches any run of spaces and
- * hyphens, or none, so "one-time password" also catches "one time password" and "onetime password".
- * A keyword may run straight into its code ("OTP123456").
+ * A keyword and a number that merely share a notification aren't joined, so payments stay: a footer such
+ * as "Never share your PIN" next to a store number, a reference or an approval code is kept. That's why
+ * the linking words are a closed list, and why a full stop ends the join ("No." aside).
  */
 class OtpFilter(phrases: List<String>) {
-    private val keywords: List<Regex> = phrases.map(::compile)
+    private val joined: List<Regex>
+
+    init {
+        val kw = phrases.map(::phrase).sortedByDescending { it.length }.joinToString("|")
+        val keyword = "(?<![\\p{L}\\p{N}])(?:$kw)(?![\\p{L}])"
+        val forward = "(?:$SEP(?:$LINK_AFTER)(?![\\p{L}]))*"
+        val backward = "(?:$SEP(?:$LINK_BEFORE)(?![\\p{L}]))*"
+        joined =
+            listOf(
+                Regex("$keyword$forward$SEP$CODE"),
+                Regex("$CODE$backward$SEP$keyword"),
+                // "TAC for DuitNow Transfer to LIM KAH HOE is 482910": a payee's name can't be on a list,
+                // so any words may follow the keyword, within one clause, when "is" or a colon then
+                // hands over the code
+                Regex("$keyword(?:[ \\t]+[^\\s.,!?;]+){0,8}[ \\t]*(?:(?<![\\p{L}])(?:is|ialah|adalah)[ \\t]+|:[ \\t]*)$CODE"),
+            )
+    }
 
     fun isOtp(vararg parts: String?): Boolean {
         val text = normalise(parts.filterNotNull().joinToString("\n"))
-        if (text.isEmpty()) return false
-        val hits = keywords.flatMap { k -> k.findAll(text).map { it.range.last } }
-        if (hits.isEmpty()) return false
-        for (n in NUMBER.findAll(text)) {
-            if (!isCode(text, n.range)) continue
-            if (n.value.length >= 6) return true
-            // a short code counts only right after its keyword: "PIN 4829", "OTP: 4829", "code is 4829"
-            if (hits.any { end -> n.range.first > end && JOIN.matches(text.substring(end + 1, n.range.first)) }) return true
-        }
-        return false
-    }
-
-    private fun isCode(text: String, at: IntRange): Boolean {
-        val before = text.getOrNull(at.first - 1)
-        val after = text.getOrNull(at.last + 1)
-        val next = text.getOrNull(at.last + 2)
-        // part of an amount, a date, a time, a phone number or a masked number
-        if (before != null && before in GLUED_BEFORE) return false
-        if (after != null && after in GLUED_AFTER && next?.isDigit() == true) return false
-        if (after == '/' || after == '-') return false
-        // straight after letters: only a keyword's own code, "otp123456"
-        if (before != null && before.isLetter()) return GLUED_KEYWORD.containsMatchIn(text.substring(0, at.first))
-        val lead = text.substring(maxOf(0, at.first - 16), at.first)
-        if (NOT_A_CODE_BEFORE.containsMatchIn(lead)) return false
-        if (TIME_AFTER.matchesAt(text, at.last + 1)) return false
-        return true
+        return text.isNotEmpty() && joined.any { it.containsMatchIn(text) }
     }
 
     companion object {
         private const val RESOURCE = "/sen/otp-keywords.txt"
-        private val JOIN = Regex("[\\s:=#-]*((is|ialah|adalah|anda)[\\s:=#-]*)?")
 
-        private val NUMBER = Regex("(?<!\\p{N})\\p{N}{4,8}(?!\\p{N})")
-        private val GLUED_BEFORE = setOf('.', ',', '/', '-', '+', '•', '*', '#', 'x', '×')
-        private val GLUED_AFTER = setOf('.', ',', ':')
-        private val GLUED_KEYWORD = Regex("(?<![\\p{L}\\p{N}])(otp|tac|mtac|pin)$")
-        private val NOT_A_CODE_BEFORE =
-            Regex("(?<![\\p{L}\\p{N}])(rm|myr|ref|reference|no|id|ending|ends|acc|account|a/c|akaun|rujukan)[\\s.:#-]*$")
-        private val TIME_AFTER = Regex("\\s?(am|pm|h|hrs)(?![\\p{L}])")
+        /** What may sit between the parts: spaces, a colon, an equals sign, brackets, a dash. Never a full stop. */
+        private const val SEP = "[\\s:=()\\[\\]\\-–—]*"
+
+        /** 4 to 8 digits, maybe grouped, maybe with # or a letter and hyphen in front; not an amount, not part of a longer number. */
+        private const val CODE =
+            "(?<![\\p{N}.,#/])(?:#|[a-z]-)?\\p{N}(?:[ \\-]?\\p{N}){3,7}(?![\\p{N}]|[.,]\\p{N}|[ \\-]\\p{N})"
+
+        /** Words that link a keyword to the code after it. A closed list: anything else breaks the join. */
+        private const val LINK_AFTER =
+            "is|are|for|your|the|a|to|use|enter|with|approve|code|login|log|in|sign|signing|transaction|transfer|" +
+                "payment|duitnow|no\\.?|number|anda|ialah|adalah|untuk|ini|bagi|guna|masukkan|masuk|nombor|nya"
+
+        /** Words that link a code to the keyword after it. */
+        private const val LINK_BEFORE = "is|are|your|the|as|adalah|ialah|merupakan|anda|ini"
 
         /** The keywords kept in the repo, `src/main/resources/sen/otp-keywords.txt`. */
         fun default(): OtpFilter = OtpFilter(parse(load()))
@@ -73,12 +73,11 @@ class OtpFilter(phrases: List<String>) {
         fun parse(list: String): List<String> =
             list.lineSequence().map { it.substringBefore('#').trim() }.filter { it.isNotEmpty() }.toList()
 
-        private fun compile(phrase: String): Regex {
-            val words = normalise(phrase).split(Regex("[\\s-]+")).filter { it.isNotEmpty() }
+        /** A keyword as a pattern: a space or hyphen in it matches any run of spaces and hyphens, or none. */
+        private fun phrase(p: String): String {
+            val words = normalise(p).split(Regex("[\\s-]+")).filter { it.isNotEmpty() }
             require(words.isNotEmpty()) { "empty phrase" }
-            val body = words.joinToString("[\\s-]*") { Regex.escape(it) }
-            // whole words on the left; on the right, no letter, so a code may follow straight on
-            return Regex("(?<![\\p{L}\\p{N}])$body(?!\\p{L})")
+            return words.joinToString("[\\s-]*") { Regex.escape(it) }
         }
     }
 }

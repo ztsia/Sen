@@ -22,8 +22,27 @@ class CaptureGateTest {
     fun `an unchosen app is dropped first, whatever it says`() {
         val d = gate.decide(posted(pkg = "com.example.other"), chosen = setOf(ryt))
         assertEquals(Decision.Drop(DropReason.NOT_CHOSEN), d)
-        // even an OTP from it is NOT_CHOSEN: its text is never read
-        assertEquals(Decision.Drop(DropReason.NOT_CHOSEN), gate.decide(posted(pkg = "x", text = "OTP 1"), setOf(ryt)))
+    }
+
+    @Test
+    fun `the chosen check comes before every other, so an unchosen app's text is never read`() {
+        // a real OTP, a group summary, an ongoing one, an empty one: from an unchosen app, all NOT_CHOSEN
+        val otp = posted(pkg = "com.example.other", text = "Your TAC is 482910")
+        assertEquals(DropReason.OTP, (gate.decide(otp.copy(packageName = ryt), setOf(ryt)) as Decision.Drop).reason)
+        assertEquals(Decision.Drop(DropReason.NOT_CHOSEN), gate.decide(otp, setOf(ryt)))
+        assertEquals(Decision.Drop(DropReason.NOT_CHOSEN), gate.decide(otp.copy(isGroupSummary = true, isOngoing = true), setOf(ryt)))
+        assertEquals(Decision.Drop(DropReason.NOT_CHOSEN), gate.decide(posted(pkg = "x", title = null, text = null), setOf(ryt)))
+        assertEquals(
+            Decision.Drop(DropReason.NOT_CHOSEN),
+            gate.decide(posted(pkg = "x", channel = "promo"), setOf(ryt), setOf(ChannelRef("x", "promo"))),
+        )
+    }
+
+    @Test
+    fun `the chosen check matches the exact package`() {
+        listOf("$ryt.fake", "MY.RYTBANK.APP", "my.rytbank", "${ryt} ").forEach {
+            assertEquals(Decision.Drop(DropReason.NOT_CHOSEN), gate.decide(posted(pkg = it), setOf(ryt)), it)
+        }
     }
 
     @Test

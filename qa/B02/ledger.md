@@ -28,3 +28,23 @@ takes its highest tier.
 Verified before the re-run: Kotlin core 25/25 (QA's probe 23/23 against the new filter and key); unit
 141/141; Playwright 100/100; typecheck, lint, format clean; the e2e APK and its tests build here. The
 emulator tests run on the push (`Shell` workflow).
+
+## Run 2 → fixes (9 Oct 2026)
+
+**Tier 3 again: a fresh full QA run 3 follows.** The Blocker is the OTP/TAC filter, a `CLAUDE.md`
+non-negotiable. Run 2's findings 1 and 2 show the run-1 fix was the wrong shape: "a keyword somewhere and
+a number somewhere" can't be right both ways. The filter is redesigned rather than patched again.
+
+| # | Finding | Fix | Tier, and why |
+|---|---|---|---|
+| 1 | Blocker: OTPs stored in six shapes (split, `#`, `G-`, `No.`, a few words between) | A keyword and a code must be **joined**: keyword → closed list of linking words → code; code → *is your*, *adalah*… → keyword; or keyword → any words in one clause → *is*/*ialah*/colon → code. A code may be grouped by spaces or hyphens and carry `#` or a letter and hyphen in front | 3 (Blocker, non-negotiable) |
+| 2 | Major: payments dropped when a footer meets a 6–8 digit number | The same: a keyword and a number that merely share a notification no longer count; security footers (*never share*, *jangan kongsi*) are no longer keywords; a comma or full stop ends a join | 3 (non-negotiable) |
+| 3 | The gate's tests didn't pin chosen-first or exact matching | `CaptureGateTest`: a real OTP, a summary, an ongoing, an empty and a dropped channel, all from an unchosen app, are `NOT_CHOSEN`; prefix, case and near-miss packages are refused. Red: moving the chosen check below the OTP check, and matching by prefix, each fail one test (`27 tests completed, 1 failed`); green with the real gate | 1 on its own |
+| 4 | The title on *Captured on this phone* couldn't be selected | `.selectable` on the title too | 1 on its own |
+| 5 | The simulator's replay and OTP were only words | They go through the simulator's own store: chosen check, then a marked OTP dropped, then a dedupe identity (package, title, text, expanded text, `when`), so a replay adds nothing | 2 on its own |
+| 6 | *Keep Sen running* promised a Home warning only B07 builds | It points to the heartbeat under *Captured on this phone* | 1 on its own |
+| 7 | No journey in `docs/flows.md` is marked core | For the owner: in the handoff | — |
+
+Verified before run 3: Kotlin core 27/27; QA's probes from both runs (`qa/B02/core-probe`, `Probe` and
+`Probe2`) 51/51 against the new filter; unit 141/141; the branch's Playwright 100/100; QA run 2's own
+Playwright specs 17/17 (FLOW-5's selectable title included); typecheck, lint, format clean.

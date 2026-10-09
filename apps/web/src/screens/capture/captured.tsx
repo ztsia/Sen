@@ -185,7 +185,7 @@ function EventRow({
         <span className="min-w-0 truncate">{app}</span>
         <span className="shrink-0">{momentLabel(new Date(e.postTime))}</span>
       </ItemDescription>
-      {e.title ? <ItemTitle className="w-full text-base wrap-anywhere">{e.title}</ItemTitle> : null}
+      {e.title ? <ItemTitle className="selectable w-full text-base wrap-anywhere">{e.title}</ItemTitle> : null}
       {e.text ? <p className="selectable text-base wrap-anywhere">{e.text}</p> : null}
       {e.bigText && e.bigText !== e.text ? (
         <p className="selectable text-sm wrap-anywhere text-muted-foreground">{e.bigText}</p>
