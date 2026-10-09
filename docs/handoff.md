@@ -11,7 +11,7 @@ read this first, and rewrite it before you end.
   week of soak (`docs/local.md`, *B02: the shell on your phone*). The next slice doesn't wait for the soak.
 - **QA so far:** four runs, each "fix first", each on the OTP/TAC filter (each run invents new wordings
   after reading the code), plus smaller findings, all fixed. Records: `qa/B02/report-run1..3.md`,
-  `report.md` (run 4), `ledger.md`. Report with screenshots: https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA.
+  `report-run4.md`, `ledger.md`. Report with screenshots: https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA.
 - **Verified at `820eadb` in the session:** Kotlin core 31/31; QA's core probes 177/179 (two kept red
   on purpose, ledger run 4); unit 141/141; Playwright 100/100; QA's Playwright 45/45; all APKs build;
   typecheck, lint, format, hygiene. **On GitHub Actions** (`Shell` workflow, free on this public repo):
