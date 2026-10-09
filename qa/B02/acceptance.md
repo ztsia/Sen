@@ -385,3 +385,159 @@ AC-47 A drop from a chosen app leaves a trace, never text
 AC-47s Then  the entry holds no title, text, big text or digits from the notification; and a notification
              from an unchosen app (OTP or not) leaves no entry at all
       Spec   §6.2 *How the OTP/TAC filter decides* (last sentence), *The chosen list … never stored or logged*; D115
+
+## Run 5: the capture path only (D116)
+
+Scope, set by the owner: what happens to a chosen app's notification between the listener and storage
+(what's dropped, what's stored, and exactly what text), and how that shows on *Captured on this phone* and
+in the simulator. Sources: `spec_v2.md` §6.2 (*The chosen list*, *Also dropped*, *How the OTP/TAC filter
+decides*, *What the filter keeps but might hold a code is masked*, *Raw text is stored first*, *Dedupe
+key*); D86, D115, D116; `docs/ui/patterns.md` §7 *Raw notification row*; `docs/screens.md` (Settings →
+Capture); the B09 and B10 briefs' D116 lines (for what B02 must hand them); `CLAUDE.md` non-negotiables.
+
+Written before any of `apps/shell` or `apps/web` was opened in this run. The reviewer had read QA's own
+records first (reports 1–4 and the ledger); the ledger's D116 row describes the masker in one sentence
+("an OTP word anywhere (advice included) and a run of four or more digits (grouped, glued to letters, with
+invisible characters) masks every such run as `•`, leaving amounts"). That's disclosed here because it's
+a description of the code, though not the code. Every notification below is made up.
+
+Two doc wordings differ slightly and both are held: §6.2 says the digits are "masked as `•`"; D116 says
+"those numbers masked (`••••••`)". So a criterion passes on any mask of bullets that leaves no digit of
+the number, and doesn't depend on the bullet count.
+
+AC-48 Chosen first, still
+      Given  an unchosen package (`com.example.notchosen`)
+      When   it posts a doubtful OTP ("Paid RM12.90 at KEDAI 2241. Never share your TAC.") and a clear OTP
+      Then   no outbox row, no drop-log entry, nothing reaches the page (gate says NOT_CHOSEN for both)
+AC-48s When  the same doubtful text comes from a chosen app
+      Then   it is stored (masked, AC-50); the mask never turns a chosen app's kept notification into a drop
+      Spec   §6.2 *The chosen list … is checked first*; D86; CLAUDE.md *listener discards apps … in native code*
+
+AC-49 A clear OTP is still dropped, on the raw text
+      Given  a chosen app
+      When   it posts "Your TAC is 482913 for a transfer of RM50.00 to TAN WEI MING."
+      Then   no outbox row; one drop-log entry (time and app, no text); the mask never runs first and lets
+             it through as a masked event
+AC-49s When  a payment carries only a footer ("Never share your TAC") and no run of 4+ digits
+      Then   it is stored with title, text and big text code-point identical to what was posted, maybe_otp 0
+      Spec   §6.2 *How the OTP/TAC filter decides*; D115; D116 ("the native filter still drops a clear OTP/TAC")
+
+AC-50 A doubtful OTP is stored masked and marked
+      Given  a chosen app's notification the filter keeps
+      When   it has an OTP word anywhere (strong or weak list, advice included) and a run of 4+ digits that
+             isn't an amount, in the title, the text or the big text
+      Then   every such run is stored as bullets (no digit of it left), in whichever field it sits, and
+             maybe_otp = 1
+AC-50s When  the same text has no OTP word
+      Then   it is stored unmasked, maybe_otp 0 (a store number or reference with no OTP word stays)
+      Spec   §6.2 *What the filter keeps but might hold a code is masked*; D116
+
+AC-51 Amounts are left
+      Given  a masked event (AC-50)
+      Then   these stay exactly: `RM12.90`, `RM 1,234.50`, `RM1234.50`, `RM2500`, `MYR 2500`, `RM 2,500`,
+             a bare decimal `1,234.56`, `-RM1,250.00`
+AC-51s Then  a 4+ digit run that is neither a decimal amount nor after a currency is masked, even right after
+             an amount (`RM12.90 482913` masks `482913`); `Ref 2500` masks `2500`
+      Spec   §6.2 ("amounts (a decimal amount, or a number after a currency) are left")
+
+AC-52 A code in disguise is masked too
+      Given  a masked event's code written as `482 913`, `48 29 13`, `4 8 2 9 1 3`, `482-913`, `OTP482913`,
+             `A-482913`, `48​29​13` (zero-width), `482 913` (no-break space), `482 913`
+             (thin space), and fullwidth `４８２９１３`
+      Then   no 4 or more of the code's digits survive in the stored text, in order (no `4829`, `8291`, `2913`
+             and no `482`+`913` left readable across a separator)
+AC-52s Then  a short number with no partner stays (`Table 12`, `No. 123`, `9:47 PM`)
+      Spec   D116 ("so no possible code is ever stored"); §6.2 (a code "maybe grouped (one digit at a time too)
+             or prefixed")
+
+AC-53 Only the masked digits change
+      Then   in a masked event, everything outside the masked numbers is code-point identical to what was
+             posted: letters, punctuation, emoji, line breaks, no-break spaces, the amount
+AC-53s Then  an unmasked event is code-point identical in all three fields, including emoji, U+00A0, U+200B,
+             NFD accents, `\r\n` and trailing spaces; an absent field stays absent (null), not "" or "null"
+      Spec   §6.2 *Raw text is stored first* ("Raw text is never changed, except a maybe OTP's masked digits")
+
+AC-54 The dedupe key is taken from the masked text
+      Then   the stored key equals the key computed over package, key, `when` and the masked fields, and
+             differs from the key over the raw fields; two posts with the same package, key and `when` whose
+             texts differ only in the masked number give one row
+AC-54s When  the same masked notification is replayed (reconnect) → one row and the last-event time doesn't
+             move; with a different `when` → two rows
+      Spec   §6.2 ("Its dedupe key is taken from the masked text, so a code never reaches storage, even as a
+             hash"); *Dedupe key*; D115; CLAUDE.md *Every input has a dedupe key*
+
+AC-55 The code reaches no storage at all
+      When   a doubtful OTP with code 482913 is stored
+      Then   no table of the outbox (events, heartbeats/drop log, anything else) holds `482913` or the key
+             computed from the raw text; no log line holds it
+AC-55s Then  a masked event isn't logged as a drop (it wasn't dropped), and the last-event time moves
+      Spec   D116; §6.2; CLAUDE.md *OTP/TAC … before anything is stored*
+
+AC-56 What reaches the page
+      Then   the bridge's list of events gives the masked text and `maybeOtp: true`; never the raw digits
+AC-56s Then  a dropped OTP never reaches the page in any form
+      Spec   §6.2; CLAUDE.md (OTP "before anything is stored or reaches JavaScript")
+
+AC-57 *Captured on this phone* says so
+      Then   a masked row shows its text with the bullets, and under it a muted line, exactly
+             *Maybe a one-time code, so its numbers are hidden*
+AC-57s Then  an unmasked row has no such line; the line is muted (not destructive or error colour) and the row
+             is the same raw notification row (app and time, then title and text, selectable)
+      Spec   §6.2 ("Captured on this phone says so under the row"); patterns.md §7 *Raw notification row*
+
+AC-58 Share samples keeps the mask
+      When   a masked row is ticked and shared
+      Then   the shared text is the masked text, and says it's a maybe one-time code
+AC-58s Then  an unmasked row is shared exactly as stored
+      Spec   brief *Share samples*; D116
+
+AC-59 The simulator walks the same path
+      When   the dev panel posts a maybe-OTP, then posts it again
+      Then   *Captured on this phone* gains one masked row with the muted line, and the replay adds nothing
+AC-59s Then  the simulator's mask agrees with the native one on the same inputs (no code shown in the browser
+             that the phone would hide, and the reverse)
+      Spec   CLAUDE.md (*Native-only features … get a dev-only simulator panel, so flows can be walked*); D116
+
+AC-60 The outbox upgrade (version 3) keeps what's there
+      Given  a version-2 outbox with rows
+      When   the app opens with version 3
+      Then   `maybe_otp` exists, old rows read 0, no row is lost
+AC-60s Then  a fresh install creates the column directly; a version-1 outbox upgrades through both steps
+      Spec   D116 (the handoff's "Outbox VERSION 3 adds the column"); §18 (the outbox survives)
+
+AC-61 A screen never claims a hidden number that wasn't hidden
+      When   a kept notification has an OTP word and no 4+ digit run except an amount (`RM1,234.50 … TAC`)
+      Then   its text is stored unchanged; the screen shows the muted line only if something was masked
+AC-61s Then  when something was masked, the line always shows
+      Spec   §6.2 (amounts are left); patterns.md §7 (the line says "its numbers are hidden")
+
+AC-62 Words that only look like OTP words
+      When   a payment has no OTP word but a substring of one (`TACO HOUSE 2241`, `SPINNEYS 1234`,
+             `KODAK 5521`, `postcode 50450`, `CODEX 2026`)
+      Then   it is stored unmasked, maybe_otp 0 (raw text is never changed otherwise)
+AC-62s When  an OTP word is glued or cased oddly (`otp`, `Tac:`, `[TAC]`, `OTP:482913`, `T A C`)
+      Then   it still counts (the event is dropped, or stored masked)
+      Spec   §6.2 *Raw text is stored first*; D116
+
+AC-63 An OTP in words the lists might not hold is never stored raw
+      When   a chosen app posts a code in wording a Malaysian bank could use: `Your passcode is 482913`,
+             `Kata laluan sekali guna anda: 482913`, `Nombor pengesahan anda ialah 482913`,
+             `Your one-time PIN: 482913`, `Your security code: 482913`, `Your 2FA code is 482913`,
+             `Gunakan 482913 untuk log masuk`, `您的验证码是482913`
+      Then   it is dropped, or stored masked; never stored with `482913` readable
+AC-63s Then  each drop is logged (time and app only)
+      Spec   CLAUDE.md *OTP/TAC messages … discarded in native code*; D116 ("so no possible code is ever
+             stored"); §6.2 (filter in English and Malay; "in doubt it drops")
+
+AC-64 Hostile sizes don't stall the listener
+      When   the text is 64 KB, or 20 000 single digits separated by spaces next to "TAC", or 5 000 grouped
+             numbers
+      Then   the gate, filter, mask and key finish in under 250 ms each on the VM, and the result obeys AC-50/52
+AC-64s Then  an empty title and text with only a big text is handled like any other field (no crash)
+      Spec   §6.2 *Background execution* (the listener stores natively; an ANR loses capture)
+
+AC-65 Done-when 4, with the mask
+      Then   the shell's emulator tests pass on CI for HEAD: an unchosen app never stored, an OTP dropped, a
+             reconnect replay adds nothing, a doubtful OTP stored masked with its code nowhere in the outbox
+AC-65s Then  the test that claims "nowhere in the outbox" reads every table, not only `events.text`
+      Spec   brief *Done when* 4; D116

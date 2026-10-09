@@ -105,3 +105,57 @@ match). Runs 1–3 noted the same; the handoff now holds it for the owner.
 So this run walks the journeys B02 touches instead: `first-run` steps 2–4 (FLOW-1 to FLOW-4, as
 Settings → Capture's screens, which B08 reuses), `capture-off` step 3 (FLOW-3) and `offline`
 (FLOW-10). Recorded as an open question: which journeys are core.
+
+## Run 5: the capture path only (D116)
+
+Written from the docs before the source was opened (see the run-5 note in `acceptance.md`). The owner
+set this run's scope: the other journeys (FLOW-1 to FLOW-14) aren't walked again. Every notification is
+made up.
+
+FLOW-15 A doubtful OTP from a chosen app, in the simulator                 (sad, handled)
+        Actor  owner (dev build)    Entry  dev panel → *Post a maybe-OTP*
+        Steps  1. open Settings → Capture → Captured on this phone (note the row count)
+               2. dev panel: *Post a maybe-OTP*  3. reopen Captured on this phone
+               4. dev panel: *Post it again*  5. reload Captured on this phone
+        Ends   step 3: one new row, its number shown as bullets, with the muted line *Maybe a one-time code,
+               so its numbers are hidden*; no 4+ digit code anywhere in the page's text; step 5: still one
+        Covers AC-54s, AC-57, AC-59   Spec §6.2, D116
+
+FLOW-16 A plain payment and a footer-only payment, unmasked               (happy)
+        Entry  dev panel → simulate a payment from a chosen app
+        Steps  1. simulate a chosen app's payment (no OTP word)  2. open Captured on this phone
+        Ends   the row's title and text are exactly as posted; no muted line under it
+        Covers AC-50s, AC-53s, AC-57s   Spec §6.2
+
+FLOW-17 A clear OTP and an unchosen app, after the mask                    (sad)
+        Entry  dev panel → *Post an OTP*; then a notification from an unchosen app
+        Steps  1. *Post an OTP*  2. open Captured on this phone  3. post from an unchosen app  4. reload
+        Ends   no event row for either; one drop entry for step 1 only, with no text or digits
+        Covers AC-48, AC-49, AC-56s   Spec §6.2, D86
+
+FLOW-18 Share samples with a masked row                                    (sad, handled)
+        Entry  Captured on this phone → *Share samples*
+        Steps  1. tick the masked row and a plain row  2. share (the browser's share/clipboard stand-in)
+        Ends   the shared text holds the masked text (no code) and marks it as a maybe one-time code; the
+               plain row is exact
+        Covers AC-58, AC-58s   Spec brief *Share samples*, D116
+
+FLOW-19 A batch of doubtful shapes through the real core                   (sad, native)
+        Actor  the listener (no UI: the pure Kotlin core the shell runs)
+        Entry  `qa/B02/core-probe`, `Probe5.kt`
+        Steps  1. each AC-50/51/52/53/61/62/63 case through the gate, the filter, the mask and the key
+               2. the key over the masked text against the key over the raw text  3. hostile sizes (AC-64)
+        Ends   every case lands where its criterion says
+        Covers AC-48 to AC-55, AC-61 to AC-64   Spec §6.2, D115, D116
+
+FLOW-20 The simulator and the core agree                                   (sad)
+        Entry  dev panel's simulator store, driven from Playwright with the same inputs as FLOW-19
+        Steps  1. post each input through the simulator  2. read the stored rows
+        Ends   for every input, the simulator's stored text equals the core's (or the gap is recorded)
+        Covers AC-59s   Spec CLAUDE.md (simulator walks native flows)
+
+### Core journeys, run 5
+
+Still none marked core in `docs/flows.md` (open with the owner since run 1). By the owner's scope for this
+run, the other journeys aren't walked; the capture path above stands in for the "payment captured" journey
+the handoff recommends as core.
