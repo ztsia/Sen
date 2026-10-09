@@ -31,7 +31,15 @@ object Capture {
     /** Synchronous, for the listener's tests and the reconnect replay. */
     fun store(context: Context, posted: Posted): Boolean {
         val outbox = Outbox.get(context)
-        return when (val d = gate.decide(posted, Chosen.get(context), outbox.droppedChannels())) {
+        val decision =
+            try {
+                gate.decide(posted, Chosen.get(context), outbox.droppedChannels())
+            } catch (e: Throwable) {
+                // never crash the listener over one notification: drop it, log its time and app only
+                if (posted.packageName in Chosen.get(context)) Heartbeat.dropped(context, posted, "unread")
+                return false
+            }
+        return when (val d = decision) {
             is Decision.Drop -> {
                 // a one-time code from a chosen app: logged by time and app, never its text (Outbox.beat)
                 if (d.reason == DropReason.OTP) Heartbeat.dropped(context, posted)

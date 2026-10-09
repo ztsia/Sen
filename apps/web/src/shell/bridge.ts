@@ -79,7 +79,7 @@ export interface CapturedEvent {
 export interface Beat {
   at: number;
   /** otp: a one-time code from a chosen app was dropped; only its time and app are kept. */
-  kind: 'connected' | 'disconnected' | 'beat' | 'boot' | 'updated' | 'otp';
+  kind: 'connected' | 'disconnected' | 'beat' | 'boot' | 'updated' | 'otp' | 'unread';
   connected: boolean;
   /** The app, for an otp drop; null otherwise. */
   package?: string | null;

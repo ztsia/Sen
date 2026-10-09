@@ -94,7 +94,9 @@ test('FLOW-16 a plain payment is stored exactly, with no maybe-OTP line', async 
   await count(page, 1);
   const row = rows(page).first();
   await expect(row.getByText('DuitNow Transfer is successful!', { exact: true })).toBeVisible();
-  await expect(row.getByText('You have successfully transferred RM 18.00 to LIM KAH HOE.', { exact: true })).toBeVisible();
+  await expect(
+    row.getByText('You have successfully transferred RM 18.00 to LIM KAH HOE.', { exact: true }),
+  ).toBeVisible();
   await expect(row.getByText(LINE)).toHaveCount(0);
   await expect(row.getByText('•')).toHaveCount(0);
   // then a maybe-OTP beside it: only that row carries the line

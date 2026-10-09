@@ -31,7 +31,10 @@ class CaptureListenerTest {
     private val shell = "com.android.shell"
     private val self = ctx.packageName
     private val component = "$self/io.github.ztsia.sen.capture.CaptureListener"
-    private val run = SystemClock.uptimeMillis().toString(36)
+    // letters only: every long number in a stored notification is masked (D119), the tests' own tags too
+    private val run = letters(SystemClock.uptimeMillis().toString(36))
+
+    private fun letters(s: String) = s.map { if (it.isDigit()) 'g' + (it - '0') else it }.joinToString("")
 
     @Before
     fun connect() {
@@ -54,7 +57,7 @@ class CaptureListenerTest {
 
     /** Posts a marker from Sen itself and waits until it's stored: everything before it has been handled. */
     private fun settle() {
-        val marker = "Marker $run ${SystemClock.uptimeMillis()}"
+        val marker = "Marker $run ${letters(SystemClock.uptimeMillis().toString())}"
         val n =
             Notification.Builder(ctx, "tests")
                 .setSmallIcon(R.drawable.ic_stat_minted)
@@ -94,15 +97,30 @@ class CaptureListenerTest {
     @Test
     fun a_notification_that_might_hold_a_code_is_stored_masked_and_marked() {
         Chosen.set(ctx, setOf(shell, self))
-        // letters only, so the mask can't touch the test's own tag
-        val tag = run.map { if (it.isDigit()) 'g' + (it - '0') else it }.joinToString("")
-        post("maybe", "Ryt Bank", "RM50.00 transfer to TAN WEI MING: 482910. Never share your TAC. $tag")
+        post("maybe", "Ryt Bank", "RM50.00 transfer to TAN WEI MING: 482910. Never share your TAC. $run")
+        // no listed word at all: masked all the same, and its amount kept (D119)
+        post("noword", "Ryt Bank", "Use 771204 to verify RM12.30 to KEDAI MAJU. $run")
         settle()
-        val e = Outbox.get(ctx).events(500).single { it.text.orEmpty().endsWith(tag) }
-        assertEquals("RM50.00 transfer to TAN WEI MING: ••••••. Never share your TAC. $tag", e.text)
+        val e = Outbox.get(ctx).events(500).single { it.text.orEmpty().endsWith("TAC. $run") }
+        assertEquals("RM50.00 transfer to TAN WEI MING: ••••••. Never share your TAC. $run", e.text)
         assertTrue(e.maybeOtp)
-        // the code is nowhere in the outbox
-        assertTrue(Outbox.get(ctx).events(500).none { listOf(it.title, it.text, it.bigText).any { t -> t.orEmpty().contains("482910") } })
+        val plain = Outbox.get(ctx).events(500).single { it.text.orEmpty().startsWith("Use ") && it.text.orEmpty().endsWith(run) }
+        assertEquals("Use •••••• to verify RM12.30 to KEDAI MAJU. $run", plain.text)
+        // neither code is anywhere in the outbox
+        assertTrue(
+            Outbox.get(ctx).events(500).none { listOf(it.title, it.text, it.bigText).any { t -> t.orEmpty().contains("482910") || t.orEmpty().contains("771204") } },
+        )
+    }
+
+    @Test
+    fun a_very_long_notification_is_read_without_crashing_the_listener() {
+        Chosen.set(ctx, setOf(shell, self))
+        // 5,000 characters of digits: the filter's patterns may give up, the mask never does (QA B02 run 5)
+        post("long", "Ryt Bank", "Never share your TAC. " + "1 ".repeat(2_500) + run)
+        settle()
+        val e = Outbox.get(ctx).events(500).single { it.text.orEmpty().endsWith(run) && it.text.orEmpty().startsWith("Never") }
+        assertTrue(e.maybeOtp)
+        assertTrue(e.text.orEmpty().none { it.isDigit() })
     }
 
     @Test

@@ -42,13 +42,16 @@ object Heartbeat {
         Capture.after { Outbox.get(context).beat(kind, connected, now) }
     }
 
-    /** A one-time code from a chosen app was dropped: its time and app go in the log, nothing else. */
-    fun dropped(context: Context, posted: Posted) {
+    /**
+     * A notification from a chosen app was dropped: a one-time code ("otp"), or one Sen couldn't read
+     * ("unread"). Its time and app go in the log, nothing else.
+     */
+    fun dropped(context: Context, posted: Posted, kind: String = "otp") {
         val now = System.currentTimeMillis()
         // the notification's identity without any of its text: a replay hashes the same and logs nothing
         val whenMillis = if (posted.whenMillis > 0) posted.whenMillis else posted.postTime
         val key = DedupeKey.of(posted.packageName, posted.key, whenMillis, null, null, null)
-        Capture.after { Outbox.get(context).beat("otp", CaptureListener.connected, now, posted.packageName, key) }
+        Capture.after { Outbox.get(context).beat(kind, CaptureListener.connected, now, posted.packageName, key) }
     }
 
     fun event(context: Context) {

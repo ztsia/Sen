@@ -22,6 +22,7 @@ const BEATS: Record<Beat['kind'], string> = {
   boot: 'Phone started',
   updated: 'Sen updated',
   otp: 'Dropped a one-time code',
+  unread: 'Skipped a notification Sen couldn’t read',
 };
 
 /**
@@ -157,7 +158,9 @@ export default function CapturedOnPhone() {
             <SettingsRow
               key={`${b.at}-${i}`}
               label={
-                b.kind === 'otp' && b.package ? `${BEATS.otp} from ${label.get(b.package) ?? b.package}` : BEATS[b.kind]
+                (b.kind === 'otp' || b.kind === 'unread') && b.package
+                  ? `${BEATS[b.kind]} from ${label.get(b.package) ?? b.package}`
+                  : BEATS[b.kind]
               }
               value={`${momentLabel(new Date(b.at))}${b.kind === 'beat' ? (b.connected ? ' · listening' : ' · not connected') : ''}`}
             />

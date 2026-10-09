@@ -66,6 +66,13 @@ class Probe5 {
         assertEquals(title, e.title); assertEquals(text, e.text); assertEquals(big, e.bigText)
     }
 
+    /** D119 (after run 5): long numbers are masked whatever the words; without an OTP word, unmarked. */
+    private fun maskedUnmarked(title: String?, text: String?) {
+        val e = keep(title, text, null)
+        assertFalse(e.maybeOtp, "marked maybe OTP")
+        assertFalse(Regex("\\d{4}").containsMatchIn(e.text.orEmpty()), "a long number left in: ${e.text}")
+    }
+
     private val doubtful = "Paid RM12.90 at KEDAI MAJU 482913. Never share your TAC."
 
     // ---- AC-48: chosen first ----
@@ -91,7 +98,7 @@ class Probe5 {
     }
     @Test fun ac50_code_in_title_word_in_big() = safe("482913", "Paid at KEDAI 482913", "RM12.90 paid.", "Never share your TAC.")
     @Test fun ac50_code_in_big_word_in_title() = safe("482913", "Never share your TAC", "RM12.90 paid.", "Merchant KEDAI MAJU 482913")
-    @Test fun ac50s_no_word_untouched() = untouched("Ryt Bank", "Paid RM12.90 at KEDAI MAJU 482913. Thank you.")
+    @Test fun ac50s_no_word_untouched() = maskedUnmarked("Ryt Bank", "Paid RM12.90 at KEDAI MAJU 482913. Thank you.") // untouched before D119
 
     // ---- AC-51: amounts are left ----
     @Test fun ac51_amounts_left() {
@@ -191,7 +198,7 @@ class Probe5 {
     // ---- AC-62: substrings aren't words; odd forms are ----
     @Test fun ac62_substrings_untouched() {
         listOf("Paid RM12.90 at TACO HOUSE 2241.", "Paid RM12.90 at SPINNEYS 1234.", "Paid RM12.90 at KODAK 5521.",
-            "Delivered to postcode 50450. Paid RM12.90.", "Paid RM12.90 at CODEX 2026.").forEach { untouched("Ryt Bank", it) }
+            "Delivered to postcode 50450. Paid RM12.90.", "Paid RM12.90 at CODEX 2026.").forEach { maskedUnmarked("Ryt Bank", it) } // untouched before D119
     }
     @Test fun ac62s_glued_otp() = safe("482913", "Ryt Bank", "OTP:482913")
     @Test fun ac62s_bracket_tac() = safe("482913", "Ryt Bank", "Paid RM12.90 at KEDAI 482913 [TAC]")
@@ -281,7 +288,7 @@ class Probe5Overflow {
     @Test fun where_and_when() {
         for ((name, make) in listOf("singles" to singles, "digit run" to run, "groups" to groups, "comma pairs" to pairs)) {
             threshold("filter/$name", make) { filter.isOtp("Ryt Bank", it, null) }
-            threshold("mask/$name", make) { mask.mask("Ryt Bank", it, null) }
+            threshold("mask/$name", make) { mask.apply("Ryt Bank", it, null) } // was mask.mask, renamed in the run-5 fixes
             threshold("gate/$name", make) { gate.decide(Posted("p", "k", "c", 1, 1, "Ryt Bank", it, null), setOf("p")) }
         }
     }

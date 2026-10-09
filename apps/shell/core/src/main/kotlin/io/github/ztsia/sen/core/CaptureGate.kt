@@ -16,8 +16,9 @@ data class Posted(
 )
 
 /**
- * A notification that passed every check: what the outbox stores, raw and unchanged (spec §6.2), except
- * that a *maybe OTP* has its code-like numbers masked (D116, OtpMask).
+ * A notification that passed every check: what the outbox stores (spec §6.2). Its text is as the app
+ * wrote it, except that long numbers outside amounts are masked (D116, D119, OtpMask); `maybeOtp` marks
+ * one that also carries an OTP word.
  */
 data class RawEvent(
     val dedupeKey: String,
@@ -44,8 +45,9 @@ sealed interface Decision {
  * from any other app is dropped before its text is even read, and the caller keeps no record of it.
  * Then group summaries, ongoing notifications (a ride in progress or a download: status, never a
  * payment), the channels a channel rule drops (B10 fills the list), notifications with no text, and
- * OTPs and TACs. What's kept but might still hold a code is masked before it's stored, and its dedupe key
- * is taken from the masked text, so a code never reaches storage, even as a hash.
+ * OTPs and TACs. What's kept has its long numbers masked before it's stored, and its dedupe key is taken
+ * from the masked text, so a code never reaches storage, even as a hash. If the filter can't read a
+ * notification at all, it's kept masked and marked *maybe OTP*: the mask reads any text.
  */
 class CaptureGate(
     private val otp: OtpFilter = OtpFilter.default(),
@@ -61,10 +63,17 @@ class CaptureGate(
         if (p.title.isNullOrBlank() && p.text.isNullOrBlank() && p.bigText.isNullOrBlank()) {
             return Decision.Drop(DropReason.EMPTY)
         }
-        if (otp.isOtp(p.title, p.text, p.bigText)) return Decision.Drop(DropReason.OTP)
+        val unread =
+            try {
+                if (otp.isOtp(p.title, p.text, p.bigText)) return Decision.Drop(DropReason.OTP)
+                false
+            } catch (e: StackOverflowError) {
+                // text too long or odd for the filter's patterns: in doubt, keep it masked and marked
+                true
+            }
         val whenMillis = if (p.whenMillis > 0) p.whenMillis else p.postTime
-        val masked = mask.mask(p.title, p.text, p.bigText)
-        val (title, text, bigText) = masked ?: listOf(p.title, p.text, p.bigText)
+        val masked = mask.apply(p.title, p.text, p.bigText)
+        val (title, text, bigText) = masked.parts
         return Decision.Keep(
             RawEvent(
                 dedupeKey = DedupeKey.of(p.packageName, p.key, whenMillis, title, text, bigText),
@@ -76,7 +85,7 @@ class CaptureGate(
                 title = title,
                 text = text,
                 bigText = bigText,
-                maybeOtp = masked != null,
+                maybeOtp = masked.maybeOtp || unread,
             ),
         )
     }
