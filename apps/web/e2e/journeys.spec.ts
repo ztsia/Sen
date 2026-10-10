@@ -220,6 +220,65 @@ export const JOURNEYS: Record<string, Journey> = {
     await expect(page.getByText(/rate 4\.2550/)).toBeVisible();
     await shot('subscriptions');
   },
+
+  // scan-after (core): Scan reads the receipt, you check it, and Done attaches it to its payment
+  'scan-after': async (page, shot, go) => {
+    await go('/');
+    await tabs(page).getByRole('button', { name: 'Scan a receipt' }).click();
+    await expect(page).toHaveURL(/\/scan/);
+    await shot('scan');
+    await page
+      .getByTestId('scan-camera')
+      .setInputFiles({ name: 'receipt.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
+    await expect(page.getByRole('button', { name: 'Use this' })).toBeVisible();
+    await shot('crop');
+    await page.getByRole('button', { name: 'Use this' }).click();
+    await expect(page.getByText('Reading receipt…')).toBeVisible();
+    await shot('reading');
+    await expect(page).toHaveURL(/\/s\/confirm/, { timeout: 10_000 });
+    await expect(page.getByText('SATE KAJANG HJ SAMURI')).toBeVisible();
+    await expect(page.getByText('Check this price')).toBeVisible();
+    await shot('confirm');
+    await page.getByRole('button', { name: 'More people' }).click();
+    await page.getByRole('button', { name: 'More people' }).click();
+    await expect(page.getByRole('region', { name: 'How many people ate?' })).toContainText('÷ 3 =');
+    await expect(page.getByRole('region', { name: 'How many people ate?' })).toContainText('RM21.38');
+    await shot('three people ate');
+    await page.getByRole('button', { name: 'Done', exact: true }).click();
+    await expect(toast(page)).toContainText('Attached to RM64.13 on Ryt Bank');
+    await shot('attached, with Undo');
+  },
+
+  // receipt-first: a receipt with no payment yet waits in Review's Waiting on others
+  'receipt-first': async (page, shot, go) => {
+    await go('/scan');
+    await page
+      .getByTestId('scan-camera')
+      .setInputFiles({ name: 'receipt-nomatch.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
+    await page.getByRole('button', { name: 'Use this' }).click();
+    await expect(page).toHaveURL(/\/s\/confirm/, { timeout: 10_000 });
+    await shot('confirm');
+    await page.getByRole('button', { name: 'Done', exact: true }).click();
+    await expect(toast(page)).toContainText('Waiting for its payment');
+    await expect(page).toHaveURL(/\/review/);
+    await expect(page.getByRole('region', { name: 'Waiting on others' })).toContainText('KOPITIAM SRI DAMAI');
+    await shot('waiting in Review');
+  },
+
+  // manual: a payment Sen didn't see, typed as text into sen, saved with Undo (§6.8)
+  manual: async (page, shot, go) => {
+    await go('/review');
+    await page.getByRole('button', { name: /Missing a payment/ }).click();
+    await expect(page).toHaveURL(/\/s\/manual/);
+    await shot('add expense');
+    await page.getByLabel('Amount').fill('12.50');
+    await page.getByRole('radio', { name: 'Meals' }).click();
+    await shot('typed');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(toast(page)).toContainText('Added RM12.50 · Meals');
+    await expect(page).toHaveURL(/\/review/);
+    await shot('added');
+  },
 };
 
 export async function walk(page: Page, info: TestInfo, look: LookId, mode: ModeId, name: string) {
