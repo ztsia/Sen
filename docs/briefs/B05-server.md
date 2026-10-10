@@ -39,7 +39,9 @@ though their screens come in B38.
   both.
 - **Deploying migrations to production** must use the owner role without putting its URL in the
   public repo's Actions (§17). Choose between Vercel's build step, with a production-only variable,
-  and `sen_ops`, and record the choice.
+  and `sen_ops`, and record the choice. **Either way it runs by itself on a merge to `main`, never
+  from the laptop (D122)**; the build step is recommended, because a failed migration then fails
+  the deploy.
 
 ### The API
 - **One Hono app on Vercel Functions** (Node), sharing the Vercel project with the web app.

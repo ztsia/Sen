@@ -33,7 +33,7 @@ What keeps Sen honest runs before any real money reaches the server:
   (`split:<id>`). A pass comes from `/realtime/token`: signed, 5 minutes, one channel. The API posts
   `{seq, topics}` hints after each change, never data.
 - **Deploy it without secrets in `ztsia/Sen`'s Actions**, for example through Cloudflare's own Git
-  builds. Record the choice.
+  builds. Record the choice. It must deploy by itself on a merge to `main` (D122).
 
 ### Jobs in the API
 - **`/jobs/tick`:**

@@ -35,52 +35,43 @@ follow on a phone, and commit.
          step, payslips as JSON), committed and pushed.
       7. Keep `private/ess/` on the laptop. In B34 the recipe goes into Sen by *Import recipe*
          (D106); no cloud session ever sees it.
-- [ ] **Link Vercel to `ztsia/Sen`** (B01, before its PR is reviewed). On your phone, at vercel.com
-      (the desktop site is easier: your browser's menu → *Desktop site*):
-      1. *Add New…* → *Project* → *Import Git Repository* → choose **ztsia/Sen**. If it isn't listed,
-         *Adjust GitHub App Permissions* and give Vercel access to that one repository.
-      2. **Root Directory:** `apps/web` (tap *Edit* next to it). Leave *Include files outside the root
-         directory in the Build Step* **on**: the build reads the looks and fonts from `docs/ui/`.
-      3. **Framework Preset:** Vite. Leave *Build Command*, *Output Directory* and *Install Command*
-         as they are: `apps/web/vercel.json` sets `pnpm build` and `dist`, and Vercel finds pnpm from
-         the lockfile at the repo's root.
-      4. No environment variables yet. *Deploy*.
-      5. Then *Settings* → *General* → **Node.js Version: 22.x**. *Settings* → *Git*: **Production
-         Branch** `main`; preview deployments stay on, one per branch. *Settings* → *Deployment
-         Protection*: keep **Vercel Authentication** on for previews (they show the dev panel), and
-         keep **Git Fork Protection** on.
-      6. Check: open the production address. It shows *Not built yet* and no dev panel. Open the
-         preview for the `B01/design-system` branch (its PR has the link): it has the dev panel on the
-         left edge, and */dev/gallery*.
-      Sessions never deploy and never hold a Vercel token: every push deploys through this link.
-- [ ] **B02: the shell on your phone.** Four parts, in this order. The first three take a few minutes
-      each; the soak is a week of ordinary use.
-      1. **The signing key, once** (so every update installs over the last). Nobody sees the key: a
-         workflow makes it and writes it into the repo's secrets itself.
-         - github.com → your avatar → *Settings* → *Developer settings* → *Personal access tokens* →
-           *Fine-grained tokens* → *Generate new token*. Name `sen-key`, expiry **7 days**,
-           *Repository access* → *Only select repositories* → **ztsia/Sen**, *Permissions* →
-           *Repository permissions* → **Secrets: Read and write**. *Generate*, and copy it.
-         - *ztsia/Sen* → *Settings* → *Secrets and variables* → *Actions* → *New repository secret*:
-           name `SEN_SECRETS_TOKEN`, paste the token.
-         - *ztsia/Sen* → *Actions* → **Shell signing key** → *Run workflow*. When it's green, delete
-           the `SEN_SECRETS_TOKEN` secret, and delete the token on GitHub. The repo now holds
-           `SEN_KEYSTORE_B64` and `SEN_KEYSTORE_PASSWORD`; never delete those, or updates stop
-           installing over the app (you'd uninstall, and lose what's only on the phone).
-      2. **Two Vercel addresses.** After *Link Vercel* above:
-         - **Production:** the project's *Domains* shows it, such as `sen-xxxx.vercel.app`.
-         - **The review alias** (§17: the debug build loads one fixed address, never `*.vercel.app`):
-           *Settings* → *Domains* → *Add*, type `sen-review.vercel.app` (or any free
-           `….vercel.app` name), and connect it to the **Preview** environment with **Git branch
-           `review`**. A session points it at the branch under review by pushing that branch to
-           `review`.
-         - Paste both addresses into a session. It writes them into `apps/shell/sites.json`; the next
-           build loads them. Then open the review alias in your phone's Chrome: if Vercel asks you to
-           log in, say so in the session (the debug build then needs a bypass; nothing else changes).
-      3. **Install and set up.** The *Shell* workflow builds both apps on every push. After B02 is
-         merged, *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* → tap `sen-0.2.N.apk` (Chrome asks
-         to allow installing unknown apps: allow it for Chrome). Before the merge, the run's page has
-         them under *Artifacts* (a zip). Then in Sen: *More* → *Settings* → *Capture*:
+- [x] **Link Vercel to `ztsia/Sen`** (done 10 Oct, from the laptop's CLI). Project **sen** in
+      *ztsia's projects*: root `apps/web`, Vite, Node 22.x, production branch `main`, a preview per
+      branch behind Vercel Authentication, Git Fork Protection on. Production is
+      `https://sen-ochre-three.vercel.app`. Sessions never deploy by hand and never hold a Vercel
+      token: every push deploys through this link (D122).
+      - [ ] **Optional, before you install: a nicer production name.** Vercel → *sen* → *Settings* →
+            *Domains* → *Add*, any free `….vercel.app` name. Tell a session, which writes it into
+            `apps/shell/sites.json`. After installing, a new address makes the app start again as a
+            new site, with its cache and sign-in gone.
+- [ ] **B02: the shell on your phone.** Parts 1 and 2 are done; install, then the soak, a week of
+      ordinary use.
+      1. **The signing key: done (10 Oct), made on the laptop.** The repo holds `SEN_KEYSTORE_B64`
+         and `SEN_KEYSTORE_PASSWORD`; never delete those, or updates stop installing over the app
+         (you'd uninstall, and lose what's only on the phone). Its certificate's SHA-256 starts
+         `A2:8A:62:49`. The *Shell signing key* workflow isn't needed any more, and refuses to run
+         while a key exists.
+         - [ ] **Move the backup off the laptop.** It's in your user folder, `sen-signing-key/`:
+               `sen.jks` and `sen-password.txt`. Put both in your password manager, then delete the
+               folder. GitHub never shows a secret again, so this is the only other copy.
+      2. **The two addresses: done (10 Oct),** in `apps/shell/sites.json`. Production above; the
+         review alias is `https://sen-review.vercel.app`, which follows the Git branch `review`. A
+         session points it at the branch under review by pushing that branch to `review`.
+         - [ ] **The review alias is behind Vercel's login** (measured 10 Oct: it redirects to
+               vercel.com), so the review build can't load it yet. Say which you'd rather: turn
+               Vercel Authentication off for the project (recommended: the repo is public, and a
+               preview only ever holds made-up data), or keep it and have a session teach the review
+               build to sign in to Vercel once.
+      3. **Install and set up.** The *Shell* workflow builds both apps on every push, and on `main`
+         publishes them. *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* → tap `sen-0.2.N.apk`
+         (Chrome asks to allow installing unknown apps: allow it for Chrome).
+         **For updates without checking by hand, use Obtainium** (D122): install it from
+         github.com/ImranR98/Obtainium (*Releases*), *Add app*, source
+         `https://github.com/ztsia/Sen`, and under *Filter APKs by regular expression* put
+         `^sen-\d`, so it skips the review build. It then tells you when a new Sen is out and
+         installs it in one tap. Most changes need no new app at all: the shell loads the web app
+         from Vercel, so a merge reaches the phone at its next launch.
+         Then in Sen: *More* → *Settings* → *Capture*:
          - *Your apps*: tap *Choose these*, or tick yours.
          - *Notification access* → *Open settings*, find Sen, switch it on. **Greyed out?** Back in
            Sen, *Open Sen's app info*, tap ⋮ at the top right → *Allow restricted settings*, then try
@@ -121,7 +112,9 @@ follow on a phone, and commit.
 - [ ] **Add the `DENYLIST` secret to `ztsia/Sen`** (B01). github.com → *ztsia/Sen* → *Settings* →
       *Secrets and variables* → *Actions* → *New repository secret*. Name: `DENYLIST`. Value: one
       string per line that must never appear in the repo, such as your employer's name and ESS's
-      address. Write it only there, nowhere else. The hygiene check on every PR then fails on any of
+      address. Write it only there, nowhere else. On the laptop, in your own terminal (never in a
+      session's chat): `gh secret set DENYLIST --repo ztsia/Sen`, paste the lines, then Enter and
+      Ctrl+Z, Enter. The hygiene check on every PR then fails on any of
       them, matched without regard to case, and names only the file and line. Until it's set, the check
       still blocks `private/` files and says plainly that the denylist part was skipped.
 - [ ] **Create the cloud environment.** At claude.ai/code, start a new session, open the environment
@@ -162,8 +155,8 @@ follow on a phone, and commit.
          it back.
       Paste what happened into the next cloud session. In Chromium's touch emulation, lifting the
       finger picked the sheet's row under it.
-- [ ] **Turn on GitHub's protections for `ztsia/Sen`** (D85): Settings → *Code security* → **secret
-      scanning** and **push protection**.
+- [x] **Turn on GitHub's protections for `ztsia/Sen`** (D85): Settings → *Code security* → **secret
+      scanning** and **push protection**. Both on (checked 10 Oct).
 - [ ] **Never make `ztsia/finance-tracker` public.** It's the private design archive: its history
       holds the claim values removed on 7 Oct, and GitHub keeps old PR pages.
 
@@ -207,13 +200,23 @@ values in *Production* only), never into the repo or a chat:
   *In production*** so its tokens don't expire after 7 days. The foundations slice adds the redirect URL
 - **two Neon projects** (free plan, D54): `sen` for production, and `sen-preview` holding only the
   anonymised seed data the foundations slice provides. Point Vercel's *Preview* environment at
-  `sen-preview`. Never let a preview branch from production: a branch copies everyone's real money
+  `sen-preview`. Never let a preview branch from production: a branch copies everyone's real money.
+  Through Vercel, so the connection strings go straight into its environments and no session sees
+  them:
+  1. Vercel → *sen* → *Storage* → *Create Database* → **Neon**, and accept its terms (the one step
+     only you can do). Region **Singapore**, free plan, name `sen`. Connect it to **Production
+     only**.
+  2. The same again, name `sen-preview`, connected to **Preview** and **Development** only.
+  On the laptop instead: run `vercel integration accept-terms neon` in your own terminal, and a
+  local session creates both.
+- **Better Auth's secret: done (10 Oct).** `BETTER_AUTH_SECRET` is in Vercel, a different random
+  value in *Production* and in *Preview*, made on the laptop and never shown.
 - **make yourself the admin**, once, after the first production deploy. Sign-up is off, so the
   foundations slice gives a one-time seed command that creates your account with the admin flag
-- a Vercel project for the web app and the API, linked to this repo
 - a Firebase project for push (FCM), in the same Google Cloud project
 - an R2 bucket
-- the Android shell on the phone, from a GitHub Actions build
+- **an Anthropic API key** (D120, before B10): console.anthropic.com → *API keys* → *Create key*,
+  named `sen`, with a monthly spend limit. Into Vercel's *Production* environment only
 - **forward receipts by email** (D56, from P5). Sen's Settings shows your own forwarding address,
   such as `sen-inbox+<code>@…`.
   1. In your main Gmail: Settings → *Forwarding and POP/IMAP* → *Add a forwarding address*, and
