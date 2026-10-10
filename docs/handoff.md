@@ -46,6 +46,8 @@ Rewritten 10 Oct 2026 by a local session on the owner's laptop (setup, no slice)
 
 1. If the `ops/local-setup` PR is still open, don't build on it: B03 starts from `main` either way.
 2. B03, on `B03/skeleton-tabs`, from its brief. It needs nothing from the owner.
+3. `ShellTest.b_the_bridge_answers_our_own_site` failed once on the emulator (run 38033474926, after adb
+   was slow to start) and passed twice on the same commit. If it fails again, look at its wait.
 
 ## Don't reopen
 
