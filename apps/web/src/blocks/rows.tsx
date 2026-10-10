@@ -111,9 +111,13 @@ export interface ReviewAnswer {
   label: string;
   /** Sen suggests this one: marked on the button (patterns.md §7). */
   suggested?: boolean;
-  /** Makes the change, and returns what happened, in words, and how to undo it. */
-  onSelect: () => { said: string; undo: () => void };
+  /**
+   * Makes the change, and returns what happened, in words, and how to undo it; or opens what answers
+   * it (a sheet, a screen) and returns nothing.
+   */
+  onSelect: () => Answered | Promise<Answered | null> | void;
 }
+type Answered = { said: string; undo: () => void };
 
 /**
  * A question that needs you: on one line, what Sen knows on the next, then at most three answers plus
@@ -129,7 +133,8 @@ export function ReviewRow({
   question: ReactNode;
   knows: ReactNode;
   answers: ReviewAnswer[];
-  onOther: () => void;
+  /** Other…: the full set of choices. Left out where the buttons are every choice there is. */
+  onOther?: () => void;
 }) {
   return (
     <Item size="sm" className="rounded-none text-base">
@@ -144,8 +149,9 @@ export function ReviewRow({
             variant={a.suggested ? 'default' : 'secondary'}
             size="sm"
             onClick={() => {
-              const { said, undo } = a.onSelect();
-              toastUndo(said, undo);
+              void Promise.resolve(a.onSelect()).then((r) => {
+                if (r) toastUndo(r.said, r.undo);
+              });
             }}
           >
             {a.suggested ? <SparklesIcon aria-hidden="true" /> : null}
@@ -153,9 +159,11 @@ export function ReviewRow({
             {a.suggested ? <span className="sr-only">, Sen suggests this</span> : null}
           </Button>
         ))}
-        <Button variant="ghost" size="sm" onClick={onOther}>
-          Other…
-        </Button>
+        {onOther ? (
+          <Button variant="ghost" size="sm" onClick={onOther}>
+            Other…
+          </Button>
+        ) : null}
       </ItemFooter>
     </Item>
   );

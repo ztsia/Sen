@@ -4,6 +4,7 @@ import { AppShell } from './frame/app-shell';
 import { Lost } from './screens/lost';
 import { Placeholder } from './screens/placeholder';
 import { REAL } from './screens/real';
+import { SKELETON } from './screens/skeleton';
 import { ListSkeleton } from './blocks/states';
 import { screenById } from './screens/registry';
 
@@ -39,27 +40,50 @@ const screenRoute = (path: '/' | '/review' | '/insights' | '/more' | '/scan', id
     getParentRoute: () => rootRoute,
     path,
     staticData: { screen: id },
-    component: () => <Placeholder screen={screenById.get(id)!} />,
+    component: () => <ScreenFor id={id} />,
   });
+
+/** A built screen; in previews, the skeleton's on made-up data; otherwise Not built yet. */
+function ScreenFor({ id }: { id: string }) {
+  const Built = REAL[id] ?? SKELETON[id];
+  if (Built)
+    return (
+      <Suspense fallback={<ListSkeleton />}>
+        <Built />
+      </Suspense>
+    );
+  return <Placeholder screen={screenById.get(id)!} />;
+}
 
 function AnyScreen() {
   const { _splat } = useParams({ from: '/s/$' });
-  const Real = REAL[_splat ?? ''];
-  if (Real)
-    return (
-      <Suspense fallback={<ListSkeleton />}>
-        <Real />
-      </Suspense>
-    );
-  return <Placeholder screen={screenById.get(_splat ?? '')!} />;
+  // keyed by the screen, so moving from one payment to another starts the screen afresh
+  return <ScreenFor key={_splat} id={_splat ?? ''} />;
 }
 const TAB_PATHS = { home: '/', review: '/review', insights: '/insights', more: '/more' } as const;
 
 // An unknown id, from an old link or a typo, goes Home, replacing itself so back doesn't return to it.
 // A sheet's id isn't a page: it goes to the screen the sheet opens over, its tab's or Home.
+/** What a pushed screen is about: a payment, a receipt, a goal, a draft, or the filters a link carries. */
+export interface ScreenSearch {
+  id?: string;
+  cycle?: string;
+  category?: string;
+  account?: string;
+  shared?: boolean;
+}
+const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined);
+
 const anyScreen = createRoute({
   getParentRoute: () => rootRoute,
   path: '/s/$',
+  validateSearch: (s: Record<string, unknown>): ScreenSearch => ({
+    id: str(s.id),
+    cycle: str(s.cycle),
+    category: str(s.category),
+    account: str(s.account),
+    shared: s.shared === true || s.shared === 'true' ? true : undefined,
+  }),
   beforeLoad: ({ params }) => {
     const screen = screenById.get(params._splat ?? '');
     if (!screen) throw redirect({ to: '/', replace: true });

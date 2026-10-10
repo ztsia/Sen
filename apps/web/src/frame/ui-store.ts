@@ -6,7 +6,15 @@ import type { ScenarioId } from '@/data/fake/variants';
 export const DEV_STATES = ['normal', 'empty', 'loading', 'error', 'offline'] as const;
 export type DevState = (typeof DEV_STATES)[number];
 
-const SCENARIO_IDS: readonly string[] = ['wei-ming', 'payday', 'before-salary', 'first-cycle', 'month', 'capture-off', 'cap'];
+const SCENARIO_IDS: readonly string[] = [
+  'wei-ming',
+  'payday',
+  'before-salary',
+  'first-cycle',
+  'month',
+  'capture-off',
+  'cap',
+];
 
 /** ?scenario= and ?state= pick the made-up scenario and the screen state on load (previews only: production has no fake). */
 function fromUrl<T extends string>(key: string, allowed: readonly string[], fallback: T): T {

@@ -446,3 +446,37 @@ export function BudgetMeter({
     </div>
   );
 }
+
+/**
+ * Home's small pace line (screens.md `home`): this cycle (the accent) against last cycle (the grey),
+ * spent by each day, with no axis. The words beside it carry the numbers, so it's hidden from screen
+ * readers.
+ */
+export function MiniPace({
+  thisCycle,
+  lastCycle,
+  days,
+}: {
+  thisCycle: number[];
+  lastCycle: number[] | null;
+  days: number;
+}) {
+  const W = 96;
+  const H = 32;
+  const top = Math.max(1, ...thisCycle, ...(lastCycle ?? []));
+  const path = (xs: number[]) =>
+    xs
+      .map(
+        (v, i) =>
+          `${i ? 'L' : 'M'}${Math.round((i / Math.max(1, days - 1)) * (W - 4) + 2)} ${Math.round(H - 2 - (v / top) * (H - 4))}`,
+      )
+      .join(' ');
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-8 w-24 shrink-0" aria-hidden="true">
+      {lastCycle ? (
+        <path d={path(lastCycle)} fill="none" stroke="var(--chart-context)" strokeWidth="2" strokeLinecap="round" />
+      ) : null}
+      <path d={path(thisCycle)} fill="none" stroke="var(--chart-accent)" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}

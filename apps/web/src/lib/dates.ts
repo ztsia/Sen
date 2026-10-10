@@ -28,3 +28,14 @@ export function momentLabel(then: Date, now: Date = new Date()): string {
   if (t === dayKey.format(new Date(now.getTime() - 86_400_000))) return `Yesterday, ${timeLabel(then)}`;
   return `${dayLabel(then)}, ${timeLabel(then)}`;
 }
+
+const noonKL = (day: string) => new Date(`${day}T12:00:00+08:00`);
+const shortFmt = new Intl.DateTimeFormat('en-MY', { timeZone: KL, day: 'numeric', month: 'short' });
+const longFmt = new Intl.DateTimeFormat('en-MY', { timeZone: KL, weekday: 'short', day: 'numeric', month: 'short' });
+
+/** A calendar day (`2026-09-30`) as `30 Sep`: never ambiguous, never `30/09`. */
+export const shortDay = (day: string) => shortFmt.format(noonKL(day));
+/** A calendar day as `Wed, 30 Sep`. */
+export const longDay = (day: string) => longFmt.format(noonKL(day));
+/** An instant's day, as a day header shows it. */
+export const dayOfInstant = (at: string) => dayKey.format(new Date(at));
