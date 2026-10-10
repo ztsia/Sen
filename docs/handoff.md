@@ -22,12 +22,14 @@ rotation*: read this first, and rewrite it before you end.
     (previews only); production still shows *Not built yet*.
   - e2e: `screens.spec.ts` (axe and 48 px in all twelve looks, every screen state), `journeys.spec.ts`
     (Home and Review's journeys so far), production's guard in `production.spec.ts`.
-- **Being built by implementers when this was written** (uncommitted if the VM was lost: redo them):
-  Insights and its five screens, More's four, Scan's five (scan, crop, reading, confirm, manual), and
-  each look's Home material (`decorate`, `paydayFx`).
-- **Still to do:** the remaining journeys (scan-after, receipt-first, manual, fix, insights, budget,
-  goal, subscription, pay-known), a full e2e run, the `uiux` checklist pass for the PR, QA (full run),
-  the PR *B03 · Skeleton: the five tabs*.
+- **Also done:** every screen of the brief (Insights and its five, More's four, Scan's five, each
+  look's Home material), all 16 journeys in all twelve looks, axe and 48 px on every screen, the
+  `uiux` pass (`qa/B03/uiux.md`), and the docs (`CLAUDE.md`, B05's brief). The full `pnpm e2e` is
+  green.
+- **In progress: QA run 1** (a full run). It stopped once at a usage limit and was resumed, not
+  restarted; its criteria, flows and specs are committed in `qa/B03/` and `qa/e2e/b03-*`.
+- **Still to do:** read QA's report, fix by tier (`qa/B03/ledger.md`), publish the report, then the PR
+  *B03 · Skeleton: the five tabs*.
 
 ## Decided, and why
 
@@ -51,8 +53,9 @@ rotation*: read this first, and rewrite it before you end.
 
 ## What to do first
 
-1. Check what of the four implementers' work is committed; finish what isn't.
-2. Write the remaining journeys, run `pnpm e2e`, then the `qa` skill, then the PR.
+1. If QA run 1's `qa/B03/report.md` isn't committed, the run was lost: start a fresh full run (the
+   `qa` skill), which reads the committed `acceptance.md` and `flows.md` first.
+2. Fix its findings by tier, then open the PR.
 
 ## Don't reopen
 
