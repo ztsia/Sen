@@ -137,6 +137,20 @@ export function balances(db: Db): Map<string, number> {
   return m;
 }
 
+/**
+ * Spending projected to the cycle's last day (`project_cycle_end`, §12.3, until B30 makes it Sen's):
+ * fixed costs once, everything else at this cycle's daily pace so far. An estimate, labelled as one.
+ */
+function projectSpending(db: Db, c: { start: string; end: string }, upto: string): number {
+  const fixed = new Set(['Home & bills', 'Phone & internet', 'Subscriptions', 'Family'].map((n) => db.categories.find((x) => x.name === n)?.id));
+  const txns = live(db).filter((t) => inRange(t, { start: c.start, end: upto }));
+  const fixedSpent = sum(txns.filter((t) => fixed.has(t.categoryId ?? undefined)).map((t) => spendingOf(db, t)));
+  const rest = sum(txns.map((t) => spendingOf(db, t))) - fixedSpent;
+  const day = daysBetween(c.start, upto) + 1;
+  const days = daysBetween(c.start, c.end) + 1;
+  return fixedSpent + scaleSen(rest, days, day);
+}
+
 // --- Home ---
 
 export function home(db: Db): HomeView {
@@ -198,8 +212,6 @@ export function cycleSheet(db: Db, id?: string): CycleView {
   const t = today(db);
   const spending = spentIn(db, cycle);
   const income = incomeIn(db, cycle);
-  const day = Math.min(daysBetween(cycle.start, t) + 1, daysBetween(cycle.start, cycle.end) + 1);
-  const days = daysBetween(cycle.start, cycle.end) + 1;
   const last = index > 0 ? all[index - 1]! : null;
   return {
     cycle,
@@ -207,7 +219,7 @@ export function cycleSheet(db: Db, id?: string): CycleView {
     spending,
     result: income - spending,
     // project_cycle_end (§12.3), a straight line at this cycle's pace: an estimate, labelled as one
-    estimate: db.capture && cycle.current ? income - scaleSen(spending, days, day) : null,
+    estimate: db.capture && cycle.current ? income - projectSpending(db, cycle, t) : null,
     lastSpending: !db.capture && last ? spentIn(db, last) : null,
   };
 }
@@ -670,7 +682,7 @@ export function insights(db: Db, id?: string): InsightsView {
       lastCycle: last ? cumulative(db, last, last.end) : null,
       days,
       income: db.capture && income ? income : null,
-      estimate: cycle.current && day > 0 ? scaleSen(spent, days, day) : null,
+      estimate: cycle.current ? projectSpending(db, cycle, upto) : null,
     },
     budgets: budgets.length ? { cycleShare: day / days, rows: budgets } : null,
     whereWent: whereWent.length ? whereWent : null,

@@ -43,6 +43,14 @@ describe('pay cycles (§7, D14)', () => {
     const c = payCycles([], '2026-10-05', today);
     expect(c).toEqual([{ start: '2026-10-05', end: '2026-10-29', label: 'October', expectedPayday: '2026-10-30' }]);
   });
+  it('set up a fortnight before payday, the first cycle ends the day before it', () => {
+    expect(payCycles([], '2026-10-18', '2026-10-18')[0]).toMatchObject({
+      end: '2026-10-29',
+      expectedPayday: '2026-10-30',
+      label: 'October',
+    });
+    expect(payCycles([], '2026-10-30', '2026-10-30')[0]!.expectedPayday).toBe('2026-11-30');
+  });
   it('a late salary stretches the current cycle to today', () => {
     const c = payCycles(['2026-09-30'], '2026-09-01', '2026-10-31');
     expect(c[c.length - 1]!.end).toBe('2026-10-31');

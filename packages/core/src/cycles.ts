@@ -99,8 +99,11 @@ export function payCycles(salaryDays: readonly string[], openingDay: string, tod
       cycles.push({ start, end: addDays(next, -1), label: '', expectedPayday: next });
       return;
     }
+    // after a salary, the next is a month on: the month-end payday after it, or the one after that when
+    // this salary came early (before a holiday). Before the first salary, the next month-end payday.
+    const salaried = start !== openingDay || salaryDays.includes(start);
     let payday = lastWorkingDay(start);
-    if (daysBetween(start, payday) < 15) payday = lastWorkingDay(nextMonthStart(start));
+    if (salaried ? daysBetween(start, payday) < 15 : payday <= start) payday = lastWorkingDay(nextMonthStart(start));
     const end = addDays(payday, -1);
     cycles.push({ start, end: end < today ? today : end, label: '', expectedPayday: payday });
   });

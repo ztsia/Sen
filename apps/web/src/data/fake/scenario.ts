@@ -1127,7 +1127,7 @@ function addThisCycle(db: Db) {
       effectiveFrom: '2026-01-01',
       effectiveTo: null,
     });
-  budget('Meals', '900.00');
+  budget('Meals', '1,200.00');
   budget('Drinks & desserts', '150.00');
   budget('Shopping', '300.00');
   budget('Entertainment', '150.00');
