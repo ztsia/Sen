@@ -1,3 +1,5 @@
+**Published report (run 1):** https://claude.ai/artifact/WfFSai2Hz3RP9Kbe93w88p
+
 # QA B03 · Skeleton: the five tabs: run 1 (full)
 
 ```
