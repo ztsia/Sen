@@ -29,7 +29,9 @@ export function Sheet({ open, onOpenChange, title, description, full, head, chil
       <DrawerContent
         className={cn(
           'mx-auto w-full max-w-[480px] rounded-t-[1.25rem] border-border bg-popover text-popover-foreground',
-          full ? 'h-[calc(100dvh-2.75rem)] max-h-none!' : 'max-h-[85dvh]',
+          full
+            ? 'h-[calc(100dvh-2.75rem-var(--safe-area-inset-top,env(safe-area-inset-top,0px)))] max-h-none!'
+            : 'max-h-[85dvh]',
         )}
       >
         <div className="flex items-center gap-3 border-b border-border px-4 pt-1 pb-2">

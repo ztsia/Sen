@@ -3,6 +3,7 @@ import { Outlet, useMatches, useNavigate } from '@tanstack/react-router';
 import { OfflineBanner } from '@/blocks/states';
 import { Toaster } from '@/components/ui/sonner';
 import { useOnline } from '@/lib/online';
+import { cn } from '@/lib/utils';
 import { screenById, showsSenButton, showsTabBar, type ScreenDef } from '@/screens/registry';
 import { LookProvider } from '@/theme/look';
 import { SenButton } from './sen-button';
@@ -31,7 +32,9 @@ function useLost(): boolean {
 
 /**
  * One column, the width of a phone, centred on a wider screen. The tab bar and Sen's button show
- * where patterns.md §6 says; every screen scrolls inside the column, never the page.
+ * where patterns.md §6 says; every screen scrolls inside the column, never the page. The shell draws
+ * edge to edge, so the column starts below the status bar, and ends above the navigation bar when no
+ * tab bar (which pads itself) is there to.
  */
 export function AppShell() {
   const screen = useCurrentScreen();
@@ -44,7 +47,12 @@ export function AppShell() {
   const sen = showsSenButton(screen);
   return (
     <LookProvider>
-      <div className="relative mx-auto flex h-dvh w-full max-w-[480px] flex-col overflow-hidden bg-background">
+      <div
+        className={cn(
+          'safe-top relative mx-auto flex h-dvh w-full max-w-[480px] flex-col overflow-hidden bg-background',
+          !tabs && 'safe-bottom',
+        )}
+      >
         {online ? null : <OfflineBanner />}
         <Outlet />
         {tabs ? (

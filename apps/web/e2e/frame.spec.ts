@@ -169,3 +169,32 @@ for (const look of LOOKS)
     small.push(...(await smallTargets(page)).map((s) => `dev panel: ${s}`));
     expect(small, `tab heights ${tabSizes.join(', ')}\n${small.join('\n')}`).toEqual([]);
   });
+
+test("the frame clears the status bar and, with no tab bar, the navigation bar, from the shell's insets", async ({
+  page,
+}) => {
+  // the shell's SystemBars plugin sets these on <html> (capacitor.config.ts, insetsHandling: 'css')
+  const inset = (top: number, bottom: number) =>
+    page.evaluate(
+      ([t, b]) => {
+        document.documentElement.style.setProperty('--safe-area-inset-top', `${t}px`);
+        document.documentElement.style.setProperty('--safe-area-inset-bottom', `${b}px`);
+      },
+      [top, bottom],
+    );
+  await open(page, '/');
+  await inset(40, 24);
+  const bar = page.locator('header').first();
+  await expect.poll(async () => (await bar.boundingBox())!.y).toBe(40);
+  // the tab bar pads itself for the navigation bar, so the column doesn't add it twice
+  const tabBox = (await tabs(page).boundingBox())!;
+  expect(tabBox.y + tabBox.height).toBe(page.viewportSize()!.height);
+
+  // a screen without the tab bar ends above the navigation bar
+  await page.goto('/scan');
+  await inset(40, 24);
+  await expect(tabs(page)).toHaveCount(0);
+  await expect.poll(async () => (await page.locator('header').first().boundingBox())!.y).toBe(40);
+  const main = (await page.locator('main').first().boundingBox())!;
+  expect(main.y + main.height).toBe(page.viewportSize()!.height - 24);
+});

@@ -1,22 +1,24 @@
 # Handoff
 
-Rewritten 10 Oct 2026 by a local session on the owner's laptop (setup, no slice). The protocol is in
+Rewritten 10 Oct 2026 by a cloud session (the first install on the phone, no slice). The protocol is in
 `CLAUDE.md`, *Session rotation*: read this first, and rewrite it before you end.
 
 ## Where things stand
 
 - **B01 and B02 are merged** (B02: PR #3, 9 Oct). **Next: B03 · Skeleton: the five tabs**, on
   `B03/skeleton-tabs` from `main`. The branch doesn't exist yet.
-- **This session's setup is on `ops/local-setup`, in a PR waiting for the owner's merge.** It holds
-  the two addresses in `apps/shell/sites.json`, D122, and these docs. Merging it makes the first
-  signed release (*Sen 0.2.N* under *Releases*) and redeploys production from `main`.
+- **The local session's setup is merged** (`ops/local-setup`, PR #4, 10 Oct), and its release,
+  *Sen 0.2.27*, is installed on the owner's phone (Play Protect has to be off to install: `docs/local.md`).
+- **On `claude/dazzling-bohr-vdfvaz`, a fix waiting for the owner's merge:** the frame ignored the
+  status bar's inset, so on the phone the app bar sat under the status bar. The column now pads
+  itself by the shell's `--safe-area-inset-top` (and the bottom one when no tab bar shows), as do
+  the frame's own error column and full sheets. Web only: a merge reaches the phone at its next launch.
 - **Vercel is linked** (project `sen`: root `apps/web`, Node 22.x, production branch `main`).
   Production is `https://sen-my.vercel.app` and answers 200. The review alias
   `https://sen-review.vercel.app` follows the branch `review`, which exists.
 - **The signing key is in the repo's secrets** (`SEN_KEYSTORE_B64`, `SEN_KEYSTORE_PASSWORD`), made on
   the laptop, with a backup the owner holds. `BETTER_AUTH_SECRET` is in Vercel for B05.
-- **Not verified yet:** anything on the phone, and the signed release itself until the PR's *Shell*
-  run is green. QA records for B02 are in `qa/B02/`.
+- **On the phone so far:** the release installs and loads production. The soak hasn't started. QA records for B02 are in `qa/B02/`.
 
 ## Decided, and why
 
@@ -43,7 +45,8 @@ Rewritten 10 Oct 2026 by a local session on the owner's laptop (setup, no slice)
 
 ## What to do first
 
-1. If the `ops/local-setup` PR is still open, don't build on it: B03 starts from `main` either way.
+1. If the status-bar fix (`claude/dazzling-bohr-vdfvaz`) isn't merged yet, B03 starts from `main` anyway; it touches
+   `frame/app-shell.tsx`, so merge `main` in once it lands.
 2. B03, on `B03/skeleton-tabs`, from its brief. It needs nothing from the owner.
 3. `ShellTest.b_the_bridge_answers_our_own_site` failed once on the emulator (run 38033474926, after adb
    was slow to start) and passed twice on the same commit. If it fails again, look at its wait.
