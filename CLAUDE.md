@@ -91,7 +91,8 @@ starts in `ztsia/Sen`. The next slice waits only for the owner's merge.
 **Built so far:** B01, the design system and the six looks (the workspace, money, the frame, the
 building blocks, the dev panel and the gallery); B02, the shell and the listener (merged 9 Oct; its
 week on the owner's phone is still to run). Vercel is linked and the shell's release is signed
-(10 Oct, D122). Next: B03, the five tabs' skeleton, on `B03/skeleton-tabs`.
+(10 Oct, D122). B03, the five tabs' skeleton on made-up data, with the data layer every later slice
+plugs into, is on `B03/skeleton-tabs`, waiting for its PR's merge. Next: B04.
 
 ## Non-negotiables
 
@@ -188,7 +189,7 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | Command | What it does |
   |---|---|
   | `pnpm install` | Install everything |
-  | `pnpm dev` | The web app at `localhost:5173`, with the dev panel; `/dev/gallery` shows every building block |
+  | `pnpm dev` | The web app at `localhost:5173`, with the dev panel; `/dev/gallery` shows every building block; `?scenario=` and `?state=` pick the made-up scenario and a screen state on load |
   | `pnpm build` | The web app's production build, as Vercel runs it. A build is production, without dev tools, unless `SEN_ENV=preview` or Vercel's `VERCEL_ENV=preview` says otherwise |
   | `pnpm test` | Unit tests: money, the looks' ports, the hygiene check, the no-float rule, the web app's pure parts |
   | `pnpm e2e` | Playwright on a preview build and a production build, at a phone viewport, under the real CSP |
@@ -205,8 +206,8 @@ Works from a phone through cloud sessions, rarely at a laptop.
 
   | Path | What it holds |
   |---|---|
-  | `apps/web/` | The web app: Vite, React, TanStack Router, Tailwind v4 and shadcn/ui. `src/components/ui/` is shadcn's, customised in place; `src/blocks/` the building blocks of `patterns.md` §7; `src/frame/` the tab bar, Sen's button and the shell of every screen; `src/screens/registry.ts` every screen id, `skeleton` or `real`; `src/dev/` the dev panel and gallery; `e2e/` Playwright |
-  | `packages/core/` | Pure TypeScript shared by the app, the API and the worker: the money module now; cycles and the template engine later |
+  | `apps/web/` | The web app: Vite, React, TanStack Router, Tailwind v4 and shadcn/ui. `src/components/ui/` is shadcn's, customised in place; `src/blocks/` the building blocks of `patterns.md` §7; `src/frame/` the tab bar, Sen's button and the shell of every screen; `src/screens/registry.ts` every screen id, `skeleton` or `real`, and `src/screens/skeleton.ts` the walking skeleton's screens, shown in previews only; `src/data/` the one backend interface (`backend.ts`), a query hook per screen (`hooks.ts`) and the skeleton's fake, with Wei Ming's month (`fake/scenario.ts`) and its edge states (`fake/variants.ts`); `src/dev/` the dev panel and gallery; `e2e/` Playwright |
+  | `packages/core/` | Pure TypeScript shared by the app, the API and the worker: the money module, pay cycles and KL days (`cycles.ts`), and the shared types with zod: §15's rows (`schema.ts`), each screen's read shape (`views.ts`) and every write (`commands.ts`). The template engine later |
   | `packages/looks/` | The six looks as `DIR` modules, ported from `docs/ui/directions/src/`, each loaded only when shown |
   | `apps/api/` | The Hono API (B05) |
   | `apps/shell/` | The Capacitor shell for Android (B02): application id **`io.github.ztsia.sen`**, name **Sen** (`.debug`, *Sen review*, for the review build). `android/` is the app, with our Kotlin in `app/src/main/java/io/github/ztsia/sen/` (the listener, the outbox, the bridge's two plugins `SenShell` and `SenCapture`) and its emulator tests in `app/src/androidTest/`; `core/` the pure Kotlin capture core (no Android SDK); `data/` the curated apps and the brands' steps; `sites.json` the one address each build loads; `www/` the page shown when the site can't load |
