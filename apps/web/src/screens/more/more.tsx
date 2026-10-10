@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import { Link } from '@tanstack/react-router';
 import { ChevronRightIcon, CreditCardIcon, HandCoinsIcon, SettingsIcon, UsersIcon, WalletIcon } from 'lucide-react';
 import { RowMarkIcon } from '@/blocks/rows';
 import {
@@ -13,7 +14,7 @@ import {
 import { useMe } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
-import { Loaded, useGo } from '../kit';
+import { Loaded } from '../kit';
 
 /**
  * More (screens.md `more`): the places that aren't a tab. Accounts needs capture, and Claims needs
@@ -38,8 +39,8 @@ interface Entry {
   icon: ComponentType<{ className?: string }>;
 }
 
+/** Each row is a link: it goes somewhere, it doesn't do something. */
 function MoreRows({ capture, claims }: { capture: boolean; claims: boolean }) {
-  const go = useGo();
   const entries: Entry[] = [
     { id: 'payments', label: 'Payments', hint: 'Every payment, searchable', icon: CreditCardIcon },
     { id: 'shared', label: 'Shared bills', hint: 'Who owes whom', icon: UsersIcon },
@@ -57,7 +58,7 @@ function MoreRows({ capture, claims }: { capture: boolean; claims: boolean }) {
             size="sm"
             className="min-h-16 w-full flex-nowrap rounded-none text-left text-base active:bg-accent"
           >
-            <button type="button" onClick={() => go(e.id)}>
+            <Link to="/s/$" params={{ _splat: e.id }}>
               <RowMarkIcon icon={e.icon} />
               <ItemContent className="min-w-0 gap-0">
                 <ItemTitle className="text-base">{e.label}</ItemTitle>
@@ -66,7 +67,7 @@ function MoreRows({ capture, claims }: { capture: boolean; claims: boolean }) {
               <ItemActions>
                 <ChevronRightIcon className="size-5 shrink-0 text-icon" aria-hidden="true" />
               </ItemActions>
-            </button>
+            </Link>
           </Item>
         </div>
       ))}
