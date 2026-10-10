@@ -1,6 +1,6 @@
 /* Firefly's own material, ported from docs/ui/directions/src/firefly.css and scoped to the look.
    An indigo night over the river, and a blue hour by day. Light is the loud thing; nothing else glows.
-   Home's sky and bokeh port with Home (B03). */
+   Home's sky and bokeh are drawn behind its content by the look's decorate. */
 [data-look='firefly'] {
   .wm {
     font: 500 23px/1 var(--font-ui);
@@ -42,6 +42,41 @@
     animation: ff-halo 3.2s ease-in-out infinite;
     transform-box: fill-box;
     transform-origin: center;
+  }
+  .hero.sync .tw-ff,
+  .hero.sync .ff-now,
+  .hero.sync .ff-now-halo {
+    animation: ff-sync 0.85s ease-out 3;
+  }
+  /* Home: the sky (the blue hour by day, a night of soft lights after dark) behind the column */
+  .sky {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+    background: linear-gradient(180deg, #d8dbf0 0%, #e5e4f2 38%, #ece6ec 72%, #f3e5dc 100%);
+  }
+  &[data-mode='dark'] .sky {
+    background:
+      radial-gradient(120% 55% at 92% -4%, rgba(92, 74, 184, 0.34), transparent 62%),
+      radial-gradient(90% 40% at 30% 108%, rgba(120, 72, 142, 0.26), transparent 70%);
+  }
+  .bokeh i {
+    position: absolute;
+    border-radius: 50%;
+    opacity: var(--o);
+    animation: ff-drift 38s ease-in-out infinite alternate;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 50%, rgba(255, 255, 255, 0) 72%);
+    opacity: calc(var(--o) * 3);
+  }
+  &[data-mode='dark'] .bokeh i {
+    background: radial-gradient(circle, rgba(244, 233, 138, 0.9) 0 55%, rgba(244, 233, 138, 0) 72%);
+    filter: blur(1.5px);
+    opacity: var(--o);
+  }
+  &[data-mode='dark'] .bokeh i:nth-child(3n) {
+    background: radial-gradient(circle, rgba(172, 156, 244, 0.9) 0 55%, rgba(172, 156, 244, 0) 72%);
   }
   .fab {
     background: #17143a;
@@ -198,5 +233,21 @@
   100% {
     opacity: 1;
     filter: none;
+  }
+}
+@keyframes ff-sync {
+  0% {
+    opacity: 0.2;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+@keyframes ff-drift {
+  to {
+    transform: translate(var(--dx), var(--dy));
   }
 }

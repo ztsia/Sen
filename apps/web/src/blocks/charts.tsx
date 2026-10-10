@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { MessageCircleIcon, TriangleAlertIcon } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts';
 import { formatSen, percent } from '@sen/core/money';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -289,7 +289,7 @@ export function CategoryBars({ rows }: { rows: CategoryRow[] }) {
       <BarChart
         data={data}
         layout="vertical"
-        margin={{ top: 4, right: 76, bottom: 4, left: 0 }}
+        margin={{ top: 4, right: 96, bottom: 4, left: 0 }}
         barCategoryGap={8}
         accessibilityLayer
       >
@@ -478,5 +478,189 @@ export function MiniPace({
       ) : null}
       <path d={path(thisCycle)} fill="none" stroke="var(--chart-accent)" strokeWidth="2" strokeLinecap="round" />
     </svg>
+  );
+}
+
+export interface Column {
+  label: string;
+  /** What the axis shows when the label is long (`Oct` for `October`). */
+  short?: string;
+  value: number;
+}
+/**
+ * Focus and context: one bar for each cycle, week or month, the last in the accent (this one) and the
+ * rest in the grey, with an optional dashed reference line (a median, a limit). One recessive axis, its
+ * labels only. `format` says a value in words: ringgit for sen, a plain count for a week's.
+ */
+export function ColumnBars({
+  columns,
+  format,
+  reference,
+  name,
+}: {
+  columns: Column[];
+  format: (value: number) => string;
+  reference?: { value: number; label: string };
+  /** What a bar counts, for the tooltip: `Saved`, `Spent`. */
+  name: string;
+}) {
+  const config = { value: { label: name } } satisfies ChartConfig;
+  const data = columns.map((c, i) => ({
+    ...c,
+    axis: c.short ?? c.label,
+    fill: i === columns.length - 1 ? 'var(--chart-accent)' : 'var(--chart-context)',
+  }));
+  const values = [...columns.map((c) => c.value), ...(reference ? [reference.value] : [])];
+  const low = Math.min(0, ...values);
+  const high = Math.max(1, ...values);
+  return (
+    <ChartContainer config={config} className="aspect-auto h-40 w-full" initialDimension={{ width: 320, height: 160 }}>
+      <BarChart data={data} margin={{ top: 20, right: 8, bottom: 0, left: 8 }} barCategoryGap={8} accessibilityLayer>
+        <XAxis
+          dataKey="axis"
+          tickLine={false}
+          axisLine={{ stroke: 'var(--border)' }}
+          interval={0}
+          tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+        />
+        <YAxis hide domain={[low, high]} />
+        {reference ? (
+          <ReferenceLine
+            y={reference.value}
+            stroke="var(--muted-foreground)"
+            strokeDasharray="4 4"
+            label={{
+              value: reference.label,
+              position: 'insideTopLeft',
+              dy: -14,
+              fill: 'var(--muted-foreground)',
+              fontSize: 11,
+            }}
+          />
+        ) : null}
+        <ChartTooltip
+          cursor={false}
+          content={
+            <ChartTooltipContent
+              hideIndicator
+              valueFormatter={format}
+              labelFormatter={(_, p) => String(p?.[0]?.payload?.label ?? '')}
+            />
+          }
+        />
+        <Bar dataKey="value" radius={[4, 4, 0, 0]} isAnimationActive={false}>
+          {data.map((d) => (
+            <Cell key={d.label} fill={d.fill} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ChartContainer>
+  );
+}
+
+/**
+ * A small line of a figure over time, the accent, with its two ends named in words and
+ * no axis: the ends carry the numbers, and the table behind it carries the rest.
+ */
+export function Sparkline({
+  points,
+  format,
+}: {
+  points: { label: string; value: number }[];
+  format: (v: number) => string;
+}) {
+  const W = 300;
+  const H = 48;
+  const lo = Math.min(...points.map((p) => p.value));
+  const hi = Math.max(...points.map((p) => p.value));
+  const span = Math.max(1, hi - lo);
+  const at = (p: { value: number }, i: number) => ({
+    x: Math.round((i / Math.max(1, points.length - 1)) * (W - 16) + 8),
+    y: Math.round(H - 8 - ((p.value - lo) / span) * (H - 16)),
+  });
+  const xy = points.map(at);
+  const first = points[0];
+  const last = points[points.length - 1];
+  const end = xy[xy.length - 1];
+  if (!first || !last || !end) return null;
+  return (
+    <div className="flex flex-col gap-1">
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-12 w-full" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          d={xy.map((q, i) => `${i ? 'L' : 'M'}${q.x} ${q.y}`).join(' ')}
+          fill="none"
+          stroke="var(--chart-accent)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+      <div className="flex justify-between gap-3 text-xs text-muted-foreground">
+        <span>
+          {first.label} <span className="num">{format(first.value)}</span>
+        </span>
+        <span>
+          {last.label} <span className="num font-semibold text-foreground">{format(last.value)}</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** Focus and context, ranked: the first row in the accent, the rest in the grey, each with its figures in words beside it. */
+export function RankedBars({ rows }: { rows: { label: string; share: number; detail: ReactNode }[] }) {
+  return (
+    <ol className="flex flex-col gap-3">
+      {rows.map((r, i) => (
+        <li key={r.label} className="flex flex-col gap-1">
+          <div className="flex justify-between gap-3 text-sm">
+            <span className="min-w-0 wrap-anywhere">{r.label}</span>
+            <span className="shrink-0 text-right text-muted-foreground">{r.detail}</span>
+          </div>
+          <svg viewBox="0 0 300 8" preserveAspectRatio="none" className="h-2 w-full" aria-hidden="true">
+            <rect x="0" y="0" width="300" height="8" rx="4" fill="var(--muted)" />
+            <rect
+              x="0"
+              y="0"
+              width={Math.max(8, 300 * Math.min(1, r.share))}
+              height="8"
+              rx="4"
+              fill={i === 0 ? 'var(--chart-accent)' : 'var(--chart-context)'}
+            />
+          </svg>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/**
+ * A goal's meter: saved against its target, in the accent. Not a risk meter: it has no cycle tick and
+ * never takes the warning colour, because a goal that's behind isn't an alarm (§10).
+ */
+export function GoalMeter({ label, saved, target }: { label: string; saved: number; target: number }) {
+  const share = target > 0 ? Math.min(1, saved / target) : 0;
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex justify-between gap-3 text-sm">
+        <span className="min-w-0 wrap-anywhere">{label}</span>
+        <span className="num text-right text-muted-foreground">
+          {formatSen(saved)} of {formatSen(target)}
+        </span>
+      </div>
+      <svg viewBox="0 0 300 12" preserveAspectRatio="none" className="h-3 w-full" aria-hidden="true">
+        <rect x="0" y="2" width="300" height="8" rx="4" fill="var(--muted)" />
+        <rect
+          x="0"
+          y="2"
+          width={Math.max(share > 0 ? 8 : 0, 300 * share)}
+          height="8"
+          rx="4"
+          fill="var(--chart-accent)"
+        />
+      </svg>
+      <span className="text-sm text-muted-foreground">{percent(share)}% saved</span>
+    </div>
   );
 }

@@ -147,6 +147,7 @@ them in its *Charts* section.
 - Grid lines and axes in `border` and `muted-foreground`, recessive. One axis, never two.
 - Two or more series always have a legend, and direct labels where there's room. Text is never in a
   series colour: it stays in `foreground` or `muted-foreground`.
+- **Bars over time and goal meters.** One bar for each cycle, week or month (`ColumnBars`): the latest in the accent, the rest in the grey, with a dashed `muted-foreground` line for a median or a limit, named on the line. A goal's meter (`GoalMeter`) fills in the accent with no cycle tick and never takes the warning colour: a goal that's behind isn't an alarm.
 - **Touch, not hover:** a tap or drag on a chart shows its values in a tooltip; the takeaway line
   under it says the answer in words, so the chart is never the only way to get it.
 - The context grey sits below 3:1 against the card on purpose. It's recessive, so it never carries

@@ -5,9 +5,11 @@
 import {
   TAB_SK,
   TAU,
+  allOf,
   dpr,
   f2,
   fontsReady,
+  insertDecor,
   reduced,
   rmParts,
   svgTag,
@@ -232,6 +234,9 @@ interface MqState {
   tex: WebGLTexture | null;
   rt: number;
   dmax: number;
+  /** Payday: droplets roll up out of the tube and pool into the new figure (`t` is set at the first frame). */
+  pour: { t: number | null } | null;
+  targets: [number, number][];
   fallback?: boolean;
 }
 type MqCanvas = HTMLCanvasElement & { _mq?: MqState; _m?: boolean };
@@ -340,13 +345,31 @@ function mqPrepare(cv: MqCanvas) {
   inside.sort((a, b) => a - b);
   const rt = Math.max(2, inside[Math.floor(inside.length * 0.97)] || 4);
   const dmax = rt * 2.2;
+  const targets: [number, number][] = [];
+  let seed = 97;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   for (let i = 0; i < W * H; i++) {
     const sd = mask[i] ? -(Math.sqrt(toOut[i]) - 0.5) : Math.sqrt(toIn[i]) - 0.5;
     const v = Math.max(0, Math.min(255, Math.round((0.5 - sd / (2 * dmax)) * 255)));
     px[i * 4] = px[i * 4 + 1] = px[i * 4 + 2] = v;
     px[i * 4 + 3] = 255;
   }
-  cv._mq = { ...L, dpr: dp, field: img, tex: null, rt, dmax, fallback: !hgInit() };
+  for (let tries = 0; targets.length < 10 && tries < 6000; tries++) {
+    const x = Math.floor(rnd() * W),
+      y = Math.floor(rnd() * H);
+    if (mask[y * W + x] && Math.sqrt(toOut[y * W + x]) > rt * 0.6) targets.push([x / dp, y / dp]);
+  }
+  cv._mq = {
+    ...L,
+    dpr: dp,
+    field: img,
+    tex: null,
+    rt,
+    dmax,
+    pour: cv.dataset.pour ? { t: null } : null,
+    targets,
+    fallback: !hgInit(),
+  };
 }
 function mqDraw(cv: MqCanvas, t: number) {
   const F = cv._mq;
@@ -372,7 +395,7 @@ function mqDraw(cv: MqCanvas, t: number) {
     return;
   }
   if (!F.tex) F.tex = hgTexture(F.field);
-  hgDraw(g, F.W, F.H, F.dpr, {
+  const o: HgOpts = {
     tex: F.tex,
     texW: 1,
     rt: F.rt,
@@ -384,7 +407,29 @@ function mqDraw(cv: MqCanvas, t: number) {
     wob: reduced() ? 0 : 0.35,
     over,
     warn: HG_WARN[mode],
-  });
+  };
+  // payday: droplets roll up out of the tube and pool into the new figure
+  if (F.pour && !reduced()) {
+    if (F.pour.t === null) F.pour.t = t;
+    const k = t - F.pour.t;
+    if (k < 2.6) {
+      o.texW = Math.min(1, Math.max(0, (k - 0.75) / 0.9));
+      F.targets.forEach((q, i) => {
+        const d = Math.min(1, Math.max(0, (k - i * 0.04) / 1.0));
+        const e = 1 - Math.pow(1 - d, 3);
+        const sx = F.W * (0.08 + 0.84 * (i / 9)),
+          sy = F.H + 26;
+        o.drops!.push([
+          sx + (q[0] - sx) * e,
+          sy + (q[1] - sy) * e - Math.sin(Math.PI * e) * 10,
+          F.size * (0.1 - 0.03 * e),
+          Math.max(0.01, 1 - Math.max(0, Math.min(1, (k - 1.1) / 0.8))),
+        ]);
+      });
+      o.glint = Math.max(0, 1 - Math.abs(k - 2.0) / 0.5);
+    } else F.pour = null;
+  }
+  hgDraw(g, F.W, F.H, F.dpr, o);
 }
 function mqMount(root: HTMLElement) {
   const mine: MqCanvas[] = [];
@@ -663,6 +708,30 @@ export const DIR: Look = {
   },
   strip(day, days) {
     return mqTube(day, days);
+  },
+  // a window's light across the stone, and a few stray beads near the figure
+  decorate(root) {
+    const off: (() => void)[] = [insertDecor(root, 'afterbegin', '<div class="room" aria-hidden="true"></div>')];
+    const hero = root.querySelector('.hero');
+    if (hero)
+      off.push(
+        insertDecor(
+          hero,
+          'beforeend',
+          '<span class="beads" aria-hidden="true"><i style="right:18px;top:30px;--r:5px"></i><i style="right:6px;top:52px;--r:3px"></i><i style="right:34px;top:64px;--r:2px"></i></span>',
+        ),
+      );
+    return allOf(...off);
+  },
+  // payday: the figure is poured out of the tube, and the column rises to its mark
+  paydayFx(root) {
+    if (reduced()) return;
+    const cv = root.querySelector<MqCanvas>('.hero-fig canvas');
+    if (cv) {
+      if (cv._mq) cv._mq.pour = { t: null };
+      else cv.dataset.pour = '1';
+    }
+    root.querySelector('.strip .col')?.classList.add('rise');
   },
   mount: mqMount,
   reveal: null,

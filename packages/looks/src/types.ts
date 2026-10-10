@@ -72,6 +72,15 @@ export interface Look {
    * `root`, and returns a function that stops it. Looks drawn wholly in SVG have none.
    */
   mount?(root: HTMLElement): () => void;
+  /**
+   * Home's own material around its figure (B03): adds what the look draws behind and around Home's content
+   * inside `root` (the Home column), and returns a function that removes all of it and stops any motion.
+   * What it adds is `aria-hidden`, never takes a tap, and sits behind the content. Under reduced motion
+   * it is drawn in its final frame and nothing loops.
+   */
+  decorate?(root: HTMLElement, mode: Mode): () => void;
+  /** Payday's one flourish on Home (D68), played once and settling to the final frame; nothing under reduced motion. */
+  paydayFx?(root: HTMLElement): void;
   /** How the look arrives in `new-look` (patterns.md §9). Built in B14. */
   reveal: null;
 }

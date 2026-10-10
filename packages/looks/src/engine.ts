@@ -294,3 +294,23 @@ export const unwatchOnScreen = (el: Element) => {
 };
 /** True only when `el` is known to be off screen. */
 export const offScreen = (el: Element) => onScreen.get(el) === false;
+
+// ---------- Home's decorations: markup added to the app's screen, and taken away again ----------
+/** Inserts one element's markup next to `at` and returns a function that removes it again. */
+export function insertDecor(at: Element, where: InsertPosition, html: string): () => void {
+  at.insertAdjacentHTML(where, html);
+  const el =
+    where === 'afterbegin'
+      ? at.firstElementChild
+      : where === 'beforeend'
+        ? at.lastElementChild
+        : where === 'beforebegin'
+          ? at.previousElementSibling
+          : at.nextElementSibling;
+  return () => el?.remove();
+}
+/** Runs every cleanup it is given, as one. */
+export const allOf =
+  (...fns: (() => void)[]) =>
+  () =>
+    fns.forEach((f) => f());

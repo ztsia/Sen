@@ -7,6 +7,7 @@ import {
   dpr,
   f2,
   fontsReady,
+  insertDecor,
   polyD,
   reduced,
   resample,
@@ -96,6 +97,10 @@ interface Fly {
   w2: number;
   r: number;
   on: boolean;
+  /** Where it flies in from on payday, and how long it waits. */
+  sx: number;
+  sy: number;
+  dl: number;
 }
 interface Part {
   t: string;
@@ -109,6 +114,7 @@ interface FFState {
   L: { size: number; parts: Part[] };
   P: Fly[];
   dpr: number;
+  gather: { t: number; dur: number } | null;
   key?: string;
   under?: HTMLCanvasElement;
 }
@@ -209,10 +215,24 @@ function ffPrepare(cv: FFCanvas) {
       w2: rnd() * TAU,
       r: 0.75 + rnd() * 0.6,
       on: i < Math.round(lit * want),
+      sx: 0,
+      sy: 0,
+      dl: rnd() * 0.7,
     });
-    rnd(); // the source drew a delay here, for the payday gathering; kept so every figure lands as designed
   }
-  cv._ff = { W, H, base, L, P, dpr: d };
+  cv._ff = { W, H, base, L, P, dpr: d, gather: null };
+  if (cv.dataset.gather) ffGather(cv);
+}
+// payday: the fireflies fly in from the twig below and settle into their places
+function ffGather(cv: FFCanvas) {
+  const F = cv._ff;
+  if (!F || reduced()) return;
+  const rnd = ffRand(4242);
+  F.P.forEach((p) => {
+    p.sx = rnd() * F.W;
+    p.sy = F.H + 22 + rnd() * 26;
+  });
+  F.gather = { t: (performance.now() - FFT.t0) / 1000, dur: 1.5 };
 }
 function ffDraw(cv: FFCanvas, t: number) {
   const F = cv._ff;
@@ -258,6 +278,7 @@ function ffDraw(cv: FFCanvas, t: number) {
   // every eight seconds the swarm flashes together, in a wave from left to right
   const still = reduced();
   const sy = still ? -1 : (t % 8) - 0.4;
+  const G = F.gather;
   const sz = Math.max(2.6, F.L.size * 0.075);
   for (const p of F.P) {
     if (!p.on) {
@@ -273,6 +294,15 @@ function ffDraw(cv: FFCanvas, t: number) {
       y += 0.45 * Math.cos(t * p.w1 * 0.8 + p.w2);
       const wave = Math.exp(-Math.pow(sy - (x / F.W) * 0.6, 2) * 70);
       b = 0.26 + 0.6 * ffFlash(((t + p.ph) % p.per) / p.per) * (1 - wave) + 0.95 * wave;
+      if (G) {
+        const k = Math.min(1, Math.max(0, (t - G.t - p.dl) / G.dur));
+        if (k < 1) {
+          const e = 1 - Math.pow(1 - k, 3);
+          x = p.sx + (x - p.sx) * e;
+          y = p.sy + (y - p.sy) * e - Math.sin(Math.PI * e) * 14;
+          b = 0.55 + 0.45 * Math.abs(Math.sin(t * 9 + p.ph));
+        }
+      }
     }
     const r = sz * p.r * (0.75 + 0.45 * b) * (dark ? 1 : 1.25);
     g.globalAlpha = Math.min(1, 0.95 * b);
@@ -280,6 +310,7 @@ function ffDraw(cv: FFCanvas, t: number) {
   }
   g.globalAlpha = 1;
   g.globalCompositeOperation = 'source-over';
+  if (G && t - G.t > G.dur + 0.8) F.gather = null;
 }
 function ffMount(root: HTMLElement) {
   const mine: FFCanvas[] = [];
@@ -375,6 +406,19 @@ function ffTwig(day: number, days: number, now: number) {
     ty = yb(tx) - 3.2;
   s += `<circle cx="${f2(tx)}" cy="${f2(ty)}" r="12" fill="url(#ffs-${now})" class="ff-now-halo"/><circle cx="${f2(tx)}" cy="${f2(ty)}" r="3.3" fill="var(--ffly-core)" class="ff-now"/>`;
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" aria-hidden="true" style="overflow:visible"><defs><radialGradient id="ffs-${now}"><stop offset="0" stop-color="var(--ffly-core)"/><stop offset=".28" stop-color="var(--ffly)" stop-opacity=".7"/><stop offset="1" stop-color="var(--ffly)" stop-opacity="0"/></radialGradient></defs>${s}</svg>`;
+}
+
+// out-of-focus lights behind the screen, and the blue hour's horizon
+function ffSky(mode: Mode) {
+  const r = ffRand(mode === 'dark' ? 11 : 23);
+  let b = '';
+  const n = mode === 'dark' ? 6 : 4;
+  for (let i = 0; i < n; i++) {
+    const sz = 26 + r() * 54;
+    const left = i % 2 ? 62 + r() * 34 : -10 + r() * 30;
+    b += `<i style="left:${f2(left)}%;top:${f2(4 + r() * 70)}%;width:${f2(sz)}px;height:${f2(sz)}px;--o:${f2(0.05 + r() * 0.1)};--dx:${f2(r() * 30 - 15)}px;--dy:${f2(r() * 24 - 12)}px;animation-delay:${f2(-r() * 30)}s"></i>`;
+  }
+  return `<div class="sky" aria-hidden="true"><div class="bokeh">${b}</div></div>`;
 }
 
 // ---------- the tab bar: each icon a firefly's trail, dotted as a long exposure shows it ----------
@@ -692,6 +736,25 @@ export const DIR: Look = {
   },
   strip(day, days) {
     return ffTwig(day, days, ++FF_N);
+  },
+  // the sky behind Home: the blue hour by day, the night's out-of-focus lights after dark
+  decorate(root, mode) {
+    return insertDecor(root, 'afterbegin', ffSky(mode));
+  },
+  // payday: the fireflies fly in from the twig, then the twig's lights answer together
+  paydayFx(root) {
+    if (reduced()) return;
+    const cv = root.querySelector<FFCanvas>('.hero-fig canvas');
+    if (cv) {
+      if (cv._ff) ffGather(cv);
+      else cv.dataset.gather = 'twig';
+    }
+    const hero = root.querySelector('.hero');
+    if (!hero) return;
+    setTimeout(() => {
+      hero.classList.add('sync');
+      setTimeout(() => hero.classList.remove('sync'), 2600);
+    }, 1700);
   },
   mount: ffMount,
   reveal: null,
