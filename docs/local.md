@@ -256,3 +256,8 @@ Each slice that needs one of these lists it under *Needs from you first* in its 
       Then, on the phone: sign in once in Settings → *Claims* → *ESS*, and on the next payday check
       that the payslip arrived by itself.
 
+- [ ] **B03's five tabs on the real phone** (QA B03). Open the preview in the debug shell and check what a
+      browser can't: hold the Scan tab for half a second (a light buzz, the sheet opens, no tap on release);
+      answer a Review row and see the toast sit above the tab bar, clear of Sen's button; turn on airplane
+      mode and answer a row, then say whether the screen updates (in a browser it doesn't: QA B03 finding 1);
+      and swipe back from a sheet, then from Insights (it should go to Home).
