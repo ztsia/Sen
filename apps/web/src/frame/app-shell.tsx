@@ -40,7 +40,9 @@ function useLost(): boolean {
 export function AppShell() {
   const screen = useCurrentScreen();
   const lost = useLost();
-  const online = useOnline();
+  // the dev panel's offline state shows what offline looks like without cutting the connection
+  const devOffline = useUi((s) => s.devState) === 'offline';
+  const online = useOnline() && !devOffline;
   const navigate = useNavigate();
   const { reviewCount, senState, setSenOpen, setScanMoreOpen } = useUi();
   const needsYou = useNeedsYouCount();

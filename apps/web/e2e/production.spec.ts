@@ -125,3 +125,48 @@ test.describe('the service worker', () => {
     await context.setOffline(false);
   });
 });
+
+// B03 done-when 5: the walking skeleton's screens still say Not built yet in production, and no made-up
+// figure reaches it: the fake backend and its scenario aren't even in the build (modules.md rule 6).
+const B03 = [
+  '/',
+  '/review',
+  '/insights',
+  '/more',
+  '/scan',
+  '/s/skipped',
+  '/s/manual',
+  '/s/payments',
+  '/s/txn',
+  '/s/receipt',
+  '/s/budgets',
+  '/s/subscriptions',
+  '/s/goals',
+  '/s/goal',
+  '/s/insights/year',
+  '/s/crop',
+  '/s/reading',
+  '/s/confirm',
+];
+
+test("B03's screens say Not built yet in production, with nothing made up", async ({ page }) => {
+  const errors = watchErrors(page);
+  for (const path of B03) {
+    await page.goto(path);
+    await expect(page.getByTestId('not-built'), path).toBeVisible();
+    await expect(page.getByText(/RM\d/)).toHaveCount(0);
+    await expect(page.getByText(/SITI AMINAH|NASI KANDAR|Wei Ming/)).toHaveCount(0);
+  }
+  expect(errors).toEqual([]);
+});
+
+test('the production build holds none of the made-up scenario', async () => {
+  const { readdirSync, readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const dir = join(import.meta.dirname, '..', 'dist-production', 'assets');
+  const js = readdirSync(dir).filter((f) => f.endsWith('.js'));
+  for (const f of js) {
+    const text = readFileSync(join(dir, f), 'utf8');
+    expect(/SYARIKAT CONTOH|SITI AMINAH|Wei Ming's month/.test(text), f).toBe(false);
+  }
+});

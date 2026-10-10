@@ -11,6 +11,7 @@ import { DEV_STATES, useUi, type DevState } from '@/frame/ui-store';
 import { LOOK_IDS, LOOK_NAMES, isLookId } from '@/looks/ids';
 import { useTheme, type ModePref } from '@/theme/store';
 import { inShell } from '@/shell/bridge';
+import { SCENARIOS, SCENARIO_NAMES, type ScenarioId } from '@/data/fake/variants';
 import { sim, useCaptureSim } from './capture-sim';
 
 /** The counts the dev panel can put on Review's badge: none, a few, and past 99+. */
@@ -38,7 +39,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
 
 /**
  * The dev panel (B01): only in development and previews, never in production. The look and light or
- * dark, reduced motion and text scale, a state for the screens (B03, B04), Sen's avatar in each of
+ * dark, reduced motion and text scale, the made-up scenario and a state for the screens (B03, B04), Sen's avatar in each of
  * its eight states, and the way to the gallery.
  */
 export default function DevPanel() {
@@ -112,6 +113,21 @@ export default function DevPanel() {
             onCheckedChange={theme.setForceReducedMotion}
           />
         </div>
+        <Group label="Made-up scenario">
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            spacing={2}
+            value={ui.scenario}
+            onValueChange={(v) => SCENARIOS.includes(v as ScenarioId) && ui.setScenario(v as ScenarioId)}
+          >
+            {SCENARIOS.map((s) => (
+              <ToggleGroupItem key={s} value={s}>
+                {SCENARIO_NAMES[s]}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </Group>
         <Group label="Screen state">
           <ToggleGroup
             type="single"
