@@ -38,12 +38,11 @@ follow on a phone, and commit.
 - [x] **Link Vercel to `ztsia/Sen`** (done 10 Oct, from the laptop's CLI). Project **sen** in
       *ztsia's projects*: root `apps/web`, Vite, Node 22.x, production branch `main`, a preview per
       branch behind Vercel Authentication, Git Fork Protection on. Production is
-      `https://sen-ochre-three.vercel.app`. Sessions never deploy by hand and never hold a Vercel
+      `https://sen-my.vercel.app`. Sessions never deploy by hand and never hold a Vercel
       token: every push deploys through this link (D122).
-      - [ ] **Optional, before you install: a nicer production name.** Vercel → *sen* → *Settings* →
-            *Domains* → *Add*, any free `….vercel.app` name. Tell a session, which writes it into
-            `apps/shell/sites.json`. After installing, a new address makes the app start again as a
-            new site, with its cache and sign-in gone.
+      The owner chose the name (10 Oct). Vercel's own `sen-ochre-three.vercel.app` still answers; the
+      app never uses it. Changing the address after installing makes the app start again as a new
+      site, with its cache and sign-in gone.
 - [ ] **B02: the shell on your phone.** Parts 1 and 2 are done; install, then the soak, a week of
       ordinary use.
       1. **The signing key: done (10 Oct), made on the laptop.** The repo holds `SEN_KEYSTORE_B64`

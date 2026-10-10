@@ -11,7 +11,7 @@ Rewritten 10 Oct 2026 by a local session on the owner's laptop (setup, no slice)
   the two addresses in `apps/shell/sites.json`, D122, and these docs. Merging it makes the first
   signed release (*Sen 0.2.N* under *Releases*) and redeploys production from `main`.
 - **Vercel is linked** (project `sen`: root `apps/web`, Node 22.x, production branch `main`).
-  Production is `https://sen-ochre-three.vercel.app` and answers 200. The review alias
+  Production is `https://sen-my.vercel.app` and answers 200. The review alias
   `https://sen-review.vercel.app` follows the branch `review`, which exists.
 - **The signing key is in the repo's secrets** (`SEN_KEYSTORE_B64`, `SEN_KEYSTORE_PASSWORD`), made on
   the laptop, with a backup the owner holds. `BETTER_AUTH_SECRET` is in Vercel for B05.
@@ -34,7 +34,6 @@ Rewritten 10 Oct 2026 by a local session on the owner's laptop (setup, no slice)
 - **The review alias is behind Vercel's login** (measured: 302 to vercel.com), so the review build
   can't load it. Recommend turning Vercel Authentication off for the project: the repo is public and
   previews hold only made-up data. The other way is teaching the review build to sign in to Vercel.
-- **A nicer production address?** It must be chosen before the owner installs (`docs/local.md`).
 - Which journeys in `docs/flows.md` are core? Recommend: first run, a payment to Review, and Scan.
 - D115 is still *Proposed*: it was to be confirmed on B02's PR, which merged without a comment.
 - Copper's overspent green (from B01). Anthropic's data terms against D34 (before B10).
