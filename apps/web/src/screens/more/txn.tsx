@@ -149,6 +149,8 @@ function TxnBody({ v }: { v: TxnView }) {
   if (v.provisional) actions.push({ label: 'New wording: right? Answer in Review', onSelect: () => go('review') });
   if (me.data?.agent !== false)
     actions.push({ label: 'Ask Sen about this', onSelect: () => useUi.getState().setSenOpen(true) });
+  // *These were two payments* (D88) shows only on a payment a pair rule merged; the made-up scenario
+  // has none, so it arrives with B11, which merges them.
   actions.push({ label: 'Mark as…', onSelect: () => setMarkOpen(true) });
   actions.push({
     label: 'Delete',

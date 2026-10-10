@@ -252,6 +252,11 @@ export function apply(db: Db, cmd: Exclude<Command, { type: 'undo' }>): Applied 
       dropReview(db, (x) => !(x.kind === 'receipt-waiting' && x.receiptId === cmd.receiptId));
       return { said: 'Kept as evidence only', touched: r ? [r.id] : [] };
     }
+    case 'receipt.note': {
+      const r = db.receipts.find((x) => x.id === cmd.receiptId);
+      if (r) r.note = cmd.note;
+      return { said: cmd.note ? 'Note saved' : 'Note removed', touched: r ? [r.id] : [] };
+    }
     case 'review.answer': {
       const item = db.review.find((r) => r.id === cmd.itemId);
       dropReview(db, (r) => r.id !== cmd.itemId);

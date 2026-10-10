@@ -35,10 +35,22 @@ const rootRoute = createRootRoute({
   ),
 });
 
+/** What a pushed screen is about: a payment, a receipt, a goal, a draft, or the filters a link carries. */
+export interface ScreenSearch {
+  id?: string;
+  cycle?: string;
+  category?: string;
+  account?: string;
+  shared?: boolean;
+}
+const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined);
+
 const screenRoute = (path: '/' | '/review' | '/insights' | '/more' | '/scan', id: string) =>
   createRoute({
     getParentRoute: () => rootRoute,
     path,
+    // Scan can be opened for one payment (Scan the receipt, the quiet scan prompt): ?id= names it
+    validateSearch: (s: Record<string, unknown>): ScreenSearch => ({ id: str(s.id) }),
     staticData: { screen: id },
     component: () => <ScreenFor id={id} />,
   });
@@ -64,16 +76,6 @@ const TAB_PATHS = { home: '/', review: '/review', insights: '/insights', more: '
 
 // An unknown id, from an old link or a typo, goes Home, replacing itself so back doesn't return to it.
 // A sheet's id isn't a page: it goes to the screen the sheet opens over, its tab's or Home.
-/** What a pushed screen is about: a payment, a receipt, a goal, a draft, or the filters a link carries. */
-export interface ScreenSearch {
-  id?: string;
-  cycle?: string;
-  category?: string;
-  account?: string;
-  shared?: boolean;
-}
-const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined);
-
 const anyScreen = createRoute({
   getParentRoute: () => rootRoute,
   path: '/s/$',

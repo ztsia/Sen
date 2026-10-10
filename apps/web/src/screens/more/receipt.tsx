@@ -6,7 +6,6 @@ import { NoteSheet } from '@/blocks/note-sheet';
 import { SettingsRow } from '@/blocks/rows';
 import { Sheet } from '@/blocks/sheet';
 import { EmptyState } from '@/blocks/states';
-import { toastDone } from '@/blocks/toast';
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemSeparator, ItemTitle } from '@/components/ui/item';
 import { useReceipt, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
@@ -141,8 +140,7 @@ function ReceiptBody({ r }: { r: ReceiptView }) {
         open={noteOpen}
         onOpenChange={setNoteOpen}
         note={rc.note}
-        // no command writes a receipt's note yet: it arrives with the receipt's slice
-        onSave={() => toastDone('Receipt notes arrive with B16')}
+        onSave={(note) => void write({ type: 'receipt.note', receiptId: rc.id, note })}
       />
       <Sheet open={photoOpen} onOpenChange={setPhotoOpen} title="The receipt's photo">
         <div className="flex aspect-[3/4] w-full flex-col items-center justify-center gap-2 rounded-lg bg-muted text-muted-foreground">

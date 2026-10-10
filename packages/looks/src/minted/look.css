@@ -41,13 +41,13 @@
   .seal {
     position: absolute;
     z-index: -1;
-    right: -30px;
+    right: -42px;
     top: 50%;
     width: 104px;
     height: 104px;
     margin-top: -52px;
     border-radius: 50%;
-    opacity: 0.55;
+    opacity: 0.45;
     pointer-events: none;
   }
   &[data-mode='dark'] .seal {

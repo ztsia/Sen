@@ -79,6 +79,8 @@ export const Command = z.discriminatedUnion('type', [
   /** A waiting receipt attached to a payment by hand, or filed as evidence (§6.4). */
   z.object({ type: z.literal('receipt.attach'), receiptId: Id, txnId: Id }),
   z.object({ type: z.literal('receipt.evidence'), receiptId: Id }),
+  /** A receipt's note (D90). */
+  z.object({ type: z.literal('receipt.note'), receiptId: Id, note: z.string().nullable() }),
   /** A Review item answered in a way no other command covers: a proposal applied or dismissed. */
   z.object({ type: z.literal('review.answer'), itemId: z.string(), answer: z.string() }),
   /** A budget for a category, per cycle (D29); amount 0 removes it. */
