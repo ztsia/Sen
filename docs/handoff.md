@@ -1,55 +1,55 @@
 # Handoff
 
-Rewritten 9 Oct 2026 by the session building B02. The protocol is in `CLAUDE.md`, *Session rotation*:
-read this first, and rewrite it before you end.
+Rewritten 10 Oct 2026 by a local session on the owner's laptop (setup, no slice). The protocol is in
+`CLAUDE.md`, *Session rotation*: read this first, and rewrite it before you end.
 
 ## Where things stand
 
-- **B02 · The shell and the listener, on `B02/shell-listener`: done; the PR is open, waiting for the
-  owner's merge** (https://github.com/ztsia/Sen/pull/3; the emulator green at `eaa6841`). QA runs 1–4
-  were full, 5–7 scoped on the capture path; run 7's fixes and D121 (mask every digit outside an amount)
-  are in, self-verified as tier 1 by the owner's call. The owner's part follows the merge:
-  Vercel, the signing key, installing, the week of soak (`docs/local.md`).
-- **QA records:** `qa/B02/report-run1..6.md`, `report.md` (run 7), `ledger.md` (every fix and tier,
-  and the probes D121 superseded), `compare-sonnet/` (run 6's twin on Sonnet). Report:
-  https://claude.ai/artifact/XUMeedU2cVicKBEWeqcFMA.
-- **Verified at `eaa6841`:** core 45/45; QA's probes 285/297 (the 12 red: 10 superseded by D121, run 4's
-  TAC CAFE choice, `Probe6.ac25`: ledger); unit 141/141; Playwright 100/100; typecheck, lint; the e2e
-  APK and emulator tests build. **The emulator** was green at `cebdbdf`.
-- **Not verified yet:** anything on the phone; the signed release (no key); the review alias (no Vercel).
+- **B01 and B02 are merged** (B02: PR #3, 9 Oct). **Next: B03 · Skeleton: the five tabs**, on
+  `B03/skeleton-tabs` from `main`. The branch doesn't exist yet.
+- **This session's setup is on `ops/local-setup`, in a PR waiting for the owner's merge.** It holds
+  the two addresses in `apps/shell/sites.json`, D122, and these docs. Merging it makes the first
+  signed release (*Sen 0.2.N* under *Releases*) and redeploys production from `main`.
+- **Vercel is linked** (project `sen`: root `apps/web`, Node 22.x, production branch `main`).
+  Production is `https://sen-my.vercel.app` and answers 200. The review alias
+  `https://sen-review.vercel.app` follows the branch `review`, which exists.
+- **The signing key is in the repo's secrets** (`SEN_KEYSTORE_B64`, `SEN_KEYSTORE_PASSWORD`), made on
+  the laptop, with a backup the owner holds. `BETTER_AUTH_SECRET` is in Vercel for B05.
+- **Not verified yet:** anything on the phone, and the signed release itself until the PR's *Shell*
+  run is green. QA records for B02 are in `qa/B02/`.
 
 ## Decided, and why
 
-- **D116, D119, D121:** until B10 can classify a wording, every digit outside an amount is stored as `•`
-  (a decimal amount, or the number after a currency code or sign); *maybe OTP* is a hint. From B10 the
-  mask applies only to what the classifier sees, and a transaction is stored with its numbers. Every
-  rule about how digits are grouped lost to a new shape (runs 5–7).
-- **D117, D121:** QA tiers. Every finished slice gets a full run; a scoped re-check **resumes the last
-  run's reviewer** (SendMessage to its agent ID), a fresh one only when it's gone; small fixes are
-  self-verified. Keep each QA run's agent ID here while its slice is open.
-- **D118:** Opus decides and reviews at high effort; `implementer` (Sonnet), `scout` (Haiku) by
-  judgement; `qa-reviewer` on Sonnet. Run 6's Sonnet twin found as much as Opus at half the cost
-  (`qa/B02/compare-sonnet/report.md`).
-- **D120:** Claude through Anthropic's own API joins Gemini; Haiku 5.5 first for the cheap tier; B10
-  builds `evals/`.
-- **D114, D115** (proposed; the owner confirms on the PR). Never stage `apps/` or `qa/` with
-  `git add -A` while a reviewer runs: it mutates code on purpose.
+- **D122 (owner, 10 Oct): nothing is deployed by hand.** A merge to `main` is the only step: Vercel
+  for the web app and API, migrations with the production deploy (B05 picks the mechanism; Vercel's
+  build step recommended), Cloudflare's Git builds for the Worker (B06), a signed release for the
+  shell, which the phone takes from *Releases* through Obtainium.
+- **The key was made locally, not by the *Shell signing key* workflow**, so a backup exists.
+- **Vercel's first deployment of a project is always production.** Pushing `ops/local-setup` was
+  that first one, so production briefly serves this branch; its web app is the same as `main`'s.
+- D116–D121 stand as in B02: mask every digit outside an amount until B10 classifies; QA's tiers.
 
 ## Open with the owner
 
-- **Which journeys in `docs/flows.md` are core?** Recommend: first run, a payment to Review, and Scan.
-- Vercel and its two addresses into `apps/shell/sites.json`; the signing key; install; the soak; the
-  hidden tests. All in `docs/local.md`. Is the review alias behind Vercel's login?
-- D115 on the PR. Copper's overspent green (from B01). Anthropic's data terms against D34 (before B10).
+- **The review alias is behind Vercel's login** (measured: 302 to vercel.com), so the review build
+  can't load it. Recommend turning Vercel Authentication off for the project: the repo is public and
+  previews hold only made-up data. The other way is teaching the review build to sign in to Vercel.
+- Which journeys in `docs/flows.md` are core? Recommend: first run, a payment to Review, and Scan.
+- D115 is still *Proposed*: it was to be confirmed on B02's PR, which merged without a comment.
+- Copper's overspent green (from B01). Anthropic's data terms against D34 (before B10).
 - Run 6's note 15 (a missing `when` stored as the post time) is for B07 to decide.
+- From `docs/local.md`: move the key's backup, the `DENYLIST` secret, install and the soak, the
+  hidden tests, the ESS capture (laptop only), Neon's terms (before B05).
 
 ## What to do first
 
-1. If the PR has review comments or red CI, address them on `B02/shell-listener`.
-2. Once it's merged: B03, on `B03/skeleton-tabs` from `main`.
+1. If the `ops/local-setup` PR is still open, don't build on it: B03 starts from `main` either way.
+2. B03, on `B03/skeleton-tabs`, from its brief. It needs nothing from the owner.
+3. `ShellTest.b_the_bridge_answers_our_own_site` failed once on the emulator (run 38033474926, after adb
+   was slow to start) and passed twice on the same commit. If it fails again, look at its wait.
 
 ## Don't reopen
 
-D1–D121, unless the owner raises one. In particular remote against bundled (D114), masking every digit
-until classify-first (D119, D121) rather than more filter rules, the slice order (D111), no screen
-mockups (D84), one brief, one branch; shadcn first, customised in place.
+D1–D122, unless the owner raises one. In particular remote against bundled (D114), masking every
+digit until classify-first (D119, D121) rather than more filter rules, the slice order (D111), no
+screen mockups (D84), one brief, one branch; shadcn first, customised in place; deploys by hand.

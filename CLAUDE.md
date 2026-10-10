@@ -89,8 +89,9 @@ built module by module, and every feature worked but the app didn't hang togethe
 starts in `ztsia/Sen`. The next slice waits only for the owner's merge.
 
 **Built so far:** B01, the design system and the six looks (the workspace, money, the frame, the
-building blocks, the dev panel and the gallery). In progress: B02, the shell and the listener, on
-`B02/shell-listener`.
+building blocks, the dev panel and the gallery); B02, the shell and the listener (merged 9 Oct; its
+week on the owner's phone is still to run). Vercel is linked and the shell's release is signed
+(10 Oct, D122). Next: B03, the five tabs' skeleton, on `B03/skeleton-tabs`.
 
 ## Non-negotiables
 
