@@ -148,3 +148,39 @@ export function apportion(total: number, weights: readonly number[]): number[] {
 
 /** A share (0.42) as a whole percent (42), for words beside a chart. Never an amount. */
 export const percent = (share: number): number => Math.round(share * 100);
+
+/**
+ * `sen × num ÷ den`, rounded half away from zero, in whole numbers throughout: a share of an amount
+ * (a cycle's spending projected to its last day, a bill per person). BigInt keeps it exact.
+ */
+export function scaleSen(sen: number, num: number, den: number): number {
+  assertSen(sen);
+  if (!Number.isSafeInteger(num) || !Number.isSafeInteger(den) || den <= 0)
+    throw new RangeError(`Scale by whole numbers, over a positive one: ${String(num)}/${String(den)}`);
+  const n = BigInt(sen) * BigInt(num);
+  const d = BigInt(den);
+  const neg = n < 0n;
+  const a = neg ? -n : n;
+  const q = (a * 2n + d) / (d * 2n);
+  // eslint-disable-next-line no-restricted-syntax -- BigInt to integer sen, never text or a float
+  return neg ? -Number(q) : Number(q);
+}
+
+/** The middle amount, or the two middles' mean rounded; none for an empty list. */
+export function medianSen(values: readonly number[]): number | null {
+  if (!values.length) return null;
+  const s = [...values].sort((a, b) => a - b);
+  const mid = s.length >> 1;
+  return s.length % 2 ? s[mid]! : scaleSen(s[mid - 1]! + s[mid]!, 1, 2);
+}
+
+/**
+ * An amount in another currency's smallest unit (US cents), shown in ringgit for display only (D99):
+ * the rate is text with up to four decimals, `4.2550`, so no float carries it. Never stored as money.
+ */
+export function fxApprox(minor: number, rate: string): number {
+  const m = /^(\d+)(?:\.(\d{1,4}))?$/.exec(rate.trim());
+  if (!m) throw new RangeError(`Not a rate: ${rate}`);
+  const scaled = digitsToInt(`${m[1]}${(m[2] ?? '').padEnd(4, '0')}`);
+  return scaleSen(minor, scaled, 10_000);
+}

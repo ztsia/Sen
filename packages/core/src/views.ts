@@ -45,10 +45,12 @@ export const HomeView = z.object({
   capture: z.boolean(),
   health: z.array(Health),
   /** On payday, the card; after it, the plan's progress until every move is done (D60). */
-  payday: z.discriminatedUnion('stage', [
-    z.object({ stage: z.literal('card') }),
-    z.object({ stage: z.literal('progress'), done: z.int(), of: z.int() }),
-  ]).nullable(),
+  payday: z
+    .discriminatedUnion('stage', [
+      z.object({ stage: z.literal('card') }),
+      z.object({ stage: z.literal('progress'), done: z.int(), of: z.int() }),
+    ])
+    .nullable(),
   figure: z.object({
     /** left: left until payday; since-start: before the first salary; month: this month's spending (D79). */
     kind: z.enum(['left', 'since-start', 'month']),
@@ -310,7 +312,12 @@ export const InsightsView = z.object({
       estimate: Amount.nullable(),
     })
     .nullable(),
-  budgets: z.object({ cycleShare: z.number(), rows: z.array(z.object({ id: Id, label: z.string(), sen: Amount, cap: Amount })) }).nullable(),
+  budgets: z
+    .object({
+      cycleShare: z.number(),
+      rows: z.array(z.object({ id: Id, label: z.string(), sen: Amount, cap: Amount })),
+    })
+    .nullable(),
   whereWent: z.array(z.object({ id: Id, label: z.string(), sen: Amount, typical: Amount })).nullable(),
   leak: z.object({ spent: z.array(Amount.nullable()), days: z.int() }).nullable(),
   smallThings: z.object({ count: z.int(), total: Amount, under: Amount }).nullable(),
@@ -354,7 +361,12 @@ export const SubscriptionsView = z.object({
       rate: z.string().nullable(),
       next: Day,
       history: z.array(
-        z.object({ on: Day, expected: Amount, actual: Amount.nullable(), status: z.enum(['expected', 'matched', 'missed']) }),
+        z.object({
+          on: Day,
+          expected: Amount,
+          actual: Amount.nullable(),
+          status: z.enum(['expected', 'matched', 'missed']),
+        }),
       ),
     }),
   ),

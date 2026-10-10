@@ -132,8 +132,8 @@ export default function DevPanel() {
             type="single"
             variant="outline"
             spacing={2}
-            value={String(ui.reviewCount)}
-            onValueChange={(v) => v && ui.setReviewCount(REVIEW_COUNTS.find((n) => String(n) === v) ?? 0)}
+            value={ui.reviewCount === null ? '' : String(ui.reviewCount)}
+            onValueChange={(v) => ui.setReviewCount(v ? (REVIEW_COUNTS.find((n) => String(n) === v) ?? null) : null)}
           >
             {REVIEW_COUNTS.map((n) => (
               <ToggleGroupItem key={n} value={String(n)}>
