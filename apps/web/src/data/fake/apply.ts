@@ -15,7 +15,8 @@ export interface Applied {
   touched: string[];
 }
 
-const nowIso = () => new Date().toISOString();
+import { nowIso } from '@/lib/clock';
+
 const uuid = () => crypto.randomUUID();
 
 function log(db: Db, id: string, what: string) {

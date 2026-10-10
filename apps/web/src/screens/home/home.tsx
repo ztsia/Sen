@@ -54,7 +54,7 @@ function HomeBody({ h }: { h: HomeView }) {
   const unit = month ? 'month' : 'cycle';
 
   return (
-    <HomeMaterial payday={h.payday?.stage === 'card'}>
+    <HomeMaterial payday={h.payday?.stage === 'card'} patina={f.income > 0 ? f.spent / f.income : 0}>
       <div className="flex flex-col gap-4 px-4 pt-1">
         {h.health.map((w) => (
           <HealthBar

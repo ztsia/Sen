@@ -1,3 +1,4 @@
+import { nowIso } from '@/lib/clock';
 import { useMemo, useState } from 'react';
 import { ChevronRightIcon, ClockIcon, ImageIcon, TriangleAlertIcon, WalletIcon } from 'lucide-react';
 import { useRouter } from '@tanstack/react-router';
@@ -12,7 +13,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useAccounts, useCategories, useDraft, useNearDuplicate, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
-import { useGo, useScreenSearch } from '../kit';
+import { useScreenSearch } from '../kit';
 
 /**
  * Add expense (screens.md `manual`, §6.8): a payment Sen didn't see. The amount, large, typed as text and
@@ -21,14 +22,13 @@ import { useGo, useScreenSearch } from '../kit';
  */
 export default function Manual() {
   const router = useRouter();
-  const go = useGo();
   const write = useWrite();
   const { id } = useScreenSearch();
   const draft = useDraft(id ?? '');
   const cats = useCategories();
   const accts = useAccounts();
   // when the form was opened: the payment's time, and the key of the near-duplicate check
-  const at = useMemo(() => new Date().toISOString(), []);
+  const at = useMemo(() => nowIso(), []);
 
   const [amountText, setAmountText] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -48,11 +48,6 @@ export default function Manual() {
   const account = accounts.find((a) => a.id === (accountId ?? accts.data?.last));
   const unreadable = draft.data && draft.data.status !== 'reading' && !draft.data.byHand ? draft.data : null;
 
-  const back = () => {
-    if (window.history.length > 1) router.history.back();
-    else go('home', {}, { replace: true });
-  };
-
   const save = async () => {
     const r = checkAmount(amountText);
     const e = {
@@ -66,7 +61,7 @@ export default function Manual() {
       type: 'txn.create',
       txn: {
         id: crypto.randomUUID(),
-        occurredAt: new Date().toISOString(),
+        occurredAt: nowIso(),
         amount: r.sen,
         categoryId,
         accountId: account?.id ?? null,
@@ -75,7 +70,7 @@ export default function Manual() {
       },
     });
     setSaving(false);
-    if (done) back();
+    if (done) router.history.back();
   };
 
   return (

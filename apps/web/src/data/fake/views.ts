@@ -142,7 +142,11 @@ export function balances(db: Db): Map<string, number> {
  * fixed costs once, everything else at this cycle's daily pace so far. An estimate, labelled as one.
  */
 function projectSpending(db: Db, c: { start: string; end: string }, upto: string): number {
-  const fixed = new Set(['Home & bills', 'Phone & internet', 'Subscriptions', 'Family'].map((n) => db.categories.find((x) => x.name === n)?.id));
+  const fixed = new Set(
+    ['Home & bills', 'Phone & internet', 'Subscriptions', 'Family'].map(
+      (n) => db.categories.find((x) => x.name === n)?.id,
+    ),
+  );
   const txns = live(db).filter((t) => inRange(t, { start: c.start, end: upto }));
   const fixedSpent = sum(txns.filter((t) => fixed.has(t.categoryId ?? undefined)).map((t) => spendingOf(db, t)));
   const rest = sum(txns.map((t) => spendingOf(db, t))) - fixedSpent;

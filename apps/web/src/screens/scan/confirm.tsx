@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
 import {
-  CheckIcon,
   ChevronRightIcon,
   ImageIcon,
   MinusIcon,
@@ -233,7 +232,9 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
                   <TagIcon className="size-5" />
                 </ItemMedia>
                 <ItemContent>
-                  <ItemTitle className="text-base font-normal">{shared ? label(shared) : 'Mixed'}</ItemTitle>
+                  <ItemTitle className="text-base font-normal">
+                    {items.length === 0 ? 'Add items first' : shared ? label(shared) : 'Mixed'}
+                  </ItemTitle>
                   {!shared && items.length ? (
                     <ItemDescription className="text-pretty">{mixedLine}</ItemDescription>
                   ) : null}
@@ -476,11 +477,7 @@ function Check({
   else words = <>Items come to {m(difference)} less than the receipt&rsquo;s total</>;
   return (
     <p className="mt-1 flex items-start gap-2" role="status">
-      {ok ? (
-        <CheckIcon className="mt-0.5 size-5 shrink-0 text-icon" aria-hidden="true" />
-      ) : (
-        <TriangleAlertIcon className="mt-0.5 size-5 shrink-0 text-icon" aria-hidden="true" />
-      )}
+      {ok ? null : <TriangleAlertIcon className="mt-0.5 size-5 shrink-0 text-icon" aria-hidden="true" />}
       <span>
         {words}
         {ok ? ' ✓' : ''}

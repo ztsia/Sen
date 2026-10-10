@@ -1067,8 +1067,13 @@ export const DIR: Look = {
   // a double rule under the total, the ledger's way of closing a sum
   decorate(root) {
     const total = root.querySelector('[data-testid="quiet"] [data-slot="item-title"]');
-    total?.classList.add('total');
-    return () => total?.classList.remove('total');
+    if (!total || total.classList.contains('total')) return () => undefined;
+    const had = total.hasAttribute('class');
+    total.classList.add('total');
+    return () => {
+      total.classList.remove('total');
+      if (!had) total.removeAttribute('class');
+    };
   },
   // payday: the pencil stroke of the strip is drawn in again
   paydayFx(root) {

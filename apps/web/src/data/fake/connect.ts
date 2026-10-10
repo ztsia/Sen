@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { useUi } from '@/frame/ui-store';
+import { setClock } from '@/lib/clock';
 import { createFake } from './index';
 import { SCENARIOS, type ScenarioId } from './variants';
 
@@ -13,6 +14,7 @@ export function connect(client: QueryClient) {
   const apply = () => {
     const { scenario, devState } = useUi.getState();
     fake.reset(scenario, { empty: devState === 'empty', offline: devState === 'offline' || !navigator.onLine });
+    setClock(fake.db().now);
     fake.setReadMode(devState === 'loading' ? 'loading' : devState === 'error' ? 'error' : 'normal');
   };
   apply();

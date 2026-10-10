@@ -46,7 +46,7 @@ const run = (cmd: Command) => runCommand(cmd);
 function ReviewBody({ r }: { r: ReviewView }) {
   const go = useGo();
   const [other, setOther] = useState<{ txnId: string; merchant: string } | null>(null);
-  const [refundFor, setRefundFor] = useState<string | null>(null);
+  const [refundFor, setRefundFor] = useState<{ txnId: string; from: string } | null>(null);
   const [attach, setAttach] = useState<string | null>(null);
   const cats = useCategories();
   const suggested = r.needsYou.filter((i) => i.suggested);
@@ -156,12 +156,13 @@ function ReviewBody({ r }: { r: ReviewView }) {
       <PaymentPicker
         open={!!refundFor}
         title="A refund of which payment?"
+        merchant={refundFor?.from}
         onClose={() => setRefundFor(null)}
         onPick={(id) => {
           if (!refundFor) return;
           void run({
             type: 'txn.kind',
-            id: refundFor,
+            id: refundFor.txnId,
             kind: 'refund',
             linkedTransactionId: id,
             otherAccountId: null,
@@ -185,7 +186,7 @@ type Go = ReturnType<typeof useGo>;
 interface Ctx {
   go: Go;
   setOther: (x: { txnId: string; merchant: string }) => void;
-  setRefundFor: (id: string) => void;
+  setRefundFor: (x: { txnId: string; from: string }) => void;
 }
 
 /** Each kind's answers, keyed so Sen's suggestion can name one (§12.1). */
@@ -223,7 +224,7 @@ function answersFor(
           onSelect: () =>
             run({ type: 'txn.kind', id: i.txnId, kind: 'transfer', linkedTransactionId: null, otherAccountId: null }),
         },
-        { key: 'refund', label: 'Refund of…', onSelect: () => setRefundFor(i.txnId) },
+        { key: 'refund', label: 'Refund of…', onSelect: () => setRefundFor({ txnId: i.txnId, from: i.from }) },
       ];
     case 'owe-share':
       return [
@@ -413,16 +414,21 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
 function PaymentPicker({
   open,
   title,
+  merchant,
   onClose,
   onPick,
 }: {
   open: boolean;
   title: string;
+  /** A refund lists recent payments to its merchant first (flows.md `refund`). */
+  merchant?: string;
   onClose: () => void;
   onPick: (id: string) => void;
 }) {
   const q = usePayments({});
-  const rows = (q.data?.rows ?? []).filter((x) => x.direction === 'out' && x.kind === 'spend').slice(0, 30);
+  const spends = (q.data?.rows ?? []).filter((x) => x.direction === 'out' && x.kind === 'spend');
+  const theirs = merchant ? spends.filter((x) => x.title === merchant) : [];
+  const rows = [...theirs, ...spends.filter((x) => !theirs.includes(x))].slice(0, 30);
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()} title={title}>
       <ItemGroup className="-mx-4">

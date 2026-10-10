@@ -1,3 +1,5 @@
+import { now as clockNow } from './clock';
+
 // Dates and month boundaries are always in Kuala Lumpur (CLAUDE.md, conventions).
 export const KL = 'Asia/Kuala_Lumpur';
 
@@ -10,7 +12,7 @@ export const dayLabel = (d: Date) => dayFmt.format(d);
 export const timeLabel = (d: Date) => timeFmt.format(d);
 
 /** `Updated just now`, `Updated 2 min ago`, `Updated 3 h ago`: how stale a screen is while live updates are down. */
-export function updatedAgo(then: Date, now: Date = new Date()): string {
+export function updatedAgo(then: Date, now: Date = clockNow()): string {
   const min = Math.floor((now.getTime() - then.getTime()) / 60000);
   if (min < 1) return 'Updated just now';
   if (min < 60) return `Updated ${min} min ago`;
@@ -22,7 +24,7 @@ export function updatedAgo(then: Date, now: Date = new Date()): string {
 const dayKey = new Intl.DateTimeFormat('en-CA', { timeZone: KL, year: 'numeric', month: '2-digit', day: '2-digit' });
 
 /** `Today, 21:02`, `Yesterday, 09:15`, else `Thu, 8 Oct, 21:02`: a moment, relative when recent, in Kuala Lumpur. */
-export function momentLabel(then: Date, now: Date = new Date()): string {
+export function momentLabel(then: Date, now: Date = clockNow()): string {
   const t = dayKey.format(then);
   if (t === dayKey.format(now)) return `Today, ${timeLabel(then)}`;
   if (t === dayKey.format(new Date(now.getTime() - 86_400_000))) return `Yesterday, ${timeLabel(then)}`;

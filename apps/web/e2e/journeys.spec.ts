@@ -108,7 +108,7 @@ export const JOURNEYS: Record<string, Journey> = {
     const sheet = page.getByRole('dialog', { name: 'A refund of which payment?' });
     await expect(sheet).toBeVisible();
     await shot('which payment');
-    await sheet.getByRole('button').filter({ hasText: 'UNIQLO' }).first().click();
+    await sheet.getByRole('button').filter({ hasText: 'TAN AH KOW' }).first().click();
     await expect(toast(page)).toContainText('Marked as a refund');
     await shot('refund');
   },
@@ -123,6 +123,102 @@ export const JOURNEYS: Record<string, Journey> = {
     await expect(toast(page)).toContainText('Sen will read this wording from now on');
     await expect(row).toHaveCount(0);
     await shot('confirmed');
+  },
+
+  // a known merchant files itself, with no review (D24): it's in Payments, filed by its rule
+  'pay-known': async (page, shot, go) => {
+    await go('/more');
+    await page.getByText('Payments', { exact: true }).click();
+    await settled(page);
+    await page.getByRole('searchbox', { name: 'Search payments' }).fill('NASI KANDAR ABC');
+    const row = page.getByRole('button', { name: /^NASI KANDAR ABC/ }).first();
+    await expect(row).toContainText('Meals');
+    await expect(row).not.toContainText('In Review');
+    await shot('in payments');
+    await row.click();
+    await expect(page.getByText("From Ryt Bank's notification")).toBeVisible();
+    await expect(page.getByText('What the bank said')).toBeVisible();
+    await shot('the payment');
+  },
+
+  // fixing a payment: change its category from now on, then undo it (§6.7, D25)
+  fix: async (page, shot, go) => {
+    await go('/more');
+    await page.getByText('Payments', { exact: true }).click();
+    await settled(page);
+    await page.getByRole('searchbox', { name: 'Search payments' }).fill('NASI KANDAR ABC');
+    await page
+      .getByRole('button', { name: /^NASI KANDAR ABC/ })
+      .first()
+      .click();
+    await shot('the payment');
+    await page.getByRole('button', { name: 'Meals' }).click();
+    const sheet = page.getByRole('dialog');
+    await sheet.getByRole('button', { name: 'Drinks & desserts' }).click();
+    await expect(page.getByRole('dialog')).toContainText('just this one?');
+    await shot('just this one, or from now on');
+    await page.getByRole('button', { name: 'From now on' }).click();
+    await expect(toast(page)).toContainText('NASI KANDAR ABC is Drinks & desserts from now on');
+    await expect(page.getByRole('button', { name: 'Drinks & desserts' })).toBeVisible();
+    await shot('changed');
+    await toast(page).getByRole('button', { name: 'Undo' }).click();
+    await expect(page.getByRole('button', { name: 'Meals' })).toBeVisible();
+    await shot('undone');
+  },
+
+  // Insights: question cards, a category to its payments, and Ask Sen about this
+  insights: async (page, shot, go) => {
+    await go('/insights');
+    await settled(page);
+    await expect(page.getByText('Am I on track?')).toBeVisible();
+    await shot('insights');
+    await page.getByRole('button', { name: 'Ask Sen about this' }).first().click();
+    await expect(page.getByText('Looking at: Insights')).toBeVisible();
+    await shot("Sen's sheet");
+    await page.keyboard.press('Escape');
+    await page.getByText('Where did it go, and what changed?').scrollIntoViewIfNeeded();
+    await shot('where did it go');
+  },
+
+  // a budget: from its card to Budgets, and a new amount, with Undo
+  budget: async (page, shot, go) => {
+    await go('/insights');
+    await settled(page);
+    await page.getByRole('button', { name: /Open budgets/ }).click();
+    await expect(page).toHaveURL(/\/s\/budgets/);
+    await shot('budgets');
+    await page
+      .getByRole('button', { name: /Shopping/ })
+      .first()
+      .click();
+    await page.getByLabel('Budget each cycle').fill('400');
+    await shot('new amount');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('RM320.30 of RM400.00')).toBeVisible();
+    await shot('saved');
+  },
+
+  // a goal: Goals, then one goal with its per-cycle amount and feasibility (§10)
+  goal: async (page, shot, go) => {
+    await go('/s/goals');
+    await settled(page);
+    await shot('goals');
+    await page.getByRole('button', { name: /Japan in spring/ }).click();
+    await expect(page).toHaveURL(/\/s\/goal\?id=/);
+    await settled(page);
+    await expect(page.getByText(/median surplus/i).first()).toBeVisible();
+    await shot('the goal');
+  },
+
+  // subscriptions: declared, with forecasts against actual charges (§11)
+  subscription: async (page, shot, go) => {
+    await go('/insights');
+    await settled(page);
+    await page.getByRole('button', { name: /Open subscriptions/ }).click();
+    await settled(page);
+    await expect(page.getByText('Claude Pro')).toBeVisible();
+    await expect(page.getByText(/rate 4\.2550/)).toBeVisible();
+    await shot('subscriptions');
   },
 };
 

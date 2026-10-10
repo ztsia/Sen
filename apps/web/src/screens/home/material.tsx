@@ -10,15 +10,7 @@ import { useMode } from '@/theme/store';
  * `patina` is the share of the cycle's money spent (0 to 1): Copper's coins wear it, Sen's included,
  * so it is set on the column and on the page, where Sen's button can see it.
  */
-export function HomeMaterial({
-  payday,
-  patina,
-  children,
-}: {
-  payday: boolean;
-  patina?: number;
-  children: ReactNode;
-}) {
+export function HomeMaterial({ payday, patina, children }: { payday: boolean; patina?: number; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const look = useLook();
   const mode = useMode();
@@ -30,7 +22,7 @@ export function HomeMaterial({
     const share = Math.max(0, Math.min(1, patina));
     const hosts = [el, document.documentElement];
     hosts.forEach((h) => {
-      h.dataset.patina = String(Math.round(share * 100) / 100);
+      h.dataset.patina = String(share);
       h.dataset.over = share >= 1 ? '1' : '0';
     });
     return () => hosts.forEach((h) => (delete h.dataset.patina, delete h.dataset.over));
