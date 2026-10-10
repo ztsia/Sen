@@ -1,61 +1,60 @@
 # Handoff
 
-Rewritten 10 Oct 2026 by a cloud session (the first install on the phone, no slice). The protocol is in
-`CLAUDE.md`, *Session rotation*: read this first, and rewrite it before you end.
+Rewritten 10 Oct 2026 by the B03 session, mid-slice. The protocol is in `CLAUDE.md`, *Session
+rotation*: read this first, and rewrite it before you end.
 
 ## Where things stand
 
-- **B01 and B02 are merged** (B02: PR #3, 9 Oct). **Next: B03 · Skeleton: the five tabs**, on
-  `B03/skeleton-tabs` from `main`. The branch doesn't exist yet.
-- **The local session's setup is merged** (`ops/local-setup`, PR #4, 10 Oct), and its release,
-  *Sen 0.2.27*, is installed on the owner's phone (Play Protect has to be off to install: `docs/local.md`).
-- **On `claude/dazzling-bohr-vdfvaz`, a fix waiting for the owner's merge:** the frame ignored the
-  status bar's inset, so on the phone the app bar sat under the status bar. The column now pads
-  itself by the shell's `--safe-area-inset-top` (and the bottom one when no tab bar shows), as do
-  the frame's own error column and full sheets. Web only: a merge reaches the phone at its next launch.
-- **Vercel is linked** (project `sen`: root `apps/web`, Node 22.x, production branch `main`).
-  Production is `https://sen-my.vercel.app` and answers 200. The review alias
-  `https://sen-review.vercel.app` follows the branch `review`, which exists.
-- **The signing key is in the repo's secrets** (`SEN_KEYSTORE_B64`, `SEN_KEYSTORE_PASSWORD`), made on
-  the laptop, with a backup the owner holds. `BETTER_AUTH_SECRET` is in Vercel for B05.
-- **On the phone so far:** the release installs and loads production. The soak hasn't started. QA records for B02 are in `qa/B02/`.
+- **B03 · Skeleton: the five tabs is in progress on `B03/skeleton-tabs`** (from `main` after PR #6).
+  B01, B02, the status-bar fix (PR #5) and D123 (PR #6) are merged.
+- **Done and pushed:**
+  - The shared types: `packages/core/src/schema.ts` (§15's rows, zod, money as `Sen`/`Amount`
+    integers), `views.ts` (one read shape per screen), `commands.ts` (every write, as data, with
+    Undo), `cycles.ts` (pay cycles and KL days, tested). `money.ts` gained `scaleSen`, `medianSen`,
+    `fxApprox` (tested).
+  - The data layer: `apps/web/src/data/` — `backend.ts` (the one interface), `hooks.ts` (a query
+    hook per screen, `useWrite` with Undo toasts), `index.ts` (TanStack Query; the fake loads only in
+    previews, so production's build holds no made-up data), `fake/` (Wei Ming's month in
+    `scenario.ts`, its edge states in `variants.ts`, views and writes, and `fake.test.ts`, which
+    parses every view with the shared zod schemas in every scenario).
+  - Home, the `cycle` sheet, Review and `skipped`; the dev panel's *Made-up scenario* switch;
+    `?scenario=` and `?state=` set them on load. The screens route through `screens/skeleton.ts`
+    (previews only); production still shows *Not built yet*.
+  - e2e: `screens.spec.ts` (axe and 48 px in all twelve looks, every screen state), `journeys.spec.ts`
+    (Home and Review's journeys so far), production's guard in `production.spec.ts`.
+- **Being built by implementers when this was written** (uncommitted if the VM was lost: redo them):
+  Insights and its five screens, More's four, Scan's five (scan, crop, reading, confirm, manual), and
+  each look's Home material (`decorate`, `paydayFx`).
+- **Still to do:** the remaining journeys (scan-after, receipt-first, manual, fix, insights, budget,
+  goal, subscription, pay-known), a full e2e run, the `uiux` checklist pass for the PR, QA (full run),
+  the PR *B03 · Skeleton: the five tabs*.
 
 ## Decided, and why
 
-- **D123 (owner, 10 Oct): screenshots as receipts.** One tap on *Attach screenshot* for a screenshot
-  taken within 10 minutes of a captured payment, and *Sen · Receipt* pinned in the share sheet. In
-  the spec (§6.4) and B15's brief; on PR #5 with the status-bar fix.
-- **D122 (owner, 10 Oct): nothing is deployed by hand.** A merge to `main` is the only step: Vercel
-  for the web app and API, migrations with the production deploy (B05 picks the mechanism; Vercel's
-  build step recommended), Cloudflare's Git builds for the Worker (B06), a signed release for the
-  shell, which the phone takes from *Releases* through Obtainium.
-- **The key was made locally, not by the *Shell signing key* workflow**, so a backup exists.
-- **Vercel's first deployment of a project is always production.** Pushing `ops/local-setup` was
-  that first one, so production briefly serves this branch; its web app is the same as `main`'s.
-- D116–D121 stand as in B02: mask every digit outside an amount until B10 classifies; QA's tiers.
+- **D124 (owner, 10 Oct): the core journeys are `first-run`, `pay-new` and `scan-after`**, marked in
+  `flows.md`; every QA run walks them.
+- **The fake applies a write at once and "syncs" 1.2 s later**, like the outbox will; offline, rows
+  stay *Not synced yet*. Undo is a backend command (`{ type: 'undo', token }`), so the API can do it
+  its own way in B05.
+- **A journey can't reload mid-way:** the made-up data lives in the page's memory, so journeys move
+  through the app, not with `page.goto`, after a write.
+- **`npx shadcn add` installed an unrelated npm package called `cn`** (it misread the utils alias).
+  Removed; add shadcn components with `--dry-run` first and check `package.json` after.
 
 ## Open with the owner
 
-- **The review alias is behind Vercel's login** (measured: 302 to vercel.com), so the review build
-  can't load it. Recommend turning Vercel Authentication off for the project: the repo is public and
-  previews hold only made-up data. The other way is teaching the review build to sign in to Vercel.
-- Which journeys in `docs/flows.md` are core? Recommend: first run, a payment to Review, and Scan.
-- D115 is still *Proposed*: it was to be confirmed on B02's PR, which merged without a comment.
-- Copper's overspent green (from B01). Anthropic's data terms against D34 (before B10).
-- Run 6's note 15 (a missing `when` stored as the post time) is for B07 to decide.
-- From `docs/local.md`: move the key's backup, the `DENYLIST` secret, install and the soak, the
-  hidden tests, the ESS capture (laptop only), Neon's terms (before B05).
+- **D115 is still *Proposed*.** The owner asked what it was (10 Oct); I recommended confirming it.
+- **Copper's overspent green:** the owner said *Ok* without a recommendation on the table. Mine: keep
+  it as designed (verdigris only on copper, the warning always with its icon and words). Confirm.
+- The review alias behind Vercel's login; Anthropic's data terms against D34 (before B10); run 6's
+  note 15 (B07); `docs/local.md`'s queue.
 
 ## What to do first
 
-1. If the status-bar fix (`claude/dazzling-bohr-vdfvaz`) isn't merged yet, B03 starts from `main` anyway; it touches
-   `frame/app-shell.tsx`, so merge `main` in once it lands.
-2. B03, on `B03/skeleton-tabs`, from its brief. It needs nothing from the owner.
-3. `ShellTest.b_the_bridge_answers_our_own_site` failed once on the emulator (run 38033474926, after adb
-   was slow to start) and passed twice on the same commit. If it fails again, look at its wait.
+1. Check what of the four implementers' work is committed; finish what isn't.
+2. Write the remaining journeys, run `pnpm e2e`, then the `qa` skill, then the PR.
 
 ## Don't reopen
 
-D1–D122, unless the owner raises one. In particular remote against bundled (D114), masking every
-digit until classify-first (D119, D121) rather than more filter rules, the slice order (D111), no
-screen mockups (D84), one brief, one branch; shadcn first, customised in place; deploys by hand.
+D1–D124, unless the owner raises one. One brief, one branch; shadcn first, customised in place; no
+screen mockups (D84); nothing made up in production (modules.md rule 6).
