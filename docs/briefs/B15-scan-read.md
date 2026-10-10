@@ -34,6 +34,12 @@ once, at print quality, privately, and is read by the model into an itemised dra
     the choice.
 - **Gallery multi-select.**
 - **The share target** for images and PDFs. It uploads the file as a receipt, then shows `reading`.
+  It shows as *Sen · Receipt*, pinned near the top of the share sheet by a sharing shortcut (D123).
+- **A screenshot right after paying (D123):** for 10 minutes after a captured payment, a MediaStore
+  observer on the screenshots folder; a new screenshot swaps the payment's notification and island
+  button to ***Attach screenshot***, and a tap attaches it to that payment and reads it. Only behind
+  Settings → *Capture* → *Screenshots after paying*, which asks for photo access (*Allow all*); never
+  attached without the tap, and the image opened only then.
 - **In a browser:** the camera through the file picker, then `crop` with four draggable corners,
   straightening in a canvas.
 - **The Scan tab:**
@@ -87,6 +93,8 @@ once, at print quality, privately, and is read by the model into an itemised dra
 1. On the Xiaomi, a receipt scanned straight after paying is uploaded and read, and shows in
    `confirm` with its items.
 2. The same file shared twice says *Already added*. Offline, the scan waits and uploads on reconnect.
+   A screenshot taken within 10 minutes of a captured payment is offered on its notification, one
+   taken later isn't, and neither is read before the tap (emulator test).
 3. A forced extraction failure falls back to `manual` with the image, and the image is kept.
 4. In a browser at a phone viewport, the camera input with four-corner crop produces a straightened
    upload (Playwright with a fixture image).
@@ -97,6 +105,8 @@ once, at print quality, privately, and is read by the model into an itemised dra
 
 - [ ] Scan a few real receipts: a faded one, a long one. Share the phone bill PDF from Gmail.
 - [ ] Long-press Scan; use the *Scan receipt* shortcut.
+- [ ] Pay for a ZUS order, screenshot the order, and tap *Attach screenshot*. Share another
+      screenshot from its preview: is *Sen · Receipt* near the top?
 
 ## Needs from you first
 

@@ -22,6 +22,9 @@ Rewritten 10 Oct 2026 by a cloud session (the first install on the phone, no sli
 
 ## Decided, and why
 
+- **D123 (owner, 10 Oct): screenshots as receipts.** One tap on *Attach screenshot* for a screenshot
+  taken within 10 minutes of a captured payment, and *Sen · Receipt* pinned in the share sheet. In
+  the spec (§6.4) and B15's brief; on PR #5 with the status-bar fix.
 - **D122 (owner, 10 Oct): nothing is deployed by hand.** A merge to `main` is the only step: Vercel
   for the web app and API, migrations with the production deploy (B05 picks the mechanism; Vercel's
   build step recommended), Cloudflare's Git builds for the Worker (B06), a signed release for the
