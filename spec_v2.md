@@ -294,12 +294,13 @@ A notification records that money moved; the receipt says what it bought. Scanni
    - This replaces v0.16's whole server-side enhancement pipeline (§7.10.7), its crop-skip heuristic, and the "OEM document mode" question (#13, #30).
    - ⚠️ **No black-and-white filter on thermal receipts.** Hard thresholding drops faint digits (v0.16 §7.10.7). Pick the scanner mode in P4 by testing faded receipts: crop/rotate only, or with filters and cleanup.
 2. **Gallery multi-select.** Images are stored as they are, after resizing.
-3. **Share to the app.** PDFs or images shared from Gmail or Files, through the shell's share target. This covers e-bills such as the phone bill.
-4. **In a browser or the PWA (D52).** ML Kit isn't available there.
+3. **Share to the app.** PDFs or images shared from Gmail or Files, through the shell's share target. This covers e-bills such as the phone bill. It shows as *Sen · Receipt*, pinned near the top of the share sheet, so a screenshot goes from its preview's *Share* in one more tap (D123).
+4. **A screenshot right after paying (D123).** For an order shown on the phone, such as ZUS. For 10 minutes after a captured payment, the shell watches for a new screenshot; when one appears, the payment's notification and its island offer ***Attach screenshot*** in place of *Scan receipt*. A tap attaches it to that payment and reads it. Screenshots outside that window are ignored, none is attached without the tap, and the image is opened only then. It needs photo access (*Allow all*), asked when it's switched on in Settings → *Capture*.
+5. **In a browser or the PWA (D52).** ML Kit isn't available there.
    - The phone's own camera opens through the file picker, with its full resolution, focus and flash.
    - A crop screen with four draggable corners straightens the photo in a few lines of code. There's no automatic edge detection, which would need OpenCV.js (about 8 MB) or a paid SDK, and the receipt reader copes with a skewed photo anyway.
    - On an iPhone, the Files app's document scanner makes a PDF, which uploads like any file.
-5. **Forwarded email (D56).** Invoices and e-receipts that arrive by email: Maxis, Spotify, Claude, Vertex AI, Grab's e-receipts, online shopping, the phone bill.
+6. **Forwarded email (D56).** Invoices and e-receipts that arrive by email: Maxis, Spotify, Claude, Vertex AI, Grab's e-receipts, online shopping, the phone bill.
    - **Sen never sees your inbox.** A Gmail filter in your own account forwards only the senders you choose to Sen's dedicated Gmail account. You control what gets in by editing the filter.
    - **Each person has their own address** on that inbox, using Gmail's `+` addressing, such as `sen-inbox+<code>@example.com`. Gmail delivers anything after the `+` to the same inbox but keeps it in the address, so Sen knows whose email it is. The code is random, at least 128 bits (D85), shown in that person's Settings, and mail with an unknown code is dropped.
    - **Gmail confirms a forwarding address** by emailing it a code. That email lands in Sen's inbox, so Sen shows the code in that person's Settings, to type into Gmail.
