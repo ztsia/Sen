@@ -63,7 +63,14 @@ follow on a phone, and commit.
                build to sign in to Vercel once.
       3. **Install and set up.** The *Shell* workflow builds both apps on every push, and on `main`
          publishes them. *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* → tap `sen-0.2.N.apk`
-         (Chrome asks to allow installing unknown apps: allow it for Chrome).
+         (Chrome asks to allow installing unknown apps: allow it for Chrome). **Play Protect blocks
+         it, with no *Install anyway*** (measured 10 Oct): Malaysia has had enhanced fraud protection
+         since April 2026, which stops apps asking for notification access when they come from a
+         browser, a chat app or a file manager. So: *Play Store* → your picture → *Play Protect* → ⚙
+         → turn *Scan apps with Play Protect* off, install, and turn it back on. `adb install` from
+         the laptop isn't blocked. Install `sen-0.2.N.apk`, named **Sen**; `sen-review-0.2.N.apk`
+         (*Sen review*) is the review build, which opens Chrome while the review alias is behind
+         Vercel's login.
          **For updates without checking by hand, use Obtainium** (D122): install it from
          github.com/ImranR98/Obtainium (*Releases*), *Add app*, source
          `https://github.com/ztsia/Sen`, and under *Filter APKs by regular expression* put

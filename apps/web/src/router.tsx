@@ -22,11 +22,16 @@ declare module '@tanstack/react-router' {
 }
 
 // A path that matches nothing, or a screen that throws, keeps the frame and offers a way home
-// (patterns.md §7, Error), never the router's own page.
+// (patterns.md §7, Error), never the router's own page. If the frame itself throws, its error shows in
+// a column of its own, below the status bar like the frame's.
 const rootRoute = createRootRoute({
   component: AppShell,
   notFoundComponent: () => <Lost kind="missing" />,
-  errorComponent: () => <Lost kind="broken" />,
+  errorComponent: () => (
+    <div className="safe-top safe-bottom mx-auto flex h-dvh w-full max-w-[480px] flex-col bg-background">
+      <Lost kind="broken" />
+    </div>
+  ),
 });
 
 const screenRoute = (path: '/' | '/review' | '/insights' | '/more' | '/scan', id: string) =>
