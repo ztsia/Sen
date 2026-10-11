@@ -265,3 +265,7 @@ Each slice that needs one of these lists it under *Needs from you first* in its 
       amount should stay whole; QA B03 finding 23); scroll Review down and tap Insights, then More →
       Payments twice (each should open at its top; finding 18); and double-tap *Apply all* and *Delete*
       (one application, one step back; findings 17 and 21).
+      Run 3 adds two: with the font size at the largest, check Home's *Spent … this cycle* amount again (it
+      still breaks at the comma in a browser; finding 23, still failing); and on a slow signal, open Payments
+      for the first time after an update and say whether the tab bar jumps to the middle of the screen while
+      it loads (QA B03 run 3, finding 31).
