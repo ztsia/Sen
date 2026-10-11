@@ -391,3 +391,21 @@ R2-18  Regression: run 1's 100 passing criteria still pass; the 11 failures are 
 R2-19  Non-negotiables, again on the fix diff: money integer sen (the hash/size fields are not money);
        prediction vs fact (budget "Over by" uses facts only); dedupe (R2-3, R2-4); KL time (R2-5 sort uses
        instants, not strings, and display stays KL)
+
+Added during phase 5 of run 2, after the code and the screens were open (written after the fact: weaker
+evidence, kept because each came from a spec citation the first pass missed):
+
+R2-20  A screen opens at its top
+       Given a tall screen (Review) scrolled down 900 px
+       When  another tall screen (Insights, or Payments) is opened that was opened before in the session
+       Then  it is at scrollTop 0, the search and filters (Payments) or the first card (Insights) visible
+       Spec  patterns §10 (each screen scrolls inside the page), screens.md `payments` (newest first)
+R2-21  A refusal is seen
+       When  *Done* is refused (by-hand items above the payment)
+       Then  the words are on the screen the person is looking at (in view, or a toast), never only below the fold
+       Spec  patterns §7 *Error* ("says what happened")
+R2-22  Every write button is idempotent under a fast double tap, not only Review's rows: Apply all, *This was
+       a payment* (Skipped), *Delete* (txn: goes back once), *Mark as…* choice
+       Spec  §6.5, CLAUDE.md (every input has a dedupe key), AC-63
+R2-23  Text at 1.5x: an amount is not split across lines at the comma ("RM3," / "873.53")
+       Spec  patterns §8 (amounts wrap before they truncate; a number stays whole)

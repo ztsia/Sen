@@ -161,7 +161,12 @@ test('FLOW-12 receipt-first: nomatch receipt waits in Review; attach by hand add
   const dlg = page.getByRole('dialog');
   // run 2: the sheet lists the same merchant, then the closest amounts (finding 12, fixed); take its first row
   const rows = await dlg.getByRole('button').allInnerTexts();
-  console.log('attach sheet, first 5:', JSON.stringify(rows.slice(0, 5).map((r) => r.replace(/\n/g, ' | '))), 'of', rows.length);
+  console.log(
+    'attach sheet, first 5:',
+    JSON.stringify(rows.slice(0, 5).map((r) => r.replace(/\n/g, ' | '))),
+    'of',
+    rows.length,
+  );
   await dlg.getByRole('button').nth(1).click();
   await expect(toast(page)).toContainText(/Attached to RM/);
   const after = await db<any>(

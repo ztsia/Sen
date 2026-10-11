@@ -304,3 +304,13 @@ FLOW-44 Plain-http host                                              (sad)
         Steps  Scan -> choose a file -> Save
         Ends   reading continues or says what is wrong
         Covers R2-17
+
+FLOW-45 Scroll between screens (added in phase 5)                     (sad)
+        Entry  Review scrolled 900 px, then Insights tab; More > Payments a second time
+        Ends   each screen is at scrollTop 0
+        Covers R2-20
+
+FLOW-46 Fast taps on the other write buttons (added in phase 5)       (sad)
+        Entry  Apply all; Skipped > This was a payment; txn > Delete; ten taps on Review's answer
+        Ends   one application, one Undo returns it, one step back
+        Covers R2-22
