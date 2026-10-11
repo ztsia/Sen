@@ -224,6 +224,7 @@ agents are in `.claude/agents/`:
 | Agent | Use it when | Don't, when |
 |---|---|---|
 | `implementer` (Sonnet) | A slice's build splits into **batches already decided**, each worth a brief: a group of screens from `patterns.md`, tests from given criteria, a port, boilerplate across files. Each batch owns its own files, so several run **in parallel, in the background** | The change is under about 100 lines, needs a design decision, or touches a non-negotiable's logic (money, RLS, dedupe, the listener's filters): do it yourself |
+| `implementer` on **Haiku** (`model: haiku` on the Agent call, low effort) | A **mechanical** batch: copying a finished example to more files, test boilerplate from given criteria, lint and format fixes, doc syncs to a decision, reading logs, screenshot sweeps. About a twentieth of Sonnet's price | The batch needs judgment (layout choices, a tricky state, anything a reviewer would argue about): Sonnet |
 | `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill: a full run when a slice is finished, then the tiers | |
 | `scout` (Haiku) | Something too big to read: a long CI log, a large unfamiliar area | A lookup one `grep` or a filtered log answers; its cold start costs more than it saves |
 
@@ -238,6 +239,9 @@ tokens each). The cost is a cold start per agent, so:
   restating rules.
 - **Review every report and diff yourself**, fix what's off, then commit. No per-task review loops:
   QA checks the slice.
+- **Haiku is on trial (D125, 11 Oct):** B04 runs its first mechanical batch on Haiku and a
+  comparable one on Sonnet, and counts the fixes each needed in the handoff. Keep Haiku where it
+  needs no more fixing than Sonnet did.
 - Subagents spend the same quota as the main session. When one stops at a usage limit, resume it
   (`SendMessage`), never restart it.
 
