@@ -146,12 +146,16 @@ test('FLOW-17 No receipt > Enter the items: unitemised allowed, overshoot refuse
     page,
     `(d) => ({ r: d.receipts.length, tx: d.txns.length, last: d.receipts[d.receipts.length-1] && { total: d.receipts[d.receipts.length-1].total, tx: d.receipts[d.receipts.length-1].transactionId } })`,
   );
+  // run 2 (finding 8, fixed): Done refuses it, in words, and saves nothing
+  expect(after.r).toBe(before.r);
+  expect(after.tx).toBe(before.tx);
+  await expect(page.getByText(/can't come to more than the payment/)).toBeVisible();
   console.log(
     'Done with items far above the payment ->',
     JSON.stringify({ before, after }),
     'toast',
     await toast(page)
-      .innerText()
+      .innerText({ timeout: 1000 })
       .catch(() => '(none)'),
   );
   await shot(page, 'FLOW-17-step-4-done-overshoot');

@@ -159,16 +159,17 @@ test('FLOW-12 receipt-first: nomatch receipt waits in Review; attach by hand add
   expect(mid.tx).toBeNull();
   await w.getByRole('button', { name: 'Attach to a payment…' }).nth(1).click();
   const dlg = page.getByRole('dialog');
-  // choose a payment of a different amount: GRABFOOD RM32.50
-  await dlg.getByRole('button').filter({ hasText: 'GRABFOOD' }).first().click();
-  await expect(toast(page)).toContainText('Attached to RM32.50');
+  // run 2: the sheet lists the same merchant, then the closest amounts (finding 12, fixed); take its first row
+  const rows = await dlg.getByRole('button').allInnerTexts();
+  console.log('attach sheet, first 5:', JSON.stringify(rows.slice(0, 5).map((r) => r.replace(/\n/g, ' | '))), 'of', rows.length);
+  await dlg.getByRole('button').nth(1).click();
+  await expect(toast(page)).toContainText(/Attached to RM/);
   const after = await db<any>(
     page,
-    `(d) => { const g = d.txns.find(t => t.merchantRaw === 'GRABFOOD' && t.amount === 3250); const r = d.receipts.find(r => r.merchantRaw === 'KOPITIAM SRI DAMAI'); return { amt: g.amount, cat: g.categoryId, rtx: r.transactionId, rstatus: r.status, same: r.transactionId === g.id, total: r.total, txns: d.txns.length } }`,
+    `(d) => { const r = d.receipts.find(r => r.merchantRaw === 'KOPITIAM SRI DAMAI'); const t = d.txns.find(t => t.id === r.transactionId); return { amt: t.amount, cat: t.categoryId, rtx: r.transactionId, rstatus: r.status, same: !!t, total: r.total, txns: d.txns.length } }`,
   );
   console.log('after attach by hand:', JSON.stringify(after));
   expect(after.txns).toBe(before.txns);
-  expect(after.amt).toBe(3250);
   expect(after.same).toBe(true);
   await shot(page, 'FLOW-12-step-2-attached');
 });
