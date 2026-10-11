@@ -1,3 +1,5 @@
+**Published report (run 2, same link as run 1):** https://claude.ai/artifact/WfFSai2Hz3RP9Kbe93w88p
+
 # QA B03 · Skeleton: the five tabs: run 2 (full, after run 1's tier-3 fixes)
 
 ```
