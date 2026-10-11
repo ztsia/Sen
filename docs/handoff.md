@@ -5,21 +5,27 @@ protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it 
 
 ## Where things stand
 
-- **B01, B02 and B03 are merged** (B03: PR #7, 11 Oct).
-- **Next: B04** (`docs/briefs/B04-skeleton-rest.md`) on `B04/skeleton-rest`, from `main`. It builds on
-  B03's data layer (`apps/web/src/data/`: one `backend.ts`, a hook per screen, the fake with Wei
-  Ming's month) and the screens' house style (`screens/home/`, `screens/review/`).
-- **Production** is `https://sen-my.vercel.app`: the tab bar and *Not built yet*, with no server
-  behind it. The review alias `https://sen-review.vercel.app` follows the branch `review`.
-- **Every account and key the build needs so far exists (11 Oct).** `docs/local.md`'s first item
-  lists each with its variable. In Vercel, Production only: R2 for receipts, Gemini (Google Cloud
-  project **`sen-my`**, not `sen`), Claude, Firebase for push, Sen's Gmail, with Neon and
-  `BETTER_AUTH_SECRET` from before. In `ztsia/sen_ops`: R2 for backups. **No key has made a call
-  yet:** B05, B06, B10 and B15 are their first tests. Preview has no keys except Neon's and Better
-  Auth's; a slice that needs one in previews says so in `docs/local.md`.
-- **ESS was captured on the laptop (10 Oct, D110),** in `private/ess/` there. `spec_v2.md` §13.1
-  has the generic answers; Q29 lists what's left.
-- **Usage:** `docs/usage.md`. **Not verified yet:** anything on the owner's phone.
+- **B04 is in progress** on `B04/skeleton-rest` (started 11 Oct). B01–B03 are merged.
+- **Done and pushed:** the shared ground.
+  - `views.ts` and `commands.ts` have *B04* sections.
+  - Backend methods and hooks exist for splits, accounts, claims, Sen, Settings and payday.
+  - The fake's per-area modules are in `data/fake/areas/` (splits, sen, money, settings, admin), wired into `Db`, the seeds and the write dispatch.
+  - A stub screen exists for every B04 id, registered in `screens/skeleton.ts`.
+- **Running (11 Oct), seven `implementer` batches, each owning its files:**
+  - splits, with `split-public` on its own fake (`data/public.ts`, `fake/public-split.ts`)
+  - Sen (the sheet's conversation and `agent/*`)
+  - accounts, claims and payday (`screens/money/`)
+  - Settings' everyday sections, on **Haiku** (the D125 trial)
+  - Settings' Claims, Sen and Members, on Sonnet (the comparison)
+  - outside the tabs (`screens/outside/`)
+  - native stand-ins, the simulator and the journeys (`dev/`)
+- **Then:**
+  - review each diff and commit
+  - Playwright walks every `flows.md` journey from `dev/journeys.ts` in six looks, light and dark, with axe
+  - QA
+  - the owner's review on the phone
+- **Production** is `https://sen-my.vercel.app`. The review alias `https://sen-review.vercel.app` follows the branch `review`.
+- **Keys:** see `docs/local.md`. No key has made a call yet; B05, B06, B10 and B15 are their first tests.
 
 ## Decided, and why
 
@@ -56,8 +62,8 @@ protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it 
 
 ## What to do first
 
-- **A build session:** B04, from `main` (`git checkout -b B04/skeleton-rest origin/main`). Build the
-  shared ground yourself, then brief batches (`CLAUDE.md`, *Models and subagents*).
+- **If the batches' work isn't on the branch:** the VM was reclaimed mid-batch. Rerun the batch briefs per
+  area, against the stubs and the `TODO(B04 …)` marks in `data/fake/areas/`.
 
 ## Don't reopen
 
