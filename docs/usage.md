@@ -11,3 +11,4 @@ the reading it saved.
 | 11 Oct | B03 | `01a75b9c` | $85.5 | 4× implementer on sonnet-5-5 $5.96; 3× qa-reviewer on sonnet-5-5 $28.42 | $119.88 | opus 71%, sonnet 29% |
 | 11 Oct | setup | `c0da593a` | $17.25 | none | $17.25 | opus 100% |
 | 11 Oct | setup | `f55dd374` | $15.2 | none | $15.2 | opus 100% |
+| 11 Oct | B04 | `a62b07c1` | $12.86 | 1× implementer on haiku-5-5 $0.08; 7× implementer on sonnet-5-5 $11.98 | $24.92 | opus 52%, sonnet 48%, haiku 0% |

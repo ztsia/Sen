@@ -5,27 +5,22 @@ protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it 
 
 ## Where things stand
 
-- **B04 is in progress** on `B04/skeleton-rest` (started 11 Oct). B01–B03 are merged.
-- **Done and pushed:** the shared ground.
-  - `views.ts` and `commands.ts` have *B04* sections.
-  - Backend methods and hooks exist for splits, accounts, claims, Sen, Settings and payday.
-  - The fake's per-area modules are in `data/fake/areas/` (splits, sen, money, settings, admin), wired into `Db`, the seeds and the write dispatch.
-  - A stub screen exists for every B04 id, registered in `screens/skeleton.ts`.
-- **Running (11 Oct), seven `implementer` batches, each owning its files:**
-  - splits, with `split-public` on its own fake (`data/public.ts`, `fake/public-split.ts`)
-  - Sen (the sheet's conversation and `agent/*`)
-  - accounts, claims and payday (`screens/money/`)
-  - Settings' everyday sections, on **Haiku** (the D125 trial)
-  - Settings' Claims, Sen and Members, on Sonnet (the comparison)
-  - outside the tabs (`screens/outside/`)
-  - native stand-ins, the simulator and the journeys (`dev/`)
+- **B04 is in progress** on `B04/skeleton-rest`. B01–B03 are merged.
+- **Built, reviewed and committed (11 Oct):**
+  - every B04 screen on made-up data: splits (with `split-public` in its own `PublicShell`, on its own fake, reading nothing of the person's), Sen's sheet and `agent/*`, accounts, balance check, claims, claim, payday, every Settings section, sign-in, first run (both versions, embedding B02's capture steps through `CaptureStep`) and new-look's frame
+  - the dev panel's native stand-ins, the simulator and all 37 journeys (`dev/journeys.ts`)
+- **Running:** a Playwright batch for done-when 1 and 2: every journey in six looks, light and dark, and axe on every screen and stand-in.
 - **Then:**
-  - review each diff and commit
-  - Playwright walks every `flows.md` journey from `dev/journeys.ts` in six looks, light and dark, with axe
-  - QA
-  - the owner's review on the phone
+  - QA, a full run (the `qa` skill)
+  - the PR *B04 · Skeleton: everything else, and your review*
+  - the owner's review on the phone, in the debug shell
+- **The D125 Haiku trial (B04):** the comparison was Settings' everyday sections on Haiku against Settings' Claims, Sen and Members on Sonnet.
+  - Haiku cost $0.08; Sonnet cost $1.07.
+  - Haiku needed 2 fixes: its writer refused every key but its own (against the brief's *by its key path*), and it ran `pnpm format` repo-wide.
+  - Sonnet needed none of its own.
+  - Verdict: keep Haiku for mechanical batches, with the contract spelled out and *format only your files* in the brief.
 - **Production** is `https://sen-my.vercel.app`. The review alias `https://sen-review.vercel.app` follows the branch `review`.
-- **Keys:** see `docs/local.md`. No key has made a call yet; B05, B06, B10 and B15 are their first tests.
+- **Keys:** see `docs/local.md`. None has made a call yet.
 
 ## Decided, and why
 
@@ -62,8 +57,14 @@ protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it 
 
 ## What to do first
 
-- **If the batches' work isn't on the branch:** the VM was reclaimed mid-batch. Rerun the batch briefs per
-  area, against the stubs and the `TODO(B04 …)` marks in `data/fake/areas/`.
+- **If the Playwright batch's work isn't on the branch,** brief it again: extend `e2e/journeys.spec.ts` and
+  `screens.spec.ts` for B04's screens and journeys, with the six looks, light and dark, and axe.
+- **Open points for B05 onwards, from the batches:**
+  - `ScreenSearch` has no `day`, so Sen's *Add a payment for Sat 4 Oct* opens `manual` empty.
+  - `ReviewRow` shows 3 answers, but `ask_user` allows 4.
+  - Categories and rules can't be added or renamed: there are no commands for it yet (B12).
+  - *Changes each quarter* has no flag in the theme store (B14).
+  - `db.picks` holds several takers comma-joined (B17 makes it `split_picks`).
 
 ## Don't reopen
 
