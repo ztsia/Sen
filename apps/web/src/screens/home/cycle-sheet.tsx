@@ -25,7 +25,17 @@ export function CycleSheet({ open, onOpenChange }: { open: boolean; onOpenChange
                 : ''}
             </p>
             <dl className="flex flex-col">
-              {c.cycle.basis === 'month' ? (
+              {c.cycle.basis === 'pay' && !c.salary ? (
+                // before the first salary: what's been spent, never a misleading "over" (QA B03 run 3, 34)
+                <>
+                  {c.income ? <Row label="Money in so far" value={<Money sen={c.income} kind="in" />} /> : null}
+                  <Row
+                    label="Spent since you started"
+                    value={<Money sen={c.spending} className="font-semibold" />}
+                    strong
+                  />
+                </>
+              ) : c.cycle.basis === 'month' ? (
                 <>
                   <Row label="Spent this month" value={<Money sen={c.spending} />} />
                   {c.lastSpending !== null ? <Row label="Last month" value={<Money sen={c.lastSpending} />} /> : null}

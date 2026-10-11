@@ -63,32 +63,25 @@ test('R3-A By-hand: Enter in the price of Add item adds the item once and shows 
   expect(err).toBe(false);
 });
 
-test('R3-B Mark an OUTGOING payment as Refund of…: spending drops by twice its amount', async ({ page }) => {
+test('R3-B Mark an OUTGOING payment: Refund of… and Income are not offered, and spending is unchanged', async ({
+  page,
+}) => {
+  // finding 28, fixed: a refund is money in (§7, D21), so money out is never offered as one
   await open(page, '/');
   await expect(page.getByTestId('hero')).toBeVisible();
   await page.waitForTimeout(400);
   const h0 = await homeNums(page);
   await openRow(page, 'KEDAI MAKAN AH CHOY');
   await page.getByRole('button', { name: 'Mark as…' }).click();
-  await page.getByRole('button', { name: 'Refund of…' }).click();
-  await page
-    .getByRole('button', { name: /ZUS COFFEE/ })
-    .first()
-    .click();
-  await expect(toast(page)).toContainText('Marked as a refund');
-  await shot(page, 'R3-B-step-1-marked');
+  await expect(page.getByRole('button', { name: 'Transfer' })).toBeVisible();
+  await shot(page, 'R3-B-step-1-mark-as');
+  await expect(page.getByRole('button', { name: 'Refund of…' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Income' })).toHaveCount(0);
+  await page.keyboard.press('Escape');
   await tabs(page).getByRole('link', { name: /^Home/ }).click();
   await expect(page.getByTestId('hero')).toBeVisible();
   await page.waitForTimeout(400);
-  const h1 = await homeNums(page);
-  console.log('Home before', JSON.stringify(h0), 'after', JSON.stringify(h1));
-  const d = await db<any>(
-    page,
-    `(d) => d.txns.filter(t => t.kind==='refund').map(t => [t.merchantRaw, t.direction, t.amount, t.linkedTransactionId])`,
-  );
-  console.log('refund rows', JSON.stringify(d));
-  // a RM10.00 payment must never move spending by more than RM10.00 (finding: it moves it by RM20.00)
-  expect(sen(h0.spent) - sen(h1.spent)).toBeLessThanOrEqual(1000);
+  expect(await homeNums(page)).toEqual(h0);
 });
 
 test('R3-C Confirm: fixing a doubtful price moves the committed total off the printed one', async ({ page }) => {

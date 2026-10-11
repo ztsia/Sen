@@ -1244,7 +1244,8 @@ function addThisCycle(db: Db) {
   db.reliefs[uid('txn:uniqlo')] = 'Lifestyle';
   db.experiment = { label: 'GrabFood at most 3 times a week', merchantKey: 'GRABFOOD', perWeek: 3 };
   db.note = {
-    text: 'Quiet Saturday: RM31.20 all day. Drinks are at RM118 of RM150 with 12 days to go, so maybe one less ZUS this week.',
+    // its figures are the month's own, pinned by fake.test.ts (QA B03 run 3, 33): Sen states only what its tools return
+    text: "Saturday came to RM135.40. Drinks are at RM73.50 of RM150 with 12 days to go, so there's room for a ZUS or two.",
     at: at('2026-10-17', '21:00'),
   };
   db.payday = { stage: 'progress', done: 2, of: 3 };

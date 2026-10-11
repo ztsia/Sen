@@ -173,3 +173,29 @@ test('a screen opens at its top, not at the last screen’s scroll', async ({ pa
   await page.waitForTimeout(800);
   expect(await top()).toBe(0);
 });
+
+// QA B03 run 3: the fixes that a screen shows, in the repo's own suite
+test('money out is never offered as a refund or income (28)', async ({ page }) => {
+  await open(page, `/s/txn?id=${NK}`);
+  await page.getByRole('button', { name: 'Mark as…' }).click();
+  await expect(page.getByRole('button', { name: 'Transfer' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Refund of…' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Income' })).toHaveCount(0);
+});
+
+test('at 1.5× text, the pace amount stays in one piece (23)', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sen.dev.textScale', '1.5'));
+  await open(page, '/');
+  const amount = page.getByTestId('pace').locator('[data-sen]').first();
+  const lines = await amount.evaluate((el) => el.getClientRects().length);
+  expect(lines).toBe(1);
+});
+
+test('before the first salary, the cycle sheet says spent since you started, never over (34)', async ({ page }) => {
+  await open(page, '/?scenario=before-salary');
+  await page.getByTestId('hero').click();
+  const sheet = page.getByRole('dialog');
+  await expect(sheet).toContainText('Spent since you started');
+  await expect(sheet).not.toContainText('Over by');
+  await expect(sheet).not.toContainText('over on payday');
+});

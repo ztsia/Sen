@@ -167,8 +167,7 @@ export function home(db: Db): HomeView {
   const spentByDay = cumulative(db, cycle, t);
   const spent = spentByDay[spentByDay.length - 1] ?? 0;
   const income = incomeIn(db, cycle);
-  const salaryId = db.categories.find((c) => c.systemKey === 'salary')?.id;
-  const hasSalary = live(db).some((x) => x.categoryId === salaryId && x.kind === 'income' && inRange(x, cycle));
+  const hasSalary = salaryIn(db, cycle);
   const kind = !db.capture ? 'month' : hasSalary ? 'left' : 'since-start';
   const sen = kind === 'left' ? income - spent : spent;
   const last = index > 0 ? all[index - 1]! : null;
@@ -213,19 +212,28 @@ export function home(db: Db): HomeView {
   };
 }
 
+/** Has a salary landed in this cycle? Before one, there's nothing to be left of (screens.md Home). */
+function salaryIn(db: Db, cycle: { start: string; end: string }) {
+  const salaryId = db.categories.find((c) => c.systemKey === 'salary')?.id;
+  return live(db).some((x) => x.categoryId === salaryId && x.kind === 'income' && inRange(x, cycle));
+}
+
 export function cycleSheet(db: Db, id?: string): CycleView {
   const { cycle, all, index } = cycleById(db, id);
   const t = today(db);
   const spending = spentIn(db, cycle);
   const income = incomeIn(db, cycle);
   const last = index > 0 ? all[index - 1]! : null;
+  const salary = salaryIn(db, cycle);
   return {
     cycle,
+    salary,
     income,
     spending,
     result: income - spending,
-    // project_cycle_end (§12.3), a straight line at this cycle's pace: an estimate, labelled as one
-    estimate: db.capture && cycle.current ? income - projectSpending(db, cycle, t) : null,
+    // project_cycle_end (§12.3), a straight line at this cycle's pace: an estimate, labelled as one.
+    // Before the first salary there's no payday figure to project (QA B03 run 3, 34)
+    estimate: db.capture && cycle.current && salary ? income - projectSpending(db, cycle, t) : null,
     lastSpending: !db.capture && last ? spentIn(db, last) : null,
   };
 }

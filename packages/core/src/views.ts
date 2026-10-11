@@ -83,6 +83,8 @@ export type HomeView = z.infer<typeof HomeView>;
 /** The `cycle` sheet: how *left until payday* is worked out, and where it will end. */
 export const CycleView = z.object({
   cycle: CycleRef,
+  /** A salary landed in it. Before one, it's spending since you started, never "over" (screens.md Home). */
+  salary: z.boolean(),
   income: Amount,
   spending: Amount,
   result: Sen,

@@ -1,3 +1,4 @@
+import { formatSen } from '@sen/core/money';
 import { describe, expect, it } from 'vitest';
 import { Command } from '@sen/core/commands';
 import { Account, Category, Receipt, ReceiptItem, Transaction } from '@sen/core/schema';
@@ -325,12 +326,29 @@ describe('QA B03 run 3', () => {
     const purchase = fake.db().txns.find((t) => t.direction === 'out' && t.kind === 'spend' && t.id !== out.id)!;
     const before = (await fake.home()).figure;
     await expect(
-      fake.run({ type: 'txn.kind', id: out.id, kind: 'refund', linkedTransactionId: purchase.id, otherAccountId: null }),
+      fake.run({
+        type: 'txn.kind',
+        id: out.id,
+        kind: 'refund',
+        linkedTransactionId: purchase.id,
+        otherAccountId: null,
+      }),
     ).rejects.toThrow('Only money coming in');
     await expect(
       fake.run({ type: 'txn.kind', id: out.id, kind: 'income', linkedTransactionId: null, otherAccountId: null }),
     ).rejects.toThrow('Only money coming in');
     expect((await fake.home()).figure).toEqual(before);
+  });
+
+  it("33: Sen's note on Home states the month's own figures", () => {
+    const db = buildScenario('wei-ming', false);
+    const sat = db.txns
+      .filter((t) => !t.deletedAt && t.occurredAt.startsWith('2026-10-17'))
+      .reduce((a, t) => a + v.spendingOf(db, t), 0);
+    const drinks = v.budgets(db).rows.find((r) => r.label === 'Drinks & desserts')!;
+    expect(db.note!.text).toContain(`Saturday came to ${formatSen(sat)}`);
+    expect(db.note!.text).toContain(`Drinks are at ${formatSen(drinks.sen)} of RM150`);
+    expect(drinks.cap).toBe(rm('150.00'));
   });
 
   it('32: a shared bill counts no more than what is left after repayments (D19), before its share is set', () => {

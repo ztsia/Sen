@@ -84,3 +84,33 @@ sweep), so its deterministic regression is the unit test; the e2e double tap is 
 
 **Green, after:** the tap guard `3 passed (3)`; the four e2e regressions `4 passed`, twice; the unit
 suite `206 passed`; typecheck, lint and format clean.
+
+## After run 3 (fix first: 37 criteria, 35 pass, 2 fail)
+
+**Self-verified, no fourth run (owner, 11 Oct).** By the skill this batch is tier 2: the fixes are
+scoped (no navigation, data-layer or pattern change everyone passes through; `Money` gained an opt-in
+`whole`, its default unchanged). The owner chose not to spend a reviewer on it, so the re-check is
+QA's own run 3 specs, which were red on these findings, plus unit and repo e2e regressions.
+
+| Finding | Fix | Where |
+|---|---|---|
+| 28 Major: *Refund of…* offered on money out, spending fell twice | Only money in is offered *Refund of…* or *Income*; the fake refuses either on money out, and a refund of anything but a payment you made, before it changes anything (the API will too, B05) | `screens/more/txn.tsx`, `data/fake/apply.ts` |
+| 23 Minor (run 2's, still failing): the pace amount split at the comma; 390 wide clipped | `Money whole` for an amount in a sentence (no break after the comma); the pace sparkline is sized in px, so at 1.5× the words get the room | `blocks/money.tsx`, `blocks/charts.tsx`, `screens/home/home.tsx` |
+| 29 Minor: Enter in Add item's price submitted twice | The form's own submit handles Enter; the price no longer calls it too | `screens/scan/confirm.tsx` |
+| 30 Minor: a failed check committed the items' sum as the total | A scanned receipt commits its printed total (§6.4); the check states the difference | `screens/scan/confirm.tsx` |
+| 31 Minor: the frame broke while a screen's code loaded | The fallback is a `Screen`, so the tab bar stays where it is | `router.tsx` |
+| 32 Minor: D19's repayment clause unpinned | A unit test with repayments larger than the unowed part | `data/fake/fake.test.ts` |
+| 33 Minor: Sen's note contradicted the month | The note states the month's figures, and a test pins them to the data | `data/fake/scenario.ts`, `fake.test.ts` |
+| 34 Minor: the cycle sheet said *Over by* before the first salary | Before a salary, it says *Spent since you started*, with no payday estimate (`CycleView.salary`) | `packages/core/src/views.ts`, `data/fake/views.ts`, `screens/home/cycle-sheet.tsx` |
+| 36 Note: *Correcting arrives with B13* | B12, which builds it | `screens/more/txn.tsx` |
+| 38 Note: the gap lost its sign; the hero's label not spoken | Unseen money in shows +RM; the label uses `spokenSen` | `screens/home/home.tsx` |
+| 39 Note: goal dates had no year | `longDay` carries the year when it isn't this one | `lib/dates.ts` |
+| 35, 37, 40, 41, 42 Notes | Left: the photo arrives with the scanner (B15); `.5`'s wording with the number pad's next pass; the fake's whole-snapshot Undo is the fake's (B05 inverts per command); 41 and 42 are QA process | |
+
+**Red, before:** the two new unit tests on the old code (the guard removed, `- repaid` dropped):
+`× 28 … × 32 … Tests 2 failed | 30 passed (32)`. QA's run 3 specs on the old code: R3-A, R3-B, R3-C,
+R3-K, R3-L red (the report's outputs).
+
+**Green, after:** the unit suite `209 passed`; QA's run 3 specs 21 of 21 (R3-B rewritten to assert the
+option is gone); run 2's FLOW-43 at 412 and 390 wide; the repo's three new e2e regressions (28, 23, 34);
+typecheck, lint and format clean.

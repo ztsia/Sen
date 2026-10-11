@@ -463,6 +463,7 @@ export function MiniPace({
   lastCycle: number[] | null;
   days: number;
 }) {
+  // its size in px, not rem: at a large text scale the words beside it get the room (QA B03 run 3, 23)
   const W = 96;
   const H = 32;
   const top = Math.max(1, ...thisCycle, ...(lastCycle ?? []));
@@ -474,7 +475,7 @@ export function MiniPace({
       )
       .join(' ');
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="h-8 w-24 shrink-0" aria-hidden="true">
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-[32px] w-[96px] shrink-0" aria-hidden="true">
       {lastCycle ? (
         <path d={path(lastCycle)} fill="none" stroke="var(--chart-context)" strokeWidth="2" strokeLinecap="round" />
       ) : null}

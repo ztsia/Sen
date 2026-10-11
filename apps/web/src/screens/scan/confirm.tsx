@@ -123,8 +123,10 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
   const itemsTotal = priced.total;
   const shared = sharedCategory(items);
   const hasPayment = d.byHand && d.forTxnId !== null;
-  // What is committed: the payment's own amount when typing against one, else what the items come to.
-  const total = hasPayment ? d.total : itemsTotal;
+  // What is committed: a scanned receipt's printed total, even when its items don't add up to it (the
+  // check says so, and matching is by the printed total: §6.4, QA B03 run 3, 30); by hand, the
+  // payment's own amount when typing against one, else what the items come to.
+  const total = !d.byHand || hasPayment ? d.total : itemsTotal;
   const difference = d.byHand ? total - itemsTotal : itemsTotal - d.total;
 
   // Attaching (§6.4): with capture on, a receipt for no named payment looks for one to attach to.
@@ -549,7 +551,7 @@ function AddItem({ onAdd }: { onAdd: (description: string, amount: number) => vo
         />
         {errors.description ? <FieldError>{errors.description}</FieldError> : null}
       </Field>
-      <MoneyInput label="Price" value={amount} error={errors.amount} onChange={setAmount} onEnter={submit} />
+      <MoneyInput label="Price" value={amount} error={errors.amount} onChange={setAmount} />
       <Button type="submit" size="lg" variant="secondary">
         Add item
       </Button>

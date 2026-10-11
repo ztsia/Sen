@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CalendarCheckIcon, ChevronRightIcon, CloudOffIcon, PartyPopperIcon, TriangleAlertIcon } from 'lucide-react';
-import { formatSen } from '@sen/core/money';
+import { formatSen, spokenSen } from '@sen/core/money';
 import type { HomeView } from '@sen/core/views';
 import { MiniPace } from '@/blocks/charts';
 import { HeroFigure } from '@/blocks/hero';
@@ -95,7 +95,7 @@ function HomeBody({ h }: { h: HomeView }) {
         <button
           type="button"
           className="home-hero -mx-1 rounded-xl px-1 text-left active:bg-accent"
-          aria-label={`${label}, ${formatSen(Math.abs(f.sen))}, ${sub}. How it's worked out`}
+          aria-label={`${label}, ${spokenSen(Math.abs(f.sen))}, ${sub}. How it's worked out`}
           onClick={() => setCycleOpen(true)}
           data-testid="hero"
         >
@@ -113,8 +113,7 @@ function HomeBody({ h }: { h: HomeView }) {
           <button type="button" onClick={() => go('payments', { cycle: h.cycle.id })} data-testid="pace">
             <ItemContent className="min-w-0 gap-0.5">
               <p className="text-base">
-                {/* the amount stays in one piece in a sentence; the line wraps around it (QA B03 run 2, 23) */}
-                Spent <Money sen={h.pace.spent} className="whitespace-nowrap" /> this {unit}
+                Spent <Money sen={h.pace.spent} whole /> this {unit}
               </p>
               <ItemDescription className="text-sm">
                 {h.pace.delta === null
@@ -169,7 +168,8 @@ function HomeBody({ h }: { h: HomeView }) {
                 <ItemContent className="min-w-0 items-end gap-0.5 text-right">
                   <ItemDescription className="text-sm">Gap at {shortDay(h.quiet.gap.on)}'s check</ItemDescription>
                   <ItemTitle className="text-base font-normal">
-                    <Money sen={Math.abs(h.quiet.gap.sen)} />
+                    {/* signed (§7): unseen money in is +RM, unseen spending plain, as Money shows them (QA B03 run 3, 38) */}
+                    <Money sen={Math.abs(h.quiet.gap.sen)} kind={h.quiet.gap.sen < 0 ? 'in' : 'out'} />
                   </ItemTitle>
                 </ItemContent>
               ) : null}
