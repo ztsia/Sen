@@ -1,6 +1,7 @@
 import type { SettingsView } from '@sen/core/views';
 import type { Db } from '../db';
 import type { AreaApply } from './ctx';
+import { uid } from '../ids';
 import { seedAdmin } from './admin';
 
 // Settings (B04): every section of screens.md's table on made-up data, and the setting.set command.
@@ -26,10 +27,45 @@ export function blankSettings(): SettingsState {
   };
 }
 
+/** Yesterday at 3:00 am in Kuala Lumpur (now is Sun 18 Oct 2026, 8:40 pm). */
+const LAST_BACKUP = '2026-10-17T03:00:00+08:00';
+
+/** Made-up merchant rules on top of the scenario's own. Invented names, one hawker (D70). */
+const MADE_UP_RULES: { merchant: string; category: string; hawker: boolean }[] = [
+  { merchant: 'WARUNG PAK HAMID', category: 'Meals', hawker: true },
+  { merchant: 'KEDAI KOPI TAMAN BAYU', category: 'Drinks & desserts', hawker: true },
+  { merchant: 'DAPUR BIBI DELIVERY', category: 'Meals', hawker: false },
+  { merchant: 'PASAR MALAM SEKSYEN 9', category: 'Groceries', hawker: true },
+];
+
 export function seedSettings(db: Db): SettingsState {
-  void db;
-  // TODO(B04 settings batch): you, categories, rules, receipts by email, data
-  return { ...blankSettings(), ...seedAdmin(db) };
+  const names = new Map(db.categories.map((c) => [c.id, c.name]));
+  const categories = db.categories
+    .filter((c) => !c.archivedAt)
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      kind: c.kind,
+      rules: db.rules.filter((r) => r.categoryId === c.id).length,
+    }));
+  const fromDb = db.rules.map((r) => ({
+    id: r.id,
+    merchant: r.merchantKey,
+    category: r.categoryId ? (names.get(r.categoryId) ?? 'Unknown') : 'Ask each time',
+    hawker: false,
+  }));
+  const made = MADE_UP_RULES.map((r) => ({ id: uid(`rule:${r.merchant}`), ...r }));
+  const rules = [...fromDb, ...made];
+  for (const c of categories) c.rules += made.filter((r) => r.category === c.name).length;
+  return {
+    ...blankSettings(),
+    ...seedAdmin(db),
+    you: { bankNames: ['TAN WEI MING', 'WEI MING TAN'], payday: { kind: 'last-working' }, qr: true },
+    categories,
+    rules,
+    receiptsByEmail: { address: 'weiming.7f3k@in.sen-my.app', code: '428913', received: 3 },
+    data: { lastBackup: LAST_BACKUP, exportReady: false },
+  };
 }
 
 export function settingsView(db: Db): SettingsView {
@@ -59,15 +95,50 @@ export function settingsView(db: Db): SettingsView {
         estimate: null,
       },
     },
-  }; // TODO(B04 settings batch)
+  };
+}
+
+/** A payday as the form sends it: the last working day, a day of the month, or none (D14). */
+function payday(value: unknown): SettingsState['you']['payday'] {
+  const v = value as { kind?: unknown; day?: unknown } | null;
+  if (v?.kind === 'last-working' || v?.kind === 'none') return { kind: v.kind };
+  if (v?.kind === 'day' && Number.isInteger(v.day) && (v.day as number) >= 1 && (v.day as number) <= 31)
+    return { kind: 'day', day: v.day as number };
+  throw new Error('That payday is not a day of the month.');
 }
 
 export const applySettings: AreaApply = (db, cmd) => {
-  void db;
-  switch (cmd.type) {
-    case 'setting.set':
-      return { said: 'Saved', touched: [] }; // TODO(B04 settings batch)
+  if (cmd.type !== 'setting.set') return null;
+  const s = db.settings;
+  const { key, value } = cmd;
+  const hawker = /^rules\.([^.]+)\.hawker$/.exec(key);
+  if (hawker) {
+    const rule = s.rules.find((r) => r.id === hawker[1]);
+    if (!rule) throw new Error('That rule is gone.');
+    rule.hawker = value === true;
+    return { said: rule.hawker ? `${rule.merchant} is a hawker` : `${rule.merchant} is not a hawker`, touched: [] };
+  }
+  switch (key) {
+    case 'you.payday':
+      s.you.payday = payday(value);
+      return { said: 'Payday saved', touched: [] };
+    case 'you.bankNames':
+      // Names as banks print them, one to a line: the form keeps them as text (the value is a string).
+      s.you.bankNames = String(value ?? '')
+        .split('\n')
+        .map((n) => n.trim())
+        .filter(Boolean);
+      return { said: 'Names saved', touched: [] };
+    case 'you.qr':
+      s.you.qr = value === true;
+      return { said: value ? 'DuitNow QR set' : 'DuitNow QR removed', touched: [] };
+    case 'receiptsByEmail.code':
+      s.receiptsByEmail.code = typeof value === 'string' ? value : null;
+      return { said: 'Saved', touched: [] };
+    case 'sen.calendar':
+      s.calendar = value === true;
+      return { said: s.calendar ? 'Calendar on' : 'Calendar off', touched: [] };
     default:
-      return null;
+      throw new Error(`Unknown setting: ${key}`);
   }
 };
