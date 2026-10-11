@@ -16,7 +16,7 @@ import type { Ctx } from './surfaces';
 
 export type WidgetSize = 'S' | 'M' | 'L';
 const SIZE_NAMES: Record<WidgetSize, string> = { S: 'Small', M: 'Medium', L: 'Large' };
-const WIDTH: Record<WidgetSize, string> = { S: 'w-48 h-48', M: 'w-full h-44', L: 'w-full h-96' };
+const WIDTH: Record<WidgetSize, string> = { S: 'w-48 h-48', M: 'w-full h-52', L: 'w-full h-[26rem]' };
 
 /** A thin bar: how much of something has gone, drawn so the two meters line up. */
 function Meter({ label, pct, bare }: { label: string; pct: number; bare?: boolean }) {
