@@ -283,7 +283,7 @@ export function paydayView(db: Db): PaydayView | null {
       : null,
     plan:
       senOn(db) && db.capture
-        ? { lines: [...due, ...aside, { label: 'Left to spend', sen: left, kind: 'spend' as const }] }
+        ? { lines: [...due, ...aside, { label: 'Until your next payday', sen: left, kind: 'spend' as const }] }
         : null,
   };
 }

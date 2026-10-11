@@ -154,7 +154,7 @@ function Body({ v, from }: { v: SenView; from: string }) {
           placeholder={ready ? 'Ask Sen' : 'Sen is not answering right now'}
           aria-label="Message to Sen"
           disabled={!ready}
-          className="max-h-32 min-h-12 flex-1"
+          className="max-h-32 min-h-12 flex-1 resize-none"
         />
         <Button type="submit" size="icon" aria-label="Send" disabled={!canSend}>
           <SendHorizontalIcon />

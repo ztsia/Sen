@@ -175,7 +175,7 @@ function ClaimsStep({ c, onNext }: { c: NonNullable<PaydayView['claims']>; onNex
               <ToggleGroupItem value="no">No</ToggleGroupItem>
             </ToggleGroup>
             <p className="text-sm text-muted-foreground">
-              Yes splits them out of your salary, so they aren't counted as income (D45).
+              Yes splits them out of your salary, so they aren't counted as income.
             </p>
           </Field>
         )}

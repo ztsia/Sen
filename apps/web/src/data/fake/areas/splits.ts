@@ -375,7 +375,7 @@ export function sharedView(db: Db): SharedView {
     return [{ id: s.id, merchant: bill.merchant, at: bill.at, paidBy: s.paidBy, line, open }];
   });
   // open ones first, newest first within each
-  return { rows: rows.sort((a, b) => Number(b.open) - Number(a.open) || (a.at < b.at ? 1 : -1)) };
+  return { rows: rows.sort((a, b) => (a.open === b.open ? (a.at < b.at ? 1 : -1) : a.open ? -1 : 1)) };
 }
 
 // --- writes ---

@@ -19,7 +19,7 @@ function Run({ run }: { run: SenRun }) {
   const label = run.mark === 'unchecked' ? 'not checked' : 'from your file';
   return (
     <>
-      <span className="num underline decoration-dotted underline-offset-4">{run.text}</span>{' '}
+      <span className="underline decoration-dotted underline-offset-4">{run.text}</span>{' '}
       <Badge variant="outline" className="align-middle">
         {label}
       </Badge>
@@ -156,7 +156,11 @@ function Ask({ part }: { part: Extract<SenPart, { type: 'ask' }> }) {
     <div className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground">
       <ReviewRow
         question={part.question}
-        knows={part.options.map((o) => `${o.label}: ${o.tradeoff}`).join(' ')}
+        knows={part.options.map((o) => (
+          <span key={o.label} className="block">
+            <span className="font-medium text-foreground">{o.label}.</span> {o.tradeoff}
+          </span>
+        ))}
         answers={part.options.map((o) => ({
           label: o.label,
           suggested: o.recommended,

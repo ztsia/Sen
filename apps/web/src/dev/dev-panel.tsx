@@ -206,7 +206,8 @@ function Simulator({ close }: { close: () => void }) {
   const offline = useUi((s) => s.devState) === 'offline';
   const run = (fn: () => void) => () => {
     close();
-    fn();
+    // a sheet closing and another opening in one tick leaves the second shut; wait out the first's exit
+    setTimeout(fn, 400);
   };
   return (
     <>

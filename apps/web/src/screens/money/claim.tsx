@@ -6,7 +6,16 @@ import { EmptyState } from '@/blocks/states';
 import { StatusCard } from '@/blocks/status';
 import { toastDone } from '@/blocks/toast';
 import { Button } from '@/components/ui/button';
-import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from '@/components/ui/item';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemFooter,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
 import { useClaim, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -140,7 +149,7 @@ function Body({ v }: { v: ClaimView }) {
                 <ItemContent className="min-w-0">
                   <ItemTitle className="text-base font-normal wrap-anywhere">{f.name}</ItemTitle>
                 </ItemContent>
-                <ItemActions>
+                <ItemFooter className="justify-start pl-13">
                   {/* stand-ins: opening and sharing a stored file arrive with claims (B25) */}
                   <Button
                     variant="secondary"
@@ -158,7 +167,7 @@ function Body({ v }: { v: ClaimView }) {
                   >
                     <ShareIcon /> Share
                   </Button>
-                </ItemActions>
+                </ItemFooter>
               </Item>
             ))}
           </ItemGroup>

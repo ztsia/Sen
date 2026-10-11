@@ -1,5 +1,6 @@
 import { apportion, parseSen } from '@sen/core/money';
 import type { PublicSplitView } from '@sen/core/views';
+import { uid } from './ids';
 
 // The fake for `split-public` (D47, D64, D71): a friend's browser, no login. It holds its own state,
 // keyed by the link's token, and imports nothing from the person's `Db` or the app's backend, so no
@@ -39,7 +40,7 @@ interface PublicSplit {
 /** The bill the demo links share: KEDAI MEE ABC, RM64.13 (flows.md `split-mine`). */
 function bill(token: string): PublicSplit {
   const item = (id: string, description: string, price: string, takers: string[]): Item => ({
-    id: `${token}:${id}`,
+    id: uid(`public-split:${token}:${id}`),
     description,
     price: rm(price),
     takers,

@@ -13,7 +13,12 @@ import { Loaded, Section, useGo } from '../kit';
 
 /** *Checked 1 Oct · Ryt Bank*: when it was last checked and the app that feeds it. */
 export const accountLine = (a: AccountRow) =>
-  [a.checkedAt ? `Checked ${shortDay(klDay(a.checkedAt))}` : 'Not checked yet', a.app].filter(Boolean).join(' · ');
+  [
+    a.checkedAt ? `Checked ${shortDay(klDay(a.checkedAt))}` : 'Not checked yet',
+    a.app && a.app !== a.name ? a.app : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
 /**
  * Accounts (screens.md, spec §7, D16, D93): capture only. The total, each tracked account with its

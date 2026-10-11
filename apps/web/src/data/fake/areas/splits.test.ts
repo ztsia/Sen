@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PublicSplitView, SharedView, SplitView } from '@sen/core/views';
 import { Receipt, ReceiptItem, SplitMember } from '@sen/core/schema';
+import { setClock } from '@/lib/clock';
 import type { Db } from '../db';
 import { uid } from '../ids';
 import { readPublicSplit, resetPublicSplits, setPublicName, tickPublic, donePublic } from '../public-split';
@@ -33,6 +34,8 @@ describe('the made-up splits', () => {
     });
 
   const db = buildScenario('wei-ming', false);
+  // the app's clock is set at the scenario's moment, as the fake does on load
+  setClock(db.now);
 
   it('adds up: every split’s shares are its total, to the sen', () => {
     for (const key of ['bbq', 'haidilao', 'nk']) {
