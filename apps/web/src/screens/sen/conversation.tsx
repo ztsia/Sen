@@ -36,7 +36,8 @@ function Body({ v, from }: { v: SenView; from: string }) {
   const [file, setFile] = useState<File | null>(null);
   const picker = useRef<HTMLInputElement>(null);
   const end = useRef<HTMLDivElement>(null);
-  const streaming = v.messages.some((m) => m.streaming);
+  // a reply is on its way: streaming, or yours is the last message and Sen hasn't started yet
+  const streaming = v.messages.some((m) => m.streaming) || v.messages.at(-1)?.role === 'you';
   const ready = v.state === 'ready';
   const canSend = ready && !streaming && (text.trim() !== '' || file !== null);
 
@@ -48,6 +49,7 @@ function Body({ v, from }: { v: SenView; from: string }) {
   }, [v.messages.length, lastSize, last?.streaming]);
 
   const send = (said: string, attached: File | null) => {
+    console.log('SEND', said);
     void write(
       {
         type: 'sen.send',
