@@ -49,7 +49,8 @@ A slice may span sessions, all on that one branch. Its PR is opened from it when
 with the slice's label as its title (*B07 · Sync and the outbox*).
 
 **When context runs high, or the owner says *hand off*, mid-slice:**
-1. Commit and push.
+1. Log the session's usage: `node scripts/usage.mjs --log <slice>` (it upserts the session's row in
+   `docs/usage.md`). Commit and push.
 2. Rewrite `docs/handoff.md` on the branch: what's done and verified, what's next, and anything
    decided. Push again.
 3. End with one line for the owner to paste into the next session: *Continue B07 from branch
@@ -195,6 +196,7 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | `pnpm e2e` | Playwright on a preview build and a production build, at a phone viewport, under the real CSP |
   | `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |
   | `pnpm looks` | Regenerates `apps/web/src/styles/looks.gen.css` from `docs/ui/directions/assets/`; CI fails if it's stale |
+  | `node scripts/usage.mjs` | What this session cost, by agent and model; `--log <slice>` keeps its row in `docs/usage.md` |
   | `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
   | `gradle -p apps/shell/core test` | The capture core's Kotlin tests; needs no Android SDK |
   | `bash scripts/android-sdk.sh` | Installs the Android SDK in a cloud session (about 2 minutes), to build the shell's APKs there: then `pnpm --filter @sen/shell sync` and `gradle assembleDebug` in `apps/shell/android` |
@@ -242,6 +244,11 @@ tokens each). The cost is a cold start per agent, so:
 - **Haiku is on trial (D125, 11 Oct):** B04 runs its first mechanical batch on Haiku and a
   comparable one on Sonnet, and counts the fixes each needed in the handoff. Keep Haiku where it
   needs no more fixing than Sonnet did.
+- **Measure, then tune.** `node scripts/usage.mjs` shows what each agent and model cost this session,
+  read from the transcripts; `--log <slice>` keeps a row in `docs/usage.md`, before every handoff
+  and PR (the transcripts go with the VM). B03's first row: the main session was 73% of the cost,
+  and most of that was re-reading its own long context each turn, so keep the main session's own
+  reading and writing small, and hand off before its context grows long.
 - Subagents spend the same quota as the main session. When one stops at a usage limit, resume it
   (`SendMessage`), never restart it.
 
