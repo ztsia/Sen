@@ -28,12 +28,14 @@ Skip it for a docs-only change. If `git diff --stat main...HEAD` shows nothing o
    run the mechanical part and gather the raw results in `qa-artifacts/<branch>/sweep/`:
    - `pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm e2e`, each with its exit code and, for a
      failure, the test's name, file and first error lines;
-   - the e2e run's screenshots, every screen and journey step in all six looks, light and dark,
-     copied into `sweep/screens/`;
+   - the e2e run's screenshots, every journey step in all six looks, light and dark: run it as
+     `E2E_SHOTS=$PWD/qa-artifacts/<branch>/sweep/screens pnpm e2e`, which writes each one as a file
+     (the list reporter keeps no attachments);
    - `sweep/index.md`, listing what ran, what failed and where each screenshot is.
 
    It reports raw results only: no judgement, no fixes, no reading of the slice's code beyond the
-   failures. Wait for it before step 3.
+   failures. The e2e run takes about an hour: tell it to wait for the run to end, not to report
+   while it's still going (B04's sweep reported twice before the end). Wait for it before step 3.
 3. Spawn `qa-reviewer` with the Agent tool, `subagent_type: "qa-reviewer"`. It runs on Sonnet by
    default; pass `model: "opus"` when the slice's risk calls for it.
 4. **Keep the prompt thin:** the branch, the slice label, the slice's row in `docs/modules.md`, and

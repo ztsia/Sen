@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { LOOKS, MODES, open, settled, watchErrors, type LookId, type ModeId } from './helpers';
 import { SETTLE_MS } from '../src/lib/tap-guard';
@@ -877,10 +879,17 @@ export async function walk(page: Page, info: TestInfo, look: LookId, mode: ModeI
   const shot = async (step: string) => {
     n += 1;
     await page.waitForTimeout(150);
-    await info.attach(`${String(n).padStart(2, '0')} ${step}`, {
-      body: await page.screenshot(),
-      contentType: 'image/png',
-    });
+    const name_ = `${String(n).padStart(2, '0')} ${step}`;
+    const body = await page.screenshot();
+    await info.attach(name_, { body, contentType: 'image/png' });
+    // E2E_SHOTS=<dir> also writes each one as a file, for QA's sweep: the list reporter keeps no
+    // attachments (the qa skill, step 2)
+    const dir = process.env.E2E_SHOTS;
+    if (dir) {
+      const file = `${name}--${look}-${mode}--${name_}`.replace(/[^\w.-]+/g, '_');
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, `${file}.png`), body);
+    }
   };
   await JOURNEYS[name]!(page, shot, (path) => open(page, path, look, mode));
   expect(errors).toEqual([]);
