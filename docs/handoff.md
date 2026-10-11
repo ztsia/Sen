@@ -18,11 +18,11 @@ you end.
   `docs/usage.md`.
 - **Neon is ready for B05:** `sen` (Production only) and `sen-preview` (Preview and Development),
   with `BETTER_AUTH_SECRET`, all in Vercel. The database variables are the owner role's.
-- **Cloudflare and Google Cloud are set up as far as a session may (11 Oct):** R2 subscribed, the
-  buckets `sen-receipts` and `sen-backups`, and usage alerts at half of each free allowance; the
-  Google Cloud project **`sen-my`** (not `sen`: Google wants 4 letters), billing linked, the Vertex
-  AI API on, and `sen-ai` with *Agent Platform user*. **No key exists yet**, and Vercel has no new
-  variable. `docs/local.md`'s first item has what's done and what's left for each.
+- **R2 and Gemini are ready (11 Oct):** buckets `sen-receipts` and `sen-backups`, a token each, and
+  usage alerts at half of each free allowance; the Google Cloud project **`sen-my`** (not `sen`:
+  Google wants 4 letters) with `sen-ai` and its key. Their variables are in Vercel (Production), the
+  backup token in `sen_ops`. **Left:** Firebase, Anthropic and Sen's Gmail, in `docs/local.md`'s
+  first item. The Gemini key is untested until B10.
 - **Not verified yet:** anything on the owner's phone.
 
 ## Decided, and why
@@ -37,9 +37,9 @@ you end.
 - **D126 (owner):** R2 never leaves its free allowance. Cloudflare only alerts, so Sen's own gates
   are the stop: a size cap and ceilings on upload links (B15), a fixed number of backups and usage
   in Settings → *Data* (B06). The mechanism and numbers are *Proposed*; those slices confirm them.
-- **A session can't create a credential, set a rule that deletes, or write a Vercel variable:** the
-  laptop's auto mode refused all three on 11 Oct, though the clipboard route worked on 10 Oct. The
-  owner pastes each key into Vercel's dashboard, or allows the command first.
+- **Keys on the laptop:** auto mode refuses creating a credential, writing a Vercel variable and a
+  rule that deletes; the owner switches to manual mode and approves each. The session clicks
+  *Create* without looking, the owner clicks *Copy*, and a watcher sends the clipboard on unseen.
 - **D124:** the core journeys are `first-run`, `pay-new` and `scan-after`.
 - **Refunds and income are money in only**, in the UI and the fake's writes; B05's API refuses the same.
 - **`npx shadcn add` once installed an unrelated package `cn`:** use `--dry-run` first, and check
@@ -59,9 +59,8 @@ you end.
 
 ## What to do first
 
-- **The owner, at the laptop:** the keys in `docs/local.md`'s first item, each pasted into Vercel as
-  *Sensitive*, *Production* only. None blocks B04; Gmail's is needed before B05, the rest by B06,
-  B10 and B15. A session never types or reads a key.
+- **The owner, at the laptop:** what's left in `docs/local.md`'s first item. None blocks B04; Gmail's
+  is needed before B05, Firebase by B06, Anthropic by B10. A session never types or reads a key.
 - **A build session:** B04, from `main` (`git checkout -b B04/skeleton-rest origin/main`). Build the
   shared ground yourself, then brief batches (`CLAUDE.md`, *Models and subagents*).
 

@@ -8,19 +8,19 @@ follow on a phone, and commit.
 
 ## Now
 
-- [ ] **Accounts and keys, on the laptop** (started 11 Oct). Everything that needs no key is done;
-      what's left is yours, because a session may not create a credential or write one into Vercel
-      (both were refused on 11 Oct). Each value goes into Vercel → *sen* → *Settings* → *Environment
-      Variables*, ticked **Sensitive**, for **Production** only. Never into a chat or the repo.
+- [ ] **Accounts and keys, on the laptop** (started 11 Oct). A session sets each thing up and never
+      sees a key: it clicks *Create* without looking at the result, you click *Copy*, and a watcher
+      takes the clipboard by its shape and sends it on, as a **Sensitive** variable for
+      **Production** only. Never into a chat or the repo.
 
-      | For | Done | Left, yours | Vercel variable, or secret |
+      | For | State (11 Oct) | Left, yours | Where it is |
       |---|---|---|---|
-      | Receipts (B15) | R2 subscribed; bucket `sen-receipts` (Asia-Pacific, private) | R2 → *API tokens* → *Create Account API token*: name `sen-receipts`, **Object Read & Write**, *Apply to specific buckets only* → `sen-receipts`. Copy the two values | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`; and plain: `R2_BUCKET` = `sen-receipts`, `R2_ACCOUNT_ID` = the account id in the dashboard's address |
-      | Backups (B06) | Bucket `sen-backups` | The same, named `sen-backups`, for that bucket only | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` as Actions secrets in `ztsia/sen_ops` (`gh secret set <NAME> --repo ztsia/sen_ops` in your own terminal) |
-      | Gemini (B10) | Project **`sen-my`** (Google refuses a name under 4 letters), your billing account linked, the Vertex AI API on, service account `sen-ai` with *Agent Platform user* (Google's new name for *Vertex AI User*) | *APIs and services* → *Credentials* → *Create credentials* → *API key*: name `sen`, tick *Authenticate API calls through a service account* → `sen-ai`, restrict it to *Agent Platform API* | `GOOGLE_VERTEX_API_KEY`; and plain: `GOOGLE_VERTEX_PROJECT` = `sen-my` |
-      | Push (B06) | | console.firebase.google.com → *Add project* → choose `sen-my`, Analytics off, accept its terms. Then ⚙ → *Service accounts* → *Generate new private key*, and paste the whole file's text | `FIREBASE_SERVICE_ACCOUNT` |
-      | Claude (B10) | | console.anthropic.com: prepaid credit, a monthly spend limit, a key named `sen` | `ANTHROPIC_API_KEY` |
-      | Sign-in codes (B05) | | Sen's own Gmail: 2-Step Verification, an app password named `sen` | `GMAIL_USER`, `GMAIL_APP_PASSWORD` |
+      | Receipts (B15) | **Done.** Bucket `sen-receipts` (Asia-Pacific, private); token `sen-receipts`, Object Read & Write on that bucket only | | Vercel: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ACCOUNT_ID` |
+      | Backups (B06) | **Done.** Bucket `sen-backups`; token `sen-backups`, that bucket only | | `ztsia/sen_ops` Actions secrets: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` |
+      | Gemini (B10) | **Done.** Project **`sen-my`** (Google refuses a name under 4 letters), billing linked, the Vertex AI API on, service account `sen-ai` with *Agent Platform user* (Google's new name for *Vertex AI User*), key `sen` bound to it and restricted to that API. Untested until B10 | | Vercel: `GOOGLE_VERTEX_API_KEY`, `GOOGLE_VERTEX_PROJECT` |
+      | Push (B06) | Stopped at Firebase's *A few things to remember* | Read it and *Continue*: it can't be undone, and with billing on the project is on the pay-as-you-go plan (push itself is free). Analytics off. Then ⚙ → *Service accounts* → *Generate new private key*, and tell a local session the file is in Downloads | Vercel: `FIREBASE_SERVICE_ACCOUNT` |
+      | Claude (B10) | The browser extension isn't allowed on Anthropic's console | console.anthropic.com: prepaid credit, a monthly spend limit, a key named `sen`, *Copy* while a session's watcher runs (or paste it into Vercel yourself) | Vercel: `ANTHROPIC_API_KEY` |
+      | Sign-in codes (B05) | | Sen's own Gmail: 2-Step Verification, an app password named `sen` | Vercel: `GMAIL_USER`, `GMAIL_APP_PASSWORD` |
 
       **R2 stays free (D126).** Cloudflare emails the account's address when storage passes 5 GB, or
       a month's Class A passes 500,000, or Class B 5 million: half of each free allowance
