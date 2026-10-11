@@ -24,6 +24,11 @@ protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it 
 
 ## Decided, and why
 
+- **QA's mechanical part runs on Haiku first (owner, 11 Oct):**
+  - A subagent can't start subagents. Measured: it gets no Agent tool.
+  - So the main session runs a Haiku sweep first: the suites, plus every look's screenshots.
+  - The Sonnet reviewer then takes the sweep's raw results (the `qa` skill, step 2).
+
 - **D127 (owner, 11 Oct):** D115 confirmed; Copper's verdigris stays as designed; production sends
   `noindex` from B05; B10 checks Anthropic's data terms against D34 before naming Claude.
 - **D126 (owner, 11 Oct):** R2 never leaves its free allowance. Cloudflare has no hard stop, only
