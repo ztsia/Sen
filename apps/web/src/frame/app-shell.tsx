@@ -14,6 +14,11 @@ import { useUi } from './ui-store';
 
 // compared in place, so a production build leaves the dev panel's chunk out (sen-env.d.ts)
 const DevPanel = __SEN_ENV__ !== 'production' ? lazy(() => import('@/dev/dev-panel')) : null;
+// the guided journeys' bar, on the split link too, which has no dev panel; it reads no app data itself
+const JourneyBar =
+  __SEN_ENV__ !== 'production'
+    ? lazy(() => import('@/dev/native/journeys-ui').then((m) => ({ default: m.JourneyOverlay })))
+    : null;
 
 /** The screen on show, from the route: its static screen id, or the id after /s/. */
 function useCurrentScreen(): ScreenDef | undefined {
@@ -55,6 +60,11 @@ function PublicShell() {
         {online ? null : <OfflineBanner>You're offline. Ticks need a connection.</OfflineBanner>}
         <Outlet />
       </div>
+      {JourneyBar ? (
+        <Suspense>
+          <JourneyBar />
+        </Suspense>
+      ) : null}
       <Toaster
         position="bottom-center"
         visibleToasts={1}

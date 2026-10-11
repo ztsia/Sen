@@ -202,12 +202,16 @@ export const JOURNEYS: Journey[] = [
     group: 'Shared bills',
     steps: [
       { screen: 'confirm', search: { id: ROTI }, draft: 'new', caption: 'Confirm → Split → Who paid? I paid.' },
-      { screen: 'split', search: { id: BBQ }, caption: 'Still changing, with a QR for the table. Tick what you had.' },
-      { screen: 'split-public', search: { id: BBQ }, caption: 'Ali scans the QR and ticks his, then Done.' },
       {
         screen: 'split',
         search: { id: BBQ },
-        caption: 'Everyone is done and every item claimed: it locks, and your share is your spending.',
+        caption: 'Still changing, with a QR for the table. Once everyone is done and every item claimed, it locks.',
+      },
+      {
+        screen: 'split-public',
+        // the link's own made-up split (data/fake/public-split.ts), never the person's
+        search: { id: 'demo' },
+        caption: 'Mei opens the link in her browser and ticks hers, then Done.',
       },
     ],
   },
@@ -371,7 +375,11 @@ export const JOURNEYS: Journey[] = [
         surface: 'push-claim',
         caption: 'Reminders by code: Review, pushes 3 days before and on the day.',
       },
-      { screen: 'claim', caption: 'Review, then Send to ESS, or copy each value and tap Submitted.' },
+      {
+        screen: 'claim',
+        search: { id: uid('claim:phone:2026-09') },
+        caption: 'Review, then Send to ESS, or copy each value and tap Submitted.',
+      },
     ],
   },
   // Sen
