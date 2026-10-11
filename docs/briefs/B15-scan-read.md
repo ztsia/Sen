@@ -58,6 +58,10 @@ once, at print quality, privately, and is read by the model into an itemised dra
   - `/receipts/upload-url` makes the `receipts` row
   - `/receipts/:id/url` gives a view link
 - **In the shell, the upload queues while offline** and the receipt waits in *Review*.
+- **R2 stays free (D126):** `/receipts/upload-url` signs only for a stated size under a per-file
+  cap, records the bytes on the `receipts` row, and refuses once that person's total, or
+  everyone's, would pass its ceiling. *Scan* then says storage is full, in words. One write per
+  upload and one read per view; nothing lists the bucket.
 
 ### Reading
 - **`/receipts/:id/extract`,** idempotent:

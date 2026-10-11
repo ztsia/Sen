@@ -71,6 +71,11 @@ What keeps Sen honest runs before any real money reaches the server:
   Decide how: report back through the API with its own secret, or insert directly.
 - **A restore tested once,** into a scratch database, with the steps written in `sen_ops`.
 - **Settings → *Data*** shows the last successful backup (admin).
+- **R2 stays free (D126):** the bucket deletes each dump 30 days after upload (a lifecycle rule,
+  the owner's call, 11 Oct), so the workflow deletes nothing. It records each dump's size in
+  `job_runs`, and never lists the bucket on a schedule. Settings →
+  *Data* shows storage used against the 10 GB, from Sen's own counts, and the morning job raises a
+  health warning at half. Propose the numbers; the owner confirms them.
 
 ### The outside monitor
 - **A cron-job.org check of `/health/jobs`** that emails the owner. The steps go into

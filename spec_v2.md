@@ -200,7 +200,7 @@ These held up and apply unchanged:
 - **Neon:** 1 GB of data and 100 compute-hours a month per project. It sleeps after 5 idle minutes and wakes on the next request, so it never pauses. The phone syncs when something happens, not on a timer, so the database mostly sleeps.
 - **Vercel Hobby:** personal, non-commercial use, which this is, friends and family included, and a public repo doesn't change that. Sen never requests or processes a payment (D98). Functions run up to 5 minutes; its cron runs once a day, so schedules run from Cloudflare (D99).
 - **Cloudflare Workers:** 100,000 requests a day free; an idle relay connection costs nothing.
-- **R2:** 10 GB of storage.
+- **R2:** 10 GB of storage, and 1 million Class A (write) and 10 million Class B (read) operations a month. It has no hard stop, so Sen keeps its own (D126).
 - **Vertex AI:** pay as you go, billed after use, with no prepaid stop, so each person's credit and daily ceiling are the stop (D98).
 
 **Local development.** A local Postgres in Docker stands in for Neon, the Hono API runs on Node, and `vite dev` serves the web app against them, in a browser or in the shell. Nothing is tested against production (v0.16 §6.9).
