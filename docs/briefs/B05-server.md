@@ -54,6 +54,7 @@ though their screens come in B38.
   - patch of changed fields only
   - delete as a tombstone (`deleted_at`) where the outbox syncs the table
 - **An `audit_log` writer,** with actor `user`, `agent` or `system`; append-only.
+- **`X-Robots-Tag: noindex`** on every response from production, the web app and the API alike (D127).
 
 ### Sign-in
 - **Better Auth:** the email OTP plugin with a 6-digit code, sent from Sen's Gmail with its app

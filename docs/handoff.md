@@ -23,6 +23,8 @@ protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it 
 
 ## Decided, and why
 
+- **D127 (owner, 11 Oct):** D115 confirmed; Copper's verdigris stays as designed; production sends
+  `noindex` from B05; B10 checks Anthropic's data terms against D34 before naming Claude.
 - **D126 (owner, 11 Oct):** R2 never leaves its free allowance. Cloudflare has no hard stop, only
   the alerts set at half of each allowance, so Sen's own gates are the stop: a size cap and
   ceilings on upload links (B15), and usage in Settings → *Data* (B06). Backups are deleted after
@@ -48,11 +50,7 @@ protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it 
 
 ## Open with the owner
 
-- **D115 is still *Proposed*.** Recommended: confirm it.
-- **Copper's overspent green:** keep it as designed (verdigris only on copper, the warning always
-  with its icon and words)? The owner said *Ok* without the recommendation in front of them.
-- **Search engines:** production sends no `noindex`. Recommended: add the header in B05.
-- Anthropic's data terms against D34 (before B10); run 6's note 15 (B07).
+- Run 6's note 15 (B07).
 - `docs/local.md`'s queue: install and the soak, the signing key's backup, the Firebase key file in
   Downloads, `DENYLIST`, the phone checks, and what the ESS capture missed.
 
