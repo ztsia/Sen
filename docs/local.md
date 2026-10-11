@@ -71,11 +71,10 @@ follow on a phone, and commit.
       2. **The two addresses: done (10 Oct),** in `apps/shell/sites.json`. Production above; the
          review alias is `https://sen-review.vercel.app`, which follows the Git branch `review`. A
          session points it at the branch under review by pushing that branch to `review`.
-         - [ ] **The review alias is behind Vercel's login** (measured 10 Oct: it redirects to
-               vercel.com), so the review build can't load it yet. Say which you'd rather: turn
-               Vercel Authentication off for the project (recommended: the repo is public, and a
-               preview only ever holds made-up data), or keep it and have a session teach the review
-               build to sign in to Vercel once.
+         - [x] **The review alias opens without a login** (11 Oct): you turned Vercel
+               Authentication off for the project, and `review` was moved up to `main`, so the
+               review build shows B03's tabs on made-up data. Every preview is now open to anyone
+               with its link; previews only ever hold made-up data.
       3. **Install and set up.** The *Shell* workflow builds both apps on every push, and on `main`
          publishes them. *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* → tap `sen-0.2.N.apk`
          (Chrome asks to allow installing unknown apps: allow it for Chrome). **Play Protect blocks
@@ -84,8 +83,8 @@ follow on a phone, and commit.
          browser, a chat app or a file manager. So: *Play Store* → your picture → *Play Protect* → ⚙
          → turn *Scan apps with Play Protect* off, install, and turn it back on. `adb install` from
          the laptop isn't blocked. Install `sen-0.2.N.apk`, named **Sen**; `sen-review-0.2.N.apk`
-         (*Sen review*) is the review build, which opens Chrome while the review alias is behind
-         Vercel's login.
+         (*Sen review*) is the review build, which loads the review alias: the branch under review,
+         with made-up data and the dev panel.
          **For updates without checking by hand, use Obtainium** (D122): install it from
          github.com/ImranR98/Obtainium (*Releases*), *Add app*, source
          `https://github.com/ztsia/Sen`, and under *Filter APKs by regular expression* put
