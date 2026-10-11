@@ -244,9 +244,13 @@ function billOf(db: Db, s: Split): Bill | null {
   return b ? { ...b, txn: null } : null;
 }
 
-/** The split an id names: a split's own id, or a payment's, as the payment's `Split` button passes it. */
+/** The split an id names: a split's own id, or a payment's or receipt's, as *Split* and *Share a link* pass it. */
 function findSplit(db: Db, id: string): Split | undefined {
-  return db.splits.find((s) => s.id === id) ?? db.splits.find((s) => s.transactionId === id);
+  return (
+    db.splits.find((s) => s.id === id) ??
+    db.splits.find((s) => s.transactionId === id) ??
+    db.splits.find((s) => s.receiptId === id)
+  );
 }
 
 /** The people who must pay the payer: everyone but the payer and the Others pool (D92). */

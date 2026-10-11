@@ -11,8 +11,12 @@ export async function open(page: Page, path: string, look: LookId = 'minted', mo
   await page.goto(`${path}${sep}look=${look}&mode=${mode}`);
   await expect(page.locator('html')).toHaveAttribute('data-look', look);
   await expect(page.locator('html')).toHaveAttribute('data-mode', mode);
-  // the look's module has loaded when its tab bar or wordmark is drawn
-  await page.waitForFunction(() => document.querySelectorAll('svg').length > 0);
+  // the look's module has loaded when its tab bar or wordmark is drawn; a page with neither (a closed
+  // split link says one line) is ready when its text is
+  await page.waitForFunction(
+    () =>
+      document.querySelectorAll('svg').length > 0 || (document.querySelector('main')?.textContent?.length ?? 0) > 10,
+  );
 }
 
 /** Collects content security policy violations and page errors, to assert there are none. */
@@ -43,7 +47,10 @@ export const smallTargets = (page: Page) =>
         if (el.closest('.sr-only, [aria-hidden="true"]')) return false;
         // the dev panel's handle: previews only, a strip in the side gutter
         if (el.hasAttribute('data-dev-handle')) return false;
-        return r.width < 47.5 || r.height < 47.5;
+        // a checkbox in a row's <label> is tapped by the whole row (split's items, patterns.md §7): the
+        // label's box is the target, as it is for a finger
+        const box = el.closest('label')?.getBoundingClientRect() ?? r;
+        return box.width < 47.5 || box.height < 47.5;
       })
       .map(
         (el) =>

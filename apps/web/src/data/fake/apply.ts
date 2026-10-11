@@ -457,6 +457,38 @@ function commitReceipt(db: Db, c: Extract<Command, { type: 'receipt.commit' }>):
     if (c.paidBy === 'other') return { said: `You owe ${formatSen(myPart)} for ${c.merchant}`, touched };
     if (attach) return { said: `Your part is ${formatSen(myPart)}. Others owe ${formatSen(othersPart)}`, touched };
   }
+  if (c.action === 'share') {
+    // Share a link (D92): an open split, only the payer in it so far; friends join by the link (D64)
+    const split = newId();
+    const me = newId();
+    const payer = c.paidBy === 'me' ? me : newId();
+    db.splits.push({
+      id: split,
+      userId: db.userId,
+      transactionId: attach?.id ?? null,
+      receiptId: c.id,
+      paidBy: c.paidBy,
+      payerMemberId: payer,
+      status: 'open',
+      lockedAt: null,
+      createdAt: nowIso(),
+    });
+    const member = (id: string, name: string, isMe: boolean) => ({
+      id,
+      userId: db.userId,
+      splitId: split,
+      name,
+      isMe,
+      isOthers: false,
+      doneAt: null,
+      share: 0,
+      paidAt: id === payer ? c.occurredAt : null,
+      paidByTransactionId: id === payer ? (attach?.id ?? null) : null,
+    });
+    db.members.push(member(me, 'You', true));
+    if (payer !== me) db.members.push(member(payer, 'A friend', false));
+    if (!attach) db.bills[split] = { merchant: c.merchant, total: c.total, at: c.occurredAt };
+  }
   if (c.action === 'evidence') return { said: 'Kept as evidence only', touched };
   if (attach)
     return {

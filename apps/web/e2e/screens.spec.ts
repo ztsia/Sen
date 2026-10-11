@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { uid } from '../src/data/fake/ids';
+import { acctId } from '../src/data/fake/scenario';
+import { JOURNEYS } from '../src/dev/journeys';
 import { LOOKS, MODES, open, settled, smallTargets, watchErrors } from './helpers';
 
 // B03 done-when 2 and 3: every screen under the five tabs, on the made-up data, passes axe in all six
@@ -199,3 +201,241 @@ test('before the first salary, the cycle sheet says spent since you started, nev
   await expect(sheet).not.toContainText('Over by');
   await expect(sheet).not.toContainText('over on payday');
 });
+
+// ---- B04 done-when 2: every screen B04 built, in all six looks, light and dark ----
+
+const BBQ = uid('split:bbq');
+export const B04_SCREENS: [name: string, path: string][] = [
+  // shared bills: a split as payer (changing, final) and as one who owes; a friend's page in each state
+  ['shared', '/s/shared'],
+  ['split, changing (you paid)', `/s/split?id=${uid('split:nk')}`],
+  ['split, final (you paid)', `/s/split?id=${BBQ}`],
+  ['split, final (a friend paid)', `/s/split?id=${uid('split:haidilao')}`],
+  ['split, gone', '/s/split?id=nothing'],
+  ['split-public, new', '/s/split-public?id=demo-new'],
+  ['split-public, named', '/s/split-public?id=demo'],
+  ['split-public, final', '/s/split-public?id=demo-final'],
+  ['split-public, closed', '/s/split-public?id=demo-closed'],
+  // Sen's pages
+  ['agent/memory', '/s/agent/memory'],
+  ['agent/research', '/s/agent/research'],
+  ['agent/usage', '/s/agent/usage'],
+  // money
+  ['accounts', '/s/accounts'],
+  ['account', `/s/account?id=${acctId('ryt')}`],
+  ['balance-check', '/s/balance-check'],
+  ['payday', '/s/payday?scenario=payday'],
+  ['claims', '/s/claims'],
+  ['claim', `/s/claim?id=${uid('claim:phone:2026-09')}`],
+  ['claim, evidence missing', `/s/claim?id=${uid('claim:parking:2026-09')}`],
+  // Settings
+  ['settings', '/s/settings'],
+  ['settings/appearance', '/s/settings/appearance'],
+  ['settings/capture', '/s/settings/capture'],
+  ['settings/capture/apps', '/s/settings/capture/apps'],
+  ['settings/capture/access', '/s/settings/capture/access'],
+  ['settings/capture/running', '/s/settings/capture/running'],
+  ['settings/capture/captured', '/s/settings/capture/captured'],
+  ['settings/you', '/s/settings/you'],
+  ['settings/categories', '/s/settings/categories'],
+  ['settings/email', '/s/settings/email'],
+  ['settings/claims', '/s/settings/claims'],
+  ['settings/sen', '/s/settings/sen'],
+  ['settings/members', '/s/settings/members'],
+  ['settings/data', '/s/settings/data'],
+  ['settings/account', '/s/settings/account'],
+  // outside the tabs
+  ['sign-in', '/s/sign-in'],
+  ['sign-in, invited', '/s/sign-in?email=hui.min@example.com'],
+  ['first-run, with capture', '/s/first-run?scenario=before-salary'],
+  ['first-run, without capture', '/s/first-run?scenario=month'],
+  ['new-look', '/s/new-look'],
+];
+
+/** The made-up scenarios that change a B04 screen (the brief: month and cap, and what they hide or pause). */
+export const B04_SCENARIOS: [name: string, path: string][] = [
+  ['shared, month', '/s/shared?scenario=month'],
+  ['accounts, month', '/s/accounts?scenario=month'],
+  ['claims, month', '/s/claims?scenario=month'],
+  ['settings, month', '/s/settings?scenario=month'],
+  ['settings/sen, cap', '/s/settings/sen?scenario=cap'],
+  ['agent/usage, cap', '/s/agent/usage?scenario=cap'],
+  ['settings/members, month', '/s/settings/members?scenario=month'],
+  ['payday, before-salary', '/s/payday?scenario=before-salary'],
+  ['payday, month', '/s/payday?scenario=month'],
+  ['settings/capture/access, capture-off', '/s/settings/capture/access?scenario=capture-off'],
+  ['accounts, capture-off', '/s/accounts?scenario=capture-off'],
+];
+
+/** A page's own steps: first-run's seven, reached with taps, since the step isn't in the address. */
+async function firstRunSteps(page: Page, check: (name: string) => Promise<void>) {
+  await page.getByLabel('Your email').fill('wei.ming@example.com');
+  await page.getByRole('button', { name: 'Send the code' }).click();
+  await check('first-run, the code');
+  await page.getByLabel('6-digit code').fill('123456');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  for (const step of ['apps', 'access', 'running', 'accounts', 'name', 'payday']) {
+    await expect(page.getByText(/^Step \d of 7$/)).toBeVisible();
+    await page.waitForTimeout(200);
+    await check(`first-run, ${step}`);
+    if (step === 'name') await page.getByLabel('Your name').fill('wei ming');
+    await page.getByRole('button', { name: step === 'payday' ? 'Finish' : /^Next$/ }).click();
+  }
+}
+
+async function clean(page: Page, name: string) {
+  const report = await axe(page);
+  expect(report, `${name}:\n${report.join('\n')}`).toEqual([]);
+  const small = await smallTargets(page);
+  expect(small, `${name}:\n${small.join('\n')}`).toEqual([]);
+}
+
+for (const look of LOOKS)
+  for (const mode of MODES) {
+    test(`every B04 screen in ${look}, ${mode}: axe finds nothing, targets are 48 px, nothing throws`, async ({
+      page,
+    }) => {
+      test.setTimeout(300_000);
+      const errors = watchErrors(page);
+      for (const [name, path] of [...B04_SCREENS, ...B04_SCENARIOS]) {
+        await open(page, path, look, mode);
+        await settled(page);
+        await clean(page, name);
+      }
+      // first run's steps are only reached by walking it
+      await open(page, '/s/first-run?scenario=before-salary', look, mode);
+      await firstRunSteps(page, (name) => clean(page, name));
+      expect(errors).toEqual([]);
+    });
+
+    for (const state of ['empty', 'loading', 'error', 'offline'] as const)
+      test(`every B04 screen, ${state}, in ${look}, ${mode}: axe finds nothing, targets are 48 px, nothing throws`, async ({
+        page,
+      }) => {
+        test.setTimeout(300_000);
+        const errors = watchErrors(page);
+        for (const [name, path] of B04_SCREENS) {
+          // a public split reads its own fake, which has no states; sign-in and first run read none
+          if (/^(split-public|sign-in|new-look)/.test(name)) continue;
+          await open(page, `${path}${path.includes('?') ? '&' : '?'}state=${state}`, look, mode);
+          if (state !== 'loading') await settled(page);
+          await clean(page, `${name}, ${state}`);
+        }
+        expect(errors).toEqual([]);
+      });
+
+    test(`Sen's sheet in ${look}, ${mode}: open, answering, offline and paused pass axe`, async ({ page }) => {
+      test.setTimeout(240_000);
+      const errors = watchErrors(page);
+      const sen = page.getByRole('dialog', { name: 'Sen' });
+      const openSen = async (path: string) => {
+        await open(page, path, look, mode);
+        if (!path.includes('state=loading')) await settled(page);
+        await page.getByRole('button', { name: 'Ask Sen', exact: true }).click();
+        await expect(sen).toContainText('Looking at:');
+        // loading and error show their own state in place of the composer
+        if (!/state=(loading|error)/.test(path)) await expect(sen.getByLabel('Message to Sen')).toBeVisible();
+        await page.waitForTimeout(500);
+      };
+      for (const [name, path] of [
+        ['Home', '/'],
+        ['Review', '/review'],
+        ['Insights', '/insights'],
+        ['More', '/more'],
+        ['offline', '/?state=offline'],
+        ['paused (AI credit at zero)', '/?scenario=cap'],
+        ['loading', '/?state=loading'],
+        ['error', '/?state=error'],
+      ] as const) {
+        await openSen(path);
+        await clean(page, `Sen's sheet, ${name}`);
+      }
+      // streaming: the words arrive first, then the finished message
+      await openSen('/');
+      await sen.getByRole('button', { name: 'How am I doing this cycle?' }).click();
+      await expect(sen.getByText('…').first()).toBeVisible({ timeout: 4000 });
+      await clean(page, "Sen's sheet, streaming");
+      await expect(sen.getByText("I looked at this cycle's payments.")).toBeVisible({ timeout: 6000 });
+      await clean(page, "Sen's sheet, answered");
+      // a file chosen to send
+      await sen.locator('input[type="file"]').setInputFiles({
+        name: 'bill.pdf',
+        mimeType: 'application/pdf',
+        buffer: Buffer.from('%PDF-1.4'),
+      });
+      await expect(sen.getByRole('button', { name: 'Remove bill.pdf' })).toBeVisible();
+      await clean(page, "Sen's sheet, a file chosen");
+      expect(errors).toEqual([]);
+    });
+
+    test(`the native stand-ins and widgets in ${look}, ${mode}: axe finds nothing`, async ({ page }) => {
+      test.setTimeout(240_000);
+      const errors = watchErrors(page);
+      await open(page, '/', look, mode);
+      await settled(page);
+      const devPanel = async (button: string) => {
+        await page.getByRole('button', { name: 'Dev panel' }).click();
+        await page.getByRole('button', { name: button, exact: true }).click();
+      };
+      // every surface: prompts, pushes, the launcher and share target, the island
+      await devPanel('Surfaces');
+      const list = page.getByRole('dialog', { name: 'Native stand-ins' });
+      await expect(list.getByTestId('surface-prompt-category')).toBeVisible();
+      for (const group of ['Prompts', 'Pushes', 'Launcher and sharing', 'The island']) {
+        await list.getByRole('region', { name: group }).scrollIntoViewIfNeeded();
+        await page.waitForTimeout(100);
+      }
+      const report = await axe(page);
+      expect(report, `stand-ins:\n${report.join('\n')}`).toEqual([]);
+      const small = await smallTargets(page);
+      expect(small, `stand-ins:\n${small.join('\n')}`).toEqual([]);
+      await list.getByRole('button', { name: 'Close' }).click();
+      await expect(list).toHaveCount(0);
+      // widgets S, M and L, each in light, dark and dark with Capture is off
+      await page.waitForTimeout(450);
+      await devPanel('Widgets');
+      const widgets = page.getByRole('dialog', { name: 'Widgets' });
+      for (const size of ['Small', 'Medium', 'Large']) {
+        await widgets.getByRole('radio', { name: size }).click();
+        await expect(widgets.getByTestId(new RegExp(`^widget-${size[0]}-`)).first()).toBeVisible();
+        await page.waitForTimeout(150);
+        const w = await axe(page);
+        expect(w, `widget ${size}:\n${w.join('\n')}`).toEqual([]);
+        const ws = await smallTargets(page);
+        expect(ws, `widget ${size}:\n${ws.join('\n')}`).toEqual([]);
+      }
+      expect(errors).toEqual([]);
+    });
+  }
+
+// Each guided journey (the dev panel's list, dev/journeys.ts) plays to its end: its bar shows the caption
+// of every step, and every screen it shows passes axe.
+for (const j of JOURNEYS)
+  test(`the guided journey ${j.id} plays to its end, and every step passes axe`, async ({ page }) => {
+    test.setTimeout(120_000);
+    const errors = watchErrors(page);
+    // from Home: another journey can leave the app on a screen outside the frame, with no dev panel
+    await open(page, '/');
+    await settled(page);
+    await page.getByRole('button', { name: 'Dev panel' }).click();
+    await page.getByRole('button', { name: 'Choose a journey' }).click();
+    const list = page.getByRole('dialog', { name: 'Guided journeys' });
+    if (j.id === JOURNEYS[0]!.id) await clean(page, 'the journeys list');
+    await list.getByTestId(`journey-${j.id}`).click();
+    const bar = page.getByTestId('journey-bar');
+    for (let i = 0; i < j.steps.length; i++) {
+      await expect(bar).toContainText(`Step ${i + 1} of ${j.steps.length}`);
+      await expect(page.getByTestId('journey-caption')).toHaveText(j.steps[i]!.caption);
+      await settled(page);
+      await page.waitForTimeout(250);
+      const report = await axe(page);
+      expect(report, `${j.id} step ${i + 1} (${j.steps[i]!.screen}):\n${report.join('\n')}`).toEqual([]);
+      // by text: while Sen's sheet is open it hides the page behind it from assistive technology, the bar
+      // included, but the bar sits above it and a tap reaches it
+      const next = bar.locator('button', { hasText: i === j.steps.length - 1 ? 'Finish' : 'Next' });
+      await expect(next, `${j.id} step ${i + 1}: the bar has its button`).toBeVisible();
+      await next.click();
+    }
+    await expect(bar).toHaveCount(0);
+    expect(errors).toEqual([]);
+  });

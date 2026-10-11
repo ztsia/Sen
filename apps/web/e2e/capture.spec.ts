@@ -21,7 +21,7 @@ test('Capture says what stops the listener, and each step fixes one thing', asyn
   const errors = watchErrors(page);
   await open(page, '/more');
   await page.getByRole('link', { name: 'Settings' }).click();
-  await page.getByRole('link', { name: 'Capture' }).click();
+  await page.getByRole('button', { name: 'Capture' }).click();
   await expect(page.getByText('Not listening')).toBeVisible();
   await expect(page.getByText('Sen needs notification access to read your bank apps.')).toBeVisible();
 
@@ -67,7 +67,7 @@ test('Captured on this phone lists what arrived, and shares the ones ticked', as
   // in-app navigation throughout: the simulator lives in the page, as the shell lives on the phone
   await open(page, '/more');
   await page.getByRole('link', { name: 'Settings' }).click();
-  await page.getByRole('link', { name: 'Capture' }).click();
+  await page.getByRole('button', { name: 'Capture' }).click();
   await page.getByRole('button', { name: /Captured on this phone/ }).click();
   await expect(page.getByText('Notifications from your chosen apps appear here as they arrive.')).toBeVisible();
   // access on, but no app chosen: nothing is stored
@@ -110,7 +110,7 @@ test('a phone brand with no steps gets the battery step and plain words', async 
   await page.getByRole('radio', { name: 'A brand with no steps' }).click();
   await page.getByRole('button', { name: 'Close' }).click();
   await page.getByRole('link', { name: 'Settings' }).click();
-  await page.getByRole('link', { name: 'Capture' }).click();
+  await page.getByRole('button', { name: 'Capture' }).click();
   await page.getByRole('button', { name: /Keep Sen running/ }).click();
   await expect(page.getByText('Sen has no extra steps for Fairphone phones.', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Allow' })).toBeVisible();
@@ -139,8 +139,9 @@ test('More lists each screen once; Settings lists its own sections', async ({ pa
   expect(labels.length).toBe(new Set(labels).size);
   expect(labels).not.toContain('Capture');
   await page.getByRole('link', { name: 'Settings' }).click();
-  for (const name of ['Capture', 'Appearance', 'Account'])
-    await expect(page.getByRole('link', { name, exact: true })).toBeVisible();
+  // Settings' rows are buttons that open a screen (B04), each named with its value after it
+  for (const name of [/^Capture/, /^Appearance/, /^Account/])
+    await expect(page.getByRole('button', { name })).toBeVisible();
 });
 
 for (const look of [LOOKS[0], LOOKS[5]]) {

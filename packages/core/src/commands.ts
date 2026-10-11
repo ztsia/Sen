@@ -57,13 +57,13 @@ export const Command = z.discriminatedUnion('type', [
   /** *This was a payment*, on a skipped notification. */
   z.object({ type: z.literal('event.restore'), eventId: Id }),
   /**
-   * A checked receipt (§6.4): *Done*, *Just my part* (the items ticked are yours, D92), or kept as
-   * evidence only. The backend matches it to its payment, or it waits for one.
+   * A checked receipt (§6.4): *Done*, *Share a link* (Done, and an open split to tick, D92), *Just my
+   * part* (the items ticked are yours, D92), or kept as evidence only. The backend matches it to its payment, or it waits for one.
    */
   z.object({
     type: z.literal('receipt.commit'),
     id: Id,
-    action: z.enum(['done', 'mine', 'evidence']),
+    action: z.enum(['done', 'share', 'mine', 'evidence']),
     paidBy: z.enum(['me', 'other']),
     merchant: z.string(),
     occurredAt: Instant,

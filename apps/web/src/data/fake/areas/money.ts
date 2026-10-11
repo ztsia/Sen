@@ -385,10 +385,10 @@ export const applyMoney: AreaApply = (db, cmd, ctx) => {
     }
     case 'payday.skip': {
       const names: Record<typeof cmd.step, string> = {
-        claims: 'the claims question',
-        balance: 'the balance check',
-        'look-back': 'the look-back',
-        plan: 'the plan',
+        claims: 'claims question',
+        balance: 'balance check',
+        'look-back': 'look-back',
+        plan: 'plan',
       };
       const id = `r:payday:${cmd.step}`;
       // skipped twice is still one item (§6.6)

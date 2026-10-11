@@ -120,18 +120,19 @@ export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
           >
             <TabIcon look={look} k={k} mode={mode} uid={`${uid}${k}`} />
             <span className="tl">{label}</span>
-            {k === 'review' ? (
-              // always there, so a screen reader hears the count change, politely (patterns.md §6)
-              <span className="sr-only" aria-live="polite" data-testid="review-count-live">
-                {reviewCount > 0 ? `, ${badgeLabel(reviewCount)}` : ''}
-              </span>
-            ) : null}
+            {k === 'review' && reviewCount > 0 ? <span className="sr-only">, {badgeLabel(reviewCount)}</span> : null}
             {k === 'review' && reviewCount > 0 ? (
               <ReviewBadge look={look} count={reviewCount} mode={mode} uid={`${uid}bd`} />
             ) : null}
           </Link>
         );
       })}
+      {/* always there, so a screen reader hears the count change, politely (patterns.md §6). Beside the
+          link, not in it: a sheet hides what's behind it from assistive technology except live regions,
+          and a link that kept this inside would stay exposed with its name gone */}
+      <span className="sr-only" aria-live="polite" data-testid="review-count-live">
+        {reviewCount > 0 ? `, ${badgeLabel(reviewCount)}` : ''}
+      </span>
     </nav>
   );
 }

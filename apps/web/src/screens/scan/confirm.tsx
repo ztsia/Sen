@@ -138,7 +138,7 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
   const editingItem = items.find((i) => i.id === editing) ?? null;
 
   const commit = async (
-    action: 'done' | 'mine' | 'evidence',
+    action: 'done' | 'share' | 'mine' | 'evidence',
     paidBy: PaidBy,
     opts: { mine?: string[]; forTxnId?: string | null } = {},
   ) => {
@@ -196,7 +196,8 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
 
   const share = async (paidBy: PaidBy) => {
     setSheet(null);
-    const r = await commit('done', paidBy);
+    const r = await commit('share', paidBy);
+    // the split is found by its receipt's id
     if (r) go('split', { id: d.id });
   };
   const mineOnly = async (paidBy: PaidBy, mine: string[]) => {

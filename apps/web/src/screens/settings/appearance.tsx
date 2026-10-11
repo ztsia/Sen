@@ -69,16 +69,16 @@ export default function Appearance() {
             ? `Today's look is ${LOOK_NAMES[look]}. The next change is on ${nextQuarterStart(now())}.`
             : `${LOOK_NAMES[look]} stays until you change it here.`}
         </p>
-        <ul role="radiogroup" aria-label="Look" className="flex flex-col">
-          <li>
+        <div role="radiogroup" aria-label="Look" className="flex flex-col">
+          <div>
             <Choice checked={quarterly} label="Changes each quarter" onSelect={() => setQuarterly(true)} />
-          </li>
+          </div>
           {LOOK_IDS.map((id) => (
-            <li key={id}>
+            <div key={id}>
               <Choice checked={!quarterly && look === id} label={LOOK_NAMES[id]} onSelect={() => pick(id)} />
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       </Section>
     </Screen>
   );

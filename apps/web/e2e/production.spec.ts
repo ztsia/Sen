@@ -170,3 +170,58 @@ test('the production build holds none of the made-up scenario', async () => {
     expect(/SYARIKAT CONTOH|SITI AMINAH|Wei Ming's month/.test(text), f).toBe(false);
   }
 });
+
+// B04 done-when 2: the screens B04 built say Not built yet in production too, with no made-up figure,
+// no dev panel, no stand-ins, and Sen's sheet holding nothing of the conversation.
+const B04 = [
+  '/s/shared',
+  '/s/split',
+  '/s/split-public?id=demo',
+  '/s/agent/memory',
+  '/s/agent/research',
+  '/s/agent/usage',
+  '/s/accounts',
+  '/s/account',
+  '/s/balance-check',
+  '/s/payday',
+  '/s/claims',
+  '/s/claim',
+  '/s/settings',
+  '/s/settings/appearance',
+  '/s/settings/you',
+  '/s/settings/categories',
+  '/s/settings/email',
+  '/s/settings/claims',
+  '/s/settings/sen',
+  '/s/settings/members',
+  '/s/settings/data',
+  '/s/sign-in',
+  '/s/first-run',
+  '/s/new-look',
+];
+
+test("B04's screens say Not built yet in production, with nothing made up and no dev tools", async ({ page }) => {
+  const errors = watchErrors(page);
+  for (const path of B04) {
+    await page.goto(path);
+    await expect(page.getByTestId('not-built'), path).toBeVisible();
+    await expect(page.getByText(/RM\d/)).toHaveCount(0);
+    await expect(page.getByText(/MEI LING|BBQ PLACE|HAIDILAO|Wei Ming|Hui Min|KEDAI MEE|Pelita/)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Dev panel' })).toHaveCount(0);
+  }
+  // the guided journeys and stand-ins have no way in
+  await page.goto('/?state=offline&scenario=payday');
+  await expect(page.getByTestId('not-built')).toBeVisible();
+  await expect(page.getByText(/Choose a journey|Native stand-ins|Guided journey/)).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test("production holds none of B04's made-up data or dev tools in its files", async () => {
+  const { readdirSync, readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const dir = join(import.meta.dirname, '..', 'dist-production', 'assets');
+  for (const f of readdirSync(dir).filter((x) => x.endsWith('.js'))) {
+    const text = readFileSync(join(dir, f), 'utf8');
+    expect(/Pelita Everyday|KEDAI MEE ABC|HAIDILAO|Guided journeys|Native stand-ins/.test(text), f).toBe(false);
+  }
+});
