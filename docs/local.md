@@ -8,33 +8,41 @@ follow on a phone, and commit.
 
 ## Now
 
-- [ ] **Tonight (8 Oct): capture ESS's API in a local session on your laptop** (D105, D110), from the
-      two claims you're submitting. It needs Node 20 or later on the laptop.
-      1. On the laptop: clone `ztsia/Sen` (or `git pull` it), on `main`.
-      2. Give Claude Code a browser it can watch:
-         `claude mcp add chrome-devtools -- npx chrome-devtools-mcp@latest`. Then run `claude` in the
-         repo and say: *Capture ESS, per docs/local.md (D110).*
-      3. It opens a Chrome window. **Sign in yourself, in that window**: type the password there,
-         never in the chat.
-      4. Then, in order: open the payslip list and one payslip (download it if there's a button);
-         open your claims list; submit the two claims with their files; open the EA form page if
-         there is one; then **sign out**, so the cookie the session saw is dead.
-      5. **The session records,** from the network panel, the console and the page:
-         - each request's method, path, query, and body field names and types
-         - which cookie holds the session, and when it expires
-         - any token (such as CSRF) a request sends, and which earlier response gave it
-         - the sign-in's redirects, and any second step
-         - how files are uploaded
-         - whether a payslip comes as data (JSON) or only as a PDF
-         - each form field's label and selector, and console errors
-      6. **It writes only to `private/ess/`** (gitignored): `capture/` (the raw requests),
-         `recipe.draft.json` (the steps as `http` or `page`, with slots such as `{claim.amount}`
-         where values go, never the values) and `notes.md`. Nothing ESS-specific goes in the repo:
-         no address, employer name, paths or amounts. The one repo change it may make is the generic
-         answers to `spec_v2.md` §21 Q29 (for example: a cookie session, about 8 hours, no second
-         step, payslips as JSON), committed and pushed.
-      7. Keep `private/ess/` on the laptop. In B34 the recipe goes into Sen by *Import recipe*
-         (D106); no cloud session ever sees it.
+- [ ] **Accounts and keys, with a local session on the laptop** (started 11 Oct). You create each
+      account and sign in, in your normal Chrome; the session clicks through the rest in a new tab.
+      Yours alone: creating an account, signing in, a card, accepting terms, and the one click that
+      shows or copies a key. **The session never sees a key:** you click *Copy*, say which one, and it
+      sends the clipboard straight into Vercel as a sensitive variable for *Production* only. The
+      steps for each are under *Later* below. The names later slices read:
+
+      | For | Where | Vercel variable, or secret | State |
+      |---|---|---|---|
+      | Sign-in codes (B05) | Sen's own Gmail: 2-Step Verification, an app password named `sen` | `GMAIL_USER`, `GMAIL_APP_PASSWORD` | to do, all yours |
+      | Claude (B10) | console.anthropic.com: prepaid credit, a spend limit, a key named `sen` | `ANTHROPIC_API_KEY` | signed in |
+      | Gemini (B10) | Google Cloud project `sen`: billing, Vertex AI API on, service account `sen-ai` (Vertex AI User), an API key bound to it and restricted to Vertex AI | `GOOGLE_VERTEX_API_KEY`, `GOOGLE_VERTEX_PROJECT` | signed in |
+      | Receipts (B15) | Cloudflare R2: bucket `sen-receipts` (Asia-Pacific), a token with Object Read & Write on that bucket only | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | signed in |
+      | Backups (B06) | Cloudflare R2: bucket `sen-backups`, its own token | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` as Actions secrets in `ztsia/sen_ops` | signed in |
+      | Push (B06) | Firebase, added to the Google Cloud project `sen`, Analytics off; *Service accounts* → *Generate new private key* | `FIREBASE_SERVICE_ACCOUNT` (the whole JSON) | signed in |
+
+      Done already: Vercel, the signing key, `BETTER_AUTH_SECRET`, both Neon databases. **These wait
+      for their slice**, which writes the steps first: the Cloudflare Worker with its Git builds and
+      the scheduler and relay secrets (B06), the database URL in `sen_ops` (B05, B06), the monitor
+      (B06), making yourself the admin (B05), the calendar's OAuth client (B24), forwarding receipts
+      (B19).
+
+- [x] **Capture ESS's API in a local session on your laptop** (D105, D110). Done 10 Oct, from the
+      sign-in and the two claims you submitted, in a Chrome window that recorded by itself. It's in
+      `private/ess/` on the laptop (gitignored): `capture/` (the requests; sign-in values as lengths
+      only, no cookie values, no file contents), `notes.md` and `recipe.draft.json` (slots, never
+      values). `spec_v2.md` §13.1 has the generic answers. Keep `private/ess/` on the laptop: in B34
+      the recipe goes into Sen by *Import recipe* (D106), and no cloud session ever sees it.
+      - [ ] **Three things it missed** (Q29), for one more sitting at the laptop or for teach mode on
+            the phone in B34: the names of the parts in the claim's file upload (the recorder
+            couldn't read them), one payslip opened, and how long a session lasts. Recording again:
+            in Chrome, F12 → *Network* → *Preserve log*, do it, then the download arrow (*Export
+            HAR*) into `private/ess/capture/`. Sign in first, so the password isn't in it.
+      - [ ] **Ask whoever runs ESS whether it has an MCP server or an API for staff.** Its settings
+            name one. It would be steadier than replaying requests.
 - [x] **Link Vercel to `ztsia/Sen`** (done 10 Oct, from the laptop's CLI). Project **sen** in
       *ztsia's projects*: root `apps/web`, Vite, Node 22.x, production branch `main`, a preview per
       branch behind Vercel Authentication, Git Fork Protection on. Production is
@@ -204,17 +212,15 @@ values in *Production* only), never into the repo or a chat:
   5. The same project can hold Firebase for push (below) and the calendar's OAuth client.
 - a Google Cloud OAuth client for the calendar (D41): consent screen *External*, then **publish it to
   *In production*** so its tokens don't expire after 7 days. The foundations slice adds the redirect URL
-- **two Neon projects** (free plan, D54): `sen` for production, and `sen-preview` holding only the
-  anonymised seed data the foundations slice provides. Point Vercel's *Preview* environment at
-  `sen-preview`. Never let a preview branch from production: a branch copies everyone's real money.
-  Through Vercel, so the connection strings go straight into its environments and no session sees
-  them:
-  1. Vercel → *sen* → *Storage* → *Create Database* → **Neon**, and accept its terms (the one step
-     only you can do). Region **Singapore**, free plan, name `sen`. Connect it to **Production
-     only**.
-  2. The same again, name `sen-preview`, connected to **Preview** and **Development** only.
-  On the laptop instead: run `vercel integration accept-terms neon` in your own terminal, and a
-  local session creates both.
+- **The two Neon databases: done (11 Oct),** through Vercel's Neon integration, so no session saw
+  a connection string. Both are in Singapore on the free plan (D54):
+  - `sen`, production, connected to Vercel's *Production* environment only
+  - `sen-preview`, connected to *Preview* and *Development* only. It will hold only the anonymised
+    seed data the foundations slice provides
+  Never connect `sen` to *Preview*, and never let a preview branch from production: a branch copies
+  everyone's real money. The variables Vercel now holds (`DATABASE_URL`, `DATABASE_URL_UNPOOLED`,
+  the `PG*` and `POSTGRES_*` sets) sign in as the database's **owner**. B05 uses them for
+  migrations only, and adds `app_user` with a variable of its own for the API.
 - **Better Auth's secret: done (10 Oct).** `BETTER_AUTH_SECRET` is in Vercel, a different random
   value in *Production* and in *Preview*, made on the laptop and never shown.
 - **make yourself the admin**, once, after the first production deploy. Sign-up is off, so the
@@ -248,8 +254,7 @@ Each slice that needs one of these lists it under *Needs from you first* in its 
 - [ ] **ESS, when B34 starts** (D103–D106, §13.1, Q29). Tonight's capture should already have
       answered most of Q29. Tell the P7 session only what's still open, never the address, amounts
       or policy text (D10):
-      - anything Q29 still lists
-      - whether a draft can be saved or a claim withdrawn, for a safe first test
+      - anything Q29 still lists (a draft can be saved: that's the safe first test)
       - the form's file limits
       - one approval email, anonymised
       Your recipe goes into Sen from the laptop by *Import recipe*, or by *Teach Sen* on the phone.
