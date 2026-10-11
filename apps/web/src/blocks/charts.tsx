@@ -438,7 +438,9 @@ export function BudgetMeter({
       {risk ? (
         <span className="inline-flex items-center gap-1.5 text-sm text-money-warning">
           <TriangleAlertIcon className="size-4 shrink-0" aria-hidden="true" />
-          At risk: {percent(share)}% spent, {percent(cycleShare)}% of the cycle gone
+          {sen > cap
+            ? `Over by ${formatSen(sen - cap)}`
+            : `At risk: ${percent(share)}% spent, ${percent(cycleShare)}% of the cycle gone`}
         </span>
       ) : (
         <span className="text-sm text-muted-foreground">On track</span>

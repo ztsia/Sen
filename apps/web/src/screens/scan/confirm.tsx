@@ -60,20 +60,25 @@ export default function Confirm() {
   );
   return (
     <Screen bar={<AppBar title="Check the receipt" />} className="flex flex-col pb-0">
-      <Loaded q={q} what="the receipt" skeleton={<ConfirmSkeleton />}>
-        {() =>
-          !draft ? (
-            unknown
-          ) : draft.status !== 'read' ? (
-            <EmptyState
-              line="Sen is still reading this receipt."
-              action={{ label: 'See it', onSelect: () => go('reading', { id: draft.id }, { replace: true }) }}
-            />
-          ) : (
-            <ConfirmBody key={draft.id} d={draft} />
-          )
-        }
-      </Loaded>
+      {/* no id: nothing to load, so say so rather than wait for ever (QA B03, F13) */}
+      {!id ? (
+        unknown
+      ) : (
+        <Loaded q={q} what="the receipt" skeleton={<ConfirmSkeleton />}>
+          {() =>
+            !draft ? (
+              unknown
+            ) : draft.status !== 'read' ? (
+              <EmptyState
+                line="Sen is still reading this receipt."
+                action={{ label: 'See it', onSelect: () => go('reading', { id: draft.id }, { replace: true }) }}
+              />
+            ) : (
+              <ConfirmBody key={draft.id} d={draft} />
+            )
+          }
+        </Loaded>
+      )}
     </Screen>
   );
 }
@@ -157,6 +162,7 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
       pax,
       note,
       forTxnId: opts.forTxnId === undefined ? d.forTxnId : opts.forTxnId,
+      contentHash: d.contentHash,
     });
     setSaving(false);
     return r;
@@ -168,7 +174,12 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
     else go('home', {}, { replace: true });
   };
 
+  // by hand, items can leave some of the payment unitemised (D90), never more than it (QA B03, F8)
+  const overshoot = hasPayment && difference < 0;
+  const [overTried, setOverTried] = useState(false);
+
   const done = async (forTxnId?: string) => {
+    if (overshoot) return setOverTried(true);
     if (!forTxnId && looks && (matches.data?.length ?? 0) > 1) return setSheet('match');
     setSheet(null);
     const r = await commit('done', 'me', forTxnId ? { forTxnId } : {});
@@ -329,6 +340,9 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
             <Money sen={total} className="text-lg font-semibold text-foreground" />
           </Line>
           <Check byHand={d.byHand} hasPayment={hasPayment} difference={difference} empty={raw.length === 0} />
+          {overshoot && overTried ? (
+            <FieldError>The items can't come to more than the payment. Fix a price, or remove an item.</FieldError>
+          ) : null}
         </div>
 
         <Section title="How many people ate?">

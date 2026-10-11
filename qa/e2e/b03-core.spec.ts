@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { open, shot, settled, tabs, toast, watch, text } from './b03-helpers';
+import { open, shot, settled, tabs, watch, text } from './b03-helpers';
 
 // FLOW-1, FLOW-2: AC-1, AC-1s, AC-2, AC-3, AC-3s, AC-4, AC-4s, AC-5, AC-5s
 
-test('FLOW-1 tab tour: five tabs in order, Sen button only on tab screens, Back on a tab goes Home', async ({ page }) => {
+test('FLOW-1 tab tour: five tabs in order, Sen button only on tab screens, Back on a tab goes Home', async ({
+  page,
+}) => {
   const errors = watch(page);
   await open(page, '/');
   const nav = tabs(page);
@@ -22,7 +24,12 @@ test('FLOW-1 tab tour: five tabs in order, Sen button only on tab screens, Back 
   // AC-2: badge = Needs you only (12 in the scenario), label "N to review"
   const badge = page.getByTestId('review-badge');
   await expect(badge).toHaveCount(1);
-  console.log('badge text:', await badge.innerText(), '| link label:', await page.getByRole('link', { name: /Review/ }).getAttribute('aria-label'));
+  console.log(
+    'badge text:',
+    await badge.innerText(),
+    '| link label:',
+    await page.getByRole('link', { name: /Review/ }).getAttribute('aria-label'),
+  );
 
   for (const [name, url, sen] of [
     ['Review', /\/review/, true],
@@ -44,7 +51,9 @@ test('FLOW-1 tab tour: five tabs in order, Sen button only on tab screens, Back 
   expect(errors).toEqual([]);
 });
 
-test('AC-4s Sen button is absent on pushed and task screens; AC-1s tab bar hidden on task screens', async ({ page }) => {
+test('AC-4s Sen button is absent on pushed and task screens; AC-1s tab bar hidden on task screens', async ({
+  page,
+}) => {
   const rows: string[] = [];
   for (const [name, path, bar, sen] of [
     ['payments', '/s/payments', true, false],
@@ -128,7 +137,10 @@ test('AC-3 From gallery in scan-more: does it get a photo, or dead-end?', async 
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: box.x + 20, y: box.y + 20 }] });
   await page.waitForTimeout(650);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await page.getByRole('dialog').getByRole('button', { name: /From gallery/ }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: /From gallery/ })
+    .click();
   await page.waitForTimeout(500);
   console.log('From gallery lands on:', page.url());
   console.log(await text(page));

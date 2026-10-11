@@ -12,7 +12,9 @@ async function scanTo(page: Page, file = FAKE) {
   await expect(page.getByRole('button', { name: 'Split' })).toBeVisible();
 }
 
-test('FLOW-16 Split > I paid > Just my part: Others\' items fold in, list still sums to total, shares in sen', async ({ page }) => {
+test("FLOW-16 Split > I paid > Just my part: Others' items fold in, list still sums to total, shares in sen", async ({
+  page,
+}) => {
   const errors = watch(page);
   await open(page, '/');
   await scanTo(page);
@@ -30,17 +32,31 @@ test('FLOW-16 Split > I paid > Just my part: Others\' items fold in, list still 
   await dlg.getByRole('checkbox').nth(3).click();
   const line = (await dlg.getByText(/Your part/).innerText()).replace(/\s+/g, ' ');
   console.log('tick summary:', line);
-  const sens = await dlg.locator('p [data-sen]').evaluateAll((els) => els.map((e) => Number(e.getAttribute('data-sen'))));
+  const sens = await dlg
+    .locator('p [data-sen]')
+    .evaluateAll((els) => els.map((e) => Number(e.getAttribute('data-sen'))));
   console.log('mine/others:', sens);
   expect(sens[0]! + sens[1]!).toBe(6413);
   expect(sens[0]).toBe(2972 + 960);
   await dlg.getByRole('button', { name: 'Done' }).click();
   await page.waitForTimeout(800);
-  console.log('toast:', await toast(page).innerText().catch(() => '(none)'), '| url', page.url());
-  const o = await db<any>(page, `(d) => { const r = d.receipts[d.receipts.length-1]; const items = d.items.filter(i => i.receiptId === r.id); const sp = d.splits.find(s => s.receiptId === r.id); const ms = d.members.filter(m => m.splitId === sp.id); const t = d.txns.find(t => t.id === r.transactionId); return { itemSum: items.reduce((a,i)=>a+i.price,0), total: r.total, kinds: items.map(i => i.kind+':'+i.price), members: ms.map(m => m.name+':'+m.share+':'+!!m.doneAt), lockedAt: !!sp.lockedAt, myShare: t?.myShare, amount: t?.amount, status: r.status } }`);
+  console.log(
+    'toast:',
+    await toast(page)
+      .innerText()
+      .catch(() => '(none)'),
+    '| url',
+    page.url(),
+  );
+  const o = await db<any>(
+    page,
+    `(d) => { const r = d.receipts[d.receipts.length-1]; const items = d.items.filter(i => i.receiptId === r.id); const sp = d.splits.find(s => s.receiptId === r.id); const ms = d.members.filter(m => m.splitId === sp.id); const t = d.txns.find(t => t.id === r.transactionId); return { itemSum: items.reduce((a,i)=>a+i.price,0), total: r.total, kinds: items.map(i => i.kind+':'+i.price), members: ms.map(m => m.name+':'+m.share+':'+!!m.doneAt), lockedAt: !!sp.lockedAt, myShare: t?.myShare, amount: t?.amount, status: r.status } }`,
+  );
   console.log(JSON.stringify(o));
   expect(o.itemSum).toBe(o.total);
-  expect(o.members.map((m: string) => Number(m.split(':')[1])).reduce((a: number, b: number) => a + b, 0)).toBe(o.total);
+  expect(o.members.map((m: string) => Number(m.split(':')[1])).reduce((a: number, b: number) => a + b, 0)).toBe(
+    o.total,
+  );
   expect(o.myShare).toBe(3932);
   await shot(page, 'FLOW-16-step-3-after-just-my-part');
   expect(errors).toEqual([]);
@@ -57,11 +73,19 @@ test('FLOW-16 Just my part, A friend paid: you owe the ticked sum; nothing becom
   await dlg.getByRole('checkbox').nth(1).click();
   await dlg.getByRole('button', { name: 'Done' }).click();
   await page.waitForTimeout(800);
-  console.log('toast:', await toast(page).innerText().catch(() => '(none)'));
+  console.log(
+    'toast:',
+    await toast(page)
+      .innerText()
+      .catch(() => '(none)'),
+  );
   const after = await db<any>(page, `(d) => d.txns.length`);
   console.log('txns', before, '->', after);
   expect(after).toBe(before);
-  await tabs(page).getByRole('link', { name: /^Home/ }).click().catch(() => {});
+  await tabs(page)
+    .getByRole('link', { name: /^Home/ })
+    .click()
+    .catch(() => {});
 });
 
 test('FLOW-16 Share a link reaches the split stand-in; the receipt is committed once', async ({ page }) => {
@@ -79,7 +103,9 @@ test('FLOW-16 Share a link reaches the split stand-in; the receipt is committed 
   console.log('receipts', n);
 });
 
-test('FLOW-17 No receipt > Enter the items: unitemised allowed, overshoot refused, blanks refused', async ({ page }) => {
+test('FLOW-17 No receipt > Enter the items: unitemised allowed, overshoot refused, blanks refused', async ({
+  page,
+}) => {
   await open(page, '/');
   const id = await db<string>(page, `(d) => d.txns.find(t => t.merchantRaw === 'SATE KAJANG HJ SAMURI').id`);
   const amt = await db<number>(page, `(d) => d.txns.find(t => t.merchantRaw === 'SATE KAJANG HJ SAMURI').amount`);
@@ -116,8 +142,18 @@ test('FLOW-17 No receipt > Enter the items: unitemised allowed, overshoot refuse
   const before = await db<any>(page, `(d) => ({ r: d.receipts.length, tx: d.txns.length })`);
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   await page.waitForTimeout(800);
-  const after = await db<any>(page, `(d) => ({ r: d.receipts.length, tx: d.txns.length, last: d.receipts[d.receipts.length-1] && { total: d.receipts[d.receipts.length-1].total, tx: d.receipts[d.receipts.length-1].transactionId } })`);
-  console.log('Done with items far above the payment ->', JSON.stringify({ before, after }), 'toast', await toast(page).innerText().catch(() => '(none)'));
+  const after = await db<any>(
+    page,
+    `(d) => ({ r: d.receipts.length, tx: d.txns.length, last: d.receipts[d.receipts.length-1] && { total: d.receipts[d.receipts.length-1].total, tx: d.receipts[d.receipts.length-1].transactionId } })`,
+  );
+  console.log(
+    'Done with items far above the payment ->',
+    JSON.stringify({ before, after }),
+    'toast',
+    await toast(page)
+      .innerText()
+      .catch(() => '(none)'),
+  );
   await shot(page, 'FLOW-17-step-4-done-overshoot');
 });
 
@@ -125,16 +161,33 @@ test('FLOW-18 without capture: Done creates the payment; no waiting', async ({ p
   await open(page, '/?scenario=month');
   await page.waitForTimeout(500);
   const before = await db<any>(page, `(d) => ({ tx: d.txns.length, receipts: d.receipts.length })`);
-  await tabs(page).getByRole('link', { name: /^Review/ }).click();
+  await tabs(page)
+    .getByRole('link', { name: /^Review/ })
+    .click();
   const t = (await page.locator('main').innerText()).replace(/\n+/g, ' | ');
   console.log('month Review:', t.slice(0, 600));
   await shot(page, 'FLOW-18-step-1-month-review');
   await scanTo(page);
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   await page.waitForTimeout(800);
-  console.log('toast:', await toast(page).innerText().catch(() => '(none)'));
-  const after = await db<any>(page, `(d) => ({ tx: d.txns.length, receipts: d.receipts.length, last: d.txns[d.txns.length-1] })`);
-  console.log(JSON.stringify({ before, tx: after.tx, receipts: after.receipts, last: { src: after.last.source, a: after.last.amount, cat: after.last.categoryId } }));
+  console.log(
+    'toast:',
+    await toast(page)
+      .innerText()
+      .catch(() => '(none)'),
+  );
+  const after = await db<any>(
+    page,
+    `(d) => ({ tx: d.txns.length, receipts: d.receipts.length, last: d.txns[d.txns.length-1] })`,
+  );
+  console.log(
+    JSON.stringify({
+      before,
+      tx: after.tx,
+      receipts: after.receipts,
+      last: { src: after.last.source, a: after.last.amount, cat: after.last.categoryId },
+    }),
+  );
   expect(after.tx).toBe(before.tx + 1);
   expect(after.last.source).toBe('receipt');
 });

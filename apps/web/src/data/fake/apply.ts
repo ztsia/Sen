@@ -20,7 +20,7 @@ import { nowIso } from '@/lib/clock';
 const uuid = () => crypto.randomUUID();
 
 function log(db: Db, id: string, what: string) {
-  (db.changes[id] ??= []).push({ at: nowIso(), what });
+  (db.changes[id] ??= []).push({ at: nowIso(), what, by: 'user' });
 }
 const dropReview = (db: Db, keep: (r: ReviewItem) => boolean) => {
   db.review = db.review.filter(keep);
@@ -70,6 +70,12 @@ export function apply(db: Db, cmd: Exclude<Command, { type: 'undo' }>): Applied 
     }
     case 'txn.kind': {
       const t = mustTxn(db, cmd.id);
+      // answered twice (a double tap, a retried sync): still one transfer with one other side (§6.5)
+      const sides = t.transferGroupId
+        ? db.txns.filter((x) => x.transferGroupId === t.transferGroupId && !x.deletedAt)
+        : [];
+      if (cmd.kind === 'transfer' && t.kind === 'transfer' && sides.length > 1)
+        return { said: 'Already a transfer', touched: [] };
       t.status = 'done';
       t.updatedAt = nowIso();
       dropReview(db, (r) => !('txnId' in r && r.txnId === t.id));
@@ -291,7 +297,11 @@ export function apply(db: Db, cmd: Exclude<Command, { type: 'undo' }>): Applied 
 
 /** §6.4: Done attaches to the one payment that matches, or waits for it; without capture it creates one. */
 function commitReceipt(db: Db, c: Extract<Command, { type: 'receipt.commit' }>): Applied {
-  if (db.receipts.some((r) => r.id === c.id)) return { said: 'Already added', touched: [] };
+  // a retried commit, or the same file again, is a no-op (§6.5)
+  if (db.receipts.some((r) => r.id === c.id || (c.contentHash !== null && r.contentHash === c.contentHash))) {
+    db.drafts = db.drafts.filter((d) => d.id !== c.id);
+    return { said: 'Already added', touched: [] };
+  }
   const mine = new Set(c.mine);
   const ours = c.action === 'mine' ? c.items.filter((i) => mine.has(i.id)) : c.items;
   const others = c.action === 'mine' ? c.items.filter((i) => !mine.has(i.id)) : [];
@@ -337,6 +347,7 @@ function commitReceipt(db: Db, c: Extract<Command, { type: 'receipt.commit' }>):
     id: c.id,
     userId: db.userId,
     transactionId: attach?.id ?? null,
+    contentHash: c.contentHash,
     merchantRaw: c.merchant,
     occurredAt: c.occurredAt,
     total: c.total,

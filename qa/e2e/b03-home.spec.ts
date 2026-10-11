@@ -3,7 +3,7 @@ import { open, shot, settled, tabs, toast, watch, text, db } from './b03-helpers
 
 // FLOW-3: AC-7..AC-16
 
-const num = (s: string) => Number(s.replace(/[^0-9.-]/g, ''));
+const _num = (s: string) => Number(s.replace(/[^0-9.-]/g, ''));
 
 test('FLOW-3 Home (normal): figure arithmetic, cycle sheet equals Home, links', async ({ page }) => {
   const errors = watch(page);
@@ -28,7 +28,9 @@ test('FLOW-3 Home (normal): figure arithmetic, cycle sheet equals Home, links', 
   await expect(sheet).toContainText('Income received');
   const sheetText = (await sheet.innerText()).replace(/\n+/g, ' | ');
   console.log('cycle sheet:', sheetText);
-  const sens = await sheet.locator('[data-sen]').evaluateAll((els) => els.map((e) => Number(e.getAttribute('data-sen'))));
+  const sens = await sheet
+    .locator('[data-sen]')
+    .evaluateAll((els) => els.map((e) => Number(e.getAttribute('data-sen'))));
   console.log('sheet sens (income, spending, result, estimate):', sens);
   expect(sens[0]! - sens[1]!).toBe(sens[2]);
   expect(sens[2]).toBe(heroSen);
@@ -96,7 +98,9 @@ for (const [scn, want] of [
 test('AC-8 Over by: exactly zero reads RM0.00 left, one sen more reads Over by RM0.01', async ({ page }) => {
   await open(page, '/review');
   const add = async (amount: string) => {
-    await tabs(page).getByRole('link', { name: /^Review/ }).click();
+    await tabs(page)
+      .getByRole('link', { name: /^Review/ })
+      .click();
     await page.getByRole('button', { name: /Missing a payment/ }).click();
     await page.getByLabel('Amount').fill(amount);
     await page.getByRole('radio', { name: 'Shopping' }).click();
@@ -115,12 +119,17 @@ test('AC-8 Over by: exactly zero reads RM0.00 left, one sen more reads Over by R
   console.log('one sen more:', over);
   expect(over).toContain('Over by, RM0.01');
   await shot(page, 'FLOW-3-step-6-over-by-one-sen');
-  const sheetTitle = await page.getByTestId('hero').click().then(async () => page.getByRole('dialog').innerText());
+  const sheetTitle = await page
+    .getByTestId('hero')
+    .click()
+    .then(async () => page.getByRole('dialog').innerText());
   console.log('cycle sheet while over:', sheetTitle.replace(/\n+/g, ' | '));
   await shot(page, 'FLOW-3-step-7-cycle-sheet-over');
 });
 
-test('AC-12 offline: chip counts unsynced rows; AC-12s online write does not flash Not synced yet', async ({ page }) => {
+test('AC-12 offline: chip counts unsynced rows; AC-12s online write does not flash Not synced yet', async ({
+  page,
+}) => {
   await open(page, '/?state=offline');
   await expect(page.getByText('2 not synced yet')).toBeVisible();
   await shot(page, 'FLOW-3-step-6-offline-chip');

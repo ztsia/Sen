@@ -8,7 +8,16 @@ import type { Backend } from './backend';
  */
 export const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { staleTime: Infinity, retry: false, refetchOnWindowFocus: false, refetchOnReconnect: false },
+    // 'always': a read never waits for the network, because the backend works offline (the fake now,
+    // the shell's outbox from B07); offline, the screens still show what was just written (QA B03, F1)
+    queries: {
+      staleTime: Infinity,
+      retry: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      networkMode: 'always',
+    },
+    mutations: { networkMode: 'always' },
   },
 });
 

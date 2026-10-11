@@ -3,9 +3,32 @@ import { watch, shot } from './b03-helpers';
 
 test.use({ baseURL: 'http://127.0.0.1:5182' });
 
-test('AC-6 production: every B03 screen says Not built yet, shows no made-up data, no dev panel, no badge', async ({ page }) => {
+test('AC-6 production: every B03 screen says Not built yet, shows no made-up data, no dev panel, no badge', async ({
+  page,
+}) => {
   const errors = watch(page);
-  const paths = ['/', '/review', '/s/skipped', '/scan', '/s/crop', '/s/reading?id=x', '/s/confirm?id=x', '/s/manual', '/insights', '/s/budgets', '/s/subscriptions', '/s/goals', '/s/goal?id=x', '/s/insights/year', '/more', '/s/payments', '/s/txn?id=x', '/s/receipt?id=x', '/?scenario=payday&state=empty', '/s/payments?state=offline'];
+  const paths = [
+    '/',
+    '/review',
+    '/s/skipped',
+    '/scan',
+    '/s/crop',
+    '/s/reading?id=x',
+    '/s/confirm?id=x',
+    '/s/manual',
+    '/insights',
+    '/s/budgets',
+    '/s/subscriptions',
+    '/s/goals',
+    '/s/goal?id=x',
+    '/s/insights/year',
+    '/more',
+    '/s/payments',
+    '/s/txn?id=x',
+    '/s/receipt?id=x',
+    '/?scenario=payday&state=empty',
+    '/s/payments?state=offline',
+  ];
   const out: string[] = [];
   for (const p of paths) {
     await page.goto(p);
@@ -26,8 +49,13 @@ test('AC-6 production: every B03 screen says Not built yet, shows no made-up dat
     expect(l).toMatch(/devPanel=0/);
   }
   // an offline write path cannot reach a fake: the backend rejects
-  const r = await page.evaluate(async () => {
-    try { const m = await import(/* @vite-ignore */ '/assets/index.js'); return 'imported'; } catch { return 'no module at that path'; }
+  const _r = await page.evaluate(async () => {
+    try {
+      const _m = await import(/* @vite-ignore */ '/assets/index.js');
+      return 'imported';
+    } catch {
+      return 'no module at that path';
+    }
   });
   expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([]);
 });

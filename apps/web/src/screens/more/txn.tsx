@@ -201,7 +201,8 @@ function TxnBody({ v }: { v: TxnView }) {
           <ul className="flex flex-col gap-2">
             {v.changes.map((c) => (
               <li key={`${c.at}-${c.what}`} className="text-sm">
-                <span className="text-muted-foreground">{momentLabel(new Date(c.at))}</span> · {c.what}
+                <span className="text-muted-foreground">{momentLabel(new Date(c.at))}</span> · {c.what},{' '}
+                {c.by === 'user' ? 'by you' : c.by === 'agent' ? 'by Sen' : 'automatically'}
               </li>
             ))}
           </ul>

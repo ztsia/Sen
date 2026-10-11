@@ -70,7 +70,11 @@ export default function Manual() {
       },
     });
     setSaving(false);
-    if (done) router.history.back();
+    // back to where it was opened from; opened first (the launcher's Add expense), Home (QA B03, F5)
+    if (done) {
+      if (router.history.canGoBack()) router.history.back();
+      else void router.navigate({ to: '/', replace: true });
+    }
   };
 
   return (

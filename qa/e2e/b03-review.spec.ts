@@ -1,10 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { open, shot, settled, tabs, toast, watch, text, db } from './b03-helpers';
+import { open, shot, settled, toast, watch, db } from './b03-helpers';
 
 // FLOW-4, 5, 6, C2 (pay-new): AC-2, AC-17..AC-23, AC-63
 
-const row = (page: any, kind: string, t: string | RegExp) => page.locator(`[data-review="${kind}"]`).filter({ hasText: t });
-const badge = async (page: any) => Number(await page.getByTestId('review-badge').getAttribute('data-count') ?? (await page.getByTestId('review-badge').innerText()));
+const row = (page: any, kind: string, t: string | RegExp) =>
+  page.locator(`[data-review="${kind}"]`).filter({ hasText: t });
+const badge = async (page: any) =>
+  Number(
+    (await page.getByTestId('review-badge').getAttribute('data-count')) ??
+      (await page.getByTestId('review-badge').innerText()),
+  );
 
 test('FLOW-C2 pay-new (core): answer ROTI BAKAR 88, rule made, badge falls, Undo restores', async ({ page }) => {
   const errors = watch(page);
@@ -17,13 +22,22 @@ test('FLOW-C2 pay-new (core): answer ROTI BAKAR 88, rule made, badge falls, Undo
   const buttons = await r.getByRole('button').allInnerTexts();
   console.log('ROTI BAKAR buttons:', JSON.stringify(buttons));
   await shot(page, 'FLOW-C2-step-1-review');
-  const before = await db<any>(page, `(d) => ({ rules: d.rules.length, t: d.txns.find(t => t.merchantRaw === 'ROTI BAKAR 88') })`);
+  const before = await db<any>(
+    page,
+    `(d) => ({ rules: d.rules.length, t: d.txns.find(t => t.merchantRaw === 'ROTI BAKAR 88') })`,
+  );
   expect(before.t.categoryId).toBeNull();
   await r.getByRole('button', { name: 'Meals' }).click();
   await expect(toast(page)).toContainText('ROTI BAKAR 88 is Meals from now on');
   await expect(r).toHaveCount(0);
-  const after = await db<any>(page, `(d) => ({ rules: d.rules.length, rule: d.rules.find(r => r.merchantKey === 'ROTI BAKAR 88'), t: d.txns.find(t => t.merchantRaw === 'ROTI BAKAR 88'), meals: d.categories.find(c => c.name==='Meals').id })`);
-  console.log('after answer:', JSON.stringify({ rules: after.rules, rule: after.rule, cat: after.t.categoryId, status: after.t.status }));
+  const after = await db<any>(
+    page,
+    `(d) => ({ rules: d.rules.length, rule: d.rules.find(r => r.merchantKey === 'ROTI BAKAR 88'), t: d.txns.find(t => t.merchantRaw === 'ROTI BAKAR 88'), meals: d.categories.find(c => c.name==='Meals').id })`,
+  );
+  console.log(
+    'after answer:',
+    JSON.stringify({ rules: after.rules, rule: after.rule, cat: after.t.categoryId, status: after.t.status }),
+  );
   expect(after.rules).toBe(before.rules + 1);
   expect(after.t.categoryId).toBe(after.meals);
   expect(after.rule.categoryId).toBe(after.meals);
@@ -31,7 +45,10 @@ test('FLOW-C2 pay-new (core): answer ROTI BAKAR 88, rule made, badge falls, Undo
   await shot(page, 'FLOW-C2-step-2-answered');
   await toast(page).getByRole('button', { name: 'Undo' }).click();
   await expect(row(page, 'new-merchant', 'ROTI BAKAR 88')).toBeVisible();
-  const undone = await db<any>(page, `(d) => ({ rules: d.rules.length, t: d.txns.find(t => t.merchantRaw === 'ROTI BAKAR 88') })`);
+  const undone = await db<any>(
+    page,
+    `(d) => ({ rules: d.rules.length, t: d.txns.find(t => t.merchantRaw === 'ROTI BAKAR 88') })`,
+  );
   expect(undone.rules).toBe(before.rules);
   expect(undone.t.categoryId).toBeNull();
   await expect.poll(() => badge(page)).toBe(12);
@@ -42,10 +59,16 @@ test('FLOW-C2 pay-new (core): answer ROTI BAKAR 88, rule made, badge falls, Undo
 test('AC-18s double-tapping an answer applies once (transfer-missing creates one inferred side)', async ({ page }) => {
   await open(page, '/review');
   const r = row(page, 'transfer-missing', 'from your own name');
-  const before = await db<any>(page, `(d) => ({ n: d.txns.length, inferred: d.txns.filter(t => t.source === 'inferred').length })`);
+  const before = await db<any>(
+    page,
+    `(d) => ({ n: d.txns.length, inferred: d.txns.filter(t => t.source === 'inferred').length })`,
+  );
   await r.getByRole('button', { name: 'Public Bank' }).dblclick();
   await page.waitForTimeout(800);
-  const after = await db<any>(page, `(d) => ({ n: d.txns.length, inferred: d.txns.filter(t => t.source === 'inferred').length })`);
+  const after = await db<any>(
+    page,
+    `(d) => ({ n: d.txns.length, inferred: d.txns.filter(t => t.source === 'inferred').length })`,
+  );
   console.log('double-tap on Public Bank:', JSON.stringify({ before, after }));
   await shot(page, 'FLOW-4-step-5-double-tap');
   expect(after.inferred - before.inferred).toBe(1);
@@ -69,12 +92,27 @@ test('AC-18s double-tapping New-wording No / share ticks apply once', async ({ p
 test('FLOW-4 every Needs-you kind present with its buttons; max 3 + Other', async ({ page }) => {
   await open(page, '/review');
   const kinds = await page.locator('[data-review]').evaluateAll((els) =>
-    els.map((e) => ({ kind: e.getAttribute('data-review'), buttons: [...e.querySelectorAll('button')].map((b) => b.textContent!.trim()) })),
+    els.map((e) => ({
+      kind: e.getAttribute('data-review'),
+      buttons: [...e.querySelectorAll('button')].map((b) => b.textContent!.trim()),
+    })),
   );
   console.log(JSON.stringify(kinds, null, 1));
   for (const k of kinds) expect(k.buttons.filter((b) => b !== 'Other…').length, k.kind!).toBeLessThanOrEqual(3);
   const names = new Set(kinds.map((k) => k.kind));
-  for (const k of ['new-merchant', 'money-in-share', 'money-in', 'owe-share', 'receipt-unread', 'new-wording', 'transfer-missing', 'balance-check', 'claim-due', 'payday-step', 'proposal'])
+  for (const k of [
+    'new-merchant',
+    'money-in-share',
+    'money-in',
+    'owe-share',
+    'receipt-unread',
+    'new-wording',
+    'transfer-missing',
+    'balance-check',
+    'claim-due',
+    'payday-step',
+    'proposal',
+  ])
     expect(names.has(k), k).toBe(true);
   await shot(page, 'FLOW-4-step-1-all-kinds');
 });
@@ -95,7 +133,9 @@ test('FLOW-4 Apply all: one Undo reverts both', async ({ page }) => {
   await expect(page.getByText(/Sen suggested 2 answers/)).toBeVisible();
 });
 
-test('FLOW-5 Waiting on others is not in the badge; Missing a payment? -> manual; Skipped -> skipped -> This was a payment', async ({ page }) => {
+test('FLOW-5 Waiting on others is not in the badge; Missing a payment? -> manual; Skipped -> skipped -> This was a payment', async ({
+  page,
+}) => {
   await open(page, '/review');
   const waiting = page.getByRole('region', { name: 'Waiting on others' });
   await expect(waiting).toContainText('BBQ PLACE');
@@ -150,8 +190,11 @@ test('FLOW-6 empty Review says Nothing needs you; badge absent', async ({ page }
 
 test('AC-2 badge reads 99+ above 99 (dev panel) and its accessible name says the count', async ({ page }) => {
   await open(page, '/');
-  const name = await page.getByRole('link', { name: /Review/ }).getAttribute('aria-label');
-  const acc = await page.getByRole('navigation', { name: 'Tabs' }).getByRole('link', { name: /Review/ }).innerText();
+  const _name = await page.getByRole('link', { name: /Review/ }).getAttribute('aria-label');
+  const acc = await page
+    .getByRole('navigation', { name: 'Tabs' })
+    .getByRole('link', { name: /Review/ })
+    .innerText();
   console.log('Review tab text:', JSON.stringify(acc));
   const snap = await page.getByRole('navigation', { name: 'Tabs' }).ariaSnapshot();
   console.log(snap);

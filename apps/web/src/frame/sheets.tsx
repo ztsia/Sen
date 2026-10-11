@@ -40,7 +40,8 @@ export function ScanMoreSheet() {
   };
   const rows = [
     { id: 'scan', label: 'Scan', icon: CameraIcon },
-    { id: 'crop', label: 'From gallery', icon: ImageIcon },
+    // Scan's own screen has the gallery picker in a browser (B15 opens ML Kit's import in the shell)
+    { id: 'scan', label: 'From gallery', icon: ImageIcon },
     { id: 'manual', label: 'Add manually', icon: PencilLineIcon },
   ];
   return (
@@ -48,7 +49,7 @@ export function ScanMoreSheet() {
       <ItemGroup>
         {rows.map((r) => (
           <Item
-            key={r.id}
+            key={r.label}
             asChild
             size="sm"
             className="min-h-14 w-full rounded-none text-left text-base active:bg-accent"

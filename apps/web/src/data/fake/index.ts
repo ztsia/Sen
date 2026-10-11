@@ -27,6 +27,12 @@ export interface FakeControls {
 }
 
 const SYNC_MS = 1200;
+
+/** A file's SHA-256, as hex: the same file twice is one receipt (§6.5), as `receipts.content_hash` will be. */
+async function sha256(file: Blob): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
 /** The first read of a screen takes a moment, so its skeleton shows; later reads answer at once. */
 const FIRST_READ_MS = 250;
 
@@ -88,7 +94,12 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     return { said, undo: { type: 'undo', token } };
   };
 
-  const draftFor = (file: File | null, forTxnId: string | null, byHand: boolean): string => {
+  const draftFor = (
+    file: File | null,
+    forTxnId: string | null,
+    byHand: boolean,
+    contentHash: string | null,
+  ): string => {
     const id = crypto.randomUUID();
     const now = new Date(Date.parse(db.now)).toISOString();
     const name = file?.name.toLowerCase() ?? '';
@@ -97,6 +108,7 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     if (byHand) {
       db.drafts.push({
         id,
+        contentHash: null,
         status: 'read',
         byHand: true,
         merchant: forTxn?.merchantRaw ?? '',
@@ -133,6 +145,7 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     const prices = spread(amounts, total);
     db.drafts.push({
       id,
+      contentHash,
       status: 'reading',
       byHand: false,
       merchant: name.includes('nomatch') ? 'KOPITIAM SRI DAMAI' : 'SATE KAJANG HJ SAMURI',
@@ -180,8 +193,8 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     me: () => read(v.me),
     categories: (kind) => read((d) => v.categoryChoices(d, kind)),
     accounts: () => read(v.accountChoices),
-    upload: (file, forTxnId) => Promise.resolve(draftFor(file, forTxnId, false)),
-    byHand: (forTxnId) => Promise.resolve(draftFor(null, forTxnId, true)),
+    upload: async (file, forTxnId) => draftFor(file, forTxnId, false, file ? await sha256(file) : null),
+    byHand: (forTxnId) => Promise.resolve(draftFor(null, forTxnId, true, null)),
     draft: (id) => read((d) => structuredClone(d.drafts.find((x) => x.id === id) ?? null)),
     matches: (total, at) => read((d) => matchesFor(d, total, at)),
     nearDuplicate: (amount, at) =>

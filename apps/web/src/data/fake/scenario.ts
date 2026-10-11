@@ -262,6 +262,7 @@ function receiptFor(t: Transaction, cat: string, r: () => number, pax = 1) {
   const receipt: Receipt = {
     ...owned(rid),
     transactionId: t.id,
+    contentHash: null,
     merchantRaw: t.merchantRaw,
     occurredAt: t.occurredAt,
     total: t.amount,
@@ -735,6 +736,7 @@ function addThisCycle(db: Db) {
   db.receipts.push({
     ...owned(nkr),
     transactionId: nk.id,
+    contentHash: null,
     merchantRaw: 'NASI KANDAR ABC',
     occurredAt: nk.occurredAt,
     total: rm('58.30'),
@@ -1039,6 +1041,7 @@ function addThisCycle(db: Db) {
   db.receipts.push({
     ...owned(diy),
     transactionId: null,
+    contentHash: null,
     merchantRaw: 'MR DIY',
     occurredAt: at(TODAY, '15:20'),
     total: rm('23.90'),
@@ -1070,6 +1073,7 @@ function addThisCycle(db: Db) {
   db.receipts.push({
     ...owned(blur),
     transactionId: null,
+    contentHash: null,
     merchantRaw: null,
     occurredAt: null,
     total: 0,
@@ -1157,7 +1161,8 @@ function addThisCycle(db: Db) {
       }),
     );
   };
-  const salaries = (i: number) => lastWorkingDay(addDays('2026-05-01', i * 31));
+  // six paydays, April to September: none after the scenario's today (QA B03, F14)
+  const salaries = (i: number) => lastWorkingDay(addDays('2026-04-01', i * 31));
   goal('japan', 'Japan in spring', 'goal', '6,000.00', '2027-03-15', [
     '500.00',
     '500.00',
@@ -1306,7 +1311,8 @@ function review(ids: Record<string, string>): ReviewItem[] {
       kind: 'transfer-missing',
       id: 'r:own',
       at: at('2026-10-15', '21:47'),
-      suggested: 'pbb',
+      // Sen's suggestion names the button's key: the account's id (QA B03, F10)
+      suggested: acctId('pbb'),
       txnId: ids.own!,
       amount: rm('2,000.00'),
       to: 'Ryt Bank',

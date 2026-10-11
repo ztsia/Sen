@@ -18,7 +18,7 @@ import {
 } from '@sen/core/views';
 import { createFake } from './index';
 import { uid } from './ids';
-import { acctId, catId, rm } from './scenario';
+import { acctId, catId, rm, txn } from './scenario';
 import { buildScenario, SCENARIOS } from './variants';
 import * as v from './views';
 
@@ -207,7 +207,113 @@ describe('writes, with Undo (§6.7)', () => {
       pax: 3,
       note: null,
       forTxnId: null,
+      contentHash: null,
     });
     expect(r.said).toBe('Attached to RM64.13 on Ryt Bank');
+  });
+});
+
+// QA B03 run 1: findings 2, 3, 4 and 6
+describe('QA B03 run 1', () => {
+  const commitOf = (
+    d: NonNullable<Awaited<ReturnType<ReturnType<typeof createFake>['draft']>>>,
+    at = '2026-10-18T20:30:00+08:00',
+  ): Command => ({
+    type: 'receipt.commit',
+    id: d.id,
+    action: 'done',
+    paidBy: 'me',
+    merchant: d.merchant,
+    occurredAt: at,
+    items: d.items,
+    mine: [],
+    tax: d.tax,
+    service: d.service,
+    total: d.total,
+    pax: 1,
+    note: null,
+    forTxnId: null,
+    contentHash: d.contentHash,
+  });
+
+  it('F4: a payment added now is the newest row, whatever offset its time was written in', async () => {
+    const fake = createFake();
+    const id = crypto.randomUUID();
+    await fake.run({
+      type: 'txn.create',
+      txn: {
+        id,
+        occurredAt: '2026-10-18T12:40:00.000Z',
+        amount: rm('1,234.56'),
+        categoryId: catId('Meals'),
+        accountId: acctId('tng'),
+        merchantRaw: 'NEWEST',
+        note: null,
+      },
+    });
+    expect((await fake.payments({})).rows[0]!.id).toBe(id);
+  });
+
+  it('F2: a transfer answered twice still has one filled-in side', async () => {
+    const fake = createFake();
+    const cmd: Command = {
+      type: 'txn.kind',
+      id: uid('txn:own-2000'),
+      kind: 'transfer',
+      linkedTransactionId: null,
+      otherAccountId: acctId('pbb'),
+    };
+    const before = fake.db().txns.length;
+    await fake.run(cmd);
+    await fake.run(cmd);
+    expect(fake.db().txns.length).toBe(before + 1);
+  });
+
+  it('F3: the same file twice is Already added (§6.5), by its content hash', async () => {
+    const fake = createFake();
+    const file = new File([new Uint8Array([1, 2, 3])], 'receipt-nomatch.jpg', { type: 'image/jpeg' });
+    const a = (await fake.draft(await fake.upload(file, null)))!;
+    const b = (await fake.draft(await fake.upload(new File([new Uint8Array([1, 2, 3])], 'again.jpg'), null)))!;
+    expect(a.contentHash).toBe(b.contentHash);
+    await fake.run(commitOf(a));
+    const r = await fake.run(commitOf(b));
+    expect(r.said).toBe('Already added');
+    expect(fake.db().receipts.filter((x) => x.contentHash === a.contentHash)).toHaveLength(1);
+  });
+
+  it('F6: a receipt committed twice with one id is one receipt', async () => {
+    const fake = createFake();
+    const d = (await fake.draft(await fake.upload(null, null)))!;
+    await fake.run(commitOf(d));
+    const r = await fake.run(commitOf(d));
+    expect(r.said).toBe('Already added');
+    expect(fake.db().receipts.filter((x) => x.id === d.id)).toHaveLength(1);
+  });
+
+  it('F6: a forecast is never spending: subscription charges change no figure (CLAUDE.md)', () => {
+    const db = buildScenario('wei-ming', false);
+    const before = { home: v.home(db).figure.spent, sheet: v.cycleSheet(db).spending };
+    expect(before.sheet).toBe(before.home);
+    db.charges.push({
+      ...db.charges[0]!,
+      id: crypto.randomUUID(),
+      expectedDate: '2026-10-10',
+      expectedAmount: rm('999.00'),
+      status: 'expected',
+      matchedTransactionId: null,
+    });
+    expect(v.home(db).figure.spent).toBe(before.home);
+    expect(v.cycleSheet(db).spending).toBe(before.sheet);
+  });
+
+  it('F6: the small things are payments under RM15.00, not at it', () => {
+    const db = buildScenario('wei-ming', true);
+    const t = (key: string, amount: string) =>
+      db.txns.push({
+        ...txn({ key, day: '2026-10-18', time: '10:00', merchant: key, amount: rm(amount), acct: 'tng', cat: 'Meals' }),
+      });
+    t('at', '15.00');
+    t('under', '14.99');
+    expect(v.insights(db).smallThings).toMatchObject({ count: 1, total: rm('14.99') });
   });
 });

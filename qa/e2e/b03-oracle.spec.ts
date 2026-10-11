@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { open, shot, settled, tabs, toast, watch, text, db } from './b03-helpers';
+import { open, db } from './b03-helpers';
 
 // Phase 4 on the fake "views": an independent oracle for spending, income, balances, owed, from raw rows, per spec §7 / D19 / D21.
 // Money is BigInt-free integer sen here too.

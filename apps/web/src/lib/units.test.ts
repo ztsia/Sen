@@ -70,3 +70,12 @@ describe('the screen registry', () => {
     expect(showsSenButton(by('payments'))).toBe(false);
   });
 });
+
+describe('day headers name another year', () => {
+  it('leaves this year out, and says last year (QA B03, F14)', async () => {
+    const { dayLabel } = await import('./dates');
+    const now = new Date('2026-10-18T12:00:00+08:00');
+    expect(dayLabel(new Date('2026-10-08T12:00:00+08:00'), now)).toBe('Thu, 8 Oct');
+    expect(dayLabel(new Date('2025-10-31T12:00:00+08:00'), now)).toMatch(/31 Oct 2025$/);
+  });
+});

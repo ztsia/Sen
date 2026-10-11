@@ -47,7 +47,7 @@ function ReviewBody({ r }: { r: ReviewView }) {
   const go = useGo();
   const [other, setOther] = useState<{ txnId: string; merchant: string } | null>(null);
   const [refundFor, setRefundFor] = useState<{ txnId: string; from: string } | null>(null);
-  const [attach, setAttach] = useState<string | null>(null);
+  const [attach, setAttach] = useState<{ receiptId: string; merchant: string; total: number } | null>(null);
   const cats = useCategories();
   const suggested = r.needsYou.filter((i) => i.suggested);
 
@@ -113,7 +113,10 @@ function ReviewBody({ r }: { r: ReviewView }) {
                 }
                 knows={`Waiting for its payment · ${momentLabel(new Date(x.at))}`}
                 answers={[
-                  { label: 'Attach to a payment…', onSelect: () => setAttach(x.receiptId) },
+                  {
+                    label: 'Attach to a payment…',
+                    onSelect: () => setAttach({ receiptId: x.receiptId, merchant: x.merchant, total: x.total }),
+                  },
                   { label: 'Evidence only', onSelect: () => run({ type: 'receipt.evidence', receiptId: x.receiptId }) },
                   { label: 'Enter the payment', onSelect: () => go('manual', { id: x.receiptId }) },
                 ]}
@@ -172,10 +175,14 @@ function ReviewBody({ r }: { r: ReviewView }) {
       <PaymentPicker
         open={!!attach}
         title="Attach to which payment?"
+        merchant={attach?.merchant}
+        amount={attach?.total}
         onClose={() => setAttach(null)}
         onPick={(id) => {
           if (!attach) return;
-          void run({ type: 'receipt.attach', receiptId: attach, txnId: id }).then((x) => toastUndo(x.said, x.undo));
+          void run({ type: 'receipt.attach', receiptId: attach.receiptId, txnId: id }).then((x) =>
+            toastUndo(x.said, x.undo),
+          );
         }}
       />
     </>
@@ -343,7 +350,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
               You owe {i.to} <Money sen={i.amount} />
             </>
           }
-          knows={`${i.bill} · Sen can't see a payment from Public Bank, so tick it if you've paid`}
+          knows={`${i.bill} · If you've paid already, tick it: Sen can't see every payment`}
           answers={answers}
         />
       );
@@ -415,6 +422,7 @@ function PaymentPicker({
   open,
   title,
   merchant,
+  amount,
   onClose,
   onPick,
 }: {
@@ -422,13 +430,18 @@ function PaymentPicker({
   title: string;
   /** A refund lists recent payments to its merchant first (flows.md `refund`). */
   merchant?: string;
+  /** A receipt lists payments of its amount first, then the closest (flows.md `receipt-first`, QA B03 F12). */
+  amount?: number;
   onClose: () => void;
   onPick: (id: string) => void;
 }) {
   const q = usePayments({});
   const spends = (q.data?.rows ?? []).filter((x) => x.direction === 'out' && x.kind === 'spend');
   const theirs = merchant ? spends.filter((x) => x.title === merchant) : [];
-  const rows = [...theirs, ...spends.filter((x) => !theirs.includes(x))].slice(0, 30);
+  const rest = spends.filter((x) => !theirs.includes(x));
+  // closest amount first; equally close, the newer (the list arrives newest first, and sort is stable)
+  if (amount !== undefined) rest.sort((a, b) => Math.abs(a.amount - amount) - Math.abs(b.amount - amount));
+  const rows = [...theirs, ...rest].slice(0, 30);
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()} title={title}>
       <ItemGroup className="-mx-4">

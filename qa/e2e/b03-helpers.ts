@@ -36,7 +36,7 @@ export async function db<T>(page: Page, fn: string): Promise<T> {
   return page.evaluate(async (src) => {
     const mod = await import(/* @vite-ignore */ '/src/data/index.ts');
     const b = (await mod.backend()) as unknown as { db(): unknown };
-    // eslint-disable-next-line no-new-func
+
     return new Function('db', `return (${src})(db)`)(b.db());
   }, fn) as Promise<T>;
 }

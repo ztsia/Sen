@@ -2,14 +2,26 @@ import { expect, test } from '@playwright/test';
 import { open } from './b03-helpers';
 
 // Phase 4 against the fake's read functions with synthetic rows: D19's table, D21 refunds, and the spending kinds.
-test('D19 / D21: spendingOf on the spec table, a retried repayment, a refund, and non-spend kinds', async ({ page }) => {
+test('D19 / D21: spendingOf on the spec table, a retried repayment, a refund, and non-spend kinds', async ({
+  page,
+}) => {
   await open(page, '/');
   const res = await page.evaluate(async () => {
     const v = await import(/* @vite-ignore */ '/src/data/fake/views.ts');
-    const mk = (o: Record<string, unknown>) => ({ id: 'x', kind: 'spend', direction: 'out', amount: 12000, myShare: null, deletedAt: null, linkedTransactionId: null, ...o });
+    const mk = (o: Record<string, unknown>) => ({
+      id: 'x',
+      kind: 'spend',
+      direction: 'out',
+      amount: 12000,
+      myShare: null,
+      deletedAt: null,
+      linkedTransactionId: null,
+      ...o,
+    });
     const run = (rows: any[], i = 0) => v.spendingOf({ txns: rows } as any, rows[i]);
     const dinner = mk({ id: 'dinner', myShare: 4000 });
-    const rep = (id: string, a: number, kind = 'repayment') => mk({ id, kind, direction: 'in', amount: a, linkedTransactionId: 'dinner' });
+    const rep = (id: string, a: number, kind = 'repayment') =>
+      mk({ id, kind, direction: 'in', amount: a, linkedTransactionId: 'dinner' });
     return {
       split_only: run([dinner]),
       ali_repays: run([dinner, rep('ali', 4000)]),

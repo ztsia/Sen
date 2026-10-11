@@ -35,6 +35,8 @@ export interface FakeEnv {
 }
 
 const today = (db: Db) => klDay(db.now);
+/** Newest first, by the instant itself: times arrive written in +08:00 or in Z, so their text never sorts (QA B03, finding 4). */
+const newestFirst = (a: string, b: string) => Date.parse(b) - Date.parse(a);
 const live = (db: Db) => db.txns.filter((t) => !t.deletedAt);
 const dayOf = (t: Transaction) => klDay(t.occurredAt);
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
@@ -131,7 +133,7 @@ export function balances(db: Db): Map<string, number> {
   for (const t of live(db)) {
     if (!t.accountId || !m.has(t.accountId)) continue;
     const a = db.accounts.find((x) => x.id === t.accountId)!;
-    if (t.occurredAt < a.openingAt) continue;
+    if (Date.parse(t.occurredAt) < Date.parse(a.openingAt)) continue;
     m.set(t.accountId, m.get(t.accountId)! + (t.direction === 'in' ? t.amount : -t.amount));
   }
   return m;
@@ -173,7 +175,7 @@ export function home(db: Db): HomeView {
   const lastCycle = last ? cumulative(db, last, last.end) : null;
   const lastByToday = lastCycle?.length ? lastCycle[Math.min(day, lastCycle.length) - 1]! : null;
   const bal = balances(db);
-  const lastCheck = [...db.checks].sort((a, b) => b.asOf.localeCompare(a.asOf))[0];
+  const lastCheck = [...db.checks].sort((a, b) => newestFirst(a.asOf, b.asOf))[0];
   const gapTxn = lastCheck?.adjustmentTransactionId
     ? db.txns.find((x) => x.id === lastCheck.adjustmentTransactionId)
     : undefined;
@@ -249,7 +251,7 @@ export function review(db: Db): ReviewView {
       ];
     });
   return {
-    needsYou: [...db.review].sort((a, b) => b.at.localeCompare(a.at)),
+    needsYou: [...db.review].sort((a, b) => newestFirst(a.at, b.at)),
     waiting: {
       splits,
       receipts: db.receipts
@@ -280,7 +282,7 @@ export function skipped(db: Db): SkippedView {
   return {
     events: db.events
       .filter((e) => e.parseStatus === 'skipped')
-      .sort((a, b) => b.postedAt.localeCompare(a.postedAt))
+      .sort((a, b) => newestFirst(a.postedAt, b.postedAt))
       .map((e) => ({ id: e.id, app: APP_NAMES[e.package] ?? e.package, at: e.postedAt, title: e.title, text: e.text })),
   };
 }
@@ -391,7 +393,7 @@ export function payments(db: Db, env: FakeEnv, f: PaymentFilters = {}): Payments
     }
     rows.push(row);
   }
-  rows.sort((a, b) => b.at.localeCompare(a.at));
+  rows.sort((a, b) => newestFirst(a.at, b.at));
   return { rows };
 }
 
@@ -510,7 +512,12 @@ export function txnView(db: Db, env: FakeEnv, id: string): TxnView | null {
       : null,
     split: splitView,
     bank: bankText(db, t),
-    changes: db.changes[t.id] ?? [{ at: t.createdAt, what: t.source === 'manual' ? 'Added by you' : 'Captured' }],
+    changes: [
+      t.source === 'manual'
+        ? { at: t.createdAt, what: 'Added', by: 'user' as const }
+        : { at: t.createdAt, what: t.source === 'inferred' ? 'Filled in' : 'Captured', by: 'system' as const },
+      ...(db.changes[t.id] ?? []),
+    ],
   };
 }
 
@@ -832,7 +839,7 @@ export function goalView(db: Db, id: string): GoalView | null {
   const s = surplus(db);
   const contributions = db.contributions
     .filter((c) => c.goalId === g.id)
-    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
+    .sort((a, b) => newestFirst(a.occurredAt, b.occurredAt));
   const perCycleNow = contributions.length ? scaleSen(goal.saved, 1, contributions.length) : 0;
   const left = Math.max(0, goal.target - goal.saved);
   return {
@@ -894,7 +901,7 @@ export function categoryChoices(db: Db, kind: 'spend' | 'income' = 'spend') {
 export function accountChoices(db: Db) {
   const lastManual = [...live(db)]
     .filter((t) => t.direction === 'out' && t.accountId)
-    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))[0];
+    .sort((a, b) => newestFirst(a.occurredAt, b.occurredAt))[0];
   return {
     accounts: db.accounts
       .filter((a) => a.kind === 'tracked' && !a.archivedAt)

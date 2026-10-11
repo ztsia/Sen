@@ -70,5 +70,5 @@ export interface Db {
   /** Rows still in the outbox, by id, with when they were written (§5). */
   unsynced: Record<string, string>;
   /** What changed on each payment, newest last (`audit_log`). */
-  changes: Record<string, { at: string; what: string }[]>;
+  changes: Record<string, { at: string; what: string; by: 'user' | 'agent' | 'system' }[]>;
 }

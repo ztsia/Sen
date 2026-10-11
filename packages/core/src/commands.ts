@@ -75,6 +75,8 @@ export const Command = z.discriminatedUnion('type', [
     pax: z.int().min(1),
     note: z.string().nullable(),
     forTxnId: Id.nullable(),
+    /** The file's hash: the same file twice is *Already added* (§6.5). */
+    contentHash: z.string().nullable(),
   }),
   /** A waiting receipt attached to a payment by hand, or filed as evidence (§6.4). */
   z.object({ type: z.literal('receipt.attach'), receiptId: Id, txnId: Id }),

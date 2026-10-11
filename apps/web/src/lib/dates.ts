@@ -6,8 +6,18 @@ export const KL = 'Asia/Kuala_Lumpur';
 const dayFmt = new Intl.DateTimeFormat('en-MY', { timeZone: KL, weekday: 'short', day: 'numeric', month: 'short' });
 const timeFmt = new Intl.DateTimeFormat('en-MY', { timeZone: KL, hour: '2-digit', minute: '2-digit', hour12: false });
 
-/** `Thu, 8 Oct` for a day header. */
-export const dayLabel = (d: Date) => dayFmt.format(d);
+const dayYearFmt = new Intl.DateTimeFormat('en-MY', {
+  timeZone: KL,
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+const yearIn = new Intl.DateTimeFormat('en-CA', { timeZone: KL, year: 'numeric' });
+
+/** `Thu, 8 Oct` for a day header; `Fri, 31 Oct 2025` in another year, so last year never reads as this (QA B03, F14). */
+export const dayLabel = (d: Date, now: Date = clockNow()) =>
+  (yearIn.format(d) === yearIn.format(now) ? dayFmt : dayYearFmt).format(d);
 /** `21:02`. */
 export const timeLabel = (d: Date) => timeFmt.format(d);
 

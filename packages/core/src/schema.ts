@@ -126,6 +126,8 @@ export const Receipt = z.object({
   ...owned,
   /** The payment it's attached to; none while it waits, or kept as evidence. */
   transactionId: Id.nullable(),
+  /** The file's SHA-256, so the same file twice is one receipt (§6.5); none for one entered by hand. */
+  contentHash: z.string().nullable(),
   merchantRaw: z.string().nullable(),
   occurredAt: Instant.nullable(),
   total: Amount,

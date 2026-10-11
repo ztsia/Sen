@@ -1,9 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { open, shot, settled, tabs, toast, db, watch, text } from './b03-helpers';
+import { open, shot, settled, tabs, toast, db, watch } from './b03-helpers';
 
 // FLOW-30: AC-12, AC-12s, AC-70, AC-70s
 
-test('FLOW-30 offline: banner, writes marked Not synced yet, reconnect syncs once with no duplicate rows', async ({ page, context }) => {
+test('FLOW-30 offline: banner, writes marked Not synced yet, reconnect syncs once with no duplicate rows', async ({
+  page,
+  context,
+}) => {
   const errors = watch(page);
   await open(page, '/review');
   const n0 = await db<number>(page, `(d) => d.txns.length`);
@@ -13,7 +16,9 @@ test('FLOW-30 offline: banner, writes marked Not synced yet, reconnect syncs onc
   await tabs(page).getByRole('link', { name: /^More/ }).click();
   await page.getByText('Payments', { exact: true }).click();
   await settled(page);
-  await tabs(page).getByRole('link', { name: /^Review/ }).click();
+  await tabs(page)
+    .getByRole('link', { name: /^Review/ })
+    .click();
   await context.setOffline(true);
   await expect(page.getByText(/You're offline/)).toBeVisible();
   await shot(page, 'FLOW-30-step-1-offline-banner');
@@ -27,7 +32,11 @@ test('FLOW-30 offline: banner, writes marked Not synced yet, reconnect syncs onc
   const mid = await db<any>(page, `(d) => ({ n: d.txns.length, unsynced: Object.keys(d.unsynced).length })`);
   console.log('offline, 1.6 s after a write:', JSON.stringify(mid));
   expect(mid.unsynced).toBe(1);
-  await page.getByRole('button', { name: /Skipped|Missing/ }).first().isVisible().catch(() => {});
+  await page
+    .getByRole('button', { name: /Skipped|Missing/ })
+    .first()
+    .isVisible()
+    .catch(() => {});
   await tabs(page).getByRole('link', { name: /^More/ }).click();
   await page.getByText('Payments', { exact: true }).click();
   await settled(page);
@@ -39,7 +48,10 @@ test('FLOW-30 offline: banner, writes marked Not synced yet, reconnect syncs onc
   await context.setOffline(false);
   await expect(page.getByText(/You're offline/)).toHaveCount(0);
   await page.waitForTimeout(2500);
-  const after = await db<any>(page, `(d) => ({ n: d.txns.length, unsynced: Object.keys(d.unsynced).length, dup: d.txns.filter(t => t.amount === 660 && t.source === 'manual').length })`);
+  const after = await db<any>(
+    page,
+    `(d) => ({ n: d.txns.length, unsynced: Object.keys(d.unsynced).length, dup: d.txns.filter(t => t.amount === 660 && t.source === 'manual').length })`,
+  );
   console.log('back online, 2.5 s later:', JSON.stringify(after), 'start', n0);
   expect(after.unsynced).toBe(0);
   expect(after.n).toBe(n0 + 1);
@@ -49,13 +61,25 @@ test('FLOW-30 offline: banner, writes marked Not synced yet, reconnect syncs onc
   expect(errors.filter((e) => !/ERR_INTERNET_DISCONNECTED|Failed to load resource/.test(e))).toEqual([]);
 });
 
-test('FLOW-30 offline then reload (preview build, service worker on): what the page does with the lost in-memory data', async ({ browser }) => {
-  const ctx = await browser.newContext({ baseURL: 'http://127.0.0.1:5181', viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, serviceWorkers: 'allow' });
+test('FLOW-30 offline then reload (preview build, service worker on): what the page does with the lost in-memory data', async ({
+  browser,
+}) => {
+  const ctx = await browser.newContext({
+    baseURL: 'http://127.0.0.1:5181',
+    viewport: { width: 412, height: 915 },
+    isMobile: true,
+    hasTouch: true,
+    serviceWorkers: 'allow',
+  });
   const page = await ctx.newPage();
-  const errors = watch(page);
+  const _errors = watch(page);
   await page.goto('/review?look=minted&mode=light');
   await page.waitForFunction(() => document.querySelectorAll('svg').length > 0);
-  await page.evaluate(async () => { await navigator.serviceWorker.ready; if (!navigator.serviceWorker.controller) await new Promise((r) => navigator.serviceWorker.addEventListener('controllerchange', r, { once: true })); });
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller)
+      await new Promise((r) => navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }));
+  });
   await ctx.setOffline(true);
   await page.getByRole('button', { name: /Missing a payment/ }).click();
   await page.getByLabel('Amount').fill('3.30');
@@ -74,7 +98,11 @@ test('FLOW-30 offline then reload (preview build, service worker on): what the p
   await page.getByText('Payments', { exact: true }).click();
   await page.waitForTimeout(800);
   await page.getByRole('searchbox', { name: 'Search payments' }).fill('');
-  const first = await page.locator('[data-index] button').first().innerText().catch(() => '(none)');
+  const first = await page
+    .locator('[data-index] button')
+    .first()
+    .innerText()
+    .catch(() => '(none)');
   console.log('is the RM3.30 payment still there after reload? first row:', first.replace(/\n/g, ' | '));
   await ctx.close();
 });

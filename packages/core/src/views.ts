@@ -239,7 +239,8 @@ export const TxnView = z.object({
   split: z.object({ id: Id, state: z.string(), detail: z.string() }).nullable(),
   /** The raw notification, as stored (D121's masking happens before it's stored). */
   bank: z.object({ app: z.string(), title: z.string(), text: z.string() }).nullable(),
-  changes: z.array(z.object({ at: Instant, what: z.string() })),
+  /** `audit_log`, newest last, with who made each change: you, Sen, or the system (§6.7). */
+  changes: z.array(z.object({ at: Instant, what: z.string(), by: z.enum(['user', 'agent', 'system']) })),
 });
 export type TxnView = z.infer<typeof TxnView>;
 
@@ -290,6 +291,8 @@ export const ReceiptDraft = z.object({
   note: z.string().nullable(),
   /** The payment it's for, when opened from one (Scan receipt, Enter the items). */
   forTxnId: Id.nullable(),
+  /** The file's SHA-256 (§6.5); none by hand. */
+  contentHash: z.string().nullable(),
 });
 export type ReceiptDraft = z.infer<typeof ReceiptDraft>;
 

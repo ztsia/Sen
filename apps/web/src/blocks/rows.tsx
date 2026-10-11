@@ -1,4 +1,4 @@
-import { useId, type ComponentType, type HTMLAttributes, type ReactNode } from 'react';
+import { useId, useRef, useState, type ComponentType, type HTMLAttributes, type ReactNode } from 'react';
 import { ChevronRightIcon, CloudOffIcon, InboxIcon, ReceiptTextIcon, SparklesIcon, SplitIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -136,6 +136,9 @@ export function ReviewRow({
   /** Other…: the full set of choices. Left out where the buttons are every choice there is. */
   onOther?: () => void;
 }) {
+  // one answer at a time: a double tap applies it once (QA B03, F2)
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
   return (
     <Item size="sm" className="rounded-none text-base">
       <ItemContent className="min-w-0 gap-1">
@@ -148,10 +151,19 @@ export function ReviewRow({
             key={a.label}
             variant={a.suggested ? 'default' : 'secondary'}
             size="sm"
+            aria-disabled={busy || undefined}
             onClick={() => {
-              void Promise.resolve(a.onSelect()).then((r) => {
-                if (r) toastUndo(r.said, r.undo);
-              });
+              if (pending.current) return;
+              pending.current = true;
+              setBusy(true);
+              void Promise.resolve(a.onSelect())
+                .then((r) => {
+                  if (r) toastUndo(r.said, r.undo);
+                })
+                .finally(() => {
+                  pending.current = false;
+                  setBusy(false);
+                });
             }}
           >
             {a.suggested ? <SparklesIcon aria-hidden="true" /> : null}
