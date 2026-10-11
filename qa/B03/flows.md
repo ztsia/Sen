@@ -314,3 +314,102 @@ FLOW-46 Fast taps on the other write buttons (added in phase 5)       (sad)
         Entry  Apply all; Skipped > This was a payment; txn > Delete; ten taps on Review's answer
         Ends   one application, one Undo returns it, one step back
         Covers R2-22
+
+---
+
+# Run 3 flows (fresh reviewer, written from the docs first)
+
+All at 412x915 unless stated; the dev panel's scenario switch or `?scenario=` sets the made-up scenario; journeys move through the app and
+do not `page.goto` after a write (the data is in the page's memory).
+
+FLOW-R3-1  A new merchant, answered from Review                       (core: pay-new, happy)
+  Entry  Review tab, the new-merchant row
+  Steps  1. read the badge N  2. tap the first guess  3. the row clears, badge is N-1, a toast offers Undo
+         4. open `txn` of that payment (payments)  5. category is the guess  6. Undo from the toast and see the row, badge N
+  Ends   one change applied, Undo restores row, badge and category
+  Covers R3-12, R3-13, R3-15
+
+FLOW-R3-1s A double tap on the same answer                            (sad)
+  Steps  tap the first guess twice within 300 ms
+  Ends   one row answered only; the next row is still in Needs you   Covers R3-14
+
+FLOW-R3-2  Scan a receipt after paying                                (core: scan-after, happy)
+  Entry  Scan tab
+  Steps  1. tap Scan  2. choose a photo file  3. crop screen: four handles, Save  4. reading  5. confirm: items, total, check
+         6. tap + twice: `RM… a person`  7. Done  8. toast `Attached to RM… on …` with Undo  9. payments shows the receipt mark
+         10. Undo
+  Ends   attached once; the receipt mark appears and disappears with Undo; tab bar hidden on scan/confirm
+  Covers R3-3, R3-16, R3-17, R3-19
+
+FLOW-R3-2s Scan failures                                              (sad)
+  Steps  a .txt file; the same photo twice; reading fails (dev state) ; no matching payment; several matching
+  Ends   refusal in words; `Already added`; manual with the image; Waiting for its payment in Review; the which-payment sheet
+  Covers R3-17s, R3-18s, R3-19, R3-20
+
+FLOW-R3-3  First run, landing on Home                                 (core: first-run, happy)
+  Entry  the before-first-salary scenario
+  Steps  1. Home reads `Spent since you started`  2. no negative figure  3. pace says what it can  4. open the cycle sheet
+  Ends   no `NaN`, no "-RM", estimate labelled as an estimate   Covers R3-9s, R3-8
+  (The real first-run screens, sign-in and so on, are B04/B08 and are not tested here.)
+
+FLOW-R3-4  Receipt before its payment                                  (happy)
+  Steps  scan, Done with no match -> `Waiting for its payment`; Review > Waiting on others; Attach to a payment… (likely first); pick;
+         row leaves; Evidence only on another; Enter the payment
+  Ends   receipt attaches once; nothing double counted in Home's spending   Covers R3-19, R3-20
+
+FLOW-R3-5  Manual entry                                                (happy, then sad)
+  Steps  Scan long-press -> Add manually; type 12.5; pick category; Save; Undo; type 12.345 and abc; Save with 0; near-duplicate of an existing payment
+  Ends   one row of 1250 sen saved; Undo removes it; bad input refused in words; duplicate warning does not block
+  Covers R3-2, R3-21
+
+FLOW-R3-6  Money in: refund, income, a split share                    (happy)
+  Steps  Review: Refund of… (the merchant's payments first) -> choose; Home spending falls by the refund; Undo; Income; Not a split; Whose share
+  Ends   spending changes by exactly the refund only; income unchanged for a refund   Covers R3-6
+
+FLOW-R3-7  Own transfer                                                 (happy)
+  Steps  Review: Where did it come from? -> Public Bank; payments shows one transfer row; Home spending unchanged; More > accounts is not built (B04)
+  Ends   no spending, no income   Covers R3-7
+
+FLOW-R3-8  Fix a payment                                                (happy)
+  Steps  payments -> txn; change category (Just this one / From now on); correct the amount; Mark as transfer; Delete; Undo each
+  Ends   Changes lists each; Undo restores the figures   Covers R3-23
+
+FLOW-R3-9  Split with Just my part                                      (happy)
+  Steps  confirm -> Split -> Who paid? -> I paid -> Just my part: tick items -> Done
+  Ends   my part + Others' = total; spending is my part   Covers R3-4, R3-5
+
+FLOW-R3-10 The daily glance and reconciliation                          (happy)
+  Steps  Home -> large figure -> cycle sheet -> pace line -> payments filtered to this cycle; add the day headers up
+  Ends   Home, cycle sheet and payments agree to the sen   Covers R3-9
+
+FLOW-R3-11 Insights end to end                                          (happy)
+  Steps  Insights -> each card; Ask Sen about this; budgets; subscriptions; goals; goal; year; a category -> payments filtered
+  Ends   takeaways match payments; Sen sheet says `Looking at: Insights`   Covers R3-24..R3-26
+
+FLOW-R3-12 Timezone                                                      (sad)
+  Steps  browser TZ America/Los_Angeles and Pacific/Kiritimati; compare day headers and totals with Kuala Lumpur
+  Ends   identical   Covers R3-10
+
+FLOW-R3-13 Offline then online                                           (sad)
+  Steps  setOffline; answer a Review row and add a manual payment; the rows say Not synced yet; online; wait
+  Ends   marks clear, each change applied once   Covers R3-29
+
+FLOW-R3-14 Production                                                    (sad)
+  Steps  build production; open every screen; grep the bundle for made-up names and secrets
+  Ends   Not built yet on each; none found   Covers R3-27
+
+FLOW-R3-15 States                                                        (sad)
+  Steps  dev panel state switcher on each screen: empty, loading, error, offline, without capture
+  Ends   each is a patterns §7 state   Covers R3-28
+
+FLOW-R3-16 Back and history                                              (happy)
+  Steps  open payments > txn > receipt; back each; open a sheet and press browser back; open Sen and a sheet
+  Ends   back closes the top sheet first, then one screen   Covers R3-30
+
+FLOW-R3-17 Hostile text                                                  (sad)
+  Steps  merchant / note with markup, 5000 chars, RTL; look at Review, payments, txn, receipt
+  Ends   text, no script, layout intact   Covers R3-34
+
+FLOW-R3-18 Six looks                                                      (happy)
+  Steps  walk Home, Review, payments, Insights in each of the six looks, light and dark
+  Ends   same labels and numbers; axe clean   Covers R3-31, R3-32

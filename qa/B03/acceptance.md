@@ -409,3 +409,210 @@ R2-22  Every write button is idempotent under a fast double tap, not only Review
        Spec  §6.5, CLAUDE.md (every input has a dedupe key), AC-63
 R2-23  Text at 1.5x: an amount is not split across lines at the comma ("RM3," / "873.53")
        Spec  patterns §8 (amounts wrap before they truncate; a number stays whole)
+
+---
+
+# Run 3 (full, fresh reviewer)
+
+Written from the docs **before any B03 source, earlier report or earlier acceptance run was opened** (only
+the slice's brief, `docs/screens.md`, `docs/flows.md`, `docs/ui/patterns.md` and the spec sections the
+brief cites). Ids are `R3-n` so they do not clash with runs 1 and 2; the earlier criteria are folded in
+after, in *Carried from runs 1 and 2* below. Every criterion has a sad twin (`-s`).
+
+R3-1  Money text
+      Given amounts of 0, 1, 128450, and 99999999999 sen, and a negative "left until payday"
+      When  they render on Home, payments, txn and the confirm screen
+      Then  they read `RM0.00`, `RM0.01`, `RM1,284.50`, `RM999,999,999.99`; a negative left-until-payday reads
+            `Over by RM…` with an icon and words, never `-RM`; no amount is truncated by an ellipsis
+      Spec  patterns §3, screens.md `home`
+R3-1s Merchant name of 300 characters next to an amount: the merchant truncates, the amount stays whole.
+
+R3-2  Number pad parses text into sen
+      Given the `manual` screen
+      When  `12.5`, `0.30`, `.5`, `1,234.56` are typed
+      Then  the large figure reads RM12.50, RM0.30, RM0.50, RM1,234.56 and the saved row holds 1250, 30, 50,
+            123456 sen
+      Spec  spec §6.8, patterns §7 Forms, CLAUDE.md money
+R3-2s `12.345`, `abc`, `-5`, `1e3`, `0`, empty, `9999999999999999` : no third decimal accepted, no NaN, no scientific
+      notation, zero cannot save and the button says what is missing, an amount past 2^53 sen is refused
+      and never silently rounded.
+
+R3-3  Receipt items add up exactly (D66)
+      Given a read receipt with tax and service spread over its items
+      When  `confirm` shows it
+      Then  the item prices (tax and service included) sum to the total to the sen, shown with a visible
+            "items add up" check; headcount 3 on RM64.13 reads `RM21.38 a person`
+      Spec  spec §6.4, screens.md `confirm`
+R3-3s A receipt whose items do NOT add up is marked doubtful in place, not silently fixed; the stepper cannot go below 1.
+
+R3-4  Just my part (D92)
+      Given a bill, ticking some items
+      When  *Just my part* is confirmed
+      Then  my part + `Others' items` = the printed total to the sen
+R3-4s Ticking nothing and ticking everything both give a coherent result (my part RM0.00 / Others RM0.00), no negative.
+
+R3-5  Shared-bill rule (D19)
+      Given RM120 dinner on Ryt, share RM40
+      Then  spending RM40 and owed RM80; after Ali repays RM40: RM40 / RM40; after Ben: RM40 / RM0; never below zero
+R3-5s A repayment larger than what is owed leaves owed at RM0.00, not negative; *Write off* grows the share by exactly the unpaid amount.
+
+R3-6  Refund (D21)
+      Given a refund linked to a purchase in cycle N
+      Then  cycle N's spending falls by exactly the refund; income does not rise; the balance rises on the day
+R3-6s Undo returns the exact prior figures; a refund is never listed as income.
+
+R3-7  Own transfer (D17)
+      Then  Home spending and income unchanged; the two balances move; `payments` shows ONE row `Ryt → TNG eWallet`
+R3-7s A transfer with a missing side asks "Where did it come from?"; choosing Elsewhere leaves total balance moved
+      on one side only, with no spending.
+
+R3-8  A prediction never shares a table with a fact (CLAUDE.md)
+      Given subscription forecasts and the cycle-end estimate
+      Then  forecasts appear in no spending total, no payments list, no budget meter and no "left until payday";
+            the estimate on `cycle` is labelled as an estimate; the meal average is labelled an estimate
+R3-8s Marking a forecast as matched/missed changes no spending figure.
+
+R3-9  Home reconciles with the other screens
+      Then  Spent this cycle on Home = sum of this cycle's day headers in `payments` filtered to this cycle
+            = the `cycle` sheet's spending line; Left until payday = income received - spending; pace delta =
+            this cycle's spend by today minus last cycle's by the same day
+R3-9s The first cycle says there is no last cycle (no `NaN`, no RM0 delta); before the first salary the figure reads
+      `Spent since you started`.
+
+R3-10 Timezone (D14, CLAUDE.md)
+      Given a payment at 23:30 KL on the last day of a month
+      When  the browser timezone is America/Los_Angeles, UTC and Pacific/Kiritimati
+      Then  its day header, month, cycle membership and every total are identical to the KL run
+R3-10s A payment at 00:30 KL on the 1st is in the new month in all three zones.
+
+R3-11 Payments list
+      Then  newest first, grouped by KL day with the day's spending, header sticky; rows >= 64 px; the whole row is the
+            link and holds no button; marks: receipt, split, in Review, Not synced yet, Filled in
+R3-11s 60+ rows are virtualised (DOM row count < total) yet the last row is reachable; a search for `'; DROP TABLE`, `.*`,
+       `(` , `\` and a 500-char string does not throw and shows the empty state (one line + the action).
+
+R3-12 Review: the badge is Needs you only (D72)
+      Then  badge number = count of Needs you rows; Waiting on others and Skipped never add to it; label reads "N to review";
+            caps at 99+; answering a row lowers it by exactly one and Undo restores it
+R3-12s Nothing needs you: badge absent, `Nothing needs you.` shown; Waiting on others still listed.
+
+R3-13 Every Needs you kind exists with its buttons (screens.md table): new merchant (two guesses + Other…), money in unseen name
+      (Whose split share is it? + Not a split), money in to classify (Income, Transfer, Refund of…), split share owed
+      (Open the split, I've paid), receipt waiting (opens confirm), unreadable receipt (opens manual with the image),
+      new wording (Yes / No), transfer missing side (accounts + Elsewhere), balance check due, claim due,
+      skipped payday step, proposal (Apply / Dismiss). At most three buttons plus Other…
+R3-13s *No* on new wording undoes its payment and offers Enter it by hand.
+
+R3-14 One change per tap (patterns §7)
+      When  a Review answer is tapped twice within half a second, at the same spot
+      Then  exactly one row is answered; the next row that slid up is untouched
+R3-14s A third tap after 600 ms is a normal tap.
+
+R3-15 Undo restores exactly
+      When  any write is made and Undo tapped inside 6 s
+      Then  rows, order, badge count and every figure are as before; toast stays 6 s above the tab bar and not over Sen's button;
+            a toast is not shown when the change is visible on screen
+R3-15s Undo after the toast has gone does not exist; a second Undo tap does nothing.
+
+R3-16 Scan routing (D69)
+      Then  tap on the middle tab opens `scan` at once; a 500 ms press opens `scan-more` with Scan receipt, From gallery, Add manually;
+            a 200 ms press does not; the tab bar is hidden on scan, confirm and manual only
+R3-16s A long-press does not also navigate to scan; releasing outside the tab does nothing.
+
+R3-17 Scan in a browser
+      Then  a photo from the file picker goes to a crop with four draggable corners, then `reading`, then `confirm`
+R3-17s A .txt / 0-byte / 50 MB file is refused with words; the same file twice is `Already added`, not a second receipt (§6.5);
+       cancelling the picker returns to where you were.
+
+R3-18 Reading (D67)
+      Then  shows the image and `Reading receipt…`; leaving it leaves the receipt waiting in Review once read
+R3-18s Reading failure goes to `manual` with the image beside it; the image is kept.
+
+R3-19 After Done (§6.4)
+      Then  one match: toast `Attached to RM58.30 on Ryt` with Undo; several: a sheet asks which; none: `Waiting for its payment`
+            and the receipt is under Waiting on others; without capture the payment is created
+R3-19s Total differing from the payment attaches items and evidence only; the payment's amount, share and category do not change.
+
+R3-20 Waiting receipt (receipt-first)
+      Then  Review offers Attach to a payment… (likely payments first), Evidence only, Enter the payment
+R3-20s No likely payment: the list says so in one line; it does not offer an empty sheet.
+
+R3-21 Manual
+      Then  amount large, categories most used first, last account, time now, merchant and note behind More; Save + Undo creates one row;
+            a near-duplicate shows a warning that does not block
+R3-21s Back or a sheet in the middle keeps the typed draft; Save with nothing typed says what is missing; double-tap Save makes one row.
+
+R3-22 By hand receipt (D90)
+      Then  items typed as text into sen; checked against the payment amount; `RM3.20 not itemised` allowed
+R3-22s Items summing to MORE than the payment are flagged; a price `1.999` is refused.
+
+R3-23 txn
+      Then  amount large, merchant, date/time/account, source line, category (rule-backed change asks Just this one / From now on),
+            your spending, note row, receipt or Scan the receipt / No receipt…, split, What the bank said, Changes,
+            Mark as…, Delete (destructive colour, still Undo)
+R3-23s Correcting an amount: `12.345`, `abc` refused; the correction is kept in Changes; Delete then Undo restores the row and its marks.
+
+R3-24 Insights cards (spec §9.3)
+      Then  every card with data shows a question, a chart, a one-line takeaway computed from the same data, and Ask Sen about this;
+            Ask Sen opens `sen` headed `Looking at: Insights`; a card with no data is not shown; The year is a row at the foot
+R3-24s The takeaway numbers equal what the payments list says (e.g. payments under RM15: count and total).
+
+R3-25 Chart rules (patterns §4)
+      Then  at most three series, legend when two or more, text never in a series colour, no raw colours, money-in green absent from
+            charts, a goal meter never in warning colour, an over-budget meter in warning WITH icon and words
+R3-25s A chart is never the only way to get its answer: the takeaway is present when the chart is empty-ish.
+
+R3-26 Budgets / goals / subscriptions
+      Then  budgets show a tick for the cycle's elapsed fraction; a goal shows feasibility with its sample size and projected finish;
+            subscriptions show forecast vs actual, `missed` marked
+R3-26s Goal with sample size 0 or 1 does not claim feasibility.
+
+R3-27 Production (modules rule 6, brief Done-when 5)
+      Then  a production build shows `Not built yet` on these screens; its JS holds no made-up names (Wei Ming, NASI KANDAR…), no dev panel,
+            no `?scenario=` effect, and no secret/key/token
+R3-27s `?scenario=` and `?state=` in production are ignored.
+
+R3-28 Dev state switcher reaches every Varies state (empty, loading skeleton, error with a button, offline banner, without capture,
+      before first salary, first cycle, counting by month, cap reached) and each looks like patterns §7 (no spinner over a whole screen,
+      error says what happened and what to do)
+R3-28s Error state keeps what was typed.
+
+R3-29 Offline (D22, §5)
+      When  context is offline, a change is made, and the app goes online again
+      Then  while offline the row carries `Not synced yet` (money-pending); after reconnect it clears and the change was applied exactly once
+R3-29s Offline reads still work for screens already opened; no `Not synced yet` flicker for a normal online write (only offline or after 5 s).
+
+R3-30 Navigation (patterns §6, §10)
+      Then  tab bar order/labels; `aria-current`; back on a non-Home tab goes to Home; each sheet is a history step so back closes it;
+            Sen's button on the five tab screens and nowhere else, 60 px, labelled `Ask Sen`, never over the last row
+R3-30s Back with two sheets open closes only the top one.
+
+R3-31 Six looks, one app (patterns §1)
+      Then  the same labels and layout in all six looks light and dark; the large figure is the same number as its accessible text
+            (`Left until payday, RM1,284.50, 12 days to go`)
+R3-31s Reduced motion: the figure and strips settle at once; WebGL unavailable: the app still renders.
+
+R3-32 Accessibility
+      Then  axe has no violations on any screen in any look/mode; touch targets >= 48 px (full-width rows exempt); text at 1.5x does not clip;
+            focus rings only for keyboard
+R3-32s Icon-only buttons have aria-labels (checked by axe and by name).
+
+R3-33 Web behaviour (patterns §10)
+      Then  no overscroll bounce, no contextmenu outside text, user-select none except text, inputs >= 16px, viewport meta right
+R3-33s An amount has a Copy button; long-press on a non-text element does nothing.
+
+R3-34 Hostile text
+      Given merchant/note text `<img src=x onerror=alert(1)>`, `../../etc/passwd`, a 5000-char string, RTL and emoji
+      Then  it is rendered as text everywhere (Review, payments, txn, receipt, Sen sheet); no script runs; layout holds; no uncaught error
+R3-34s Notes with newlines and leading/trailing spaces are kept as typed, not collapsed into the amount.
+
+R3-35 No floating-point money anywhere in the diff (CLAUDE.md)
+      Then  no `parseFloat`, `toFixed` on amounts, `Number(` on amount strings, or money division outside the money module (lint rule green)
+R3-35s The no-float lint rule actually fails when one is introduced (probe).
+
+R3-36 The data layer (brief)
+      Then  every screen reads through a query hook and writes through the one write interface; views parse with the shared zod schemas
+R3-36s A malformed view from the backend lands in the error state, not a blank screen.
+
+R3-37 No real data (CLAUDE.md)
+      Then  the scenario and fixtures are made up (D11); `pnpm hygiene` passes
