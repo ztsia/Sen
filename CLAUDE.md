@@ -93,7 +93,7 @@ starts in `ztsia/Sen`. The next slice waits only for the owner's merge.
 building blocks, the dev panel and the gallery); B02, the shell and the listener (merged 9 Oct; its
 week on the owner's phone is still to run). Vercel is linked and the shell's release is signed
 (10 Oct, D122). B03, the five tabs' skeleton on made-up data, with the data layer every later slice
-plugs into, is on `B03/skeleton-tabs`, waiting for its PR's merge. Next: B04.
+plugs into (merged 11 Oct). ESS's API was captured on the owner's laptop (10 Oct, D110). Next: B04.
 
 ## Non-negotiables
 

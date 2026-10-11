@@ -8,33 +8,19 @@ follow on a phone, and commit.
 
 ## Now
 
-- [ ] **Tonight (8 Oct): capture ESS's API in a local session on your laptop** (D105, D110), from the
-      two claims you're submitting. It needs Node 20 or later on the laptop.
-      1. On the laptop: clone `ztsia/Sen` (or `git pull` it), on `main`.
-      2. Give Claude Code a browser it can watch:
-         `claude mcp add chrome-devtools -- npx chrome-devtools-mcp@latest`. Then run `claude` in the
-         repo and say: *Capture ESS, per docs/local.md (D110).*
-      3. It opens a Chrome window. **Sign in yourself, in that window**: type the password there,
-         never in the chat.
-      4. Then, in order: open the payslip list and one payslip (download it if there's a button);
-         open your claims list; submit the two claims with their files; open the EA form page if
-         there is one; then **sign out**, so the cookie the session saw is dead.
-      5. **The session records,** from the network panel, the console and the page:
-         - each request's method, path, query, and body field names and types
-         - which cookie holds the session, and when it expires
-         - any token (such as CSRF) a request sends, and which earlier response gave it
-         - the sign-in's redirects, and any second step
-         - how files are uploaded
-         - whether a payslip comes as data (JSON) or only as a PDF
-         - each form field's label and selector, and console errors
-      6. **It writes only to `private/ess/`** (gitignored): `capture/` (the raw requests),
-         `recipe.draft.json` (the steps as `http` or `page`, with slots such as `{claim.amount}`
-         where values go, never the values) and `notes.md`. Nothing ESS-specific goes in the repo:
-         no address, employer name, paths or amounts. The one repo change it may make is the generic
-         answers to `spec_v2.md` §21 Q29 (for example: a cookie session, about 8 hours, no second
-         step, payslips as JSON), committed and pushed.
-      7. Keep `private/ess/` on the laptop. In B34 the recipe goes into Sen by *Import recipe*
-         (D106); no cloud session ever sees it.
+- [x] **Capture ESS's API in a local session on your laptop** (D105, D110). Done 10 Oct, from the
+      sign-in and the two claims you submitted, in a Chrome window that recorded by itself. It's in
+      `private/ess/` on the laptop (gitignored): `capture/` (the requests; sign-in values as lengths
+      only, no cookie values, no file contents), `notes.md` and `recipe.draft.json` (slots, never
+      values). `spec_v2.md` §13.1 has the generic answers. Keep `private/ess/` on the laptop: in B34
+      the recipe goes into Sen by *Import recipe* (D106), and no cloud session ever sees it.
+      - [ ] **Three things it missed** (Q29), for one more sitting at the laptop or for teach mode on
+            the phone in B34: the names of the parts in the claim's file upload (the recorder
+            couldn't read them), one payslip opened, and how long a session lasts. Recording again:
+            in Chrome, F12 → *Network* → *Preserve log*, do it, then the download arrow (*Export
+            HAR*) into `private/ess/capture/`. Sign in first, so the password isn't in it.
+      - [ ] **Ask whoever runs ESS whether it has an MCP server or an API for staff.** Its settings
+            name one. It would be steadier than replaying requests.
 - [x] **Link Vercel to `ztsia/Sen`** (done 10 Oct, from the laptop's CLI). Project **sen** in
       *ztsia's projects*: root `apps/web`, Vite, Node 22.x, production branch `main`, a preview per
       branch behind Vercel Authentication, Git Fork Protection on. Production is
@@ -248,8 +234,7 @@ Each slice that needs one of these lists it under *Needs from you first* in its 
 - [ ] **ESS, when B34 starts** (D103–D106, §13.1, Q29). Tonight's capture should already have
       answered most of Q29. Tell the P7 session only what's still open, never the address, amounts
       or policy text (D10):
-      - anything Q29 still lists
-      - whether a draft can be saved or a claim withdrawn, for a safe first test
+      - anything Q29 still lists (a draft can be saved: that's the safe first test)
       - the form's file limits
       - one approval email, anonymised
       Your recipe goes into Sen from the laptop by *Import recipe*, or by *Teach Sen* on the phone.

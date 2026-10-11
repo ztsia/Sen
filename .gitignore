@@ -45,5 +45,10 @@ Thumbs.db
 # any other build of the web app (QA builds its own, such as dist-qa-prod)
 apps/web/dist-*/
 
+# what an editor's Java or Gradle plugin builds next to Kotlin sources
+apps/shell/core/bin/
+qa/**/bin/
+qa/**/.gradle/
+
 # subagents' isolated worktrees (Claude Code)
 .claude/worktrees/

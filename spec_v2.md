@@ -950,7 +950,8 @@ Deadlines go into Google Calendar, so your calendar does the reminding: renewals
   - A recipe can also be imported as a file, without values: the owner's first comes from a capture on the laptop (D110).
 - **No session ever reaches the real ESS.** Sessions build and test the engine against a made-up ESS and a made-up recipe kept in the repo. Real recipes live only in their owners' data, because the address names the employer (§17).
 - **In the PWA,** a browser can't drive another site, so the submission kit and the claim pack do the job by hand, and the payday question is asked. A same-company friend in the shell can use the adapter too, with their own recipe and password.
-- **Still to learn** (§21 Q29), mostly from the 8 Oct capture (D110): whether sign-in has a second step, how long a session lasts, whether payslips come as data or only as a PDF, how files are uploaded, and whether a draft can be saved or a claim withdrawn, for a safe first test.
+- **Learnt from the capture** (10 Oct, D110, §21 Q29): ESS is a page over a JSON API of its own, so every step can be `http`, sign-in included. Sign-in is one request with the id and password, and has no second step and no company sign-in. A token against forged requests arrives as a cookie and goes back as a header on every write. The session is a cookie with no expiry, so the server decides how long it lasts. Claims come back as data, each with its status, approved amount and pay period, so an approval can be read there. A claim is one multipart request with its files, sent after ESS has read the receipt itself and checked it for a duplicate. A draft can be saved, which is the safe first test, and a claim's record has a withdrawal. ESS also says when payday is.
+- **Still to learn** (§21 Q29): the names of the upload's parts, how long a session lasts, and whether a payslip itself comes as data or only as a PDF (only the list was seen, as data).
 
 ---
 
@@ -1375,7 +1376,7 @@ P0 runs alongside the design track. **Before the foundations slice, Sen is publi
 | 26 | How far apart are Ryt's duplicate notifications? It sets the `duplicate` window (D88) | P1 |
 | 27 | Does HyperOS 3.1 give a sideloaded app's Live Update the full Hyper Island, expanded view included? Does the HyperIsland ToolKit's demo get Xiaomi's own island without a whitelist? (`docs/local.md`, D101) | Before P5 |
 | 28 | Do TNG, Ryt and MAE accept a DuitNow QR shared from another app, and does TNG accept a QR carrying an amount? (D101) | P4 |
-| 29 | ESS: its login (company sign-in or its own, and any second step), whether it has an API, how long a session lasts, whether payslips come as data or only as a PDF, how files are uploaded, and whether a draft can be saved or a claim withdrawn (§13.1). It works outside the office (owner, 8 Oct) | The 8 Oct capture (D110); the rest when P7 starts |
+| 29 | ESS: the names of the parts in its file upload, how long a session lasts, and whether a payslip itself comes as data or only as a PDF. The 10 Oct capture (D110) answered the rest (§13.1): its own login with no second step, a JSON API, claims and drafts as data. It works outside the office (owner, 8 Oct) | When P7 starts: teach mode, or one more capture on the laptop |
 | 30 | Does Gmail's filter forwarding keep the original `Message-ID`? (D91) | P5 |
 
 Answered on 7 Oct: **17** (promo channels are learned by channel rules, D87). Partly answered: **24** (search suggestions are optional below a million prompts a day, and grounded results may be stored only in the chat history, for up to 2 years, D94).
