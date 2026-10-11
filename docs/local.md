@@ -8,6 +8,28 @@ follow on a phone, and commit.
 
 ## Now
 
+- [ ] **Accounts and keys, with a local session on the laptop** (started 11 Oct). You create each
+      account and sign in, in your normal Chrome; the session clicks through the rest in a new tab.
+      Yours alone: creating an account, signing in, a card, accepting terms, and the one click that
+      shows or copies a key. **The session never sees a key:** you click *Copy*, say which one, and it
+      sends the clipboard straight into Vercel as a sensitive variable for *Production* only. The
+      steps for each are under *Later* below. The names later slices read:
+
+      | For | Where | Vercel variable, or secret | State |
+      |---|---|---|---|
+      | Sign-in codes (B05) | Sen's own Gmail: 2-Step Verification, an app password named `sen` | `GMAIL_USER`, `GMAIL_APP_PASSWORD` | to do, all yours |
+      | Claude (B10) | console.anthropic.com: prepaid credit, a spend limit, a key named `sen` | `ANTHROPIC_API_KEY` | signed in |
+      | Gemini (B10) | Google Cloud project `sen`: billing, Vertex AI API on, service account `sen-ai` (Vertex AI User), an API key bound to it and restricted to Vertex AI | `GOOGLE_VERTEX_API_KEY`, `GOOGLE_VERTEX_PROJECT` | signed in |
+      | Receipts (B15) | Cloudflare R2: bucket `sen-receipts` (Asia-Pacific), a token with Object Read & Write on that bucket only | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | signed in |
+      | Backups (B06) | Cloudflare R2: bucket `sen-backups`, its own token | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` as Actions secrets in `ztsia/sen_ops` | signed in |
+      | Push (B06) | Firebase, added to the Google Cloud project `sen`, Analytics off; *Service accounts* → *Generate new private key* | `FIREBASE_SERVICE_ACCOUNT` (the whole JSON) | signed in |
+
+      Done already: Vercel, the signing key, `BETTER_AUTH_SECRET`, both Neon databases. **These wait
+      for their slice**, which writes the steps first: the Cloudflare Worker with its Git builds and
+      the scheduler and relay secrets (B06), the database URL in `sen_ops` (B05, B06), the monitor
+      (B06), making yourself the admin (B05), the calendar's OAuth client (B24), forwarding receipts
+      (B19).
+
 - [x] **Capture ESS's API in a local session on your laptop** (D105, D110). Done 10 Oct, from the
       sign-in and the two claims you submitted, in a Chrome window that recorded by itself. It's in
       `private/ess/` on the laptop (gitignored): `capture/` (the requests; sign-in values as lengths

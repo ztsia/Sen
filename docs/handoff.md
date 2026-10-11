@@ -39,8 +39,6 @@ you end.
 
 ## Open with the owner
 
-- **The review alias is behind Vercel's login**, so the review build can't load it. Recommend turning
-  Vercel Authentication off for the project: the repo is public and previews hold made-up data.
 - **D115 is still *Proposed*.** Recommended: confirm it.
 - **Copper's overspent green:** keep it as designed (verdigris only on copper, the warning always
   with its icon and words)? The owner said *Ok* without the recommendation in front of them.
@@ -50,8 +48,12 @@ you end.
 
 ## What to do first
 
-1. B04, from `main`: `git checkout -b B04/skeleton-rest origin/main`.
-2. Build the shared ground yourself, then brief batches (`CLAUDE.md`, *Models and subagents*).
+- **A local session on the laptop:** finish the accounts and keys, `docs/local.md`'s first item. On
+  11 Oct the owner was signed in to Cloudflare, Google Cloud, Firebase and Anthropic in Chrome, and
+  nothing had been created in them yet. Start with Cloudflare and Google Cloud. Never type or read a
+  key: the owner copies it, and the clipboard goes into Vercel unseen.
+- **A build session:** B04, from `main` (`git checkout -b B04/skeleton-rest origin/main`). Build the
+  shared ground yourself, then brief batches (`CLAUDE.md`, *Models and subagents*).
 
 ## Don't reopen
 
