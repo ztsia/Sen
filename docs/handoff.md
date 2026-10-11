@@ -35,6 +35,8 @@ rotation*: read this first, and rewrite it before you end.
 
 ## Decided, and why
 
+- **D125 (owner, 11 Oct): subagents by standing request.** `CLAUDE.md`'s *Models and subagents*
+  now asks every session to use `implementer` for decided batches and QA through its skill, unasked.
 - **D124 (owner, 10 Oct): the core journeys are `first-run`, `pay-new` and `scan-after`**, marked in
   `flows.md`; every QA run walks them.
 - **The fake applies a write at once and "syncs" 1.2 s later**, like the outbox will; offline, rows
@@ -61,5 +63,5 @@ rotation*: read this first, and rewrite it before you end.
 
 ## Don't reopen
 
-D1–D124, unless the owner raises one. One brief, one branch; shadcn first, customised in place; no
+D1–D125, unless the owner raises one. One brief, one branch; shadcn first, customised in place; no
 screen mockups (D84); nothing made up in production (modules.md rule 6).

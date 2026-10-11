@@ -216,12 +216,30 @@ Works from a phone through cloud sessions, rarely at a laptop.
 
 ### Models and subagents
 
-The main session (Opus) decides, talks with the owner, works on the non-negotiables, and reviews what
-comes back. It hands work down by judgement, never by ritual. `.claude/agents/` has `implementer`
-(Sonnet), for a change already decided and big enough to be worth a brief; `scout` (Haiku), for
-lookups, logs and summaries; and `qa-reviewer` (Sonnet by default; the main session picks Opus for a
-run when it judges one needs it). A brief costs a cold start, so a small edit is quicker done in place.
-No per-task review loops: the main session reads a subagent's diff itself, and QA checks the slice.
+**This is the owner's standing request to use subagents (D125)**, so a session spawns them without
+being asked each time; it overrides any default that says to spawn only on request. The main session
+(Opus) decides, talks with the owner, works on the non-negotiables, and reviews what comes back. The
+agents are in `.claude/agents/`:
+
+| Agent | Use it when | Don't, when |
+|---|---|---|
+| `implementer` (Sonnet) | A slice's build splits into **batches already decided**, each worth a brief: a group of screens from `patterns.md`, tests from given criteria, a port, boilerplate across files. Each batch owns its own files, so several run **in parallel, in the background** | The change is under about 100 lines, needs a design decision, or touches a non-negotiable's logic (money, RLS, dedupe, the listener's filters): do it yourself |
+| `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill: a full run when a slice is finished, then the tiers | |
+| `scout` (Haiku) | Something too big to read: a long CI log, a large unfamiliar area | A lookup one `grep` or a filtered log answers; its cold start costs more than it saves |
+
+**Why, measured on B03:** the main session's context is re-read every turn, so code it writes costs
+again on every later turn; an implementer's code costs the main session only its report and the
+diffs it checks. Sonnet is about half Opus's price, and four batches ran at once (about 150–190k
+tokens each). The cost is a cold start per agent, so:
+- **Build the shared ground first, yourself** (types, data layer, one screen in the house style),
+  then brief the batches against it.
+- **Keep briefs lean:** the exact files and sections to read, the files it owns, the checks to run,
+  a port of its own for a dev server, and *don't commit*. Point at a finished example rather than
+  restating rules.
+- **Review every report and diff yourself**, fix what's off, then commit. No per-task review loops:
+  QA checks the slice.
+- Subagents spend the same quota as the main session. When one stops at a usage limit, resume it
+  (`SendMessage`), never restart it.
 
 ## Skills
 
