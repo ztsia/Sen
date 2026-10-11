@@ -209,7 +209,7 @@ function SplitBody({ v }: { v: SplitView }) {
                   key={p.id}
                   asChild
                   size="sm"
-                  className="min-h-14 flex-nowrap rounded-none border-b border-border active:bg-accent"
+                  className="min-h-14 flex-nowrap rounded-none border-0 border-b border-border active:bg-accent"
                 >
                   <label>
                     <Checkbox
