@@ -1,67 +1,51 @@
 # Handoff
 
-Rewritten 10 Oct 2026 by the B03 session, mid-slice. The protocol is in `CLAUDE.md`, *Session
-rotation*: read this first, and rewrite it before you end.
+Rewritten 11 Oct 2026 by the B03 session, at the slice's end. The protocol is in `CLAUDE.md`,
+*Session rotation*: read this first, and rewrite it before you end.
 
 ## Where things stand
 
-- **B03 · Skeleton: the five tabs is in progress on `B03/skeleton-tabs`** (from `main` after PR #6).
-  B01, B02, the status-bar fix (PR #5) and D123 (PR #6) are merged.
-- **Done and pushed:**
-  - The shared types: `packages/core/src/schema.ts` (§15's rows, zod, money as `Sen`/`Amount`
-    integers), `views.ts` (one read shape per screen), `commands.ts` (every write, as data, with
-    Undo), `cycles.ts` (pay cycles and KL days, tested). `money.ts` gained `scaleSen`, `medianSen`,
-    `fxApprox` (tested).
-  - The data layer: `apps/web/src/data/` — `backend.ts` (the one interface), `hooks.ts` (a query
-    hook per screen, `useWrite` with Undo toasts), `index.ts` (TanStack Query; the fake loads only in
-    previews, so production's build holds no made-up data), `fake/` (Wei Ming's month in
-    `scenario.ts`, its edge states in `variants.ts`, views and writes, and `fake.test.ts`, which
-    parses every view with the shared zod schemas in every scenario).
-  - Home, the `cycle` sheet, Review and `skipped`; the dev panel's *Made-up scenario* switch;
-    `?scenario=` and `?state=` set them on load. The screens route through `screens/skeleton.ts`
-    (previews only); production still shows *Not built yet*.
-  - e2e: `screens.spec.ts` (axe and 48 px in all twelve looks, every screen state), `journeys.spec.ts`
-    (Home and Review's journeys so far), production's guard in `production.spec.ts`.
-- **Also done:** every screen of the brief (Insights and its five, More's four, Scan's five, each
-  look's Home material), all 16 journeys in all twelve looks, axe and 48 px on every screen, the
-  `uiux` pass (`qa/B03/uiux.md`), and the docs (`CLAUDE.md`, B05's brief). The full `pnpm e2e` is
-  green.
-- **QA runs 1 and 2** (full) both said *fix first*; every finding is fixed or recorded in
-  `qa/B03/ledger.md` (tier 3 each time). Reports: `qa/B03/report-run1.md`, `report-run2.md`, both
-  published at https://claude.ai/artifact/WfFSai2Hz3RP9Kbe93w88p (one link, the latest run).
-- **In progress: QA run 3**, a fresh full run, and the repo's `pnpm e2e` beside it.
-- **Still to do:** read run 3, fix by tier, publish it to the same link, then the PR
-  *B03 · Skeleton: the five tabs*.
-- **Open with the owner (subagents):** whether to add Haiku 5.5 for mechanical batches to
-  `CLAUDE.md`'s table (proposed 11 Oct, awaiting a yes).
+- **B03 · Skeleton: the five tabs is done** on `B03/skeleton-tabs`; its PR waits for the owner's
+  merge. B01, B02, PR #5 and D123 (PR #6) are merged.
+- **Next: B04** (`docs/briefs/B04-skeleton-rest.md`) on `B04/skeleton-rest`, from `main` once B03 is
+  merged. It builds on B03's data layer (`apps/web/src/data/`: one `backend.ts`, a hook per screen,
+  the fake with Wei Ming's month) and the screens' house style (`screens/home/`, `screens/review/`).
+- **QA:** three full runs (`qa/B03/report-run1.md`, `report-run2.md`, `report.md`), every finding
+  fixed or recorded with its tier in `qa/B03/ledger.md`. The latest is published at
+  https://claude.ai/artifact/WfFSai2Hz3RP9Kbe93w88p. After run 3, the owner chose no fourth run
+  (quota): its fixes were checked against QA's own run 3 specs (21 of 21), unit and e2e regressions.
+- **Usage:** `docs/usage.md` has B03's row: the main session was 73% of the cost, mostly re-reading
+  its long context; implementers cost $1–2 a batch, a full QA run $8–10.
 
 ## Decided, and why
 
-- **D125 (owner, 11 Oct): subagents by standing request.** `CLAUDE.md`'s *Models and subagents*
-  now asks every session to use `implementer` for decided batches and QA through its skill, unasked.
-- **D124 (owner, 10 Oct): the core journeys are `first-run`, `pay-new` and `scan-after`**, marked in
-  `flows.md`; every QA run walks them.
-- **The fake applies a write at once and "syncs" 1.2 s later**, like the outbox will; offline, rows
-  stay *Not synced yet*. Undo is a backend command (`{ type: 'undo', token }`), so the API can do it
-  its own way in B05.
-- **A journey can't reload mid-way:** the made-up data lives in the page's memory, so journeys move
-  through the app, not with `page.goto`, after a write.
-- **`npx shadcn add` installed an unrelated npm package called `cn`** (it misread the utils alias).
-  Removed; add shadcn components with `--dry-run` first and check `package.json` after.
+- **D125, amended 11 Oct (owner):** subagents by standing request; `implementer` may run on Haiku at
+  low effort for mechanical batches, Sonnet for judgment. **B04 measures it:** run its first
+  mechanical batch on Haiku and a comparable one on Sonnet, count the fixes each needed, write the
+  result here and in `docs/usage.md`.
+- **Log usage before every handoff and PR:** `node scripts/usage.mjs --log <slice>`; the transcripts
+  go with the VM.
+- **QA rounds cost quota (owner, 11 Oct):** fix by the cheapest tier that's honest; a fresh full
+  run only when a fix reaches the whole flow, and say what it will cost first.
+- **D124:** the core journeys are `first-run`, `pay-new` and `scan-after`.
+- **Refunds and income are money in only**, in the UI and in the fake's writes; B05's API refuses
+  the same way.
+- **`npx shadcn add` once installed an unrelated npm package `cn`:** add components with `--dry-run`
+  first and check `package.json` after.
 
 ## Open with the owner
 
-- **D115 is still *Proposed*.** The owner asked what it was (10 Oct); I recommended confirming it.
-- **Copper's overspent green:** the owner said *Ok* without a recommendation on the table. Mine: keep
-  it as designed (verdigris only on copper, the warning always with its icon and words). Confirm.
+- **D115 is still *Proposed*.** I recommended confirming it.
+- **Copper's overspent green:** the owner said *Ok* without a recommendation. Mine: keep it as designed
+  (verdigris only on copper, the warning always with its icon and words). Confirm.
 - The review alias behind Vercel's login; Anthropic's data terms against D34 (before B10); run 6's
-  note 15 (B07); `docs/local.md`'s queue.
+  note 15 (B07); `docs/local.md`'s queue (two QA phone checks from run 3 added).
 
 ## What to do first
 
-1. If `qa/B03/report.md` (run 3's) isn't committed, the run was lost: start a fresh full run (the
-   `qa` skill); it reads the committed `acceptance.md` and `flows.md` first.
-2. Fix its findings by tier, then open the PR.
+1. If B03's PR is merged: start B04 from `main` (`git checkout -b B04/skeleton-rest origin/main`).
+   If not, B04 waits on it: get the PR's CI green and tell the owner it's ready to merge.
+2. Build the shared ground yourself, then brief batches (`CLAUDE.md`, *Models and subagents*).
 
 ## Don't reopen
 
