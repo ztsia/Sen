@@ -26,9 +26,11 @@ rotation*: read this first, and rewrite it before you end.
   look's Home material), all 16 journeys in all twelve looks, axe and 48 px on every screen, the
   `uiux` pass (`qa/B03/uiux.md`), and the docs (`CLAUDE.md`, B05's brief). The full `pnpm e2e` is
   green.
-- **In progress: QA run 1** (a full run). It stopped once at a usage limit and was resumed, not
-  restarted; its criteria, flows and specs are committed in `qa/B03/` and `qa/e2e/b03-*`.
-- **Still to do:** read QA's report, fix by tier (`qa/B03/ledger.md`), publish the report, then the PR
+- **QA run 1** (full) said *fix first*: 6 Majors, 8 Minors. All fixed in one tier-3 batch
+  (`qa/B03/ledger.md`); its report is `qa/B03/report-run1.md`, published at
+  https://claude.ai/artifact/WfFSai2Hz3RP9Kbe93w88p.
+- **In progress: QA run 2**, a fresh full run (tier 3), and the repo's `pnpm e2e` beside it.
+- **Still to do:** read run 2, fix by tier, publish its report to the same artifact, then the PR
   *B03 · Skeleton: the five tabs*.
 
 ## Decided, and why
@@ -53,8 +55,8 @@ rotation*: read this first, and rewrite it before you end.
 
 ## What to do first
 
-1. If QA run 1's `qa/B03/report.md` isn't committed, the run was lost: start a fresh full run (the
-   `qa` skill), which reads the committed `acceptance.md` and `flows.md` first.
+1. If `qa/B03/report.md` (run 2's) isn't committed, the run was lost: start a fresh full run (the
+   `qa` skill); it reads the committed `acceptance.md` and `flows.md` first.
 2. Fix its findings by tier, then open the PR.
 
 ## Don't reopen
