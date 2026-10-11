@@ -1,5 +1,6 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { LOOKS, MODES, open, settled, watchErrors, type LookId, type ModeId } from './helpers';
+import { SETTLE_MS } from '../src/lib/tap-guard';
 
 // B03 done-when 1: each journey the five tabs carry (docs/flows.md) clicks through on the made-up
 // data, at 390×844, in all six looks, light and dark, with a screenshot per step. Each journey starts
@@ -79,6 +80,9 @@ export const JOURNEYS: Record<string, Journey> = {
     await shot('share ticked');
     const gift = reviewRow(page, 'money-in', 'TAN AH KOW');
     await expect(gift.getByRole('button', { name: /^Income.*Sen suggests this$/ })).toBeVisible();
+    // a tap within the settle after a change is taken for a double tap and ignored (patterns.md §7),
+    // so the next answer waits it out, as a person's would
+    await page.waitForTimeout(SETTLE_MS);
     await gift.getByRole('button', { name: /Income/ }).click();
     await expect(toast(page)).toContainText('is income');
     await shot('income');
