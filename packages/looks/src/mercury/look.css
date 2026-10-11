@@ -1,6 +1,6 @@
 /* Mercury's own material, ported from docs/ui/directions/src/mercury.css and scoped to the look.
    Quicksilver in a warm room: the metal is the loud thing; everything around it is stone and shadow.
-   Home's room light and stray beads port with Home (B03). */
+   Home's room light and stray beads are drawn behind its content by the look's decorate. */
 [data-look='mercury'] {
   .wm {
     display: block;
@@ -20,6 +20,35 @@
     width: calc(100% + 12px);
     height: 67px;
     margin-left: -6px;
+  }
+  /* Home: a window's light across the stone, stray beads by the figure, the column rising on payday */
+  .room {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(90% 46% at 6% -6%, rgba(255, 251, 244, 0.85), transparent 70%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 40%);
+  }
+  &[data-mode='dark'] .room {
+    background: radial-gradient(100% 50% at 4% -8%, rgba(255, 196, 140, 0.13), transparent 68%);
+  }
+  .beads {
+    pointer-events: none;
+  }
+  .beads i {
+    position: absolute;
+    width: calc(var(--r) * 2);
+    height: calc(var(--r) * 2);
+    border-radius: 50%;
+    background: radial-gradient(circle at 36% 30%, #fffaf3 0 16%, #a59d94 34%, #2b241e 68%, #b58c62 100%);
+    box-shadow: 1px 2px 2px rgba(20, 12, 6, 0.3);
+  }
+  .col.rise {
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: mq-rise 1.6s cubic-bezier(0.3, 0.7, 0.2, 1) both;
   }
   .hero .strip {
     height: 26px;
@@ -110,5 +139,13 @@
   }
   to {
     transform: none;
+  }
+}
+@keyframes mq-rise {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
   }
 }

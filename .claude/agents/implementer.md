@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Makes a change the main session has already decided and specified, when it's big enough to be worth handing over (a screen built from patterns.md, tests written from given criteria, boilerplate across several files, docs updated to match a decision). Not for design choices, the non-negotiables' logic, or a small edit the main session can make faster itself.
+description: Use proactively, by standing request of the owner (D125), whenever a slice's build splits into batches already decided, each worth a brief and owning its own files (a group of screens built from patterns.md, tests written from given criteria, a port, boilerplate across several files, docs updated to match a decision); run several in parallel in the background. Run mechanical batches (copying a finished example, boilerplate, lint, doc syncs) on Haiku with the Agent call's model override; Sonnet when the batch needs judgment. Not for design choices, the non-negotiables' logic, or a change under about 100 lines the main session can make faster itself.
 model: sonnet
 effort: medium
 ---

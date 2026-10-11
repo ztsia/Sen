@@ -1,6 +1,17 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { MAX_SEN, apportion, formatSen, moneyParts, parseSen, percent, spokenSen } from './money';
+import {
+  MAX_SEN,
+  apportion,
+  formatSen,
+  fxApprox,
+  medianSen,
+  moneyParts,
+  parseSen,
+  percent,
+  scaleSen,
+  spokenSen,
+} from './money';
 
 const ok = (sen: number) => ({ ok: true, sen });
 
@@ -174,5 +185,24 @@ describe('percent', () => {
     expect(percent(0.875)).toBe(88);
     expect(percent(1.2)).toBe(120);
     expect(percent(0)).toBe(0);
+  });
+});
+
+describe('scaleSen, medianSen and fxApprox', () => {
+  it('scales exactly, rounding half away from zero', () => {
+    expect(scaleSen(100, 1, 3)).toBe(33);
+    expect(scaleSen(5, 1, 2)).toBe(3);
+    expect(scaleSen(-5, 1, 2)).toBe(-3);
+    expect(scaleSen(291550, 30, 19)).toBe(460342);
+  });
+  it('takes the median of sen', () => {
+    expect(medianSen([])).toBeNull();
+    expect(medianSen([300, 100, 200])).toBe(200);
+    expect(medianSen([100, 201])).toBe(151);
+  });
+  it('shows another currency in ringgit at a rate given as text', () => {
+    expect(fxApprox(2000, '4.2550')).toBe(8510);
+    expect(fxApprox(999, '4.2')).toBe(4196);
+    expect(() => fxApprox(100, '4.25501')).toThrow();
   });
 });

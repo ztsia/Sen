@@ -30,11 +30,12 @@ for (const look of LOOKS)
       expect(errors).toEqual([]);
     });
 
-test("Review's badge counts up to 99+, and is read as words", async ({ page }) => {
+test("Review's badge counts Needs you, up to 99+, and is read as words", async ({ page }) => {
   await open(page, '/');
   const review = tabs(page).getByRole('link', { name: /^Review/ });
-  await expect(review).toHaveAccessibleName('Review , 5 to review');
-  await expect(page.getByTestId('review-badge')).toHaveAttribute('data-count', '5');
+  // Wei Ming's month has twelve things that need you (D72)
+  await expect(review).toHaveAccessibleName('Review , 12 to review');
+  await expect(page.getByTestId('review-badge')).toHaveAttribute('data-count', '12');
   await page.getByRole('button', { name: 'Dev panel' }).click();
   await page.getByRole('radio', { name: '120' }).click();
   await page.getByRole('button', { name: 'Close' }).click();

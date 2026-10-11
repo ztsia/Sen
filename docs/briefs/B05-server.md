@@ -72,7 +72,9 @@ though their screens come in B38.
 
 ### Previews
 - **A separate Neon project** for previews, seeded from B03's made-up scenario for the tables that
-  exist. Each later slice extends the seed with its own tables.
+  exist: `apps/web/src/data/fake/scenario.ts` builds it as §15's rows (`@sen/core/schema`), so the seed
+  inserts them as they are. The API answers with `@sen/core/views`' shapes and takes
+  `@sen/core/commands`' writes, and an `api` backend replaces the fake behind `apps/web/src/data/backend.ts`. Each later slice extends the seed with its own tables.
 
 ## Leaves for later
 

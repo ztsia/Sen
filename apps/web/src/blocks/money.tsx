@@ -20,11 +20,23 @@ const colour: Record<MoneyKind, string> = {
  * An amount: integer sen in, text out, `RM1,284.50` with tabular figures. It may wrap after a
  * thousands comma but is never truncated, and a screen reader says it as money: "RM 1,284.50".
  */
-export function Money({ sen, kind = 'out', className }: { sen: number; kind?: MoneyKind; className?: string }) {
+export function Money({
+  sen,
+  kind = 'out',
+  whole = false,
+  className,
+}: {
+  sen: number;
+  kind?: MoneyKind;
+  /** In a sentence: the amount never breaks, and the line wraps around it (QA B03 run 3, 23). */
+  whole?: boolean;
+  className?: string;
+}) {
   const plus = kind === 'in';
-  const parts = formatSen(sen, { plus }).split(',');
+  const text = formatSen(sen, { plus });
+  const parts = whole ? [text] : text.split(',');
   return (
-    <span className={cn('num font-medium', colour[kind], className)} data-sen={sen}>
+    <span className={cn('num font-medium', whole && 'whitespace-nowrap', colour[kind], className)} data-sen={sen}>
       <span aria-hidden="true">
         {parts.map((p, i) => (
           <Fragment key={i}>

@@ -49,7 +49,8 @@ A slice may span sessions, all on that one branch. Its PR is opened from it when
 with the slice's label as its title (*B07 · Sync and the outbox*).
 
 **When context runs high, or the owner says *hand off*, mid-slice:**
-1. Commit and push.
+1. Log the session's usage: `node scripts/usage.mjs --log <slice>` (it upserts the session's row in
+   `docs/usage.md`). Commit and push.
 2. Rewrite `docs/handoff.md` on the branch: what's done and verified, what's next, and anything
    decided. Push again.
 3. End with one line for the owner to paste into the next session: *Continue B07 from branch
@@ -91,7 +92,8 @@ starts in `ztsia/Sen`. The next slice waits only for the owner's merge.
 **Built so far:** B01, the design system and the six looks (the workspace, money, the frame, the
 building blocks, the dev panel and the gallery); B02, the shell and the listener (merged 9 Oct; its
 week on the owner's phone is still to run). Vercel is linked and the shell's release is signed
-(10 Oct, D122). Next: B03, the five tabs' skeleton, on `B03/skeleton-tabs`.
+(10 Oct, D122). B03, the five tabs' skeleton on made-up data, with the data layer every later slice
+plugs into, is on `B03/skeleton-tabs`, waiting for its PR's merge. Next: B04.
 
 ## Non-negotiables
 
@@ -188,12 +190,13 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | Command | What it does |
   |---|---|
   | `pnpm install` | Install everything |
-  | `pnpm dev` | The web app at `localhost:5173`, with the dev panel; `/dev/gallery` shows every building block |
+  | `pnpm dev` | The web app at `localhost:5173`, with the dev panel; `/dev/gallery` shows every building block; `?scenario=` and `?state=` pick the made-up scenario and a screen state on load |
   | `pnpm build` | The web app's production build, as Vercel runs it. A build is production, without dev tools, unless `SEN_ENV=preview` or Vercel's `VERCEL_ENV=preview` says otherwise |
   | `pnpm test` | Unit tests: money, the looks' ports, the hygiene check, the no-float rule, the web app's pure parts |
   | `pnpm e2e` | Playwright on a preview build and a production build, at a phone viewport, under the real CSP |
   | `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |
   | `pnpm looks` | Regenerates `apps/web/src/styles/looks.gen.css` from `docs/ui/directions/assets/`; CI fails if it's stale |
+  | `node scripts/usage.mjs` | What this session cost, by agent and model; `--log <slice>` keeps its row in `docs/usage.md` |
   | `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
   | `gradle -p apps/shell/core test` | The capture core's Kotlin tests; needs no Android SDK |
   | `bash scripts/android-sdk.sh` | Installs the Android SDK in a cloud session (about 2 minutes), to build the shell's APKs there: then `pnpm --filter @sen/shell sync` and `gradle assembleDebug` in `apps/shell/android` |
@@ -205,8 +208,8 @@ Works from a phone through cloud sessions, rarely at a laptop.
 
   | Path | What it holds |
   |---|---|
-  | `apps/web/` | The web app: Vite, React, TanStack Router, Tailwind v4 and shadcn/ui. `src/components/ui/` is shadcn's, customised in place; `src/blocks/` the building blocks of `patterns.md` §7; `src/frame/` the tab bar, Sen's button and the shell of every screen; `src/screens/registry.ts` every screen id, `skeleton` or `real`; `src/dev/` the dev panel and gallery; `e2e/` Playwright |
-  | `packages/core/` | Pure TypeScript shared by the app, the API and the worker: the money module now; cycles and the template engine later |
+  | `apps/web/` | The web app: Vite, React, TanStack Router, Tailwind v4 and shadcn/ui. `src/components/ui/` is shadcn's, customised in place; `src/blocks/` the building blocks of `patterns.md` §7; `src/frame/` the tab bar, Sen's button and the shell of every screen; `src/screens/registry.ts` every screen id, `skeleton` or `real`, and `src/screens/skeleton.ts` the walking skeleton's screens, shown in previews only; `src/data/` the one backend interface (`backend.ts`), a query hook per screen (`hooks.ts`) and the skeleton's fake, with Wei Ming's month (`fake/scenario.ts`) and its edge states (`fake/variants.ts`); `src/dev/` the dev panel and gallery; `e2e/` Playwright |
+  | `packages/core/` | Pure TypeScript shared by the app, the API and the worker: the money module, pay cycles and KL days (`cycles.ts`), and the shared types with zod: §15's rows (`schema.ts`), each screen's read shape (`views.ts`) and every write (`commands.ts`). The template engine later |
   | `packages/looks/` | The six looks as `DIR` modules, ported from `docs/ui/directions/src/`, each loaded only when shown |
   | `apps/api/` | The Hono API (B05) |
   | `apps/shell/` | The Capacitor shell for Android (B02): application id **`io.github.ztsia.sen`**, name **Sen** (`.debug`, *Sen review*, for the review build). `android/` is the app, with our Kotlin in `app/src/main/java/io/github/ztsia/sen/` (the listener, the outbox, the bridge's two plugins `SenShell` and `SenCapture`) and its emulator tests in `app/src/androidTest/`; `core/` the pure Kotlin capture core (no Android SDK); `data/` the curated apps and the brands' steps; `sites.json` the one address each build loads; `www/` the page shown when the site can't load |
@@ -215,12 +218,39 @@ Works from a phone through cloud sessions, rarely at a laptop.
 
 ### Models and subagents
 
-The main session (Opus) decides, talks with the owner, works on the non-negotiables, and reviews what
-comes back. It hands work down by judgement, never by ritual. `.claude/agents/` has `implementer`
-(Sonnet), for a change already decided and big enough to be worth a brief; `scout` (Haiku), for
-lookups, logs and summaries; and `qa-reviewer` (Sonnet by default; the main session picks Opus for a
-run when it judges one needs it). A brief costs a cold start, so a small edit is quicker done in place.
-No per-task review loops: the main session reads a subagent's diff itself, and QA checks the slice.
+**This is the owner's standing request to use subagents (D125)**, so a session spawns them without
+being asked each time; it overrides any default that says to spawn only on request. The main session
+(Opus) decides, talks with the owner, works on the non-negotiables, and reviews what comes back. The
+agents are in `.claude/agents/`:
+
+| Agent | Use it when | Don't, when |
+|---|---|---|
+| `implementer` (Sonnet) | A slice's build splits into **batches already decided**, each worth a brief: a group of screens from `patterns.md`, tests from given criteria, a port, boilerplate across files. Each batch owns its own files, so several run **in parallel, in the background** | The change is under about 100 lines, needs a design decision, or touches a non-negotiable's logic (money, RLS, dedupe, the listener's filters): do it yourself |
+| `implementer` on **Haiku** (`model: haiku` on the Agent call, low effort) | A **mechanical** batch: copying a finished example to more files, test boilerplate from given criteria, lint and format fixes, doc syncs to a decision, reading logs, screenshot sweeps. About a twentieth of Sonnet's price | The batch needs judgment (layout choices, a tricky state, anything a reviewer would argue about): Sonnet |
+| `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill: a full run when a slice is finished, then the tiers | |
+| `scout` (Haiku) | Something too big to read: a long CI log, a large unfamiliar area | A lookup one `grep` or a filtered log answers; its cold start costs more than it saves |
+
+**Why, measured on B03:** the main session's context is re-read every turn, so code it writes costs
+again on every later turn; an implementer's code costs the main session only its report and the
+diffs it checks. Sonnet is about half Opus's price, and four batches ran at once (about 150–190k
+tokens each). The cost is a cold start per agent, so:
+- **Build the shared ground first, yourself** (types, data layer, one screen in the house style),
+  then brief the batches against it.
+- **Keep briefs lean:** the exact files and sections to read, the files it owns, the checks to run,
+  a port of its own for a dev server, and *don't commit*. Point at a finished example rather than
+  restating rules.
+- **Review every report and diff yourself**, fix what's off, then commit. No per-task review loops:
+  QA checks the slice.
+- **Haiku is on trial (D125, 11 Oct):** B04 runs its first mechanical batch on Haiku and a
+  comparable one on Sonnet, and counts the fixes each needed in the handoff. Keep Haiku where it
+  needs no more fixing than Sonnet did.
+- **Measure, then tune.** `node scripts/usage.mjs` shows what each agent and model cost this session,
+  read from the transcripts; `--log <slice>` keeps a row in `docs/usage.md`, before every handoff
+  and PR (the transcripts go with the VM). B03's first row: the main session was 73% of the cost,
+  and most of that was re-reading its own long context each turn, so keep the main session's own
+  reading and writing small, and hand off before its context grows long.
+- Subagents spend the same quota as the main session. When one stops at a usage limit, resume it
+  (`SendMessage`), never restart it.
 
 ## Skills
 

@@ -1,0 +1,1495 @@
+{
+ "module": "B03",
+ "branch": "B03/skeleton-tabs",
+ "verdict": "fix first",
+ "generatedAt": "2026-10-11 UTC",
+ "phases": "1-6 (phase 4 against the fake and the shared types only: B03 has no SQL, API route or RLS)",
+ "headline": "Runs 1 and 2's fixes hold (22 of 23 re-checked findings fixed; the run 2 amount-wrapping one is still failing), and seven of eight probes go red, but one new Major turned up: Mark as… offers Refund of… on a money-out payment and spending falls by twice the payment.",
+ "summary": {
+  "criteria": 37,
+  "pass": 35,
+  "fail": 2,
+  "unreachable": 0
+ },
+ "suites": {
+  "unit": "206/206 pass (pnpm test)",
+  "e2e": "QA b03 suite: 141 specs, 134 pass on the first pass; 5 of the 7 reds pass on a re-run alone, FLOW-43 at 390 is finding 23, FLOW-17b/AC-41 are timing; b03-r3: 22 specs, 3 red by design (findings 28/29/30) plus R3-K and R3-L (33, 23)",
+  "typecheck": "clean",
+  "lint": "clean (incl. qa/e2e/b03-r3.spec.ts)"
+ },
+ "findings": [
+  {
+   "id": 28,
+   "severity": "Major",
+   "status": "open",
+   "title": "Mark as… offers Refund of… on a money-out payment, and spending then falls by twice the payment",
+   "detail": "`txn` > *Mark as…* lists Transfer and *Refund of…* for an outgoing payment (Income is correctly in-only). Choosing a purchase to refund turns the RM10.00 payment itself into `kind: refund`, which stops counting as spending, and the purchase it points at is reduced by the same RM10.00. Home's spent figure falls by RM20.00 and *Left until payday* rises by RM20.00 for one RM10.00 payment. A refund is money in (spec §7, D21: *Money in … a refund of a purchase*), so the option should not exist on a money-out row. Undo restores it.",
+   "repro": "pnpm dev; open /s/payments, search KEDAI MAKAN AH CHOY, open it, Mark as… > Refund of… > first ZUS COFFEE row. Then Home. (qa/e2e/b03-r3.spec.ts, R3-B)",
+   "evidence": "Home before {\"left\":\"1,931.27\",\"spent\":\"3,873.53\"} after {\"left\":\"1,951.27\",\"spent\":\"3,853.53\"}\nrefund rows [[\"KEDAI MAKAN AH CHOY\",\"out\",1000,\"253a7533-…\"],[\"UNIQLO\",\"in\",3990,\"3332da66-…\"]]\nExpected: <= 1000   Received: 2000",
+   "spec": "R3-6, spec_v2.md §7 (Refunds, D21), screens.md `txn` Mark as…",
+   "screenshots": [
+    "R3-B-step-1-mark-as.png",
+    "R3-B-step-1-marked.png"
+   ]
+  },
+  {
+   "id": 23,
+   "severity": "Minor",
+   "status": "still failing",
+   "title": "At 1.5x text, Home's *Spent RM3,873.53 this cycle* still splits at the comma (run 2 finding 23)",
+   "detail": "The run 2 fix put `whitespace-nowrap` on the amount, but `Money` inserts a `<wbr>` after each thousands comma and Chrome still breaks there, so the amount reads `RM3,` / `873.53` on two lines at 412, 390 and 360 wide. At 390 the next line, `RM273.53 more than last cycle by this day`, is also clipped (scrollWidth 97 > clientWidth 91; QA's FLOW-43 at 390 fails). The fixed 144 px sparkline leaves the text about 130 px.",
+   "repro": "412x844, root font size 24px, Home. (qa/e2e/b03-r3.spec.ts R3-L; b03-r2 FLOW-43 at 390)",
+   "evidence": "R3-L: lines the amount takes: 2   (Expected: 1)\nFLOW-43 390: home: clipped amount \"RM273.53 more \" 97>91",
+   "spec": "R3-3 (amounts wrap before they truncate), patterns.md §3 and §8, run 2 finding 23",
+   "screenshots": [
+    "R3-L-pace-1.5x.png",
+    "R3-H-pace-1.5x-412.png",
+    "R3-H-pace-1.5x-390.png"
+   ]
+  },
+  {
+   "id": 29,
+   "severity": "Minor",
+   "status": "open",
+   "title": "By hand, Enter in the Add item price adds the item and then shows two errors",
+   "detail": "The price field calls `submit()` on Enter and the form also submits on Enter, so it runs twice. The first run adds the item and clears both fields; the second finds them empty and shows *Say what it is.* and *Type the amount.* on a form that just worked. On the phone, the keyboard's Done key is that Enter. Manual's Enter saves once (it is guarded by the disabled button); Add item has no such guard.",
+   "repro": "txn of a payment with no receipt > No receipt… > Enter the items; type Teh tarik, price 3.50, press Enter in the price. (R3-A)",
+   "evidence": "Teh tarik items: 1 | error shown: true | … Items Teh tarik RM3.50 Add an item Say what it is. Price RM Type the amount. Add item …",
+   "spec": "R3-22, patterns.md §7 Forms (validate on submit), D90",
+   "screenshots": [
+    "R3-A-step-2-after-enter.png"
+   ]
+  },
+  {
+   "id": 30,
+   "severity": "Minor",
+   "status": "open",
+   "title": "A scanned receipt whose check fails can still be done, and commits the items' sum as its total",
+   "detail": "Fixing the doubtful *Nasi impit* from RM4.50 to RM9.50 moves the check to *Items come to RM5.00 more than the receipt's total*, but *Done* stays enabled. The receipt is committed with total RM69.13, not the printed RM64.13, so it no longer matches the RM64.13 payment and goes to *Waiting for its payment* instead of attaching. §6.4: a failed check marks the total doubtful; matching and the total are the receipt's printed ones.",
+   "repro": "Scan any photo > confirm > tap Nasi impit > price 9.50 > Save > Done. (R3-C)",
+   "evidence": "printed total 6413 … after fix: … Total RM69.13 … Items come to RM5.00 more than the receipt’s total … Done enabled after the check fails: true\ncommitted receipt total 6913 status awaiting_payment tx null",
+   "spec": "R3-3, R3-19, spec_v2.md §6.4 (confirm screen, matching)",
+   "screenshots": [
+    "R3-C-step-1-fixed.png"
+   ]
+  },
+  {
+   "id": 31,
+   "severity": "Minor",
+   "status": "open",
+   "title": "While a screen's code loads, the frame breaks: the tab bar jumps to the middle of the screen",
+   "detail": "A lazily loaded screen shows its Suspense fallback outside `Screen`: no app bar, a skeleton, and the tab bar directly under it at y=256 of 915, with the rest blank. It shows on the first visit to any screen after a deploy, on a slow signal (preview build, 1.2 s latency). patterns.md §7: a loading state is a skeleton shaped like the content; the frame never moves.",
+   "repro": "Preview build, throttle the network, More > Payments for the first time. (qa-artifacts R3-G; also seen once in dev as the R3-F step 1 shot)",
+   "evidence": "{\"navTop\":256,\"navBottom\":335.39,\"ih\":915,\"hasMain\":false,\"text\":\"Loading EVERY SEN COUNTED …\"}",
+   "spec": "patterns.md §7 Loading, §6 (one navigation)",
+   "screenshots": [
+    "R3-G-lazy-fallback-payments.png"
+   ]
+  },
+  {
+   "id": 32,
+   "severity": "Minor",
+   "status": "open",
+   "title": "The D19 repayment clause of `spendingOf` is not pinned by `pnpm test`",
+   "detail": "Probe: change `Math.min(share, t.amount - repaid)` to `Math.min(share, t.amount)` in `data/fake/views.ts`. `fake.test.ts` stays 30/30 green: the one D19 test (`counts a split bill as your share`) uses a bill whose repayments never exceed the unowed part. Only QA's own `b03-money.spec.ts` goes red, and it is not in CI. The refund clause beside it is pinned (probe caught).",
+   "repro": "git stash; edit as above; `npx vitest run apps/web/src/data/fake/fake.test.ts`",
+   "evidence": "Tests  30 passed (30)   with the defect in; qa/e2e b03-money.spec.ts: 1 failed",
+   "spec": "R3-5, spec_v2.md §7 (the shared-bill rule, D19), run 2 finding 24",
+   "screenshots": []
+  },
+  {
+   "id": 33,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Sen's note on Home contradicts the month beneath it",
+   "detail": "The made-up note reads *Quiet Saturday: RM31.20 all day. Drinks are at RM118 of RM150*, written 'yesterday' (Sat 17 Oct). The data has RM135.40 spent that Saturday (Payments' day header) and Drinks at RM73.50 of RM150 (Budgets, Insights). The owner walking the skeleton sees two answers. Same class as run 1's finding 14.",
+   "repro": "Home; Payments, Sat 17 Oct header; Budgets. (R3-K)",
+   "evidence": "note: Sen · Yesterday, 21:00 Quiet Saturday: RM31.20 all day. Drinks are at RM118 of RM150 … | Saturday 17 Oct spending in the data (sen): 13540",
+   "spec": "spec_v2.md §12.2 (figures from tools), brief B03 (made-up scenario)",
+   "screenshots": []
+  },
+  {
+   "id": 34,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Before the first salary, the cycle sheet frames the spending as *Over by RM1,445.23*",
+   "detail": "Home reads *Spent since you started RM1,450.03* as screens.md asks, but its `cycle` sheet reads *Income received +RM4.80 · Spending RM1,450.03 · Over by RM1,445.23 · An estimate … over on payday*: the misleading negative the Home default avoids. The same sheet should say *Spent since you started* until a salary lands.",
+   "repro": "/?scenario=before-salary, tap the large figure. (FLOW-R3-3)",
+   "evidence": "sheet: … Income received +RM4.80 … Spending RM1,450.03 … Over by RM1,445.23 … An estimate: at this pace, about RM2,565.76 over on payday.",
+   "spec": "screens.md Home *Before the first salary*, Confirmed default 3",
+   "screenshots": [
+    "FLOW-R3-3-step-1-home.png"
+   ]
+  },
+  {
+   "id": 35,
+   "severity": "Note",
+   "status": "open",
+   "title": "The receipt's photo is never shown: reading is a grey skeleton, crop a grey box with fixed corners, View photo an icon",
+   "detail": "The fake cannot hold the image, so every place that should show it shows a placeholder, and the crop says *Adjusting the corners arrives with the scanner*. The brief allows the crop stand-in (B15), but `reading`'s and `confirm`'s *Shows: the image* is also placeholder. The owner's walk will not show a receipt anywhere. A phone check, queued.",
+   "repro": "Scan > choose a photo.",
+   "evidence": "crop handles (sliders): 0",
+   "spec": "screens.md `reading`, `confirm` (View photo), brief B03 Scan",
+   "screenshots": [
+    "FLOW-R3-2-step-2-crop.png",
+    "FLOW-R3-2-step-3-reading.png"
+   ]
+  },
+  {
+   "id": 36,
+   "severity": "Note",
+   "status": "open",
+   "title": "*Correct amount, time or account* is a stub that names the wrong slice",
+   "detail": "On a notification's payment it toasts *Correcting arrives with B13*; B12's brief builds it (`docs/briefs/B12-categories.md:99`). The row exists as screens.md says; its sad twin (`12.345`, `abc` refused) cannot be tested.",
+   "repro": "txn of a captured payment > Correct amount, time or account",
+   "evidence": "toast: Correcting arrives with B13",
+   "spec": "screens.md `txn`, spec §6.7",
+   "screenshots": []
+  },
+  {
+   "id": 37,
+   "severity": "Note",
+   "status": "open",
+   "title": "`.5` and `12.` are refused with the message for a wholly different mistake",
+   "detail": "`.5` is how people type 50 sen; both get *Type the amount in ringgit, like 12.50.* Nothing is mis-parsed (every other input in R3-E parses or is refused correctly), so this is only wording.",
+   "repro": "manual > Amount .5 > Save",
+   "evidence": "\".5\" -> saved=0 msg=\"Type the amount in ringgit, like 12.50.\"",
+   "spec": "patterns.md §7 Forms",
+   "screenshots": []
+  },
+  {
+   "id": 38,
+   "severity": "Note",
+   "status": "open",
+   "title": "Home's gap loses its sign, and the large figure's label is not the spoken form",
+   "detail": "Home's quiet row shows `Math.abs(gap)`, so unseen spending and unseen money-in both read *Gap at 1 Oct's check RM42.10* (§7 says the gap is signed). The hero's `aria-label` uses `formatSen` (`RM1,931.27`) where `spokenSen` exists for patterns.md §3 (*RM 1,931.27*).",
+   "repro": "Home; read the `data-testid=hero` aria-label",
+   "evidence": "Left until payday, RM1,931.27, 12 days to go. How it's worked out",
+   "spec": "spec §7 balance checks, patterns.md §3",
+   "screenshots": []
+  },
+  {
+   "id": 39,
+   "severity": "Note",
+   "status": "open",
+   "title": "Goal projections carry no year, and one contradicts its own target",
+   "detail": "*At the pace so far it's done around Mon, 13 Sept* (a year away, first-cycle scenario) reads as last September; *Japan in spring* says *Within reach* beside a pace finish of 16 May, two months after its 15 Mar target.",
+   "repro": "/s/goals?scenario=first-cycle > Japan in spring",
+   "evidence": "FIRST CYCLE goal: … it's done around Mon, 13 Sept. That's an estimate.",
+   "spec": "spec §10, patterns.md",
+   "screenshots": [
+    "R3-J-goal.png",
+    "R3-J-goals-first-cycle.png"
+   ]
+  },
+  {
+   "id": 40,
+   "severity": "Note",
+   "status": "open",
+   "title": "Read from the code, not run: the fake's Undo restores a whole snapshot of the database",
+   "detail": "`run({type:'undo'})` sets `db = before`, so undoing change A after change B also drops B. The UI only offers the latest toast's Undo, so no tap reaches it; B05's route needs its own per-command inverse.",
+   "repro": "-",
+   "evidence": "apps/web/src/data/fake/index.ts: `db = before`",
+   "spec": "brief B03 (optimistic writes with Undo)",
+   "screenshots": []
+  },
+  {
+   "id": 41,
+   "severity": "Note",
+   "status": "open",
+   "title": "Process: a `pkill -f vite` from this run stopped the parent session's `pnpm e2e` preview servers",
+   "detail": "While `pnpm e2e` was running on :4173/:4174, the reviewer killed every `vite` process to free ports, which took those two servers down for a few minutes (the reviewer restarted them). Failures in that run's window are not product failures: re-run `pnpm e2e` in the parent session. The reviewer then used :5180-:5183 and killed only its own PIDs.",
+   "repro": "-",
+   "evidence": "-",
+   "spec": "-",
+   "screenshots": []
+  },
+  {
+   "id": 42,
+   "severity": "Note",
+   "status": "open",
+   "title": "Two of QA's own specs are timing-sensitive",
+   "detail": "`b03-insights AC-41` (reads the Insights text 600 ms after the tab opens) and `b03-r2 FLOW-17b` (reads the refusal's position while a smooth scroll is still running) fail under load or alone, and pass with a longer wait (small things 23; refusal in view at 300 ms). Not product defects.",
+   "repro": "playwright test -c b03.config.ts -g 'AC-41|FLOW-17b'",
+   "evidence": "FLOW-17b positions: 0ms top=1019, 300ms top=445 (visible), 800ms top=437",
+   "spec": "-",
+   "screenshots": []
+  },
+  {
+   "id": 1,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #1 Real offline froze the screens",
+   "detail": "FLOW-34 (real offline, answers show at once, reconnect syncs once) pass; R3 FLOW-R3-13 pass: Not synced yet ×2, then unsynced 0, one row.",
+   "repro": "-",
+   "evidence": "FLOW-34 (real offline, answers show at once, reconnect syncs once) pass; R3 FLOW-R3-13 pass: Not synced yet ×2, then unsynced 0, one row.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 2,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1/2 #2 A fast double tap answered twice",
+   "detail": "b03-review AC-18s, b03-r2 FLOW-35/35b/35c pass; unit tap-guard probe red.",
+   "repro": "-",
+   "evidence": "b03-review AC-18s, b03-r2 FLOW-35/35b/35c pass; unit tap-guard probe red.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 3,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #3 The same file twice made a second receipt",
+   "detail": "R3 FLOW-R3-2s: photo 1 'Kept as evidence only', photo 2 'Already added', 1 evidence receipt; probe: content-hash clause dropped, F3 red.",
+   "repro": "-",
+   "evidence": "R3 FLOW-R3-2s: photo 1 'Kept as evidence only', photo 2 'Already added', 1 evidence receipt; probe: content-hash clause dropped, F3 red.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 4,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #4 A new payment was not at the top",
+   "detail": "The new RM5.00 row is first in Payments (R3-F step 1); newest-first test in fake.test.ts.",
+   "repro": "-",
+   "evidence": "The new RM5.00 row is first in Payments (R3-F step 1); newest-first test in fake.test.ts.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 5,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #5 Add expense opened first ended on about:blank",
+   "detail": "b03-r2 FLOW-38 pass.",
+   "repro": "-",
+   "evidence": "b03-r2 FLOW-38 pass.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 6,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #6 Three probes went uncaught",
+   "detail": "Probes 2 (forecast), 3 (money) and refund red in fake.test.ts.",
+   "repro": "-",
+   "evidence": "Probes 2 (forecast), 3 (money) and refund red in fake.test.ts.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 7,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #7 From gallery led nowhere",
+   "detail": "b03 suite pass (134 of 141 on the first pass); not walked on its own in run 3.",
+   "repro": "-",
+   "evidence": "b03 suite pass (134 of 141 on the first pass); not walked on its own in run 3.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 8,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #8 By hand, items over the payment saved",
+   "detail": "FLOW-17b: refusal in view at 300 ms.",
+   "repro": "-",
+   "evidence": "FLOW-17b: refusal in view at 300 ms.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 9,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #9 Changes named no actor",
+   "detail": "txn Changes: `Captured, automatically`.",
+   "repro": "-",
+   "evidence": "txn Changes: `Captured, automatically`.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 10,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #10 One of two suggestions marked",
+   "detail": "Review rows: `Income, Sen suggests this`, `Public Bank, Sen suggests this`; banner says 2 answers.",
+   "repro": "-",
+   "evidence": "Review rows: `Income, Sen suggests this`, `Public Bank, Sen suggests this`; banner says 2 answers.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 11,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #11 Over budget read as At risk",
+   "detail": "Budgets: `Shopping RM320.30 of RM300.00 Over by RM20.30`.",
+   "repro": "-",
+   "evidence": "Budgets: `Shopping RM320.30 of RM300.00 Over by RM20.30`.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 12,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #12 Attach to a payment… was newest first",
+   "detail": "Same merchant first, then closest amount (R3 FLOW-R3-4 list).",
+   "repro": "-",
+   "evidence": "Same merchant first, then closest amount (R3 FLOW-R3-4 list).",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 13,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #13 /s/confirm with no id loaded for ever",
+   "detail": "FLOW-41: `Sen can't find this receipt. Go Home`.",
+   "repro": "-",
+   "evidence": "FLOW-41: `Sen can't find this receipt. Go Home`.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 14,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 1 #14 Scenario slips",
+   "detail": "goal contributions end 30 Sept; years on 2025 day headers. (Finding 33 is a new slip of the same kind.)",
+   "repro": "-",
+   "evidence": "goal contributions end 30 Sept; years on 2025 day headers. (Finding 33 is a new slip of the same kind.)",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 17,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 2 #17 Apply all, double-tapped, answered twice",
+   "detail": "b03-r2 FLOW-35/40 pass.",
+   "repro": "-",
+   "evidence": "b03-r2 FLOW-35/40 pass.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 18,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 2 #18 A screen opened at the previous scroll offset",
+   "detail": "R2-S3 scroll test pass: `Insights revisited after Review at 900: scrollTop 0`.",
+   "repro": "-",
+   "evidence": "R2-S3 scroll test pass: `Insights revisited after Review at 900: scrollTop 0`.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 19,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 2 #19 Scan over plain http threw on crypto.subtle",
+   "detail": "FLOW-44 on http://192.0.2.2:5183: isSecureContext false, crypto.subtle undefined, Scan still reads a photo.",
+   "repro": "-",
+   "evidence": "FLOW-44 on http://192.0.2.2:5183: isSecureContext false, crypto.subtle undefined, Scan still reads a photo.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 20,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 2 #20 A refused Done looked like nothing happened",
+   "detail": "Refusal in view 300 ms after Done (top 445 of 915).",
+   "repro": "-",
+   "evidence": "Refusal in view 300 ms after Done (top 445 of 915).",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 21,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 2 #21 Double taps on Delete and This was a payment",
+   "detail": "b03-r2 FLOW-35 pass.",
+   "repro": "-",
+   "evidence": "b03-r2 FLOW-35 pass.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 22,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 2 #22 /s/reading with no id",
+   "detail": "FLOW-41: `Sen can't find this receipt. Go Home`.",
+   "repro": "-",
+   "evidence": "FLOW-41: `Sen can't find this receipt. Go Home`.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 24,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 2 #24 Regressions in no CI job",
+   "detail": "Unit probes 1, 4 now red in `pnpm test`; but see new finding 32 (D19 clause).",
+   "repro": "-",
+   "evidence": "Unit probes 1, 4 now red in `pnpm test`; but see new finding 32 (D19 clause).",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  },
+  {
+   "id": 25,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Run 2 #25 An empty or text file was taken as a receipt",
+   "detail": "R3 FLOW-R3-2s: `That isn't a photo or a PDF of a receipt. Try another.`; empty file shows no crop.",
+   "repro": "-",
+   "evidence": "R3 FLOW-R3-2s: `That isn't a photo or a PDF of a receipt. Try another.`; empty file shows no crop.",
+   "spec": "runs 1 and 2",
+   "screenshots": []
+  }
+ ],
+ "probes": [
+  {
+   "broke": "apportion() floors in floating point (Math.round(Number(t)*w/Number(sum)))",
+   "caught": true,
+   "note": "money.test.ts 'apportioned parts always add up' and receipt-math.test.ts 'adding up to the total exactly' red (2 failed of 95)"
+  },
+  {
+   "broke": "commitReceipt: content-hash clause of the duplicate check dropped",
+   "caught": true,
+   "note": "fake.test.ts F3 'the same file twice is Already added' red"
+  },
+  {
+   "broke": "spentIn adds expected subscription charges (forecast into spending)",
+   "caught": true,
+   "note": "fake.test.ts F6 'a forecast is never spending' red"
+  },
+  {
+   "broke": "tap guard always lets the tap through",
+   "caught": true,
+   "note": "tap-guard.test.tsx: 2 of 12 red, including the next-row case"
+  },
+  {
+   "broke": "klDay loses timeZone: Asia/Kuala_Lumpur",
+   "caught": true,
+   "note": "cycles.test.ts 'reads an instant as its Kuala Lumpur day' red (in TZ=America/Los_Angeles and the default)"
+  },
+  {
+   "broke": "spendingOf drops `- repaid` (D19 shared-bill rule)",
+   "caught": false,
+   "note": "fake.test.ts stayed 30/30 green; only QA's b03-money.spec.ts went red (finding 32)"
+  },
+  {
+   "broke": "spendingOf drops the refund clause (D21)",
+   "caught": true,
+   "note": "fake.test.ts 'takes a refund off its purchase' red"
+  },
+  {
+   "broke": "parseFloat added in formatSen",
+   "caught": true,
+   "note": "eslint no-restricted-globals: 'Money is integer sen: parse typed text with parseSen' (2 errors)"
+  }
+ ],
+ "flows": [
+  {
+   "id": "FLOW-R3-1",
+   "title": "A new merchant answered from Review (pay-new, core)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Review tab",
+   "covers": [
+    "R3-12",
+    "R3-13",
+    "R3-15"
+   ],
+   "spec": "flows.md pay-new",
+   "status": "pass",
+   "ends": "One change applied; Undo restores row, badge and category (run via QA FLOW-C2)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Review",
+     "assertion": "badge 12, ROTI BAKAR 88 row with guesses",
+     "status": "pass",
+     "screenshot": "FLOW-C2-step-1-review.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap Meals",
+     "assertion": "row clears, rule made, badge 11, toast \"ROTI BAKAR 88 is Meals from now on\"",
+     "status": "pass",
+     "screenshot": "FLOW-C2-step-2-answered.png"
+    },
+    {
+     "n": 3,
+     "action": "Undo",
+     "assertion": "row back, badge 12, no rule",
+     "status": "pass",
+     "screenshot": "FLOW-C2-step-3-undone.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-2",
+   "title": "Scan a receipt after paying (scan-after, core)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Scan tab",
+   "covers": [
+    "R3-3",
+    "R3-16",
+    "R3-17",
+    "R3-19"
+   ],
+   "spec": "flows.md scan-after",
+   "status": "pass",
+   "ends": "Attached to RM64.13 on Ryt Bank; txns 1199→1199, receipts +1; spent unchanged",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Tap Scan",
+     "assertion": "scan opens at once, tab bar hidden",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2-step-1-scan.png"
+    },
+    {
+     "n": 2,
+     "action": "Choose a photo",
+     "assertion": "crop with four corners, Use this",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2-step-2-crop.png"
+    },
+    {
+     "n": 3,
+     "action": "Use this",
+     "assertion": "Reading receipt… shown",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2-step-3-reading.png"
+    },
+    {
+     "n": 4,
+     "action": "Wait",
+     "assertion": "confirm: Items add up to the total ✓",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2-step-4-confirm.png"
+    },
+    {
+     "n": 5,
+     "action": "+ twice",
+     "assertion": "÷ 3 = RM21.38 a person",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2-step-5-pax.png"
+    },
+    {
+     "n": 6,
+     "action": "Done",
+     "assertion": "toast Attached to RM64.13 on Ryt Bank",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2-step-6-attached.png"
+    },
+    {
+     "n": 7,
+     "action": "Open the payment",
+     "assertion": "Receipt · 5 items row",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2-step-7-txn-receipt.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-2s",
+   "title": "Scan failures: a text file, an empty file, the same photo twice, a failed read",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Scan tab",
+   "covers": [
+    "R3-17",
+    "R3-18"
+   ],
+   "spec": "§6.4, §6.5",
+   "status": "pass",
+   "ends": "refusal in words; one evidence receipt for the same photo; failed read offers manual",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Choose notes.txt",
+     "assertion": "That isn't a photo or a PDF of a receipt. Try another.",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2s-step-1-text-file.png"
+    },
+    {
+     "n": 2,
+     "action": "Choose a 0-byte jpg",
+     "assertion": "no crop shown",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2s-step-2-empty-file.png"
+    },
+    {
+     "n": 3,
+     "action": "Photo, keep as evidence",
+     "assertion": "Kept as evidence only",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2s-step-3-twice-1.png"
+    },
+    {
+     "n": 4,
+     "action": "Same photo again",
+     "assertion": "Already added",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2s-step-4-twice-2.png"
+    },
+    {
+     "n": 5,
+     "action": "A blurred photo",
+     "assertion": "Sen couldn't read this receipt, Enter it by hand",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2s-step-5a-failed-read.png"
+    },
+    {
+     "n": 6,
+     "action": "Enter it by hand",
+     "assertion": "manual, photo kept",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2s-step-5-failed-read-manual.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-3",
+   "title": "Before the first salary (first-run landing)",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "?scenario=before-salary",
+   "covers": [
+    "R3-9"
+   ],
+   "spec": "screens.md Home",
+   "status": "pass",
+   "ends": "Home reads Spent since you started; no NaN or minus. The sheet still says Over by (finding 34)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Home",
+     "assertion": "Spent since you started RM1,450.03, no negative",
+     "status": "pass",
+     "screenshot": "FLOW-R3-3-step-1-home.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap the figure",
+     "assertion": "sheet has an estimate, labelled as one",
+     "status": "pass",
+     "screenshot": "FLOW-R3-3-step-2-cycle-sheet.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-4",
+   "title": "A receipt before its payment",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Scan tab",
+   "covers": [
+    "R3-19",
+    "R3-20",
+    "R3-12"
+   ],
+   "spec": "flows.md receipt-first",
+   "status": "pass",
+   "ends": "Receipt attaches once; spent unchanged; Waiting does not count in the badge",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Scan a receipt with no payment",
+     "assertion": "confirm",
+     "status": "pass",
+     "screenshot": "FLOW-R3-4-step-1-confirm.png"
+    },
+    {
+     "n": 2,
+     "action": "Done",
+     "assertion": "Waiting for its payment, in Review under Waiting on others, badge 12",
+     "status": "pass",
+     "screenshot": "FLOW-R3-4-step-2-waiting.png"
+    },
+    {
+     "n": 3,
+     "action": "Attach to a payment…",
+     "assertion": "same merchant first, then closest amount",
+     "status": "pass",
+     "screenshot": "FLOW-R3-4-step-3-attach-sheet.png"
+    },
+    {
+     "n": 4,
+     "action": "Pick one",
+     "assertion": "Attached; spent 3,873.53 unchanged",
+     "status": "pass",
+     "screenshot": "FLOW-R3-4-step-4-home.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-6",
+   "title": "Money in: a refund lowers spending by exactly the refund",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Review",
+   "covers": [
+    "R3-6"
+   ],
+   "spec": "§7, D21",
+   "status": "pass",
+   "ends": "spent 3,873.53 → 3,773.53; income unchanged; Undo restores (the outgoing-payment case is finding 28)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Home",
+     "assertion": "spent 3,873.53",
+     "status": "pass",
+     "screenshot": "FLOW-R3-6-step-1-home.png"
+    },
+    {
+     "n": 2,
+     "action": "Review money-in row",
+     "assertion": "Income / Transfer / Refund of…",
+     "status": "pass",
+     "screenshot": "FLOW-R3-6-step-2-review.png"
+    },
+    {
+     "n": 3,
+     "action": "Refund of…",
+     "assertion": "candidates, same name first",
+     "status": "pass",
+     "screenshot": "FLOW-R3-6-step-3-pick.png"
+    },
+    {
+     "n": 4,
+     "action": "Pick; Home",
+     "assertion": "spent 3,773.53",
+     "status": "pass",
+     "screenshot": "FLOW-R3-6-step-4-home-after.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-7",
+   "title": "Own transfer",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Review",
+   "covers": [
+    "R3-7"
+   ],
+   "spec": "§7, D17",
+   "status": "pass",
+   "ends": "no spending change; one Filled in row; total balance -RM2,000.00",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Review",
+     "assertion": "Where did it come from?",
+     "status": "pass",
+     "screenshot": "FLOW-R3-7-step-1-review.png"
+    },
+    {
+     "n": 2,
+     "action": "Public Bank",
+     "assertion": "toast, row cleared",
+     "status": "pass",
+     "screenshot": "FLOW-R3-7-step-2-answered.png"
+    },
+    {
+     "n": 3,
+     "action": "Home",
+     "assertion": "spent and left unchanged",
+     "status": "pass",
+     "screenshot": "FLOW-R3-7-step-3-home.png"
+    },
+    {
+     "n": 4,
+     "action": "Payments",
+     "assertion": "Public Bank → Ryt Bank Transfer Filled in RM2,000.00",
+     "status": "pass",
+     "screenshot": "FLOW-R3-7-step-4-payments.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-8",
+   "title": "Fix a payment: category, delete, Undo",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Payments > a payment",
+   "covers": [
+    "R3-23",
+    "R3-15"
+   ],
+   "spec": "§6.7",
+   "status": "pass",
+   "ends": "Changed to Groceries then Undone; delete then Undo restores the count",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open CHICKEN RICE SHOP",
+     "assertion": "facts, source, bank text",
+     "status": "pass",
+     "screenshot": "FLOW-R3-8-step-1-txn.png"
+    },
+    {
+     "n": 2,
+     "action": "Category",
+     "assertion": "sheet",
+     "status": "pass",
+     "screenshot": "FLOW-R3-8-step-2-category-sheet.png"
+    },
+    {
+     "n": 3,
+     "action": "Groceries",
+     "assertion": "Groceries: just this one? From now on / Just this one",
+     "status": "pass",
+     "screenshot": "FLOW-R3-8-step-3-scope.png"
+    },
+    {
+     "n": 4,
+     "action": "Just this one",
+     "assertion": "toast Changed to Groceries",
+     "status": "pass",
+     "screenshot": "FLOW-R3-8-step-4-changed.png"
+    },
+    {
+     "n": 5,
+     "action": "Delete",
+     "assertion": "toast Deleted, back to Payments",
+     "status": "pass",
+     "screenshot": "FLOW-R3-8-step-5-deleted.png"
+    },
+    {
+     "n": 6,
+     "action": "Undo",
+     "assertion": "count restored",
+     "status": "pass",
+     "screenshot": "FLOW-R3-8-step-6-undeleted.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-9",
+   "title": "Split: Just my part",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "confirm > Split",
+   "covers": [
+    "R3-4"
+   ],
+   "spec": "§6.4, D92",
+   "status": "pass",
+   "ends": "mine 3486 + Others 2927 = 6413",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Scan; confirm",
+     "assertion": "items",
+     "status": "pass",
+     "screenshot": "FLOW-R3-9-step-1-confirm.png"
+    },
+    {
+     "n": 2,
+     "action": "Split > I paid > Just my part",
+     "assertion": "Done disabled until an item is ticked",
+     "status": "pass",
+     "screenshot": "FLOW-R3-9-step-2-tick.png"
+    },
+    {
+     "n": 3,
+     "action": "Tick two",
+     "assertion": "Your part RM34.86 · Others’ items RM29.27",
+     "status": "pass",
+     "screenshot": "FLOW-R3-9-step-3-ticked.png"
+    },
+    {
+     "n": 4,
+     "action": "Done",
+     "assertion": "Your part is RM34.86. Others owe RM29.27",
+     "status": "pass",
+     "screenshot": "FLOW-R3-9-step-4-done.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-13",
+   "title": "Offline then online",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Review",
+   "covers": [
+    "R3-29"
+   ],
+   "spec": "§5, patterns §7",
+   "status": "pass",
+   "ends": "Not synced yet ×2 offline; 0 after reconnect; one manual row",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Go offline; answer a row",
+     "assertion": "answer shows at once, badge falls",
+     "status": "pass",
+     "screenshot": "FLOW-R3-13-step-1-offline-answered.png"
+    },
+    {
+     "n": 2,
+     "action": "Add manually; Payments",
+     "assertion": "Not synced yet marks",
+     "status": "pass",
+     "screenshot": "FLOW-R3-13-step-2-not-synced-marks.png"
+    },
+    {
+     "n": 3,
+     "action": "Back online",
+     "assertion": "marks clear, 1 row",
+     "status": "pass",
+     "screenshot": "FLOW-R3-13-step-3-synced.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-15",
+   "title": "Dev states on every screen",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "?state=",
+   "covers": [
+    "R3-28"
+   ],
+   "spec": "patterns §7",
+   "status": "pass",
+   "ends": "each is a skeleton, words with a button, or a banner",
+   "steps": [
+    {
+     "n": 1,
+     "action": "empty",
+     "assertion": "Spent since you started RM 0.00",
+     "status": "pass",
+     "screenshot": "FLOW-R3-15-empty-home.png"
+    },
+    {
+     "n": 2,
+     "action": "loading",
+     "assertion": "skeleton, no spinner",
+     "status": "pass",
+     "screenshot": "FLOW-R3-15-loading-home.png"
+    },
+    {
+     "n": 3,
+     "action": "error",
+     "assertion": "Couldn't load Home … Try again",
+     "status": "pass",
+     "screenshot": "FLOW-R3-15-error-home.png"
+    },
+    {
+     "n": 4,
+     "action": "offline",
+     "assertion": "banner and data",
+     "status": "pass",
+     "screenshot": "FLOW-R3-15-offline-home.png"
+    },
+    {
+     "n": 5,
+     "action": "payments, empty",
+     "assertion": "No payments yet.",
+     "status": "pass",
+     "screenshot": "FLOW-R3-15-empty-payments.png"
+    },
+    {
+     "n": 6,
+     "action": "payments, error",
+     "assertion": "Couldn't load your payments. Try again",
+     "status": "pass",
+     "screenshot": "FLOW-R3-15-error-payments.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-16",
+   "title": "Back and history",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More > Payments > txn",
+   "covers": [
+    "R3-30"
+   ],
+   "spec": "patterns §6, §10",
+   "status": "pass",
+   "ends": "Back closes the sheet first; Insights Back → Home",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Mark as…",
+     "assertion": "sheet open",
+     "status": "pass",
+     "screenshot": "FLOW-R3-16-step-1-sheet-open.png"
+    },
+    {
+     "n": 2,
+     "action": "Back",
+     "assertion": "sheet closed, still on txn",
+     "status": "pass",
+     "screenshot": "FLOW-R3-16-step-2-back-closed-sheet.png"
+    },
+    {
+     "n": 3,
+     "action": "Ask Sen",
+     "assertion": "Looking at: More (placeholder)",
+     "status": "pass",
+     "screenshot": "FLOW-R3-16-step-3-sen.png"
+    },
+    {
+     "n": 4,
+     "action": "Insights, Back",
+     "assertion": "Home",
+     "status": "pass",
+     "screenshot": "FLOW-R3-16-step-4-back-from-tab.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-17",
+   "title": "Hostile text",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "manual > More",
+   "covers": [
+    "R3-34"
+   ],
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "ends": "text, no script, layout intact",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Payments",
+     "assertion": "row title <img src=x …, amount whole",
+     "status": "pass",
+     "screenshot": "R3-F-step-1-payments.png"
+    },
+    {
+     "n": 2,
+     "action": "txn",
+     "assertion": "300-char merchant wraps; no overflow",
+     "status": "pass",
+     "screenshot": "R3-F-step-2-txn.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-18",
+   "title": "Six looks",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Home, Review",
+   "covers": [
+    "R3-31"
+   ],
+   "spec": "patterns §1",
+   "status": "pass",
+   "ends": "same hero label, pace, note and Review text in 12 look/mode pairs",
+   "steps": [
+    {
+     "n": 1,
+     "action": "minted",
+     "assertion": "Home",
+     "status": "pass",
+     "screenshot": "FLOW-R3-18-minted-review.png"
+    },
+    {
+     "n": 2,
+     "action": "instrument",
+     "assertion": "Home",
+     "status": "pass",
+     "screenshot": "FLOW-R3-18-instrument-review.png"
+    },
+    {
+     "n": 3,
+     "action": "firefly",
+     "assertion": "Home",
+     "status": "pass",
+     "screenshot": "FLOW-R3-18-firefly-review.png"
+    },
+    {
+     "n": 4,
+     "action": "line",
+     "assertion": "Home",
+     "status": "pass",
+     "screenshot": "FLOW-R3-18-line-review.png"
+    },
+    {
+     "n": 5,
+     "action": "mercury",
+     "assertion": "Home",
+     "status": "pass",
+     "screenshot": "FLOW-R3-18-mercury-review.png"
+    },
+    {
+     "n": 6,
+     "action": "copper",
+     "assertion": "Home",
+     "status": "pass",
+     "screenshot": "FLOW-R3-18-copper-review.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-5",
+   "title": "Manual entry, and the amount refusals",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Review > Missing a payment?",
+   "covers": [
+    "R3-2",
+    "R3-21",
+    "R3-22"
+   ],
+   "spec": "§6.8",
+   "status": "fail",
+   "ends": "parses to sen; refusals in words (Add item Enter fails: finding 29)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Type 1,234.56",
+     "assertion": "RM1,234.56 saved as 123456",
+     "status": "pass",
+     "screenshot": "R3-E2-typed-123456.png"
+    },
+    {
+     "n": 2,
+     "action": "Type 0.30",
+     "assertion": "saved as 30",
+     "status": "pass",
+     "screenshot": "R3-E2-typed-30.png"
+    },
+    {
+     "n": 3,
+     "action": "Type 99999999999.99",
+     "assertion": "saved as 9999999999999",
+     "status": "pass",
+     "screenshot": "R3-E2-typed-9999999999999.png"
+    },
+    {
+     "n": 4,
+     "action": "Enter in Add item price",
+     "assertion": "item added once, no error",
+     "status": "fail",
+     "screenshot": "R3-A-step-2-after-enter.png"
+    }
+   ]
+  }
+ ],
+ "criteria": [
+  {
+   "id": "R3-1",
+   "title": "Money text: RM0.00, RM0.01, RM1,284.50, RM999,999,999.99; Over by, not -RM; amount whole beside a 300-char merchant",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "R3-E2 typed 99999999999.99 shows Added RM99,999,999,999.99; hero 'Over by' path; R3-F amount box 65 px beside 300 'M'"
+  },
+  {
+   "id": "R3-2",
+   "title": "Number pad parses text to sen; refusals",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "1,234.56→123456, 0.30→30, 12.5→1250, 99999999999.99→9999999999999; 21 bad inputs refused, none saved (R3-E)"
+  },
+  {
+   "id": "R3-3",
+   "title": "Receipt items add up exactly; 64.13 ÷ 3 = RM21.38",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "FLOW-R3-2: 'Items add up to the total ✓', pax 3 → RM21.38; apportion probe red"
+  },
+  {
+   "id": "R3-4",
+   "title": "Just my part: mine + Others' = total",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "FLOW-R3-9: 3486 + 2927 = 6413, items sum 6413, myShare 3486"
+  },
+  {
+   "id": "R3-5",
+   "title": "Shared-bill rule (D19)",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "b03-money pass; but pnpm test does not pin the repayment clause (finding 32)"
+  },
+  {
+   "id": "R3-6",
+   "title": "Refund lowers spending by exactly the refund; income unchanged; Undo restores; never on money out",
+   "spec": "see acceptance.md Run 3",
+   "status": "fail",
+   "evidence": "Incoming: 3,873.53→3,773.53 (-100.00), Undo restores. Outgoing payment marked as refund: -20.00 (finding 28)"
+  },
+  {
+   "id": "R3-7",
+   "title": "Own transfer: no spending, one row, balances move",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "FLOW-R3-7: spent/left unchanged, one 'Public Bank → Ryt Bank RM2,000.00 Filled in' row, total balance -RM2,000.00 (the one-sided credit is balanced)"
+  },
+  {
+   "id": "R3-8",
+   "title": "A prediction never shares a table with a fact",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "forecast probe red; the sheet's estimate 'An estimate: at this pace…'; meal average 'an estimate'"
+  },
+  {
+   "id": "R3-9",
+   "title": "Home, cycle sheet and Payments agree; first cycle and before-first-salary handled",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "Home spent 3,873.53 = sheet 3,873.53 = sum of 18 day headers 387,353; but the sheet's framing before first salary is finding 34"
+  },
+  {
+   "id": "R3-10",
+   "title": "Timezone: KL days and cycles do not move",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "b03-tz: KL, Los Angeles, Kiritimati, UTC, Pago Pago identical; dayKey probe red"
+  },
+  {
+   "id": "R3-11",
+   "title": "Payments list: order, sticky headers, marks, virtualised, search",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "1152 rows virtualised; hostile and metacharacter searches return 0 matches; transfer one row"
+  },
+  {
+   "id": "R3-12",
+   "title": "Review badge counts Needs you only",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "badge 12 = Needs you · 12; adding a Waiting receipt leaves it 12"
+  },
+  {
+   "id": "R3-13",
+   "title": "Every Needs-you kind with ≤3 buttons + Other…",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "b03-review FLOW-4 pass (12 kinds)"
+  },
+  {
+   "id": "R3-14",
+   "title": "One change per tap",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "b03-review/b03-r2 double-tap specs pass; tap-guard probe red (2 tests)"
+  },
+  {
+   "id": "R3-15",
+   "title": "Undo restores exactly; toast above the tab bar",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "FLOW-R3-6 Undo → 3,873.53; FLOW-R3-8 delete+Undo count restored"
+  },
+  {
+   "id": "R3-16",
+   "title": "Scan routing: tap, 500 ms long-press, tab bar hidden on task screens",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "b03-core AC-4s/AC-1s and b03-r2 long-press specs pass"
+  },
+  {
+   "id": "R3-17",
+   "title": "Scan in a browser: crop, refusals, same file twice",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "text file refused in words; empty file shows no crop; second commit 'Already added'"
+  },
+  {
+   "id": "R3-18",
+   "title": "Reading: leave, failure goes to manual",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "Failed read shows 'Sen couldn't read this receipt' > Enter it by hand > manual with the photo (the photo itself is a placeholder: finding 35)"
+  },
+  {
+   "id": "R3-19",
+   "title": "After Done: attach, several, none, total differs",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "Attached to RM64.13 on Ryt Bank, txns 1199→1199; none → Waiting for its payment; finding 30 is the failed-check case"
+  },
+  {
+   "id": "R3-20",
+   "title": "Waiting receipt: attach (likely first), evidence, enter",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "FLOW-R3-4: attached, spent unchanged"
+  },
+  {
+   "id": "R3-21",
+   "title": "Manual: saves once, Undo, near-duplicate warning",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "b03-manual pass; Enter saves once"
+  },
+  {
+   "id": "R3-22",
+   "title": "By hand receipt: items typed as text; not-itemised allowed; over refused",
+   "spec": "see acceptance.md Run 3",
+   "status": "fail",
+   "evidence": "Enter in the price double-submits and shows two errors (finding 29)"
+  },
+  {
+   "id": "R3-23",
+   "title": "txn: facts, rule-scope sheet, Mark as, Delete with Undo",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "FLOW-R3-8: 'Groceries: just this one?' sheet, Changed to Groceries, delete+Undo; the correction row is a stub (finding 36)"
+  },
+  {
+   "id": "R3-24",
+   "title": "Insights cards computed from the same data, Ask Sen",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "Takeaways agree with Payments (22 payments, RM177.10; Meals +RM222.23 above usual)"
+  },
+  {
+   "id": "R3-25",
+   "title": "Chart rules (series, legend, no raw colours, warning with icon and words)",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "no raw colour in blocks/screens/frame; budgets 'Over by RM20.30'; axe clean in 12 looks"
+  },
+  {
+   "id": "R3-26",
+   "title": "Budgets, goals, subscriptions",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "Budget 78%/63% correct; goal shows sample (6 cycles) and 'Too early to say' on first cycle; subscriptions RM141.90 = 23.90+4.90+85.10+28.00"
+  },
+  {
+   "id": "R3-27",
+   "title": "Production shows Not built yet; no made-up data, no secret",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "b03-prod: notBuilt on every screen; grep of 68 prod assets: 0 hits for names, keys, tokens"
+  },
+  {
+   "id": "R3-28",
+   "title": "Dev states reachable and shaped right",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "FLOW-R3-15: 10 screens × empty/loading/error/offline; error = words + Try again; no spinner"
+  },
+  {
+   "id": "R3-29",
+   "title": "Offline: Not synced yet, syncs once",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "FLOW-R3-13: 2 marks offline, manual rows 1, unsynced 0 after reconnect"
+  },
+  {
+   "id": "R3-30",
+   "title": "Navigation, back, history, Sen's button",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "Back closes the sheet; Insights Back → Home; Sen sheet 'Looking at: More' (placeholder)"
+  },
+  {
+   "id": "R3-31",
+   "title": "Six looks: same words and numbers",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "FLOW-R3-18: hero label, pace, note and Review text identical in 12 look/mode pairs"
+  },
+  {
+   "id": "R3-32",
+   "title": "Accessibility: axe, 48 px, 1.5x text",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "FLOW-32 12 looks pass; 1.5x amount wrap is finding 23 (the criterion's clipping part)"
+  },
+  {
+   "id": "R3-33",
+   "title": "Web behaviour rules (§10)",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "AC-69 pass: overscroll none, contextmenu cancelled, inputs ≥16 px"
+  },
+  {
+   "id": "R3-34",
+   "title": "Hostile text renders as text",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "R3-F: no img/script in DOM, 0 dialogs, 0 errors, layout holds"
+  },
+  {
+   "id": "R3-35",
+   "title": "No floating-point money in the diff; the lint rule bites",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "grep: only ratios, coordinates, animation easing; parseFloat in money.ts → 2 eslint errors"
+  },
+  {
+   "id": "R3-36",
+   "title": "Data layer: hooks read, one write interface, zod-parsed views",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "fake.test.ts parses every view in every scenario; a malformed view landing in the error state was not tried"
+  },
+  {
+   "id": "R3-37",
+   "title": "No real data; hygiene",
+   "spec": "see acceptance.md Run 3",
+   "status": "pass",
+   "evidence": "pnpm hygiene passes; scenario names are made up"
+  }
+ ],
+ "notTested": [
+  {
+   "what": "RLS, SQL views and functions, API routes, pooled-connection user ids",
+   "why": "none exist in B03 (B05); phase 4 ran only against the fake and the shared zod types"
+  },
+  {
+   "what": "A captured payment at a known merchant filing itself silently (pay-new's second payment)",
+   "why": "the capture simulator is not wired to the fake"
+  },
+  {
+   "what": "The shell outbox surviving a kill; sync exactly once from the shell",
+   "why": "B07; the fake is in memory, and a page reload loses it by design"
+  },
+  {
+   "what": "first-run, sign-in and the other native screens",
+   "why": "B04/B08; only the landing state (before the first salary) is here"
+  },
+  {
+   "what": "Correcting an amount (12.345, abc refused)",
+   "why": "the row is a stub (finding 36)"
+  },
+  {
+   "what": "A refund larger than its purchase",
+   "why": "no scenario row or control reaches it; spendingOf clamps at zero by reading the code only"
+  },
+  {
+   "what": "A malformed view landing in the error state",
+   "why": "not tried; the fake's views all parse in fake.test.ts"
+  },
+  {
+   "what": "Font scale, haptic, back gesture and the toast over the real navigation bar on a real phone",
+   "why": "needs the device; queued in docs/local.md (two run 3 checks added)"
+  },
+  {
+   "what": "The repo's own pnpm e2e (390x844, twelve looks)",
+   "why": "it belongs to the parent session; QA's pkill briefly took its :4173/:4174 servers down (finding 41)"
+  }
+ ]
+}

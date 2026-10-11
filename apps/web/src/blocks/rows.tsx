@@ -1,4 +1,4 @@
-import { useId, type ComponentType, type HTMLAttributes, type ReactNode } from 'react';
+import { useId, useRef, useState, type ComponentType, type HTMLAttributes, type ReactNode } from 'react';
 import { ChevronRightIcon, CloudOffIcon, InboxIcon, ReceiptTextIcon, SparklesIcon, SplitIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { dayLabel } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import { Money, type MoneyKind } from './money';
+import { settleTap } from '@/lib/tap-guard';
 import { toastUndo } from './toast';
 
 // The rows every list is made of (patterns.md §7), composed from shadcn's Item. A row is one control:
@@ -111,9 +112,13 @@ export interface ReviewAnswer {
   label: string;
   /** Sen suggests this one: marked on the button (patterns.md §7). */
   suggested?: boolean;
-  /** Makes the change, and returns what happened, in words, and how to undo it. */
-  onSelect: () => { said: string; undo: () => void };
+  /**
+   * Makes the change, and returns what happened, in words, and how to undo it; or opens what answers
+   * it (a sheet, a screen) and returns nothing.
+   */
+  onSelect: () => Answered | Promise<Answered | null> | void;
 }
+type Answered = { said: string; undo: () => void };
 
 /**
  * A question that needs you: on one line, what Sen knows on the next, then at most three answers plus
@@ -129,8 +134,12 @@ export function ReviewRow({
   question: ReactNode;
   knows: ReactNode;
   answers: ReviewAnswer[];
-  onOther: () => void;
+  /** Other…: the full set of choices. Left out where the buttons are every choice there is. */
+  onOther?: () => void;
 }) {
+  // one answer at a time: a double tap applies it once (QA B03, F2)
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
   return (
     <Item size="sm" className="rounded-none text-base">
       <ItemContent className="min-w-0 gap-1">
@@ -143,9 +152,22 @@ export function ReviewRow({
             key={a.label}
             variant={a.suggested ? 'default' : 'secondary'}
             size="sm"
+            aria-disabled={busy || undefined}
             onClick={() => {
-              const { said, undo } = a.onSelect();
-              toastUndo(said, undo);
+              // one answer per row, and none while the last change settles: the next row slides into
+              // this place, so a double tap would answer it too (patterns.md §7, QA B03 run 2)
+              if (pending.current || !settleTap()) return;
+              pending.current = true;
+              setBusy(true);
+              const release = () => {
+                pending.current = false;
+                setBusy(false);
+              };
+              void Promise.resolve(a.onSelect()).then((r) => {
+                // answered: the row is on its way out, so it stays answered; opened a sheet: free again
+                if (r) toastUndo(r.said, r.undo);
+                else release();
+              }, release);
             }}
           >
             {a.suggested ? <SparklesIcon aria-hidden="true" /> : null}
@@ -153,9 +175,11 @@ export function ReviewRow({
             {a.suggested ? <span className="sr-only">, Sen suggests this</span> : null}
           </Button>
         ))}
-        <Button variant="ghost" size="sm" onClick={onOther}>
-          Other…
-        </Button>
+        {onOther ? (
+          <Button variant="ghost" size="sm" onClick={onOther}>
+            Other…
+          </Button>
+        ) : null}
       </ItemFooter>
     </Item>
   );

@@ -50,3 +50,8 @@ export const smallTargets = (page: Page) =>
           `${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30)}" ${Math.round(el.getBoundingClientRect().width)}×${Math.round(el.getBoundingClientRect().height)}`,
       );
   });
+
+/** Waits until the screen has its data: no skeleton saying Loading is left. */
+export async function settled(page: Page) {
+  await expect(page.locator('main [role="status"]:has-text("Loading")')).toHaveCount(0, { timeout: 10_000 });
+}

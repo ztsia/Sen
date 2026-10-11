@@ -1,61 +1,53 @@
 # Handoff
 
-Rewritten 10 Oct 2026 by a cloud session (the first install on the phone, no slice). The protocol is in
-`CLAUDE.md`, *Session rotation*: read this first, and rewrite it before you end.
+Rewritten 11 Oct 2026 by the B03 session, at the slice's end. The protocol is in `CLAUDE.md`,
+*Session rotation*: read this first, and rewrite it before you end.
 
 ## Where things stand
 
-- **B01 and B02 are merged** (B02: PR #3, 9 Oct). **Next: B03 · Skeleton: the five tabs**, on
-  `B03/skeleton-tabs` from `main`. The branch doesn't exist yet.
-- **The local session's setup is merged** (`ops/local-setup`, PR #4, 10 Oct), and its release,
-  *Sen 0.2.27*, is installed on the owner's phone (Play Protect has to be off to install: `docs/local.md`).
-- **On `claude/dazzling-bohr-vdfvaz`, a fix waiting for the owner's merge:** the frame ignored the
-  status bar's inset, so on the phone the app bar sat under the status bar. The column now pads
-  itself by the shell's `--safe-area-inset-top` (and the bottom one when no tab bar shows), as do
-  the frame's own error column and full sheets. Web only: a merge reaches the phone at its next launch.
-- **Vercel is linked** (project `sen`: root `apps/web`, Node 22.x, production branch `main`).
-  Production is `https://sen-my.vercel.app` and answers 200. The review alias
-  `https://sen-review.vercel.app` follows the branch `review`, which exists.
-- **The signing key is in the repo's secrets** (`SEN_KEYSTORE_B64`, `SEN_KEYSTORE_PASSWORD`), made on
-  the laptop, with a backup the owner holds. `BETTER_AUTH_SECRET` is in Vercel for B05.
-- **On the phone so far:** the release installs and loads production. The soak hasn't started. QA records for B02 are in `qa/B02/`.
+- **B03 · Skeleton: the five tabs is done** on `B03/skeleton-tabs`; its PR waits for the owner's
+  merge. B01, B02, PR #5 and D123 (PR #6) are merged.
+- **Next: B04** (`docs/briefs/B04-skeleton-rest.md`) on `B04/skeleton-rest`, from `main` once B03 is
+  merged. It builds on B03's data layer (`apps/web/src/data/`: one `backend.ts`, a hook per screen,
+  the fake with Wei Ming's month) and the screens' house style (`screens/home/`, `screens/review/`).
+- **QA:** three full runs (`qa/B03/report-run1.md`, `report-run2.md`, `report.md`), every finding
+  fixed or recorded with its tier in `qa/B03/ledger.md`. The latest is published at
+  https://claude.ai/artifact/WfFSai2Hz3RP9Kbe93w88p. After run 3, the owner chose no fourth run
+  (quota): its fixes were checked against QA's own run 3 specs (21 of 21), unit and e2e regressions.
+- **Usage:** `docs/usage.md` has B03's row: the main session was 73% of the cost, mostly re-reading
+  its long context; implementers cost $1–2 a batch, a full QA run $8–10.
 
 ## Decided, and why
 
-- **D123 (owner, 10 Oct): screenshots as receipts.** One tap on *Attach screenshot* for a screenshot
-  taken within 10 minutes of a captured payment, and *Sen · Receipt* pinned in the share sheet. In
-  the spec (§6.4) and B15's brief; on PR #5 with the status-bar fix.
-- **D122 (owner, 10 Oct): nothing is deployed by hand.** A merge to `main` is the only step: Vercel
-  for the web app and API, migrations with the production deploy (B05 picks the mechanism; Vercel's
-  build step recommended), Cloudflare's Git builds for the Worker (B06), a signed release for the
-  shell, which the phone takes from *Releases* through Obtainium.
-- **The key was made locally, not by the *Shell signing key* workflow**, so a backup exists.
-- **Vercel's first deployment of a project is always production.** Pushing `ops/local-setup` was
-  that first one, so production briefly serves this branch; its web app is the same as `main`'s.
-- D116–D121 stand as in B02: mask every digit outside an amount until B10 classifies; QA's tiers.
+- **D125, amended 11 Oct (owner):** subagents by standing request; `implementer` may run on Haiku at
+  low effort for mechanical batches, Sonnet for judgment. **B04 measures it:** run its first
+  mechanical batch on Haiku and a comparable one on Sonnet, count the fixes each needed, write the
+  result here and in `docs/usage.md`.
+- **Log usage before every handoff and PR:** `node scripts/usage.mjs --log <slice>`; the transcripts
+  go with the VM.
+- **QA rounds cost quota (owner, 11 Oct):** fix by the cheapest tier that's honest; a fresh full
+  run only when a fix reaches the whole flow, and say what it will cost first.
+- **D124:** the core journeys are `first-run`, `pay-new` and `scan-after`.
+- **Refunds and income are money in only**, in the UI and in the fake's writes; B05's API refuses
+  the same way.
+- **`npx shadcn add` once installed an unrelated npm package `cn`:** add components with `--dry-run`
+  first and check `package.json` after.
 
 ## Open with the owner
 
-- **The review alias is behind Vercel's login** (measured: 302 to vercel.com), so the review build
-  can't load it. Recommend turning Vercel Authentication off for the project: the repo is public and
-  previews hold only made-up data. The other way is teaching the review build to sign in to Vercel.
-- Which journeys in `docs/flows.md` are core? Recommend: first run, a payment to Review, and Scan.
-- D115 is still *Proposed*: it was to be confirmed on B02's PR, which merged without a comment.
-- Copper's overspent green (from B01). Anthropic's data terms against D34 (before B10).
-- Run 6's note 15 (a missing `when` stored as the post time) is for B07 to decide.
-- From `docs/local.md`: move the key's backup, the `DENYLIST` secret, install and the soak, the
-  hidden tests, the ESS capture (laptop only), Neon's terms (before B05).
+- **D115 is still *Proposed*.** I recommended confirming it.
+- **Copper's overspent green:** the owner said *Ok* without a recommendation. Mine: keep it as designed
+  (verdigris only on copper, the warning always with its icon and words). Confirm.
+- The review alias behind Vercel's login; Anthropic's data terms against D34 (before B10); run 6's
+  note 15 (B07); `docs/local.md`'s queue (two QA phone checks from run 3 added).
 
 ## What to do first
 
-1. If the status-bar fix (`claude/dazzling-bohr-vdfvaz`) isn't merged yet, B03 starts from `main` anyway; it touches
-   `frame/app-shell.tsx`, so merge `main` in once it lands.
-2. B03, on `B03/skeleton-tabs`, from its brief. It needs nothing from the owner.
-3. `ShellTest.b_the_bridge_answers_our_own_site` failed once on the emulator (run 38033474926, after adb
-   was slow to start) and passed twice on the same commit. If it fails again, look at its wait.
+1. If B03's PR is merged: start B04 from `main` (`git checkout -b B04/skeleton-rest origin/main`).
+   If not, B04 waits on it: get the PR's CI green and tell the owner it's ready to merge.
+2. Build the shared ground yourself, then brief batches (`CLAUDE.md`, *Models and subagents*).
 
 ## Don't reopen
 
-D1–D122, unless the owner raises one. In particular remote against bundled (D114), masking every
-digit until classify-first (D119, D121) rather than more filter rules, the slice order (D111), no
-screen mockups (D84), one brief, one branch; shadcn first, customised in place; deploys by hand.
+D1–D125, unless the owner raises one. One brief, one branch; shadcn first, customised in place; no
+screen mockups (D84); nothing made up in production (modules.md rule 6).

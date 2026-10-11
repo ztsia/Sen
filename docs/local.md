@@ -256,3 +256,16 @@ Each slice that needs one of these lists it under *Needs from you first* in its 
       Then, on the phone: sign in once in Settings → *Claims* → *ESS*, and on the next payday check
       that the payslip arrived by itself.
 
+- [ ] **B03's five tabs on the real phone** (QA B03). Open the preview in the debug shell and check what a
+      browser can't: hold the Scan tab for half a second (a light buzz, the sheet opens, no tap on release);
+      answer a Review row and see the toast sit above the tab bar, clear of Sen's button; turn on airplane
+      mode and answer a row, then say whether the screen updates (in a browser it doesn't: QA B03 finding 1);
+      and swipe back from a sheet, then from Insights (it should go to Home).
+      Run 2 adds three: set Android's font size to the largest and read Home's *Spent … this cycle* card (the
+      amount should stay whole; QA B03 finding 23); scroll Review down and tap Insights, then More →
+      Payments twice (each should open at its top; finding 18); and double-tap *Apply all* and *Delete*
+      (one application, one step back; findings 17 and 21).
+      Run 3 adds two: with the font size at the largest, check Home's *Spent … this cycle* amount again (it
+      still breaks at the comma in a browser; finding 23, still failing); and on a slow signal, open Payments
+      for the first time after an update and say whether the tab bar jumps to the middle of the screen while
+      it loads (QA B03 run 3, finding 31).

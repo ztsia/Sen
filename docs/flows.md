@@ -9,6 +9,9 @@ these as guided journeys; the owner approved them on 6 Oct.
 `screens.md`, such as `home` or `confirm`. *When it goes wrong* lists the sad paths, each with what the
 person sees. *Done* is the state that ends it.
 
+**Core journeys** (D124): `first-run`, `pay-new` and `scan-after`, marked **core** below. Every QA run
+walks them, whatever the slice.
+
 The behaviour is in `spec_v2.md`; this file cites it. Made-up names and amounts throughout (D11);
 `TAN WEI MING`, *Wei Ming* on a split link, stands in for the owner.
 
@@ -32,7 +35,7 @@ The behaviour is in `spec_v2.md`; this file cites it. Made-up names and amounts 
 
 ## Setting up
 
-### First run (`first-run`)
+### First run (`first-run`) · **core**
 
 **Starts:** the owner opens the shell for the first time, installed from a GitHub Actions build (§3).
 
@@ -87,7 +90,7 @@ The behaviour is in `spec_v2.md`; this file cites it. Made-up names and amounts 
 (§6.5). A Grab charge with no restaurant waits up to 10 minutes for its context (§6.2). A card hold at
 a pump is ignored (§6.3).
 
-### Paying at a new merchant (`pay-new`)
+### Paying at a new merchant (`pay-new`) · **core**
 
 **Starts:** a payment at a merchant Sen hasn't seen, such as ROTI BAKAR 88.
 
@@ -135,7 +138,7 @@ merchant. The refund lowers that purchase's spending, in its cycle; it's never i
 
 ## Receipts
 
-### Scanning a receipt after paying (`scan-after`)
+### Scanning a receipt after paying (`scan-after`) · **core**
 
 **Starts:** the quiet scan prompt, the category prompt's third button, a widget, the launcher shortcut,
 or a tap on the Scan tab (D69).

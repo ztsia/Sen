@@ -147,6 +147,7 @@ them in its *Charts* section.
 - Grid lines and axes in `border` and `muted-foreground`, recessive. One axis, never two.
 - Two or more series always have a legend, and direct labels where there's room. Text is never in a
   series colour: it stays in `foreground` or `muted-foreground`.
+- **Bars over time and goal meters.** One bar for each cycle, week or month (`ColumnBars`): the latest in the accent, the rest in the grey, with a dashed `muted-foreground` line for a median or a limit, named on the line. A goal's meter (`GoalMeter`) fills in the accent with no cycle tick and never takes the warning colour: a goal that's behind isn't an alarm.
 - **Touch, not hover:** a tap or drag on a chart shows its values in a tooltip; the takeaway line
   under it says the answer in words, so the chart is never the only way to get it.
 - The context grey sits below 3:1 against the card on purpose. It's recessive, so it never carries
@@ -258,6 +259,12 @@ Every change happens at once, with *Undo* in a toast (spec §6.7): recategorisin
 transfer, linking a repayment. The toast says what happened, in words (*Attached to RM58.30 on
 Ryt*), sits above the tab bar, stays 6 seconds or until the next change, and never covers Sen's
 button. A toast appears only when the change isn't visible on screen.
+
+**One change per double tap.** After a tap that changes something, a second tap within half a second
+is ignored, wherever it lands: when a Review row clears, the next row slides into its place under the
+finger, and a double tap must not answer it too (QA B03 run 2). A row also takes one answer at a
+time. `lib/tap-guard.ts` holds the rule; `ReviewRow` and every destructive or list-changing action
+use it.
 
 ### Status cards
 

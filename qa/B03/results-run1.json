@@ -1,0 +1,2159 @@
+{
+  "module": "B03",
+  "branch": "B03/skeleton-tabs",
+  "verdict": "fix first",
+  "generatedAt": "2026-10-10 UTC",
+  "phases": "1-6 (4 against the fake only: no SQL, API or RLS exist)",
+  "headline": "Money arithmetic, KL dates and the six looks hold up; the write layer and offline do not. Five Major findings (offline freeze, double-apply, no file dedupe, new payments sort wrongly, Save ends on about:blank) plus three probes the tests did not notice.",
+  "summary": {
+    "criteria": 118,
+    "pass": 100,
+    "fail": 11,
+    "unreachable": 7
+  },
+  "suites": {
+    "unit": "190/190 pass",
+    "e2e": "repo: 320/320 pass at 390x844; this review: 16 spec files at 412x915 (qa/e2e/b03-*.spec.ts), 12 look/mode axe runs clean; the failing expectations are the findings",
+    "typecheck": "clean",
+    "lint": "clean"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "Major",
+      "status": "open",
+      "title": "Real offline freezes every screen: a write made offline is applied but not shown until reconnect",
+      "detail": "TanStack Query's default networkMode ('online') pauses refetches once `navigator.onLine` is false. The fake applies the write, the toast says it worked, but Home's chip, Review's rows and Payments' marks stay stale. A person can answer the same row again. The dev panel's offline state never cuts the connection, so the repo's offline checks miss this. Every later slice plugs into this data layer.",
+      "repro": "qa/e2e/b03-offline.spec.ts (dev server): open /review, `context.setOffline(true)`, tap Meals on ROTI BAKAR 88; or `./node_modules/.bin/playwright test -c b03.config.ts b03-offline`",
+      "evidence": "OFFLINE: toast= \"ROTI BAKAR 88 is Meals from now on\\nUndo\" | row still on screen = 1 | heading = Needs you \u00b7 12 | fake db = {\"cat\":\"27a1\u2026\",\"review\":11,\"u\":1}\nback online: row on screen = 0",
+      "spec": "AC-12, AC-70, spec \u00a75, patterns \u00a77 Offline, flows.md offline",
+      "screenshots": ["FLOW-30-step-5-offline-answer-not-shown.png"]
+    },
+    {
+      "id": 2,
+      "severity": "Major",
+      "status": "open",
+      "title": "A double tap on a Review answer applies it twice; Undo then does nothing useful",
+      "detail": "`txn.kind` (transfer with another account) creates the filled-in side with a fresh uuid on every call, and ReviewRow has no in-flight guard, so two taps make two inferred transactions and move the account balance twice. After a double-tapped share tick the single Undo toast restores only the second command's snapshot, so the row stays gone. A retried outbox sync would duplicate the same way.",
+      "repro": "Review > transfer-missing row > double-tap `Public Bank` (qa/e2e/b03-review.spec.ts, 'AC-18s double-tapping an answer')",
+      "evidence": "double-tap on Public Bank: {\"before\":{\"n\":1199,\"inferred\":12},\"after\":{\"n\":1201,\"inferred\":14}}\nafter one Undo following a double tap, the row is back: false",
+      "spec": "AC-18s, AC-63, spec \u00a76.5, CLAUDE.md \"Every input has a dedupe key\"",
+      "screenshots": ["FLOW-4-step-5-double-tap.png"]
+    },
+    {
+      "id": 3,
+      "severity": "Major",
+      "status": "open",
+      "title": "The same receipt file twice is not \"Already added\": it becomes a second waiting receipt",
+      "detail": "`upload(file, forTxnId)` makes a random draft id each time and never hashes the file, so the content-hash dedupe of \u00a76.5 cannot be expressed through the backend interface. The first copy attaches; the second finds no free payment and waits in Review as if its payment hadn't arrived.",
+      "repro": "Scan the same file twice, Done each time (b03-scan.spec.ts FLOW-14)",
+      "evidence": "second identical file -> toast: \"Waiting for its payment. It\u2019s in Review\\nUndo\" receipts 46 -> 47 waiting 2",
+      "spec": "AC-31, spec \u00a76.5, flows.md scan-after \"The same file twice: Already added\", CLAUDE.md dedupe",
+      "screenshots": ["FLOW-14-step-1-same-file-twice.png"]
+    },
+    {
+      "id": 4,
+      "severity": "Major",
+      "status": "open",
+      "title": "A payment added just now is not at the top of Payments: ordering compares mixed-format timestamp strings",
+      "detail": "Rows are sorted with `b.at.localeCompare(a.at)` on ISO strings. The scenario writes `+08:00` offsets; new payments use `\u2026Z`. Compared as text, 12:40Z sorts below 19:58+08:00, so a payment saved at 20:40 KL lands 4th. The same string sort feeds Review's order and the 'last account used' default. Day totals still add correctly, so the screen disagrees with itself.",
+      "repro": "Review > Missing a payment? > RM1,234.56 Meals > More > Payments (b03-payments.spec.ts, long-name test)",
+      "evidence": "[ 'Sun, 18 Oct | Spent RM1,432.19', 'SATE KAJANG HJ SAMURI \u2026 RM64.13', 'GRABFOOD \u2026 RM32.50', \"Nando's \u2026 RM83.50\", 'A VERY LONG MERCHANT NAME \u2026 RM1,234.56' ]",
+      "spec": "AC-52b, screens.md payments \"newest first\"",
+      "screenshots": ["FLOW-24-step-5-long-name.png"]
+    },
+    {
+      "id": 5,
+      "severity": "Major",
+      "status": "open",
+      "title": "Add expense from a first page (the launcher shortcut, a deep link) ends on about:blank after Save",
+      "detail": "Manual calls `router.history.back()` after saving. When /manual is the first history entry, back leaves the app: about:blank in a browser, and the toast is lost with the page. The launcher's *Add expense* opens manual straight away (\u00a79.1).",
+      "repro": "Open /s/manual directly, enter 3.30, Meals, Save (b03-manual.spec.ts 'AC-36 Save from a deep link')",
+      "evidence": "after Save when manual was the first page: about:blank",
+      "spec": "AC-36b, spec \u00a79.1, \u00a76.8",
+      "screenshots": ["FLOW-7-step-4-save-from-shortcut.png"]
+    },
+    {
+      "id": 6,
+      "severity": "Major",
+      "status": "open",
+      "title": "Three of five probes on the money and prediction rules stayed green: the suite does not guard them",
+      "detail": "Probe 3 let `db.charges` forecasts into `spentIn` (cycle sheet spending, Insights, year): 190 unit and the four related e2e journeys stay green; only this review's cycle-sheet-equals-Home check went red. Probe 4b removed receipt.commit's idempotency guard: green. Probe 6 changed the small-things boundary to `<=` RM15.00: green. The money module, the dedupe on txn.create and the KL date helpers are guarded (probes 1, 2, 4, 5 went red).",
+      "repro": "See probes in this report; qa/e2e/b03-home.spec.ts catches probe 3",
+      "evidence": "pnpm test: Tests 190 passed (190) with the forecast probe applied; pnpm e2e -g '(daily|subscription|insights|budget) in minted, light': 4 passed",
+      "spec": "CLAUDE.md \"A prediction never shares a table with a fact\"; phase 3",
+      "screenshots": []
+    },
+    {
+      "id": 7,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Scan-more \"From gallery\" dead-ends",
+      "detail": "It routes to `crop` with no id: \"Pick a photo first.\" with a button back to Scan, and no file picker.",
+      "repro": "Hold the Scan tab 600 ms > From gallery",
+      "evidence": "From gallery lands on: /s/crop  |  Pick a photo first.  |  file inputs on that screen: 0",
+      "spec": "AC-24s, D69, spec \u00a79.1",
+      "screenshots": ["FLOW-2-step-4-from-gallery.png"]
+    },
+    {
+      "id": 8,
+      "severity": "Minor",
+      "status": "open",
+      "title": "By hand, items far above the payment still save",
+      "detail": "Items of RM1,009.00 against a RM64.13 payment show 'Items come to RM944.87 more than the payment', yet Done attaches the receipt. D90 says it is checked against the payment's amount; patterns \u00a77 says the button stays enabled and says what's missing.",
+      "repro": "txn (no receipt) > No receipt\u2026 > Enter the items > Nasi 10.00, Big 999.00 > Done",
+      "evidence": "Items come to RM944.87 more than the payment  ->  toast Attached to RM64.13 on Ryt Bank, receipts 45 -> 46",
+      "spec": "AC-34s, D90",
+      "screenshots": ["FLOW-17-step-3-overshoot.png"]
+    },
+    {
+      "id": 9,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Changes does not say who made each change",
+      "detail": "Each line is a time and what happened. \u00a76.7: every change is in the audit log with who made it (you, the agent or the system).",
+      "repro": "txn > Add a note > read Changes",
+      "evidence": "Changes | Today, 20:40 \u00b7 Note added",
+      "spec": "AC-56, spec \u00a76.7",
+      "screenshots": []
+    },
+    {
+      "id": 10,
+      "severity": "Minor",
+      "status": "open",
+      "title": "\"Sen suggested 2 answers, marked below\" marks and applies one",
+      "detail": "The transfer-missing item suggests key `pbb`, but its buttons are keyed by account id, so nothing is marked and Apply all skips it.",
+      "repro": "Review > Apply all",
+      "evidence": "apply-all toast: Applied 1 of Sen's answers; scenario: [{kind:'transfer-missing',suggested:'pbb'},{kind:'money-in',suggested:'income'}]",
+      "spec": "AC-23, screens.md review item 1",
+      "screenshots": ["FLOW-4-step-6-apply-all.png"]
+    },
+    {
+      "id": 11,
+      "severity": "Minor",
+      "status": "open",
+      "title": "An over-budget category reads \"At risk: 107% spent\", not \"Over by RM20.30\"",
+      "detail": "patterns \u00a73 gives 'Over by RM215.40' as the example of a warning. It has the icon and words; only the wording differs.",
+      "repro": "Insights > budgets",
+      "evidence": "Shopping | RM320.30 of RM300.00 | At risk: 107% spent, 63% of the cycle gone",
+      "spec": "AC-43w, patterns \u00a73",
+      "screenshots": ["FLOW-20-step-1-budgets.png"]
+    },
+    {
+      "id": 12,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Attach to a payment\u2026 lists recent payments, not likely ones",
+      "detail": "flows.md receipt-first: same merchant, close amounts. The picker is newest first (the refund picker does put the merchant first).",
+      "repro": "Review > Waiting on others > MR DIY RM23.90 > Attach to a payment\u2026",
+      "evidence": "first candidates: SATE KAJANG RM64.13, GRABFOOD RM32.50, Nando's RM83.50",
+      "spec": "flows.md receipt-first",
+      "screenshots": ["FLOW-5-step-4-attach-picker.png"]
+    },
+    {
+      "id": 13,
+      "severity": "Minor",
+      "status": "open",
+      "title": "/s/confirm without an id shows a skeleton forever",
+      "detail": "The draft query is disabled with no id, so `Loaded` never leaves its skeleton. With an unknown id it says 'Sen can't find this receipt.'",
+      "repro": "Open /s/confirm",
+      "evidence": "main [role=status] 'Loading' never clears (10 s timeout in b03-core AC-4s run)",
+      "spec": "patterns \u00a77 Loading/Error",
+      "screenshots": []
+    },
+    {
+      "id": 14,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Made-up data slips: a future goal contribution counts as saved; no-capture Review mentions Public Bank",
+      "detail": "Goals list 'Fri, 30 Oct, 10:20 RM500.00' under 'Put in so far' on 18 Oct and counts it in the total saved. The no-capture scenario's Review keeps a row that says 'Sen can't see a payment from Public Bank'. Payments' day headers have no year though the history spans 12 months ('Fri, 31 Oct' is 2025).",
+      "repro": "Insights > goals > Japan in spring; ?scenario=month > Review",
+      "evidence": "Put in so far | Fri, 30 Oct, 10:20 | RM500.00 (today is Sun, 18 Oct)",
+      "spec": "D11, screens.md Varies",
+      "screenshots": ["FLOW-22-step-2-goal.png"]
+    },
+    {
+      "id": 15,
+      "severity": "Note",
+      "status": "open",
+      "title": "Gaps that are by design in a skeleton, listed so nobody reads them as passes",
+      "detail": "Deleting a notification payment sets deletedAt only (the scenario's payments have no bank event to dismiss). `receipt` has no email view (D91). Year's October income is RM4.80 because salary lands on the 30th. Correcting amount/time says it arrives with B13. A reload loses the in-memory fake. The second payment at a known merchant after pay-new, and first-run's sign-in to payday steps, cannot be driven from B03 (B02's simulator is not wired to the fake ledger).",
+      "repro": "",
+      "evidence": "",
+      "spec": "AC-58e, AC-70s, FLOW-C1, FLOW-C2",
+      "screenshots": []
+    },
+    {
+      "id": 16,
+      "severity": "Note",
+      "status": "open",
+      "title": "The repo e2e suite is at 390\u00d7844; this review ran 412\u00d7915",
+      "detail": "Both pass. The repo's 320 e2e tests pass in 11.9 min.",
+      "repro": "",
+      "evidence": "pnpm e2e: 320 passed (11.9m)",
+      "spec": "",
+      "screenshots": []
+    }
+  ],
+  "probes": [
+    {
+      "broke": "money.apportion: leftover sen never handed out (largest remainder removed)",
+      "caught": true,
+      "note": "money.test 'splits by largest remainder' and the property test red; fake.test 'attaches a scanned receipt' red"
+    },
+    {
+      "broke": "money.parseSen: Math.trunc(parseFloat(text)*100) instead of digit parsing",
+      "caught": true,
+      "note": "two property tests red (format-then-parse), plus the no-float lint test"
+    },
+    {
+      "broke": "views.spentIn adds subscription forecasts (db.charges expected) to spending",
+      "caught": false,
+      "note": "190 unit tests green; 4 related e2e journeys green. Only qa/e2e/b03-home.spec.ts went red (cycle sheet 188327 vs Home 193127)"
+    },
+    {
+      "broke": "apply txn.create: duplicate-id guard removed",
+      "caught": true,
+      "note": "fake.test 'adds a payment by hand once' red"
+    },
+    {
+      "broke": "apply receipt.commit: duplicate-id guard removed",
+      "caught": false,
+      "note": "190 green; no test commits the same receipt twice"
+    },
+    {
+      "broke": "lib/dates.ts: timeZone: KL removed from day/time/dayKey formatters",
+      "caught": true,
+      "note": "3 unit tests red: day label in KL, relative, midnight in KL"
+    },
+    {
+      "broke": "insights small things: `< RM15.00` changed to `<=`",
+      "caught": false,
+      "note": "190 green apart from an unrelated timing flake (a planted-parseFloat test timed out at 5.1 s, green on re-run); no e2e checks the boundary"
+    }
+  ],
+  "flows": [
+    {
+      "id": "FLOW-1",
+      "title": "Tab tour",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/ preview",
+      "covers": ["AC-1", "AC-4", "AC-5"],
+      "spec": "\u00a79.1",
+      "status": "pass",
+      "ends": "five labelled tabs; Sen button on tab screens; Back goes Home",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Home",
+          "assertion": "Home tab aria-current, Ask Sen visible",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-1-home.png"
+        },
+        {
+          "n": 2,
+          "action": "Tap Review",
+          "assertion": "/review, Ask Sen visible",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-2-review.png"
+        },
+        {
+          "n": 3,
+          "action": "Tap Insights",
+          "assertion": "/insights",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-2-insights.png"
+        },
+        {
+          "n": 4,
+          "action": "Tap More",
+          "assertion": "/more",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-2-more.png"
+        },
+        {
+          "n": 5,
+          "action": "Ask Sen",
+          "assertion": "Looking at: Insights; Back closes it",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-sen-sheet.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-2",
+      "title": "Scan long-press",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Scan tab",
+      "covers": ["AC-3", "AC-24s"],
+      "spec": "D69",
+      "status": "fail",
+      "ends": "scan-more after 500 ms; Add manually reaches manual; From gallery dead-ends",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Hold 650 ms",
+          "assertion": "sheet with Scan, From gallery, Add manually",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-1-scan-more.png"
+        },
+        {
+          "n": 2,
+          "action": "Add manually",
+          "assertion": "/s/manual, no tab bar",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-2-add-manually.png"
+        },
+        {
+          "n": 3,
+          "action": "Tap",
+          "assertion": "/scan at once",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-3-tap-opens-scan.png"
+        },
+        {
+          "n": 4,
+          "action": "From gallery",
+          "assertion": "a photo can be picked",
+          "status": "fail",
+          "screenshot": "FLOW-2-step-4-from-gallery.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-3",
+      "title": "Home figures, cycle sheet, scenarios",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/",
+      "covers": ["AC-7", "AC-8", "AC-9", "AC-10", "AC-11", "AC-14", "AC-15", "AC-16"],
+      "spec": "\u00a79.2",
+      "status": "pass",
+      "ends": "figures equal the raw-row oracle; every scenario says what screens.md says",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Home",
+          "assertion": "Left until payday RM1,931.27, 12 days to go",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-1-home.png"
+        },
+        {
+          "n": 2,
+          "action": "Tap the figure",
+          "assertion": "sheet result 193127 = Home",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-2-cycle-sheet.png"
+        },
+        {
+          "n": 3,
+          "action": "Tap pace",
+          "assertion": "77 payments, cycle 2026-09-30",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-3-payments-this-cycle.png"
+        },
+        {
+          "n": 4,
+          "action": "Spend exactly what is left",
+          "assertion": "RM0.00 left, not Over by",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-5-exactly-zero.png"
+        },
+        {
+          "n": 5,
+          "action": "One sen more",
+          "assertion": "Over by RM0.01",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-6-over-by-one-sen.png"
+        },
+        {
+          "n": 6,
+          "action": "Month scenario",
+          "assertion": "Spent this month, no balances",
+          "status": "pass",
+          "screenshot": "FLOW-3-scenario-month.png"
+        },
+        {
+          "n": 7,
+          "action": "Payday scenario",
+          "assertion": "Payday card + Start",
+          "status": "pass",
+          "screenshot": "FLOW-3-scenario-payday.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-4",
+      "title": "Review: every kind, answer, Undo, double tap",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/review",
+      "covers": ["AC-17", "AC-18", "AC-18s", "AC-23"],
+      "spec": "\u00a76.6",
+      "status": "fail",
+      "ends": "double tap duplicates; Apply all applies one of two",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Review",
+          "assertion": "11 kinds, \u22643 buttons",
+          "status": "pass",
+          "screenshot": "FLOW-4-step-1-all-kinds.png"
+        },
+        {
+          "n": 2,
+          "action": "Double-tap Public Bank",
+          "assertion": "one inferred side",
+          "status": "fail",
+          "screenshot": "FLOW-4-step-5-double-tap.png"
+        },
+        {
+          "n": 3,
+          "action": "Apply all",
+          "assertion": "both suggestions applied",
+          "status": "fail",
+          "screenshot": "FLOW-4-step-6-apply-all.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-5",
+      "title": "Waiting on others, skipped, attach",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/review",
+      "covers": ["AC-19", "AC-20", "AC-22"],
+      "spec": "D72",
+      "status": "pass",
+      "ends": "waiting not counted; skipped restore with Undo; attach works",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Read Waiting on others",
+          "assertion": "BBQ, MR DIY, SHOPEE; badge 12",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-1-waiting.png"
+        },
+        {
+          "n": 2,
+          "action": "Skipped",
+          "assertion": "3 rows",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-2-skipped.png"
+        },
+        {
+          "n": 3,
+          "action": "Undo",
+          "assertion": "3 rows again",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-3-skipped-undone.png"
+        },
+        {
+          "n": 4,
+          "action": "Attach to a payment\u2026",
+          "assertion": "picker (recency order)",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-4-attach-picker.png"
+        },
+        {
+          "n": 5,
+          "action": "Pick",
+          "assertion": "Attached; row leaves",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-5-attached.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-6",
+      "title": "Empty Review",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/review?state=empty",
+      "covers": ["AC-21"],
+      "spec": "\u00a76.6",
+      "status": "pass",
+      "ends": "Nothing needs you.",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open",
+          "assertion": "empty line, no badge",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-1-empty.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-7",
+      "title": "Manual entry",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Review > Missing a payment?",
+      "covers": ["AC-35", "AC-36", "AC-37"],
+      "spec": "\u00a76.8",
+      "status": "fail",
+      "ends": "one payment RM12.50, Undo removes; Save from a first page ends on about:blank",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open",
+          "assertion": "categories most used first",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-1-manual.png"
+        },
+        {
+          "n": 2,
+          "action": "Type 12.5, Meals",
+          "assertion": "RM12.50",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-2-typed.png"
+        },
+        {
+          "n": 3,
+          "action": "Save",
+          "assertion": "Added RM12.50 \u00b7 Meals, row in db",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-3-saved.png"
+        },
+        {
+          "n": 4,
+          "action": "Save as first page",
+          "assertion": "app stays",
+          "status": "fail",
+          "screenshot": "FLOW-7-step-4-save-from-shortcut.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-8",
+      "title": "Manual: hostile amounts",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/s/manual",
+      "covers": ["AC-35s", "AC-60s", "AC-36s"],
+      "spec": "\u00a76.8",
+      "status": "pass",
+      "ends": "24 inputs: refused with words or exact sen; double tap and Enter save once",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Save with no category",
+          "assertion": "Pick a category.",
+          "status": "pass",
+          "screenshot": "FLOW-8-step-1-no-category.png"
+        },
+        {
+          "n": 2,
+          "action": "337-char merchant with <script>",
+          "assertion": "stored, shown escaped",
+          "status": "pass",
+          "screenshot": "FLOW-8-step-2-hostile-merchant.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-9",
+      "title": "Near-duplicate",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/s/manual",
+      "covers": ["AC-36s"],
+      "spec": "\u00a76.5",
+      "status": "pass",
+      "ends": "warning, not blocked",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Type 64.13",
+          "assertion": "Looks like SATE KAJANG\u2026",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-1-warning.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-10",
+      "title": "scan-after (core)",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Scan tab",
+      "covers": ["AC-24", "AC-26", "AC-28", "AC-29"],
+      "spec": "\u00a76.4",
+      "status": "pass",
+      "ends": "Attached to RM64.13 on Ryt Bank; no second payment; Receipt mark",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Scan, pick a file, Use this, read",
+          "assertion": "confirm with items summing to 6413",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-1-confirm.png"
+        },
+        {
+          "n": 2,
+          "action": "Three people",
+          "assertion": "RM21.38 a person",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-2-three-people.png"
+        },
+        {
+          "n": 3,
+          "action": "Done",
+          "assertion": "toast Attached\u2026",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-3-attached.png"
+        },
+        {
+          "n": 4,
+          "action": "Payments",
+          "assertion": "Receipt mark",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-4-payments-row.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-11",
+      "title": "Confirm: fix a price",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "confirm",
+      "covers": ["AC-26s"],
+      "spec": "D66",
+      "status": "pass",
+      "ends": "check line says by how much",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open item sheet",
+          "assertion": "price field",
+          "status": "pass",
+          "screenshot": "FLOW-11-step-1-item-sheet.png"
+        },
+        {
+          "n": 2,
+          "action": "4.50 \u2192 4.60",
+          "assertion": "RM0.10 more than the receipt's total",
+          "status": "pass",
+          "screenshot": "FLOW-11-step-2-fixed-price.png"
+        },
+        {
+          "n": 3,
+          "action": "Done",
+          "assertion": "waits (total changed)",
+          "status": "pass",
+          "screenshot": "FLOW-11-step-3-done-after-edit.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-12",
+      "title": "receipt-first",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Scan nomatch file",
+      "covers": ["AC-19s", "AC-30"],
+      "spec": "\u00a76.4",
+      "status": "pass",
+      "ends": "waits, then attached by hand without changing the payment",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Confirm nomatch",
+          "assertion": "RM14.80 total",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-1-confirm-nomatch.png"
+        },
+        {
+          "n": 2,
+          "action": "Attach to GRABFOOD",
+          "assertion": "amount 3250 and category unchanged",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-2-attached.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-13",
+      "title": "Several matches / different total",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "confirm",
+      "covers": ["AC-29s", "AC-30"],
+      "spec": "\u00a76.4",
+      "status": "pass",
+      "ends": "sheet asks which; mismatch changes nothing",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Done with two matches",
+          "assertion": "Which payment is this?",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-1-which-payment.png"
+        },
+        {
+          "n": 2,
+          "action": "Choose",
+          "assertion": "attached once",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-2-attached.png"
+        },
+        {
+          "n": 3,
+          "action": "Receipt for Nando's RM83.50",
+          "assertion": "amount unchanged",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-3-different-total.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-14",
+      "title": "Same file twice",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "Scan",
+      "covers": ["AC-31"],
+      "spec": "\u00a76.5",
+      "status": "fail",
+      "ends": "Already added expected; got a second waiting receipt",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Scan the identical file again",
+          "assertion": "Already added",
+          "status": "fail",
+          "screenshot": "FLOW-14-step-1-same-file-twice.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-16",
+      "title": "Split from confirm",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "confirm",
+      "covers": ["AC-32", "AC-32s"],
+      "spec": "D92",
+      "status": "pass",
+      "ends": "Others' items fold in; sums exact",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Split",
+          "assertion": "Who paid?",
+          "status": "pass",
+          "screenshot": "FLOW-16-step-1-who-paid.png"
+        },
+        {
+          "n": 2,
+          "action": "Just my part, tick two",
+          "assertion": "3932 + 2481",
+          "status": "pass",
+          "screenshot": "FLOW-16-step-2-tick.png"
+        },
+        {
+          "n": 3,
+          "action": "Done",
+          "assertion": "list sums to 6413",
+          "status": "pass",
+          "screenshot": "FLOW-16-step-3-after-just-my-part.png"
+        },
+        {
+          "n": 4,
+          "action": "Share a link",
+          "assertion": "stand-in split (B17)",
+          "status": "pass",
+          "screenshot": "FLOW-16-step-4-share-link-standin.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-17",
+      "title": "By hand",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "txn > No receipt\u2026",
+      "covers": ["AC-34", "AC-34s"],
+      "spec": "D90",
+      "status": "fail",
+      "ends": "unitemised allowed; overshoot not refused",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Enter the items",
+          "assertion": "empty list",
+          "status": "pass",
+          "screenshot": "FLOW-17-step-1-by-hand.png"
+        },
+        {
+          "n": 2,
+          "action": "One item",
+          "assertion": "RM54.13 not itemised",
+          "status": "pass",
+          "screenshot": "FLOW-17-step-2-one-item.png"
+        },
+        {
+          "n": 3,
+          "action": "Overshoot",
+          "assertion": "refused",
+          "status": "fail",
+          "screenshot": "FLOW-17-step-3-overshoot.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-18",
+      "title": "Without capture",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "?scenario=month",
+      "covers": ["AC-11", "AC-33", "AC-49"],
+      "spec": "D79",
+      "status": "pass",
+      "ends": "Done created the payment",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Review in month scenario",
+          "assertion": "capture rows reduced",
+          "status": "pass",
+          "screenshot": "FLOW-18-step-1-month-review.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-19",
+      "title": "Insights tour",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/insights",
+      "covers": ["AC-38", "AC-41", "AC-47"],
+      "spec": "\u00a79.3",
+      "status": "pass",
+      "ends": "14 cards, takeaways match raw rows",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Scroll",
+          "assertion": "cards",
+          "status": "pass",
+          "screenshot": "FLOW-19-step-02-scroll.png"
+        },
+        {
+          "n": 2,
+          "action": "Where did it go",
+          "assertion": "category buttons filter payments",
+          "status": "pass",
+          "screenshot": "FLOW-19-step-11-where-did-it-go.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-20",
+      "title": "Budgets",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/s/budgets",
+      "covers": ["AC-43", "AC-43s"],
+      "spec": "D29",
+      "status": "fail",
+      "ends": "validation and no duplicates pass; over-budget wording differs",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open",
+          "assertion": "meters and words",
+          "status": "pass",
+          "screenshot": "FLOW-20-step-1-budgets.png"
+        },
+        {
+          "n": 2,
+          "action": "Add Groceries 250.50",
+          "assertion": "added once",
+          "status": "pass",
+          "screenshot": "FLOW-20-step-2-added.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-21",
+      "title": "Subscriptions",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/s/subscriptions",
+      "covers": ["AC-44"],
+      "spec": "\u00a711",
+      "status": "pass",
+      "ends": "monthly RM141.90; no forecast in txns",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open",
+          "assertion": "forecast vs actual",
+          "status": "pass",
+          "screenshot": "FLOW-21-step-1-subscriptions.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-22",
+      "title": "Goals",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/s/goals",
+      "covers": ["AC-45"],
+      "spec": "\u00a710",
+      "status": "pass",
+      "ends": "feasibility with sample size; no warning colour",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Goals",
+          "assertion": "three meters",
+          "status": "pass",
+          "screenshot": "FLOW-22-step-1-goals.png"
+        },
+        {
+          "n": 2,
+          "action": "A goal",
+          "assertion": "median surplus over 6 cycles",
+          "status": "pass",
+          "screenshot": "FLOW-22-step-2-goal.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-23",
+      "title": "Year",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/s/insights/year",
+      "covers": ["AC-46"],
+      "spec": "\u00a79.3",
+      "status": "pass",
+      "ends": "months match oracle",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open",
+          "assertion": "Jan..Oct",
+          "status": "pass",
+          "screenshot": "FLOW-23-step-1-year.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-24",
+      "title": "Payments",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "More > Payments",
+      "covers": ["AC-50", "AC-51", "AC-52", "AC-53"],
+      "spec": "screens.md payments",
+      "status": "fail",
+      "ends": "day totals, search, virtualised pass; newest-first fails for a new payment",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open",
+          "assertion": "17 DOM rows for 1151",
+          "status": "pass",
+          "screenshot": "FLOW-24-step-1-payments-top.png"
+        },
+        {
+          "n": 2,
+          "action": "Bottom",
+          "assertion": "oldest day",
+          "status": "pass",
+          "screenshot": "FLOW-24-step-2-payments-bottom.png"
+        },
+        {
+          "n": 3,
+          "action": "No match",
+          "assertion": "No payments match.",
+          "status": "pass",
+          "screenshot": "FLOW-24-step-3-no-match.png"
+        },
+        {
+          "n": 4,
+          "action": "Filters",
+          "assertion": "Ryt + Shared 1",
+          "status": "pass",
+          "screenshot": "FLOW-24-step-4-filters.png"
+        },
+        {
+          "n": 5,
+          "action": "Add a long-named payment",
+          "assertion": "it is first",
+          "status": "fail",
+          "screenshot": "FLOW-24-step-5-long-name.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-25",
+      "title": "txn: read and fix",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Payments > a payment",
+      "covers": ["AC-54", "AC-55", "AC-56"],
+      "spec": "\u00a76.7",
+      "status": "fail",
+      "ends": "rules right; Changes has no actor",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open",
+          "assertion": "rows",
+          "status": "pass",
+          "screenshot": "FLOW-25-step-1-txn.png"
+        },
+        {
+          "n": 2,
+          "action": "Change category",
+          "assertion": "Just this one / From now on",
+          "status": "pass",
+          "screenshot": "FLOW-25-step-2-scope.png"
+        },
+        {
+          "n": 3,
+          "action": "From now on",
+          "assertion": "rule changes, 1 payment changes",
+          "status": "pass",
+          "screenshot": "FLOW-25-step-3-from-now-on.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-26",
+      "title": "Mark as, Delete, refund",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "txn",
+      "covers": ["AC-54s", "AC-57"],
+      "spec": "\u00a77",
+      "status": "pass",
+      "ends": "figures move by the exact amount; Undo restores",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Mark as transfer",
+          "assertion": "+5830",
+          "status": "pass",
+          "screenshot": "FLOW-26-step-1-marked-transfer.png"
+        },
+        {
+          "n": 2,
+          "action": "Delete",
+          "assertion": "at once, Undo",
+          "status": "pass",
+          "screenshot": "FLOW-26-step-2-deleted.png"
+        },
+        {
+          "n": 3,
+          "action": "Refund of\u2026",
+          "assertion": "+10000",
+          "status": "pass",
+          "screenshot": "FLOW-26-step-3-refund.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-27",
+      "title": "Receipt screen",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "txn > Receipt",
+      "covers": ["AC-58"],
+      "spec": "screens.md receipt",
+      "status": "pass",
+      "ends": "items sum to total",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open",
+          "assertion": "9360",
+          "status": "pass",
+          "screenshot": "FLOW-27-step-1-receipt.png"
+        },
+        {
+          "n": 2,
+          "action": "View photo",
+          "assertion": "placeholder",
+          "status": "pass",
+          "screenshot": "FLOW-27-step-2-view-photo.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-29",
+      "title": "Timezone",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "five browser zones",
+      "covers": ["AC-61"],
+      "spec": "D14",
+      "status": "pass",
+      "ends": "identical screens in all five",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Kiritimati",
+          "assertion": "same text as KL",
+          "status": "pass",
+          "screenshot": "FLOW-29-step-1-kiritimati.png"
+        },
+        {
+          "n": 2,
+          "action": "Los Angeles",
+          "assertion": "same text as KL",
+          "status": "pass",
+          "screenshot": "FLOW-29-step-1-los-angeles.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-30",
+      "title": "Offline",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "context.setOffline",
+      "covers": ["AC-12", "AC-70"],
+      "spec": "\u00a75",
+      "status": "fail",
+      "ends": "screens frozen while offline",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Go offline",
+          "assertion": "banner",
+          "status": "pass",
+          "screenshot": "FLOW-30-step-1-offline-banner.png"
+        },
+        {
+          "n": 2,
+          "action": "Answer a row",
+          "assertion": "row leaves",
+          "status": "fail",
+          "screenshot": "FLOW-30-step-5-offline-answer-not-shown.png"
+        },
+        {
+          "n": 3,
+          "action": "Reload offline",
+          "assertion": "page loads; data lost (skeleton)",
+          "status": "pass",
+          "screenshot": "FLOW-30-step-4-offline-reload.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-31",
+      "title": "States",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "?state=",
+      "covers": ["AC-68"],
+      "spec": "patterns \u00a77",
+      "status": "pass",
+      "ends": "17 pairs read in words",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Error",
+          "assertion": "Try again button",
+          "status": "pass",
+          "screenshot": "FLOW-31-error-_s_budgets_state_error.png"
+        },
+        {
+          "n": 2,
+          "action": "Empty",
+          "assertion": "one line",
+          "status": "pass",
+          "screenshot": "FLOW-31-empty-_s_goals_state_empty.png"
+        },
+        {
+          "n": 3,
+          "action": "Loading",
+          "assertion": "skeleton",
+          "status": "pass",
+          "screenshot": "FLOW-31-loading-_s_payments_state_loading.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-32",
+      "title": "Looks, dark, 412 px",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "12 look/mode pairs",
+      "covers": ["AC-67"],
+      "spec": "patterns \u00a78",
+      "status": "pass",
+      "ends": "axe + 48 px clean",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Copper dark",
+          "assertion": "clean",
+          "status": "pass",
+          "screenshot": "FLOW-32-copper-dark-last.png"
+        },
+        {
+          "n": 2,
+          "action": "Mercury dark",
+          "assertion": "clean",
+          "status": "pass",
+          "screenshot": "FLOW-32-mercury-dark-last.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-33",
+      "title": "Production",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "production build",
+      "covers": ["AC-6"],
+      "spec": "rule 6",
+      "status": "pass",
+      "ends": "Not built yet",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open /",
+          "assertion": "Not built yet",
+          "status": "pass",
+          "screenshot": "FLOW-33-step-1-production-home.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-C1",
+      "title": "first-run (core)",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "first launch",
+      "covers": ["AC-9"],
+      "spec": "flows.md",
+      "status": "unreachable",
+      "ends": "sign-in to payday belong to B04/B08; only Home before first salary reachable (passes)",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Before-salary Home",
+          "assertion": "Spent since you started",
+          "status": "pass",
+          "screenshot": "FLOW-3-scenario-before-salary.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-C2",
+      "title": "pay-new (core)",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Review row ROTI BAKAR 88",
+      "covers": ["AC-17", "AC-18"],
+      "spec": "\u00a76.3",
+      "status": "pass",
+      "ends": "category set, one rule made, Undo removes both; the second payment cannot be driven from B03",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Review",
+          "assertion": "RM9.50 \u00b7 ROTI BAKAR 88",
+          "status": "pass",
+          "screenshot": "FLOW-C2-step-1-review.png"
+        },
+        {
+          "n": 2,
+          "action": "Tap Meals",
+          "assertion": "rule +1",
+          "status": "pass",
+          "screenshot": "FLOW-C2-step-2-answered.png"
+        },
+        {
+          "n": 3,
+          "action": "Undo",
+          "assertion": "rule removed",
+          "status": "pass",
+          "screenshot": "FLOW-C2-step-3-undone.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-C3",
+      "title": "scan-after (core)",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "= FLOW-10",
+      "covers": ["AC-29"],
+      "spec": "\u00a76.4",
+      "status": "pass",
+      "ends": "see FLOW-10",
+      "steps": [
+        {
+          "n": 1,
+          "action": "See FLOW-10",
+          "assertion": "attached",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-3-attached.png"
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "AC-1",
+      "title": "Five tabs in order, active one aria-current",
+      "spec": "\u00a79.1, patterns \u00a76",
+      "status": "pass",
+      "evidence": "labels [\"Home\",\"Review\",\"Scan\",\"Insights\",\"More\"]; Home link aria-current=page"
+    },
+    {
+      "id": "AC-1s",
+      "title": "Tab bar hidden on confirm/manual/scan, shown on payments/budgets/skipped",
+      "spec": "screens.md Rules",
+      "status": "pass",
+      "evidence": "manual, scan, confirm: no bar; payments, budgets, skipped: bar"
+    },
+    {
+      "id": "AC-2",
+      "title": "Badge counts Needs you only (12), not Waiting on others",
+      "spec": "D72",
+      "status": "pass",
+      "evidence": "badge data-count 12 with 3 waiting rows; repo frame.spec asserts \"Review , 12 to review\" and 99+"
+    },
+    {
+      "id": "AC-2s",
+      "title": "Answering lowers badge by 1, Undo restores; empty has no badge",
+      "spec": "D72, D83",
+      "status": "pass",
+      "evidence": "12 -> 11 -> 12; empty state: 0 badge elements"
+    },
+    {
+      "id": "AC-3",
+      "title": "Tap opens scan at once; hold 650 ms opens scan-more with Scan, From gallery, Add manually",
+      "spec": "D69",
+      "status": "pass",
+      "evidence": "touch tap -> /scan; CDP hold -> sheet with three entries"
+    },
+    {
+      "id": "AC-3s",
+      "title": "250 ms press is a tap; Add manually opens manual",
+      "spec": "D83",
+      "status": "pass",
+      "evidence": "mouse press 250 ms -> /scan; Add manually -> /s/manual"
+    },
+    {
+      "id": "AC-4",
+      "title": "Sen button on tab screens, sheet says Looking at: <screen>",
+      "spec": "D68",
+      "status": "pass",
+      "evidence": "Looking at: Insights / Home / Payment"
+    },
+    {
+      "id": "AC-4s",
+      "title": "No Sen button on pushed and task screens",
+      "spec": "D68",
+      "status": "pass",
+      "evidence": "payments, budgets, skipped, manual, scan, confirm: absent"
+    },
+    {
+      "id": "AC-5",
+      "title": "Back closes a sheet first; Back on a non-Home tab goes Home",
+      "spec": "patterns \u00a76",
+      "status": "pass",
+      "evidence": "Insights -> back -> /; sheet closed by history back"
+    },
+    {
+      "id": "AC-5s",
+      "title": "Back on Home leaves the app",
+      "spec": "D83",
+      "status": "unreachable",
+      "evidence": "a browser has no app to leave"
+    },
+    {
+      "id": "AC-6",
+      "title": "Production shows Not built yet on every B03 screen",
+      "spec": "brief done-when 5",
+      "status": "pass",
+      "evidence": "20 paths on a production build: not-built=1, no dev panel, no badge"
+    },
+    {
+      "id": "AC-6s",
+      "title": "Production bundle has no made-up data or secrets",
+      "spec": "modules rule 6, \u00a717",
+      "status": "pass",
+      "evidence": "grep of dist: no scenario strings; only font names match sk-"
+    },
+    {
+      "id": "AC-7",
+      "title": "Home parts and arithmetic",
+      "spec": "\u00a79.2",
+      "status": "pass",
+      "evidence": "left 193127 = income 580480 - spent 387353; oracle from raw rows agrees"
+    },
+    {
+      "id": "AC-7s",
+      "title": "Cycle sheet result equals Home figure",
+      "spec": "\u00a79.2",
+      "status": "pass",
+      "evidence": "sheet result 193127 = hero 193127"
+    },
+    {
+      "id": "AC-8",
+      "title": "Over by RM<abs> with warning treatment",
+      "spec": "screens.md home",
+      "status": "pass",
+      "evidence": "1931.27 spent -> RM0.00 left; +0.01 -> \"Over by, RM0.01\""
+    },
+    {
+      "id": "AC-8s",
+      "title": "Exactly zero reads Left until payday RM0.00",
+      "spec": "screens.md home",
+      "status": "pass",
+      "evidence": "aria-label \"Left until payday, RM0.00\""
+    },
+    {
+      "id": "AC-9",
+      "title": "Before the first salary: Spent since you started",
+      "spec": "screens.md Varies",
+      "status": "pass",
+      "evidence": "scenario before-salary"
+    },
+    {
+      "id": "AC-9s",
+      "title": "With a salary it reverts to Left until payday",
+      "spec": "screens.md Varies",
+      "status": "pass",
+      "evidence": "default scenario"
+    },
+    {
+      "id": "AC-10",
+      "title": "First cycle pace line says nothing to compare with",
+      "spec": "screens.md Varies",
+      "status": "pass",
+      "evidence": "\"Your first cycle: nothing to compare with yet\""
+    },
+    {
+      "id": "AC-11",
+      "title": "Calendar-month mode: no balance/gap, month words",
+      "spec": "D79",
+      "status": "pass",
+      "evidence": "scenario month: \"Spent this month\", no quiet row, no cycle/estimate wording, no Accounts/Claims in More"
+    },
+    {
+      "id": "AC-11s",
+      "title": "With capture, cycle wording stays",
+      "spec": "D79",
+      "status": "pass",
+      "evidence": "default scenario says cycle"
+    },
+    {
+      "id": "AC-12",
+      "title": "Real offline: figures include outbox rows; rows marked Not synced yet",
+      "spec": "\u00a75, patterns \u00a77",
+      "status": "fail",
+      "evidence": "context.setOffline(true), answer a Review row: fake db review 12 -> 11, unsynced 1, but the row and \"Needs you \u00b7 12\" stay on screen until reconnect (finding 1)"
+    },
+    {
+      "id": "AC-12s",
+      "title": "Online write does not flash Not synced yet",
+      "spec": "patterns \u00a77",
+      "status": "pass",
+      "evidence": "0 marks at 0.3 s and 2 s; unsynced cleared at ~1.2 s"
+    },
+    {
+      "id": "AC-13",
+      "title": "Health bar at top with a fix button",
+      "spec": "\u00a718",
+      "status": "pass",
+      "evidence": "Capture may be off + Fix"
+    },
+    {
+      "id": "AC-13s",
+      "title": "No band without a warning",
+      "spec": "\u00a718",
+      "status": "pass",
+      "evidence": "default scenario has none"
+    },
+    {
+      "id": "AC-14",
+      "title": "Payday card on payday; plan progress after",
+      "spec": "\u00a79.7, D60",
+      "status": "pass",
+      "evidence": "scenario payday: Payday + Start; default: \"2 of 3 moves done\""
+    },
+    {
+      "id": "AC-14s",
+      "title": "No Payday card off payday",
+      "spec": "\u00a79.7",
+      "status": "pass",
+      "evidence": "default scenario"
+    },
+    {
+      "id": "AC-15",
+      "title": "Cycle sheet income, spending, result, dates, estimate labelled",
+      "spec": "screens.md cycle",
+      "status": "pass",
+      "evidence": "\"An estimate: at this pace, about RM740.53 left on payday\""
+    },
+    {
+      "id": "AC-15s",
+      "title": "Estimate never part of the result",
+      "spec": "CLAUDE.md prediction vs fact",
+      "status": "pass",
+      "evidence": "result = income - spending only"
+    },
+    {
+      "id": "AC-16",
+      "title": "Figure -> cycle; pace -> payments; note -> Sen; balance -> accounts",
+      "spec": "screens.md home",
+      "status": "pass",
+      "evidence": "accounts is a \"Not built yet\" stand-in (B08)"
+    },
+    {
+      "id": "AC-16s",
+      "title": "Payments from pace is filtered to the cycle",
+      "spec": "screens.md home",
+      "status": "pass",
+      "evidence": "/s/payments?cycle=2026-09-30, 77 payments, days 30 Sep..18 Oct"
+    },
+    {
+      "id": "AC-17",
+      "title": "Every Needs-you kind with its buttons",
+      "spec": "\u00a76.6",
+      "status": "pass",
+      "evidence": "12 rows, 11 kinds present; receipt-waiting in month scenario"
+    },
+    {
+      "id": "AC-17s",
+      "title": "At most 3 buttons + Other\u2026; suggestion marked",
+      "spec": "patterns \u00a77",
+      "status": "pass",
+      "evidence": "max 3 everywhere; \"Income, Sen suggests this\""
+    },
+    {
+      "id": "AC-18",
+      "title": "Answer clears with Undo; badge follows; rule made",
+      "spec": "\u00a76.7, \u00a76.3",
+      "status": "pass",
+      "evidence": "ROTI BAKAR 88 -> Meals: rule +1, txn category set, undo removes both"
+    },
+    {
+      "id": "AC-18s",
+      "title": "Double-tap applies once",
+      "spec": "\u00a76.5",
+      "status": "fail",
+      "evidence": "dblclick on \"Public Bank\": inferred sides 12 -> 14; after a double-tapped share tick one Undo leaves the row gone (finding 2)"
+    },
+    {
+      "id": "AC-19",
+      "title": "Waiting on others not counted; receipt actions",
+      "spec": "D72",
+      "status": "pass",
+      "evidence": "BBQ, MR DIY (3 buttons), SHOPEE; badge stays 12"
+    },
+    {
+      "id": "AC-19s",
+      "title": "Unmatched receipt waits in Review, creates no payment",
+      "spec": "\u00a76.4",
+      "status": "pass",
+      "evidence": "txns 1199 before and after; status awaiting_payment"
+    },
+    {
+      "id": "AC-20",
+      "title": "Missing a payment? -> manual; Skipped -> skipped",
+      "spec": "screens.md review",
+      "status": "pass",
+      "evidence": "both navigate"
+    },
+    {
+      "id": "AC-21",
+      "title": "Empty: Nothing needs you.",
+      "spec": "screens.md review",
+      "status": "pass",
+      "evidence": "?state=empty"
+    },
+    {
+      "id": "AC-22",
+      "title": "This was a payment restores a skipped event with Undo",
+      "spec": "\u00a76.2",
+      "status": "pass",
+      "evidence": "3 -> 2 -> 3"
+    },
+    {
+      "id": "AC-22s",
+      "title": "Empty skipped says what will appear",
+      "spec": "patterns \u00a77",
+      "status": "pass",
+      "evidence": "\"Nothing skipped.\""
+    },
+    {
+      "id": "AC-23",
+      "title": "Apply all applies every suggestion with one Undo",
+      "spec": "screens.md review",
+      "status": "fail",
+      "evidence": "bar says 2 suggested; toast \"Applied 1 of Sen's answers\": transfer-missing suggests \"pbb\" but its buttons are keyed by account id (finding 10). One Undo does revert the one applied"
+    },
+    {
+      "id": "AC-24",
+      "title": "Scan: picker then crop stand-in then reading",
+      "spec": "\u00a76.4 path 5",
+      "status": "pass",
+      "evidence": "journey passes"
+    },
+    {
+      "id": "AC-24s",
+      "title": "Scan-more From gallery gets a photo",
+      "spec": "D69",
+      "status": "fail",
+      "evidence": "lands on /s/crop \"Pick a photo first.\" with no file input (finding 7)"
+    },
+    {
+      "id": "AC-25",
+      "title": "Reading shows status, ends on confirm",
+      "spec": "screens.md reading",
+      "status": "pass",
+      "evidence": "\"Reading receipt\u2026\" -> /s/confirm"
+    },
+    {
+      "id": "AC-25s",
+      "title": "Failed read ends on manual with the image",
+      "spec": "screens.md reading",
+      "status": "unreachable",
+      "evidence": "only reachable with a name containing \"blur\" in the fake; not walked"
+    },
+    {
+      "id": "AC-26",
+      "title": "Item prices sum exactly to total; check line",
+      "spec": "D66, D67",
+      "status": "pass",
+      "evidence": "2972+1715+514+960+252 = 6413; \"Items add up to the total \u2713\"; every scenario receipt sums to its total"
+    },
+    {
+      "id": "AC-26s",
+      "title": "Mismatch says by how much",
+      "spec": "D66",
+      "status": "pass",
+      "evidence": "\"Items come to RM0.10 more than the receipt's total\""
+    },
+    {
+      "id": "AC-27",
+      "title": "One category row, Mixed when items differ",
+      "spec": "D89",
+      "status": "pass",
+      "evidence": "Meals shown; sheet opens"
+    },
+    {
+      "id": "AC-27s",
+      "title": "Changing one item flips to Mixed and back",
+      "spec": "D89",
+      "status": "unreachable",
+      "evidence": "no per-item category control on confirm; not reachable"
+    },
+    {
+      "id": "AC-28",
+      "title": "Headcount: RM64.13 \u00f7 3 = RM21.38, floor at 1",
+      "spec": "D66",
+      "status": "pass",
+      "evidence": "data-sen [6413, 2138]; Fewer disabled at 1"
+    },
+    {
+      "id": "AC-28s",
+      "title": "No float artefacts",
+      "spec": "D66",
+      "status": "pass",
+      "evidence": "scaleSen BigInt; 10/3 -> 3, 5/2 -> 3"
+    },
+    {
+      "id": "AC-29",
+      "title": "Done with one match attaches; no second payment",
+      "spec": "\u00a76.4",
+      "status": "pass",
+      "evidence": "\"Attached to RM64.13 on Ryt Bank\"; txns unchanged; receipt linked; Receipt mark in Payments"
+    },
+    {
+      "id": "AC-29s",
+      "title": "Several matches ask which; none waits",
+      "spec": "\u00a76.4",
+      "status": "pass",
+      "evidence": "two RM64.13 payments -> \"Which payment is this?\", nothing committed until chosen; 3 h 01 min boundary not probed"
+    },
+    {
+      "id": "AC-30",
+      "title": "Different total: items only, amount and category unchanged",
+      "spec": "\u00a76.4",
+      "status": "pass",
+      "evidence": "Nando's RM83.50 + RM64.13 receipt: amount 8350, category unchanged"
+    },
+    {
+      "id": "AC-30s",
+      "title": "Equal totals: items become breakdown",
+      "spec": "\u00a76.4, D89",
+      "status": "unreachable",
+      "evidence": "receipt categories are all Meals; breakdown not distinguishable"
+    },
+    {
+      "id": "AC-31",
+      "title": "Same file twice is \"Already added\"",
+      "spec": "\u00a76.5",
+      "status": "fail",
+      "evidence": "second identical file -> \"Waiting for its payment\", receipts 46 -> 47 (finding 3)"
+    },
+    {
+      "id": "AC-32",
+      "title": "Split > Who paid? > Share a link / Just my part",
+      "spec": "D92",
+      "status": "pass",
+      "evidence": "stand-in /s/split \"Not built yet\" (B17)"
+    },
+    {
+      "id": "AC-32s",
+      "title": "Just my part: Others' items fold in, sums exact",
+      "spec": "D92",
+      "status": "pass",
+      "evidence": "3932 + 2481 = 6413; owe/owed in sen"
+    },
+    {
+      "id": "AC-33",
+      "title": "Without capture Done creates the payment",
+      "spec": "\u00a76.4, D52",
+      "status": "pass",
+      "evidence": "scenario month: txns 29 -> 30, source receipt"
+    },
+    {
+      "id": "AC-33s",
+      "title": "With capture Done never creates one",
+      "spec": "\u00a76.4",
+      "status": "pass",
+      "evidence": "txns unchanged"
+    },
+    {
+      "id": "AC-34",
+      "title": "By hand: RM3.20-style not itemised allowed",
+      "spec": "D90",
+      "status": "pass",
+      "evidence": "\"RM54.13 not itemised\""
+    },
+    {
+      "id": "AC-34s",
+      "title": "Items above the payment are refused",
+      "spec": "D90",
+      "status": "fail",
+      "evidence": "RM1,009 of items on a RM64.13 payment: warning only, Done saves (finding 8)"
+    },
+    {
+      "id": "AC-35",
+      "title": "Manual: 12.5 -> RM12.50; float-trap digits exact",
+      "spec": "\u00a76.8, CLAUDE.md",
+      "status": "pass",
+      "evidence": "19.99->1999, 4.35->435, 1,284.5->128450, 0.1->10, 0.01->1, \"  9.90  \"->990"
+    },
+    {
+      "id": "AC-35s",
+      "title": "Hostile amounts refused with words",
+      "spec": "\u00a76.8",
+      "status": "pass",
+      "evidence": "empty, 0, 0.00, ., 1.234, -5, 1e5, abc, 20 nines, 5000 nines, SQL, ../, Devanagari, RM12, 1.005: none saved, message each"
+    },
+    {
+      "id": "AC-36",
+      "title": "Save creates one payment with Undo; account last used; time now",
+      "spec": "\u00a76.8",
+      "status": "pass",
+      "evidence": "Added RM12.50 \u00b7 Meals, Ryt Bank, 12:40Z = 20:40 KL; Undo removes"
+    },
+    {
+      "id": "AC-36s",
+      "title": "Double tap and Enter save once; near-duplicate warns",
+      "spec": "\u00a76.5",
+      "status": "pass",
+      "evidence": "dblclick 1199 -> 1200; Enter 1199 -> 1200; warning \"Looks like SATE KAJANG\u2026\" then saved"
+    },
+    {
+      "id": "AC-36b",
+      "title": "Save from a first page (launcher shortcut) stays in the app",
+      "spec": "\u00a79.1",
+      "status": "fail",
+      "evidence": "history.back() -> about:blank (finding 5)"
+    },
+    {
+      "id": "AC-37",
+      "title": "Categories most used first",
+      "spec": "\u00a76.8",
+      "status": "pass",
+      "evidence": "Meals, Car, Drinks\u2026 matches 90-day counts"
+    },
+    {
+      "id": "AC-38",
+      "title": "Every \u00a79.3 card present with Ask Sen",
+      "spec": "\u00a79.3",
+      "status": "pass",
+      "evidence": "14 of 14 questions, 14 Ask Sen buttons, The year row"
+    },
+    {
+      "id": "AC-38s",
+      "title": "No empty chart frames in empty scenario",
+      "spec": "\u00a79.3",
+      "status": "pass",
+      "evidence": "\"Your first insights show once you've a few payments\""
+    },
+    {
+      "id": "AC-39",
+      "title": "Each chart has a table and a takeaway",
+      "spec": "patterns \u00a74",
+      "status": "pass",
+      "evidence": "tables in page text for each chart; repo blocks.spec also checks"
+    },
+    {
+      "id": "AC-40",
+      "title": "Chart colours, legend, \u22643 series",
+      "spec": "patterns \u00a74",
+      "status": "pass",
+      "evidence": "axe clean in 12 looks; visual pass; dataviz palette not re-validated"
+    },
+    {
+      "id": "AC-41",
+      "title": "Takeaways agree with raw rows",
+      "spec": "\u00a79.3",
+      "status": "pass",
+      "evidence": "small things 22 = oracle 22; eating-out 93293/24330, 79% = oracle; top merchants oracle"
+    },
+    {
+      "id": "AC-41s",
+      "title": "RM15.00 is not under RM15",
+      "spec": "\u00a79.3",
+      "status": "pass",
+      "evidence": "adding 15.00 and 14.99 -> 22 -> 23"
+    },
+    {
+      "id": "AC-42",
+      "title": "On track: estimate dashed and labelled",
+      "spec": "\u00a79.3",
+      "status": "pass",
+      "evidence": "\"An estimate for payday: RM5,064.27\""
+    },
+    {
+      "id": "AC-43",
+      "title": "Budget meters with elapsed tick; at-risk words + icon",
+      "spec": "D29, D31",
+      "status": "pass",
+      "evidence": "Meals 78%, Shopping 107% with icon and words"
+    },
+    {
+      "id": "AC-43s",
+      "title": "Budget validation; no duplicate category",
+      "spec": "D29",
+      "status": "pass",
+      "evidence": "\"\", -1, abc, 1e3, 12.345 refused; added category not offered again"
+    },
+    {
+      "id": "AC-43w",
+      "title": "Over budget says Over by RM\u2026",
+      "spec": "patterns \u00a73",
+      "status": "fail",
+      "evidence": "\"At risk: 107% spent\" (finding 11)"
+    },
+    {
+      "id": "AC-44",
+      "title": "Subscriptions forecast vs actual, monthly sum",
+      "spec": "\u00a711",
+      "status": "pass",
+      "evidence": "RM141.90 = 85.10+28.00+4.90+23.90"
+    },
+    {
+      "id": "AC-44s",
+      "title": "Forecasts never in spending (code)",
+      "spec": "\u00a711, CLAUDE.md",
+      "status": "pass",
+      "evidence": "no forecast in txns; but see probe 3: no test would notice"
+    },
+    {
+      "id": "AC-45",
+      "title": "Goals: per cycle, feasibility with sample, estimate",
+      "spec": "\u00a710",
+      "status": "pass",
+      "evidence": "\"median surplus RM1,237.95 over 6 cycles\"; \"That's an estimate\""
+    },
+    {
+      "id": "AC-45s",
+      "title": "Behind goal never in warning colour; sample 0 says so",
+      "spec": "patterns \u00a74",
+      "status": "pass",
+      "evidence": "0 warning-class elements on 3 goal screens; sample 0 text in code, not reached"
+    },
+    {
+      "id": "AC-46",
+      "title": "Year by KL month, savings rate, reliefs",
+      "spec": "\u00a79.3",
+      "status": "pass",
+      "evidence": "monthly spent equals oracle for Jan-Oct"
+    },
+    {
+      "id": "AC-47",
+      "title": "Category tap opens filtered payments",
+      "spec": "screens.md insights",
+      "status": "pass",
+      "evidence": "/s/payments?cycle=\u2026&category=\u2026"
+    },
+    {
+      "id": "AC-48",
+      "title": "Ask Sen about this opens Sen",
+      "spec": "D94",
+      "status": "pass",
+      "evidence": "Looking at: Insights"
+    },
+    {
+      "id": "AC-49",
+      "title": "More rows; capture-only/claims-only hidden",
+      "spec": "D52",
+      "status": "pass",
+      "evidence": "month scenario hides Accounts and Claims"
+    },
+    {
+      "id": "AC-50",
+      "title": "Payments search and filters",
+      "spec": "screens.md payments",
+      "status": "pass",
+      "evidence": "grab 169, filters Ryt 377, Ryt+Shared 1, item \"Milk 2L\" 7"
+    },
+    {
+      "id": "AC-50s",
+      "title": "No hit state; hostile queries safe",
+      "spec": "screens.md payments",
+      "status": "pass",
+      "evidence": "\"No payments match.\" + Clear the filters; SQL, %, <script>, ../, 5000 chars, emoji, backslash: 0 matches, no error"
+    },
+    {
+      "id": "AC-51",
+      "title": "Day totals equal raw-row oracle; transfers/income add nothing",
+      "spec": "\u00a77",
+      "status": "pass",
+      "evidence": "18 days 30 Sep..18 Oct: 0 mismatches"
+    },
+    {
+      "id": "AC-52",
+      "title": "Marks, one transfer row, rows \u226564 px",
+      "spec": "patterns \u00a77",
+      "status": "pass",
+      "evidence": "min row 71 px; Receipt/Split/In Review marks found; transfer row Ryt Bank \u2192 GO+"
+    },
+    {
+      "id": "AC-52b",
+      "title": "Newest first",
+      "spec": "screens.md payments",
+      "status": "fail",
+      "evidence": "payment added now ranks 4th, below 19:30 rows (finding 4)"
+    },
+    {
+      "id": "AC-53",
+      "title": "Virtualised",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "17 DOM items for 1151 rows; bottom reached"
+    },
+    {
+      "id": "AC-54",
+      "title": "txn shows every row of screens.md",
+      "spec": "screens.md txn",
+      "status": "pass",
+      "evidence": "all rows present on a notification payment; Receipt row only with a receipt"
+    },
+    {
+      "id": "AC-54s",
+      "title": "Delete at once with Undo, no dialog, restores identical row",
+      "spec": "\u00a76.7",
+      "status": "pass",
+      "evidence": "toEqual before/after"
+    },
+    {
+      "id": "AC-55",
+      "title": "Just this one / From now on only for rule categories; past stay",
+      "spec": "D25, D89",
+      "status": "pass",
+      "evidence": "once: 1 changed, rule same; from now on: rule changes, 1 payment changed"
+    },
+    {
+      "id": "AC-56",
+      "title": "Changes records who made it",
+      "spec": "\u00a76.7",
+      "status": "fail",
+      "evidence": "\"Today, 20:40 \u00b7 Note added\", no actor (finding 9)"
+    },
+    {
+      "id": "AC-57",
+      "title": "Mark as transfer / refund move figures by the exact amount",
+      "spec": "\u00a77, D21",
+      "status": "pass",
+      "evidence": "transfer: +5830 to left; refund: +10000, never income"
+    },
+    {
+      "id": "AC-57s",
+      "title": "Undo returns to the sen",
+      "spec": "\u00a76.7",
+      "status": "pass",
+      "evidence": "delete/undo and category/undo restore the rows"
+    },
+    {
+      "id": "AC-58",
+      "title": "receipt screen: items, total, note, photo, evidence",
+      "spec": "screens.md receipt",
+      "status": "pass",
+      "evidence": "items 2600+2600+2340+1820 = 9360"
+    },
+    {
+      "id": "AC-58e",
+      "title": "Email receipts: sandboxed view, other attachments",
+      "spec": "D91",
+      "status": "unreachable",
+      "evidence": "no email receipt in the scenario; not built in receipt.tsx"
+    },
+    {
+      "id": "AC-59",
+      "title": "D19 table",
+      "spec": "\u00a77, D19",
+      "status": "pass",
+      "evidence": "spendingOf: split only 4000, Ali 4000, Ben 4000; no share + 4000 repaid -> 8000; refund 3000 -> 9000"
+    },
+    {
+      "id": "AC-59s",
+      "title": "Owed to you never negative; overpay clamps",
+      "spec": "\u00a77",
+      "status": "unreachable",
+      "evidence": "no owed-to-you function in B03"
+    },
+    {
+      "id": "AC-59b",
+      "title": "Largest remainder across 1..7 parties",
+      "spec": "\u00a77",
+      "status": "pass",
+      "evidence": "-3000..30000 sen \u00d7 1..7 parties: sum exact, spread \u22641; 2099/3 = 700,700,699"
+    },
+    {
+      "id": "AC-60",
+      "title": "Money integer sen; no float in money paths",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "diff grep: only ratios/percent/layout; every txn amount a safe integer; lint clean"
+    },
+    {
+      "id": "AC-60s",
+      "title": "Float-trap digits exact",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "node check of parseSen"
+    },
+    {
+      "id": "AC-61",
+      "title": "Timezone: identical in 5 zones",
+      "spec": "D14",
+      "status": "pass",
+      "evidence": "KL, LA, Kiritimati, UTC, Pago Pago: Home, cycle sheet, payments, insights, year all identical with payments at 23:59, 23:30 and 00:00 KL"
+    },
+    {
+      "id": "AC-61s",
+      "title": "Dates never 30/09",
+      "spec": "conventions",
+      "status": "pass",
+      "evidence": "\"Wed, 30 Sept\""
+    },
+    {
+      "id": "AC-62",
+      "title": "Predictions labelled and absent from facts",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "estimate/projection/forecast labelled; none in spending (but see probe 3)"
+    },
+    {
+      "id": "AC-63",
+      "title": "Dedupe keys: retried write is a no-op",
+      "spec": "\u00a76.5",
+      "status": "fail",
+      "evidence": "see AC-18s, AC-31"
+    },
+    {
+      "id": "AC-64",
+      "title": "One set of patterns",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "visual pass in 6 looks; ListRow/ReviewRow/Sheet/EmptyState used throughout"
+    },
+    {
+      "id": "AC-65",
+      "title": "Undo, not confirm",
+      "spec": "\u00a76.7",
+      "status": "pass",
+      "evidence": "no alertdialog on Delete or any write"
+    },
+    {
+      "id": "AC-66",
+      "title": "No real data or secrets",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "bundle grep clean; fixtures are made-up"
+    },
+    {
+      "id": "AC-67",
+      "title": "Six looks, light and dark: axe, 48 px, no sideways scroll, text at 1.5\u00d7",
+      "spec": "patterns \u00a78",
+      "status": "pass",
+      "evidence": "12 combos \u00d7 13 screens at 412 px clean; repo e2e 320 pass includes 1.5\u00d7"
+    },
+    {
+      "id": "AC-68",
+      "title": "States reachable and in words",
+      "spec": "patterns \u00a77",
+      "status": "pass",
+      "evidence": "loading/empty/error on 17 screen+state pairs; error has Try again; no spinner"
+    },
+    {
+      "id": "AC-69",
+      "title": "Web behaviour",
+      "spec": "patterns \u00a710",
+      "status": "pass",
+      "evidence": "overscroll none, user-select none, contextmenu prevented, input 36 px"
+    },
+    {
+      "id": "AC-70",
+      "title": "Writes at once, sync later, exactly once",
+      "spec": "D100",
+      "status": "pass",
+      "evidence": "online: unsynced cleared ~1.2 s; offline-by-panel marks rows; reconnect cleared with no duplicate (page stayed open)"
+    },
+    {
+      "id": "AC-70s",
+      "title": "Offline + reload",
+      "spec": "\u00a75",
+      "status": "unreachable",
+      "evidence": "the fake is in memory: the RM3.30 payment is gone after reload; the shell outbox is B07"
+    }
+  ],
+  "notTested": [
+    {
+      "what": "RLS, SQL views, API routes, pooled-connection user id",
+      "why": "B03 has none: no database or route exists (B05). Phase 4 ran against the fake and the shared types only"
+    },
+    {
+      "what": "The outbox surviving an app kill; sync exactly once from the shell",
+      "why": "shell outbox is B07; the fake is in memory"
+    },
+    {
+      "what": "The second payment at a merchant asking nothing; first-run steps",
+      "why": "B02 capture simulator is not wired to the fake ledger; first-run is B04/B08"
+    },
+    {
+      "what": "A failed receipt read walked end to end; per-item category change on confirm; email receipt view",
+      "why": "no control or fixture reaches them in B03"
+    },
+    {
+      "what": "Real device: scan long-press haptic, toast over the real navigation bar, WebView back gesture",
+      "why": "needs the owner phone; added to docs/local.md"
+    }
+  ]
+}

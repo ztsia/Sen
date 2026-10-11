@@ -127,6 +127,8 @@ export default tseslint.config(
   },
   { files: MONEY_MODULE, rules: { 'no-restricted-syntax': ['error', ...moneyBans] } },
   { files: ['**/*.test.{ts,tsx}', '**/e2e/**'], rules: { 'no-restricted-syntax': 'off' } },
+  // QA's specs probe the fake's state and the page's internals through untyped handles
+  { files: ['qa/e2e/**'], rules: { '@typescript-eslint/no-explicit-any': 'off' } },
   {
     files: ['apps/web/src/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
