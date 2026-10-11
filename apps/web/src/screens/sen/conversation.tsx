@@ -59,7 +59,7 @@ function Body({ v, from }: { v: SenView; from: string }) {
         from,
       },
       { quiet: true },
-    );
+    ).then((r) => console.log('SEND done', JSON.stringify(r?.said)));
   };
   const submit = () => {
     if (!canSend) return;
