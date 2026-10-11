@@ -35,8 +35,8 @@ you end.
 - **QA rounds cost quota (owner, 11 Oct):** fix by the cheapest tier that's honest; a fresh full run
   only when a fix reaches the whole flow, and say what it will cost first.
 - **D126 (owner):** R2 never leaves its free allowance. Cloudflare only alerts, so Sen's own gates
-  are the stop: a size cap and ceilings on upload links (B15), a fixed number of backups and usage
-  in Settings → *Data* (B06). The mechanism and numbers are *Proposed*; those slices confirm them.
+  are the stop: a size cap and ceilings on upload links (B15), backups deleted after 30 days by the bucket (set 11 Oct)
+  and usage in Settings → *Data* (B06). The mechanism and numbers are *Proposed*; those slices confirm them.
 - **Keys on the laptop:** auto mode refuses creating a credential, writing a Vercel variable and a
   rule that deletes; the owner switches to manual mode and approves each. The session clicks
   *Create* without looking, the owner clicks *Copy*, and a watcher sends the clipboard on unseen.
@@ -53,7 +53,6 @@ you end.
 - **Copper's overspent green:** keep it as designed (verdigris only on copper, the warning always
   with its icon and words)? The owner said *Ok* without the recommendation in front of them.
 - Anthropic's data terms against D34 (before B10); run 6's note 15 (B07).
-- How long backups are kept: a lifecycle rule on `sen-backups`, recommended 30 days (`docs/local.md`).
 - `docs/local.md`'s queue: install and the soak, the key's backup, `DENYLIST`, Sen's Gmail (before
   B05), the phone checks, and what the ESS capture missed.
 
