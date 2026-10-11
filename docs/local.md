@@ -190,17 +190,15 @@ values in *Production* only), never into the repo or a chat:
   5. The same project can hold Firebase for push (below) and the calendar's OAuth client.
 - a Google Cloud OAuth client for the calendar (D41): consent screen *External*, then **publish it to
   *In production*** so its tokens don't expire after 7 days. The foundations slice adds the redirect URL
-- **two Neon projects** (free plan, D54): `sen` for production, and `sen-preview` holding only the
-  anonymised seed data the foundations slice provides. Point Vercel's *Preview* environment at
-  `sen-preview`. Never let a preview branch from production: a branch copies everyone's real money.
-  Through Vercel, so the connection strings go straight into its environments and no session sees
-  them:
-  1. Vercel → *sen* → *Storage* → *Create Database* → **Neon**, and accept its terms (the one step
-     only you can do). Region **Singapore**, free plan, name `sen`. Connect it to **Production
-     only**.
-  2. The same again, name `sen-preview`, connected to **Preview** and **Development** only.
-  On the laptop instead: run `vercel integration accept-terms neon` in your own terminal, and a
-  local session creates both.
+- **The two Neon databases: done (11 Oct),** through Vercel's Neon integration, so no session saw
+  a connection string. Both are in Singapore on the free plan (D54):
+  - `sen`, production, connected to Vercel's *Production* environment only
+  - `sen-preview`, connected to *Preview* and *Development* only. It will hold only the anonymised
+    seed data the foundations slice provides
+  Never connect `sen` to *Preview*, and never let a preview branch from production: a branch copies
+  everyone's real money. The variables Vercel now holds (`DATABASE_URL`, `DATABASE_URL_UNPOOLED`,
+  the `PG*` and `POSTGRES_*` sets) sign in as the database's **owner**. B05 uses them for
+  migrations only, and adds `app_user` with a variable of its own for the API.
 - **Better Auth's secret: done (10 Oct).** `BETTER_AUTH_SECRET` is in Vercel, a different random
   value in *Production* and in *Preview*, made on the laptop and never shown.
 - **make yourself the admin**, once, after the first production deploy. Sign-up is off, so the

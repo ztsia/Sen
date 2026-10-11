@@ -17,6 +17,8 @@ you end.
   now lists only what's left.
 - **B03's QA:** three full runs (`qa/B03/`), every finding fixed or in `ledger.md`. **Usage:**
   `docs/usage.md`.
+- **Neon is ready for B05:** `sen` (Production only) and `sen-preview` (Preview and Development),
+  with `BETTER_AUTH_SECRET`, all in Vercel. The database variables are the owner role's.
 - **Not verified yet:** anything on the owner's phone.
 
 ## Decided, and why
@@ -43,7 +45,7 @@ you end.
 - **Copper's overspent green:** keep it as designed (verdigris only on copper, the warning always
   with its icon and words)? The owner said *Ok* without the recommendation in front of them.
 - Anthropic's data terms against D34 (before B10); run 6's note 15 (B07).
-- `docs/local.md`'s queue: install and the soak, the key's backup, `DENYLIST`, Neon's terms (before
+- `docs/local.md`'s queue: install and the soak, the key's backup, `DENYLIST`, Sen's Gmail (before
   B05), the phone checks, and what the ESS capture missed.
 
 ## What to do first

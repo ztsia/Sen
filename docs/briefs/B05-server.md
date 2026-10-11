@@ -96,6 +96,9 @@ though their screens come in B38.
 
 - Two Neon projects: `sen` (production) and `sen-preview`, with their connection strings in
   Vercel's *Production* and *Preview* environments. Never paste them into a session.
+  **Done (11 Oct)**, through Vercel's Neon integration: `DATABASE_URL` and `DATABASE_URL_UNPOOLED`
+  are set per environment, as the database's owner role. Use them for migrations only; `app_user`
+  and its variable are this slice's to add.
 - Sen's Gmail account and its app password, plus a random Better Auth secret, both as Vercel
   environment variables. The steps are in `docs/local.md`.
 
