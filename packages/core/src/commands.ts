@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Amount, Id, Instant } from './schema';
+import { Amount, Id, Instant, Sen } from './schema';
 
 /**
  * Every write the app makes, as data (B03). The screens send these through one write interface, which
@@ -87,6 +87,60 @@ export const Command = z.discriminatedUnion('type', [
   z.object({ type: z.literal('review.answer'), itemId: z.string(), answer: z.string() }),
   /** A budget for a category, per cycle (D29); amount 0 removes it. */
   z.object({ type: z.literal('budget.set'), categoryId: Id, amount: Amount }),
+  // --- B04 ---
+  /** Tick or untick an item as yours, or, as the payer, for someone (D71). */
+  z.object({ type: z.literal('split.tick'), splitId: Id, itemId: Id, memberId: Id, on: z.boolean() }),
+  /** An item nobody ticked: *Everyone*, or *Someone else…* by name (the payer only). */
+  z.object({
+    type: z.literal('split.assign'),
+    splitId: Id,
+    itemId: Id,
+    to: z.union([z.literal('everyone'), z.string().min(1)]),
+  }),
+  /** *I've ticked everything I had*, or *Still ticking* to undo it, until the lock. */
+  z.object({ type: z.literal('split.done'), splitId: Id, memberId: Id, done: z.boolean() }),
+  /** *Lock without waiting for…* (the payer, once every item is claimed). */
+  z.object({ type: z.literal('split.lock'), splitId: Id }),
+  /** *I've paid*, for a payment Sen can't see (D65). */
+  z.object({ type: z.literal('split.paid-them'), splitId: Id }),
+  /** The bank's figures (D18): each difference is booked as *Unaccounted*. */
+  z.object({ type: z.literal('balance.check'), checks: z.array(z.object({ accountId: Id, balance: Sen })) }),
+  /** *Submitted* in ESS by hand, or *Send to ESS* in the shell (§13). */
+  z.object({ type: z.literal('claim.submitted'), id: Id, essRef: z.string().nullable() }),
+  /** A message to Sen, with its id made on the phone, so a retried send is a no-op (§12.5). */
+  z.object({
+    type: z.literal('sen.send'),
+    id: z.string(),
+    text: z.string(),
+    file: z.object({ name: z.string(), kind: z.enum(['pdf', 'image']) }).nullable(),
+    from: z.string(),
+  }),
+  /** An `ask_user` button. */
+  z.object({ type: z.literal('sen.answer'), askId: z.string(), answer: z.string() }),
+  /** A proposal card, in the chat or in Review (`/proposals/:id`). */
+  z.object({ type: z.literal('proposal.answer'), id: z.string(), answer: z.enum(['apply', 'dismiss']) }),
+  /** A research draft's figures confirmed into `products` (§12.2 rule 6). */
+  z.object({ type: z.literal('research.confirm'), messageId: z.string() }),
+  z.object({ type: z.literal('memory.forget'), id: z.string() }),
+  /** One Settings value, by its path: `you.payday`, `sen.calendar`, `claims.essSender`. */
+  z.object({
+    type: z.literal('setting.set'),
+    key: z.string(),
+    value: z.union([z.boolean(), z.string(), z.int(), z.null(), z.record(z.string(), z.unknown())]),
+  }),
+  /** Settings → Members (D52, D98): invite, a switch, credit, suspend, remove. */
+  z.object({ type: z.literal('member.invite'), email: z.string(), shell: z.boolean() }),
+  z.object({
+    type: z.literal('member.set'),
+    id: Id,
+    key: z.string(),
+    value: z.union([z.boolean(), z.int(), z.string()]),
+  }),
+  z.object({ type: z.literal('member.remove'), id: Id }),
+  /** Payday (§9.7): the claims question, a step skipped (it waits in Review), the plan used. */
+  z.object({ type: z.literal('payday.claims'), answer: z.enum(['yes', 'no', 'undo']) }),
+  z.object({ type: z.literal('payday.skip'), step: z.enum(['claims', 'balance', 'look-back', 'plan']) }),
+  z.object({ type: z.literal('payday.plan'), use: z.boolean() }),
   /** Undo: the backend's own token for putting things back as they were. */
   z.object({ type: z.literal('undo'), token: z.string() }),
 ]);

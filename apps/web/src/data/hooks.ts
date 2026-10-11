@@ -31,6 +31,20 @@ export const useMe = () => useRead(['me'], (b) => b.me());
 export const useCategories = (kind: 'spend' | 'income' = 'spend') =>
   useRead(['categories', kind], (b) => b.categories(kind));
 export const useAccounts = () => useRead(['accounts'], (b) => b.accounts());
+// B04
+export const useSplit = (id: string) => useRead(['split', id], (b) => b.split(id), !!id);
+export const useShared = () => useRead(['shared'], (b) => b.shared());
+export const useAccountList = () => useRead(['account-list'], (b) => b.accountList());
+export const useAccount = (id: string) => useRead(['account', id], (b) => b.account(id), !!id);
+export const useBalanceCheck = () => useRead(['balance-check'], (b) => b.balanceCheck());
+export const useClaims = () => useRead(['claims'], (b) => b.claimList());
+export const useClaim = (id: string) => useRead(['claim', id], (b) => b.claim(id), !!id);
+export const useSen = (from: string) => useRead(['sen', from], (b) => b.sen(from));
+export const useMemory = () => useRead(['memory'], (b) => b.memory());
+export const useResearch = () => useRead(['research'], (b) => b.research());
+export const useUsage = () => useRead(['usage'], (b) => b.usage());
+export const useSettings = () => useRead(['settings'], (b) => b.settings());
+export const usePayday = () => useRead(['payday'], (b) => b.payday());
 export const useDraft = (id: string) => useRead(['draft', id], (b) => b.draft(id), !!id);
 export const useMatches = (total: number, at: string, enabled: boolean) =>
   useRead(['matches', total, at], (b) => b.matches(total, at), enabled);

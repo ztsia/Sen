@@ -169,6 +169,8 @@ function emptyDb(): Db {
     receipts: [],
     items: [],
     picks: {},
+    sen: { messages: [], memory: [] },
+    claimState: { claims: [] },
     splits: [],
     members: [],
     bills: {},

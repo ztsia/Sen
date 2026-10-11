@@ -301,6 +301,9 @@ export function apply(db: Db, cmd: Exclude<Command, { type: 'undo' }>): Applied 
         touched: [],
       };
     }
+    default:
+      // B04's commands belong to their areas (areas/index.ts), which run first
+      throw new Error(`No fake for ${cmd.type}`);
   }
 }
 

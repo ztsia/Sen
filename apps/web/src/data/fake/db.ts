@@ -18,6 +18,9 @@ import type {
   Transaction,
 } from '@sen/core/schema';
 import type { Health, ReceiptDraft, ReviewItem } from '@sen/core/views';
+import type { ClaimState } from './areas/money';
+import type { SenState } from './areas/sen';
+import type { SettingsState } from './areas/settings';
 
 /**
  * The fake's whole state: the rows of spec §15 one person would have, plus what the server would
@@ -69,6 +72,13 @@ export interface Db {
   drafts: ReceiptDraft[];
   /** Rows still in the outbox, by id, with when they were written (§5). */
   unsynced: Record<string, string>;
+  // B04's areas, each owned by its module in areas/
+  /** Sen's conversation and memory. */
+  sen: SenState;
+  /** The claims drafted per scheme and period (§13). */
+  claimState: ClaimState;
+  /** Everything Settings holds beyond the switches above. */
+  settings: SettingsState;
   /** What changed on each payment, newest last (`audit_log`). */
   changes: Record<string, { at: string; what: string; by: 'user' | 'agent' | 'system' }[]>;
 }

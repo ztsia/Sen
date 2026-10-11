@@ -4,6 +4,10 @@ import type { Account, Category, Receipt, ReceiptItem, Transaction, TxnKind, Txn
 import type { ReviewItem } from '@sen/core/views';
 import type { Db } from './db';
 import { seeded, uid } from './ids';
+import { seedClaims } from './areas/money';
+import { seedSen } from './areas/sen';
+import { blankSettings, seedSettings } from './areas/settings';
+import { seedSplits } from './areas/splits';
 
 // Wei Ming's month (D11): made-up names and amounts throughout, in the style of notifications.md.
 // TAN WEI MING stands in for the owner. Twelve months of history come from a seeded generator, so they
@@ -670,6 +674,11 @@ export function weiMing(): Db {
   });
   const db = base(gen);
   addThisCycle(db);
+  // B04's areas, each seeded by its own module
+  seedSplits(db);
+  db.settings = seedSettings(db);
+  db.sen = seedSen(db);
+  db.claimState = seedClaims(db);
   return db;
 }
 
@@ -710,6 +719,9 @@ function base(gen: Gen): Db {
     drafts: [],
     unsynced: {},
     changes: {},
+    sen: { messages: [], memory: [] },
+    claimState: { claims: [] },
+    settings: blankSettings(),
   };
 }
 
