@@ -41,6 +41,8 @@ const ROTI = uid('txn:roti-bakar');
 const NASI = uid('txn:nasi-kandar');
 const BBQ = uid('split:bbq');
 const HAIDILAO = uid('split:haidilao');
+/** The split still changing: an item nobody ticked, Kah Hoe not done (areas/splits.ts). */
+const STUCK = uid('split:nk');
 const GOAL = uid('goal:japan');
 const MEALS = uid('category:Meals');
 
@@ -235,7 +237,7 @@ export const JOURNEYS: Journey[] = [
       {
         screen: 'home',
         surface: 'prompt-payback',
-        caption: 'You send Mei RM25.00 from TNG: Paying back: BBQ PLACE comes first, even offline.',
+        caption: 'You send Mei RM24.40 from TNG: Paying back: HAIDILAO comes first, even offline.',
       },
     ],
   },
@@ -246,7 +248,7 @@ export const JOURNEYS: Journey[] = [
     steps: [
       {
         screen: 'split',
-        search: { id: BBQ },
+        search: { id: STUCK },
         caption: 'An item nobody ticked, or someone who left: settle it as the payer, or Lock without waiting.',
       },
     ],

@@ -234,3 +234,24 @@ describe('split-public, on its own state', () => {
     expect(v).toMatchObject({ state: 'closed', items: [], people: [], pay: null, you: null });
   });
 });
+
+describe('Split on a payment with none (§7)', () => {
+  it('starts an open split with only you in it, and a second start is a no-op', () => {
+    const db = buildScenario('wei-ming', false);
+    const t = db.txns.find(
+      (x) => x.kind === 'spend' && !x.deletedAt && !db.splits.some((s) => s.transactionId === x.id),
+    )!;
+    const ctx = { offline: false, later: () => {} };
+    const splitId = uid('split:test-start');
+    applyArea(db, { type: 'split.start', splitId, txnId: t.id }, ctx);
+    const v = SplitView.parse(splitView(db, splitId));
+    expect(v.state).toBe('changing');
+    expect(v.people.map((p) => p.name)).toEqual(['You']);
+    expect(v.total).toBe(t.amount);
+    const n = db.splits.length;
+    expect(applyArea(db, { type: 'split.start', splitId: uid('split:again'), txnId: t.id }, ctx)?.said).toBe(
+      'Already split',
+    );
+    expect(db.splits).toHaveLength(n);
+  });
+});

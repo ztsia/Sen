@@ -490,7 +490,7 @@ export const JOURNEYS: Record<string, Journey> = {
     // the paying-back prompt (Android draws it): its first button ticks your share, even offline
     const prompt = await standIn(page, 'prompt-payback');
     await shot('the prompt');
-    await prompt.getByRole('button', { name: 'Paying back: BBQ PLACE' }).click();
+    await prompt.getByRole('button', { name: 'Paying back: HAIDILAO' }).click();
     await expect(dialog(page, 'Native stand-ins')).toHaveCount(0);
     await expect(page.getByText('You owe')).toHaveCount(0);
     await expect(page.getByText('Paid', { exact: true })).toBeVisible();

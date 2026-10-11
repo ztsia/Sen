@@ -88,6 +88,8 @@ export const Command = z.discriminatedUnion('type', [
   /** A budget for a category, per cycle (D29); amount 0 removes it. */
   z.object({ type: z.literal('budget.set'), categoryId: Id, amount: Amount }),
   // --- B04 ---
+  /** *Split* on a payment with none (§7): an open split, with only you in it so far, shared evenly. */
+  z.object({ type: z.literal('split.start'), splitId: Id, txnId: Id }),
   /** Tick or untick an item as yours, or, as the payer, for someone (D71). */
   z.object({ type: z.literal('split.tick'), splitId: Id, itemId: Id, memberId: Id, on: z.boolean() }),
   /** An item nobody ticked: *Everyone*, or *Someone else…* by name (the payer only). */

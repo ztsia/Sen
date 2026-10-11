@@ -471,6 +471,38 @@ export const applySplits: AreaApply = (db, cmd) => {
       m.doneAt = null;
       return { said: m.isMe ? 'Still ticking' : `${m.name} is still ticking`, touched: [m.id] };
     }
+    case 'split.start': {
+      // a retried start, or a payment already split, is a no-op (§6.5)
+      if (db.splits.some((x) => x.id === c.splitId || x.transactionId === c.txnId))
+        return { said: 'Already split', touched: [] };
+      const t = db.txns.find((x) => x.id === c.txnId);
+      if (!t) throw new Error('That payment is gone.');
+      const me = newId();
+      db.splits.push({
+        id: c.splitId,
+        userId: db.userId,
+        transactionId: t.id,
+        receiptId: null,
+        paidBy: 'me',
+        payerMemberId: me,
+        status: 'open',
+        lockedAt: null,
+        createdAt: nowIso(),
+      });
+      db.members.push({
+        id: me,
+        userId: db.userId,
+        splitId: c.splitId,
+        name: 'You',
+        isMe: true,
+        isOthers: false,
+        doneAt: null,
+        share: t.amount,
+        paidAt: t.occurredAt,
+        paidByTransactionId: t.id,
+      });
+      return { said: 'Split started. Share the link', touched: [c.splitId] };
+    }
     case 'split.lock': {
       const s = mustSplit(db, c.splitId);
       if (s.paidBy !== 'me') throw new Error(`Only ${payerOf(db, s)?.name ?? 'the payer'} can lock it.`);

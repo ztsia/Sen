@@ -11,6 +11,7 @@ import { Sheet } from '@/blocks/sheet';
 import { EmptyState } from '@/blocks/states';
 import { toastDone } from '@/blocks/toast';
 import { Item, ItemContent, ItemGroup, ItemSeparator, ItemTitle } from '@/components/ui/item';
+import { newId } from '@/lib/uid';
 import { startDraft, useCategories, useMe, usePayments, useTxn, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -144,7 +145,16 @@ function TxnBody({ v }: { v: TxnView }) {
     actions.push(
       v.split
         ? { label: `Split · ${v.split.state}. ${v.split.detail}`, onSelect: () => go('split', { id: v.split!.id }) }
-        : { label: 'Split', onSelect: () => go('split', { id: t.id }) },
+        : {
+            label: 'Split',
+            onSelect: () => {
+              // an open split for this payment, then its screen (§7); the id is made here, so a retry is a no-op
+              const splitId = newId();
+              void write({ type: 'split.start', splitId, txnId: t.id }, { quiet: true }).then(
+                (r) => r && go('split', { id: splitId }),
+              );
+            },
+          },
     );
   }
   if (v.provisional) actions.push({ label: 'New wording: right? Answer in Review', onSelect: () => go('review') });

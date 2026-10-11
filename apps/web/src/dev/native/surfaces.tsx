@@ -102,7 +102,7 @@ export const SURFACES: Def[] = [
     body: 'Matches a split you owe on. Works offline too.',
     buttons: [
       {
-        label: 'Paying back: BBQ PLACE',
+        label: 'Paying back: HAIDILAO',
         run: (c) => {
           c.write({ type: 'share.paid', memberId: uid('member:hd:me'), byTransactionId: null });
           c.dismiss();
@@ -306,7 +306,7 @@ export const SURFACES: Def[] = [
     kind: 'island',
     name: 'A split at the table',
     title: '2 of 4 ticked',
-    body: 'KEDAI MEE ABC · until it locks',
+    body: 'BBQ PLACE · until it locks',
     segments: [2, 4],
     open: { label: 'Open the split', run: (c) => (c.dismiss(), c.go('split', { id: BBQ })) },
     does: 'Opens split.',
