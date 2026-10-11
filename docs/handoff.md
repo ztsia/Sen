@@ -26,12 +26,14 @@ rotation*: read this first, and rewrite it before you end.
   look's Home material), all 16 journeys in all twelve looks, axe and 48 px on every screen, the
   `uiux` pass (`qa/B03/uiux.md`), and the docs (`CLAUDE.md`, B05's brief). The full `pnpm e2e` is
   green.
-- **QA run 1** (full) said *fix first*: 6 Majors, 8 Minors. All fixed in one tier-3 batch
-  (`qa/B03/ledger.md`); its report is `qa/B03/report-run1.md`, published at
-  https://claude.ai/artifact/WfFSai2Hz3RP9Kbe93w88p.
-- **In progress: QA run 2**, a fresh full run (tier 3), and the repo's `pnpm e2e` beside it.
-- **Still to do:** read run 2, fix by tier, publish its report to the same artifact, then the PR
+- **QA runs 1 and 2** (full) both said *fix first*; every finding is fixed or recorded in
+  `qa/B03/ledger.md` (tier 3 each time). Reports: `qa/B03/report-run1.md`, `report-run2.md`, both
+  published at https://claude.ai/artifact/WfFSai2Hz3RP9Kbe93w88p (one link, the latest run).
+- **In progress: QA run 3**, a fresh full run, and the repo's `pnpm e2e` beside it.
+- **Still to do:** read run 3, fix by tier, publish it to the same link, then the PR
   *B03 · Skeleton: the five tabs*.
+- **Open with the owner (subagents):** whether to add Haiku 5.5 for mechanical batches to
+  `CLAUDE.md`'s table (proposed 11 Oct, awaiting a yes).
 
 ## Decided, and why
 
@@ -57,7 +59,7 @@ rotation*: read this first, and rewrite it before you end.
 
 ## What to do first
 
-1. If `qa/B03/report.md` (run 2's) isn't committed, the run was lost: start a fresh full run (the
+1. If `qa/B03/report.md` (run 3's) isn't committed, the run was lost: start a fresh full run (the
    `qa` skill); it reads the committed `acceptance.md` and `flows.md` first.
 2. Fix its findings by tier, then open the PR.
 
