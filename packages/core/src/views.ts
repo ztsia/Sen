@@ -499,6 +499,8 @@ export const SharedView = z.object({
       merchant: z.string(),
       at: Instant,
       paidBy: z.enum(['me', 'other']),
+      /** The bill's total. */
+      sen: Amount,
       /** *You paid · 1 of 2 paid you back*, or *Mei paid · you owe RM24.40*. */
       line: z.string(),
       open: z.boolean(),

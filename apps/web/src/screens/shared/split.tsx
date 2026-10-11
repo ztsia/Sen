@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { CheckCircle2Icon, HourglassIcon, LockIcon, WalletIcon } from 'lucide-react';
-import type { Command } from '@sen/core/commands';
 import type { SplitView } from '@sen/core/views';
 import { Money } from '@/blocks/money';
 import { StatusCard } from '@/blocks/status';
@@ -217,13 +216,7 @@ function SplitBody({ v }: { v: SplitView }) {
                       disabled={matched}
                       onCheckedChange={(on) =>
                         void write(
-                          // not in commands.ts yet: the payer's tick for a friend (see the B04 splits report)
-                          {
-                            type: 'split.paid',
-                            splitId: v.id,
-                            memberId: p.id,
-                            paid: on === true,
-                          } as unknown as Command,
+                          { type: 'split.paid', splitId: v.id, memberId: p.id, paid: on === true },
                           { quiet: true },
                         )
                       }

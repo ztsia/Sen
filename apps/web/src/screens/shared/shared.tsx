@@ -1,8 +1,7 @@
-import { ChevronRightIcon, SplitIcon } from 'lucide-react';
+import { SplitIcon } from 'lucide-react';
 import type { SharedView } from '@sen/core/views';
 import { EmptyState } from '@/blocks/states';
-import { RowMarkIcon } from '@/blocks/rows';
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
+import { ListRow } from '@/blocks/rows';
 import { useShared } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -55,25 +54,14 @@ function Rows({ rows }: { rows: SharedView['rows'] }) {
   return (
     <div className="flex flex-col">
       {rows.map((r) => (
-        // a list row (blocks/rows.tsx) without an amount: what is owed is in its second line
-        <Item
+        <ListRow
           key={r.id}
-          asChild
-          size="sm"
-          className="min-h-16 w-full flex-nowrap rounded-none text-left text-base active:bg-accent"
-        >
-          <button type="button" onClick={() => go('split', { id: r.id })}>
-            <RowMarkIcon icon={SplitIcon} />
-            <ItemContent className="min-w-0 gap-0">
-              <ItemTitle className="block w-full truncate text-base">{r.merchant}</ItemTitle>
-              <ItemDescription className="text-sm text-pretty">{r.line}</ItemDescription>
-            </ItemContent>
-            <ItemActions className="shrink-0 text-sm text-muted-foreground">
-              {shortDay(dayOfInstant(r.at))}
-              <ChevronRightIcon className="size-5 shrink-0 text-icon" aria-hidden="true" />
-            </ItemActions>
-          </button>
-        </Item>
+          icon={SplitIcon}
+          title={r.merchant}
+          secondary={`${shortDay(dayOfInstant(r.at))} · ${r.line}`}
+          sen={r.sen}
+          onOpen={() => go('split', { id: r.id })}
+        />
       ))}
     </div>
   );

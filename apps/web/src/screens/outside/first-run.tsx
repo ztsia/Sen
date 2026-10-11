@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ComponentType, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,10 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { checkAmount, MoneyInput } from '@/blocks/money-input';
 import { SettingsRow } from '@/blocks/rows';
 import { EmptyState, OfflineBanner } from '@/blocks/states';
+import CaptureAccess from '../capture/access';
+import CaptureApps from '../capture/apps';
+import { CaptureStep } from '../capture/common';
+import CaptureRunning from '../capture/running';
 import { useAccountList, useCategories, useMe } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -89,28 +93,11 @@ function Steps({ capture }: { capture: boolean }) {
       ) : step === 'categories' ? (
         <Categories off={off} setOff={setOff} onDone={next} />
       ) : step === 'apps' ? (
-        <BuiltStep
-          to="settings/capture/apps"
-          open="Open your apps"
-          line="Pick the banks and e-wallets Sen reads notifications from. Other apps are ignored, and messaging, SMS and email apps can never be chosen."
-          onNext={next}
-        />
+        <BuiltStep screen={CaptureApps} onNext={next} />
       ) : step === 'access' ? (
-        <BuiltStep
-          to="settings/capture/access"
-          open="Open notification access"
-          line="Switch Sen on in Android’s notification access, once. If the switch is greyed out, Sen shows you how to allow restricted settings."
-          onNext={next}
-          skip
-        />
+        <BuiltStep screen={CaptureAccess} onNext={next} skip />
       ) : step === 'running' ? (
-        <BuiltStep
-          to="settings/capture/running"
-          open="Open Keep Sen running"
-          line="Android may stop Sen to save battery. This step lets it run, with the extra steps your phone’s brand needs."
-          onNext={next}
-          skip
-        />
+        <BuiltStep screen={CaptureRunning} onNext={next} skip />
       ) : step === 'accounts' ? (
         <Accounts balances={balances} setBalances={setBalances} onNext={next} />
       ) : step === 'name' ? (
@@ -174,32 +161,13 @@ function Actions({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * The shell's own step screens (B02) draw their own bar, so they can't sit inside this frame as they
- * are. Until they take a bare mode, this step says what it is and opens the built screen.
- */
-function BuiltStep({
-  to,
-  open,
-  line,
-  onNext,
-  skip,
-}: {
-  to: string;
-  open: string;
-  line: string;
-  onNext: () => void;
-  skip?: boolean;
-}) {
-  const go = useGo();
+/** The shell's own step screens (B02), drawn inside this frame: the same screens Settings → Capture shows. */
+function BuiltStep({ screen: Step, onNext, skip }: { screen: ComponentType; onNext: () => void; skip?: boolean }) {
   return (
     <>
-      <p className="px-4 pt-4 text-base text-pretty">{line}</p>
-      <div className="px-4 pt-4">
-        <Button variant="outline" size="lg" className="w-full" onClick={() => go(to)}>
-          {open}
-        </Button>
-      </div>
+      <CaptureStep>
+        <Step />
+      </CaptureStep>
       <Actions>
         <Button size="lg" onClick={onNext}>
           Next

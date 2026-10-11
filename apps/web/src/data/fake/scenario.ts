@@ -354,11 +354,11 @@ function genCycle(
       );
       if (opts.ownTransfers) {
         transfer(k('goplus'), d, '10:10', rm('500.00'), 'ryt', 'goplus').forEach(push);
-        transfer(k('tng'), d, '10:12', rm('450.00'), 'ryt', 'tng').forEach(push);
+        transfer(k('tng'), d, '10:12', rm('550.00'), 'ryt', 'tng').forEach(push);
         transfer(k('pbb'), d, '10:14', rm('400.00'), 'ryt', 'pbb').forEach(push);
       }
     }
-    if (i === 2 && opts.ownTransfers) transfer(k('grab'), d, '08:30', rm('300.00'), 'pbb', 'grab', true).forEach(push);
+    if (i === 2 && opts.ownTransfers) transfer(k('grab'), d, '08:30', rm('330.00'), 'pbb', 'grab', true).forEach(push);
     if (dom === '05')
       push(
         txn({

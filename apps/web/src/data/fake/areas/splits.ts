@@ -9,7 +9,7 @@ import type { Db } from '../db';
 import { uid } from '../ids';
 import { at, catId, rm } from '../scenario';
 import { spendingOf } from '../views';
-import type { AreaApply, Cmd } from './ctx';
+import type { AreaApply } from './ctx';
 
 // Shared bills (B04): `split` and `shared` on the person's own rows (db.splits, db.members, db.items,
 // db.picks, db.bills), and the split.* commands (spec §7, D47, D64–D66, D71). `split-public` is not
@@ -20,7 +20,6 @@ import type { AreaApply, Cmd } from './ctx';
 // decides who gets the odd sen of a shared item).
 
 /** Not in commands.ts yet: the payer's tick for "this friend paid me", cash or matched (D65). */
-export type SplitPaidCmd = { type: 'split.paid'; splitId: string; memberId: string; paid: boolean };
 
 // --- the rows ---
 
@@ -372,7 +371,7 @@ export function sharedView(db: Db): SharedView {
           ? `${who} paid · you paid ${formatSen(owes)}`
           : `${who} paid · you owe ${formatSen(owes)}`;
     }
-    return [{ id: s.id, merchant: bill.merchant, at: bill.at, paidBy: s.paidBy, line, open }];
+    return [{ id: s.id, merchant: bill.merchant, at: bill.at, paidBy: s.paidBy, sen: bill.total, line, open }];
   });
   // open ones first, newest first within each
   return { rows: rows.sort((a, b) => (a.open === b.open ? (a.at < b.at ? 1 : -1) : a.open ? -1 : 1)) };
@@ -381,7 +380,7 @@ export function sharedView(db: Db): SharedView {
 // --- writes ---
 
 export const applySplits: AreaApply = (db, cmd) => {
-  const c = cmd as Cmd | SplitPaidCmd;
+  const c = cmd;
   switch (c.type) {
     case 'split.tick': {
       const s = mustSplit(db, c.splitId);

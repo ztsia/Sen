@@ -101,6 +101,8 @@ export const Command = z.discriminatedUnion('type', [
   z.object({ type: z.literal('split.done'), splitId: Id, memberId: Id, done: z.boolean() }),
   /** *Lock without waiting for…* (the payer, once every item is claimed). */
   z.object({ type: z.literal('split.lock'), splitId: Id }),
+  /** The payer's tick list: a friend's share paid, by cash or a payment Sen didn't match (D65). */
+  z.object({ type: z.literal('split.paid'), splitId: Id, memberId: Id, paid: z.boolean() }),
   /** *I've paid*, for a payment Sen can't see (D65). */
   z.object({ type: z.literal('split.paid-them'), splitId: Id }),
   /** The bank's figures (D18): each difference is booked as *Unaccounted*. */
@@ -129,7 +131,21 @@ export const Command = z.discriminatedUnion('type', [
     value: z.union([z.boolean(), z.string(), z.int(), z.null(), z.record(z.string(), z.unknown())]),
   }),
   /** Settings → Members (D52, D98): invite, a switch, credit, suspend, remove. */
-  z.object({ type: z.literal('member.invite'), email: z.string(), shell: z.boolean() }),
+  z.object({
+    type: z.literal('member.invite'),
+    email: z.string(),
+    shell: z.boolean(),
+    switches: z.object({
+      capture: z.boolean(),
+      agent: z.boolean(),
+      splits: z.boolean(),
+      email: z.boolean(),
+      calendar: z.boolean(),
+      claims: z.boolean(),
+    }),
+    welcome: Amount,
+    allowance: Amount,
+  }),
   z.object({
     type: z.literal('member.set'),
     id: Id,

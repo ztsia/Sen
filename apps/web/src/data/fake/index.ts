@@ -75,7 +75,9 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     return new Promise<T>((resolve, reject) =>
       setTimeout(() => {
         try {
-          resolve(fn(db));
+          // a copy: the state is changed in place, and the query cache compares what it's given with
+          // what it holds, so a view handing back a live array would never show a change
+          resolve(structuredClone(fn(db)));
         } catch (e) {
           reject(e instanceof Error ? e : new Error(String(e)));
         }

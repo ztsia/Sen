@@ -11,7 +11,6 @@ import { checkAmount, MoneyInput } from '@/blocks/money-input';
 import { SettingsRow } from '@/blocks/rows';
 import { Sheet } from '@/blocks/sheet';
 import { EmptyState } from '@/blocks/states';
-import { backend } from '@/data';
 import { useSettings, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -107,7 +106,7 @@ function InviteSheet({
   const write = useWrite();
   const [email, setEmail] = useState('');
   const [shell, setShell] = useState<'browser' | 'shell'>('browser');
-  const [on, setOn] = useState<Record<string, boolean>>(DEFAULTS);
+  const [on, setOn] = useState<typeof DEFAULTS>(DEFAULTS);
   const [welcome, setWelcome] = useState(WELCOME);
   const [allowance, setAllowance] = useState(ALLOWANCE);
   const [errors, setErrors] = useState<{ email?: string; welcome?: string; allowance?: string }>({});
@@ -125,18 +124,15 @@ function InviteSheet({
     if (e.email || e.welcome || e.allowance || w.sen === undefined || a.sen === undefined) return;
     setBusy(true);
     const isShell = shell === 'shell';
-    const r = await write({ type: 'member.invite', email: addr, shell: isShell });
+    const r = await write({
+      type: 'member.invite',
+      email: addr,
+      shell: isShell,
+      switches: { ...DEFAULTS, ...on } as typeof DEFAULTS,
+      welcome: w.sen,
+      allowance: a.sen,
+    });
     if (r) {
-      // the invite made the person with the defaults; set what was changed on the sheet
-      const m = (await (await backend()).settings()).members.find((x) => x.email === addr.toLowerCase());
-      if (m) {
-        const set = (key: string, value: boolean | number) =>
-          write({ type: 'member.set', id: m.id, key, value }, { quiet: true });
-        for (const [k, v] of Object.entries(on))
-          if ((k !== 'capture' || isShell) && v !== DEFAULTS[k as keyof typeof DEFAULTS]) await set(k, v);
-        if (w.sen !== 500) await set('grant', w.sen - 500);
-        if (a.sen !== 200) await set('allowance', a.sen);
-      }
       setEmail('');
       setOn(DEFAULTS);
       setWelcome(WELCOME);
@@ -201,7 +197,7 @@ function InviteSheet({
               key={s.key}
               label={s.label}
               description={s.about}
-              checked={!!on[s.key]}
+              checked={s.key !== 'shell' && on[s.key]}
               onCheckedChange={(v) => setOn((o) => ({ ...o, [s.key]: v }))}
             />
           ))}

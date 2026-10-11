@@ -276,6 +276,12 @@ export function apply(db: Db, cmd: Exclude<Command, { type: 'undo' }>): Applied 
     case 'review.answer': {
       const item = db.review.find((r) => r.id === cmd.itemId);
       dropReview(db, (r) => r.id !== cmd.itemId);
+      // a proposal is one card in Review and in Sen's chat: answered in either, it's answered in both
+      if (item?.kind === 'proposal')
+        for (const m of db.sen.messages)
+          for (const p of m.parts)
+            if (p.type === 'proposal' && p.id === cmd.itemId)
+              p.status = cmd.answer === 'apply' ? 'applied' : 'dismissed';
       const said =
         item?.kind === 'proposal'
           ? cmd.answer === 'apply'

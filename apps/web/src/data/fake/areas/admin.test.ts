@@ -10,6 +10,16 @@ const run = (db: ReturnType<typeof buildScenario>, cmd: Parameters<typeof applyM
   applyMembers(db, cmd, ctx);
 const hui = (db: ReturnType<typeof buildScenario>) => db.settings.members.find((m) => m.name === 'Hui Min')!;
 
+const invite = (email: string, shell: boolean) =>
+  ({
+    type: 'member.invite',
+    email,
+    shell,
+    switches: { capture: true, agent: true, splits: true, email: true, calendar: false, claims: false },
+    welcome: 500,
+    allowance: 200,
+  }) as const;
+
 describe('Settings admin area', () => {
   it('seeds a view that parses, with made-up schemes and ESS half set up', () => {
     const db = buildScenario('wei-ming', false);
@@ -25,22 +35,22 @@ describe('Settings admin area', () => {
 
   it('invites a browser friend without capture, and a duplicate is a no-op', () => {
     const db = buildScenario('wei-ming', false);
-    run(db, { type: 'member.invite', email: ' New@Example.com ', shell: false });
+    run(db, invite(' New@Example.com ', false));
     const m = db.settings.members.find((x) => x.email === 'new@example.com')!;
     expect(m.status).toBe('invited');
     expect(m.switches.capture).toBe(false);
     expect(db.settings.seats.used).toBe(2);
     const n = db.settings.members.length;
-    run(db, { type: 'member.invite', email: 'new@example.com', shell: true });
+    run(db, invite('new@example.com', true));
     expect(db.settings.members).toHaveLength(n);
   });
 
   it('refuses a bad email and a full house', () => {
     const db = buildScenario('wei-ming', false);
-    expect(() => run(db, { type: 'member.invite', email: 'nope', shell: false })).toThrow();
-    for (let i = 0; i < 18; i++) run(db, { type: 'member.invite', email: `p${i}@example.com`, shell: true });
+    expect(() => run(db, invite('nope', false))).toThrow();
+    for (let i = 0; i < 18; i++) run(db, invite(`p${i}@example.com`, true));
     expect(db.settings.seats.used).toBe(20);
-    expect(() => run(db, { type: 'member.invite', email: 'late@example.com', shell: true })).toThrow(/seats/);
+    expect(() => run(db, invite('late@example.com', true))).toThrow(/seats/);
   });
 
   it('turning the shell off takes capture and the seat with it', () => {

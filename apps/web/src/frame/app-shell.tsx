@@ -39,6 +39,33 @@ function useLost(): boolean {
  */
 export function AppShell() {
   const screen = useCurrentScreen();
+  // a friend's split link (D47) gets a frame of its own, which reads nothing of the person's: no badge
+  // count, no Sen, no outbox, no dev panel (B04's note; B18 serves it from its own route)
+  return screen?.id === 'split-public' ? <PublicShell /> : <PersonShell screen={screen} />;
+}
+
+/** The split link's frame: the look and the column, and nothing else. */
+function PublicShell() {
+  const devOffline = useUi((s) => s.devState) === 'offline';
+  const online = useOnline() && !devOffline;
+  return (
+    <LookProvider>
+      <div className="safe-top safe-bottom relative mx-auto flex h-dvh w-full max-w-[480px] flex-col overflow-hidden bg-background">
+        {/* a friend's browser has no outbox: nothing waits to sync */}
+        {online ? null : <OfflineBanner>You're offline. Ticks need a connection.</OfflineBanner>}
+        <Outlet />
+      </div>
+      <Toaster
+        position="bottom-center"
+        visibleToasts={1}
+        offset={{ bottom: 16 }}
+        mobileOffset={{ bottom: 16, left: 12, right: 12 }}
+      />
+    </LookProvider>
+  );
+}
+
+function PersonShell({ screen }: { screen: ScreenDef | undefined }) {
   const lost = useLost();
   // the dev panel's offline state shows what offline looks like without cutting the connection
   const devOffline = useUi((s) => s.devState) === 'offline';

@@ -1,8 +1,9 @@
-import type { SettingsView } from '@sen/core/views';
+import { SettingsView } from '@sen/core/views';
 import type { Db } from '../db';
 import type { AreaApply } from './ctx';
 import { uid } from '../ids';
 import { seedAdmin } from './admin';
+import { usageView } from './sen';
 
 // Settings (B04): every section of screens.md's table on made-up data, and the setting.set command.
 // What each section shows follows the person's switches (D52). Members, claims' schemes and ESS, and
@@ -84,16 +85,8 @@ export function settingsView(db: Db): SettingsView {
     sen: {
       calendar: s.calendar,
       memories: db.sen.memory.length,
-      credit: {
-        owner: s.admin,
-        unlimited: false,
-        balance: 0,
-        allowance: 0,
-        allowanceLeft: 0,
-        pausedUntil: db.aiPausedUntil,
-        byUse: [],
-        estimate: null,
-      },
+      // the same figures agent/usage shows (D98)
+      credit: usageView(db),
     },
   };
 }
@@ -135,6 +128,17 @@ export const applySettings: AreaApply = (db, cmd) => {
     case 'receiptsByEmail.code':
       s.receiptsByEmail.code = typeof value === 'string' ? value : null;
       return { said: 'Saved', touched: [] };
+    case 'claims.essSender':
+      s.claims.essSender = typeof value === 'string' && value.trim() ? value.trim() : null;
+      return { said: 'ESS sender saved', touched: [] };
+    case 'claims.ess': {
+      // the ESS section's state as a whole (signed in, the capabilities, the last payslip): the
+      // shell holds it natively from B25, so the skeleton just keeps what the screen sends
+      if (!value || typeof value !== 'object') throw new Error('That ESS state is not valid.');
+      s.claims.ess = SettingsView.shape.claims.shape.ess.parse(value);
+      return { said: s.claims.ess.signedIn ? 'Saved' : 'ESS password forgotten', touched: [] };
+    }
+    case 'calendar':
     case 'sen.calendar':
       s.calendar = value === true;
       return { said: s.calendar ? 'Calendar on' : 'Calendar off', touched: [] };
