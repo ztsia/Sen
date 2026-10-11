@@ -191,7 +191,7 @@ function TxnBody({ v }: { v: TxnView }) {
           <div className="-mx-4">
             <SettingsRow
               label="Correct amount, time or account"
-              onOpen={() => toastDone('Correcting arrives with B13')}
+              onOpen={() => toastDone('Correcting arrives with B12')}
             />
           </div>
         </section>
@@ -290,8 +290,13 @@ function MarkAsSheet({ open, onOpenChange, v }: { open: boolean; onOpenChange: (
           {t.direction === 'in' ? <ChoiceRow label="Income" onSelect={() => mark('income')} /> : null}
           {t.direction === 'in' ? <ItemSeparator /> : null}
           <ChoiceRow label="Transfer" onSelect={() => mark('transfer')} />
-          <ItemSeparator />
-          <ChoiceRow label="Refund of…" onSelect={() => setStep('refund')} />
+          {/* a refund is money in (§7, D21); money out is never one (QA B03 run 3, 28) */}
+          {t.direction === 'in' ? (
+            <>
+              <ItemSeparator />
+              <ChoiceRow label="Refund of…" onSelect={() => setStep('refund')} />
+            </>
+          ) : null}
           {t.kind !== 'spend' && t.direction === 'out' ? (
             <>
               <ItemSeparator />

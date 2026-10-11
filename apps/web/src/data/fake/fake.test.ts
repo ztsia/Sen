@@ -317,3 +317,28 @@ describe('QA B03 run 1', () => {
     expect(v.insights(db).smallThings).toMatchObject({ count: 1, total: rm('14.99') });
   });
 });
+
+describe('QA B03 run 3', () => {
+  it('28: money out can never be marked as a refund or income, and nothing changes when it is tried', async () => {
+    const fake = createFake();
+    const out = fake.db().txns.find((t) => t.direction === 'out' && t.kind === 'spend' && !t.deletedAt)!;
+    const purchase = fake.db().txns.find((t) => t.direction === 'out' && t.kind === 'spend' && t.id !== out.id)!;
+    const before = (await fake.home()).figure;
+    await expect(
+      fake.run({ type: 'txn.kind', id: out.id, kind: 'refund', linkedTransactionId: purchase.id, otherAccountId: null }),
+    ).rejects.toThrow('Only money coming in');
+    await expect(
+      fake.run({ type: 'txn.kind', id: out.id, kind: 'income', linkedTransactionId: null, otherAccountId: null }),
+    ).rejects.toThrow('Only money coming in');
+    expect((await fake.home()).figure).toEqual(before);
+  });
+
+  it('32: a shared bill counts no more than what is left after repayments (D19), before its share is set', () => {
+    const db = buildScenario('wei-ming', false);
+    const bbq = db.txns.find((t) => t.id === uid('txn:bbq'))!;
+    const bill = { ...bbq, id: uid('txn:qa-bill'), amount: rm('100.00'), myShare: null };
+    const back = { ...bbq, id: uid('txn:qa-back'), direction: 'in' as const, kind: 'repayment' as const };
+    db.txns.push(bill, { ...back, amount: rm('40.00'), linkedTransactionId: bill.id, myShare: null });
+    expect(v.spendingOf(db, bill)).toBe(rm('60.00'));
+  });
+});

@@ -6,6 +6,7 @@ import { Placeholder } from './screens/placeholder';
 import { REAL } from './screens/real';
 import { SKELETON } from './screens/skeleton';
 import { ListSkeleton } from './blocks/states';
+import { Screen } from './frame/screen';
 import { screenById } from './screens/registry';
 
 // The routes: the four tab screens, Scan's task screen, every other screen by its id from
@@ -60,7 +61,15 @@ function ScreenFor({ id }: { id: string }) {
   const Built = REAL[id] ?? SKELETON[id];
   if (Built)
     return (
-      <Suspense fallback={<ListSkeleton />}>
+      // the fallback keeps the frame: a screen's shape while its code loads, the tab bar where it
+      // always is (QA B03 run 3, 31)
+      <Suspense
+        fallback={
+          <Screen bar={null}>
+            <ListSkeleton />
+          </Screen>
+        }
+      >
         <Built />
       </Suspense>
     );

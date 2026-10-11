@@ -77,6 +77,14 @@ export function apply(db: Db, cmd: Exclude<Command, { type: 'undo' }>): Applied 
         : [];
       if (cmd.kind === 'transfer' && t.kind === 'transfer' && sides.length > 1)
         return { said: 'Already a transfer', touched: [] };
+      // a refund or income is money in (§7, D21): money out marked as one would leave spending twice
+      // over (QA B03 run 3, 28); the API refuses it the same way (B05)
+      if ((cmd.kind === 'refund' || cmd.kind === 'income') && t.direction !== 'in')
+        throw new Error('Only money coming in can be a refund or income.');
+      if (cmd.kind === 'refund') {
+        const of = db.txns.find((x) => x.id === cmd.linkedTransactionId && !x.deletedAt);
+        if (!of || of.direction !== 'out') throw new Error('A refund is of a payment you made.');
+      }
       t.status = 'done';
       t.updatedAt = nowIso();
       dropReview(db, (r) => !('txnId' in r && r.txnId === t.id));

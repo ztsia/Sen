@@ -43,11 +43,10 @@ export function momentLabel(then: Date, now: Date = clockNow()): string {
 
 const noonKL = (day: string) => new Date(`${day}T12:00:00+08:00`);
 const shortFmt = new Intl.DateTimeFormat('en-MY', { timeZone: KL, day: 'numeric', month: 'short' });
-const longFmt = new Intl.DateTimeFormat('en-MY', { timeZone: KL, weekday: 'short', day: 'numeric', month: 'short' });
 
 /** A calendar day (`2026-09-30`) as `30 Sep`: never ambiguous, never `30/09`. */
 export const shortDay = (day: string) => shortFmt.format(noonKL(day));
-/** A calendar day as `Wed, 30 Sep`. */
-export const longDay = (day: string) => longFmt.format(noonKL(day));
+/** A calendar day as `Wed, 30 Sep`; `Mon, 13 Sept 2027` in another year (QA B03 run 3, 39). */
+export const longDay = (day: string) => dayLabel(noonKL(day));
 /** An instant's day, as a day header shows it. */
 export const dayOfInstant = (at: string) => dayKey.format(new Date(at));
