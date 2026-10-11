@@ -231,3 +231,76 @@ FLOW-C2 pay-new (core)                                               (happy)
 
 FLOW-C3 scan-after (core)                                            (happy)
         = FLOW-10.
+
+---
+
+# Run 2 (full)
+
+Docs only. Entry at 412x915 on a preview build with the dev server. Every run-1 flow (FLOW-1..33, C1..C3)
+is re-walked by run 1's specs. New or changed flows:
+
+FLOW-34 Offline for real                                             (sad)
+        Entry  Review, `context.setOffline(true)`
+        Steps  1. answer ROTI BAKAR 88 -> row leaves, toast, badge -1  2. Payments -> the new rows say Not
+               synced yet  3. manual Save offline -> top of Payments  4. Home figure includes both
+               5. go online, wait 3 s  6. marks go; counts equal what was written; go offline/online again
+        Ends   one row per write, figure unchanged by the sync
+        Covers R2-1, R2-1s, R2-2
+
+FLOW-35 Double, triple taps                                          (sad)
+        Entry  every write button (list in R2-3)
+        Steps  tap 2-3 times in 50 ms; count rows/changes; Undo once
+        Ends   one application, one Undo reverts all
+        Covers R2-3, R2-3s
+
+FLOW-36 Same receipt, three ways                                     (sad)
+        Entry  Scan
+        Steps  1. file A  2. file A renamed  3. file A with a byte flipped  4. Undo the first then A again
+               5. 0-byte file  6. a text file
+        Ends   2 -> Already added; 3 -> new; 4 -> allowed; 5,6 -> refused in words
+        Covers R2-4, R2-4s
+
+FLOW-37 Newest first                                                 (happy + sad)
+        Entry  manual, Payments, Review
+        Steps  Save RM1,234.56 now; open Payments; edit its time to yesterday; reopen
+        Ends   top, then in yesterday's header
+        Covers R2-5, R2-5s
+
+FLOW-38 Launcher shortcut                                            (happy)
+        Entry  /s/manual as first page
+        Steps  type 5, Save
+        Ends   Home with the payment; Payments has it
+        Covers R2-6, R2-6s
+
+FLOW-39 Budgets over                                                 (happy + sad)
+        Entry  Insights > budgets
+        Ends   Over by RM exact diff; at-cap not over
+        Covers R2-7
+
+FLOW-40 Review suggestions and attach                                (happy)
+        Entry  Review
+        Steps  Apply all (count equals marks); Undo; MR DIY receipt -> Attach to a payment…
+        Ends   N marks == N applied; attach list ordered same merchant, then closeness
+        Covers R2-9, R2-10
+
+FLOW-41 Bad addresses                                                (sad)
+        Entry  /s/confirm, /s/txn/x, /s/receipt/x, /s/goal/x, hostile ids
+        Ends   a sentence and a button on each
+        Covers R2-11
+
+FLOW-42 Undo timing                                                  (sad)
+        Entry  Review
+        Steps  answer, Undo inside 1.2 s, wait 3 s; answer, go offline, Undo, online, wait
+        Ends   stays undone
+        Covers R2-15
+
+FLOW-43 Text size and viewport                                       (sad)
+        Entry  Home, Review, Payments, txn, confirm, budgets, goal at 1.5x, 390 and 412 wide
+        Ends   no clipped amounts, no sideways scroll
+        Covers R2-16
+
+FLOW-44 Plain-http host                                              (sad)
+        Entry  the preview served on a non-localhost host over http
+        Steps  Scan -> choose a file -> Save
+        Ends   reading continues or says what is wrong
+        Covers R2-17

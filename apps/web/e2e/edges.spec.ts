@@ -55,7 +55,8 @@ test("a finger's long-press on Scan opens the sheet, and lifting it chooses noth
   await expect(sheet).toBeVisible();
   // and the next tap on a row works as normal
   await sheet.getByRole('button', { name: 'From gallery' }).tap();
-  await expect(page).toHaveURL(/\/s\/crop/);
+  // From gallery opens Scan, which has the gallery picker in a browser (QA B03 run 1, finding 7)
+  await expect(page).toHaveURL(/\/scan/);
 });
 
 test("a finger's tap on Scan opens the scanner", async ({ page }) => {

@@ -48,3 +48,7 @@ after an overshoot that finding 8 now refuses. Run 2 judges both against the spe
 
 **Lint on QA's specs:** `qa/e2e/**` may use `any` (they probe the fake through untyped handles,
 `eslint.config.js`); unused imports were removed and the files formatted. No assertion changed.
+
+**The repo's `pnpm e2e` after the fixes:** 319 of 320. The one red was B02's long-press test, which
+expected *From gallery* to open `crop`; finding 7 sends it to `scan`, so the assertion now says so
+(`e2e/edges.spec.ts`). Re-run alone: green.

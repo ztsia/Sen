@@ -305,3 +305,89 @@ AC-70  **Data layer**: reads go through per-screen query hooks and writes throug
        backend command; the fake applies a write at once and "syncs" later; offline writes remain
        *Not synced yet* and sync exactly once on reconnect, with no duplicate rows
 AC-70s Offline + reload (the fake is in-memory): the page does not crash and says what was lost or kept
+
+---
+
+# Run 2 (full, after run 1's tier-3 fixes)
+
+Written from the docs before any B03 source was opened in this run. The reviewer had read run 1's report
+and `qa/B03/ledger.md` first (they name the fixes and where they landed, no code), so the criteria below
+re-check each fix from the spec's side, and add angles run 1 did not take. Run 1's criteria AC-1..AC-70
+all stand and are re-run by run 1's specs (`qa/e2e/b03-*.spec.ts`), which are judged against the spec, not
+against the fixes (run 1's own notes: AC-6 needs a production build served; FLOW-12 and FLOW-17 expectations
+changed with findings 12 and 8).
+
+R2-1   Offline is real, not a flag
+       Given the browser is truly offline (`context.setOffline(true)`) on Review
+       When  a Review row is answered
+       Then  the row leaves at once, the badge and the "Needs you" count drop by exactly 1, the toast has
+             Undo, and the row reads *Not synced yet* wherever it shows (Payments, txn)
+       Spec  spec_v2.md §5, §6.2, patterns §7 *Offline*
+R2-1s  When back online, the rows sync once: no duplicate payment, the mark goes, a second offline->online
+       cycle does not re-send. Home's figure includes the offline row while offline, and equals the figure
+       after sync (to the sen)
+R2-2   Offline, a write on any other screen also shows at once: `manual` Save puts a payment on top of
+       Payments; txn note appears in Changes; budgets add shows the meter
+R2-3   One answer per tap
+       When  Review's answer button (and Apply all, Done on confirm, Save on manual, Mark as, Delete,
+             Attach, I've paid, This was a payment) is double- or triple-tapped within 100 ms
+       Then  one application: one new row/one change in the data, and one Undo returns it fully
+R2-3s  Undo double-tapped reverts once and does not error; Undo after the row was answered again does nothing
+       harmful; a different row's answer straight after is unaffected
+       Spec  §6.5 (every input has a dedupe key), D83
+R2-4   Receipt file identity
+       Given a file already added as a receipt
+       When  the same bytes are chosen again (even under another file name)
+       Then  toast/line says "Already added"; receipts count unchanged; nothing in Review changes
+R2-4s  A different file (one byte changed) is a new receipt; the same file after the first was Undone can be
+       added again; the same file picked twice before the first read ends is one receipt; an empty (0 byte)
+       or non-image file is refused in words, not hashed into a receipt
+       Spec  §6.5, §6.4
+R2-5   Newest first means by instant
+       When  a payment is added now (manual Save) or captured with a different UTC offset form
+       Then  it is the top row of Payments and Review's suggestions of "the last account used" uses the newest
+             by instant; two payments one minute apart sort by time whatever their offsets
+R2-5s  A back-dated payment (time edited to yesterday) sorts below today's, in the right KL day header
+R2-6   Add expense from a first page
+       Given `/s/manual` opened directly (launcher shortcut)
+       When  Save
+       Then  Home shows with the payment present; no about:blank
+R2-6s  From Review's *Missing a payment?* Save returns to Review; from Scan-more *Add manually* returns to
+       where it was opened; the system Back on `manual` without saving creates nothing
+R2-7   Over budget reads in words
+       Given a budget over its cap
+       Then  its meter says "Over by RM<exact diff>" with the warning icon; a budget exactly at its cap does
+             not say "Over"; one at 80-99% says it is close with icon+words
+       Spec  patterns §3/§4, AC-43
+R2-8   *Changes* names who: "by you" for a hand edit, "by Sen", or "automatically"; Undo logs a line too
+R2-9   Apply all: the line "Sen suggested N answers" marks exactly N buttons and Apply all applies exactly N,
+       with one Undo reverting all N
+R2-10  *Attach to a payment…* lists the same merchant first, then by closeness of amount; Evidence only and
+       Enter the payment are offered
+R2-11  Bad route params
+       When  `/s/confirm`, `/s/txn/<unknown>`, `/s/receipt/<unknown>`, `/s/goal/<unknown>`,
+             `/s/confirm?id=<unknown>` are opened
+       Then  each says what is wrong in a sentence and offers a button home or back; never a forever-skeleton,
+             blank screen or stack trace; a hostile id (`../`, `' OR 1=1`, 5 000 chars, `<script>`) is the
+             same
+       Spec  patterns §7 *Error*
+R2-12  By-hand items: items that exceed the payment are refused with the exact excess; items equal to the
+       payment are accepted with no "not itemised" line; items below show "RM x not itemised"
+       Spec  D90
+R2-13  Scan-more *From gallery* reaches a picker (the file input) rather than a dead end
+R2-14  Made-up data plausibility: no goal contribution dated after "today" counts as saved; no Review item
+       names an account the owner does not have (Public Bank is an account, D86); a day header from another
+       year carries its year, one from this year does not
+       Spec  D11
+R2-15  Undo in the sync window: write -> Undo within 1.2 s -> after the fake "syncs" the row stays undone;
+       write -> offline -> Undo -> online -> nothing resurrects
+R2-16  Text 1.5x and 412x915 AND 390x844: no clipped amount, no sideways scroll on Home, Review, Payments,
+       txn, confirm, budgets, goal
+R2-17  Insecure context: the app over plain http on a non-localhost host (e.g. a LAN preview) must not break
+       Scan because a browser API is missing (SHA-256 hashing of the file); it degrades or says so
+       Spec  §9.1 (Scan always opens), patterns §7
+R2-18  Regression: run 1's 100 passing criteria still pass; the 11 failures are judged `fixed`,
+       `still failing` or `regressed`
+R2-19  Non-negotiables, again on the fix diff: money integer sen (the hash/size fields are not money);
+       prediction vs fact (budget "Over by" uses facts only); dedupe (R2-3, R2-4); KL time (R2-5 sort uses
+       instants, not strings, and display stays KL)
