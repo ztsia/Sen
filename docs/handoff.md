@@ -1,7 +1,6 @@
 # Handoff
 
-Rewritten 11 Oct 2026 by a local session on the owner's laptop (setup and the ESS capture, no
-slice). The protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it before
+Rewritten 11 Oct 2026 by a local session on the owner's laptop (accounts, no slice). The protocol is in `CLAUDE.md`, *Session rotation*: read this first, and rewrite it before
 you end.
 
 ## Where things stand
@@ -19,6 +18,11 @@ you end.
   `docs/usage.md`.
 - **Neon is ready for B05:** `sen` (Production only) and `sen-preview` (Preview and Development),
   with `BETTER_AUTH_SECRET`, all in Vercel. The database variables are the owner role's.
+- **Cloudflare and Google Cloud are set up as far as a session may (11 Oct):** R2 subscribed, the
+  buckets `sen-receipts` and `sen-backups`, and usage alerts at half of each free allowance; the
+  Google Cloud project **`sen-my`** (not `sen`: Google wants 4 letters), billing linked, the Vertex
+  AI API on, and `sen-ai` with *Agent Platform user*. **No key exists yet**, and Vercel has no new
+  variable. `docs/local.md`'s first item has what's done and what's left for each.
 - **Not verified yet:** anything on the owner's phone.
 
 ## Decided, and why
@@ -30,6 +34,12 @@ you end.
 - **Log usage before every handoff and PR:** `node scripts/usage.mjs --log <slice>`.
 - **QA rounds cost quota (owner, 11 Oct):** fix by the cheapest tier that's honest; a fresh full run
   only when a fix reaches the whole flow, and say what it will cost first.
+- **D126 (owner):** R2 never leaves its free allowance. Cloudflare only alerts, so Sen's own gates
+  are the stop: a size cap and ceilings on upload links (B15), a fixed number of backups and usage
+  in Settings → *Data* (B06). The mechanism and numbers are *Proposed*; those slices confirm them.
+- **A session can't create a credential, set a rule that deletes, or write a Vercel variable:** the
+  laptop's auto mode refused all three on 11 Oct, though the clipboard route worked on 10 Oct. The
+  owner pastes each key into Vercel's dashboard, or allows the command first.
 - **D124:** the core journeys are `first-run`, `pay-new` and `scan-after`.
 - **Refunds and income are money in only**, in the UI and the fake's writes; B05's API refuses the same.
 - **`npx shadcn add` once installed an unrelated package `cn`:** use `--dry-run` first, and check
@@ -43,15 +53,15 @@ you end.
 - **Copper's overspent green:** keep it as designed (verdigris only on copper, the warning always
   with its icon and words)? The owner said *Ok* without the recommendation in front of them.
 - Anthropic's data terms against D34 (before B10); run 6's note 15 (B07).
+- How long backups are kept: a lifecycle rule on `sen-backups`, recommended 30 days (`docs/local.md`).
 - `docs/local.md`'s queue: install and the soak, the key's backup, `DENYLIST`, Sen's Gmail (before
   B05), the phone checks, and what the ESS capture missed.
 
 ## What to do first
 
-- **A local session on the laptop:** finish the accounts and keys, `docs/local.md`'s first item. On
-  11 Oct the owner was signed in to Cloudflare, Google Cloud, Firebase and Anthropic in Chrome, and
-  nothing had been created in them yet. Start with Cloudflare and Google Cloud. Never type or read a
-  key: the owner copies it, and the clipboard goes into Vercel unseen.
+- **The owner, at the laptop:** the keys in `docs/local.md`'s first item, each pasted into Vercel as
+  *Sensitive*, *Production* only. None blocks B04; Gmail's is needed before B05, the rest by B06,
+  B10 and B15. A session never types or reads a key.
 - **A build session:** B04, from `main` (`git checkout -b B04/skeleton-rest origin/main`). Build the
   shared ground yourself, then brief batches (`CLAUDE.md`, *Models and subagents*).
 

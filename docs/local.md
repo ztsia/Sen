@@ -8,21 +8,27 @@ follow on a phone, and commit.
 
 ## Now
 
-- [ ] **Accounts and keys, with a local session on the laptop** (started 11 Oct). You create each
-      account and sign in, in your normal Chrome; the session clicks through the rest in a new tab.
-      Yours alone: creating an account, signing in, a card, accepting terms, and the one click that
-      shows or copies a key. **The session never sees a key:** you click *Copy*, say which one, and it
-      sends the clipboard straight into Vercel as a sensitive variable for *Production* only. The
-      steps for each are under *Later* below. The names later slices read:
+- [ ] **Accounts and keys, on the laptop** (started 11 Oct). Everything that needs no key is done;
+      what's left is yours, because a session may not create a credential or write one into Vercel
+      (both were refused on 11 Oct). Each value goes into Vercel → *sen* → *Settings* → *Environment
+      Variables*, ticked **Sensitive**, for **Production** only. Never into a chat or the repo.
 
-      | For | Where | Vercel variable, or secret | State |
+      | For | Done | Left, yours | Vercel variable, or secret |
       |---|---|---|---|
-      | Sign-in codes (B05) | Sen's own Gmail: 2-Step Verification, an app password named `sen` | `GMAIL_USER`, `GMAIL_APP_PASSWORD` | to do, all yours |
-      | Claude (B10) | console.anthropic.com: prepaid credit, a spend limit, a key named `sen` | `ANTHROPIC_API_KEY` | signed in |
-      | Gemini (B10) | Google Cloud project `sen`: billing, Vertex AI API on, service account `sen-ai` (Vertex AI User), an API key bound to it and restricted to Vertex AI | `GOOGLE_VERTEX_API_KEY`, `GOOGLE_VERTEX_PROJECT` | signed in |
-      | Receipts (B15) | Cloudflare R2: bucket `sen-receipts` (Asia-Pacific), a token with Object Read & Write on that bucket only | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | signed in |
-      | Backups (B06) | Cloudflare R2: bucket `sen-backups`, its own token | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` as Actions secrets in `ztsia/sen_ops` | signed in |
-      | Push (B06) | Firebase, added to the Google Cloud project `sen`, Analytics off; *Service accounts* → *Generate new private key* | `FIREBASE_SERVICE_ACCOUNT` (the whole JSON) | signed in |
+      | Receipts (B15) | R2 subscribed; bucket `sen-receipts` (Asia-Pacific, private) | R2 → *API tokens* → *Create Account API token*: name `sen-receipts`, **Object Read & Write**, *Apply to specific buckets only* → `sen-receipts`. Copy the two values | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`; and plain: `R2_BUCKET` = `sen-receipts`, `R2_ACCOUNT_ID` = the account id in the dashboard's address |
+      | Backups (B06) | Bucket `sen-backups` | The same, named `sen-backups`, for that bucket only | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` as Actions secrets in `ztsia/sen_ops` (`gh secret set <NAME> --repo ztsia/sen_ops` in your own terminal) |
+      | Gemini (B10) | Project **`sen-my`** (Google refuses a name under 4 letters), your billing account linked, the Vertex AI API on, service account `sen-ai` with *Agent Platform user* (Google's new name for *Vertex AI User*) | *APIs and services* → *Credentials* → *Create credentials* → *API key*: name `sen`, tick *Authenticate API calls through a service account* → `sen-ai`, restrict it to *Agent Platform API* | `GOOGLE_VERTEX_API_KEY`; and plain: `GOOGLE_VERTEX_PROJECT` = `sen-my` |
+      | Push (B06) | | console.firebase.google.com → *Add project* → choose `sen-my`, Analytics off, accept its terms. Then ⚙ → *Service accounts* → *Generate new private key*, and paste the whole file's text | `FIREBASE_SERVICE_ACCOUNT` |
+      | Claude (B10) | | console.anthropic.com: prepaid credit, a monthly spend limit, a key named `sen` | `ANTHROPIC_API_KEY` |
+      | Sign-in codes (B05) | | Sen's own Gmail: 2-Step Verification, an app password named `sen` | `GMAIL_USER`, `GMAIL_APP_PASSWORD` |
+
+      **R2 stays free (D126).** Cloudflare emails the account's address when storage passes 5 GB, or
+      a month's Class A passes 500,000, or Class B 5 million: half of each free allowance
+      (*Observability* → *Alerts*). It has no hard stop; Sen's own gates come with B06 and B15.
+      - [ ] **Decide how long backups are kept.** `sen-backups` → *Settings* → *Object Lifecycle
+            Rules* → *Add*: *Delete uploaded objects after* 30 days is the recommendation (a session
+            may not set a rule that deletes). B06's watchdog warns after 2 days without a backup, so
+            the bucket never empties unnoticed.
 
       Done already: Vercel, the signing key, `BETTER_AUTH_SECRET`, both Neon databases. **These wait
       for their slice**, which writes the steps first: the Cloudflare Worker with its Git builds and
@@ -202,7 +208,7 @@ values in *Production* only), never into the repo or a chat:
      foundations slice; it's the password Better Auth's mail uses.
 - **a Google Cloud project for the AI**, Gemini through Vertex AI (D55). There's no "Gemini key" page
   in Vertex: it's an ordinary Google Cloud API key bound to a service account.
-  1. console.cloud.google.com → create a project, such as `sen`. Billing → link a billing account
+  1. console.cloud.google.com → create a project (it's `sen-my`, made 11 Oct). Billing → link a billing account
      with your card (billed in MYR, after use).
   2. APIs & Services → Library → **Vertex AI API** → *Enable*.
   3. IAM & Admin → Service accounts → *Create*: name `sen-ai`, role **Vertex AI User**.
