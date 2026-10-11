@@ -18,11 +18,11 @@ you end.
   `docs/usage.md`.
 - **Neon is ready for B05:** `sen` (Production only) and `sen-preview` (Preview and Development),
   with `BETTER_AUTH_SECRET`, all in Vercel. The database variables are the owner role's.
-- **R2, Gemini and push are ready (11 Oct):** buckets `sen-receipts` and `sen-backups`, a token each, and
+- **R2, Gemini, Claude and push are ready (11 Oct):** buckets `sen-receipts` and `sen-backups`, a token each, and
   usage alerts at half of each free allowance; the Google Cloud project **`sen-my`** (not `sen`:
   Google wants 4 letters) with `sen-ai` and its key, and Firebase on it for push. Their variables
-  are in Vercel (Production), the backup token in `sen_ops`. **Left:** Anthropic and Sen's Gmail,
-  in `docs/local.md`'s first item. No key has made a call yet: B06 and B10 test them.
+  are in Vercel (Production), the backup token in `sen_ops`. **Left:** Sen's Gmail, in
+  `docs/local.md`'s first item. No key has made a call yet: B06 and B10 test them.
 - **Not verified yet:** anything on the owner's phone.
 
 ## Decided, and why
@@ -60,7 +60,7 @@ you end.
 ## What to do first
 
 - **The owner, at the laptop:** what's left in `docs/local.md`'s first item. None blocks B04; Gmail's
-  is needed before B05, Anthropic by B10. A session never types or reads a key.
+  is needed before B05. A session never types or reads a key.
 - **A build session:** B04, from `main` (`git checkout -b B04/skeleton-rest origin/main`). Build the
   shared ground yourself, then brief batches (`CLAUDE.md`, *Models and subagents*).
 

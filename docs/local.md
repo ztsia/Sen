@@ -19,7 +19,7 @@ follow on a phone, and commit.
       | Backups (B06) | **Done.** Bucket `sen-backups`; token `sen-backups`, that bucket only | | `ztsia/sen_ops` Actions secrets: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` |
       | Gemini (B10) | **Done.** Project **`sen-my`** (Google refuses a name under 4 letters), billing linked, the Vertex AI API on, service account `sen-ai` with *Agent Platform user* (Google's new name for *Vertex AI User*), key `sen` bound to it and restricted to that API. Untested until B10 | | Vercel: `GOOGLE_VERTEX_API_KEY`, `GOOGLE_VERTEX_PROJECT` |
       | Push (B06) | **Done.** Firebase added to `sen-my`, Analytics off, the Cloud Messaging API (V1) on; the Admin SDK's service-account key. With billing on, the project is on Firebase's pay-as-you-go plan; push itself is free | Delete `sen-my-firebase-adminsdk-….json` from Downloads, or keep it in your password manager. A new one can be generated any time | Vercel: `FIREBASE_SERVICE_ACCOUNT` |
-      | Claude (B10) | The browser extension isn't allowed on Anthropic's console | console.anthropic.com: prepaid credit, a monthly spend limit, a key named `sen`, *Copy* while a session's watcher runs (or paste it into Vercel yourself) | Vercel: `ANTHROPIC_API_KEY` |
+      | Claude (B10) | **Done.** A key named `sen`, made by you (the browser extension isn't allowed on Anthropic's console) | Check the console has prepaid credit and a monthly spend limit: a session can't see either | Vercel: `ANTHROPIC_API_KEY` |
       | Sign-in codes (B05) | | Sen's own Gmail: 2-Step Verification, an app password named `sen` | Vercel: `GMAIL_USER`, `GMAIL_APP_PASSWORD` |
 
       **R2 stays free (D126).** Cloudflare emails the account's address when storage passes 5 GB, or
