@@ -329,6 +329,8 @@ interface CuState {
   dpr: number;
   mask: HTMLCanvasElement;
   tex: WebGLTexture | null;
+  /** Payday: a polish sweeps across and takes the old cycle's tarnish with it (`t` is set at the first frame). */
+  polish: { t: number | null } | null;
   fallback: boolean;
 }
 type CuCanvas = HTMLCanvasElement & { _cu?: CuState; _m?: boolean };
@@ -388,7 +390,7 @@ function cuPrepare(cv: CuCanvas) {
     g.fontStretch = 'semi-expanded';
     g.fillText(q.t, q.x, L.base);
   });
-  cv._cu = { ...L, dpr: dp, mask: m, tex: null, fallback: !cuInit() };
+  cv._cu = { ...L, dpr: dp, mask: m, tex: null, polish: cv.dataset.polish ? { t: null } : null, fallback: !cuInit() };
 }
 function cuDrawFig(cv: CuCanvas, t: number) {
   const F = cv._cu;
@@ -413,7 +415,7 @@ function cuDrawFig(cv: CuCanvas, t: number) {
     return;
   }
   if (!F.tex) F.tex = cuTexture(F.mask);
-  cuDraw(g, F.W, F.H, F.dpr, {
+  const o: CuOpts = {
     mode: 0,
     tex: F.tex,
     t,
@@ -425,7 +427,17 @@ function cuDrawFig(cv: CuCanvas, t: number) {
     ageX: 0,
     span: F.span,
     glint: 1,
-  });
+  };
+  // payday: a polish sweeps across and takes the old cycle's tarnish with it
+  if (F.polish && !reduced()) {
+    if (F.polish.t === null) F.polish.t = t;
+    const k = (t - F.polish.t) / 1.5;
+    if (k < 1.25) {
+      o.polish = k * 1.25 - 0.1;
+      o.age = 0.92;
+    } else F.polish = null;
+  }
+  cuDraw(g, F.W, F.H, F.dpr, o);
 }
 function cuMount(root: HTMLElement) {
   const mine: CuCanvas[] = [];
@@ -759,6 +771,14 @@ export const DIR: Look = {
   },
   strip(day, days, _mode, st) {
     return cuStrip(day, days, st);
+  },
+  // payday: a polish sweeps across the figure
+  paydayFx(root) {
+    if (reduced()) return;
+    const cv = root.querySelector<CuCanvas>('.hero-fig canvas');
+    if (!cv) return;
+    if (cv._cu) cv._cu.polish = { t: null };
+    else cv.dataset.polish = '1';
   },
   mount: cuMount,
   reveal: null,

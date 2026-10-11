@@ -27,7 +27,7 @@ test('an unknown screen id goes Home, and back does not return to it', async ({ 
   await open(page, '/');
   await page.goto('/s/does-not-exist');
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByTestId('not-built')).toBeVisible();
+  await expect(page.getByTestId('hero')).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -39,7 +39,7 @@ test('a path that leads nowhere keeps the tab bar and offers the way Home', asyn
   await expect(tabs(page).locator('[aria-current="page"]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Go to Home' }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByTestId('not-built')).toBeVisible();
+  await expect(page.getByTestId('hero')).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -55,7 +55,8 @@ test("a finger's long-press on Scan opens the sheet, and lifting it chooses noth
   await expect(sheet).toBeVisible();
   // and the next tap on a row works as normal
   await sheet.getByRole('button', { name: 'From gallery' }).tap();
-  await expect(page).toHaveURL(/\/s\/crop/);
+  // From gallery opens Scan, which has the gallery picker in a browser (QA B03 run 1, finding 7)
+  await expect(page).toHaveURL(/\/scan/);
 });
 
 test("a finger's tap on Scan opens the scanner", async ({ page }) => {
@@ -117,7 +118,7 @@ test("Review's count is in a polite live region, so a change is announced", asyn
   await open(page, '/');
   const live = tabs(page).getByTestId('review-count-live');
   await expect(live).toHaveAttribute('aria-live', 'polite');
-  await expect(live).toHaveText(', 5 to review');
+  await expect(live).toHaveText(', 12 to review');
   await setFromPanel(page, '0');
   await expect(live).toHaveText('');
   await setFromPanel(page, '120');
@@ -147,6 +148,6 @@ for (const id of ['sen', 'scan-more', 'cycle'])
   test(`/s/${id}, a sheet's id, goes to its screen rather than showing a bare page`, async ({ page }) => {
     await open(page, `/s/${id}`);
     await expect(page).toHaveURL(/\/(\?.*)?$/);
-    await expect(page.getByTestId('not-built')).toBeVisible();
+    await expect(page.getByTestId('hero')).toBeVisible();
     await expect(tabs(page)).toBeVisible();
   });

@@ -1,7 +1,7 @@
 // Instrument, ported from docs/ui/directions/src/instrument.js. A hundred sen make a ringgit, so Sen
 // is drawn on a ten-by-ten grid: a precise instrument with a dot-matrix display. Colour only where
 // money moves. Sen speaks in the same dots.
-import { TAU, f2, rmParts, svgTag } from '../engine';
+import { TAU, f2, reduced, rmParts, svgTag } from '../engine';
 import type { IconTab, Look, Mode } from '../types';
 import './look.css';
 
@@ -345,7 +345,25 @@ export const DIR: Look = {
     const p = rmParts(sen);
     const on = st.over ? 'var(--led-warn)' : 'var(--led)';
     const off = 'rgba(255,255,255,.07)';
-    return `<span class="dm-cur">${dmSVG('RM', 3.1, 1.2, on, off)}</span>${dmSVG(`${p.whole}.${p.cents}`, 6.35, 2.45, on, off, 'dm-num')}`;
+    return `<span class="dm-cur" data-sen="${sen}" data-over="${st.over ? 1 : 0}">${dmSVG('RM', 3.1, 1.2, on, off)}</span>${dmSVG(`${p.whole}.${p.cents}`, 6.35, 2.45, on, off, 'dm-num')}`;
+  },
+  // payday: the display counts up to the new figure
+  paydayFx(root) {
+    const fig = root.querySelector<HTMLElement>('.hero-fig');
+    const cur = fig?.querySelector<HTMLElement>('.dm-cur');
+    if (!fig || !cur || reduced()) return;
+    const sen = Number(cur.dataset.sen);
+    const state = { over: cur.dataset.over === '1' };
+    const t0 = performance.now();
+    const ms = 1300;
+    const step = (now: number) => {
+      if (!fig.isConnected) return;
+      const k = Math.min(1, (now - t0) / ms);
+      const e = 1 - Math.pow(1 - k, 3);
+      fig.innerHTML = DIR.heroFigure(Math.round(sen * e), 'dark', state);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   },
   // the cycle as a row of dots on the display: days gone lit, today blinking, days to go dark
   strip(day, days) {

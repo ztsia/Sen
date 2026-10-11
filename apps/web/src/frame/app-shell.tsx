@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Outlet, useMatches, useNavigate } from '@tanstack/react-router';
 import { OfflineBanner } from '@/blocks/states';
 import { Toaster } from '@/components/ui/sonner';
+import { useNeedsYouCount } from '@/data/hooks';
 import { useOnline } from '@/lib/online';
 import { cn } from '@/lib/utils';
 import { screenById, showsSenButton, showsTabBar, type ScreenDef } from '@/screens/registry';
@@ -39,9 +40,12 @@ function useLost(): boolean {
 export function AppShell() {
   const screen = useCurrentScreen();
   const lost = useLost();
-  const online = useOnline();
+  // the dev panel's offline state shows what offline looks like without cutting the connection
+  const devOffline = useUi((s) => s.devState) === 'offline';
+  const online = useOnline() && !devOffline;
   const navigate = useNavigate();
   const { reviewCount, senState, setSenOpen, setScanMoreOpen } = useUi();
+  const needsYou = useNeedsYouCount();
   // Lost, the tab bar stays, with no tab active, so there's always a way back.
   const tabs = lost || showsTabBar(screen);
   const sen = showsSenButton(screen);
@@ -60,7 +64,7 @@ export function AppShell() {
             {sen ? <SenButton state={senState} onOpen={() => setSenOpen(true)} /> : null}
             <TabBar
               active={screen?.tab ?? null}
-              reviewCount={reviewCount}
+              reviewCount={reviewCount ?? needsYou}
               onScan={() => void navigate({ to: '/scan' })}
               onScanMore={() => setScanMoreOpen(true)}
             />

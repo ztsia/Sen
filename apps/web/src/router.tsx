@@ -4,7 +4,9 @@ import { AppShell } from './frame/app-shell';
 import { Lost } from './screens/lost';
 import { Placeholder } from './screens/placeholder';
 import { REAL } from './screens/real';
+import { SKELETON } from './screens/skeleton';
 import { ListSkeleton } from './blocks/states';
+import { Screen } from './frame/screen';
 import { screenById } from './screens/registry';
 
 // The routes: the four tab screens, Scan's task screen, every other screen by its id from
@@ -34,24 +36,50 @@ const rootRoute = createRootRoute({
   ),
 });
 
+/** What a pushed screen is about: a payment, a receipt, a goal, a draft, or the filters a link carries. */
+export interface ScreenSearch {
+  id?: string;
+  cycle?: string;
+  category?: string;
+  account?: string;
+  shared?: boolean;
+}
+const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined);
+
 const screenRoute = (path: '/' | '/review' | '/insights' | '/more' | '/scan', id: string) =>
   createRoute({
     getParentRoute: () => rootRoute,
     path,
+    // Scan can be opened for one payment (Scan the receipt, the quiet scan prompt): ?id= names it
+    validateSearch: (s: Record<string, unknown>): ScreenSearch => ({ id: str(s.id) }),
     staticData: { screen: id },
-    component: () => <Placeholder screen={screenById.get(id)!} />,
+    component: () => <ScreenFor id={id} />,
   });
+
+/** A built screen; in previews, the skeleton's on made-up data; otherwise Not built yet. */
+function ScreenFor({ id }: { id: string }) {
+  const Built = REAL[id] ?? SKELETON[id];
+  if (Built)
+    return (
+      // the fallback keeps the frame: a screen's shape while its code loads, the tab bar where it
+      // always is (QA B03 run 3, 31)
+      <Suspense
+        fallback={
+          <Screen bar={null}>
+            <ListSkeleton />
+          </Screen>
+        }
+      >
+        <Built />
+      </Suspense>
+    );
+  return <Placeholder screen={screenById.get(id)!} />;
+}
 
 function AnyScreen() {
   const { _splat } = useParams({ from: '/s/$' });
-  const Real = REAL[_splat ?? ''];
-  if (Real)
-    return (
-      <Suspense fallback={<ListSkeleton />}>
-        <Real />
-      </Suspense>
-    );
-  return <Placeholder screen={screenById.get(_splat ?? '')!} />;
+  // keyed by the screen, so moving from one payment to another starts the screen afresh
+  return <ScreenFor key={_splat} id={_splat ?? ''} />;
 }
 const TAB_PATHS = { home: '/', review: '/review', insights: '/insights', more: '/more' } as const;
 
@@ -60,6 +88,13 @@ const TAB_PATHS = { home: '/', review: '/review', insights: '/insights', more: '
 const anyScreen = createRoute({
   getParentRoute: () => rootRoute,
   path: '/s/$',
+  validateSearch: (s: Record<string, unknown>): ScreenSearch => ({
+    id: str(s.id),
+    cycle: str(s.cycle),
+    category: str(s.category),
+    account: str(s.account),
+    shared: s.shared === true || s.shared === 'true' ? true : undefined,
+  }),
   beforeLoad: ({ params }) => {
     const screen = screenById.get(params._splat ?? '');
     if (!screen) throw redirect({ to: '/', replace: true });
@@ -100,7 +135,9 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultPreload: false,
-  scrollRestoration: true,
+  // off: the page itself never scrolls, and the router's restoration keyed every screen's scroll area by
+  // one selector, so a screen opened at the last one's offset (QA B03 run 2, finding 18). Screen resets it.
+  scrollRestoration: false,
   defaultNotFoundComponent: () => <Lost kind="missing" />,
   defaultErrorComponent: () => <Lost kind="broken" />,
 });

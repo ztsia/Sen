@@ -1,6 +1,6 @@
 // Minted, ported from docs/ui/directions/src/minted.js. Money's own craft: guilloché engraving,
 // intaglio ink on opaline paper. Sen is a living rosette: two engraved bands around a silver bead (the sen).
-import { TAB_SK, TAU, f2, polyD, rmParts, svgTag } from '../engine';
+import { TAB_SK, TAU, allOf, f2, insertDecor, polyD, reduced, rmParts, svgTag } from '../engine';
 import type { IconTab, Look, Mode } from '../types';
 import './look.css';
 
@@ -40,6 +40,10 @@ export function rosetteSVG(cx: number, cy: number, size: number, color: string, 
 // microprint, the security line along the tab bar: one phrase, too small to copy
 const mtMicro = (w: number, cls: string) =>
   `<svg class="${cls}" viewBox="0 0 ${w} 5" preserveAspectRatio="none" aria-hidden="true"><text x="0" y="3.9" font-size="3.6" textLength="${w}" lengthAdjust="spacing" fill="currentColor">${'EVERY SEN COUNTED • '.repeat(Math.round(w / 58))}</text></svg>`;
+
+// the payday card's foil seal, a small rosette on holographic foil
+const mtSeal = () =>
+  `<svg class="seal" viewBox="0 0 108 108" aria-hidden="true"><defs><linearGradient id="foil" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#cfd9ea"/><stop offset=".35" stop-color="#e9dcf3"/><stop offset=".6" stop-color="#f3e7c9"/><stop offset=".85" stop-color="#cde8e2"/><stop offset="1" stop-color="#cfd9ea"/></linearGradient></defs><circle cx="54" cy="54" r="50" fill="url(#foil)"/>${rosetteSVG(54, 54, 100, '#4b5d78', 0.7, 0.6)}<circle cx="54" cy="54" r="7" fill="#4b5d78" opacity=".7"/></svg>`;
 
 // ---------- the tab bar: engraved icons, and a bead riding the microprint ----------
 interface TabInk {
@@ -290,6 +294,26 @@ export const DIR: Look = {
     }
     s += `<circle cx="${f2(x(day - 1))}" cy="${H - 17.5}" r="3" fill="var(--primary)"/>`;
     return `<svg viewBox="0 0 ${W} ${H + 2}" width="100%" aria-hidden="true" style="overflow:visible">${s}</svg>`;
+  },
+  // the rosette behind the wordmark, microprint above the quiet row, and the payday card's foil seal
+  decorate(root) {
+    const off: (() => void)[] = [
+      insertDecor(
+        root,
+        'afterbegin',
+        `<svg class="wm-rosette" viewBox="0 0 108 108" aria-hidden="true">${rosetteSVG(54, 54, 104, 'currentColor', 0.3, 1)}</svg>`,
+      ),
+    ];
+    const quiet = root.querySelector('[data-testid="quiet"]');
+    if (quiet) off.push(insertDecor(quiet, 'beforebegin', mtMicro(350, 'micro')));
+    // the seal is the payday card's: the column says so when that card is showing
+    const pay = root.hasAttribute('data-payday') ? root.querySelector('[data-slot="card"]') : null;
+    if (pay) off.push(insertDecor(pay, 'afterbegin', mtSeal()));
+    return allOf(...off);
+  },
+  paydayFx(root) {
+    const seal = root.querySelector('.seal');
+    if (seal && !reduced()) seal.classList.add('shine');
   },
   reveal: null,
 };

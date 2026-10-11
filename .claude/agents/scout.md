@@ -1,6 +1,6 @@
 ---
 name: scout
-description: Cheap, fast lookups that would otherwise fill the main session's context. Finds where something is in the code, reads a CI or test log and says what failed and where, summarises a long file or output, checks a list of files for a pattern. Reports facts with paths and line numbers; never edits.
+description: Cheap lookups over something too big for the main session to read: a long CI or test log (what failed and where), a large unfamiliar area of code, a long file or output to summarise. Not for what one grep or a filtered log answers. Reports facts with paths and line numbers; never edits.
 model: haiku
 effort: low
 tools: Bash, Read, Grep, Glob

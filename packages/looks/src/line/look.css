@@ -47,6 +47,15 @@
     height: 22px;
     margin-top: 6px;
   }
+  /* the ledger: a double rule under the total, and payday's stroke drawn in */
+  .total {
+    width: fit-content;
+    padding-bottom: 3px;
+    border-bottom: 3px double var(--foreground);
+  }
+  .drawn.draw {
+    animation: ln-reveal 1.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
   .wet {
     animation: ln-wet 3.6s ease-in-out infinite;
     transform-box: fill-box;
@@ -158,5 +167,13 @@
   }
   100% {
     transform: none;
+  }
+}
+@keyframes ln-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
   }
 }

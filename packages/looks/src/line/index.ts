@@ -1064,6 +1064,21 @@ export const DIR: Look = {
     s += `<defs><radialGradient id="${id}" cx="38%" cy="34%" r="70%"><stop offset="0" stop-color="#fff" stop-opacity=".8"/><stop offset=".25" stop-color="var(--ink-fresh)"/><stop offset="1" stop-color="var(--ink-fresh)"/></radialGradient></defs><circle cx="${f2(tx)}" cy="${y}" r="4.4" fill="url(#${id})" class="wet"/>`;
     return `<svg viewBox="0 0 ${W} 22" width="100%" aria-hidden="true" style="overflow:visible">${s}</svg>`;
   },
+  // a double rule under the total, the ledger's way of closing a sum
+  decorate(root) {
+    const total = root.querySelector('[data-testid="quiet"] [data-slot="item-title"]');
+    if (!total || total.classList.contains('total')) return () => undefined;
+    const had = total.hasAttribute('class');
+    total.classList.add('total');
+    return () => {
+      total.classList.remove('total');
+      if (!had) total.removeAttribute('class');
+    };
+  },
+  // payday: the pencil stroke of the strip is drawn in again
+  paydayFx(root) {
+    if (!reduced()) root.querySelector('.strip .drawn')?.classList.add('draw');
+  },
   mount: penMount,
   reveal: null,
 };

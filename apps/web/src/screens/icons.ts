@@ -1,0 +1,62 @@
+import {
+  ArrowDownLeftIcon,
+  ArrowLeftRightIcon,
+  BanknoteIcon,
+  BriefcaseIcon,
+  BusIcon,
+  CarIcon,
+  CircleDashedIcon,
+  CircleHelpIcon,
+  ClapperboardIcon,
+  CoffeeIcon,
+  GiftIcon,
+  HandCoinsIcon,
+  HeartPulseIcon,
+  HouseIcon,
+  LandmarkIcon,
+  PlaneIcon,
+  RepeatIcon,
+  ScissorsIcon,
+  ShoppingBagIcon,
+  ShoppingBasketIcon,
+  SmartphoneIcon,
+  TrendingUpIcon,
+  Undo2Icon,
+  UsersIcon,
+  UtensilsIcon,
+  type LucideIcon,
+} from 'lucide-react';
+
+// One icon for each category (patterns.md §5: the same thing always has the same icon), and for the
+// rows that have no category of their own. A renamed or new category falls back to the dashed circle
+// until Settings (B12) lets a category carry its icon.
+const BY_NAME: Record<string, LucideIcon> = {
+  Meals: UtensilsIcon,
+  'Drinks & desserts': CoffeeIcon,
+  Groceries: ShoppingBasketIcon,
+  Transport: BusIcon,
+  Car: CarIcon,
+  'Phone & internet': SmartphoneIcon,
+  'Home & bills': HouseIcon,
+  Shopping: ShoppingBagIcon,
+  Entertainment: ClapperboardIcon,
+  Subscriptions: RepeatIcon,
+  Health: HeartPulseIcon,
+  'Personal care': ScissorsIcon,
+  'Gifts & treats': GiftIcon,
+  Family: UsersIcon,
+  Travel: PlaneIcon,
+  'Fees & charges': LandmarkIcon,
+  Cash: BanknoteIcon,
+  Unaccounted: CircleHelpIcon,
+  Salary: BriefcaseIcon,
+  'Interest & returns': TrendingUpIcon,
+  'Other income': HandCoinsIcon,
+  Transfer: ArrowLeftRightIcon,
+  'Money in': ArrowDownLeftIcon,
+  'Paid back': Undo2Icon,
+  Refund: Undo2Icon,
+};
+
+export const categoryIcon = (name: string | null | undefined): LucideIcon =>
+  (name && BY_NAME[name]) || CircleDashedIcon;
