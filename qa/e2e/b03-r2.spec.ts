@@ -32,9 +32,7 @@ test('FLOW-34 R2-1/R2-1s/R2-2 real offline: the answer shows at once, Home and P
   const homeBefore = await db<any>(page, `(d) => d.txns.length`);
   await context.setOffline(true);
   await expect(page.getByText(/You're offline/)).toBeVisible();
-  console.log('scroll A', await st(page));
   await review(page, 'new-merchant', 'ROTI BAKAR 88').getByRole('button', { name: 'Meals' }).click();
-  console.log('scroll B', await st(page));
   await expect(toast(page)).toContainText('ROTI BAKAR 88 is Meals from now on');
   await shot(page, 'FLOW-34-step-1-offline-answer');
   await expect(review(page, 'new-merchant', 'ROTI BAKAR 88')).toHaveCount(0, { timeout: 3000 });
@@ -46,23 +44,16 @@ test('FLOW-34 R2-1/R2-1s/R2-2 real offline: the answer shows at once, Home and P
   await expect.poll(() => needs(page)).toBe(n0);
   await review(page, 'new-merchant', 'ROTI BAKAR 88').getByRole('button', { name: 'Meals' }).click();
   await expect(review(page, 'new-merchant', 'ROTI BAKAR 88')).toHaveCount(0);
-  console.log('scroll C', await st(page));
   // manual Save offline
   await page.getByRole('button', { name: /Missing a payment/ }).click();
   await page.getByLabel('Amount').fill('7.77');
   await page.getByRole('radio', { name: 'Meals' }).click();
   await page.getByRole('button', { name: 'Save' }).click();
   await expect(toast(page)).toContainText('Added RM7.77');
-  console.log('scroll D', page.url(), await st(page));
   await tabs(page).getByRole('link', { name: /^More/ }).click();
-  console.log('scroll E more', await st(page));
   await page.getByText('Payments', { exact: true }).click();
   await settled(page);
   const first = page.locator('[data-index] button').first();
-  await page.waitForTimeout(1500);
-  await shot(page, 'FLOW-34-dbg-payments');
-  console.log('dbg', await page.evaluate(() => document.querySelector('main')!.scrollTop), await page.locator('[data-index]').evaluateAll((els) => els.slice(0, 5).map((e) => e.getAttribute('data-index') + ':' + e.textContent!.slice(0, 25))));
-  await page.waitForTimeout(500);
   await expect(first).toContainText('RM7.77', { timeout: 3000 });
   await expect(first).toContainText('Not synced yet');
   await shot(page, 'FLOW-34-step-2-payments-offline');
