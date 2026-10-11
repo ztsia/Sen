@@ -54,8 +54,7 @@ follow on a phone, and commit.
       branch behind Vercel Authentication, Git Fork Protection on. Production is
       `https://sen-my.vercel.app`. Sessions never deploy by hand and never hold a Vercel
       token: every push deploys through this link (D122).
-      The owner chose the name (10 Oct). Vercel's own `sen-ochre-three.vercel.app` still answers; the
-      app never uses it. Changing the address after installing makes the app start again as a new
+      The owner chose the name (10 Oct). Vercel's first address, `sen-ochre-three.vercel.app`, is gone (404 on 11 Oct), and the repo's *About* link now points at `sen-my`. Changing the address after installing makes the app start again as a new
       site, with its cache and sign-in gone.
 - [ ] **B02: the shell on your phone.** Parts 1 and 2 are done; install, then the soak, a week of
       ordinary use.
