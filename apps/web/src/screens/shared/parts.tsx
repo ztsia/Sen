@@ -183,7 +183,10 @@ export function StandInQr({ seed, title, caption }: { seed: string; title: strin
       const f = finder(x, y);
       // the quiet gap around each finder stays light
       const gap =
-        (y <= 7 && (x === 7 || x === n - 8)) || (x <= 7 && (y === 7 || y === n - 8)) || (y === 7 && x >= n - 8) || (x === 7 && y >= n - 8);
+        (y <= 7 && (x === 7 || x === n - 8)) ||
+        (x <= 7 && (y === 7 || y === n - 8)) ||
+        (y === 7 && x >= n - 8) ||
+        (x === 7 && y >= n - 8);
       const dark = f ?? (!gap && ((Math.imul(x + 1, 73856093) ^ Math.imul(y + 1, 19349663) ^ h) >>> 0) % 5 < 2);
       if (dark) cells.push(<rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} />);
     }

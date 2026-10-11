@@ -18,8 +18,8 @@ const run = (db: Db, cmd: Cmd | { type: 'split.paid'; splitId: string; memberId:
   applyArea(db, cmd as Cmd, ctx);
 const view = (db: Db, key: string) => splitView(db, uid(`split:${key}`))!;
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
-const idOf = (db: Db, key: string, who: string) => uid(`member:${key}:${who}`);
-const itemId = (db: Db, key: string, i: number) => uid(`item:${key}:${i}`);
+const idOf = (key: string, who: string) => uid(`member:${key}:${who}`);
+const itemId = (key: string, i: number) => uid(`item:${key}:${i}`);
 
 describe('the made-up splits', () => {
   for (const id of SCENARIOS)
@@ -37,7 +37,10 @@ describe('the made-up splits', () => {
   it('adds up: every split’s shares are its total, to the sen', () => {
     for (const key of ['bbq', 'haidilao', 'nk']) {
       const v = view(db, key);
-      expect(sum(v.people.map((p) => p.share)) + (key === 'nk' ? v.items.filter((i) => !i.takers.length).reduce((a, i) => a + i.price, 0) : 0)).toBe(v.total);
+      expect(
+        sum(v.people.map((p) => p.share)) +
+          (key === 'nk' ? v.items.filter((i) => !i.takers.length).reduce((a, i) => a + i.price, 0) : 0),
+      ).toBe(v.total);
     }
   });
 
@@ -78,8 +81,8 @@ describe('the made-up splits', () => {
 
   it('settles a stuck split: Everyone, Done, lock without waiting, and the bill becomes your share', () => {
     const d = structuredClone(db);
-    const me = idOf(d, 'nk', 'me');
-    const telur = itemId(d, 'nk', 2);
+    const me = idOf('nk', 'me');
+    const telur = itemId('nk', 2);
     run(d, { type: 'split.assign', splitId: uid('split:nk'), itemId: telur, to: 'everyone' });
     let v = view(d, 'nk');
     expect(v.unclaimed).toBe(0);
@@ -97,10 +100,10 @@ describe('the made-up splits', () => {
   it('locks by itself once everyone is done and every item is claimed', () => {
     const d = structuredClone(db);
     const split = uid('split:nk');
-    run(d, { type: 'split.assign', splitId: split, itemId: itemId(d, 'nk', 2), to: 'Mei' });
-    run(d, { type: 'split.done', splitId: split, memberId: idOf(d, 'nk', 'kahhoe'), done: true });
+    run(d, { type: 'split.assign', splitId: split, itemId: itemId('nk', 2), to: 'Mei' });
+    run(d, { type: 'split.done', splitId: split, memberId: idOf('nk', 'kahhoe'), done: true });
     expect(view(d, 'nk').state).toBe('changing');
-    run(d, { type: 'split.done', splitId: split, memberId: idOf(d, 'nk', 'me'), done: true });
+    run(d, { type: 'split.done', splitId: split, memberId: idOf('nk', 'me'), done: true });
     const v = view(d, 'nk');
     expect(v.state).toBe('final');
     // Mei was added by the payer and counts as done; her dish is hers alone
@@ -115,10 +118,10 @@ describe('the made-up splits', () => {
   it('ticking again undoes your Done until the lock; a Done can be undone', () => {
     const d = structuredClone(db);
     const split = uid('split:nk');
-    const me = idOf(d, 'nk', 'me');
+    const me = idOf('nk', 'me');
     run(d, { type: 'split.done', splitId: split, memberId: me, done: true });
     expect(view(d, 'nk').meDone).toBe(true);
-    run(d, { type: 'split.tick', splitId: split, itemId: itemId(d, 'nk', 2), memberId: me, on: true });
+    run(d, { type: 'split.tick', splitId: split, itemId: itemId('nk', 2), memberId: me, on: true });
     expect(view(d, 'nk').meDone).toBe(false);
     run(d, { type: 'split.done', splitId: split, memberId: me, done: true });
     run(d, { type: 'split.done', splitId: split, memberId: me, done: false });
@@ -132,8 +135,8 @@ describe('the made-up splits', () => {
       run(d, {
         type: 'split.tick',
         splitId: uid('split:haidilao'),
-        itemId: itemId(d, 'hd', 1),
-        memberId: idOf(d, 'hd', 'me'),
+        itemId: itemId('hd', 1),
+        memberId: idOf('hd', 'me'),
         on: false,
       }),
     ).toThrow(/ask Mei/);
@@ -141,8 +144,8 @@ describe('the made-up splits', () => {
     run(d, {
       type: 'split.tick',
       splitId: uid('split:bbq'),
-      itemId: itemId(d, 'bbq', 3),
-      memberId: idOf(d, 'bbq', 'kahhoe'),
+      itemId: itemId('bbq', 3),
+      memberId: idOf('bbq', 'kahhoe'),
       on: false,
     });
     const v = view(d, 'bbq');
@@ -153,14 +156,14 @@ describe('the made-up splits', () => {
 
   it('ticks who paid you back, and closes the link a day after the last one', () => {
     const d = structuredClone(db);
-    run(d, { type: 'split.paid', splitId: uid('split:bbq'), memberId: idOf(d, 'bbq', 'kahhoe'), paid: true });
+    run(d, { type: 'split.paid', splitId: uid('split:bbq'), memberId: idOf('bbq', 'kahhoe'), paid: true });
     const v = view(d, 'bbq');
     expect(v.people.find((p) => p.name === 'Kah Hoe')!.paidHow).toBe('ticked by you');
     expect(v.link).toBe('closing');
     expect(v.closesOn).toBe('2026-10-19');
     // a matched payment isn't undone by a tick
     expect(() =>
-      run(d, { type: 'split.paid', splitId: uid('split:bbq'), memberId: idOf(d, 'bbq', 'ali'), paid: false }),
+      run(d, { type: 'split.paid', splitId: uid('split:bbq'), memberId: idOf('bbq', 'ali'), paid: false }),
     ).toThrow(/matched/);
   });
 
@@ -174,7 +177,7 @@ describe('the made-up splits', () => {
   it('only the payer settles an item', () => {
     const d = structuredClone(db);
     expect(() =>
-      run(d, { type: 'split.assign', splitId: uid('split:haidilao'), itemId: itemId(d, 'hd', 1), to: 'everyone' }),
+      run(d, { type: 'split.assign', splitId: uid('split:haidilao'), itemId: itemId('hd', 1), to: 'everyone' }),
     ).toThrow(/Only Mei/);
   });
 });
@@ -193,8 +196,9 @@ describe('split-public, on its own state', () => {
     expect(v.state).toBe('changing');
     expect(() => tickPublic('demo-new', v.items[2]!.id, true)).toThrow(/name/);
     setPublicName('demo-new', 'Mei');
-    for (const i of readPublicSplit('demo-new').items.filter((x) => !x.mine && x.takers.length !== 1 || x.takers.length === 0))
-      tickPublic('demo-new', i.id, true);
+    for (const i of readPublicSplit('demo-new').items)
+      if (!i.takers.length || i.description.includes('share') || i.description.startsWith('Teh'))
+        tickPublic('demo-new', i.id, true);
     donePublic('demo-new', true);
     v = readPublicSplit('demo-new');
     expect(v.state).toBe('final');

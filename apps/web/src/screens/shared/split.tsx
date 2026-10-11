@@ -111,7 +111,9 @@ function SplitBody({ v }: { v: SplitView }) {
             state="Final"
             status="done"
             title="Everyone is done and every item is claimed."
-            waiting={frozen ? `To change a tick, ask ${v.payer}.` : 'The shares are locked. Only you can change a tick.'}
+            waiting={
+              frozen ? `To change a tick, ask ${v.payer}.` : 'The shares are locked. Only you can change a tick.'
+            }
           />
         ) : (
           <StatusCard
@@ -216,7 +218,12 @@ function SplitBody({ v }: { v: SplitView }) {
                       onCheckedChange={(on) =>
                         void write(
                           // not in commands.ts yet: the payer's tick for a friend (see the B04 splits report)
-                          { type: 'split.paid', splitId: v.id, memberId: p.id, paid: on === true } as unknown as Command,
+                          {
+                            type: 'split.paid',
+                            splitId: v.id,
+                            memberId: p.id,
+                            paid: on === true,
+                          } as unknown as Command,
                           { quiet: true },
                         )
                       }

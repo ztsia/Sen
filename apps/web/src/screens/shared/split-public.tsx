@@ -106,7 +106,9 @@ function Body({ token, v }: { token: string; v: PublicSplitView }) {
           locked={final || !named}
           onTick={(itemId, on) => void run(write.tick(itemId, on))}
         />
-        {!named ? <p className="px-4 pt-3 text-sm text-muted-foreground">Type your name to tick what you had.</p> : null}
+        {!named ? (
+          <p className="px-4 pt-3 text-sm text-muted-foreground">Type your name to tick what you had.</p>
+        ) : null}
       </Section>
 
       {named ? (
