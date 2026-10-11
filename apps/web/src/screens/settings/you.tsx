@@ -113,13 +113,16 @@ function Body({
             value={kind}
             onValueChange={(v) => choose(v as PaydayKind)}
           >
-            <ToggleGroupItem value="last-working" className="min-h-12 flex-1">
+            <ToggleGroupItem
+              value="last-working"
+              className="h-auto min-h-12 flex-1 px-2 py-2 leading-tight whitespace-normal"
+            >
               Last working day
             </ToggleGroupItem>
-            <ToggleGroupItem value="day" className="min-h-12 flex-1">
+            <ToggleGroupItem value="day" className="h-auto min-h-12 flex-1 px-2 py-2 leading-tight whitespace-normal">
               A day
             </ToggleGroupItem>
-            <ToggleGroupItem value="none" className="min-h-12 flex-1">
+            <ToggleGroupItem value="none" className="h-auto min-h-12 flex-1 px-2 py-2 leading-tight whitespace-normal">
               Not set
             </ToggleGroupItem>
           </ToggleGroup>

@@ -25,8 +25,8 @@ export default function Usage() {
   );
 }
 
-const count = new Intl.NumberFormat('en-MY');
-const tokens = (n: number) => `${count.format(n)} tokens`;
+// counts, not money: thousands keep it short
+const tokens = (n: number) => `${Math.round(n / 1000)}k tokens`;
 
 function Body({ v }: { v: UsageView }) {
   const total = v.byUse.reduce((a, u) => a + u.sen, 0);

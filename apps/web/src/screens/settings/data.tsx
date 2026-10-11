@@ -23,7 +23,7 @@ export default function Data() {
             <Section title="Export">
               <div className="flex flex-col gap-3 px-4 pt-1">
                 <p className="text-sm text-muted-foreground">
-                  Every payment, receipt and setting, as files you can keep. Nothing is sent anywhere.
+                  Every payment, receipt and setting, as files you can keep.
                 </p>
                 <Button
                   variant="secondary"
