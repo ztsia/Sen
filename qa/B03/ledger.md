@@ -52,3 +52,35 @@ after an overshoot that finding 8 now refuses. Run 2 judges both against the spe
 **The repo's `pnpm e2e` after the fixes:** 319 of 320. The one red was B02's long-press test, which
 expected *From gallery* to open `crop`; finding 7 sends it to `scan`, so the assertion now says so
 (`e2e/edges.spec.ts`). Re-run alone: green.
+
+## After run 2 (fix first: 146 criteria, 127 pass, 11 fail, 8 not reachable)
+
+**Tier 3 again, a fresh full run.** The fixes reach shared code: a new pattern (*one change per
+double tap*, `patterns.md` §7, `lib/tap-guard.ts`) used by `ReviewRow`; `Screen` and the router's
+scroll restoration (navigation); ids made on the phone (`lib/uid.ts`, every write). The double-tap
+area failed twice, so its design changed instead of its patch: a short settle after any change,
+wherever the second tap lands, rather than a guard on one button.
+
+| Finding | Fix | Where |
+|---|---|---|
+| 2 Major (still failing): a fast double tap answered twice | The second tap landed on the *next* row, which slid into place. Now any tap within 500 ms of a change is ignored, and a row stays answered once answered (no reset on success) | `lib/tap-guard.ts`, `blocks/rows.tsx` |
+| 17 Major: Apply all, double-tapped, answered twice | The settle guard, and a guard while it applies | `screens/review/review.tsx` |
+| 18 Major: a screen opened at the last one's scroll | The router's scroll restoration keyed every screen's scroll area by one selector; it's off (the page never scrolls), and `Screen` opens each screen at its top | `router.tsx`, `frame/screen.tsx` |
+| 19 Minor: over plain http, Scan failed on `crypto.subtle` | The fake falls back to a non-cryptographic fingerprint there; ids made on the phone fall back to `getRandomValues` (`randomUUID` is secure-context only too) | `data/fake/index.ts`, `lib/uid.ts` and every caller |
+| 20 Minor: a refused Done looked like nothing happened | The screen scrolls to the refusal, which is an alert | `screens/scan/confirm.tsx` |
+| 21 Minor: double taps on Delete and *This was a payment* | The settle guard | `screens/more/txn.tsx`, `screens/review/skipped.tsx` |
+| 22 Minor (run 1's 13): `/s/reading` with no id | Says so at once | `screens/scan/reading.tsx` |
+| 23 Minor: Home's pace amount split at the comma at 1.5× | The amount stays in one piece in that sentence | `screens/home/home.tsx` |
+| 24 Minor: regressions in no CI job | Unit tests for the tap guard (the next-row case), the receipt arithmetic and the read mode; e2e for real offline, double taps, Apply all and scroll in `pnpm e2e` | `lib/tap-guard.test.tsx`, `screens/scan/receipt-math.test.ts`, `e2e/screens.spec.ts` |
+| 25 Note: a 0-byte or text file was taken as a receipt | Scan takes a photo or a PDF with something in it, and says so otherwise | `screens/scan/scan.tsx` |
+| 26 Note: *Attach to a payment…* offers 30 with no search | Left: it lists the same merchant and the closest amounts first (run 1's 12); a search arrives with B16's real attach | |
+| 27 Note: three run 1 specs fail only under load | Finding 18 was behind FLOW-24's; the rest are load timing in QA's specs | |
+
+**Red, before** (the tap guard's next-row test, on the old `ReviewRow`): `× a second tap that lands
+on the next row, which slid into place, answers nothing · Tests 1 failed | 2 passed (3)`. The e2e
+*Apply all* test on the old code: `1 failed` (`toHaveText` 12 → 10 → stayed). The scroll test on the
+old `Screen`: `Expected: 0, Received: 900`. A fast double tap on one row is a race (4 of 15 in QA's
+sweep), so its deterministic regression is the unit test; the e2e double tap is a smoke test.
+
+**Green, after:** the tap guard `3 passed (3)`; the four e2e regressions `4 passed`, twice; the unit
+suite `206 passed`; typecheck, lint and format clean.

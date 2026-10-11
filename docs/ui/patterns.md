@@ -260,6 +260,12 @@ transfer, linking a repayment. The toast says what happened, in words (*Attached
 Ryt*), sits above the tab bar, stays 6 seconds or until the next change, and never covers Sen's
 button. A toast appears only when the change isn't visible on screen.
 
+**One change per double tap.** After a tap that changes something, a second tap within half a second
+is ignored, wherever it lands: when a Review row clears, the next row slides into its place under the
+finger, and a double tap must not answer it too (QA B03 run 2). A row also takes one answer at a
+time. `lib/tap-guard.ts` holds the rule; `ReviewRow` and every destructive or list-changing action
+use it.
+
 ### Status cards
 
 A card whose state matters (a split's *Still changing* and *Final*, a claim's status, the payday

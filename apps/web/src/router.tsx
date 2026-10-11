@@ -126,7 +126,9 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultPreload: false,
-  scrollRestoration: true,
+  // off: the page itself never scrolls, and the router's restoration keyed every screen's scroll area by
+  // one selector, so a screen opened at the last one's offset (QA B03 run 2, finding 18). Screen resets it.
+  scrollRestoration: false,
   defaultNotFoundComponent: () => <Lost kind="missing" />,
   defaultErrorComponent: () => <Lost kind="broken" />,
 });

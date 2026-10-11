@@ -1,3 +1,4 @@
+import { newId } from '@/lib/uid';
 import { nowIso } from '@/lib/clock';
 import { useMemo, useState } from 'react';
 import { ChevronRightIcon, ClockIcon, ImageIcon, TriangleAlertIcon, WalletIcon } from 'lucide-react';
@@ -60,7 +61,7 @@ export default function Manual() {
     const done = await write({
       type: 'txn.create',
       txn: {
-        id: crypto.randomUUID(),
+        id: newId(),
         occurredAt: nowIso(),
         amount: r.sen,
         categoryId,

@@ -113,7 +113,8 @@ function HomeBody({ h }: { h: HomeView }) {
           <button type="button" onClick={() => go('payments', { cycle: h.cycle.id })} data-testid="pace">
             <ItemContent className="min-w-0 gap-0.5">
               <p className="text-base">
-                Spent <Money sen={h.pace.spent} /> this {unit}
+                {/* the amount stays in one piece in a sentence; the line wraps around it (QA B03 run 2, 23) */}
+                Spent <Money sen={h.pace.spent} className="whitespace-nowrap" /> this {unit}
               </p>
               <ItemDescription className="text-sm">
                 {h.pace.delta === null

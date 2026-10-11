@@ -19,7 +19,10 @@ export default function Scan() {
   const [busy, setBusy] = useState(false);
 
   const picked = async (files: FileList | null) => {
-    const list = files ? Array.from(files) : [];
+    const all = files ? Array.from(files) : [];
+    // a photo or a PDF with something in it; anything else isn't a receipt (QA B03 run 2, finding 25)
+    const list = all.filter((f) => f.size > 0 && (f.type.startsWith('image/') || f.type === 'application/pdf'));
+    if (all.length && !list.length) return toastDone("That isn't a photo or a PDF of a receipt. Try another.");
     if (!list.length) return;
     setBusy(true);
     try {

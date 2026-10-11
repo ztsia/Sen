@@ -106,3 +106,70 @@ test('a skeleton screen keeps working at text scale 1.5×: no amount is cut off'
     expect(sideways, `${name} scrolls sideways`).toBe(false);
   }
 });
+
+// QA B03 runs 1 and 2: real offline, double taps and scroll, in the repo's own suite (finding 24)
+const toastOf = (page: Page) => page.locator('[data-sonner-toast]').first();
+
+test('really offline, an answer shows at once and the row is marked Not synced yet', async ({ page, context }) => {
+  await open(page, '/review');
+  await settled(page);
+  await context.setOffline(true);
+  const row = page.locator('[data-review="new-merchant"]').filter({ hasText: 'ROTI BAKAR 88' });
+  await row.getByRole('button', { name: 'Meals' }).click();
+  await expect(toastOf(page)).toContainText('ROTI BAKAR 88 is Meals from now on');
+  await expect(row).toHaveCount(0);
+  await expect(page.getByRole('region', { name: /Needs you · 11/ })).toBeVisible();
+  await context.setOffline(false);
+});
+
+test('a double tap answers one Review row, not the one that slides into its place', async ({ page }) => {
+  await open(page, '/review');
+  await settled(page);
+  const needs = () => page.locator('[data-review]').count();
+  await expect(page.locator('[data-review]').first()).toBeVisible();
+  const before = await needs();
+  await page
+    .locator('[data-review="new-merchant"]')
+    .first()
+    .getByRole('button')
+    .first()
+    .click({ clickCount: 2, delay: 20 });
+  await expect(toastOf(page)).toBeVisible();
+  await page.waitForTimeout(600);
+  expect(await needs()).toBe(before - 1);
+});
+
+test('Apply all, double-tapped, applies once; one Undo puts every answer back', async ({ page }) => {
+  await open(page, '/review');
+  await settled(page);
+  const heading = page.getByRole('heading', { name: /Needs you/ });
+  await expect(heading).toHaveText('Needs you · 12');
+  await page.getByRole('button', { name: 'Apply all' }).click({ clickCount: 2, delay: 20 });
+  await expect(heading).toHaveText('Needs you · 10');
+  await toastOf(page).getByRole('button', { name: 'Undo' }).click();
+  await expect(heading).toHaveText('Needs you · 12');
+});
+
+test('a screen opens at its top, not at the last screen’s scroll', async ({ page }) => {
+  const tabs = page.getByRole('navigation', { name: 'Tabs' });
+  const top = () => page.locator('main').evaluate((m) => m.scrollTop);
+  // Payments, then Review scrolled down, then Payments again: it opens at its first rows
+  await open(page, '/more');
+  await page.getByText('Payments', { exact: true }).click();
+  await settled(page);
+  await tabs.getByRole('link', { name: /^Review/ }).click();
+  await page.waitForTimeout(600);
+  await page.locator('main').evaluate((m) => m.scrollTo(0, 900));
+  await tabs.getByRole('link', { name: /^More/ }).click();
+  await page.getByText('Payments', { exact: true }).click();
+  await settled(page);
+  await page.waitForTimeout(800);
+  expect(await top()).toBe(0);
+  // a tab revisited, likewise
+  await tabs.getByRole('link', { name: /^Review/ }).click();
+  await page.waitForTimeout(600);
+  await page.locator('main').evaluate((m) => m.scrollTo(0, 900));
+  await tabs.getByRole('link', { name: /^Insights/ }).click();
+  await page.waitForTimeout(800);
+  expect(await top()).toBe(0);
+});

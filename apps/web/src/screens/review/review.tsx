@@ -25,6 +25,7 @@ import { Screen } from '@/frame/screen';
 import { longDay, momentLabel } from '@/lib/dates';
 import { categoryIcon } from '../icons';
 import { Loaded, Section, useGo } from '../kit';
+import { settleTap } from '@/lib/tap-guard';
 
 /**
  * Review (screens.md, D72, §6.6): what needs me, and what am I waiting for? *Needs you* is counted in
@@ -51,13 +52,18 @@ function ReviewBody({ r }: { r: ReviewView }) {
   const cats = useCategories();
   const suggested = r.needsYou.filter((i) => i.suggested);
 
+  const [applying, setApplying] = useState(false);
   const applyAll = async () => {
+    // once per double tap, and not again while it's applying (QA B03 run 2, finding 17)
+    if (applying || !settleTap()) return;
+    setApplying(true);
     const undos: (() => void)[] = [];
     for (const i of suggested) {
       const a = answersFor(i, { go, setOther, setRefundFor }).find((x) => x.key === i.suggested);
       const res = a ? await Promise.resolve(a.onSelect()) : null;
       if (res) undos.push(res.undo);
     }
+    setApplying(false);
     toastUndo(`Applied ${undos.length} of Sen's answers`, () => undos.reverse().forEach((u) => u()));
   };
 
@@ -69,7 +75,7 @@ function ReviewBody({ r }: { r: ReviewView }) {
           <p className="min-w-0 flex-1 text-sm">
             Sen suggested {suggested.length === 1 ? 'an answer' : `${suggested.length} answers`}, marked below.
           </p>
-          <Button size="sm" onClick={() => void applyAll()}>
+          <Button size="sm" aria-disabled={applying || undefined} onClick={() => void applyAll()}>
             Apply all
           </Button>
         </div>

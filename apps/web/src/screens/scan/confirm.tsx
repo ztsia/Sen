@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
+import { newId } from '@/lib/uid';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronRightIcon,
   ImageIcon,
@@ -176,10 +177,15 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
 
   // by hand, items can leave some of the payment unitemised (D90), never more than it (QA B03, F8)
   const overshoot = hasPayment && difference < 0;
-  const [overTried, setOverTried] = useState(false);
+  const [overTried, setOverTried] = useState(0);
+  // a refused Done moves to what's wrong, so it never looks like Done did nothing (QA B03 run 2, finding 20)
+  const overRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (overTried) overRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [overTried]);
 
   const done = async (forTxnId?: string) => {
-    if (overshoot) return setOverTried(true);
+    if (overshoot) return setOverTried((n) => n + 1);
     if (!forTxnId && looks && (matches.data?.length ?? 0) > 1) return setSheet('match');
     setSheet(null);
     const r = await commit('done', 'me', forTxnId ? { forTxnId } : {});
@@ -298,7 +304,7 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
                 setRaw((r) => [
                   ...r,
                   {
-                    id: crypto.randomUUID(),
+                    id: newId(),
                     description,
                     qty: 1,
                     amount,
@@ -341,7 +347,9 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
           </Line>
           <Check byHand={d.byHand} hasPayment={hasPayment} difference={difference} empty={raw.length === 0} />
           {overshoot && overTried ? (
-            <FieldError>The items can't come to more than the payment. Fix a price, or remove an item.</FieldError>
+            <div ref={overRef} role="alert">
+              <FieldError>The items can't come to more than the payment. Fix a price, or remove an item.</FieldError>
+            </div>
           ) : null}
         </div>
 

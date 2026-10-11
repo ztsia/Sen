@@ -18,6 +18,7 @@ import { useUi } from '@/frame/ui-store';
 import { momentLabel } from '@/lib/dates';
 import { categoryIcon } from '../icons';
 import { Loaded, useGo, useScreenSearch } from '../kit';
+import { settled } from '@/lib/tap-guard';
 
 /**
  * One payment (screens.md `txn`): the amount, where it came from, and everything you can do to it.
@@ -155,11 +156,12 @@ function TxnBody({ v }: { v: TxnView }) {
   actions.push({
     label: 'Delete',
     destructive: true,
-    onSelect: () => {
+    // a double tap deletes once and goes back once (QA B03 run 2, finding 21)
+    onSelect: settled(() => {
       void write({ type: 'txn.delete', id: t.id }).then((r) => {
         if (r) router.history.back();
       });
-    },
+    }),
   });
 
   return (

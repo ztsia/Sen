@@ -1,3 +1,4 @@
+import { newId } from '@/lib/uid';
 import type { Command } from '@sen/core/commands';
 import { klDay } from '@sen/core/cycles';
 import { apportion, formatSen } from '@sen/core/money';
@@ -17,7 +18,7 @@ export interface Applied {
 
 import { nowIso } from '@/lib/clock';
 
-const uuid = () => crypto.randomUUID();
+const uuid = () => newId();
 
 function log(db: Db, id: string, what: string) {
   (db.changes[id] ??= []).push({ at: nowIso(), what, by: 'user' });
@@ -317,7 +318,7 @@ function commitReceipt(db: Db, c: Extract<Command, { type: 'receipt.commit' }>):
   if (!target && !db.capture && c.paidBy === 'me' && c.action !== 'evidence') {
     // without capture, confirming a receipt creates its payment (§6.4, D52)
     target = {
-      id: crypto.randomUUID(),
+      id: newId(),
       userId: db.userId,
       accountId: null,
       bankEventId: null,
@@ -373,7 +374,7 @@ function commitReceipt(db: Db, c: Extract<Command, { type: 'receipt.commit' }>):
     });
   if (others.length)
     db.items.push({
-      id: crypto.randomUUID(),
+      id: newId(),
       userId: db.userId,
       receiptId: c.id,
       description: "Others' items",
@@ -395,7 +396,7 @@ function commitReceipt(db: Db, c: Extract<Command, { type: 'receipt.commit' }>):
   }
   if (c.action === 'mine') {
     // Just my part (D92): an unnamed Others, done at once, so the split locks at once
-    const split = crypto.randomUUID();
+    const split = newId();
     const now = nowIso();
     db.splits.push({
       id: split,
@@ -410,7 +411,7 @@ function commitReceipt(db: Db, c: Extract<Command, { type: 'receipt.commit' }>):
     });
     db.members.push(
       {
-        id: crypto.randomUUID(),
+        id: newId(),
         userId: db.userId,
         splitId: split,
         name: 'You',
@@ -422,7 +423,7 @@ function commitReceipt(db: Db, c: Extract<Command, { type: 'receipt.commit' }>):
         paidByTransactionId: c.paidBy === 'me' ? (attach?.id ?? null) : null,
       },
       {
-        id: crypto.randomUUID(),
+        id: newId(),
         userId: db.userId,
         splitId: split,
         name: 'Others',

@@ -26,41 +26,49 @@ export default function Reading() {
 
   return (
     <Screen bar={<AppBar title="Reading" />}>
-      <Loaded q={q} what="the receipt">
-        {(d) => {
-          if (!d)
-            return (
-              <EmptyState
-                line="Sen can't find this receipt."
-                action={{ label: 'Go Home', onSelect: () => go('home', {}, { replace: true }) }}
-              />
-            );
-          if (d.status === 'read') return <ReadingBody />;
-          if (paused)
-            return (
-              <div className="px-4 pt-4">
-                <ErrorState
-                  title="Reading is paused"
-                  detail={`Sen can't read receipts until ${longDay(paused)}. Everything else works, and your photo is kept.`}
-                  action="Enter it by hand"
-                  onAction={byHand}
+      {/* no id: nothing to read, so say so rather than wait for ever (QA B03 run 2, finding 22) */}
+      {!id ? (
+        <EmptyState
+          line="Sen can't find this receipt."
+          action={{ label: 'Go Home', onSelect: () => go('home', {}, { replace: true }) }}
+        />
+      ) : (
+        <Loaded q={q} what="the receipt">
+          {(d) => {
+            if (!d)
+              return (
+                <EmptyState
+                  line="Sen can't find this receipt."
+                  action={{ label: 'Go Home', onSelect: () => go('home', {}, { replace: true }) }}
                 />
-              </div>
-            );
-          if (d.status === 'failed')
-            return (
-              <div className="px-4 pt-4">
-                <ErrorState
-                  title="Sen couldn't read this receipt"
-                  detail="The photo is kept. You can type it in instead."
-                  action="Enter it by hand"
-                  onAction={byHand}
-                />
-              </div>
-            );
-          return <ReadingBody leave={() => go('review')} />;
-        }}
-      </Loaded>
+              );
+            if (d.status === 'read') return <ReadingBody />;
+            if (paused)
+              return (
+                <div className="px-4 pt-4">
+                  <ErrorState
+                    title="Reading is paused"
+                    detail={`Sen can't read receipts until ${longDay(paused)}. Everything else works, and your photo is kept.`}
+                    action="Enter it by hand"
+                    onAction={byHand}
+                  />
+                </div>
+              );
+            if (d.status === 'failed')
+              return (
+                <div className="px-4 pt-4">
+                  <ErrorState
+                    title="Sen couldn't read this receipt"
+                    detail="The photo is kept. You can type it in instead."
+                    action="Enter it by hand"
+                    onAction={byHand}
+                  />
+                </div>
+              );
+            return <ReadingBody leave={() => go('review')} />;
+          }}
+        </Loaded>
+      )}
     </Screen>
   );
 }

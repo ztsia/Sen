@@ -1,5 +1,5 @@
 // Ids for the made-up scenario: the same name always gives the same UUID, so a screenshot, a link and
-// a test can name a row. Rows made while the app runs use crypto.randomUUID(), as the phone will (§15).
+// a test can name a row. Rows made while the app runs use `newId()` (lib/uid.ts), as the phone will (§15).
 
 function hash32(s: string, seed: number): number {
   let h = seed ^ s.length;

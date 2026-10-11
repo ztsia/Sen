@@ -7,6 +7,7 @@ import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { momentLabel } from '@/lib/dates';
 import { Loaded } from '../kit';
+import { settled } from '@/lib/tap-guard';
 
 /**
  * `skipped` (screens.md): did Sen throw a payment away by mistake? Notifications no template read and
@@ -40,9 +41,13 @@ export default function Skipped() {
                       variant="secondary"
                       size="sm"
                       className="mt-1 self-start"
-                      onClick={() =>
-                        void runCommand({ type: 'event.restore', eventId: e.id }).then((r) => toastUndo(r.said, r.undo))
-                      }
+                      // the next notification slides into this place: a double tap restores one (QA B03 run 2, 21)
+                      onClick={settled(
+                        () =>
+                          void runCommand({ type: 'event.restore', eventId: e.id }).then((r) =>
+                            toastUndo(r.said, r.undo),
+                          ),
+                      )}
                     >
                       This was a payment
                     </Button>

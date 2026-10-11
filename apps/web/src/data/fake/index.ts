@@ -1,3 +1,4 @@
+import { newId } from '@/lib/uid';
 import type { Command, WriteResult } from '@sen/core/commands';
 import { momentLabel } from '@/lib/dates';
 import { rm } from './scenario';
@@ -30,8 +31,24 @@ const SYNC_MS = 1200;
 
 /** A file's SHA-256, as hex: the same file twice is one receipt (§6.5), as `receipts.content_hash` will be. */
 async function sha256(file: Blob): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+  const bytes = await file.arrayBuffer();
+  // crypto.subtle exists only in a secure context: a preview opened over plain http on the LAN has none,
+  // so the fake falls back to a non-cryptographic fingerprint there (QA B03 run 2, finding 19). B15's
+  // upload hashes on the phone with the real thing.
+  if (!globalThis.crypto?.subtle) return fnv1a(new Uint8Array(bytes));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** FNV-1a over the bytes, two 32-bit lanes and the length: enough to tell the same file twice in a preview. */
+function fnv1a(bytes: Uint8Array): string {
+  let a = 0x811c9dc5;
+  let b = 0x01000193;
+  for (const x of bytes) {
+    a = Math.imul(a ^ x, 0x01000193) >>> 0;
+    b = Math.imul(b ^ x ^ (a >>> 8), 0x85ebca6b) >>> 0;
+  }
+  return `fnv-${a.toString(16)}${b.toString(16)}-${bytes.length}`;
 }
 /** The first read of a screen takes a moment, so its skeleton shows; later reads answer at once. */
 const FIRST_READ_MS = 250;
@@ -87,7 +104,7 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     const { said, touched } = apply(db, cmd);
     const since = new Date().toISOString();
     for (const id of touched) db.unsynced[id] = since;
-    const token = crypto.randomUUID();
+    const token = newId();
     snapshots.set(token, before);
     changed();
     sync();
@@ -100,7 +117,7 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     byHand: boolean,
     contentHash: string | null,
   ): string => {
-    const id = crypto.randomUUID();
+    const id = newId();
     const now = new Date(Date.parse(db.now)).toISOString();
     const name = file?.name.toLowerCase() ?? '';
     const meals = db.categories.find((c) => c.name === 'Meals')?.id ?? null;
@@ -151,7 +168,7 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
       merchant: name.includes('nomatch') ? 'KOPITIAM SRI DAMAI' : 'SATE KAJANG HJ SAMURI',
       occurredAt: forTxn?.occurredAt ?? now,
       items: printed.map(([description, , doubtful], i) => ({
-        id: crypto.randomUUID(),
+        id: newId(),
         description,
         qty: 1,
         amount: amounts[i]!,

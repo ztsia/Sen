@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { dayLabel } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import { Money, type MoneyKind } from './money';
+import { settleTap } from '@/lib/tap-guard';
 import { toastUndo } from './toast';
 
 // The rows every list is made of (patterns.md §7), composed from shadcn's Item. A row is one control:
@@ -153,17 +154,20 @@ export function ReviewRow({
             size="sm"
             aria-disabled={busy || undefined}
             onClick={() => {
-              if (pending.current) return;
+              // one answer per row, and none while the last change settles: the next row slides into
+              // this place, so a double tap would answer it too (patterns.md §7, QA B03 run 2)
+              if (pending.current || !settleTap()) return;
               pending.current = true;
               setBusy(true);
-              void Promise.resolve(a.onSelect())
-                .then((r) => {
-                  if (r) toastUndo(r.said, r.undo);
-                })
-                .finally(() => {
-                  pending.current = false;
-                  setBusy(false);
-                });
+              const release = () => {
+                pending.current = false;
+                setBusy(false);
+              };
+              void Promise.resolve(a.onSelect()).then((r) => {
+                // answered: the row is on its way out, so it stays answered; opened a sheet: free again
+                if (r) toastUndo(r.said, r.undo);
+                else release();
+              }, release);
             }}
           >
             {a.suggested ? <SparklesIcon aria-hidden="true" /> : null}
