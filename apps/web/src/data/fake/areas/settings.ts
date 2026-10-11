@@ -1,9 +1,11 @@
 import type { SettingsView } from '@sen/core/views';
 import type { Db } from '../db';
 import type { AreaApply } from './ctx';
+import { seedAdmin } from './admin';
 
-// Settings (B04): every section of screens.md's table on made-up data, and the setting.set and
-// member.* commands. What each section shows follows the person's switches (D52).
+// Settings (B04): every section of screens.md's table on made-up data, and the setting.set command.
+// What each section shows follows the person's switches (D52). Members, claims' schemes and ESS, and
+// Sen's section are seeded by admin.ts, with the member.* commands.
 
 export type SettingsState = Omit<SettingsView, 'switches' | 'sen'> & { calendar: boolean };
 
@@ -26,7 +28,8 @@ export function blankSettings(): SettingsState {
 
 export function seedSettings(db: Db): SettingsState {
   void db;
-  return blankSettings(); // TODO(B04 settings batch)
+  // TODO(B04 settings batch): you, categories, rules, receipts by email, data
+  return { ...blankSettings(), ...seedAdmin(db) };
 }
 
 export function settingsView(db: Db): SettingsView {
@@ -63,9 +66,6 @@ export const applySettings: AreaApply = (db, cmd) => {
   void db;
   switch (cmd.type) {
     case 'setting.set':
-    case 'member.invite':
-    case 'member.set':
-    case 'member.remove':
       return { said: 'Saved', touched: [] }; // TODO(B04 settings batch)
     default:
       return null;
