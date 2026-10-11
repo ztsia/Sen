@@ -16,13 +16,13 @@ import type { Ctx } from './surfaces';
 
 export type WidgetSize = 'S' | 'M' | 'L';
 const SIZE_NAMES: Record<WidgetSize, string> = { S: 'Small', M: 'Medium', L: 'Large' };
-const WIDTH: Record<WidgetSize, string> = { S: 'w-40 h-40', M: 'w-full h-40', L: 'w-full h-80' };
+const WIDTH: Record<WidgetSize, string> = { S: 'w-48 h-48', M: 'w-full h-44', L: 'w-full h-96' };
 
 /** A thin bar: how much of something has gone, drawn so the two meters line up. */
-function Meter({ label, pct }: { label: string; pct: number }) {
+function Meter({ label, pct, bare }: { label: string; pct: number; bare?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      {bare ? null : <span className="text-xs text-muted-foreground">{label}</span>}
       <div role="img" aria-label={`${label}: ${pct}%`} className="h-1.5 overflow-hidden rounded-full bg-muted">
         <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
       </div>
@@ -134,11 +134,11 @@ function Body({
         aria-label={`Open Home. ${label}`}
       >
         <span className="text-xs text-muted-foreground">{label}</span>
-        <Money sen={left ? f.sen : f.spent} kind={f.over ? 'warning' : 'out'} className="text-2xl" />
+        <Money sen={left ? f.sen : f.spent} kind={f.over ? 'warning' : 'out'} whole className="text-2xl" />
       </button>
       <div className="flex flex-col gap-1">
-        <Meter label="Spent" pct={spentPct} />
-        <Meter label="Days gone" pct={elapsedPct} />
+        <Meter label="Spent" pct={spentPct} bare={size === 'S'} />
+        <Meter label="Days gone" pct={elapsedPct} bare={size === 'S'} />
       </div>
       {size !== 'S' && delta !== null ? (
         <p className="text-xs text-muted-foreground">

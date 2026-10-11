@@ -58,7 +58,8 @@ export function JourneysSheet() {
                 className="flex min-h-12 items-center justify-between gap-2 border-b border-border py-2 text-left"
                 onClick={() => {
                   setSheet(null);
-                  start(j.id);
+                  // let the list's sheet finish closing before the first step navigates
+                  setTimeout(() => start(j.id), 450);
                 }}
               >
                 <span className="flex flex-col">

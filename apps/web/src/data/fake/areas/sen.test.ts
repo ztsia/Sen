@@ -65,6 +65,11 @@ describe('the seeded conversation', () => {
 });
 
 describe('sen.send', () => {
+  it('reads a copy of the messages, so a change in place reaches the screen', () => {
+    const db = buildScenario('wei-ming', false);
+    expect(senView(db, 'Home', false).messages).not.toBe(db.sen.messages);
+  });
+
   it('adds your message at once, then streams the reply, then finishes it', () => {
     const db = buildScenario('wei-ming', false);
     const { ctx, flush, queue } = ctxFor(db);

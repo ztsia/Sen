@@ -176,7 +176,8 @@ const SUGGESTIONS: Record<string, string[]> = {
 
 export function senView(db: Db, from: string, offline: boolean): SenView {
   return {
-    messages: db.sen.messages,
+    // a copy: the query cache compares by value, and messages change in place (a streaming reply)
+    messages: structuredClone(db.sen.messages),
     state: offline ? 'offline' : db.aiPausedUntil ? 'paused' : 'ready',
     pausedUntil: db.aiPausedUntil,
     suggestions: SUGGESTIONS[from] ?? SUGGESTIONS.Home!,

@@ -49,7 +49,6 @@ function Body({ v, from }: { v: SenView; from: string }) {
   }, [v.messages.length, lastSize, last?.streaming]);
 
   const send = (said: string, attached: File | null) => {
-    console.log('SEND', said);
     void write(
       {
         type: 'sen.send',
@@ -59,7 +58,7 @@ function Body({ v, from }: { v: SenView; from: string }) {
         from,
       },
       { quiet: true },
-    ).then((r) => console.log('SEND done', JSON.stringify(r?.said)));
+    );
   };
   const submit = () => {
     if (!canSend) return;
