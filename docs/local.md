@@ -8,7 +8,7 @@ follow on a phone, and commit.
 
 ## Now
 
-- [ ] **Accounts and keys, on the laptop** (started 11 Oct). A session sets each thing up and never
+- [x] **Accounts and keys, on the laptop** (done 11 Oct). A session sets each thing up and never
       sees a key: it clicks *Create* without looking at the result, you click *Copy*, and a watcher
       takes the clipboard by its shape and sends it on, as a **Sensitive** variable for
       **Production** only. Never into a chat or the repo.
@@ -20,7 +20,10 @@ follow on a phone, and commit.
       | Gemini (B10) | **Done.** Project **`sen-my`** (Google refuses a name under 4 letters), billing linked, the Vertex AI API on, service account `sen-ai` with *Agent Platform user* (Google's new name for *Vertex AI User*), key `sen` bound to it and restricted to that API. Untested until B10 | | Vercel: `GOOGLE_VERTEX_API_KEY`, `GOOGLE_VERTEX_PROJECT` |
       | Push (B06) | **Done.** Firebase added to `sen-my`, Analytics off, the Cloud Messaging API (V1) on; the Admin SDK's service-account key. With billing on, the project is on Firebase's pay-as-you-go plan; push itself is free | Delete `sen-my-firebase-adminsdk-….json` from Downloads, or keep it in your password manager. A new one can be generated any time | Vercel: `FIREBASE_SERVICE_ACCOUNT` |
       | Claude (B10) | **Done.** A key named `sen`, made by you (the browser extension isn't allowed on Anthropic's console) | Prepaid credit (US$5) and a US$10 monthly spend limit, set by you on 11 Oct | Vercel: `ANTHROPIC_API_KEY` |
-      | Sign-in codes (B05) | | Sen's own Gmail: 2-Step Verification, an app password named `sen` | Vercel: `GMAIL_USER`, `GMAIL_APP_PASSWORD` |
+      | Sign-in codes (B05) | **Done.** Sen's own Gmail, made by you, with 2-Step Verification and an app password named `sen`. Set its display name to *Sen* | | Vercel: `GMAIL_USER`, `GMAIL_APP_PASSWORD` |
+
+      All of these are for *Production* only, and none has made a call yet: the slice that first
+      uses each one is its test.
 
       **R2 stays free (D126).** Cloudflare emails the account's address when storage passes 5 GB, or
       a month's Class A passes 500,000, or Class B 5 million: half of each free allowance
