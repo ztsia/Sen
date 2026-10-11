@@ -152,10 +152,13 @@ if (slice) {
     month: 'short',
     timeZone: 'Asia/Kuala_Lumpur',
   });
-  const agents = rows
-    .slice(1)
-    .map((r) => `${r.who} (${short(r.models)}) ${usd(r.usd)}`)
-    .join('; ');
+  const groups = new Map();
+  for (const r of rows.slice(1)) {
+    const g = `${r.who} on ${short(r.models)}`;
+    const v = groups.get(g) ?? { n: 0, usd: 0 };
+    groups.set(g, { n: v.n + 1, usd: v.usd + r.usd });
+  }
+  const agents = [...groups].map(([g, v]) => `${v.n}× ${g} ${usd(v.usd)}`).join('; ');
   const row = `| ${date} | ${slice} | \`${session.slice(0, 8)}\` | ${usd(rows[0].usd)} | ${agents || 'none'} | ${usd(total)} | ${split} |`;
   const lines = readFileSync(log, 'utf8').split('\n');
   const at = lines.findIndex((l) => l.includes(`\`${session.slice(0, 8)}\``));

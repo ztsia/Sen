@@ -8,4 +8,4 @@ the reading it saved.
 
 | Date | Slice | Session | Main | Subagents | Total | By model |
 |---|---|---|--:|---|--:|---|
-| 11 Oct | B03 | `01a75b9c` | $77.65 | implementer (sonnet-5-5) $2.03; implementer (sonnet-5-5) $1.62; implementer (sonnet-5-5) $1.24; qa-reviewer (sonnet-5-5) $10.18; implementer (sonnet-5-5) $1.07; qa-reviewer (sonnet-5-5) $4.41; qa-reviewer (sonnet-5-5) $8.66 | $106.85 | opus 73%, sonnet 27% |
+| 11 Oct | B03 | `01a75b9c` | $77.86 | 4× implementer on sonnet-5-5 $5.96; 3× qa-reviewer on sonnet-5-5 $23.24 | $107.06 | opus 73%, sonnet 27% |
