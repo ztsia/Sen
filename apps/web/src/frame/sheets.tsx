@@ -73,7 +73,7 @@ export function SenSheet({ from }: { from: string }) {
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {Conversation ? <HeadAvatar from={from} /> : <Avatar state="listening" size={40} />}
           <div className="flex min-w-0 flex-col">
-            <span className="text-lg font-semibold">Sen</span>
+            <span className="text-xl font-semibold">Sen</span>
             <span className="text-sm text-muted-foreground">Looking at: {from}</span>
           </div>
           {Conversation ? (
@@ -121,8 +121,8 @@ export function ScanMoreSheet() {
             className="min-h-14 w-full rounded-none text-left text-base active:bg-accent"
           >
             <button type="button" onClick={() => go(r.id)}>
-              <ItemMedia variant="icon" className="size-10 rounded-full border-0 bg-muted text-icon">
-                <r.icon className="size-5" />
+              <ItemMedia variant="icon" className="size-8 rounded-full border-0 bg-muted text-icon">
+                <r.icon className="size-4" />
               </ItemMedia>
               <ItemContent>
                 <ItemTitle className="text-base">{r.label}</ItemTitle>
