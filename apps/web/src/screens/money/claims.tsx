@@ -61,7 +61,7 @@ function Body({ v }: { v: ClaimsView }) {
         <div className="flex flex-col gap-2 px-4 pt-4">
           <Button
             variant="outline"
-            size="lg"
+            size={v.ess && essHere() && toSubmit.length ? 'sm' : 'default'}
             // a stand-in: the printable PDF is built with claims (B25, D97)
             onClick={() => toastDone('The claim pack PDF arrives with claims. Nothing to print yet.')}
           >
@@ -70,7 +70,6 @@ function Body({ v }: { v: ClaimsView }) {
           {v.ess && essHere() && toSubmit.length ? (
             <>
               <Button
-                size="lg"
                 disabled={!ready.length}
                 onClick={() => {
                   // each claim goes on its own; a claim missing evidence waits (D96)

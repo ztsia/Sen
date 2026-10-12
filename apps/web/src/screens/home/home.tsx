@@ -74,10 +74,10 @@ function HomeBody({ h }: { h: HomeView }) {
                 <PartyPopperIcon className="size-5 text-icon" aria-hidden="true" />
                 Payday
               </p>
-              <p>Your salary landed. Take two minutes to start {h.cycle.label} well.</p>
-              <Button size="lg" onClick={() => go('payday')}>
-                Start
-              </Button>
+              <p className="text-sm text-muted-foreground">
+                Your salary landed. Take two minutes to start {h.cycle.label} well.
+              </p>
+              <Button onClick={() => go('payday')}>Start</Button>
             </CardContent>
           </Card>
         ) : h.payday?.stage === 'progress' ? (

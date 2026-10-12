@@ -416,7 +416,7 @@ export function BudgetMeter({
   const risk = share > cycleShare + 0.1;
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex justify-between gap-3 text-sm">
+      <div className="flex justify-between gap-3 text-base">
         <span>{label}</span>
         <span className="num text-right text-muted-foreground">
           {formatSen(sen)} of {formatSen(cap)}
@@ -640,7 +640,7 @@ export function RankedBars({ rows }: { rows: { label: string; share: number; det
     <ol className="flex flex-col gap-3">
       {rows.map((r, i) => (
         <li key={r.label} className="flex flex-col gap-1">
-          <div className="flex justify-between gap-3 text-sm">
+          <div className="flex justify-between gap-3 text-base">
             <span className="min-w-0 wrap-anywhere">{r.label}</span>
             <span className="shrink-0 text-right text-muted-foreground">{r.detail}</span>
           </div>
@@ -669,7 +669,7 @@ export function GoalMeter({ label, saved, target }: { label: string; saved: numb
   const share = target > 0 ? Math.min(1, saved / target) : 0;
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex justify-between gap-3 text-sm">
+      <div className="flex justify-between gap-3 text-base">
         <span className="min-w-0 wrap-anywhere">{label}</span>
         <span className="num text-right text-muted-foreground">
           {formatSen(saved)} of {formatSen(target)}

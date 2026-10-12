@@ -53,7 +53,7 @@ function Body({ v }: { v: AccountsView }) {
         ) : null}
       </div>
       <div className="px-4 pt-4">
-        <Button className="w-full" size="lg" onClick={() => go('balance-check')}>
+        <Button className="w-full" onClick={() => go('balance-check')}>
           Check balances
         </Button>
       </div>

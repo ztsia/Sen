@@ -51,9 +51,7 @@ export function NoteSheet({
           />
           <FieldDescription>Only you see it. Search finds it.</FieldDescription>
         </Field>
-        <Button type="submit" size="lg">
-          Save
-        </Button>
+        <Button type="submit">Save</Button>
       </form>
     </Sheet>
   );

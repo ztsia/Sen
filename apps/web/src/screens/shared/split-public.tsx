@@ -125,7 +125,7 @@ function Body({ token, v }: { token: string; v: PublicSplitView }) {
                 <CheckCircle2Icon className="size-5 text-icon" aria-hidden="true" />
                 You're done ✓
               </p>
-              <Button variant="ghost" onClick={() => void run(write.done(false))}>
+              <Button variant="ghost" size="sm" onClick={() => void run(write.done(false))}>
                 Still ticking
               </Button>
             </div>

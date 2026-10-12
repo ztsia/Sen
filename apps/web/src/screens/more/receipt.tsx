@@ -1,3 +1,4 @@
+import { readableName } from '@/lib/names';
 import { useState } from 'react';
 import { ImageIcon } from 'lucide-react';
 import type { ReceiptView } from '@sen/core/views';
@@ -63,7 +64,9 @@ function ReceiptBody({ r }: { r: ReceiptView }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1 px-4 pt-2">
-        <h2 className="text-xl font-semibold wrap-anywhere">{rc.merchantRaw ?? 'Receipt'}</h2>
+        <h2 className="text-xl font-semibold wrap-anywhere">
+          {rc.merchantRaw ? readableName(rc.merchantRaw) : 'Receipt'}
+        </h2>
         <p className="text-sm text-muted-foreground">
           {rc.occurredAt ? momentLabel(new Date(rc.occurredAt)) : 'No date on it'}
           {evidence ? ' · Kept as evidence only' : ''}

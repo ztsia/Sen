@@ -152,6 +152,7 @@ function ClaimsStep({ c, onNext }: { c: NonNullable<PaydayView['claims']>; onNex
             ) : null}
             <Button
               variant="outline"
+              size="sm"
               className="self-start"
               onClick={() => void write({ type: 'payday.claims', answer: 'undo' })}
             >
@@ -182,7 +183,6 @@ function ClaimsStep({ c, onNext }: { c: NonNullable<PaydayView['claims']>; onNex
       </div>
       <Foot>
         <Button
-          size="lg"
           onClick={() => {
             if (c.answered) onNext();
             else void write({ type: 'payday.claims', answer }).then((r) => r && onNext());
@@ -223,6 +223,7 @@ function LookBack({ l, onNext }: { l: NonNullable<PaydayView['lookBack']>; onNex
             {/* a stand-in: the experiment is counted by code once Sen is built (§12.1, B30) */}
             <Button
               variant="secondary"
+              size="sm"
               className="self-start"
               onClick={() => toastDone('Sen will count it this cycle and tell you where you are')}
             >
@@ -232,9 +233,7 @@ function LookBack({ l, onNext }: { l: NonNullable<PaydayView['lookBack']>; onNex
         </Section>
       </div>
       <Foot>
-        <Button size="lg" onClick={onNext}>
-          Next
-        </Button>
+        <Button onClick={onNext}>Next</Button>
       </Foot>
     </>
   );
@@ -266,9 +265,7 @@ function Plan({ p, onUse }: { p: NonNullable<PaydayView['plan']>; onUse: () => v
         </p>
       </div>
       <Foot>
-        <Button size="lg" onClick={onUse}>
-          Use this plan
-        </Button>
+        <Button onClick={onUse}>Use this plan</Button>
       </Foot>
     </>
   );

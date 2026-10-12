@@ -130,7 +130,7 @@ function SplitBody({ v }: { v: SplitView }) {
       {payerMe && !final ? (
         <div className="flex flex-col items-center gap-3 px-4 py-2">
           <StandInQr seed={v.id} title="QR code for the table" caption="Scan to tick what you had" />
-          <Button variant="secondary" onClick={() => void copyLink()}>
+          <Button variant="secondary" size="sm" onClick={() => void copyLink()}>
             Share the link
           </Button>
         </div>
@@ -185,7 +185,7 @@ function SplitBody({ v }: { v: SplitView }) {
                 <CheckCircle2Icon className="size-5 text-icon" aria-hidden="true" />
                 You're done ✓
               </p>
-              <Button variant="ghost" onClick={() => done(false)}>
+              <Button variant="ghost" size="sm" onClick={() => done(false)}>
                 Still ticking
               </Button>
             </div>
@@ -193,7 +193,7 @@ function SplitBody({ v }: { v: SplitView }) {
             <Button onClick={() => done(true)}>I've ticked everything I had</Button>
           )}
           {v.lockWithout ? (
-            <Button variant="secondary" onClick={() => void write({ type: 'split.lock', splitId: v.id })}>
+            <Button variant="secondary" size="sm" onClick={() => void write({ type: 'split.lock', splitId: v.id })}>
               Lock without waiting for {v.lockWithout}
             </Button>
           ) : null}
@@ -237,7 +237,12 @@ function SplitBody({ v }: { v: SplitView }) {
           </div>
           {owed > 0 ? (
             <div className="flex flex-col gap-1 px-4 pt-3">
-              <Button variant="secondary" onClick={() => void write({ type: 'split.write-off', splitId: v.id })}>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="self-start"
+                onClick={() => void write({ type: 'split.write-off', splitId: v.id })}
+              >
                 Write off
               </Button>
               <p className="text-sm text-muted-foreground">

@@ -1,3 +1,4 @@
+import { readableName } from '@/lib/names';
 import { useId, type FormEvent, type ReactNode } from 'react';
 import { CheckIcon, CircleDashedIcon, TriangleAlertIcon } from 'lucide-react';
 import { formatSen } from '@sen/core/money';
@@ -30,7 +31,7 @@ export interface PartItem {
 export function BillHeader({ merchant, total, line }: { merchant: string; total: number; line: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <h2 className="text-xl font-semibold wrap-anywhere">{merchant}</h2>
+      <h2 className="text-xl font-semibold wrap-anywhere">{readableName(merchant)}</h2>
       <div className="flex flex-wrap items-baseline gap-x-3">
         <Money sen={total} className="text-3xl font-semibold" />
         <p className="text-sm text-muted-foreground">{line}</p>
