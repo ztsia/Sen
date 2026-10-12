@@ -241,9 +241,14 @@ tokens each). The cost is a cold start per agent, so:
   restating rules.
 - **Review every report and diff yourself**, fix what's off, then commit. No per-task review loops:
   QA checks the slice.
-- **Haiku is on trial (D125, 11 Oct):** B04 runs its first mechanical batch on Haiku and a
-  comparable one on Sonnet, and counts the fixes each needed in the handoff. Keep Haiku where it
-  needs no more fixing than Sonnet did.
+- **Haiku, measured on B04 (D125):** about 13× cheaper than Sonnet on a comparable batch ($0.08
+  against $1.07), but it slipped on unstated contracts (it accepted only its own settings keys and ran
+  a repo-wide formatter) and twice reported an hour-long test run as done while it was running. Keep
+  it for mechanical work, with the contract spelled out, *only your files*, and *wait for long runs
+  to end*.
+- **Subagents can't start subagents** (tested twice). Anything an agent would delegate, the main
+  session starts itself: the `qa` skill's Haiku sweep runs before the reviewer, not inside it.
+- **Two end-to-end runs never overlap**: they share ports 4173/4174 and the build folders. Queue them.
 - **Measure, then tune.** `node scripts/usage.mjs` shows what each agent and model cost this session,
   read from the transcripts; `--log <slice>` keeps a row in `docs/usage.md`, before every handoff
   and PR (the transcripts go with the VM). B03's first row: the main session was 73% of the cost,

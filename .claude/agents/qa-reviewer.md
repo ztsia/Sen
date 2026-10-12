@@ -84,7 +84,10 @@ slice, because that's how integration breaks get caught.
 
 ## Phase 3: do the tests test anything?
 
-Now read the implementation and its tests. A green suite is a claim, not evidence. Look for:
+Now read the implementation and its tests. A green suite is a claim, not evidence. **If the main
+session ran a sweep** (`qa-artifacts/<branch>/sweep/index.md`), take the suites' results from it
+rather than running them again: it's raw output, gathered on Haiku so your effort goes on judgement.
+Re-run a suite only to probe it, as below. Look for:
 - **No assertions:** the test calls the code but never checks the result.
 - **Mock-only assertions:** it proves the stub was set up, not that the code works.
 - **Tautologies:** the expected value comes from the code under test.
@@ -147,6 +150,9 @@ Playwright specs in `qa/e2e/`.
 
 - **Screenshot every step**, before and after each action:
   `qa-artifacts/<branch>/screens/FLOW-3-step-2-tap-drinks.png`.
+- **The looks: use the sweep's screenshots** (`sweep/screens/`, every screen and journey step in six
+  looks, light and dark) instead of re-shooting the matrix. Look at them as contact sheets, and walk
+  your own flows in one look and mode, plus any look whose shots make you suspect something.
 - **Assert, then screenshot.** A screenshot is evidence for a person, not a passing test. Every step
   needs a real assertion: visible text, a URL, or a row in the database.
 - **Check the database after the UI acts.** "Saved" on screen and the row existing are two separate

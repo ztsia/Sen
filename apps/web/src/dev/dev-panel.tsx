@@ -13,6 +13,10 @@ import { useTheme, type ModePref } from '@/theme/store';
 import { inShell } from '@/shell/bridge';
 import { SCENARIOS, SCENARIO_NAMES, type ScenarioId } from '@/data/fake/variants';
 import { sim, useCaptureSim } from './capture-sim';
+import { NativeLayer } from './native/native-layer';
+import { useNative } from './native/store';
+import { useCtx } from './native/use-ctx';
+import { simulator } from './native/simulator';
 
 /** The counts the dev panel can put on Review's badge: none, a few, and past 99+. */
 const REVIEW_COUNTS = [0, 5, 120];
@@ -178,6 +182,7 @@ export default function DevPanel() {
           </ToggleGroup>
         </Group>
         {inShell() ? null : <CaptureSim />}
+        <Simulator close={() => setOpen(false)} />
         <div className="py-3">
           <Button asChild variant="outline" className="w-full">
             <Link to="/dev/gallery" onClick={() => setOpen(false)}>
@@ -186,6 +191,65 @@ export default function DevPanel() {
           </Button>
         </div>
       </Sheet>
+      <NativeLayer />
+    </>
+  );
+}
+
+/**
+ * The walking skeleton's review tools (B04): the reveal, the native stand-ins, the simulator that
+ * drives the skeleton, and the guided journeys.
+ */
+function Simulator({ close }: { close: () => void }) {
+  const ctx = useCtx();
+  const setSheet = useNative((n) => n.setSheet);
+  const offline = useUi((s) => s.devState) === 'offline';
+  const run = (fn: () => void) => () => {
+    close();
+    // a sheet closing and another opening in one tick leaves the second shut; wait out the first's exit
+    setTimeout(fn, 400);
+  };
+  return (
+    <>
+      <Group label="The reveal">
+        <Button variant="outline" onClick={run(() => ctx.go('new-look'))}>
+          Play the reveal
+        </Button>
+      </Group>
+      <Group label="Native stand-ins">
+        <p className="text-sm text-muted-foreground">
+          Prompts, pushes, widgets, shortcuts, the share target and the island, as Android would draw them.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={run(() => setSheet('native'))}>
+            Surfaces
+          </Button>
+          <Button variant="outline" onClick={run(() => setSheet('widgets'))}>
+            Widgets
+          </Button>
+        </div>
+      </Group>
+      <Group label="Simulator">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={run(simulator.arrives)}>
+            A notification arrives
+          </Button>
+          <Button variant="outline" onClick={run(() => simulator.payday(ctx))}>
+            Payday
+          </Button>
+          <Button variant="outline" onClick={run(() => simulator.captureOff(ctx))}>
+            Capture off
+          </Button>
+          <Button variant="outline" aria-pressed={offline} onClick={run(simulator.toggleOffline)}>
+            {offline ? 'Back online' : 'Offline'}
+          </Button>
+        </div>
+      </Group>
+      <Group label="Guided journeys">
+        <Button variant="outline" onClick={run(() => setSheet('journeys'))}>
+          Choose a journey
+        </Button>
+      </Group>
     </>
   );
 }

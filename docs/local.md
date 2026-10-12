@@ -280,3 +280,12 @@ Each slice that needs one of these lists it under *Needs from you first* in its 
       still breaks at the comma in a browser; finding 23, still failing); and on a slow signal, open Payments
       for the first time after an update and say whether the tab bar jumps to the middle of the screen while
       it loads (QA B03 run 3, finding 31).
+
+- [ ] **B04's skeleton on the real phone** (QA B04). The brief's own list is yours to walk; QA adds what a
+      browser can't show. In the debug shell, open a split you owe on (More → Shared bills → HAIDILAO) and
+      double-tap *I've paid*: the toast should still say it was marked paid, and *Undo* should put it back
+      (in a browser it says *Already marked as paid* and *Undo* does nothing: QA B04 finding 1). Then open
+      *Play the reveal* from the dev panel on Mercury and Copper and say whether the WebGL feels smooth in
+      the real WebView; hold a widget stand-in against your launcher's real widget picker and say whether the
+      sizes match what Android will draw; and, with *Capture off* from the simulator, check that every
+      widget stand-in reads the same figure as Home.

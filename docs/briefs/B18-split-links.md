@@ -30,6 +30,9 @@ On the phone, paying a friend's QR is a share straight into TNG.
 
 ## Builds
 
+- **From B04's skeleton (QA B04 run 1, 4):** `split-public` says *Sen remembers this browser*, but the
+  skeleton forgets the name on reload. The random browser token (§7) makes it true.
+
 ### The link
 - ***Share the link*** makes a random token of at least 128 bits and stores only its hash.
 - **The QR for the table** is drawn locally.

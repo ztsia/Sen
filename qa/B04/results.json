@@ -1,0 +1,1395 @@
+{
+ "module": "B04",
+ "branch": "B04/skeleton-rest",
+ "verdict": "fix first",
+ "generatedAt": "2026-10-12 UTC (run 3, scoped)",
+ "phases": "run 3: scoped re-check of 15, 20, 21, 22, 12 (email) and the D128 pieces",
+ "headline": "Findings 15, 20 and 22 are fixed; 21 is half fixed (income jumps back by RM152 when the payday card ends); 12's email is fixed apart from odd dots and lengths. D128's pieces all work: write off, the gap day, pay stand-ins, expired invitation and Members. New: a stale count after write-off, a crash on an impossible `?day=`, and the payday income jump.",
+ "summary": {
+  "criteria": 102,
+  "pass": 83,
+  "fail": 9,
+  "unreachable": 10
+ },
+ "suites": {
+  "e2e": "my own specs only (b04-r2-* and b04-r3-*, about 30 tests on preview/dev servers), all as expected; the full 707 was the main session's",
+  "probes": "8 of 9 caught; manual-day probe unproven",
+  "lint": "clean for qa/e2e"
+ },
+ "findings": [
+  {
+   "id": 1,
+   "severity": "Major",
+   "status": "fixed",
+   "title": "A double tap on any B04 action replaces the toast with the no-op's message, and Undo then does nothing",
+   "detail": "patterns.md \u00a77's tap guard (`lib/tap-guard.ts`) is imported only by B03's files (`rows.tsx`, `review.tsx`, `skipped.tsx`, `txn.tsx`). No B04 screen uses it. A second tap runs the command again; the fake answers `Already \u2026` with `touched: []`, that message becomes the toast, and its Undo restores a state that is already the changed one. The first change stays, and the person has no way to undo it. The same happens on *Submitted* (claim), and by the same code path on *Lock without waiting*, *Everyone* and the Sen *Apply*-style buttons.",
+   "repro": "dev server or preview: More -> Shared bills -> HAIDILAO -> double-tap \"I've paid\", then tap Undo in the toast. Spec file: qa/e2e/b04-dbl.spec.ts (split) and b04-claims.spec.ts (claim).",
+   "evidence": "RUN 2: Re-run: double-tap \"I've paid\" gives one toast \"Marked as paid to Mei\\nUndo\", paid 1, Undo -> paid 0 and \"You owe\" shows again; Submitted dbl -> \"Phone bill marked as submitted\\nUndo\", status after Undo to_submit; Everyone, Lock without waiting and Sen Apply: one toast each, Undo reverts (Final -> Still changing; Apply visible again). A deliberate repeat after the settle time still goes through.\n\nRUN 1: split: toast after dbl: \"Already marked as paid\\nUndo\"  ->  paid after Undo: 1\n(single tap: toast \"Marked as paid to Mei\\nUndo\" -> paid after single Undo: 0)\nclaim: toast after dbl submitted: \"Already submitted\\nUndo\"  status: submitted  status after undo: submitted",
+   "spec": "AC-69, AC-11s; patterns.md \u00a77 Toasts and undo (QA B03 run 2 finding 17)",
+   "screenshots": [],
+   "recheck": "Re-run: double-tap \"I've paid\" gives one toast \"Marked as paid to Mei\\nUndo\", paid 1, Undo -> paid 0 and \"You owe\" shows again; Submitted dbl -> \"Phone bill marked as submitted\\nUndo\", status after Undo to_submit; Everyone, Lock without waiting and Sen Apply: one toast each, Undo reverts (Final -> Still changing; Apply visible again). A deliberate repeat after the settle time still goes through."
+  },
+  {
+   "id": 2,
+   "severity": "Major",
+   "status": "fixed",
+   "title": "Nothing tests that a split must not lock while an item is unclaimed on the public page, and the app-side rule is caught only by a browser journey",
+   "detail": "Probe: dropped `&& s.items.every((i) => i.takers.length)` from `lockIfReady` in `data/fake/public-split.ts`. The unit suite stayed 26/26 and the whole split e2e group stayed 39/39. The D71 rule (a split locks only when everyone is done AND every item is claimed) therefore has no test on the friend's side, which is the side that handles real money in B18. On the app side (`maybeLock` without `!unclaimedOf`), `splits.test.ts` also stayed green; only the e2e journey `split-mine` went red (12 failures). Closed-link leak probe also survived (see probes).",
+   "repro": "Edit public-split.ts as above; `pnpm exec vitest run apps/web/src/data/fake/areas/splits.test.ts`; `pnpm exec playwright test --project=preview -g split` in apps/web.",
+   "evidence": "RUN 2: Probes re-run: public `lockIfReady` without the claimed check -> 1 failed (everyone done with an item nobody ticked stays still changing (D71): expected 'final' to be 'changing'); app `maybeLock` without it -> 1 failed (same test, in the app). Both were green in run 1.\n\nRUN 1: unit: Test Files 1 passed (1), Tests 26 passed (26)\ne2e (public probe only): 39 passed (2.5m)\napp-side probe, e2e: 12 failed (split-mine in every look, light and dark); unit: 26 passed",
+   "spec": "AC-4, AC-4s; D71; spec \u00a77",
+   "screenshots": [],
+   "recheck": "Probes re-run: public `lockIfReady` without the claimed check -> 1 failed (everyone done with an item nobody ticked stays still changing (D71): expected 'final' to be 'changing'); app `maybeLock` without it -> 1 failed (same test, in the app). Both were green in run 1."
+  },
+  {
+   "id": 3,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "A closed public link returning the real merchant and total is not caught by any test",
+   "detail": "Probe: `readPublicSplit` for a closed link returned `merchant: s.merchant, total: 6413` instead of empty. `splits.test.ts` asserts only `state, items, people, pay, you` with `toMatchObject`, so the probe stayed green. The screen hides it (`Closed` draws one line), so nothing shows today, but the contract B18 copies is `This split is closed, and nothing else` (screens.md).",
+   "repro": "Edit the closed branch in public-split.ts; run splits.test.ts.",
+   "evidence": "RUN 2: Probes re-run: closed view with real merchant/total -> red; with real payer -> red; with a non-zero yourShare -> red. Leftover: the closed view still returns `at` (the bill's date), untested and hidden by the screen (finding 22).\n\nRUN 1: Tests 26 passed (26)",
+   "spec": "AC-7s; screens.md split-public Varies",
+   "screenshots": [],
+   "recheck": "Probes re-run: closed view with real merchant/total -> red; with real payer -> red; with a non-zero yourShare -> red. Leftover: the closed view still returns `at` (the bill's date), untested and hidden by the screen (finding 22)."
+  },
+  {
+   "id": 4,
+   "severity": "Minor",
+   "status": "open",
+   "title": "`split-public` says Sen remembers this browser, but a reload forgets the name",
+   "detail": "Naming yourself shows `Hi <name>. Sen remembers this browser.`; the state lives in a module Map, nothing is written to localStorage/cookie. After a reload the name box is back. (The `demo` token is a canned remembered Mei, which hides this.)",
+   "repro": "/s/split-public?id=demo-new -> enter a name -> Continue -> reload.",
+   "evidence": "STORAGE {\"l\":{},\"s\":{}}\nAFTER RELOAD has name box: true has Hi: false",
+   "spec": "AC-7; spec \u00a77 (random token kept in that browser), D64",
+   "screenshots": []
+  },
+  {
+   "id": 5,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "With the agent switch off, Sen's button still shows",
+   "detail": "`frame/app-shell.tsx` shows the button on `showsSenButton(screen)` only; it never reads `me.agent`. screens.md and D52: with the agent off there's no Sen button. No scenario turns the agent off, so the dev panel can't show it.",
+   "repro": "dev server: set `db.agent = false` through the fake, navigate to Home.",
+   "evidence": "RUN 2: A scenario with the agent off (made by rewriting the served variants.ts so `month` builds with db.agent = false, no source edit): Ask Sen buttons on Home, Review, Insights, More = 0; Settings has no Sen row; control with the agent on: 1.\n\nRUN 1: agent=false: Ask Sen button count on Home: 1  | me.agent: false",
+   "spec": "AC-8; screens.md rules; D52",
+   "screenshots": [],
+   "recheck": "A scenario with the agent off (made by rewriting the served variants.ts so `month` builds with db.agent = false, no source edit): Ask Sen buttons on Home, Review, Insights, More = 0; Settings has no Sen row; control with the agent on: 1."
+  },
+  {
+   "id": 6,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "The friend scenario (`month`) shows owner-only things, and a switched-off feature still opens by URL",
+   "detail": "`?scenario=month` (a friend in a browser) keeps `settings.admin = true`: Settings lists Members, Data shows *Last backup* (admin only), Settings -> Sen shows the owner's cost estimate rather than credit and allowance. `/s/claims` with the claims switch off shows the full September claims (only `/s/settings/claims` says *Claims are off for you*). `settingsView` returns the whole `members` list to anyone. The non-admin branch of Members (`Only the admin sees Members.`) can't be reached by any scenario. Hiding is only a menu hide here; B05's API must enforce (D52).",
+   "repro": "/s/settings?scenario=month ; /s/claims?scenario=month ; /s/settings/data?scenario=month",
+   "evidence": "RUN 2: Friend scenario: Settings lists no Members, Data shows no Last backup, Settings -> Sen shows Balance RM6.40 and allowance RM1.10 of RM2.00; /s/settings/members says \"Only the admin sees Members.\"; /s/claims shows the empty state; /s/claim?id=<real id> says \"This claim isn't here any more.\"; owner scenario unchanged (Members, Claims, full list). Leftovers in findings 22.\n\nRUN 1: settings (friend): [... \"Features\",\"Sen\",\"Members\",\"Data and account\" ...]\nclaims direct, no claims: [\"Claims\",\"September 2026\",\"\",\"To submit \u00b7 evidence complete\",\"\",\"Phone bill\",\"RM88.00\" ...]\ndata: Backups | Last backup | Yesterday, 03:00",
+   "spec": "AC-22, AC-22s, AC-71; spec \u00a79.6, D52",
+   "screenshots": [],
+   "recheck": "Friend scenario: Settings lists no Members, Data shows no Last backup, Settings -> Sen shows Balance RM6.40 and allowance RM1.10 of RM2.00; /s/settings/members says \"Only the admin sees Members.\"; /s/claims shows the empty state; /s/claim?id=<real id> says \"This claim isn't here any more.\"; owner scenario unchanged (Members, Claims, full list). Leftovers in findings 22."
+  },
+  {
+   "id": 7,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Settings -> Appearance: pinning a look is forgotten when you leave the screen; the reveal's switch pins nothing",
+   "detail": "The look and the mode persist, but `quarterly` is `useState(true)` in Appearance, and new-look's *Change each quarter* switch is local too. After pinning Copper and returning, the screen reads *Changes each quarter* and says the next change date. In new-look, switch off + *Keep it* leaves Appearance at *Changes each quarter*. The code says B14 stores it; the brief listed new-look's frame including the switch.",
+   "repro": "Settings -> Appearance -> Copper -> back -> More -> Settings -> Appearance.",
+   "evidence": "return: quarterly checked? true | copper checked? false\nreload: look copper mode dark | quarterly checked? true",
+   "spec": "AC-23s, AC-33; screens.md new-look, patterns \u00a79",
+   "screenshots": []
+  },
+  {
+   "id": 8,
+   "severity": "Minor",
+   "status": "open",
+   "title": "The simulator's *A notification arrives* asks again after the rule exists",
+   "detail": "It always shows the hard-coded ROTI BAKAR 88 prompt. After answering Meals the rule exists (`rules: [\"ROTI BAKAR 88\"]`), yet a second arrival shows the prompt again and answering it again 'makes' the same rule. The end state of `pay-new` (second payment asks nothing) and 'a second new merchant replaces the first prompt' can't be walked.",
+   "repro": "Dev panel -> A notification arrives -> Meals -> A notification arrives.",
+   "evidence": "after answer 1: {\"rules\":[\"ROTI BAKAR 88\"],\"roti\":0 ...}\narrival 2: prompt visible true",
+   "spec": "AC-34s, FLOW-C2; spec \u00a76.3, \u00a78",
+   "screenshots": []
+  },
+  {
+   "id": 9,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "Made-up claims and payday data contradict each other",
+   "detail": "Settings -> Claims: Phone bill cap RM80.00, deadline day 7; Claims: the September claim is RM88.00 'capped at RM100.00', 'Submit by 25 Oct' (parking 20 Oct). The claim exceeds its scheme's cap, which \u00a713 says is applied. Payday step 1 says 'Sen split RM152.00 of claims from your salary' while both September claims are still *To submit* and Home still reads Left until payday RM5,800.00 (no RM152 taken out as D45 says). ESS references differ in format (ESS-26-04417 vs ESS-26-5700). Skipped-step labels say 'October's claims question' on a November payday. The owner reviews this data on the phone, so it should agree with itself.",
+   "repro": "/s/settings/claims ; /s/claims ; /s/payday?scenario=payday",
+   "evidence": "RUN 2: Settings -> Claims: Phone bill \"up to RM100.00, by day 25\", Parking \"up to RM100.00, by day 20\", matching the claims' caps and \"Submit by 25 Oct / 20 Oct\". Payday scenario: September claims are Approved, so \"Sen split RM152.00\" is coherent. Leftovers in findings 21.\n\nRUN 1: (see text dumps tour-settings-claims.txt, tour-claims.txt, tour-payday.png)",
+   "spec": "AC-61 (coherence), spec \u00a713, D45",
+   "screenshots": [],
+   "recheck": "Settings -> Claims: Phone bill \"up to RM100.00, by day 25\", Parking \"up to RM100.00, by day 20\", matching the claims' caps and \"Submit by 25 Oct / 20 Oct\". Payday scenario: September claims are Approved, so \"Sen split RM152.00\" is coherent. Leftovers in findings 21."
+  },
+  {
+   "id": 10,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "`claim` and `account` with no id hang on Loading",
+   "detail": "`/s/claim` and `/s/account` (no `id`) show the skeleton forever; `split`, `txn`, `receipt` and a wrong id show *\u2026 isn't here any more*.",
+   "repro": "/s/claim ; /s/account",
+   "evidence": "RUN 2: 19 routes with a missing, empty or wrong id: claim, account, split, txn, receipt, goal, confirm, reading all say it's gone (or a pick-one line); none hang; split-public says \"This split is closed\".\n\nRUN 1: == claim \"Claim | Loading | ...\"   == account \"Account | Loading | ...\"",
+   "spec": "AC-16s; patterns \u00a77 Error",
+   "screenshots": [],
+   "recheck": "19 routes with a missing, empty or wrong id: claim, account, split, txn, receipt, goal, confirm, reading all say it's gone (or a pick-one line); none hang; split-public says \"This split is closed\"."
+  },
+  {
+   "id": 11,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "The shared command schemas (`packages/core/src/commands.ts`) accept hostile input, and `balance.check` can double-book",
+   "detail": "No B04 free-text field has a max length (100k-character email, Sen text, friend name, essRef all ACCEPTED); `balance.check` allows 10,000 rows and duplicate `accountId`s. With a duplicate, both adjustments are computed from the same snapshot, so after typing RM14,750.87 the balance is RM14,850.87. `member.set` `grant` takes any safe integer and the balance sums past it (`safe: false`). The UI can't produce these (parseSen caps at RM99,999,999,999.99, one box per account), but B05 turns these schemas into the API's contract.",
+   "repro": "qa/e2e/b04-cmd.spec.ts (dev server).",
+   "evidence": "RUN 2: Schema probes: 255+ char email, 4001-char Sen text, 61-char friend name, balance.check with 0, 51 or duplicate rows, a grant of 9e15, a 65-char essRef, a 101-char key, a 2001-char setting string: all rejected; boundaries (254, 4000, 60) accepted. The fake refuses a duplicate balance check (\"Each account once.\", 0 adjustments, balance unchanged) and a second grant past the range (balance 9000000000340, safe). Leftovers in finding 20.\n\nRUN 1: dupCheck: {before:1465087, typed:1475087, after:1485087}\ninvite 100k email: ACCEPTED ; sen.send 100k text: ACCEPTED ; split.assign 100k name: ACCEPTED ; balance.check 10000 rows: ACCEPTED\ngrantOverflow: {balance:18014398509482324, safe:false}",
+   "spec": "AC-60, AC-17s; spec \u00a716, \u00a717",
+   "screenshots": [],
+   "recheck": "Schema probes: 255+ char email, 4001-char Sen text, 61-char friend name, balance.check with 0, 51 or duplicate rows, a grant of 9e15, a 65-char essRef, a 101-char key, a 2001-char setting string: all rejected; boundaries (254, 4000, 60) accepted. The fake refuses a duplicate balance check (\"Each account once.\", 0 adjustments, balance unchanged) and a second grant past the range (balance 9000000000340, safe). Leftovers in finding 20."
+  },
+  {
+   "id": 12,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Members: invite and member sheets lack what \u00a79.6 lists",
+   "detail": "Welcome credit defaults to RM5.00 (spec: RM10, D98). The invite has no *Unlimited*; invited members have no *Resend* / *Revoke* (their sheet has only *Remove*); *Remove* doesn't offer their export. `<script>@x.co` passes the email check and creates a member (rendered as text, inert).",
+   "repro": "Settings -> Members -> Invite; open Farid.",
+   "evidence": "RUN 3: Email check: `a..b@x.co`, `a@-b.co`, `a@b-.co`, `a@x.co.`, `a@b.c`, `<script>@x.co`, a 312-char address all refused, and the field stops at 254. Still accepted: `.a@x.co`, `a.@x.co`, a 129-character local part, a 70-character domain label (leftover, Note). The rest of 12 (Unlimited at invite, Resend/Revoke, export on Remove) was built in D128: see the new-area checks, all pass.\n\nRUN 2: Only the welcome credit and the email check were in scope. Welcome credit now defaults to 10.00 (fixed). `<script>@x.co` and `a@b.c` are refused (fixed). Still accepted: `a..b@x.co`, `a@-b.co`, and a 312-char email (finding 20). The rest of this finding (Unlimited at invite, Resend/Revoke, export offer) is left open on purpose.\n\nRUN 1: welcome default 5.00 | allowance 2.00\nINVITE \"<script>@x.co\" => members 3 -> 4",
+   "spec": "AC-26, AC-26s; spec \u00a79.6, D98",
+   "screenshots": [],
+   "recheck": "Only the welcome credit and the email check were in scope. Welcome credit now defaults to 10.00 (fixed). `<script>@x.co` and `a@b.c` are refused (fixed). Still accepted: `a..b@x.co`, `a@-b.co`, and a 312-char email (finding 20). The rest of this finding (Unlimited at invite, Resend/Revoke, export offer) is left open on purpose.",
+   "recheck3": "Email check: `a..b@x.co`, `a@-b.co`, `a@b-.co`, `a@x.co.`, `a@b.c`, `<script>@x.co`, a 312-char address all refused, and the field stops at 254. Still accepted: `.a@x.co`, `a.@x.co`, a 129-character local part, a 70-character domain label (leftover, Note). The rest of 12 (Unlimited at invite, Resend/Revoke, export on Remove) was built in D128: see the new-area checks, all pass."
+  },
+  {
+   "id": 13,
+   "severity": "Minor",
+   "status": "open",
+   "title": "`paid-back` has no *Write off*, and `gap`'s answers don't open `manual` with the day",
+   "detail": "flows.md `paid-back`: 'or write their part off, which adds it to your spending (D19)'; `grep 'Write off'` finds nothing. `gap`: *Yes, I did* only records the answer (toast `Answered: Yes, I did`), and *Add a payment for Sat 4 Oct* opens `manual` with no day (known open point in the handoff). D101's *Pay with TNG* / *Save QR* aren't on `split` or `split-public` either.",
+   "repro": "Sen sheet -> Add a payment for Sat 4 Oct; split -> any locked split.",
+   "evidence": "url after Add a payment: /s/manual   (Add expense | Amount | RM | Category | ...)",
+   "spec": "flows.md paid-back, gap; D19, D101",
+   "screenshots": []
+  },
+  {
+   "id": 14,
+   "severity": "Minor",
+   "status": "open",
+   "title": "`sign-in` has no expired-invitation state",
+   "detail": "flows.md `invited`: 'an expired invitation: *Ask for a new invitation*'. Not built (`grep \"new invitation\"` finds nothing). Wrong code, expired code and invitation-only are built and work.",
+   "repro": "/s/sign-in?email=\u2026 (no way to reach an expired state).",
+   "evidence": "grep 'new invitation' apps/web/src: no match",
+   "spec": "AC-29; flows.md invited",
+   "screenshots": []
+  },
+  {
+   "id": 15,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "*Send to ESS* is offered with no shell check, and *Copy* puts `RM88.00` on the clipboard",
+   "detail": "`essReady` is `settings.claims.ess.signedIn` only, so a browser preview shows *Send to ESS* (\u00a713.1: shell only; the PWA submits by hand). *Copy* on Amount copies the formatted `RM88.00`, which ESS's amount field may not take.",
+   "repro": "/s/claims; /s/claim?id=\u2026 -> Copy next to Amount.",
+   "evidence": "RUN 3: Send to ESS: shown on /s/claims with a \"A stand-in here: in the app, Sen sends it from your phone.\" note in the preview; absent from the payday scenario where nothing is left to submit; production builds show Not built yet (no shell, no dev tools). Copy still puts 88.00 on the clipboard (four claims). No way to see it in a real browser outside previews.\n\nRUN 2: Copy is fixed: the Amount row is now \"Amount (RM)\" and copies 88.00, 64.00, 88.00, 72.00 (and 1284.50-style amounts have no comma or RM). The other half, Send to ESS offered with no shell check, is not changed: /s/claims in a browser preview still shows Send to ESS. Status: half fixed.\n\nRUN 1: clipboard: \"RM88.00\"",
+   "spec": "AC-19s; spec \u00a713, \u00a713.1",
+   "screenshots": [],
+   "recheck": "Copy is fixed: the Amount row is now \"Amount (RM)\" and copies 88.00, 64.00, 88.00, 72.00 (and 1284.50-style amounts have no comma or RM). The other half, Send to ESS offered with no shell check, is not changed: /s/claims in a browser preview still shows Send to ESS. Status: half fixed.",
+   "recheck3": "Send to ESS: shown on /s/claims with a \"A stand-in here: in the app, Sen sends it from your phone.\" note in the preview; absent from the payday scenario where nothing is left to submit; production builds show Not built yet (no shell, no dev tools). Copy still puts 88.00 on the clipboard (four claims). No way to see it in a real browser outside previews."
+  },
+  {
+   "id": 16,
+   "severity": "Note",
+   "status": "open",
+   "title": "First run saves nothing and its sad paths don't reach Home",
+   "detail": "Choices (balances, name, payday) are kept in the component, so a reload mid-way keeps the step but loses what was typed (patterns \u00a77 Forms). *Skip for now* on access doesn't lead to Home's *Capture is off*. Finishing lands on the ordinary Wei Ming Home (`Left until payday RM1,931.27`), not *Spent since you started* (only the guided journey's scenario shows that). The email field accepts 400 characters. *Start using Sen* is disabled with no words when every category is off. The guided `first-run` journey shows sign-in twice (its own step and first-run's step 1). Documented in the code as B08's job.",
+   "repro": "/s/first-run through all seven steps.",
+   "evidence": "HOME after first-run: Sen | Sen | Home | 2 of 3 moves done | October's payday plan ... Left until payday | RM | 1,931.27",
+   "spec": "AC-30, AC-30s; flows.md first-run",
+   "screenshots": []
+  },
+  {
+   "id": 17,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Canned Sen replies sound like analysis",
+   "detail": "Any free-form question ('What is my salary?', 'How much will I have saved by December?') gets \"I looked at this cycle's payments. Nothing stands out\u2026\". No figure is invented, but it doesn't say it can't answer (\u00a712.2). Skeleton canned text; B27 owns it.",
+   "repro": "Sen sheet -> type a question.",
+   "evidence": "RUN 2: The default reply now reads \"That's a made-up answer: Sen's real replies arrive in B27.\" for \"What is my salary?\", \"Hello\" and the savings question. Leftovers: any text with \"rate\" or \"card\" (\"Is my savings rate good?\") still gets \"I can look that up for you. It would take a minute, and I'd show you every source.\", and \"Ask about a category or a day to see how one reads\" returns the same made-up text.\n\nRUN 1: Q \"What is my salary?\" => \"I looked at this cycle's payments. Nothing stands out, so I'd leave things as they are.\"",
+   "spec": "spec \u00a712.2",
+   "screenshots": [],
+   "recheck": "The default reply now reads \"That's a made-up answer: Sen's real replies arrive in B27.\" for \"What is my salary?\", \"Hello\" and the savings question. Leftovers: any text with \"rate\" or \"card\" (\"Is my savings rate good?\") still gets \"I can look that up for you. It would take a minute, and I'd show you every source.\", and \"Ask about a category or a day to see how one reads\" returns the same made-up text."
+  },
+  {
+   "id": 18,
+   "severity": "Note",
+   "status": "open",
+   "title": "Small things",
+   "detail": "Accounts' *Elsewhere* row is 56 px (patterns \u00a77: list rows 64 px or more). `?state=offline` is honoured in the production build (B03-era; shows the offline banner only). `Wed, 30 Sept` uses a different month abbreviation from `1 Oct`. A friend's Settings -> You hides *Names* correctly, and Account's sign-out rows are B05's, so AC-27 is not reachable.",
+   "repro": "/s/accounts ; production /?state=offline",
+   "evidence": "/s/accounts rows: LI:Maybank No balance=56",
+   "spec": "AC-66; patterns \u00a77",
+   "screenshots": []
+  },
+  {
+   "id": 19,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "Scanning the same file twice does not say Already added",
+   "detail": "flows.md `scan-after` sad path: 'The same file twice: Already added (\u00a76.5)'. Choosing the same image (identical bytes) a second time in /scan opened `confirm` again (new draft id, same receipt) with no message. This is scan/confirm code from B03, walked here because `scan-after` is a core journey.",
+   "repro": "/scan -> choose receipt.jpg -> Use this -> Done; /scan -> choose the same file -> Use this.",
+   "evidence": "RUN 2: Choosing the same bytes again (same name, renamed, or from the gallery) stays on Scan with the toast \"Already added\" at once; different bytes go to confirm; an unfinished draft can be re-scanned; after Undo of Done the same file is accepted again.\n\nRUN 1: second scan same file: http://127.0.0.1:5180/s/confirm?id=26e97c3c-\u2026 Check the receipt | SATE KAJANG HJ SAMURI | Today, 20:40 ...",
+   "spec": "AC-40; flows.md scan-after; spec \u00a76.5",
+   "screenshots": [],
+   "recheck": "Choosing the same bytes again (same name, renamed, or from the gallery) stays on Scan with the toast \"Already added\" at once; different bytes go to confirm; an unfinished draft can be re-scanned; after Undo of Done the same file is accepted again."
+  },
+  {
+   "id": 20,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "Fixed schemas leave gaps, and the UI takes what they now refuse",
+   "detail": "`setting.set` still accepts a 50,000-key record, and `sen.answer` (askId, answer), `proposal.answer` id, `memory.forget` id and `research.confirm` messageId accept 100k-character strings. The Sen composer takes 5000 characters (the schema stops at 4000) and the invite sheet takes a 312-character email (the schema stops at 254), so once B05 parses these, the person gets a raw refusal; the fake doesn't parse, so nothing shows today. Emails `a..b@x.co` and `a@-b.co` pass the UI check.",
+   "repro": "qa/e2e/b04-r2-cmd.spec.ts, b04-r2-fake.spec.ts",
+   "evidence": "RUN 3: Schema probes now all rejected: a 50,000-key setting record, 100k-char sen.answer answer and askId, proposal.answer id, memory.forget id, research.confirm id, 100k sen.send id and file name, a 300-char email. The composer stops at 4000 (fill 5000 -> 4000; pasting 4500 -> 4000). Invite sheet refuses `a..b@x.co`, `a@-b.co`, 312-char addresses. Note: `txn.note` (B03) still takes 100k characters.\n\nsetting.set huge record: ACCEPTED ; sen.answer 100k answer: ACCEPTED ; proposal.answer 100k id: ACCEPTED ; memory.forget 100k id: ACCEPTED ; research.confirm 100k: ACCEPTED\ncomposer value length after fill(5000): 5000\nEMAIL \"xxxxxxxxxxxxxxxx\" (len 312) => ACCEPTED ; EMAIL \"a..b@x.co\" => ACCEPTED",
+   "spec": "AC-17s, AC-26s; spec \u00a716, \u00a717",
+   "screenshots": [],
+   "recheck3": "Schema probes now all rejected: a 50,000-key setting record, 100k-char sen.answer answer and askId, proposal.answer id, memory.forget id, research.confirm id, 100k sen.send id and file name, a 300-char email. The composer stops at 4000 (fill 5000 -> 4000; pasting 4500 -> 4000). Invite sheet refuses `a..b@x.co`, `a@-b.co`, 312-char addresses. Note: `txn.note` (B03) still takes 100k characters."
+  },
+  {
+   "id": 21,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Payday scenario: an Approved claim still says its evidence is missing, and Send to ESS stays",
+   "detail": "In the payday scenario both September claims are Approved, but Parking still reads \"Receipt for 21 Sep not added yet\", the page still says \"A claim with evidence missing waits until you've added it\" and offers Send to ESS with nothing left to send. Home also still reads Left until payday RM5,800.00 although the payday card says RM152.00 of claims was split out of the salary (D45).",
+   "repro": "/s/claims?scenario=payday ; /?scenario=payday",
+   "evidence": "RUN 3: Half fixed. Payday scenario: Parking is Approved with nothing missing and no Send to ESS; Home reads Left until payday RM5,648.00 and the cycle sheet Income +RM5,648.00 while the card is up; the plan reads Left to spend RM2,839.00 (was 2,991). But when the card ends (Use this plan, or skipping every step) Home and the sheet return to RM5,800.00: see finding 23.\n\nCLAIMS in payday scenario: Claims | September 2026 | Approved | Phone bill | RM88.00 | ... | Approved | Parking | RM64.00 | 4 files \u00b7 capped at RM100.00 | Receipt for 21 Sep not added yet | Open the claim | Download claim pack | Send to ESS | A claim with evidence missing waits until you've added it.",
+   "spec": "AC-61 (coherence), spec \u00a713, D45",
+   "screenshots": [],
+   "recheck3": "Half fixed. Payday scenario: Parking is Approved with nothing missing and no Send to ESS; Home reads Left until payday RM5,648.00 and the cycle sheet Income +RM5,648.00 while the card is up; the plan reads Left to spend RM2,839.00 (was 2,991). But when the card ends (Use this plan, or skipping every step) Home and the sheet return to RM5,800.00: see finding 23."
+  },
+  {
+   "id": 22,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "Small leftovers from the friend and closed-link fixes",
+   "detail": "The closed `split-public` view still returns `at` (the bill's date and time) for any token, and no test asserts it. A friend's Settings -> Account still shows `weiming@example.com`. A friend with claims off who opens /s/claims by URL is told \"Add a scheme in Settings \u2192 Claims\", where Claims says \"Claims are off for you\". The fake's member.* commands have no admin check (B05's API must). A stale toast (\"Already added\") carries onto the next screen when a different file is chosen straight after.",
+   "repro": "readPublicSplit('demo-closed'); /s/settings/account?scenario=month; /s/claims?scenario=month",
+   "evidence": "RUN 3: Friend Account row: huimin@example.com. Friend /s/claims: \"Claims are off for you. Whoever invited you to Sen can switch them on.\" Closed and unknown link: `at: null`. A \"Already added\" toast no longer follows onto the next screen (see 27). member.* refused for non-admins at command level (5 of 5).\n\nclosed view: at: s.at ; friend Settings: Account | weiming@example.com ; claims (friend): \"Each scheme's claim drafts itself on the 1st. Add a scheme in Settings \u2192 Claims.\"",
+   "spec": "AC-7s, AC-71; screens.md split-public",
+   "screenshots": [],
+   "recheck3": "Friend Account row: huimin@example.com. Friend /s/claims: \"Claims are off for you. Whoever invited you to Sen can switch them on.\" Closed and unknown link: `at: null`. A \"Already added\" toast no longer follows onto the next screen (see 27). member.* refused for non-admins at command level (5 of 5)."
+  },
+  {
+   "id": 23,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Payday: the RM152 claims part re-enters income when the payday card ends",
+   "detail": "`claimsInSalary` applies only while `db.payday.stage === 'card'`. Home and the cycle sheet leave the claims out while the card is up (RM5,648.00), then jump to RM5,800.00 on *Use this plan* or after skipping every step, although the claims were split out of that salary and nothing undid it.",
+   "repro": "/?scenario=payday; Payday -> Use this plan (or Skip x4); read Home.",
+   "evidence": "card up: hero Left until payday RM 5,648.00 ... cycle sheet Income received +RM5,648.00\nafter skipping all four: hero Left until payday RM 5,800.00 ... Income received +RM5,800.00\nHOME after Use this plan: Left until payday | RM | 5,800.00",
+   "spec": "D45, D104, spec \u00a79.7",
+   "screenshots": []
+  },
+  {
+   "id": 24,
+   "severity": "Minor",
+   "status": "open",
+   "title": "After a write-off the Shared bills list says the share was paid back",
+   "detail": "BBQ PLACE reads `1 of 2 paid you back` before and `2 of 2 paid you back` after *Write off*, but Kah Hoe never paid; the split view itself says `written off`. The list counts written-off shares as paid.",
+   "repro": "More -> Shared bills -> BBQ PLACE -> Write off -> Back.",
+   "evidence": "SHARED before: ... BBQ PLACE | 10 Oct \u00b7 You paid \u00b7 1 of 2 paid you back\nSHARED after write-off: ... Settled | BBQ PLACE | 10 Oct \u00b7 You paid \u00b7 2 of 2 paid you back",
+   "spec": "\u00a77 (D19), screens.md shared",
+   "screenshots": []
+  },
+  {
+   "id": 25,
+   "severity": "Minor",
+   "status": "open",
+   "title": "`manual?day=` checks the shape of the date, not that it is a date",
+   "detail": "The router accepts any `dddd-dd-dd`. `2026-13-45` and `0000-00-00` throw inside `new Date(...).toISOString()` and show \"Something went wrong / This screen didn't open\" (the error boundary catches it, no blank page). `2027-01-01`, `1999-01-01` and `9999-12-31` open the form on a future or ancient day, and a payment can be saved there. Reachable only by a typed or old link; Sen's own buttons carry a valid day.",
+   "repro": "/s/manual?day=2026-13-45",
+   "evidence": "day \"2026-13-45\"   NO FORM | Something went wrong | This screen didn't open\nday \"0000-00-00\"   NO FORM\nday \"9999-12-31\"   form",
+   "spec": "flows.md gap; patterns \u00a77 Forms",
+   "screenshots": []
+  },
+  {
+   "id": 26,
+   "severity": "Note",
+   "status": "open",
+   "title": "A no-op answer still offers Undo",
+   "detail": "Inviting an address already invited says `They are already invited` with an Undo that undoes nothing (the double-tap guard only covers a repeat within 500 ms). Same for the other `Already \u2026` answers.",
+   "repro": "Invite dup@example.com twice, 1 s apart.",
+   "evidence": "toasts: [\"They are already invited\\nUndo\"]",
+   "spec": "patterns \u00a77 Toasts and undo",
+   "screenshots": []
+  },
+  {
+   "id": 27,
+   "severity": "Note",
+   "status": "open",
+   "title": "Choosing the next file takes down the previous Undo toast",
+   "detail": "The fix for the stale `Already added` toast calls `dismissToast()` for whatever toast is up, so `Attached to RM64.13 on Ryt Bank` + Undo disappears when the next receipt's file is picked, a few seconds into its six.",
+   "repro": "Scan -> Done -> Scan tab -> pick a different file.",
+   "evidence": "after Done toasts: [\"Attached to RM64.13 on Ryt Bank\\nUndo\"]\non scan page, toasts: [\"Attached to RM64.13 on Ryt Bank\\nUndo\"]\nafter picking a new file, toasts: []",
+   "spec": "patterns \u00a77 Toasts and undo (6 s or until the next change)",
+   "screenshots": []
+  }
+ ],
+ "probes": [
+  {
+   "broke": "Largest remainder replaced by per-person Math.round(price/n) in the app's `sharesOf`",
+   "caught": true,
+   "note": "splits.test.ts: 2 failed (shares sum 5832 vs 5830)"
+  },
+  {
+   "broke": "App side: `maybeLock` ignores unclaimed items",
+   "caught": true,
+   "note": "unit suite stayed green (26/26); only e2e `split-mine` went red, 12 of 12 looks. Caught late, by a browser journey, not a unit test."
+  },
+  {
+   "broke": "Public side: `lockIfReady` ignores unclaimed items",
+   "caught": false,
+   "note": "unit 26/26 and e2e -g split 39/39 stayed green. Finding 2."
+  },
+  {
+   "broke": "Public page: ticking allowed after the lock",
+   "caught": true,
+   "note": "splits.test.ts 'demo-final is read-only' failed"
+  },
+  {
+   "broke": "`balance.check` booking direction flipped (out/in)",
+   "caught": true,
+   "note": "money.test.ts: 2 failed"
+  },
+  {
+   "broke": "Closed public link returns the real merchant and total",
+   "caught": false,
+   "note": "splits.test.ts 26/26 stayed green. Finding 3."
+  },
+  {
+   "broke": "Members: 'You can't remove yourself' guard dropped",
+   "caught": true,
+   "note": "admin.test.ts 'suspends and removes others, never the admin' failed"
+  },
+  {
+   "broke": "Credit refund allowed to go below zero",
+   "caught": true,
+   "note": "admin.test.ts 'grants and refunds credit' failed"
+  },
+  {
+   "broke": "`DEV_TOOLS = true` (dev panel, fake and simulator in a production build)",
+   "caught": true,
+   "note": "production.spec.ts:7 failed (dev tools); B04's own two production tests stayed green, so B01's test is what protects it."
+  },
+  {
+   "broke": "Run 2: public `lockIfReady` ignores unclaimed items",
+   "caught": true,
+   "note": "splits.test.ts: 'everyone done with an item nobody ticked stays still changing (D71)' failed; was green in run 1"
+  },
+  {
+   "broke": "Run 2: app `maybeLock` ignores unclaimed items",
+   "caught": true,
+   "note": "splits.test.ts 'the lock (D71)' failed in the unit suite itself; in run 1 only e2e caught it"
+  },
+  {
+   "broke": "Run 2: closed link leaks merchant+total, or payer, or yourShare",
+   "caught": true,
+   "note": "'a closed or unknown link shows nothing' failed for each of the three"
+  },
+  {
+   "broke": "Run 2: closed link's `at` (not asserted)",
+   "caught": false,
+   "note": "`at` is still returned and no test checks it (finding 22)"
+  },
+  {
+   "broke": "Run 3: write-off not added to my share",
+   "caught": true,
+   "note": "splits.test.ts \"writes off what is still owed\" failed (expected 4880 to be 9760)"
+  },
+  {
+   "broke": "Run 3: write-off allowed for a non-payer",
+   "caught": true,
+   "note": "same test failed (expected [Function] to throw)"
+  },
+  {
+   "broke": "Run 3: write-off allowed with nothing owed / still changing",
+   "caught": true,
+   "note": "same test failed"
+  },
+  {
+   "broke": "Run 3: member.* guard for non-admins dropped",
+   "caught": true,
+   "note": "admin.test.ts \"resends and revokes\u2026only for the admin\" failed"
+  },
+  {
+   "broke": "Run 3: revoke allowed on a signed-in member",
+   "caught": true,
+   "note": "admin.test.ts failed"
+  },
+  {
+   "broke": "Run 3: invite email double-dot check dropped",
+   "caught": true,
+   "note": "admin.test.ts \"invites with Unlimited, and rejects emails\u2026\" failed (a..b@x.co)"
+  },
+  {
+   "broke": "Run 3: Unlimited ignored at invite",
+   "caught": true,
+   "note": "same test failed (expected false to be true)"
+  },
+  {
+   "broke": "Run 3: manual saves \"now\" instead of the gap day",
+   "caught": false,
+   "note": "the suite asserts the URL day and the \"4 Oct\" label only; I could not read the saved time reliably after the probe (my db() read returned another row), so this one is unproven. Before the probe, my run showed the payment saved at 2026-10-04T04:00:00Z (12:00 KL)."
+  }
+ ],
+ "flows": [
+  {
+   "id": "FLOW-R3-1",
+   "title": "Write off a split you paid",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More -> Shared bills -> BBQ PLACE",
+   "covers": [
+    "AC-73",
+    "AC-73s",
+    "AC-73t"
+   ],
+   "spec": "\u00a77",
+   "status": "fail",
+   "ends": "spending up by the amount; Undo restores",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open BBQ PLACE",
+     "assertion": "Kah Hoe not paid, Write off offered",
+     "status": "pass",
+     "screenshot": "R3-WO-step-1-split-before.png"
+    },
+    {
+     "n": 2,
+     "action": "Write off",
+     "assertion": "Your spending RM97.60, Written off RM48.80, Home +48.80",
+     "status": "pass",
+     "screenshot": "R3-WO-step-2-written-off.png"
+    },
+    {
+     "n": 3,
+     "action": "Back to Shared bills",
+     "assertion": "list says 2 of 2 paid you back",
+     "status": "fail",
+     "screenshot": "R3-WO-step-3-shared-list.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-2",
+   "title": "The gap: Yes, I did",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Sen sheet on Home",
+   "covers": [
+    "AC-74",
+    "AC-74s"
+   ],
+   "spec": "flows.md gap",
+   "status": "pass",
+   "ends": "manual opens on 4 Oct",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Yes, I did",
+     "assertion": "manual?day=2026-10-04 on 4 Oct",
+     "status": "pass",
+     "screenshot": "R3-GAP-step-1-manual-on-day.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-3",
+   "title": "Pay from this phone",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "split you owe; split-public final",
+   "covers": [
+    "AC-75",
+    "AC-75s"
+   ],
+   "spec": "\u00a77, D101",
+   "status": "pass",
+   "ends": "stand-ins copy the amount",
+   "steps": [
+    {
+     "n": 1,
+     "action": "HAIDILAO",
+     "assertion": "Pay with TNG / Other app\u2026 / Save QR",
+     "status": "pass",
+     "screenshot": "R3-PAY-step-1-split-owe.png"
+    },
+    {
+     "n": 2,
+     "action": "Friend page final",
+     "assertion": "Pay with an app / Save QR",
+     "status": "pass",
+     "screenshot": "R3-PAY-step-2-public-final.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-4",
+   "title": "Expired invitation",
+   "kind": "sad",
+   "actor": "friend",
+   "entry": "/s/sign-in?state=expired",
+   "covers": [
+    "AC-76"
+   ],
+   "spec": "flows.md invited",
+   "status": "pass",
+   "ends": "says who to ask",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open",
+     "assertion": "This invitation has expired",
+     "status": "pass",
+     "screenshot": "R3-SI-step-1-expired.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-5",
+   "title": "Members: Unlimited, Resend, Revoke, Remove",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Settings -> Members",
+   "covers": [
+    "AC-77",
+    "AC-78",
+    "AC-79",
+    "AC-80"
+   ],
+   "spec": "\u00a79.6",
+   "status": "pass",
+   "ends": "all four work",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Invite Zed unlimited",
+     "assertion": "allowance hidden",
+     "status": "pass",
+     "screenshot": "R3-MEM-step-1-invite-unlimited.png"
+    },
+    {
+     "n": 2,
+     "action": "Zed sheet",
+     "assertion": "Resend, Revoke",
+     "status": "pass",
+     "screenshot": "R3-MEM-step-2-zed-sheet.png"
+    },
+    {
+     "n": 3,
+     "action": "Revoke then Undo",
+     "assertion": "Zed back",
+     "status": "pass",
+     "screenshot": "R3-MEM-step-3-revoke-undone.png"
+    },
+    {
+     "n": 4,
+     "action": "Remove Hui Min",
+     "assertion": "export offered",
+     "status": "pass",
+     "screenshot": "R3-MEM-step-4-remove-step.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-6",
+   "title": "Payday income after the card",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "simulator -> Payday",
+   "covers": [
+    "AC-61"
+   ],
+   "spec": "D45",
+   "status": "fail",
+   "ends": "income stays net of claims",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Card up",
+     "assertion": "Home 5,648.00",
+     "status": "pass",
+     "screenshot": "R3-F21-step-1-home-payday.png"
+    },
+    {
+     "n": 2,
+     "action": "Use this plan",
+     "assertion": "Home back to 5,800.00",
+     "status": "fail",
+     "screenshot": "R3-F21-step-3-home-after-plan.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-7",
+   "title": "Claims with Send to ESS",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More -> Claims",
+   "covers": [
+    "AC-19s"
+   ],
+   "spec": "\u00a713.1",
+   "status": "pass",
+   "ends": "stand-in note in preview; none when nothing to send",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Claims list",
+     "assertion": "Send to ESS + stand-in note",
+     "status": "pass",
+     "screenshot": "R3-F15-step-1-claims-standin.png"
+    },
+    {
+     "n": 2,
+     "action": "Payday scenario",
+     "assertion": "no Send to ESS",
+     "status": "pass",
+     "screenshot": "R3-F21-step-4-claims-payday.png"
+    }
+   ]
+  }
+ ],
+ "criteria": [
+  {
+   "id": "AC-1",
+   "title": "shared lists splits",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "3 rows, lines read \"You paid \u00b7 1 of 2 paid you back\" / \"Mei paid \u00b7 you owe RM24.40\""
+  },
+  {
+   "id": "AC-1s",
+   "title": "shared empty",
+   "spec": "patterns \u00a77",
+   "status": "pass",
+   "evidence": "\"No shared bills yet. Open a payment and tap Split to share it.\""
+  },
+  {
+   "id": "AC-2",
+   "title": "split payer view",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "status, QR, Share the link, items, Done button present"
+  },
+  {
+   "id": "AC-2s",
+   "title": "unclaimed item controls",
+   "spec": "D71",
+   "status": "pass",
+   "evidence": "Everyone / Someone else\u2026 for payer; fake throws \"Only Mei can settle\" for non-payer (unit)"
+  },
+  {
+   "id": "AC-3",
+   "title": "largest remainder",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "fried chicken 7.00/7.00/6.99; probe red; Mei 12.48+6.99+2.67 = 22.14"
+  },
+  {
+   "id": "AC-3s",
+   "title": "odd-sen items",
+   "spec": "money",
+   "status": "pass",
+   "evidence": "14.00/3 -> 4.67,4.67,4.66; shares [2317,2427,466,620] = 5830"
+  },
+  {
+   "id": "AC-4",
+   "title": "lock rule",
+   "spec": "D71",
+   "status": "pass",
+   "evidence": "run 2: lock rule now tested on both sides; both probes red"
+  },
+  {
+   "id": "AC-4s",
+   "title": "lock without waiting only when all claimed",
+   "spec": "flows split-stuck",
+   "status": "pass",
+   "evidence": "button absent with 1 unclaimed, present after Zul; locks"
+  },
+  {
+   "id": "AC-5",
+   "title": "payer tick list",
+   "spec": "D65",
+   "status": "pass",
+   "evidence": "matched/ticked by you wording; split.paid unit tests"
+  },
+  {
+   "id": "AC-5s",
+   "title": "non-payer read-only",
+   "spec": "D65",
+   "status": "pass",
+   "evidence": "checkboxes disabled on HAIDILAO"
+  },
+  {
+   "id": "AC-6",
+   "title": "you owe",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "You owe Mei RM24.40"
+  },
+  {
+   "id": "AC-6s",
+   "title": "paid state",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "StatusCard Paid; no I've paid after (split-theirs journey)"
+  },
+  {
+   "id": "AC-7",
+   "title": "split-public no chrome, remembers name",
+   "spec": "screens",
+   "status": "fail",
+   "evidence": "no chrome; but reload forgets the name (finding 4)"
+  },
+  {
+   "id": "AC-7s",
+   "title": "closed link",
+   "spec": "screens",
+   "status": "pass",
+   "evidence": "run 2: closed view empty of merchant, total, payer; probes red"
+  },
+  {
+   "id": "AC-7t",
+   "title": "read-only after lock, pay only when final",
+   "spec": "D71",
+   "status": "pass",
+   "evidence": "To change a tick, ask Wei Ming.; demo shows no Pay"
+  },
+  {
+   "id": "AC-7u",
+   "title": "public leaks nothing",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "html grep for NASI KANDAR, HAIDILAO, BBQ PLACE, 29,871, Ryt Bank, TNG, weiming@: none; storage empty"
+  },
+  {
+   "id": "AC-8",
+   "title": "Sen button gating",
+   "spec": "D68, D52",
+   "status": "pass",
+   "evidence": "run 2: agent-off scenario shows 0 Ask Sen buttons on four tabs"
+  },
+  {
+   "id": "AC-8s",
+   "title": "Looking at",
+   "spec": "screens sen",
+   "status": "pass",
+   "evidence": "Looking at: Insights"
+  },
+  {
+   "id": "AC-9",
+   "title": "message kinds",
+   "spec": "\u00a712.3",
+   "status": "pass",
+   "evidence": "note, answer, proposal, research with sources, ask, clip, suggestions all present"
+  },
+  {
+   "id": "AC-9s",
+   "title": "4-option ask_user",
+   "spec": "\u00a712.3",
+   "status": "unreachable",
+   "evidence": "no scenario has four options; ReviewRow shows 3 (handoff open point)"
+  },
+  {
+   "id": "AC-10",
+   "title": "traceability marks",
+   "spec": "D108",
+   "status": "pass",
+   "evidence": "\"RM650.00 not checked\", \"from your file\""
+  },
+  {
+   "id": "AC-10s",
+   "title": "no URLs, external links",
+   "spec": "\u00a712.2, \u00a717",
+   "status": "pass",
+   "evidence": "Source click opens popup, opener null, app stays; 0 anchors in the sheet"
+  },
+  {
+   "id": "AC-11",
+   "title": "Apply/Dismiss",
+   "spec": "\u00a712.1",
+   "status": "pass",
+   "evidence": "applied -> Undo -> open -> dismissed; Review item parity"
+  },
+  {
+   "id": "AC-11s",
+   "title": "Apply twice once",
+   "spec": "tap guard",
+   "status": "pass",
+   "evidence": "run 2: Apply double-tap -> one toast, Undo restores the card"
+  },
+  {
+   "id": "AC-12",
+   "title": "offline/paused",
+   "spec": "\u00a79.6",
+   "status": "pass",
+   "evidence": "both strings exact; composer disabled"
+  },
+  {
+   "id": "AC-13",
+   "title": "research unconfirmed",
+   "spec": "\u00a712.2",
+   "status": "pass",
+   "evidence": "\"Draft, not confirmed\"; no user figure in findings"
+  },
+  {
+   "id": "AC-14",
+   "title": "agent/*",
+   "spec": "D98",
+   "status": "pass",
+   "evidence": "memory, research, usage render; owner usage = tokens + estimate"
+  },
+  {
+   "id": "AC-14s",
+   "title": "empty agent screens",
+   "spec": "patterns",
+   "status": "pass",
+   "evidence": "one-line empties for memory and research"
+  },
+  {
+   "id": "AC-15",
+   "title": "accounts",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "total RM29,871.77 = 14,650.87+7,340.00+262.30+7,553.10+65.50; Maybank no balance"
+  },
+  {
+   "id": "AC-15s",
+   "title": "no capture hides accounts",
+   "spec": "D52",
+   "status": "pass",
+   "evidence": "More has no Accounts; direct URL says balances show once Sen reads apps"
+  },
+  {
+   "id": "AC-16",
+   "title": "account",
+   "spec": "screens",
+   "status": "pass",
+   "evidence": "balance, opening RM3,200.00, fed by, recent payments, checks"
+  },
+  {
+   "id": "AC-16s",
+   "title": "unknown account id",
+   "spec": "patterns",
+   "status": "pass",
+   "evidence": "run 2: no id, empty id and wrong id all say it is gone"
+  },
+  {
+   "id": "AC-17",
+   "title": "balance-check parse, Save",
+   "spec": "D18",
+   "status": "pass",
+   "evidence": "1,284.50 -> booked RM13,366.37 vs RM14,650.87; Matches -> everything matches"
+  },
+  {
+   "id": "AC-17s",
+   "title": "hostile input",
+   "spec": "forms",
+   "status": "pass",
+   "evidence": "11 inputs refused in words, 0 adjustments"
+  },
+  {
+   "id": "AC-17t",
+   "title": "tab bar hidden",
+   "spec": "patterns \u00a76",
+   "status": "pass",
+   "evidence": "tab bar count 0 (draft survival not tested)"
+  },
+  {
+   "id": "AC-18",
+   "title": "claims",
+   "spec": "\u00a713",
+   "status": "pass",
+   "evidence": "two schemes, status, deadline, evidence, Download claim pack"
+  },
+  {
+   "id": "AC-18s",
+   "title": "claims off",
+   "spec": "D52",
+   "status": "pass",
+   "evidence": "run 2: claims off -> /s/claims empty, /s/claim?id=\u2026 gone"
+  },
+  {
+   "id": "AC-19",
+   "title": "claim kit",
+   "spec": "\u00a713",
+   "status": "pass",
+   "evidence": "run 2: Copy Amount (RM) -> \"88.00\""
+  },
+  {
+   "id": "AC-19s",
+   "title": "ESS gating",
+   "spec": "\u00a713.1",
+   "status": "pass",
+   "evidence": "run 3: Send to ESS only in shell or preview (stand-in note), hidden when nothing is to submit"
+  },
+  {
+   "id": "AC-20",
+   "title": "status wording",
+   "spec": "patterns",
+   "status": "pass",
+   "evidence": "To submit \u00b7 evidence complete / missing, with icon"
+  },
+  {
+   "id": "AC-21",
+   "title": "no real claim values",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "schemes Phone bill/Parking, example.com sender"
+  },
+  {
+   "id": "AC-22",
+   "title": "Settings per role",
+   "spec": "\u00a79.6",
+   "status": "pass",
+   "evidence": "run 2: friend Settings has no Members, backups or owner estimate"
+  },
+  {
+   "id": "AC-22s",
+   "title": "Members non-admin",
+   "spec": "\u00a717",
+   "status": "pass",
+   "evidence": "run 2: /s/settings/members says \"Only the admin sees Members.\""
+  },
+  {
+   "id": "AC-23",
+   "title": "Appearance",
+   "spec": "D44, D77",
+   "status": "pass",
+   "evidence": "dark + copper applied, mode and look survive reload"
+  },
+  {
+   "id": "AC-23s",
+   "title": "pin persists",
+   "spec": "D77",
+   "status": "fail",
+   "evidence": "pin lost on leaving the screen (finding 7)"
+  },
+  {
+   "id": "AC-24",
+   "title": "You",
+   "spec": "D14",
+   "status": "pass",
+   "evidence": "0, 32, abc refused; 15 saved and kept on SPA return"
+  },
+  {
+   "id": "AC-25",
+   "title": "ESS section",
+   "spec": "D103",
+   "status": "pass",
+   "evidence": "no password field; Forget ESS password; Teach/Import present"
+  },
+  {
+   "id": "AC-26",
+   "title": "Members",
+   "spec": "\u00a79.6",
+   "status": "pass",
+   "evidence": "run 3: Unlimited at invite, Resend, Revoke (Undo restores), export offered on Remove, welcome RM10 all work"
+  },
+  {
+   "id": "AC-26s",
+   "title": "invite validation",
+   "spec": "\u00a79.6",
+   "status": "pass",
+   "evidence": "\"a@\" refused; remove confirms; refund below zero refused (unit)"
+  },
+  {
+   "id": "AC-27",
+   "title": "Data/Account",
+   "spec": "\u00a717",
+   "status": "unreachable",
+   "evidence": "Account sign-out is B05; Data export is a stub toast"
+  },
+  {
+   "id": "AC-27s",
+   "title": "sign out everywhere",
+   "spec": "\u00a717",
+   "status": "unreachable",
+   "evidence": "B05"
+  },
+  {
+   "id": "AC-28",
+   "title": "capture steps",
+   "spec": "screens",
+   "status": "pass",
+   "evidence": "Settings/capture and first-run embed the same screens"
+  },
+  {
+   "id": "AC-29",
+   "title": "sign-in states",
+   "spec": "flows",
+   "status": "pass",
+   "evidence": "run 3: expired invitation state \"This invitation has expired\" + Ask for a new invitation; production ignores ?state=expired"
+  },
+  {
+   "id": "AC-29s",
+   "title": "sign-in hostile input",
+   "spec": "forms",
+   "status": "pass",
+   "evidence": "abcdef stripped, 5 digits refused, <img> email refused, prefill hostile -> empty"
+  },
+  {
+   "id": "AC-30",
+   "title": "first-run 7 steps",
+   "spec": "\u00a79.5",
+   "status": "fail",
+   "evidence": "7 steps, reload reopens step 3; Home end state is not \"Spent since you started\" (finding 16)"
+  },
+  {
+   "id": "AC-30s",
+   "title": "access refused",
+   "spec": "flows",
+   "status": "fail",
+   "evidence": "Skip for now does not set Capture is off"
+  },
+  {
+   "id": "AC-31",
+   "title": "short first run",
+   "spec": "D79",
+   "status": "pass",
+   "evidence": "sweep journeys.spec invited passed (703/703)"
+  },
+  {
+   "id": "AC-32",
+   "title": "payday",
+   "spec": "\u00a79.7",
+   "status": "pass",
+   "evidence": "4 steps, Skip each, asked variant Yes preselected, Use this plan -> 0 of 5"
+  },
+  {
+   "id": "AC-32s",
+   "title": "steps by role",
+   "spec": "D52",
+   "status": "unreachable",
+   "evidence": "no scenario with agent/claims off and a payday"
+  },
+  {
+   "id": "AC-33",
+   "title": "new-look",
+   "spec": "\u00a79",
+   "status": "fail",
+   "evidence": "crossfade, focus, Keep/Go back right; switch off pins nothing"
+  },
+  {
+   "id": "AC-33s",
+   "title": "reduced motion",
+   "spec": "\u00a79",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-34",
+   "title": "prompts",
+   "spec": "screens",
+   "status": "pass",
+   "evidence": "ROTI BAKAR RM9.50, payback RM25.00, quiet scan; sweep stand-in tests passed"
+  },
+  {
+   "id": "AC-34s",
+   "title": "second prompt replaces first",
+   "spec": "D24",
+   "status": "unreachable",
+   "evidence": "simulator has one hard-coded arrival (finding 8)"
+  },
+  {
+   "id": "AC-35",
+   "title": "pushes, shortcuts, island",
+   "spec": "screens",
+   "status": "pass",
+   "evidence": "sweep: every stand-in axe + journeys passed"
+  },
+  {
+   "id": "AC-36",
+   "title": "widgets",
+   "spec": "\u00a79.1",
+   "status": "pass",
+   "evidence": "S/M/L, light/dark/Capture is off + Fix present"
+  },
+  {
+   "id": "AC-36s",
+   "title": "widget = Home",
+   "spec": "\u00a79.2",
+   "status": "pass",
+   "evidence": "RM1,931.27 both"
+  },
+  {
+   "id": "AC-37",
+   "title": "simulator",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "payday card, offline figures include outbox, capture-off via sweep"
+  },
+  {
+   "id": "AC-37s",
+   "title": "simulator off restores",
+   "spec": "brief",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-38",
+   "title": "dev tools absent in production",
+   "spec": "modules rule 6",
+   "status": "pass",
+   "evidence": "15 routes Not built yet, 0 dev panel, bundle grep clean; probe red"
+  },
+  {
+   "id": "AC-39",
+   "title": "journeys list",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "38 ids; all flows.md journeys present"
+  },
+  {
+   "id": "AC-39s",
+   "title": "journey with missing precondition",
+   "spec": "brief",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-40",
+   "title": "core journeys",
+   "spec": "D124",
+   "status": "fail",
+   "evidence": "first-run and scan-after walked; pay-new asks again (finding 8); same file twice gives no Already added (finding 19)"
+  },
+  {
+   "id": "AC-41",
+   "title": "six looks, light/dark",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "sweep: 703 passed"
+  },
+  {
+   "id": "AC-42",
+   "title": "axe",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "sweep: every B04 screen/state/stand-in passed"
+  },
+  {
+   "id": "AC-43",
+   "title": "touch targets, labels",
+   "spec": "\u00a78",
+   "status": "pass",
+   "evidence": "24 B04 routes, 0 targets under 48 px"
+  },
+  {
+   "id": "AC-60",
+   "title": "no float money",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "diff grep: only Math.round for percent and token counts"
+  },
+  {
+   "id": "AC-60s",
+   "title": "typed money edge cases",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "11 inputs: 1e3, 1.234, 1,5, 12., .5, Arabic digits, 20 digits refused"
+  },
+  {
+   "id": "AC-61",
+   "title": "prediction labelled",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "projection marked not checked; plan not in Left until payday"
+  },
+  {
+   "id": "AC-62",
+   "title": "no secrets in bundle",
+   "spec": "\u00a717",
+   "status": "pass",
+   "evidence": "grep of production bundle for key shapes: none"
+  },
+  {
+   "id": "AC-63",
+   "title": "no real data",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "pnpm hygiene passed (denylist skipped, secret not set)"
+  },
+  {
+   "id": "AC-64",
+   "title": "no third-party requests",
+   "spec": "\u00a717",
+   "status": "pass",
+   "evidence": "external [] on 60+ page loads and journeys"
+  },
+  {
+   "id": "AC-65",
+   "title": "KL time",
+   "spec": "D14",
+   "status": "pass",
+   "evidence": "13 routes identical in KL, Auckland, Los Angeles (clock pinned, so weaker)"
+  },
+  {
+   "id": "AC-66",
+   "title": "patterns",
+   "spec": "patterns \u00a77",
+   "status": "fail",
+   "evidence": "rows >=71 px except Elsewhere 56; no tap guard (findings 1, 18)"
+  },
+  {
+   "id": "AC-66s",
+   "title": "empty/loading/error states",
+   "spec": "patterns \u00a77",
+   "status": "pass",
+   "evidence": "one-line empties, skeleton Loading, Couldn't load + Try again"
+  },
+  {
+   "id": "AC-67",
+   "title": "money format",
+   "spec": "patterns \u00a73",
+   "status": "pass",
+   "evidence": "RM1,284.50 style, +RM on money in"
+  },
+  {
+   "id": "AC-68",
+   "title": "refund/income money in only",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "sweep B03 test passed"
+  },
+  {
+   "id": "AC-69",
+   "title": "one change per double tap",
+   "spec": "patterns \u00a77",
+   "status": "pass",
+   "evidence": "run 2: double tap on I've paid, Submitted, Everyone, Lock, Apply is one change and Undo works"
+  },
+  {
+   "id": "AC-70",
+   "title": "offline sync once",
+   "spec": "\u00a75",
+   "status": "unreachable",
+   "evidence": "fake has no persistence across reload; B07"
+  },
+  {
+   "id": "AC-71",
+   "title": "switches hide, not only the menu",
+   "spec": "D52",
+   "status": "pass",
+   "evidence": "run 2: claims off hides by URL too; members by URL too"
+  },
+  {
+   "id": "AC-72",
+   "title": "OTP never reaches JS",
+   "spec": "\u00a76.2",
+   "status": "unreachable",
+   "evidence": "B04 simulator has no OTP; B02 capture sim does (not B04)"
+  },
+  {
+   "id": "AC-73",
+   "title": "Write off on a split you paid",
+   "spec": "\u00a77, D19, D128",
+   "status": "pass",
+   "evidence": "spending RM48.80 -> RM97.60, Written off RM48.80, Home Spent RM3,873.53 -> RM3,922.33, Undo restores, double tap one toast"
+  },
+  {
+   "id": "AC-73s",
+   "title": "Write off refused",
+   "spec": "\u00a77, D128",
+   "status": "pass",
+   "evidence": "not payer, still changing, nothing owed, second write-off, unknown split all refused; button absent on NK and HAIDILAO; probes red"
+  },
+  {
+   "id": "AC-73t",
+   "title": "Shared list after write-off",
+   "spec": "screens.md shared",
+   "status": "fail",
+   "evidence": "\"2 of 2 paid you back\" after a write-off (finding 24)"
+  },
+  {
+   "id": "AC-74",
+   "title": "Sen gap: Yes, I did opens manual on the day",
+   "spec": "flows.md gap",
+   "status": "pass",
+   "evidence": "url /s/manual?day=2026-10-04, chip \"4 Oct\", saved at 2026-10-04T04:00:00.000Z; Add a payment button the same"
+  },
+  {
+   "id": "AC-74s",
+   "title": "hostile day param",
+   "spec": "patterns \u00a77",
+   "status": "fail",
+   "evidence": "2026-13-45 and 0000-00-00 show \"This screen didn't open\"; future days accepted (finding 25)"
+  },
+  {
+   "id": "AC-75",
+   "title": "Pay with TNG / Other app\u2026 / Save QR on split",
+   "spec": "\u00a77, D101",
+   "status": "pass",
+   "evidence": "three buttons on the split you owe, clipboard 24.40, hidden once paid, absent for the payer and while changing"
+  },
+  {
+   "id": "AC-75s",
+   "title": "Pay with an app / Save QR on split-public",
+   "spec": "\u00a77, D101",
+   "status": "pass",
+   "evidence": "shown only when final; clipboard 22.14; absent on demo (changing)"
+  },
+  {
+   "id": "AC-76",
+   "title": "sign-in expired invitation",
+   "spec": "flows.md invited",
+   "status": "pass",
+   "evidence": "see AC-29"
+  },
+  {
+   "id": "AC-77",
+   "title": "Members: Unlimited at invite",
+   "spec": "\u00a79.6, D98",
+   "status": "pass",
+   "evidence": "Zed invited unlimited, allowance field hidden, stored unlimited true"
+  },
+  {
+   "id": "AC-78",
+   "title": "Members: Resend, Revoke with Undo",
+   "spec": "\u00a79.6",
+   "status": "pass",
+   "evidence": "Revoke removes Zed, Undo restores; Resend only for invited; refused for signed-in at command level"
+  },
+  {
+   "id": "AC-79",
+   "title": "Members: export offered on Remove",
+   "spec": "\u00a79.6",
+   "status": "pass",
+   "evidence": "\"Export their data first\" / Remove / Keep them; toast \"Their data export goes to huimin@example.com\""
+  },
+  {
+   "id": "AC-80",
+   "title": "member.* refused for non-admins",
+   "spec": "D52",
+   "status": "pass",
+   "evidence": "invite, set, resend, revoke, remove all \"Only the admin can do that.\"; members unchanged (3)"
+  }
+ ],
+ "notTested": [
+  {
+   "what": "Findings 4, 7, 8, 13 (rest), 14 (now built), 16, 18",
+   "why": "left to the owner or later slices; not re-checked except 13 and 14, whose D128 pieces are in the new-area checks"
+  },
+  {
+   "what": "The 707-test e2e suite",
+   "why": "ran in the main session; I ran only my own specs"
+  },
+  {
+   "what": "Saved day of a gap payment under a probe",
+   "why": "my db() read returned another row after the probe; unproven"
+  },
+  {
+   "what": "The paying island and the real hand-offs to TNG",
+   "why": "stand-ins only; device (docs/local.md)"
+  }
+ ]
+}

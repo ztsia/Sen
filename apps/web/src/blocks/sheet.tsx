@@ -27,6 +27,10 @@ export function Sheet({ open, onOpenChange, title, description, full, head, chil
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
+        // a tap on a toast (its Undo) is outside the sheet, but isn't a tap on the scrim: it keeps the sheet open
+        onInteractOutside={(e) => {
+          if ((e.target as Element | null)?.closest?.('[data-sonner-toast]')) e.preventDefault();
+        }}
         className={cn(
           'mx-auto w-full max-w-[480px] rounded-t-[1.25rem] border-border bg-popover text-popover-foreground',
           full

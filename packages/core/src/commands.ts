@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Amount, Id, Instant } from './schema';
+import { Amount, Id, Instant, Sen } from './schema';
 
 /**
  * Every write the app makes, as data (B03). The screens send these through one write interface, which
@@ -57,13 +57,13 @@ export const Command = z.discriminatedUnion('type', [
   /** *This was a payment*, on a skipped notification. */
   z.object({ type: z.literal('event.restore'), eventId: Id }),
   /**
-   * A checked receipt (§6.4): *Done*, *Just my part* (the items ticked are yours, D92), or kept as
-   * evidence only. The backend matches it to its payment, or it waits for one.
+   * A checked receipt (§6.4): *Done*, *Share a link* (Done, and an open split to tick, D92), *Just my
+   * part* (the items ticked are yours, D92), or kept as evidence only. The backend matches it to its payment, or it waits for one.
    */
   z.object({
     type: z.literal('receipt.commit'),
     id: Id,
-    action: z.enum(['done', 'mine', 'evidence']),
+    action: z.enum(['done', 'share', 'mine', 'evidence']),
     paidBy: z.enum(['me', 'other']),
     merchant: z.string(),
     occurredAt: Instant,
@@ -87,6 +87,105 @@ export const Command = z.discriminatedUnion('type', [
   z.object({ type: z.literal('review.answer'), itemId: z.string(), answer: z.string() }),
   /** A budget for a category, per cycle (D29); amount 0 removes it. */
   z.object({ type: z.literal('budget.set'), categoryId: Id, amount: Amount }),
+  // --- B04 ---
+  /** *Split* on a payment with none (§7): an open split, with only you in it so far, shared evenly. */
+  z.object({ type: z.literal('split.start'), splitId: Id, txnId: Id }),
+  /** Tick or untick an item as yours, or, as the payer, for someone (D71). */
+  z.object({ type: z.literal('split.tick'), splitId: Id, itemId: Id, memberId: Id, on: z.boolean() }),
+  /** An item nobody ticked: *Everyone*, or *Someone else…* by name (the payer only). */
+  z.object({
+    type: z.literal('split.assign'),
+    splitId: Id,
+    itemId: Id,
+    to: z.union([z.literal('everyone'), z.string().trim().min(1).max(60)]),
+  }),
+  /** *I've ticked everything I had*, or *Still ticking* to undo it, until the lock. */
+  z.object({ type: z.literal('split.done'), splitId: Id, memberId: Id, done: z.boolean() }),
+  /** *Lock without waiting for…* (the payer, once every item is claimed). */
+  z.object({ type: z.literal('split.lock'), splitId: Id }),
+  /** The payer's tick list: a friend's share paid, by cash or a payment Sen didn't match (D65). */
+  z.object({ type: z.literal('split.paid'), splitId: Id, memberId: Id, paid: z.boolean() }),
+  /** *I've paid*, for a payment Sen can't see (D65). */
+  z.object({ type: z.literal('split.paid-them'), splitId: Id }),
+  /** *Write off*, on a split you paid: what friends still owe stops being owed, and is your spending (§7). */
+  z.object({ type: z.literal('split.write-off'), splitId: Id }),
+  /** The bank's figures (D18): each difference is booked as *Unaccounted*. */
+  z.object({
+    type: z.literal('balance.check'),
+    // one figure per account: the same account twice would book its difference twice (QA B04 run 1, 11)
+    checks: z
+      .array(z.object({ accountId: Id, balance: Sen }))
+      .min(1)
+      .max(50)
+      .refine((cs) => new Set(cs.map((c) => c.accountId)).size === cs.length, 'Each account once'),
+  }),
+  /** *Submitted* in ESS by hand, or *Send to ESS* in the shell (§13). */
+  z.object({ type: z.literal('claim.submitted'), id: Id, essRef: z.string().max(64).nullable() }),
+  /** A message to Sen, with its id made on the phone, so a retried send is a no-op (§12.5). */
+  z.object({
+    type: z.literal('sen.send'),
+    id: z.string().max(64),
+    text: z.string().max(4000),
+    file: z.object({ name: z.string().max(200), kind: z.enum(['pdf', 'image']) }).nullable(),
+    from: z.string().max(40),
+  }),
+  /** An `ask_user` button. */
+  z.object({ type: z.literal('sen.answer'), askId: z.string().max(64), answer: z.string().max(200) }),
+  /** A proposal card, in the chat or in Review (`/proposals/:id`). */
+  z.object({ type: z.literal('proposal.answer'), id: z.string().max(64), answer: z.enum(['apply', 'dismiss']) }),
+  /** A research draft's figures confirmed into `products` (§12.2 rule 6). */
+  z.object({ type: z.literal('research.confirm'), messageId: z.string().max(64) }),
+  z.object({ type: z.literal('memory.forget'), id: z.string().max(64) }),
+  /** One Settings value, by its path: `you.payday`, `sen.calendar`, `claims.essSender`. */
+  z.object({
+    type: z.literal('setting.set'),
+    key: z.string().max(100),
+    // a record is a small object of plain values, like `you.payday`'s `{ kind: 'day', day: 25 }`
+    // (QA B04 run 2, 20)
+    value: z.union([
+      z.boolean(),
+      z.string().max(2000),
+      Sen,
+      z.null(),
+      z
+        .record(z.string().max(40), z.union([z.boolean(), z.string().max(200), Sen, z.null()]))
+        .refine((r) => Object.keys(r).length <= 10, 'Too many fields'),
+    ]),
+  }),
+  /** Settings → Members (D52, D98): invite, a switch, credit, suspend, remove. */
+  z.object({
+    type: z.literal('member.invite'),
+    email: z.string().max(254),
+    shell: z.boolean(),
+    switches: z.object({
+      capture: z.boolean(),
+      agent: z.boolean(),
+      splits: z.boolean(),
+      email: z.boolean(),
+      calendar: z.boolean(),
+      claims: z.boolean(),
+    }),
+    welcome: Amount,
+    allowance: Amount,
+    /** *Unlimited*: their charges are recorded as covered, and the allowance doesn't apply (§12.6). */
+    unlimited: z.boolean(),
+  }),
+  /** An invitation not yet accepted: sent again, or withdrawn (D98). */
+  z.object({ type: z.literal('member.resend'), id: Id }),
+  z.object({ type: z.literal('member.revoke'), id: Id }),
+  z.object({
+    type: z.literal('member.set'),
+    id: Id,
+    key: z.string().max(40),
+    // money in integer sen, within Sen's range, so a grant can't pass a safe integer (QA B04 run 1, 11)
+    value: z.union([z.boolean(), Sen, z.string().max(200)]),
+  }),
+  /** *Remove*, after offering them an export of their own data (D52). */
+  z.object({ type: z.literal('member.remove'), id: Id, exportFirst: z.boolean().optional() }),
+  /** Payday (§9.7): the claims question, a step skipped (it waits in Review), the plan used. */
+  z.object({ type: z.literal('payday.claims'), answer: z.enum(['yes', 'no', 'undo']) }),
+  z.object({ type: z.literal('payday.skip'), step: z.enum(['claims', 'balance', 'look-back', 'plan']) }),
+  z.object({ type: z.literal('payday.plan'), use: z.boolean() }),
   /** Undo: the backend's own token for putting things back as they were. */
   z.object({ type: z.literal('undo'), token: z.string() }),
 ]);

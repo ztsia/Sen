@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Outlet, useMatches, useNavigate } from '@tanstack/react-router';
 import { OfflineBanner } from '@/blocks/states';
 import { Toaster } from '@/components/ui/sonner';
-import { useNeedsYouCount } from '@/data/hooks';
+import { useAgentOn, useNeedsYouCount } from '@/data/hooks';
 import { useOnline } from '@/lib/online';
 import { cn } from '@/lib/utils';
 import { screenById, showsSenButton, showsTabBar, type ScreenDef } from '@/screens/registry';
@@ -14,6 +14,11 @@ import { useUi } from './ui-store';
 
 // compared in place, so a production build leaves the dev panel's chunk out (sen-env.d.ts)
 const DevPanel = __SEN_ENV__ !== 'production' ? lazy(() => import('@/dev/dev-panel')) : null;
+// the guided journeys' bar, on the split link too, which has no dev panel; it reads no app data itself
+const JourneyBar =
+  __SEN_ENV__ !== 'production'
+    ? lazy(() => import('@/dev/native/journeys-ui').then((m) => ({ default: m.JourneyOverlay })))
+    : null;
 
 /** The screen on show, from the route: its static screen id, or the id after /s/. */
 function useCurrentScreen(): ScreenDef | undefined {
@@ -39,6 +44,38 @@ function useLost(): boolean {
  */
 export function AppShell() {
   const screen = useCurrentScreen();
+  // a friend's split link (D47) gets a frame of its own, which reads nothing of the person's: no badge
+  // count, no Sen, no outbox, no dev panel (B04's note; B18 serves it from its own route)
+  return screen?.id === 'split-public' ? <PublicShell /> : <PersonShell screen={screen} />;
+}
+
+/** The split link's frame: the look and the column, and nothing else. */
+function PublicShell() {
+  const devOffline = useUi((s) => s.devState) === 'offline';
+  const online = useOnline() && !devOffline;
+  return (
+    <LookProvider>
+      <div className="safe-top safe-bottom relative mx-auto flex h-dvh w-full max-w-[480px] flex-col overflow-hidden bg-background">
+        {/* a friend's browser has no outbox: nothing waits to sync */}
+        {online ? null : <OfflineBanner>You're offline. Ticks need a connection.</OfflineBanner>}
+        <Outlet />
+      </div>
+      {JourneyBar ? (
+        <Suspense>
+          <JourneyBar />
+        </Suspense>
+      ) : null}
+      <Toaster
+        position="bottom-center"
+        visibleToasts={1}
+        offset={{ bottom: 16 }}
+        mobileOffset={{ bottom: 16, left: 12, right: 12 }}
+      />
+    </LookProvider>
+  );
+}
+
+function PersonShell({ screen }: { screen: ScreenDef | undefined }) {
   const lost = useLost();
   // the dev panel's offline state shows what offline looks like without cutting the connection
   const devOffline = useUi((s) => s.devState) === 'offline';
@@ -48,7 +85,8 @@ export function AppShell() {
   const needsYou = useNeedsYouCount();
   // Lost, the tab bar stays, with no tab active, so there's always a way back.
   const tabs = lost || showsTabBar(screen);
-  const sen = showsSenButton(screen);
+  const agentOn = useAgentOn();
+  const sen = showsSenButton(screen) && agentOn;
   return (
     <LookProvider>
       <div

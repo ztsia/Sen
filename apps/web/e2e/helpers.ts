@@ -1,8 +1,15 @@
 import { expect, type Page } from '@playwright/test';
 
-export const LOOKS = ['minted', 'instrument', 'firefly', 'line', 'mercury', 'copper'] as const;
+export const ALL_LOOKS = ['minted', 'instrument', 'firefly', 'line', 'mercury', 'copper'] as const;
+export type LookId = (typeof ALL_LOOKS)[number];
+/**
+ * The looks a run covers: all six, or those named in E2E_LOOKS (`minted,copper`). CI runs two on each
+ * PR push and all six nightly; the session runs all six before a PR (owner, 12 Oct).
+ */
+const want = process.env.E2E_LOOKS;
+const only = want && want !== 'all' ? want.split(',').map((s) => s.trim()) : undefined;
+export const LOOKS: readonly LookId[] = only ? ALL_LOOKS.filter((l) => only.includes(l)) : ALL_LOOKS;
 export const MODES = ['light', 'dark'] as const;
-export type LookId = (typeof LOOKS)[number];
 export type ModeId = (typeof MODES)[number];
 
 /** Opens a page in a look and mode (the dev tools read ?look= and ?mode=), and waits for the look to load. */
@@ -11,8 +18,12 @@ export async function open(page: Page, path: string, look: LookId = 'minted', mo
   await page.goto(`${path}${sep}look=${look}&mode=${mode}`);
   await expect(page.locator('html')).toHaveAttribute('data-look', look);
   await expect(page.locator('html')).toHaveAttribute('data-mode', mode);
-  // the look's module has loaded when its tab bar or wordmark is drawn
-  await page.waitForFunction(() => document.querySelectorAll('svg').length > 0);
+  // the look's module has loaded when its tab bar or wordmark is drawn; a page with neither (a closed
+  // split link says one line) is ready when its text is
+  await page.waitForFunction(
+    () =>
+      document.querySelectorAll('svg').length > 0 || (document.querySelector('main')?.textContent?.length ?? 0) > 10,
+  );
 }
 
 /** Collects content security policy violations and page errors, to assert there are none. */
@@ -43,7 +54,10 @@ export const smallTargets = (page: Page) =>
         if (el.closest('.sr-only, [aria-hidden="true"]')) return false;
         // the dev panel's handle: previews only, a strip in the side gutter
         if (el.hasAttribute('data-dev-handle')) return false;
-        return r.width < 47.5 || r.height < 47.5;
+        // a checkbox in a row's <label> is tapped by the whole row (split's items, patterns.md §7): the
+        // label's box is the target, as it is for a finger
+        const box = el.closest('label')?.getBoundingClientRect() ?? r;
+        return box.width < 47.5 || box.height < 47.5;
       })
       .map(
         (el) =>

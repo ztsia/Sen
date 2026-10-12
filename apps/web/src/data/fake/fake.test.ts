@@ -212,6 +212,34 @@ describe('writes, with Undo (§6.7)', () => {
     });
     expect(r.said).toBe('Attached to RM64.13 on Ryt Bank');
   });
+
+  it('Share a link opens a split, still changing, that the receipt’s id finds (B04 e2e: split-mine)', async () => {
+    const fake = createFake();
+    const d = (await fake.draft(await fake.upload(null, null)))!;
+    await fake.run({
+      type: 'receipt.commit',
+      id: d.id,
+      action: 'share',
+      paidBy: 'me',
+      merchant: d.merchant,
+      occurredAt: '2026-10-18T20:30:00+08:00',
+      items: d.items,
+      mine: [],
+      tax: d.tax,
+      service: d.service,
+      total: d.total,
+      pax: 3,
+      note: null,
+      forTxnId: null,
+      contentHash: null,
+    });
+    const split = (await fake.split(d.id))!;
+    expect(split.state).toBe('changing');
+    expect(split.paidBy).toBe('me');
+    expect(split.items).toHaveLength(d.items.length);
+    expect(split.unclaimed).toBe(d.items.length);
+    expect(split.total).toBe(d.total);
+  });
 });
 
 // QA B03 run 1: findings 2, 3, 4 and 6

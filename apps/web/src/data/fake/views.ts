@@ -107,10 +107,32 @@ function spentIn(db: Db, c: { start: string; end: string }) {
   );
 }
 function incomeIn(db: Db, c: { start: string; end: string }) {
+  const today = klDay(db.now);
+  const split = today >= c.start && today <= c.end ? claimsInSalary(db) : 0;
+  return (
+    sum(
+      live(db)
+        .filter((t) => inRange(t, c) && isIncome(t))
+        .map((t) => t.amount),
+    ) - split
+  );
+}
+
+/**
+ * The claims part of the salary that just landed (D45, D104): once the payslip matched, or you said
+ * yes, the approved claims it carried repay what they covered, so they aren't income. Only the payday
+ * scenario has September's claims approved; B25 books the split as its own lines.
+ */
+export function claimsInSalary(db: Db): number {
+  // the salary that just landed carried September's approved claims; the split stands once the
+  // payday card is done too (QA B04 run 3, 23)
+  if (!db.claims) return 0;
+  const state = db.claimState.paydayClaims ?? 'matched';
+  if (state !== 'matched' && state !== 'yes') return 0;
   return sum(
-    live(db)
-      .filter((t) => inRange(t, c) && isIncome(t))
-      .map((t) => t.amount),
+    db.claimState.claims
+      .filter((c) => c.status === 'approved' && c.period === 'September 2026')
+      .map((c) => c.approvedAmount ?? c.amount),
   );
 }
 

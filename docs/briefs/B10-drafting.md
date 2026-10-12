@@ -90,6 +90,8 @@ model writes is ever stored.**
   score (how a template or merchant is named), the session reads in a blind side-by-side sample of
   the candidates' answers and judges, recording why; the owner decides where it's a matter of taste.
   Later phases add their own job's set (receipts in P4, the agent in P6).
+- **First, check Anthropic's API data terms against D34** (D127): no training on API data, retention
+  as short as offered. Record what you found in `decisions.md`; if they fall short, Claude stays out.
 - **Benchmark the cheap candidates** on it: Claude Haiku 5.5, Gemini 3.5 Flash-Lite and, for
   classifying, Jev. Name the winner only in `ai/models.ts`, and record a decision.
 - **The live drafter test needs a key, so it runs in the benchmark session only.** CI replays

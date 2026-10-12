@@ -1,0 +1,21 @@
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+import { test } from '@playwright/test';
+import { dialog, open, shot, watch } from './b04-helpers';
+test.use({ baseURL: 'http://127.0.0.1:5180' });
+test('widgets and surfaces', async ({ page }) => {
+  const w = watch(page);
+  await open(page, '/');
+  const hero = await page.getByTestId('hero').innerText();
+  console.log('HOME hero:', JSON.stringify(hero.replace(/\n/g, ' | ')));
+  await page.getByRole('button', { name: 'Dev panel' }).click();
+  await page.waitForTimeout(400);
+  await page.getByRole('button', { name: 'Widgets', exact: true }).click();
+  await page.waitForTimeout(900);
+  const d = dialog(page, 'Widgets');
+  await shot(page, 'FLOW-15-step-1-widgets');
+  const t = await d.innerText();
+  require('node:fs').writeFileSync('/home/user/Sen/qa-artifacts/B04-skeleton-rest/text/widgets.txt', t);
+  console.log(t.slice(0, 1800));
+  console.log(w.errors.join('\n'));
+});

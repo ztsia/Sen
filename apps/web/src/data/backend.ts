@@ -1,5 +1,18 @@
 import type { Command, WriteResult } from '@sen/core/commands';
 import type {
+  AccountsView,
+  AccountView,
+  BalanceCheckView,
+  ClaimsView,
+  ClaimView,
+  MemoryView,
+  PaydayView,
+  ResearchView,
+  SenView,
+  SettingsView,
+  SharedView,
+  SplitView,
+  UsageView,
   BudgetsView,
   CycleView,
   GoalsView,
@@ -55,6 +68,23 @@ export interface Backend {
   categories(kind: 'spend' | 'income'): Promise<Choice[]>;
   /** Tracked accounts, and the one used last (§6.8). */
   accounts(): Promise<{ accounts: Choice[]; last: string | null }>;
+
+  // B04
+  split(id: string): Promise<SplitView | null>;
+  shared(): Promise<SharedView>;
+  /** `accounts`: balances, elsewhere accounts and the gap (capture only). */
+  accountList(): Promise<AccountsView>;
+  account(id: string): Promise<AccountView | null>;
+  balanceCheck(): Promise<BalanceCheckView>;
+  claimList(): Promise<ClaimsView>;
+  claim(id: string): Promise<ClaimView | null>;
+  /** The one conversation, with suggestions for the screen it was opened from. */
+  sen(from: string): Promise<SenView>;
+  memory(): Promise<MemoryView>;
+  research(): Promise<ResearchView>;
+  usage(): Promise<UsageView>;
+  settings(): Promise<SettingsView>;
+  payday(): Promise<PaydayView | null>;
 
   /** A file to read as a receipt (`POST /receipts/upload-url`, then `/extract`): returns its draft's id. */
   upload(file: File | null, forTxnId: string | null): Promise<string>;

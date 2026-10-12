@@ -22,11 +22,25 @@ Skip it for a docs-only change. If `git diff --stat main...HEAD` shows nothing o
 
 1. Start the QA database and the web app as `CLAUDE.md` § Commands describes. The foundations
    slice adds those commands.
-2. Spawn `qa-reviewer` with the Agent tool, `subagent_type: "qa-reviewer"`. It runs on Sonnet by
+2. **The sweep, on Haiku, first (owner, 11 Oct).** A subagent can't start subagents (measured
+   11 Oct: it gets no Agent tool), so the reviewer can't hand its mechanical work down itself. The
+   main session does it before the review: spawn `implementer` with `model: "haiku"` at low effort to
+   run the mechanical part and gather the raw results in `qa-artifacts/<branch>/sweep/`:
+   - `pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm e2e`, each with its exit code and, for a
+     failure, the test's name, file and first error lines;
+   - the e2e run's screenshots, every journey step in all six looks, light and dark: run it as
+     `E2E_SHOTS=$PWD/qa-artifacts/<branch>/sweep/screens pnpm e2e`, which writes each one as a file
+     (the list reporter keeps no attachments);
+   - `sweep/index.md`, listing what ran, what failed and where each screenshot is.
+
+   It reports raw results only: no judgement, no fixes, no reading of the slice's code beyond the
+   failures. The e2e run takes about an hour: tell it to wait for the run to end, not to report
+   while it's still going (B04's sweep reported twice before the end). Wait for it before step 3.
+3. Spawn `qa-reviewer` with the Agent tool, `subagent_type: "qa-reviewer"`. It runs on Sonnet by
    default; pass `model: "opus"` when the slice's risk calls for it.
-3. **Keep the prompt thin:** the branch, the slice label, and the slice's row in `docs/modules.md`.
-   Nothing else. A scoped run (tier 2) adds only its area and the finding IDs, below.
-4. **Keep the last run's record:** before a new run, rename `qa/<slice>/report.md` to
+4. **Keep the prompt thin:** the branch, the slice label, the slice's row in `docs/modules.md`, and
+   where the sweep is. Nothing else. A scoped run (tier 2) adds only its area and the finding IDs, below.
+5. **Keep the last run's record:** before a new run, rename `qa/<slice>/report.md` to
    `report-run<N>.md`, so the new run writes its own.
 
 > **Don't tell it what you built, how it works, or why you think it's right.** Its value is that it

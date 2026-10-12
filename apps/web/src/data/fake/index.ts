@@ -7,6 +7,11 @@ import type { Db } from './db';
 import { apply, matchesFor, spread } from './apply';
 import { buildScenario, withOffline, type ScenarioId } from './variants';
 import * as v from './views';
+import { applyArea, type Ctx } from './areas';
+import { sharedView, splitView } from './areas/splits';
+import { memoryView, researchView, senView, usageView } from './areas/sen';
+import { accountsView, accountView, balanceCheckView, claimsView, claimView, paydayView } from './areas/money';
+import { settingsView } from './areas/settings';
 
 /**
  * The skeleton's backend (B03): the whole person in memory, in previews and the dev server only. It
@@ -70,7 +75,9 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     return new Promise<T>((resolve, reject) =>
       setTimeout(() => {
         try {
-          resolve(fn(db));
+          // a copy: the state is changed in place, and the query cache compares what it's given with
+          // what it holds, so a view handing back a live array would never show a change
+          resolve(structuredClone(fn(db)));
         } catch (e) {
           reject(e instanceof Error ? e : new Error(String(e)));
         }
@@ -78,6 +85,17 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     );
   };
   const env = () => ({ offline });
+  /** For B04's areas: the connection, and a change that lands a moment later, as a server's would. */
+  const ctx: Ctx = {
+    get offline() {
+      return offline;
+    },
+    later: (ms, fn) =>
+      setTimeout(() => {
+        fn(db);
+        changed();
+      }, ms),
+  };
 
   /** The made-up sync: online, the outbox empties a moment after each write (§5). */
   const sync = () => {
@@ -101,7 +119,9 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
       return { said: 'Undone', undo: null };
     }
     const before = structuredClone(db);
-    const { said, touched } = apply(db, cmd);
+    const { said, touched } = applyArea(db, cmd, ctx) ?? apply(db, cmd);
+    // a no-op (*They are already invited*, *Already added*) offers no Undo (QA B04 run 3, 26)
+    if (JSON.stringify(db) === JSON.stringify(before)) return { said, undo: null };
     const since = new Date().toISOString();
     for (const id of touched) db.unsynced[id] = since;
     const token = newId();
@@ -208,9 +228,27 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     goal: (id) => read((d) => v.goalView(d, id)),
     year: (y) => read((d) => v.year(d, y)),
     me: () => read(v.me),
+    split: (id) => read((d) => splitView(d, id)),
+    shared: () => read(sharedView),
+    accountList: () => read(accountsView),
+    account: (id) => read((d) => accountView(d, id)),
+    balanceCheck: () => read(balanceCheckView),
+    claimList: () => read(claimsView),
+    claim: (id) => read((d) => claimView(d, id)),
+    sen: (from) => read((d) => senView(d, from, offline)),
+    memory: () => read(memoryView),
+    research: () => read(researchView),
+    usage: () => read(usageView),
+    settings: () => read(settingsView),
+    payday: () => read(paydayView),
     categories: (kind) => read((d) => v.categoryChoices(d, kind)),
     accounts: () => read(v.accountChoices),
-    upload: async (file, forTxnId) => draftFor(file, forTxnId, false, file ? await sha256(file) : null),
+    upload: async (file, forTxnId) => {
+      const hash = file ? await sha256(file) : null;
+      // the same file twice is one receipt (§6.5): say so at once, rather than read it again (QA B04 run 1, 19)
+      if (hash && db.receipts.some((r) => r.contentHash === hash)) throw new Error('Already added');
+      return draftFor(file, forTxnId, false, hash);
+    },
     byHand: (forTxnId) => Promise.resolve(draftFor(null, forTxnId, true, null)),
     draft: (id) => read((d) => structuredClone(d.drafts.find((x) => x.id === id) ?? null)),
     matches: (total, at) => read((d) => matchesFor(d, total, at)),

@@ -1,4 +1,5 @@
-# Every PR and every push to main: hygiene, typecheck, lint, format, unit tests and Playwright.
+# Every PR and every push to main: hygiene, typecheck, lint, format, unit tests and Playwright in two
+# looks (Minted and Copper, light and dark). Nightly, and by hand: Playwright in all six (owner, 12 Oct).
 # No pull_request_target and no secret but DENYLIST, which a fork's PR never sees (spec §17).
 name: CI
 
@@ -6,6 +7,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: '17 19 * * *' # 3:17 am in Kuala Lumpur
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -54,7 +58,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -66,7 +70,10 @@ jobs:
       # GitHub's runners have no browser for this Playwright version. Cloud sessions use the preinstalled
       # Chromium and never run this (docs/cloud.md §1).
       - run: pnpm --filter @sen/web exec playwright install --with-deps chromium
+      # two looks on PRs and pushes; all six on the nightly run and by hand
       - run: pnpm e2e
+        env:
+          E2E_LOOKS: "${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'all' || 'minted,copper' }}"
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

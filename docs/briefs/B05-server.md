@@ -54,6 +54,9 @@ though their screens come in B38.
   - patch of changed fields only
   - delete as a tombstone (`deleted_at`) where the outbox syncs the table
 - **An `audit_log` writer,** with actor `user`, `agent` or `system`; append-only.
+- **`X-Robots-Tag: noindex`** on every response from production, the web app and the API alike (D127).
+- **The admin's routes refuse everyone else** (`/admin/*`, the `member.*` commands), with a test that a
+  member's session gets a 403. B04's fake refuses them too, but only the server's check counts (QA B04 run 2, 22).
 
 ### Sign-in
 - **Better Auth:** the email OTP plugin with a 6-digit code, sent from Sen's Gmail with its app

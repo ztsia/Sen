@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { CameraIcon, ImageIcon } from 'lucide-react';
-import { toastDone } from '@/blocks/toast';
+import { dismissToast, toastDone } from '@/blocks/toast';
 import { Button } from '@/components/ui/button';
 import { startDraft } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
@@ -29,6 +29,8 @@ export default function Scan() {
       // Several photos: each is read; the first opens now, the rest wait in Review.
       const ids: string[] = [];
       for (const f of list) ids.push(await startDraft(f, forTxnId ?? null));
+      // a refusal from the last pick (*Already added*) doesn't follow onto crop (QA B04 run 2, 22)
+      dismissToast();
       go('crop', { id: ids[0] }, { replace: true });
     } catch (e) {
       toastDone(e instanceof Error ? e.message : "That didn't open. Try again.");

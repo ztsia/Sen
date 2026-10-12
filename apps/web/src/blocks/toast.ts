@@ -8,11 +8,12 @@ export const TOAST_MS = 6000;
 // While the last toast is up, a new change replaces it in place. Once it's going (Undo tapped, swiped,
 // timed out), a new change takes a fresh id: reusing the id of a toast on its way out lost the new
 // toast, so a change right after Undo got no Undo (QA B01, finding 5).
-let current: { id: number; up: boolean } | undefined;
+let current: { id: number; up: boolean; undo: boolean } | undefined;
 let next = 0;
 
 function show(message: string, action?: { label: string; onClick: () => void }) {
-  if (!current?.up) current = { id: ++next, up: true };
+  if (!current?.up) current = { id: ++next, up: true, undo: false };
+  current.undo = !!action;
   const mine = current;
   const gone = () => {
     mine.up = false;
@@ -39,4 +40,14 @@ export function toastUndo(message: string, onUndo: () => void) {
 /** A change that can't be undone from here, said in words. */
 export function toastDone(message: string) {
   show(message);
+}
+
+/**
+ * Take the last toast down if it only said something: a refusal about a file shouldn't follow the next
+ * one onto its screen. A toast with Undo stays its six seconds (QA B04 run 3, 27).
+ */
+export function dismissToast() {
+  if (!current?.up || current.undo) return;
+  current.up = false;
+  toast.dismiss(current.id);
 }

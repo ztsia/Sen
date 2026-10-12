@@ -1,0 +1,29 @@
+import { test } from '@playwright/test';
+import { db, open } from './b04-helpers';
+test.use({ baseURL: 'http://127.0.0.1:5180' });
+test('you payday day saved? SPA nav back', async ({ page }) => {
+  await open(page, '/more');
+  await page.getByText('Settings', { exact: true }).click();
+  await page.getByRole('button', { name: /^You/ }).click();
+  await page.getByRole('radio', { name: /A day/ }).click();
+  const day = page.getByLabel(/Day/).first();
+  await day.fill('15');
+  await day.blur();
+  await page.waitForTimeout(1000);
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.waitForTimeout(600);
+  console.log('url after back', page.url());
+  await page.getByRole('button', { name: /^You/ }).click();
+  await page.waitForTimeout(800);
+  for (const n of ['Last working day', 'A day', 'Not set'])
+    console.log(n, await page.getByRole('radio', { name: new RegExp(n) }).getAttribute('aria-checked'));
+  console.log(
+    'day field:',
+    await page
+      .getByLabel(/Day/)
+      .first()
+      .inputValue()
+      .catch(() => 'no day field'),
+  );
+  console.log('db:', await db<string>(page, `(d) => JSON.stringify(d.settings.you.payday)`));
+});

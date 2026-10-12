@@ -22,6 +22,9 @@ chose in B04's review.** If it lands after 1 Jan, the first change simply comes 
 
 ## Builds
 
+- **From B04's skeleton (QA B04 run 1, 7):** the theme store has no *Changes each quarter* flag, so
+  Appearance's pin and new-look's switch don't stick. Add it to `theme/store.ts` and wire both.
+
 ### The roster (pure TypeScript, deterministic)
 - **D78's rules:**
   - on 1 Jan, the two looks that rested last year open the year, in a random order
