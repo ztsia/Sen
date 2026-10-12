@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { CalendarCheckIcon, ChevronRightIcon, CloudOffIcon, PartyPopperIcon, TriangleAlertIcon } from 'lucide-react';
 import { formatSen, spokenSen } from '@sen/core/money';
 import type { HomeView } from '@sen/core/views';
-import { MiniPace } from '@/blocks/charts';
+import { PaceSpark } from '@/blocks/charts';
 import { HeroFigure } from '@/blocks/hero';
 import { Money } from '@/blocks/money';
 import { HealthBar, StatusCard } from '@/blocks/status';
@@ -109,12 +109,16 @@ function HomeBody({ h }: { h: HomeView }) {
           />
         </button>
 
-        <Item asChild size="sm" variant="outline" className="w-full flex-nowrap text-left active:bg-accent">
+        <Item asChild variant="outline" className="w-full flex-col items-stretch gap-2 p-4 text-left active:bg-accent">
           <button type="button" onClick={() => go('payments', { cycle: h.cycle.id })} data-testid="pace">
-            <ItemContent className="min-w-0 gap-0.5">
-              <p className="text-base">
-                Spent <Money sen={h.pace.spent} whole /> this {unit}
+            <div className="flex items-center gap-2">
+              <p className="min-w-0 flex-1 text-sm text-muted-foreground">
+                Spent <Money sen={h.pace.spent} whole className="text-base text-foreground" /> this {unit}
               </p>
+              <ChevronRightIcon className="size-4 shrink-0 text-icon" aria-hidden="true" />
+            </div>
+            <PaceSpark thisCycle={h.pace.thisCycle} lastCycle={h.pace.lastCycle} days={f.days} />
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <ItemDescription className="text-sm">
                 {h.pace.delta === null
                   ? `Your first ${unit}: nothing to compare with yet`
@@ -122,11 +126,19 @@ function HomeBody({ h }: { h: HomeView }) {
                     ? `The same as last ${unit} by this day`
                     : `${formatSen(Math.abs(h.pace.delta))} ${h.pace.delta > 0 ? 'more' : 'less'} than last ${unit} by this day`}
               </ItemDescription>
-            </ItemContent>
-            <ItemActions>
-              <MiniPace thisCycle={h.pace.thisCycle} lastCycle={h.pace.lastCycle} days={f.days} />
-              <ChevronRightIcon className="size-5 text-icon" aria-hidden="true" />
-            </ItemActions>
+              {h.pace.lastCycle ? (
+                <span className="flex items-center gap-3 text-xs text-muted-foreground" aria-hidden="true">
+                  <span className="flex items-center gap-1">
+                    <span className="h-0.5 w-3 rounded-full bg-chart-accent" />
+                    This {unit}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-0.5 w-3 rounded-full bg-chart-context" />
+                    Last
+                  </span>
+                </span>
+              ) : null}
+            </div>
           </button>
         </Item>
 
@@ -152,11 +164,7 @@ function HomeBody({ h }: { h: HomeView }) {
         ) : null}
 
         {h.quiet ? (
-          <Item
-            asChild
-            size="sm"
-            className="w-full flex-nowrap rounded-none border-t border-border px-0 text-left active:bg-accent"
-          >
+          <Item asChild size="sm" variant="outline" className="w-full flex-nowrap text-left active:bg-accent">
             <button type="button" onClick={() => go('accounts')} data-testid="quiet">
               <ItemContent className="min-w-0 gap-0.5">
                 <ItemDescription className="text-sm">Total balance</ItemDescription>

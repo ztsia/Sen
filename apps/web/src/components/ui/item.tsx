@@ -1,4 +1,4 @@
-// Sen: shadcn/ui's item, changed in place for the phone (CLAUDE.md, shadcn first): ItemGroup drops role="list", since Sen's rows are buttons and links, not list items; ItemDescription no longer clamps to two lines, so nothing clips at 1.5× text.
+// Sen: shadcn/ui's item, changed in place for the phone (CLAUDE.md, shadcn first): ItemGroup drops role="list", since Sen's rows are buttons and links, not list items; ItemDescription no longer clamps to two lines, so nothing clips at 1.5× text; corners are the look's --radius-card, as a card's (D129), so an outlined or muted item matches the cards beside it.
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Sepa
 }
 
 const itemVariants = cva(
-  'group/item flex flex-wrap items-center rounded-md border border-transparent text-sm transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:transition-colors [a]:hover:bg-accent/50',
+  'group/item flex flex-wrap items-center rounded-[var(--radius-card,16px)] border border-transparent text-sm transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 [a]:transition-colors [a]:hover:bg-accent/50',
   {
     variants: {
       variant: {

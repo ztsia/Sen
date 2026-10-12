@@ -450,11 +450,11 @@ export function BudgetMeter({
 }
 
 /**
- * Home's small pace line (screens.md `home`): this cycle (the accent) against last cycle (the grey),
- * spent by each day, with no axis. The words beside it carry the numbers, so it's hidden from screen
- * readers.
+ * Home's pace card (D129): this cycle's running spend in the accent against the last cycle's in the
+ * grey, across the whole cycle, so where the accent line stops is today. The chart is the card's main
+ * thing; the words sit small beside it. Drawn at the card's width, in a fixed aspect, so the dot stays round.
  */
-export function MiniPace({
+export function PaceSpark({
   thisCycle,
   lastCycle,
   days,
@@ -463,23 +463,46 @@ export function MiniPace({
   lastCycle: number[] | null;
   days: number;
 }) {
-  // its size in px, not rem: at a large text scale the words beside it get the room (QA B03 run 3, 23)
-  const W = 96;
-  const H = 32;
+  const W = 320;
+  const H = 88;
   const top = Math.max(1, ...thisCycle, ...(lastCycle ?? []));
-  const path = (xs: number[]) =>
-    xs
-      .map(
-        (v, i) =>
-          `${i ? 'L' : 'M'}${Math.round((i / Math.max(1, days - 1)) * (W - 4) + 2)} ${Math.round(H - 2 - (v / top) * (H - 4))}`,
-      )
-      .join(' ');
+  const pt = (v: number, i: number) =>
+    [(i / Math.max(1, days - 1)) * (W - 8) + 4, H - 4 - (v / top) * (H - 12)] as const;
+  const line = (xs: number[]) =>
+    xs.map((v, i) => `${i ? 'L' : 'M'}${Math.round(pt(v, i)[0])} ${Math.round(pt(v, i)[1])}`).join(' ');
+  const last = thisCycle.length - 1;
+  const end = last >= 0 ? pt(thisCycle[last]!, last) : null;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="h-[32px] w-[96px] shrink-0" aria-hidden="true">
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" aria-hidden="true">
+      <line x1="4" x2={W - 4} y1={H - 4} y2={H - 4} stroke="var(--border)" strokeWidth="1" />
       {lastCycle ? (
-        <path d={path(lastCycle)} fill="none" stroke="var(--chart-context)" strokeWidth="2" strokeLinecap="round" />
+        <path
+          d={line(lastCycle)}
+          fill="none"
+          stroke="var(--chart-context)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       ) : null}
-      <path d={path(thisCycle)} fill="none" stroke="var(--chart-accent)" strokeWidth="2" strokeLinecap="round" />
+      {end ? (
+        <>
+          <path
+            d={`${line(thisCycle)} L${Math.round(end[0])} ${H - 4} L4 ${H - 4} Z`}
+            fill="var(--chart-accent)"
+            opacity="0.12"
+          />
+          <path
+            d={line(thisCycle)}
+            fill="none"
+            stroke="var(--chart-accent)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx={end[0]} cy={end[1]} r="4" fill="var(--chart-accent)" />
+        </>
+      ) : null}
     </svg>
   );
 }

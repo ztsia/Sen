@@ -72,6 +72,32 @@ said in words, in the text colour. The money tokens keep their one meaning (§3)
 *Final* or *Waiting* is in the text colours, and only a warning takes `money-warning`. A look's
 `extra` variables are never used by a shared component.
 
+### Sizes: one hierarchy for everything on a screen (D129)
+
+Every element sits at one of five levels, and a level sets its text, the height a control is drawn,
+its icons and the space around it together, so a button sits at the level of the text beside it. A
+heading is always bigger than what it heads. The Tailwind steps are Sen's levels (`app.css`), so
+`text-sm` means *secondary* everywhere.
+
+| Level | Text | Controls drawn at | Icons | Used for |
+|---|---|---|---|---|
+| Figure | The look's own | | | The one large figure (§1) |
+| Title | `text-2xl`, 22 px, semibold (a sheet's, `text-xl`, 20) | App bar 56 | 24 | A screen's or sheet's title |
+| Section | `text-lg`, 17 px, semibold, in the text colour | A text button 40 | 20 | A section's heading, a card's own heading, with 28 px above and 8 below |
+| Body | `text-base`, 15 px | The screen's main action 48, inputs 48, list rows 56 or more | 20; a row's mark 32 | Rows, card text, paragraphs |
+| Secondary | `text-sm`, 13 px, muted | Other buttons 40 (`size="sm"`), chips 32 (`size="chip"`), icon buttons 40 | 16 | A row's second line, a card's line under its figure, chips and filters, *Copy address* |
+| Caption | `text-xs`, 12 px | Badges 20 | 14 | Times, marks, the tab labels |
+
+**The touch target is 48 px whatever is drawn** (§8). A control drawn smaller keeps 48 for the finger
+through an invisible extension (the `tap` utility), as Android draws a 32 px chip in a 48 px target.
+Button labels are 14 px medium at every size. Inputs keep 16 px text, so no browser zooms (§10). One
+main action per screen is drawn at 48; the rest are secondary. Filters are one row of chips that
+scrolls sideways, never two rows.
+
+**Names as people read them:** a payee that arrives in capitals (*SATE KAJANG HJ SAMURI*) is shown in
+title case (*Sate Kajang Hj Samuri*); short single words (*ZUS*, *TNG*) stay as they came. Only the
+display changes: the stored text is what the bank sent.
+
 ## 3. Money
 
 - **Integer sen in, text out.** `RM1,284.50`: the currency, thousands separators, always two
@@ -213,7 +239,7 @@ them in its *Charts* section.
 - **List row** (payments, accounts, shared bills): a leading mark (category or account), the title
   (merchant) and a secondary line (category · account), and the amount on the right, never truncated.
   Marks after the secondary line, as small icons with labels: a receipt, a split, in Review, *Not
-  synced yet*, *Filled in*. The whole row opens its detail; there are no buttons inside it. 64 px or
+  synced yet*, *Filled in*. The whole row opens its detail; there are no buttons inside it. 56 px or
   more, a stable height, so long lists virtualise.
 - **Day header:** the date in Kuala Lumpur time, and the day's spending, sticky while its rows
   scroll.
@@ -295,7 +321,7 @@ plan's *2 of 3 moves done*) states it in words first, with an icon, then what it
   avatar holds one still frame per state, and nothing loops.
 - **Contrast:** text 4.5:1 (large text 3:1), icons and chart marks 3:1, in every look, light and dark.
   The theme section of each look's page measures its tokens.
-- **Touch targets** at least 48 px, 8 px apart. Full-width rows that touch (list rows, settings rows,
+- **Touch targets** at least 48 px, 8 px apart, whatever size the control is drawn (§2, *Sizes*). Full-width rows that touch (list rows, settings rows,
   a detail page's action rows, §7) are the exception: each whole row is the target, and a
   separator is between them. Nothing depends on hover.
 - **Text scales** with the system font size to at least 1.5× without clipping; amounts wrap before

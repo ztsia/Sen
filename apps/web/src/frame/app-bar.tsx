@@ -33,11 +33,11 @@ export function AppBar({
       </header>
     );
   return (
-    <header className="flex h-14 shrink-0 items-center gap-1 px-1">
+    <header className="flex h-14 shrink-0 items-center gap-1 px-2">
       <Button variant="ghost" size="icon" aria-label="Back" onClick={onBack ?? (() => router.history.back())}>
         <ArrowLeftIcon />
       </Button>
-      <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">{title}</h1>
+      <h1 className="min-w-0 flex-1 truncate text-2xl font-semibold">{title}</h1>
       {action}
     </header>
   );

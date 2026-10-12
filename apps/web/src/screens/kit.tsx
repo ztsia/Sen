@@ -62,9 +62,9 @@ export function Loaded<T>({
 /** A section's heading inside a screen. */
 export function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="flex flex-col pt-5" aria-label={title}>
-      <div className="flex items-center justify-between gap-3 px-4 pb-1">
-        <h2 className="text-sm font-semibold text-muted-foreground">{title}</h2>
+    <section className="flex flex-col pt-7" aria-label={title}>
+      <div className="flex items-center justify-between gap-3 px-4 pb-2">
+        <h2 className="text-lg font-semibold">{title}</h2>
         {action}
       </div>
       {children}

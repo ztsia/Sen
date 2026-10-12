@@ -57,7 +57,11 @@ export const smallTargets = (page: Page) =>
         // a checkbox in a row's <label> is tapped by the whole row (split's items, patterns.md §7): the
         // label's box is the target, as it is for a finger
         const box = el.closest('label')?.getBoundingClientRect() ?? r;
-        return box.width < 47.5 || box.height < 47.5;
+        // a control drawn smaller keeps a 48 px target through `tap`'s invisible extension (D129)
+        const tap = getComputedStyle(el, '::after');
+        const w = Math.max(box.width, tap.content !== 'none' ? parseFloat(tap.width) || 0 : 0);
+        const h = Math.max(box.height, tap.content !== 'none' ? parseFloat(tap.height) || 0 : 0);
+        return w < 47.5 || h < 47.5;
       })
       .map(
         (el) =>

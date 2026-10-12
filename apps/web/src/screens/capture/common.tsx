@@ -39,8 +39,8 @@ export function BridgeError({ onRetry }: { onRetry: () => void }) {
 /** A section's heading inside a screen. */
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col pt-4" aria-label={title}>
-      <h2 className="px-4 pb-1 text-sm font-semibold text-muted-foreground">{title}</h2>
+    <section className="flex flex-col pt-7" aria-label={title}>
+      <h2 className="px-4 pb-2 text-lg font-semibold">{title}</h2>
       {children}
     </section>
   );

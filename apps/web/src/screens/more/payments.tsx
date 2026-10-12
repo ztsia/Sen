@@ -124,7 +124,7 @@ function PaymentsBody() {
               onChange={(e) => setText(e.target.value)}
             />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none]">
             <Chip on={!!cycle} onClick={() => setPicking('cycle')}>
               {cycle
                 ? (nameOf(
@@ -143,6 +143,7 @@ function PaymentsBody() {
             </Chip>
             <Button
               variant={shared ? 'secondary' : 'outline'}
+              size="chip"
               aria-pressed={shared}
               onClick={() => setShared((s) => !s)}
             >
@@ -194,7 +195,7 @@ function PaymentsBody() {
 
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: string }) {
   return (
-    <Button variant={on ? 'secondary' : 'outline'} onClick={onClick} className="max-w-full min-w-0">
+    <Button variant={on ? 'secondary' : 'outline'} size="chip" onClick={onClick} className="max-w-[70%]">
       <span className="truncate">{children}</span>
       <ChevronDownIcon className="text-icon" aria-hidden="true" />
     </Button>
@@ -202,7 +203,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
 }
 
 const HEAD = 40;
-const ROW = 64;
+const ROW = 56;
 
 function PaymentsList({
   controls,
