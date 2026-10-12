@@ -78,7 +78,7 @@ export const JOURNEYS: Record<string, Journey> = {
     await expect(row).toBeVisible();
     await shot('review');
     await row.getByRole('button', { name: 'Meals' }).click();
-    await expect(toast(page)).toContainText('ROTI BAKAR 88 is Meals from now on');
+    await expect(toast(page)).toContainText(/ROTI BAKAR 88 is Meals from now on/i);
     await expect(row).toHaveCount(0);
     await shot('answered, with Undo');
     await toast(page).getByRole('button', { name: 'Undo' }).click();
@@ -91,11 +91,11 @@ export const JOURNEYS: Record<string, Journey> = {
     await go('/review');
     const row = reviewRow(page, 'new-merchant', 'SITI AMINAH BT YUSOF');
     await row.getByRole('button', { name: 'Other…' }).click();
-    const sheet = page.getByRole('dialog', { name: /SITI AMINAH BT YUSOF: which category/ });
+    const sheet = page.getByRole('dialog', { name: /SITI AMINAH BT YUSOF: which category/i });
     await expect(sheet).toBeVisible();
     await shot('category sheet');
     await sheet.getByRole('button', { name: 'Groceries' }).click();
-    await expect(toast(page)).toContainText('SITI AMINAH BT YUSOF is Groceries from now on');
+    await expect(toast(page)).toContainText(/SITI AMINAH BT YUSOF is Groceries from now on/i);
     await expect(row).toHaveCount(0);
     await shot('filed');
   },
@@ -110,7 +110,7 @@ export const JOURNEYS: Record<string, Journey> = {
     await share.getByRole('button', { name: 'Kah Hoe · BBQ PLACE' }).click();
     await expect(toast(page)).toContainText('Kah Hoe paid back RM48.80');
     // the split is paid back in full, so it's no longer waiting on anyone
-    await expect(page.getByRole('region', { name: 'Waiting on others' })).not.toContainText('BBQ PLACE');
+    await expect(page.getByRole('region', { name: 'Waiting on others' })).not.toContainText(/BBQ PLACE/i);
     await shot('share ticked');
     const gift = reviewRow(page, 'money-in', 'TAN AH KOW');
     await expect(gift.getByRole('button', { name: /^Income.*Sen suggests this$/ })).toBeVisible();
@@ -169,7 +169,7 @@ export const JOURNEYS: Record<string, Journey> = {
     await page.getByText('Payments', { exact: true }).click();
     await settled(page);
     await page.getByRole('searchbox', { name: 'Search payments' }).fill('NASI KANDAR ABC');
-    const row = page.getByRole('button', { name: /^NASI KANDAR ABC/ }).first();
+    const row = page.getByRole('button', { name: /^NASI KANDAR ABC/i }).first();
     await expect(row).toContainText('Meals');
     await expect(row).not.toContainText('In Review');
     await shot('in payments');
@@ -186,7 +186,7 @@ export const JOURNEYS: Record<string, Journey> = {
     await settled(page);
     await page.getByRole('searchbox', { name: 'Search payments' }).fill('NASI KANDAR ABC');
     await page
-      .getByRole('button', { name: /^NASI KANDAR ABC/ })
+      .getByRole('button', { name: /^NASI KANDAR ABC/i })
       .first()
       .click();
     await shot('the payment');
@@ -196,7 +196,7 @@ export const JOURNEYS: Record<string, Journey> = {
     await expect(page.getByRole('dialog')).toContainText('just this one?');
     await shot('just this one, or from now on');
     await page.getByRole('button', { name: 'From now on' }).click();
-    await expect(toast(page)).toContainText('NASI KANDAR ABC is Drinks & desserts from now on');
+    await expect(toast(page)).toContainText(/NASI KANDAR ABC is Drinks & desserts from now on/i);
     await expect(page.getByRole('button', { name: 'Drinks & desserts' })).toBeVisible();
     await shot('changed');
     await toast(page).getByRole('button', { name: 'Undo' }).click();
@@ -299,7 +299,7 @@ export const JOURNEYS: Record<string, Journey> = {
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     await expect(toast(page)).toContainText('Waiting for its payment');
     await expect(page).toHaveURL(/\/review/);
-    await expect(page.getByRole('region', { name: 'Waiting on others' })).toContainText('KOPITIAM SRI DAMAI');
+    await expect(page.getByRole('region', { name: 'Waiting on others' })).toContainText(/KOPITIAM SRI DAMAI/i);
     await shot('waiting in Review');
   },
 
@@ -462,7 +462,7 @@ export const JOURNEYS: Record<string, Journey> = {
     await page.getByText('Shared bills', { exact: true }).click();
     await settled(page);
     await shot('shared bills');
-    await page.getByRole('button', { name: /^BBQ PLACE/ }).click();
+    await page.getByRole('button', { name: /^BBQ PLACE/i }).click();
     await settled(page);
     await expect(page.getByText('Final', { exact: true })).toBeVisible();
     const back = page.getByRole('region', { name: 'Who has paid you back' });
@@ -534,7 +534,7 @@ export const JOURNEYS: Record<string, Journey> = {
     await settled(page);
     await page.getByRole('searchbox', { name: 'Search payments' }).fill('BBQ PLACE');
     await page
-      .getByRole('button', { name: /^BBQ PLACE/ })
+      .getByRole('button', { name: /^BBQ PLACE/i })
       .first()
       .click();
     await shot('the payment');
@@ -790,7 +790,7 @@ export const JOURNEYS: Record<string, Journey> = {
       .click();
     const row = reviewRow(page, 'new-merchant', 'ROTI BAKAR 88');
     await row.getByRole('button', { name: 'Meals' }).click();
-    await expect(toast(page)).toContainText('ROTI BAKAR 88 is Meals from now on');
+    await expect(toast(page)).toContainText(/ROTI BAKAR 88 is Meals from now on/i);
     await shot('review still answers');
     await page.waitForTimeout(SETTLE_MS);
     await page.getByRole('button', { name: 'Ask Sen' }).click();

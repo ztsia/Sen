@@ -54,6 +54,8 @@ export const smallTargets = (page: Page) =>
         if (el.closest('.sr-only, [aria-hidden="true"]')) return false;
         // the dev panel's handle: previews only, a strip in the side gutter
         if (el.hasAttribute('data-dev-handle')) return false;
+        // a toggle group's own box holds its toggles, each a target of its own
+        if (el.matches('[data-slot="toggle-group"]')) return false;
         // a checkbox in a row's <label> is tapped by the whole row (split's items, patterns.md §7): the
         // label's box is the target, as it is for a finger
         const box = el.closest('label')?.getBoundingClientRect() ?? r;
