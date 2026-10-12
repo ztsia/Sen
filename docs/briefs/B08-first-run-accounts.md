@@ -30,6 +30,9 @@ fixtures, ready for B09 to book the first transactions.
 
 ## Builds
 
+- **From B04's skeleton (QA B04 run 1, 16):** `screens/outside/first-run.tsx` saves nothing, and a reload
+  mid-way loses what was typed. Make each step save as it goes, and its sad paths reach Home.
+
 ### Data
 - **`accounts`:** kind `tracked` or `elsewhere`, `notifier_package` and `notifier_label`, opening
   balance in sen, `opening_at`, currency, `archived_at`.
