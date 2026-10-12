@@ -1,6 +1,6 @@
 # Handoff
 
-Rewritten 12 Oct 2026 by the B04 cloud session, before compacting its context. The protocol is in
+Rewritten 12 Oct 2026 by the B04 cloud session, after QA run 2's fixes and D128's batch. The protocol is in
 `CLAUDE.md`, *Session rotation*: read this first, and rewrite it before you end.
 
 ## Where things stand
@@ -15,27 +15,18 @@ Rewritten 12 Oct 2026 by the B04 cloud session, before compacting its context. T
   - The full `pnpm e2e` run is 703 of 703 green in 57 min. Unit tests: 289.
 - **QA run 1 (full):** *fix first*, with 62 of 90 criteria passing. Report: `qa/B04/report-run1.md`, published at https://claude.ai/artifact/EysS8ku2w263ugj35pFXG3
   - Fixed in `851cbd0`, tier 1: findings 1, 2, 3, 5, 6, 9, 10, 11, 12 (welcome credit RM10 and email check), 15, 17 and 19.
-- **QA run 2 (scoped, done):** 10 of 12 fixed, 2 partly (15, and 12's email). Now 70 of 90 pass.
-  Report: `qa/B04/report.md`, published as version 2 at the same link. Small fixes still to do (tier 1):
-  - 15: *Send to ESS* shows in a browser preview; gate it on the shell or `DEV_TOOLS` with a stand-in label
-  - 20:
-    - bound `setting.set`'s record and the `sen.answer`, `proposal.answer`, `memory.forget` and `research.confirm` strings
-    - cap the composer at 4000 characters and the invite email at 254
-    - reject `a..b@x.co` and `a@-b.co`
-  - 21: in the payday scenario, Parking is approved but still says its receipt is missing, and *Send to ESS* stays with nothing to send; Home's figure ignores the RM152 claims split (D45)
-  - 22:
-    - the closed link still carries `at`; add it to the test
-    - a friend's empty claims page says *Add a scheme*, though their claims are off
-    - a stale *Already added* toast follows to the next screen
-    - the fake's `member.*` has no admin check, and B05's API must add one
-- **Next:** the run-2 fixes above, then:
-  1. **One Sonnet batch (D128), the pieces QA found missing:**
-     - *Write off* on a split
-     - Sen's *Yes, I did* opening `manual` with the day: `ScreenSearch` needs a `day`, and `manual` must read it
-     - *Pay with TNG* and *Save QR* (D101) on `split` and `split-public`
-     - sign-in's expired-invitation state (*Ask for a new invitation*)
-     - Members: *Unlimited* at invite, *Resend*, *Revoke*, and the export offered on *Remove*
-  2. Review the batch, then run all six looks before the PR (`pnpm e2e`, about an hour), and a scoped QA re-check of that batch's area.
+- **QA run 2 (scoped, done):** 10 of 12 fixed, 2 partly; 70 of 90 pass. Report: `qa/B04/report.md`,
+  published as version 2 at the same link.
+  - Its small fixes (15, 20, 21, 22) are in `ad49bb0`, with tests.
+- **D128's missing pieces are built** (`daa498a`, one Sonnet batch, reviewed): *Write off*, *Yes, I did*
+  opening `manual` on its day (`?day=`), *Pay with TNG* / *Save QR* stand-ins, sign-in's expired
+  invitation (`?state=expired`), and Members' *Unlimited*, *Resend*, *Revoke* and export on *Remove*.
+  B17's brief notes a written-off share needs its own column.
+- **Next:**
+  1. The full six-look `pnpm e2e` (`E2E_LOOKS=all`, about an hour) was running when this was written.
+     If it isn't green in the log, rerun it and fix what fails.
+  2. A scoped QA re-check (the `qa` skill, tier 2) of run 2's fixes and D128's pieces, after e2e (they
+     share ports 4173/4174, so never at once).
   3. Log usage, then open the PR *B04 · Skeleton: everything else, and your review*.
   4. **The owner's review on the phone, in the debug shell:**
      - the seven *Defaults to confirm* (screens.md)
@@ -71,8 +62,7 @@ Rewritten 12 Oct 2026 by the B04 cloud session, before compacting its context. T
 
 ## What to do first
 
-- If run 2's report isn't in `qa/B04/report.md`, the reviewer was lost. Spawn a fresh scoped `qa-reviewer` on the findings above (the `qa` skill, tier 2).
-- If the commit for D128's batch isn't on the branch, brief it (one Sonnet `implementer`) from the list above.
+- Check the six-look e2e result, then run the scoped QA re-check (*Next*, 2).
 
 ## Don't reopen
 
