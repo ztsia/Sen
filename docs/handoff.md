@@ -1,38 +1,32 @@
 # Handoff
 
-Rewritten 12 Oct 2026 by the B04 cloud session, after QA run 2's fixes and D128's batch. The protocol is in
+Rewritten 12 Oct 2026 by the B04 cloud session, with B04's PR open. The protocol is in
 `CLAUDE.md`, *Session rotation*: read this first, and rewrite it before you end.
 
 ## Where things stand
 
-- **B04 is in progress** on `B04/skeleton-rest`. B01–B03 are merged.
-- **Built and committed:**
+- **B04 is finished; its PR is open** from `B04/skeleton-rest` (*B04 · Skeleton: everything else, and
+  your review*). B01–B03 are merged. Nothing more is planned on the branch unless CI or the owner's
+  review asks for it.
+- **Built:**
   - every B04 screen on made-up data, with the shared ground in `views.ts` and `commands.ts` (*B04* sections) and the fake's area modules in `data/fake/areas/`
   - `split-public` in its own `PublicShell`, on its own fake (`data/public.ts`), reading nothing of the person's
   - the dev panel's native stand-ins, the simulator and all 37 journeys (`dev/journeys.ts`)
-- **Done-when 1 and 2 are met.**
-  - Every flows.md journey is walked in 6 looks, light and dark, and axe passes on every screen and stand-in.
-  - The full `pnpm e2e` run is 703 of 703 green in 57 min. Unit tests: 289.
-- **QA run 1 (full):** *fix first*, with 62 of 90 criteria passing. Report: `qa/B04/report-run1.md`, published at https://claude.ai/artifact/EysS8ku2w263ugj35pFXG3
-  - Fixed in `851cbd0`, tier 1: findings 1, 2, 3, 5, 6, 9, 10, 11, 12 (welcome credit RM10 and email check), 15, 17 and 19.
-- **QA run 2 (scoped, done):** 10 of 12 fixed, 2 partly; 70 of 90 pass. Report: `qa/B04/report.md`,
-  published as version 2 at the same link.
-  - Its small fixes (15, 20, 21, 22) are in `ad49bb0`, with tests.
-- **D128's missing pieces are built** (`daa498a`, one Sonnet batch, reviewed): *Write off*, *Yes, I did*
-  opening `manual` on its day (`?day=`), *Pay with TNG* / *Save QR* stand-ins, sign-in's expired
-  invitation (`?state=expired`), and Members' *Unlimited*, *Resend*, *Revoke* and export on *Remove*.
-  B17's brief notes a written-off share needs its own column.
-- **Next:**
-  1. The full six-look `pnpm e2e` (`E2E_LOOKS=all`, about an hour) was running when this was written.
-     If it isn't green in the log, rerun it and fix what fails.
-  2. A scoped QA re-check (the `qa` skill, tier 2) of run 2's fixes and D128's pieces, after e2e (they
-     share ports 4173/4174, so never at once).
-  3. Log usage, then open the PR *B04 · Skeleton: everything else, and your review*.
-  4. **The owner's review on the phone, in the debug shell:**
-     - the seven *Defaults to confirm* (screens.md)
-     - Mercury and Copper's WebGL in the real WebView
-     - production's one look until B14
-     - anything they'd change, recorded in docs first
+  - D128's missing pieces: *Write off*, *Yes, I did* opening `manual?day=`, the *Pay with TNG* / *Save
+    QR* stand-ins, sign-in's expired invitation, and Members' *Unlimited*, *Resend*, *Revoke* and export on *Remove*
+- **Verified:** six looks × light/dark, `pnpm e2e` 707 of 707 (45.8 min) after D128's batch; Minted
+  205 of 205 after run 3's fixes. Unit tests and lint clean.
+- **QA:** three runs. Run 3 (scoped): 83 of 102 criteria pass; its findings 23–27 are fixed with tests.
+  Records in `qa/B04/` (`report.md` is run 3; run 1 and 2 kept beside it). Published as version 3 at
+  https://claude.ai/artifact/EysS8ku2w263ugj35pFXG3
+  - Left on purpose: 4 (remembered name, B18), 7 (pinned look, B14), 16 (first run saves, B08), 8 and 18
+    (below), 12's leftovers (`.a@x.co`, long local parts: B05's real email check).
+- **Next: the owner's review on the phone, in the debug shell:**
+  - the seven *Defaults to confirm* (screens.md)
+  - Mercury and Copper's WebGL in the real WebView
+  - production's one look until B14
+  - anything they'd change, recorded in docs first, then fixed on this branch before merge
+- **After merge:** B05, the server.
 
 ## Decided, and why
 
@@ -62,7 +56,8 @@ Rewritten 12 Oct 2026 by the B04 cloud session, after QA run 2's fixes and D128'
 
 ## What to do first
 
-- Check the six-look e2e result, then run the scoped QA re-check (*Next*, 2).
+- If the PR's CI is red, fix it on `B04/skeleton-rest` first.
+- Otherwise, wait for the owner's phone review and act on what they record.
 
 ## Don't reopen
 
