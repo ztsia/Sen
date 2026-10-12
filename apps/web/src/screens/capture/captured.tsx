@@ -120,7 +120,7 @@ export default function CapturedOnPhone() {
           )}
           {events.length < total ? (
             <div className="px-4 pt-2">
-              <Button variant="outline" onClick={() => void more()}>
+              <Button variant="outline" size="sm" onClick={() => void more()}>
                 Show older
               </Button>
             </div>
@@ -129,17 +129,17 @@ export default function CapturedOnPhone() {
             <BottomAction>
               {picking ? (
                 <>
-                  <Button size="lg" onClick={() => void share()}>
+                  <Button onClick={() => void share()}>
                     {picked.size
                       ? `Share ${picked.size} ${picked.size === 1 ? 'sample' : 'samples'}`
                       : 'Tick the ones to share'}
                   </Button>
-                  <Button variant="ghost" onClick={() => (setPicking(false), setPicked(new Set()))}>
+                  <Button variant="ghost" size="sm" onClick={() => (setPicking(false), setPicked(new Set()))}>
                     Cancel
                   </Button>
                 </>
               ) : (
-                <Button size="lg" variant="secondary" onClick={() => setPicking(true)}>
+                <Button variant="secondary" onClick={() => setPicking(true)}>
                   Share samples
                 </Button>
               )}
@@ -189,7 +189,7 @@ function EventRow({
     <ItemContent className="min-w-0 gap-1">
       <ItemDescription className="flex justify-between gap-2 text-sm">
         <span className="min-w-0 truncate">{app}</span>
-        <span className="shrink-0">{momentLabel(new Date(e.postTime))}</span>
+        <span className="shrink-0 text-xs">{momentLabel(new Date(e.postTime))}</span>
       </ItemDescription>
       {e.title ? (
         <ItemTitle className="selectable w-full text-base wrap-anywhere whitespace-pre-line">{e.title}</ItemTitle>

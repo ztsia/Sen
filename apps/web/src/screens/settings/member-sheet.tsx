@@ -70,19 +70,19 @@ export function MemberSheet({
         {remove ? (
           // the confirmation is a step inside this sheet: a second sheet would stack a second back step
           <div className="flex flex-col gap-2 pb-2">
-            <Button variant="secondary" onClick={() => confirmRemove(true)}>
+            <Button variant="secondary" size="sm" onClick={() => confirmRemove(true)}>
               Export their data first
             </Button>
             <Button variant="destructive" onClick={() => confirmRemove(false)}>
               Remove
             </Button>
-            <Button variant="ghost" onClick={() => setRemove(false)}>
+            <Button variant="ghost" size="sm" onClick={() => setRemove(false)}>
               Keep them
             </Button>
           </div>
         ) : (
           <div className="-mx-4 flex flex-col pb-2">
-            <h3 className="px-4 pt-2 pb-1 text-sm font-semibold text-muted-foreground">Can use</h3>
+            <h3 className="px-4 pt-3 pb-2 text-lg font-semibold">Can use</h3>
             {SWITCHES.map((s) => (
               <SettingsRow
                 key={s.key}
@@ -93,12 +93,12 @@ export function MemberSheet({
                 onCheckedChange={(on) => set(s.key, on)}
               />
             ))}
-            <h3 className="px-4 pt-5 pb-1 text-sm font-semibold text-muted-foreground">Phone</h3>
+            <h3 className="px-4 pt-7 pb-2 text-lg font-semibold">Phone</h3>
             <SettingsRow label="Shell version" value={m.shellVersion ?? 'Browser only'} />
             <SettingsRow label="Capture connected" value={m.captureConnected ? 'Yes' : 'No'} />
             {owner ? null : (
               <>
-                <h3 className="px-4 pt-5 pb-1 text-sm font-semibold text-muted-foreground">AI credit</h3>
+                <h3 className="px-4 pt-7 pb-2 text-lg font-semibold">AI credit</h3>
                 <SettingsRow label="Balance" value={formatSen(m.balance)} />
                 <SettingsRow
                   label="Allowance left this month"
@@ -139,6 +139,7 @@ export function MemberSheet({
                     <>
                       <Button
                         variant="secondary"
+                        size="sm"
                         onClick={() =>
                           void write({ type: 'member.resend', id: m.id }, { quiet: true }).then(
                             (r) => r && toastDone('Invitation sent again'),
@@ -149,6 +150,7 @@ export function MemberSheet({
                       </Button>
                       <Button
                         variant="destructive"
+                        size="sm"
                         onClick={() => {
                           onClose();
                           void write({ type: 'member.revoke', id: m.id });
@@ -161,11 +163,12 @@ export function MemberSheet({
                     <>
                       <Button
                         variant="secondary"
+                        size="sm"
                         onClick={() => set('status', m.status === 'suspended' ? 'active' : 'suspended')}
                       >
                         {m.status === 'suspended' ? 'Let them back in' : 'Suspend'}
                       </Button>
-                      <Button variant="destructive" onClick={() => setRemove(true)}>
+                      <Button variant="destructive" size="sm" onClick={() => setRemove(true)}>
                         Remove
                       </Button>
                     </>
@@ -218,10 +221,10 @@ function CreditAmount({
         hint={hint}
       />
       <div className="flex gap-2">
-        <Button variant="secondary" onClick={() => go(onGrant, false)}>
+        <Button variant="secondary" size="sm" onClick={() => go(onGrant, false)}>
           Grant
         </Button>
-        <Button variant="secondary" onClick={() => go(onRefund, true)}>
+        <Button variant="secondary" size="sm" onClick={() => go(onRefund, true)}>
           Refund
         </Button>
       </div>

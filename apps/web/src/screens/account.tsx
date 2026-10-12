@@ -87,7 +87,7 @@ function TestButtons() {
     <div className="flex flex-col gap-4 pb-2">
       {rows.map((r) => (
         <div key={r.key} className="flex flex-col gap-1">
-          <Button variant="secondary" className="self-start" onClick={() => run(r.key, r.go)}>
+          <Button variant="secondary" size="sm" className="self-start" onClick={() => run(r.key, r.go)}>
             {r.label}
           </Button>
           <p className="text-sm text-muted-foreground">{r.about}</p>

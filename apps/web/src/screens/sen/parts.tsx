@@ -57,17 +57,20 @@ function Proposal({ part }: { part: Extract<SenPart, { type: 'proposal' }> }) {
   const write = useWrite();
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 text-card-foreground">
-      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+      <p className="flex items-center gap-2 text-xs text-muted-foreground">
         <SparklesIcon className="size-4" aria-hidden="true" />
         Sen suggests
       </p>
-      <p className="text-base font-medium text-pretty wrap-anywhere">{part.title}</p>
+      <p className="text-base font-semibold text-pretty wrap-anywhere">{part.title}</p>
       <p className="text-sm text-muted-foreground">{part.why}</p>
       {part.status === 'open' ? (
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => void write({ type: 'proposal.answer', id: part.id, answer: 'apply' })}>Apply</Button>
+          <Button size="sm" onClick={() => void write({ type: 'proposal.answer', id: part.id, answer: 'apply' })}>
+            Apply
+          </Button>
           <Button
             variant="secondary"
+            size="sm"
             onClick={() => void write({ type: 'proposal.answer', id: part.id, answer: 'dismiss' })}
           >
             Dismiss
@@ -98,9 +101,9 @@ function Research({ part, messageId }: { part: Extract<SenPart, { type: 'researc
         <Badge variant={part.confirmed ? 'default' : 'outline'}>
           {part.confirmed ? 'Confirmed' : 'Draft, not confirmed'}
         </Badge>
-        <span className="text-sm text-muted-foreground">Research</span>
+        <span className="text-xs text-muted-foreground">Research</span>
       </div>
-      <p className="text-base font-medium text-pretty wrap-anywhere">{part.question}</p>
+      <p className="text-base font-semibold text-pretty wrap-anywhere">{part.question}</p>
       <ul className="flex flex-col gap-2">
         {part.findings.map((f, i) => (
           <li key={i} className="text-base text-pretty wrap-anywhere select-text">
@@ -133,7 +136,7 @@ function Research({ part, messageId }: { part: Extract<SenPart, { type: 'researc
         ))}
       </ol>
       {part.confirmed ? null : (
-        <Button variant="secondary" onClick={() => void write({ type: 'research.confirm', messageId })}>
+        <Button variant="secondary" size="sm" onClick={() => void write({ type: 'research.confirm', messageId })}>
           Confirm these figures
         </Button>
       )}
@@ -204,6 +207,7 @@ function Open({
   return (
     <Button
       variant="outline"
+      size="sm"
       className="self-start"
       onClick={() => {
         if (!dayOnly) return onOpen(part.screen, part.id);
@@ -259,7 +263,7 @@ export function Message({
       aria-label={mine ? 'You' : 'Sen'}
       aria-busy={message.streaming || undefined}
     >
-      {message.checkin ? <p className="text-sm font-medium text-muted-foreground">Evening note</p> : null}
+      {message.checkin ? <p className="text-xs font-medium text-muted-foreground">Evening note</p> : null}
       {bubble.length ? (
         <div
           className={cn(

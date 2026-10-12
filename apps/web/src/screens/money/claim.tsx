@@ -110,7 +110,7 @@ function Body({ v }: { v: ClaimView }) {
         <Section title="Still missing">
           <ItemGroup>
             {v.missing.map((m) => (
-              <Item key={m.what} size="sm" className="rounded-none text-base">
+              <Item key={m.what} size="sm" className="rounded-none">
                 <ItemContent>
                   <ItemTitle className="text-base">{m.what}</ItemTitle>
                   <ItemDescription>{m.how}</ItemDescription>
@@ -149,8 +149,8 @@ function Body({ v }: { v: ClaimView }) {
           <ItemGroup>
             {v.files.map((f) => (
               <Item key={f.id} size="sm" className="min-h-14 flex-wrap rounded-none">
-                <ItemMedia variant="icon" className="size-10 rounded-full border-0 bg-muted text-icon">
-                  {f.kind === 'pdf' ? <FileTextIcon className="size-5" /> : <ImageIcon className="size-5" />}
+                <ItemMedia variant="icon" className="size-8 rounded-full border-0 bg-muted text-icon">
+                  {f.kind === 'pdf' ? <FileTextIcon className="size-4" /> : <ImageIcon className="size-4" />}
                 </ItemMedia>
                 <ItemContent className="min-w-0">
                   <ItemTitle className="text-base font-normal wrap-anywhere">{f.name}</ItemTitle>
@@ -187,7 +187,6 @@ function Body({ v }: { v: ClaimView }) {
           {v.ess && essHere() && c.status === 'to_submit' ? (
             <>
               <Button
-                size="lg"
                 disabled={sending || v.missing.length > 0}
                 onClick={() => {
                   setSending(true);
@@ -205,8 +204,8 @@ function Body({ v }: { v: ClaimView }) {
             </>
           ) : null}
           <Button
-            size="lg"
             variant={v.ess ? 'outline' : 'default'}
+            size={v.ess ? 'sm' : 'default'}
             disabled={sending}
             onClick={() => void write({ type: 'claim.submitted', id: c.id, essRef: null })}
           >

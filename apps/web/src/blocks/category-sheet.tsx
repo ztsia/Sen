@@ -50,12 +50,11 @@ export function CategorySheet({
     <Sheet open={open} onOpenChange={close} title={picked ? `${picked.label}: just this one?` : title}>
       {picked ? (
         <div className="flex flex-col gap-3 pt-2 pb-2">
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {merchant ?? 'This merchant'} is filed by a rule. Change only this payment, or every one from now on? Past
             payments stay as they are.
           </p>
           <Button
-            size="lg"
             onClick={() => {
               onChoose(picked.id, 'rule');
               close(false);
@@ -64,8 +63,8 @@ export function CategorySheet({
             From now on
           </Button>
           <Button
-            size="lg"
             variant="secondary"
+            size="sm"
             onClick={() => {
               onChoose(picked.id, 'once');
               close(false);

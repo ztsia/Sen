@@ -13,6 +13,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { dayLabel } from '@/lib/dates';
 import { cn } from '@/lib/utils';
+import { readableName } from '@/lib/names';
 import { Money, type MoneyKind } from './money';
 import { settleTap } from '@/lib/tap-guard';
 import { toastUndo } from './toast';
@@ -55,8 +56,8 @@ export function Marks({ marks }: { marks: RowMark[] }) {
 /** A leading mark: the category's or account's icon, in a disc. */
 export function RowMarkIcon({ icon: Icon }: { icon: ComponentType<{ className?: string }> }) {
   return (
-    <ItemMedia variant="icon" className="size-10 rounded-full border-0 bg-muted text-icon" aria-hidden="true">
-      <Icon className="size-5" />
+    <ItemMedia variant="icon" className="size-8 rounded-full border-0 bg-muted text-icon" aria-hidden="true">
+      <Icon className="size-4" />
     </ItemMedia>
   );
 }
@@ -73,23 +74,27 @@ interface ListRowProps {
   onOpen?: () => void;
 }
 
-/** A payment, an account or a shared bill: 64 px or more, a stable height, so long lists virtualise. */
+/** A payment, an account or a shared bill: 56 px or more, a stable height, so long lists virtualise. */
 export function ListRow({ icon, title, secondary, sen, kind = 'out', marks = [], onOpen }: ListRowProps) {
   return (
-    <Item asChild size="sm" className="min-h-16 w-full flex-nowrap rounded-none text-left text-base active:bg-accent">
+    <Item
+      asChild
+      size="sm"
+      className="min-h-14 w-full flex-nowrap gap-3 rounded-none py-2 text-left text-base active:bg-accent"
+    >
       <button type="button" onClick={onOpen}>
         <RowMarkIcon icon={icon} />
         <ItemContent className="min-w-0 gap-0">
-          <ItemTitle className="block w-full truncate text-base">{title}</ItemTitle>
+          <ItemTitle className="block w-full truncate text-base">{readableName(title)}</ItemTitle>
           {secondary || marks.length ? (
-            <ItemDescription className="flex min-w-0 flex-wrap items-center gap-x-2 text-balance">
+            <ItemDescription className="flex min-w-0 flex-wrap items-center gap-x-2 text-sm text-balance">
               {secondary ? <span className="min-w-0 truncate">{secondary}</span> : null}
               <Marks marks={marks} />
             </ItemDescription>
           ) : null}
         </ItemContent>
         <ItemActions className="max-w-[55%] shrink-0 justify-end text-right">
-          <Money sen={sen} kind={kind} />
+          <Money sen={sen} kind={kind} className="font-normal" />
         </ItemActions>
       </button>
     </Item>

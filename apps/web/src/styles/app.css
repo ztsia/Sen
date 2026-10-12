@@ -57,6 +57,21 @@
 }
 
 @theme {
+  /* the size levels (patterns.md §2, Sizes, D129): caption, secondary, label, body, section, title */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.35;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.4;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.3;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.45;
+  --text-lg: 1.0625rem;
+  --text-lg--line-height: 1.35;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.3;
+  --text-2xl: 1.375rem;
+  --text-2xl--line-height: 1.25;
   /* the z-index scale (uiux skill): content, sticky headers, tab bar, Sen's button, sheets, toasts */
   --z-index-sticky: 10;
   --z-index-tabbar: 30;
@@ -85,8 +100,8 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-size: 1rem;
-    line-height: 1.5;
+    font-size: var(--text-base);
+    line-height: 1.45;
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -175,4 +190,18 @@
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
+}
+
+/* A control drawn under 48 px keeps a 48 px touch target (patterns.md §8, D129): an invisible
+   extension, centred on it. The control itself is positioned (relative, or its own fixed/absolute). */
+@utility tap {
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 48px);
+    height: max(100%, 48px);
+    transform: translate(-50%, -50%);
+  }
 }

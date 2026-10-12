@@ -1,3 +1,4 @@
+import { readableName } from '@/lib/names';
 import { useState } from 'react';
 import { ChevronRightIcon, SparklesIcon, SplitIcon } from 'lucide-react';
 import type { Command } from '@sen/core/commands';
@@ -114,7 +115,7 @@ function ReviewBody({ r }: { r: ReviewView }) {
                 key={x.receiptId}
                 question={
                   <>
-                    <Money sen={x.total} /> · {x.merchant} receipt
+                    <Money sen={x.total} /> · {readableName(x.merchant)} receipt
                   </>
                 }
                 knows={`Waiting for its payment · ${momentLabel(new Date(x.at))}`}
@@ -131,7 +132,7 @@ function ReviewBody({ r }: { r: ReviewView }) {
             {r.waiting.refunds.map((x) => (
               <Item key={x.id} size="sm" className="min-h-16 rounded-none">
                 <ItemContent>
-                  <ItemTitle className="text-base">{x.counterparty} refund</ItemTitle>
+                  <ItemTitle className="text-base">{readableName(x.counterparty)} refund</ItemTitle>
                   <ItemDescription>Sen is watching for it, by {longDay(x.by)}</ItemDescription>
                 </ItemContent>
                 <ItemActions>
@@ -316,7 +317,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
         <ReviewRow
           question={
             <>
-              <Money sen={i.amount} /> · {i.merchant}
+              <Money sen={i.amount} /> · {readableName(i.merchant)}
             </>
           }
           knows={`New on ${i.account} · ${when}`}
@@ -329,7 +330,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
         <ReviewRow
           question={
             <>
-              <Money sen={i.amount} kind="in" /> from {i.from}
+              <Money sen={i.amount} kind="in" /> from {readableName(i.from)}
             </>
           }
           knows={`Whose split share is it? · ${when}`}
@@ -341,7 +342,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
         <ReviewRow
           question={
             <>
-              <Money sen={i.amount} kind="in" /> from {i.from}
+              <Money sen={i.amount} kind="in" /> from {readableName(i.from)}
             </>
           }
           knows={`Into ${i.account} · ${when}${i.suggested ? '. Your note says it’s a gift' : ''}`}
@@ -383,7 +384,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
         <OpensRow
           title={
             <>
-              <Money sen={i.total} /> · {i.merchant} receipt
+              <Money sen={i.total} /> · {readableName(i.merchant)} receipt
             </>
           }
           detail="Read and waiting for you to check it"

@@ -66,7 +66,7 @@ export function BalanceForm({ v, onSaved, extra }: { v: BalanceCheckView; onSave
           <li key={r.id} className="border-b border-border">
             <div role="group" aria-label={r.name} className="flex flex-col gap-2 px-4 py-4">
               <p className="flex items-baseline justify-between gap-3">
-                <span className="font-medium">{r.name}</span>
+                <span className="text-base font-semibold">{r.name}</span>
                 <span className="text-sm text-muted-foreground">
                   Sen has <Money sen={r.computed} className="font-normal text-foreground" />
                 </span>
@@ -108,7 +108,7 @@ export function BalanceForm({ v, onSaved, extra }: { v: BalanceCheckView; onSave
         ) : null}
         <div className="flex gap-2">
           {extra}
-          <Button type="submit" size="lg" className="flex-1" disabled={saving}>
+          <Button type="submit" className="flex-1" disabled={saving}>
             Save
           </Button>
         </div>

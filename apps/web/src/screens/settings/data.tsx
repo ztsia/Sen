@@ -27,7 +27,8 @@ export default function Data() {
                 </p>
                 <Button
                   variant="secondary"
-                  className="min-h-12 self-start"
+                  size="sm"
+                  className="self-start"
                   onClick={() => toastDone('Export isn’t ready yet. Nothing was exported.')}
                 >
                   <DownloadIcon aria-hidden="true" />

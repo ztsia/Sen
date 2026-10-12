@@ -118,7 +118,7 @@ test('really offline, an answer shows at once and the row is marked Not synced y
   await context.setOffline(true);
   const row = page.locator('[data-review="new-merchant"]').filter({ hasText: 'ROTI BAKAR 88' });
   await row.getByRole('button', { name: 'Meals' }).click();
-  await expect(toastOf(page)).toContainText('ROTI BAKAR 88 is Meals from now on');
+  await expect(toastOf(page)).toContainText(/ROTI BAKAR 88 is Meals from now on/i);
   await expect(row).toHaveCount(0);
   await expect(page.getByRole('region', { name: /Needs you · 11/ })).toBeVisible();
   await context.setOffline(false);

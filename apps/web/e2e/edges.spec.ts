@@ -151,3 +151,21 @@ for (const id of ['sen', 'scan-more', 'cycle'])
     await expect(page.getByTestId('hero')).toBeVisible();
     await expect(tabs(page)).toBeVisible();
   });
+
+test("Sen's sheet comes back to full height after the keyboard closes (owner's review of B04)", async ({ page }) => {
+  await open(page, '/', 'minted', 'light');
+  await page.getByRole('button', { name: 'Ask Sen' }).click();
+  const sheet = page.locator('[data-vaul-drawer]');
+  await expect(sheet).toBeVisible();
+  await page.waitForTimeout(600);
+  const full = (await sheet.boundingBox())!.height;
+  // the keyboard opens: the page resizes (interactive-widget=resizes-content), with the input focused
+  await sheet.locator('textarea').focus();
+  await page.setViewportSize({ width: 390, height: 500 });
+  await page.waitForTimeout(400);
+  // the input loses focus, then the keyboard closes
+  await sheet.locator('textarea').blur();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(400);
+  expect(Math.abs((await sheet.boundingBox())!.height - full)).toBeLessThan(2);
+});

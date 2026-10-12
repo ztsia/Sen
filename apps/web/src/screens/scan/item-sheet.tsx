@@ -78,12 +78,10 @@ function ItemForm({
         onEnter={submit}
         hint="Before tax and service."
       />
-      <Button type="submit" size="lg">
-        Save
-      </Button>
+      <Button type="submit">Save</Button>
       <Button
         type="button"
-        size="lg"
+        size="sm"
         variant="ghost"
         onClick={() => {
           onRemove(item.id);

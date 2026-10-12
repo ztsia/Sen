@@ -112,10 +112,10 @@ export default function NewLook() {
           <Switch checked={quarterly} onCheckedChange={setQuarterly} />
         </label>
         <div className="mt-auto flex w-full flex-col gap-2 pb-4">
-          <Button ref={keep} size="lg" disabled={!arrived} onClick={() => land(false)}>
+          <Button ref={keep} disabled={!arrived} onClick={() => land(false)}>
             Keep it
           </Button>
-          <Button variant="outline" size="lg" disabled={!arrived} onClick={() => land(true)}>
+          <Button variant="outline" size="sm" disabled={!arrived} onClick={() => land(true)}>
             Go back
           </Button>
           <p className="pt-2 text-sm text-muted-foreground">You can change this any time in Settings → Appearance</p>

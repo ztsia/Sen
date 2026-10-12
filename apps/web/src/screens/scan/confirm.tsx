@@ -1,3 +1,4 @@
+import { readableName } from '@/lib/names';
 import { newId } from '@/lib/uid';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -231,13 +232,13 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
               </Field>
             ) : (
               <>
-                <h2 className="text-xl font-semibold text-pretty">{merchant || 'Receipt'}</h2>
+                <h2 className="text-xl font-semibold text-pretty">{merchant ? readableName(merchant) : 'Receipt'}</h2>
                 <p className="text-sm text-muted-foreground">{momentLabel(new Date(d.occurredAt))}</p>
               </>
             )}
           </div>
           {d.byHand ? null : (
-            <Button variant="secondary" onClick={() => setSheet('photo')}>
+            <Button variant="secondary" size="sm" onClick={() => setSheet('photo')}>
               <ImageIcon aria-hidden="true" />
               View photo
             </Button>
@@ -248,8 +249,8 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
           <ItemGroup>
             <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
               <button type="button" onClick={() => setSheet('category')} disabled={items.length === 0}>
-                <ItemMedia variant="icon" className="size-10 rounded-full border-0 bg-muted text-icon">
-                  <TagIcon className="size-5" />
+                <ItemMedia variant="icon" className="size-8 rounded-full border-0 bg-muted text-icon">
+                  <TagIcon className="size-4" />
                 </ItemMedia>
                 <ItemContent>
                   <ItemTitle className="text-base font-normal">
@@ -361,7 +362,7 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                className="size-12"
+                size="icon"
                 aria-label="Fewer people"
                 disabled={pax <= 1}
                 onClick={() => setPax((p) => Math.max(1, p - 1))}
@@ -371,12 +372,7 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
               <span className="num min-w-10 text-center text-2xl font-semibold" aria-live="polite">
                 {pax}
               </span>
-              <Button
-                variant="outline"
-                className="size-12"
-                aria-label="More people"
-                onClick={() => setPax((p) => p + 1)}
-              >
+              <Button variant="outline" size="icon" aria-label="More people" onClick={() => setPax((p) => p + 1)}>
                 <PlusIcon aria-hidden="true" />
               </Button>
             </div>
@@ -391,8 +387,8 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
         <ItemGroup className="mt-2">
           <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
             <button type="button" onClick={() => setSheet('note')}>
-              <ItemMedia variant="icon" className="size-10 rounded-full border-0 bg-transparent text-icon">
-                <StickyNoteIcon className="size-5" />
+              <ItemMedia variant="icon" className="size-8 rounded-full border-0 bg-transparent text-icon">
+                <StickyNoteIcon className="size-4" />
               </ItemMedia>
               <ItemContent>
                 <ItemTitle className={note ? 'text-base font-normal' : 'text-base font-normal text-muted-foreground'}>
@@ -405,16 +401,16 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
       </div>
 
       <div className="sticky bottom-0 flex flex-col gap-2 border-t border-border bg-background px-4 pt-3 pb-4">
-        <div className="grid grid-cols-2 gap-2">
-          <Button size="lg" disabled={blocked} onClick={() => void done()}>
+        <div className="grid grid-cols-2 items-center gap-2">
+          <Button disabled={blocked} onClick={() => void done()}>
             Done
           </Button>
-          <Button size="lg" variant="secondary" disabled={blocked} onClick={() => setSheet('split')}>
+          <Button size="sm" variant="secondary" disabled={blocked} onClick={() => setSheet('split')}>
             Split
           </Button>
         </div>
         {d.byHand ? null : (
-          <Button variant="ghost" size="sm" className="min-h-12" disabled={saving} onClick={() => void evidence()}>
+          <Button variant="ghost" size="sm" disabled={saving} onClick={() => void evidence()}>
             Not a payment? Keep it as evidence
           </Button>
         )}
@@ -553,7 +549,7 @@ function AddItem({ onAdd }: { onAdd: (description: string, amount: number) => vo
         {errors.description ? <FieldError>{errors.description}</FieldError> : null}
       </Field>
       <MoneyInput label="Price" value={amount} error={errors.amount} onChange={setAmount} />
-      <Button type="submit" size="lg" variant="secondary">
+      <Button type="submit" size="sm" variant="secondary" className="self-start">
         Add item
       </Button>
     </form>

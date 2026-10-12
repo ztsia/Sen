@@ -17,8 +17,9 @@ import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { useUi } from '@/frame/ui-store';
 import { momentLabel } from '@/lib/dates';
+import { readableName } from '@/lib/names';
 import { categoryIcon } from '../icons';
-import { Loaded, useGo, useScreenSearch } from '../kit';
+import { Loaded, Section, useGo, useScreenSearch } from '../kit';
 import { settled } from '@/lib/tap-guard';
 
 /**
@@ -83,7 +84,7 @@ function TxnBody({ v }: { v: TxnView }) {
   const hasCategory = !isTransfer && (t.kind === 'spend' || t.kind === 'income' || t.direction === 'in');
 
   const facts: Fact[] = [
-    { label: isTransfer ? 'Transfer' : t.direction === 'in' ? 'From' : 'Merchant', value: v.title },
+    { label: isTransfer ? 'Transfer' : t.direction === 'in' ? 'From' : 'Merchant', value: readableName(v.title) },
     { label: 'When', value: momentLabel(new Date(t.occurredAt)) },
     ...(v.account ? [{ label: 'Account', value: v.account }] : []),
     ...(v.otherAccount ? [{ label: 'Other account', value: v.otherAccount }] : []),
@@ -191,26 +192,24 @@ function TxnBody({ v }: { v: TxnView }) {
       />
 
       {v.bank ? (
-        <section className="flex flex-col gap-2 px-4 pt-6" aria-label="What the bank said">
-          <h2 className="text-sm font-semibold text-muted-foreground">What the bank said</h2>
-          <div className="selectable flex flex-col gap-1 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+        <Section title="What the bank said">
+          <div className="selectable mx-4 flex flex-col gap-1 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
             <p className="font-medium">{v.bank.app}</p>
             <p className="text-foreground">{v.bank.title}</p>
             <p className="wrap-anywhere">{v.bank.text}</p>
           </div>
-          <div className="-mx-4">
+          <div>
             <SettingsRow
               label="Correct amount, time or account"
               onOpen={() => toastDone('Correcting arrives with B12')}
             />
           </div>
-        </section>
+        </Section>
       ) : null}
 
       {v.changes.length ? (
-        <section className="flex flex-col gap-1 px-4 pt-6" aria-label="Changes">
-          <h2 className="text-sm font-semibold text-muted-foreground">Changes</h2>
-          <ul className="flex flex-col gap-2">
+        <Section title="Changes">
+          <ul className="flex flex-col gap-2 px-4">
             {v.changes.map((c) => (
               <li key={`${c.at}-${c.what}`} className="text-sm">
                 <span className="text-muted-foreground">{momentLabel(new Date(c.at))}</span> · {c.what},{' '}
@@ -218,13 +217,13 @@ function TxnBody({ v }: { v: TxnView }) {
               </li>
             ))}
           </ul>
-        </section>
+        </Section>
       ) : null}
 
       <CategorySheet
         open={catOpen}
         onOpenChange={setCatOpen}
-        title={`${v.title}: which category?`}
+        title={`${readableName(v.title)}: which category?`}
         choices={cats.data ?? []}
         current={t.categoryId}
         askScope={v.fromRule}

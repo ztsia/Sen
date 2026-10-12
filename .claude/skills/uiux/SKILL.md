@@ -73,14 +73,33 @@ Check every element of a screen, new or existing, for these, and fix them before
 - **Hand-rolled** where a component or pattern already exists.
 - **Wrong component**, or a component used against its docs.
 - **Correct, but a prop, variant or composition would lift it.** Use it.
+- **Flat or upside-down hierarchy:** a heading the same size as, or smaller than, what it heads;
+  every element at one size; every button drawn as big as the main action. The screen then reads as
+  dense and overwhelming even with a few lines on it (the owner's review of B04, D129).
 
 ## Phone checklist
 
 **Reach and layout**
 - The primary action sits in the bottom third of the screen, reachable one-handed. Nothing critical
   goes in a top corner.
-- Touch targets are at least 48 px, with 8 px between them.
+- Touch targets are at least 48 px, with 8 px between them. **48 px is the target, not the drawn
+  size:** a chip is drawn 32, a secondary or icon button 40, and `tap` extends each to 48 for the
+  finger, as Android does.
 - One column.
+
+**Hierarchy and density** (`docs/ui/patterns.md` §2, *Sizes*, D129)
+- Every element sits at one level (title, section, body, secondary, caption), and the level sets its
+  text, the height it's drawn, its icons and the space around it together. A button belongs to the
+  level of the text beside it, not a level of its own.
+- A heading is always bigger than what it heads: section headings `text-lg` semibold in the text
+  colour, never small grey labels above bigger text.
+- One main action per screen is drawn at 48 (`size="default"`); every other button `size="sm"`,
+  filters and choices `size="chip"`, in one row that scrolls sideways. Heights come from the size
+  prop, never from `className`.
+- Secondary lines `text-sm` muted, times and marks `text-xs`; a row's leading mark a 32 px disc;
+  amounts in a list in normal weight. Payees sent in capitals are shown through `readableName`.
+- Check by screenshot at 390×844: where does the eye land first, second, third? If everything
+  competes, step something down a level before adding space.
 
 **Navigation**
 - One navigation (`spec_v2.md` §9.1): the bottom tab bar. No sidebar, and no second navigation.
@@ -206,7 +225,8 @@ checklist above, the checklist wins.
 - **Every building block starts from a shadcn component.** Add it with the CLI (`npx shadcn@latest
   add`, `--dry-run` before overwriting a customised one) and import it from `@/components/ui`.
 - **Customise the shadcn file itself** (`apps/web/src/components/ui/<component>.tsx`) when its
-  defaults don't fit the phone: 48 px targets, the look's tokens and radii, no clipping at 1.5×.
+  defaults don't fit the phone: 48 px touch targets drawn at their level (§2, *Sizes*), the look's
+  tokens and radii, no clipping at 1.5×.
   Never write a second, hand-rolled version of something shadcn has. A pattern from `patterns.md`
   is a composition of these components (in `apps/web/src/blocks/`), not a replacement for them.
 - Semantic colour pairs (`primary` with `primary-foreground`), defined in full for `:root` and

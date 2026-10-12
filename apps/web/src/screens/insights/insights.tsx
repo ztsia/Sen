@@ -270,12 +270,16 @@ function whereWentCard(v: InsightsView, go: Go) {
     >
       <CategoryBars rows={rows.map((r) => ({ label: r.label, sen: r.sen, typical: r.typical }))} />
       <p className="text-xs text-muted-foreground">The bar is this cycle; the line is the usual level by this day.</p>
-      <div className="flex flex-wrap gap-2" role="group" aria-label="See the payments in a category">
+      <div
+        className="flex gap-2 overflow-x-auto py-2 [scrollbar-width:none]"
+        role="group"
+        aria-label="See the payments in a category"
+      >
         {rows.map((r) => (
           <Button
             key={r.id}
             variant="outline"
-            size="sm"
+            size="chip"
             onClick={() => go('payments', { cycle: v.cycle.id, category: r.id })}
           >
             {r.label}

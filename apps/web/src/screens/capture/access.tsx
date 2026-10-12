@@ -49,7 +49,7 @@ export default function CaptureAccess() {
                 Android asks this of apps installed from outside Play. It changes nothing else.
               </p>
               <div className="px-4 pt-3">
-                <Button variant="outline" onClick={() => open(() => SenCapture.openAppInfo())}>
+                <Button variant="outline" size="sm" onClick={() => open(() => SenCapture.openAppInfo())}>
                   Open Sen's app info
                 </Button>
               </div>
@@ -57,7 +57,6 @@ export default function CaptureAccess() {
           ) : null}
           <BottomAction>
             <Button
-              size="lg"
               variant={s.access ? 'outline' : 'default'}
               onClick={() => open(() => SenCapture.openNotificationAccess())}
             >

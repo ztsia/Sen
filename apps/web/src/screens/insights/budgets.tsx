@@ -58,11 +58,7 @@ function BudgetsBody({ v }: { v: BudgetsView }) {
         <EmptyState line="No budgets yet. Add one to see how a category is going." />
       )}
       <BottomAction>
-        <Button
-          size="lg"
-          disabled={!v.others.length}
-          onClick={() => setEditing({ categoryId: null, label: '', cap: null })}
-        >
+        <Button disabled={!v.others.length} onClick={() => setEditing({ categoryId: null, label: '', cap: null })}>
           <PlusIcon aria-hidden="true" />
           Add a budget
         </Button>
@@ -128,12 +124,16 @@ function BudgetForm({
   return (
     <div className="flex flex-col gap-4">
       {editing.categoryId === null ? (
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Category">
+        <div
+          className="-mx-4 flex gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none]"
+          role="group"
+          aria-label="Category"
+        >
           {others.map((o) => (
             <Button
               key={o.id}
               variant={categoryId === o.id ? 'default' : 'outline'}
-              size="sm"
+              size="chip"
               aria-pressed={categoryId === o.id}
               className={cn(categoryId === o.id && 'font-semibold')}
               onClick={() => {
@@ -157,9 +157,7 @@ function BudgetForm({
         autoFocus={editing.categoryId !== null}
         onEnter={() => void save()}
       />
-      <Button size="lg" onClick={() => void save()}>
-        Save
-      </Button>
+      <Button onClick={() => void save()}>Save</Button>
     </div>
   );
 }

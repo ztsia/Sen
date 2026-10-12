@@ -101,9 +101,13 @@ function Body({ v, from }: { v: SenView; from: string }) {
         </Alert>
       ) : null}
       {ready && !streaming && !text && !file && v.suggestions.length ? (
-        <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Suggested questions">
+        <div
+          className="flex gap-2 overflow-x-auto py-2 [scrollbar-width:none]"
+          role="group"
+          aria-label="Suggested questions"
+        >
           {v.suggestions.map((s) => (
-            <Button key={s} variant="outline" size="sm" className="shrink-0" onClick={() => send(s, null)}>
+            <Button key={s} variant="outline" size="chip" className="shrink-0" onClick={() => send(s, null)}>
               {s}
             </Button>
           ))}
