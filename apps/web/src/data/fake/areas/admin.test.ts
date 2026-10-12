@@ -18,6 +18,7 @@ const invite = (email: string, shell: boolean) =>
     switches: { capture: true, agent: true, splits: true, email: true, calendar: false, claims: false },
     welcome: 500,
     allowance: 200,
+    unlimited: false,
   }) as const;
 
 describe('Settings admin area', () => {

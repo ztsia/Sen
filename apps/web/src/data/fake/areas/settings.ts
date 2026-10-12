@@ -1,4 +1,4 @@
-import { SettingsView } from '@sen/core/views';
+import type { SettingsView } from '@sen/core/views';
 import type { Db } from '../db';
 import type { AreaApply } from './ctx';
 import { uid } from '../ids';
@@ -133,12 +133,16 @@ export const applySettings: AreaApply = (db, cmd) => {
     case 'claims.essSender':
       s.claims.essSender = typeof value === 'string' && value.trim() ? value.trim() : null;
       return { said: 'ESS sender saved', touched: [] };
-    case 'claims.ess': {
-      // the ESS section's state as a whole (signed in, the capabilities, the last payslip): the
-      // shell holds it natively from B25, so the skeleton just keeps what the screen sends
-      if (!value || typeof value !== 'object') throw new Error('That ESS state is not valid.');
-      s.claims.ess = SettingsView.shape.claims.shape.ess.parse(value);
-      return { said: s.claims.ess.signedIn ? 'Saved' : 'ESS password forgotten', touched: [] };
+    // ESS (the shell holds it natively from B25): signed in or not, and a recipe imported
+    case 'claims.ess.signedIn':
+      if (typeof value !== 'boolean') throw new Error('That ESS state is not valid.');
+      s.claims.ess.signedIn = value;
+      return { said: value ? 'Saved' : 'ESS password forgotten', touched: [] };
+    case 'claims.ess.recipe': {
+      const cap = s.claims.ess.capabilities.find((c) => c.name === value);
+      if (!cap) throw new Error('Sen has no step by that name.');
+      cap.recorded = true;
+      return { said: 'Recipe imported', touched: [] };
     }
     case 'calendar':
     case 'sen.calendar':

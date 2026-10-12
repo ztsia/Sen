@@ -123,8 +123,8 @@ export function readPublicSplit(token: string): PublicSplitView {
     return {
       merchant: '',
       total: 0,
-      at: s.at,
-      // a closed link shows nothing of the bill, not even who paid (screens.md)
+      // a closed link shows nothing of the bill, not even when or who paid (screens.md)
+      at: null,
       payer: '',
       state: 'closed',
       you: null,

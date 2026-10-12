@@ -69,7 +69,7 @@ function Body({ token, v }: { token: string; v: PublicSplitView }) {
         <BillHeader
           merchant={v.merchant}
           total={v.total}
-          line={`Paid by ${v.payer} · ${momentLabel(new Date(v.at))}`}
+          line={`Paid by ${v.payer} · ${v.at ? momentLabel(new Date(v.at)) : ''}`}
         />
         {named ? (
           <p className="text-muted-foreground">Hi {v.you}. Sen remembers this browser.</p>

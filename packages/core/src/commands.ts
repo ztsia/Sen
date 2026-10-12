@@ -107,6 +107,8 @@ export const Command = z.discriminatedUnion('type', [
   z.object({ type: z.literal('split.paid'), splitId: Id, memberId: Id, paid: z.boolean() }),
   /** *I've paid*, for a payment Sen can't see (D65). */
   z.object({ type: z.literal('split.paid-them'), splitId: Id }),
+  /** *Write off*, on a split you paid: what friends still owe stops being owed, and is your spending (§7). */
+  z.object({ type: z.literal('split.write-off'), splitId: Id }),
   /** The bank's figures (D18): each difference is booked as *Unaccounted*. */
   z.object({
     type: z.literal('balance.check'),
@@ -128,17 +130,27 @@ export const Command = z.discriminatedUnion('type', [
     from: z.string().max(40),
   }),
   /** An `ask_user` button. */
-  z.object({ type: z.literal('sen.answer'), askId: z.string(), answer: z.string() }),
+  z.object({ type: z.literal('sen.answer'), askId: z.string().max(64), answer: z.string().max(200) }),
   /** A proposal card, in the chat or in Review (`/proposals/:id`). */
-  z.object({ type: z.literal('proposal.answer'), id: z.string(), answer: z.enum(['apply', 'dismiss']) }),
+  z.object({ type: z.literal('proposal.answer'), id: z.string().max(64), answer: z.enum(['apply', 'dismiss']) }),
   /** A research draft's figures confirmed into `products` (§12.2 rule 6). */
-  z.object({ type: z.literal('research.confirm'), messageId: z.string() }),
-  z.object({ type: z.literal('memory.forget'), id: z.string() }),
+  z.object({ type: z.literal('research.confirm'), messageId: z.string().max(64) }),
+  z.object({ type: z.literal('memory.forget'), id: z.string().max(64) }),
   /** One Settings value, by its path: `you.payday`, `sen.calendar`, `claims.essSender`. */
   z.object({
     type: z.literal('setting.set'),
     key: z.string().max(100),
-    value: z.union([z.boolean(), z.string().max(2000), Sen, z.null(), z.record(z.string(), z.unknown())]),
+    // a record is a small object of plain values, like `you.payday`'s `{ kind: 'day', day: 25 }`
+    // (QA B04 run 2, 20)
+    value: z.union([
+      z.boolean(),
+      z.string().max(2000),
+      Sen,
+      z.null(),
+      z
+        .record(z.string().max(40), z.union([z.boolean(), z.string().max(200), Sen, z.null()]))
+        .refine((r) => Object.keys(r).length <= 10, 'Too many fields'),
+    ]),
   }),
   /** Settings → Members (D52, D98): invite, a switch, credit, suspend, remove. */
   z.object({
@@ -155,7 +167,12 @@ export const Command = z.discriminatedUnion('type', [
     }),
     welcome: Amount,
     allowance: Amount,
+    /** *Unlimited*: their charges are recorded as covered, and the allowance doesn't apply (§12.6). */
+    unlimited: z.boolean(),
   }),
+  /** An invitation not yet accepted: sent again, or withdrawn (D98). */
+  z.object({ type: z.literal('member.resend'), id: Id }),
+  z.object({ type: z.literal('member.revoke'), id: Id }),
   z.object({
     type: z.literal('member.set'),
     id: Id,
@@ -163,7 +180,8 @@ export const Command = z.discriminatedUnion('type', [
     // money in integer sen, within Sen's range, so a grant can't pass a safe integer (QA B04 run 1, 11)
     value: z.union([z.boolean(), Sen, z.string().max(200)]),
   }),
-  z.object({ type: z.literal('member.remove'), id: Id }),
+  /** *Remove*, after offering them an export of their own data (D52). */
+  z.object({ type: z.literal('member.remove'), id: Id, exportFirst: z.boolean().optional() }),
   /** Payday (§9.7): the claims question, a step skipped (it waits in Review), the plan used. */
   z.object({ type: z.literal('payday.claims'), answer: z.enum(['yes', 'no', 'undo']) }),
   z.object({ type: z.literal('payday.skip'), step: z.enum(['claims', 'balance', 'look-back', 'plan']) }),

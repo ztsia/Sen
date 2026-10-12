@@ -233,7 +233,7 @@ describe('split-public, on its own state', () => {
     const v = readPublicSplit('demo-closed');
     expect(v).toMatchObject({ state: 'closed', items: [], people: [], pay: null, you: null });
     // nothing of the bill either (QA B04 run 1, finding 3)
-    expect(v).toMatchObject({ merchant: '', total: 0, payer: '', yourShare: 0 });
+    expect(v).toMatchObject({ merchant: '', total: 0, payer: '', at: null, yourShare: 0 });
   });
 
   it('everyone done with an item nobody ticked stays still changing (D71)', () => {

@@ -43,6 +43,8 @@ export interface ScreenSearch {
   category?: string;
   account?: string;
   shared?: boolean;
+  /** A KL day, `2026-10-14`: `manual` opened for a day Sen asked about (flows.md, the gap). */
+  day?: string;
 }
 const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined);
 
@@ -94,6 +96,7 @@ const anyScreen = createRoute({
     category: str(s.category),
     account: str(s.account),
     shared: s.shared === true || s.shared === 'true' ? true : undefined,
+    day: typeof s.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s.day) ? s.day : undefined,
   }),
   beforeLoad: ({ params }) => {
     const screen = screenById.get(params._splat ?? '');

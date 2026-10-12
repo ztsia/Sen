@@ -344,6 +344,7 @@ export function splitView(db: Db, id: string): SplitView | null {
     mySpending: final && bill.txn ? spendingOf(db, bill.txn) : myShare,
     owe: !mine && final && payer ? { to: payer.name, sen: myShare, paid: me.paidAt !== null } : null,
     payerQr: mine ? db.settings.you.qr : true,
+    writtenOff: 0,
     txnId: s.transactionId,
   };
 }

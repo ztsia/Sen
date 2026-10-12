@@ -132,6 +132,7 @@ function InviteSheet({
       switches: { ...DEFAULTS, ...on } as typeof DEFAULTS,
       welcome: w.sen,
       allowance: a.sen,
+      unlimited: false,
     });
     if (r) {
       setEmail('');

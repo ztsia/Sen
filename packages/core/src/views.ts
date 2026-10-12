@@ -488,6 +488,8 @@ export const SplitView = z.object({
   owe: z.object({ to: z.string(), sen: Amount, paid: z.boolean() }).nullable(),
   /** The payer's DuitNow QR is set (Settings → You). */
   payerQr: z.boolean(),
+  /** You paid and wrote off what was still owed (*Write off*): that part is your spending now. */
+  writtenOff: Amount,
   txnId: Id.nullable(),
 });
 export type SplitView = z.infer<typeof SplitView>;
@@ -517,7 +519,8 @@ export type SharedView = z.infer<typeof SharedView>;
 export const PublicSplitView = z.object({
   merchant: z.string(),
   total: Amount,
-  at: Instant,
+  /** None once it's closed: a closed link shows nothing of the bill. */
+  at: Instant.nullable(),
   payer: z.string(),
   state: z.enum(['changing', 'final', 'closed']),
   /** The friend this browser remembers, or none: the name box. */

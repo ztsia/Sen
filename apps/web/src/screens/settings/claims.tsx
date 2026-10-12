@@ -135,8 +135,8 @@ function Ess({ ess }: { ess: Claims['ess'] }) {
   const { setSenOpen } = useUi();
   const [signIn, setSignIn] = useState(false);
   const [forget, setForget] = useState(false);
-  const set = (next: Claims['ess'], quiet = false) =>
-    write({ type: 'setting.set', key: 'claims.ess', value: next }, { quiet });
+  const setSignedIn = (signedIn: boolean, quiet = false) =>
+    write({ type: 'setting.set', key: 'claims.ess.signedIn', value: signedIn }, { quiet });
   return (
     <Section title="ESS">
       {ess.signedIn ? (
@@ -167,10 +167,7 @@ function Ess({ ess }: { ess: Claims['ess'] }) {
               variant="ghost"
               size="sm"
               onClick={() =>
-                void set({
-                  ...ess,
-                  capabilities: ess.capabilities.map((x) => (x.name === c.name ? { ...x, recorded: true } : x)),
-                })
+                void write({ type: 'setting.set', key: 'claims.ess.recipe', value: c.name })
               }
             >
               Import recipe
@@ -190,7 +187,7 @@ function Ess({ ess }: { ess: Claims['ess'] }) {
         <Button
           className="w-full"
           onClick={() =>
-            void set({ ...ess, signedIn: true }).then((r) => {
+            void setSignedIn(true).then((r) => {
               if (r) setSignIn(false);
             })
           }
@@ -206,7 +203,7 @@ function Ess({ ess }: { ess: Claims['ess'] }) {
         action="Forget password"
         onConfirm={() => {
           setForget(false);
-          void set({ ...ess, signedIn: false }, true).then((r) => r && toastDone('Forgot your ESS password'));
+          void setSignedIn(false, true).then((r) => r && toastDone('Forgot your ESS password'));
         }}
       />
     </Section>
