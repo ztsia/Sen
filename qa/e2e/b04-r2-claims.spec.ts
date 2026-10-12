@@ -1,7 +1,12 @@
 import { test } from '@playwright/test';
 import { open, shot, text } from './b04-helpers';
 test.use({ baseURL: 'http://127.0.0.1:5180' });
-const lines = async (p: import('@playwright/test').Page, n = 40) => (await text(p)).split('\n').filter((l) => l && !/EVERY SEN|^Home$|^Review$|^Scan$|^Insights$|^More$|to review|^RM \d/.test(l)).slice(0, n).join(' | ');
+const lines = async (p: import('@playwright/test').Page, n = 40) =>
+  (await text(p))
+    .split('\n')
+    .filter((l) => l && !/EVERY SEN|^Home$|^Review$|^Scan$|^Insights$|^More$|to review|^RM \d/.test(l))
+    .slice(0, n)
+    .join(' | ');
 test('F9: claims coherence', async ({ page }) => {
   await open(page, '/s/settings/claims');
   console.log('SETTINGS CLAIMS:', (await lines(page, 14)).slice(0, 420));

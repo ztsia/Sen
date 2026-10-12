@@ -1,8 +1,16 @@
 import { test } from '@playwright/test';
 import { open, shot } from './b04-helpers';
 test.use({ baseURL: 'http://127.0.0.1:5180' });
-const hero = async (p: import('@playwright/test').Page) => (await p.getByTestId('hero').innerText()).replace(/\n/g, ' ');
-const sheet = async (p: import('@playwright/test').Page) => { await p.getByTestId('hero').click(); await p.waitForTimeout(600); const t = (await p.getByRole('dialog').innerText()).split('\n').filter(Boolean).slice(0, 14).join(' | '); await p.keyboard.press('Escape'); await p.waitForTimeout(400); return t; };
+const hero = async (p: import('@playwright/test').Page) =>
+  (await p.getByTestId('hero').innerText()).replace(/\n/g, ' ');
+const sheet = async (p: import('@playwright/test').Page) => {
+  await p.getByTestId('hero').click();
+  await p.waitForTimeout(600);
+  const t = (await p.getByRole('dialog').innerText()).split('\n').filter(Boolean).slice(0, 14).join(' | ');
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(400);
+  return t;
+};
 test('F21 income vs claims across the payday', async ({ page }) => {
   await open(page, '/?scenario=payday');
   console.log('card up: hero', await hero(page));

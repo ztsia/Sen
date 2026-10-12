@@ -1,7 +1,12 @@
 import { test } from '@playwright/test';
 import { db, open, shot, text } from './b04-helpers';
 test.use({ baseURL: 'http://127.0.0.1:5180' });
-const L = async (p: import('@playwright/test').Page, n = 24) => (await text(p)).split('\n').filter((l) => l && !/EVERY SEN|^Home$|^Review$|^Scan$|^Insights$|^More$|to review|^\d+$/.test(l)).slice(0, n).join(' | ');
+const L = async (p: import('@playwright/test').Page, n = 24) =>
+  (await text(p))
+    .split('\n')
+    .filter((l) => l && !/EVERY SEN|^Home$|^Review$|^Scan$|^Insights$|^More$|to review|^\d+$/.test(l))
+    .slice(0, n)
+    .join(' | ');
 const toasts = (p: import('@playwright/test').Page) => p.locator('[data-sonner-toast]').allInnerTexts();
 
 test('PAY on split you owe (HAIDILAO) and on split-public final', async ({ page }) => {
@@ -15,7 +20,13 @@ test('PAY on split you owe (HAIDILAO) and on split-public final', async ({ page 
   for (const b of ['Pay with TNG', 'Other app…', 'Save QR']) {
     await grp.getByRole('button', { name: b }).click();
     await page.waitForTimeout(500);
-    console.log(b, '=> toast', JSON.stringify(await toasts(page)), '| clipboard', JSON.stringify(await page.evaluate(() => navigator.clipboard.readText())));
+    console.log(
+      b,
+      '=> toast',
+      JSON.stringify(await toasts(page)),
+      '| clipboard',
+      JSON.stringify(await page.evaluate(() => navigator.clipboard.readText())),
+    );
     await page.waitForTimeout(600);
   }
   await grp.getByRole('button', { name: 'Pay with TNG' }).dblclick();
@@ -24,7 +35,7 @@ test('PAY on split you owe (HAIDILAO) and on split-public final', async ({ page 
   // after I've paid, hidden
   await page.getByRole('button', { name: "I've paid" }).click();
   await page.waitForTimeout(700);
-  console.log('after I\'ve paid, pay buttons:', await page.getByRole('group', { name: 'Pay from this phone' }).count());
+  console.log("after I've paid, pay buttons:", await page.getByRole('group', { name: 'Pay from this phone' }).count());
   // public final
   await open(page, '/s/split-public?id=demo-final');
   const g2 = page.getByRole('group', { name: 'Pay from this phone' });
@@ -32,13 +43,22 @@ test('PAY on split you owe (HAIDILAO) and on split-public final', async ({ page 
   for (const b of ['Pay with an app', 'Save QR']) {
     await g2.getByRole('button', { name: b }).click();
     await page.waitForTimeout(500);
-    console.log(b, '=> toast', JSON.stringify(await toasts(page)), '| clipboard', JSON.stringify(await page.evaluate(() => navigator.clipboard.readText())));
+    console.log(
+      b,
+      '=> toast',
+      JSON.stringify(await toasts(page)),
+      '| clipboard',
+      JSON.stringify(await page.evaluate(() => navigator.clipboard.readText())),
+    );
     await page.waitForTimeout(600);
   }
   await shot(page, 'R3-PAY-step-2-public-final');
   // still changing / not final -> none
   await open(page, '/s/split-public?id=demo');
-  console.log('public still changing pay group:', await page.getByRole('group', { name: 'Pay from this phone' }).count());
+  console.log(
+    'public still changing pay group:',
+    await page.getByRole('group', { name: 'Pay from this phone' }).count(),
+  );
   // payer's own split (BBQ): none
   await open(page, '/s/shared');
   await page.getByRole('button', { name: /^BBQ PLACE/ }).click();

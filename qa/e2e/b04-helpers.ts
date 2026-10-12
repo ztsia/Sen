@@ -7,7 +7,10 @@ fs.mkdirSync(OUT, { recursive: true });
 fs.mkdirSync(TXT, { recursive: true });
 
 /** Assert first, then call this: a screenshot is evidence for a person, not the test. */
-export const shot = (page: Page, name: string) => page.screenshot({ path: `${OUT}${name}.png`, timeout: 15000 }).catch((e) => console.log('SHOT FAILED', name, String(e).slice(0, 80)));
+export const shot = (page: Page, name: string) =>
+  page
+    .screenshot({ path: `${OUT}${name}.png`, timeout: 15000 })
+    .catch((e) => console.log('SHOT FAILED', name, String(e).slice(0, 80)));
 
 export function watch(page: Page) {
   const errors: string[] = [];
@@ -30,7 +33,8 @@ export async function open(page: Page, path: string, look = 'minted', mode = 'li
   await page.goto(`${path}${sep}look=${look}&mode=${mode}`);
   await expect(page.locator('html')).toHaveAttribute('data-look', look);
   await page.waitForFunction(
-    () => document.querySelectorAll('svg').length > 0 || (document.querySelector('main')?.textContent?.length ?? 0) > 10,
+    () =>
+      document.querySelectorAll('svg').length > 0 || (document.querySelector('main')?.textContent?.length ?? 0) > 10,
   );
   await settled(page);
 }

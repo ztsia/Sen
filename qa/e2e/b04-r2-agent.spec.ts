@@ -34,7 +34,9 @@ test('F5: a scenario with the agent off has no Sen button', async ({ page }) => 
   await tabs(page).getByRole('link', { name: /^Home/ }).click();
   await page.waitForTimeout(500);
   console.log('Home note card with agent off:', await page.getByText(/Sen ·/).count(), '| Review suggestion bar:');
-  await tabs(page).getByRole('link', { name: /^Review/ }).click();
+  await tabs(page)
+    .getByRole('link', { name: /^Review/ })
+    .click();
   await page.waitForTimeout(500);
   console.log('Review "Sen suggested" shown:', await page.getByText(/Sen suggested/).count());
 });
