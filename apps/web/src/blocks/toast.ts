@@ -40,3 +40,10 @@ export function toastUndo(message: string, onUndo: () => void) {
 export function toastDone(message: string) {
   show(message);
 }
+
+/** Take the last toast down: a refusal about a file shouldn't follow the next one onto its screen. */
+export function dismissToast() {
+  if (!current?.up) return;
+  current.up = false;
+  toast.dismiss(current.id);
+}

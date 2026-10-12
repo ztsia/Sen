@@ -166,9 +166,7 @@ function Ess({ ess }: { ess: Claims['ess'] }) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() =>
-                void write({ type: 'setting.set', key: 'claims.ess.recipe', value: c.name })
-              }
+              onClick={() => void write({ type: 'setting.set', key: 'claims.ess.recipe', value: c.name })}
             >
               Import recipe
             </Button>

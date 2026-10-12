@@ -16,7 +16,7 @@ import { nowIso } from '@/lib/clock';
 import { newId } from '@/lib/uid';
 import type { Db } from '../db';
 import { uid } from '../ids';
-import { balances, payments } from '../views';
+import { balances, claimsInSalary, payments } from '../views';
 import type { AreaApply } from './ctx';
 
 // Accounts, claims and payday (B04), on made-up data: `accounts`, `account`, `balance-check`,
@@ -267,7 +267,8 @@ export function paydayView(db: Db): PaydayView | null {
     { label: 'Emergency fund', sen: rm(400), kind: 'aside' as const },
     { label: 'Holiday bucket', sen: rm(250), kind: 'aside' as const },
   ];
-  const left = amount - [...due, ...aside].reduce((s, l) => s + l.sen, 0);
+  // the claims' part of the salary isn't income to plan with (D45)
+  const left = amount - claimsInSalary(db) - [...due, ...aside].reduce((s, l) => s + l.sen, 0);
 
   return {
     salary: amount,

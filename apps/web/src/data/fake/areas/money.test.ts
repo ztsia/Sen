@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountsView, AccountView, BalanceCheckView, ClaimsView, ClaimView, PaydayView } from '@sen/core/views';
 import { rm } from '../scenario';
 import { buildScenario } from '../variants';
+import { home as homeView } from '../views';
 import { balances } from '../views';
 import { createFake } from '../index';
 import { acctId } from '../scenario';
@@ -120,14 +121,24 @@ describe('claims', () => {
 describe('payday', () => {
   const db = buildScenario('payday', false);
 
+  it("leaves the claims' part out of Home's income, as the payday card says (D45, QA B04 run 2, 21)", () => {
+    const home = homeView(db);
+    expect(home.figure.income).toBe(rm('5,800.00') - rm('152.00'));
+    // and each approved claim has nothing missing, so nothing waits to be sent
+    for (const c of claimsView(db).claims.filter((c) => c.period === 'September 2026'))
+      expect(c).toMatchObject({ status: 'approved', missing: [] });
+  });
+
   it('is the salary and four steps, step 1 already answered', () => {
     const v = PaydayView.parse(paydayView(db)!);
     expect(v.salary).toBe(rm('5,800.00'));
     expect(v.steps).toEqual(['claims', 'balance', 'look-back', 'plan']);
     expect(v.claims?.answered).toBe(true);
-    // the plan's figures add up: code's arithmetic
+    // the plan's figures add up to the salary less its claims part (D45): code's arithmetic
     const total = v.plan!.lines.reduce((s, l) => s + l.sen, 0);
-    expect(total).toBe(v.salary);
+    const claims = v.claims!.claims.reduce((s, l) => s + l.sen, 0);
+    expect(claims).toBe(rm('152.00'));
+    expect(total + claims).toBe(v.salary);
   });
 
   it('asks the question after Undo', async () => {

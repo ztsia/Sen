@@ -78,3 +78,35 @@ describe('setting.set', () => {
     expect(() => set(db, 'nope.nothing', true)).toThrow('Unknown setting');
   });
 });
+
+describe('bounds and ESS (QA B04 run 2, 15 and 20)', () => {
+  it('takes a small record of plain values, and refuses a large or nested one', () => {
+    const ok = Command.safeParse({ type: 'setting.set', key: 'you.payday', value: { kind: 'day', day: 25 } });
+    expect(ok.success).toBe(true);
+    const huge = Object.fromEntries(Array.from({ length: 11 }, (_, i) => [`k${i}`, 'x']));
+    expect(Command.safeParse({ type: 'setting.set', key: 'x', value: huge }).success).toBe(false);
+    expect(Command.safeParse({ type: 'setting.set', key: 'x', value: { a: { b: 1 } } }).success).toBe(false);
+  });
+
+  it("bounds Sen's answers and ids", () => {
+    const long = 'x'.repeat(201);
+    expect(Command.safeParse({ type: 'sen.answer', askId: 'ask:gap', answer: long }).success).toBe(false);
+    expect(Command.safeParse({ type: 'memory.forget', id: 'x'.repeat(65) }).success).toBe(false);
+    expect(Command.safeParse({ type: 'research.confirm', messageId: 'x'.repeat(65) }).success).toBe(false);
+    expect(Command.safeParse({ type: 'proposal.answer', id: 'x'.repeat(65), answer: 'apply' }).success).toBe(false);
+  });
+
+  it('signs in to ESS and imports a recipe by key', () => {
+    const db = buildScenario('wei-ming', false);
+    set(db, 'claims.ess.signedIn', false);
+    expect(db.settings.claims.ess.signedIn).toBe(false);
+    set(db, 'claims.ess.signedIn', true);
+    expect(db.settings.claims.ess.signedIn).toBe(true);
+    const todo = db.settings.claims.ess.capabilities.find((c) => !c.recorded);
+    if (todo) {
+      set(db, 'claims.ess.recipe', todo.name);
+      expect(todo.recorded).toBe(true);
+    }
+    expect(() => set(db, 'claims.ess.recipe', 'No such step')).toThrow();
+  });
+});

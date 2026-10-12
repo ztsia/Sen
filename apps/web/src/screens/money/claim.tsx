@@ -21,6 +21,7 @@ import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { Loaded, Section, useGo, useScreenSearch } from '../kit';
 import { claimDue, claimState } from './claim-status';
+import { essHere, EssStandIn } from './ess';
 
 /**
  * One claim, the submission kit (screens.md `claim`, spec §13): each value in ESS's order with *Copy*,
@@ -183,7 +184,7 @@ function Body({ v }: { v: ClaimView }) {
 
       {open ? (
         <div className="flex flex-col gap-2 px-4 pt-6">
-          {v.ess ? (
+          {v.ess && essHere() && c.status === 'to_submit' ? (
             <>
               <Button
                 size="lg"
@@ -197,6 +198,7 @@ function Body({ v }: { v: ClaimView }) {
               >
                 <SendIcon /> {sending ? 'Sending to ESS…' : 'Send to ESS'}
               </Button>
+              <EssStandIn />
               {v.missing.length ? (
                 <p className="text-sm text-muted-foreground">Add what's missing first, then Sen can send it.</p>
               ) : null}

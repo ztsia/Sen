@@ -60,6 +60,8 @@ export function buildScenario(id: ScenarioId, empty: boolean): Db {
     case 'month':
       // a friend in a browser, not the admin: no Members, backups or the owner's estimate (D52)
       db.settings.admin = false;
+      // signed in as a friend, so Settings → Account shows their address, not Wei Ming's (QA B04 run 2, 22)
+      db.settings.email = 'huimin@example.com';
       return withoutCapture(db);
     case 'capture-off':
       db.health = [
@@ -95,7 +97,7 @@ function payday(db: Db): Db {
   db.payday = { stage: 'card' };
   // by payday, ESS has approved September's claims, so the payslip can carry them (D104)
   for (const c of db.claimState.claims)
-    if (c.period === 'September 2026') Object.assign(c, { status: 'approved', approvedAmount: c.amount });
+    if (c.period === 'September 2026') Object.assign(c, { status: 'approved', approvedAmount: c.amount, missing: [] });
   db.note = { text: 'Payday. October ended RM1,240 ahead, your best in four cycles.', at: '2026-10-30T09:15:00+08:00' };
   return db;
 }

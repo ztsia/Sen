@@ -152,6 +152,8 @@ function Body({ v, from }: { v: SenView; from: string }) {
           value={text}
           rows={1}
           onChange={(e) => setText(e.target.value)}
+          // sen.send takes 4000 characters at most (QA B04 run 2, 20)
+          maxLength={4000}
           placeholder={ready ? 'Ask Sen' : 'Sen is not answering right now'}
           aria-label="Message to Sen"
           disabled={!ready}

@@ -6,11 +6,12 @@ import { EmptyState } from '@/blocks/states';
 import { StatusCard } from '@/blocks/status';
 import { toastDone } from '@/blocks/toast';
 import { Button } from '@/components/ui/button';
-import { useClaims, useWrite } from '@/data/hooks';
+import { useClaims, useMe, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { Loaded, Section, useGo } from '../kit';
 import { claimDue, claimState } from './claim-status';
+import { essHere, EssStandIn } from './ess';
 
 /**
  * Claims (screens.md, spec §13): this period's claim per scheme with its amount, status, deadline and
@@ -31,11 +32,22 @@ export default function Claims() {
 function Body({ v }: { v: ClaimsView }) {
   const go = useGo();
   const write = useWrite();
+  const me = useMe();
   if (!v.claims.length)
-    return <EmptyState line="Each scheme's claim drafts itself on the 1st. Add a scheme in Settings → Claims." />;
+    return (
+      <EmptyState
+        line={
+          // a link to Claims can reach someone whose claims are off (D52): no scheme to add (QA B04 run 2, 22)
+          me.data && !me.data.claims
+            ? 'Claims are off for you. Whoever invited you to Sen can switch them on.'
+            : "Each scheme's claim drafts itself on the 1st. Add a scheme in Settings → Claims."
+        }
+      />
+    );
   const now = v.claims.filter((c) => c.period === v.period);
   const earlier = v.claims.filter((c) => c.period !== v.period);
-  const ready = now.filter((c) => c.status === 'to_submit' && !c.missing.length);
+  const toSubmit = now.filter((c) => c.status === 'to_submit');
+  const ready = toSubmit.filter((c) => !c.missing.length);
   return (
     <div className="flex flex-col pb-4">
       <Section title={v.period}>
@@ -55,7 +67,7 @@ function Body({ v }: { v: ClaimsView }) {
           >
             <DownloadIcon /> Download claim pack
           </Button>
-          {v.ess ? (
+          {v.ess && essHere() && toSubmit.length ? (
             <>
               <Button
                 size="lg"
@@ -69,7 +81,8 @@ function Body({ v }: { v: ClaimsView }) {
               >
                 <SendIcon /> Send to ESS
               </Button>
-              {now.length > ready.length ? (
+              <EssStandIn />
+              {toSubmit.length > ready.length ? (
                 <p className="text-sm text-muted-foreground">
                   A claim with evidence missing waits until you've added it.
                 </p>
