@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { db, dialog, open, shot, text, toast, watch } from './b04-helpers';
+import { open, shot, text, watch } from './b04-helpers';
 test.use({ baseURL: 'http://127.0.0.1:5180' });
-const body = async (p: import('@playwright/test').Page) => (await text(p)).split('\n').filter(Boolean).slice(0, 30).join(' | ');
+const body = async (p: import('@playwright/test').Page) =>
+  (await text(p)).split('\n').filter(Boolean).slice(0, 30).join(' | ');
 
 test('FLOW-13 new-look: keep, go back, switch off', async ({ page }) => {
   const w = watch(page);
@@ -37,12 +38,23 @@ test('FLOW-10 sign-in states', async ({ page }) => {
   await open(page, '/s/sign-in');
   const email = page.getByLabel('Your email');
   const send = page.getByRole('button', { name: 'Send the code' });
-  for (const bad of ['', 'abc', 'a@b', 'x'.repeat(400) + '@example.com', '<img src=x onerror=window.__p=1>@a.com', 'stranger@example.com']) {
+  for (const bad of [
+    '',
+    'abc',
+    'a@b',
+    'x'.repeat(400) + '@example.com',
+    '<img src=x onerror=window.__p=1>@a.com',
+    'stranger@example.com',
+  ]) {
     await open(page, '/s/sign-in');
     await email.fill(bad);
     await send.click();
     await page.waitForTimeout(200);
-    const t = (await text(page)).split('\n').filter((l) => /email|invitation|code/i.test(l)).slice(0, 3).join(' / ');
+    const t = (await text(page))
+      .split('\n')
+      .filter((l) => /email|invitation|code/i.test(l))
+      .slice(0, 3)
+      .join(' / ');
     console.log('EMAIL', JSON.stringify(bad.slice(0, 20)), '=>', t.slice(0, 160));
   }
   await shot(page, 'FLOW-10-step-1-invitation-only');
@@ -54,7 +66,19 @@ test('FLOW-10 sign-in states', async ({ page }) => {
     await code.fill(c);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await page.waitForTimeout(200);
-    console.log('CODE', JSON.stringify(c), '=> val', JSON.stringify(await code.inputValue()), (await text(page)).split('\n').filter((l) => /code|digits|expired|right/i.test(l)).slice(0, 3).join(' / ').slice(0, 140), page.url());
+    console.log(
+      'CODE',
+      JSON.stringify(c),
+      '=> val',
+      JSON.stringify(await code.inputValue()),
+      (await text(page))
+        .split('\n')
+        .filter((l) => /code|digits|expired|right/i.test(l))
+        .slice(0, 3)
+        .join(' / ')
+        .slice(0, 140),
+      page.url(),
+    );
   }
   await shot(page, 'FLOW-10-step-2-wrong-code');
   await code.fill('123456');
@@ -100,14 +124,26 @@ test('FLOW-C1 first-run, shell version, 7 steps', async ({ page }) => {
   await boxes.first().fill('abc');
   await page.getByRole('button', { name: 'Next' }).click();
   await page.waitForTimeout(300);
-  console.log('S5 bad balance:', (await text(page)).split('\n').filter((l) => /amount|ringgit/i.test(l)).join(' / '));
+  console.log(
+    'S5 bad balance:',
+    (await text(page))
+      .split('\n')
+      .filter((l) => /amount|ringgit/i.test(l))
+      .join(' / '),
+  );
   await boxes.first().fill('1,284.50');
   await page.getByRole('button', { name: 'Next' }).click();
   await page.waitForTimeout(400);
   console.log('S6', (await body(page)).slice(0, 300));
   await page.getByRole('button', { name: 'Next' }).click();
   await page.waitForTimeout(300);
-  console.log('S6 empty name:', (await text(page)).split('\n').filter((l) => /Type your name/i.test(l)).join(''));
+  console.log(
+    'S6 empty name:',
+    (await text(page))
+      .split('\n')
+      .filter((l) => /Type your name/i.test(l))
+      .join(''),
+  );
   await page.getByLabel('Your name').fill('  tan   wei ming ');
   await page.getByRole('button', { name: 'Next' }).click();
   await page.waitForTimeout(400);
@@ -117,7 +153,16 @@ test('FLOW-C1 first-run, shell version, 7 steps', async ({ page }) => {
     await page.getByLabel('Day of the month').fill(d);
     await page.getByRole('button', { name: 'Finish' }).click();
     await page.waitForTimeout(300);
-    console.log('payday day', JSON.stringify(d), '=>', (await text(page)).split('\n').filter((l) => /1 to 31/.test(l)).join('') || 'accepted', page.url());
+    console.log(
+      'payday day',
+      JSON.stringify(d),
+      '=>',
+      (await text(page))
+        .split('\n')
+        .filter((l) => /1 to 31/.test(l))
+        .join('') || 'accepted',
+      page.url(),
+    );
     if (!/first-run/.test(page.url())) break;
   }
   await page.waitForTimeout(800);

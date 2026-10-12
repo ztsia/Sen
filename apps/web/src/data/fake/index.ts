@@ -241,7 +241,12 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     payday: () => read(paydayView),
     categories: (kind) => read((d) => v.categoryChoices(d, kind)),
     accounts: () => read(v.accountChoices),
-    upload: async (file, forTxnId) => draftFor(file, forTxnId, false, file ? await sha256(file) : null),
+    upload: async (file, forTxnId) => {
+      const hash = file ? await sha256(file) : null;
+      // the same file twice is one receipt (§6.5): say so at once, rather than read it again (QA B04 run 1, 19)
+      if (hash && db.receipts.some((r) => r.contentHash === hash)) throw new Error('Already added');
+      return draftFor(file, forTxnId, false, hash);
+    },
     byHand: (forTxnId) => Promise.resolve(draftFor(null, forTxnId, true, null)),
     draft: (id) => read((d) => structuredClone(d.drafts.find((x) => x.id === id) ?? null)),
     matches: (total, at) => read((d) => matchesFor(d, total, at)),

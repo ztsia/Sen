@@ -242,7 +242,7 @@ function replyTo(text: string, file: boolean): SenPart[] {
     return [say("I can look that up for you. It would take a minute, and I'd show you every source.")];
   return [
     say(
-      "I looked at this cycle's payments. Nothing stands out, so I'd leave things as they are. Ask me about a category or a day and I'll check it.",
+      "That's a made-up answer: Sen's real replies arrive in B27. Ask about a category or a day to see how one reads.",
     ),
   ];
 }

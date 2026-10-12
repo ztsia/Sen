@@ -2,7 +2,10 @@ import { expect, test } from '@playwright/test';
 import { db, open, shot, toast } from './b04-helpers';
 test.use({ baseURL: 'http://127.0.0.1:5180' });
 const paidCount = (page: import('@playwright/test').Page) =>
-  db<number>(page, `(d) => d.members.filter(m => m.isMe && m.paidAt && d.splits.find(s=>s.id===m.splitId)?.paidBy==='other').length`);
+  db<number>(
+    page,
+    `(d) => d.members.filter(m => m.isMe && m.paidAt && d.splits.find(s=>s.id===m.splitId)?.paidBy==='other').length`,
+  );
 test('double tap I have paid then Undo', async ({ page }) => {
   await page.goto('/');
   const hd = await db<string>(page, `(d) => d.splits.find(s=>s.paidBy==='other').id`);

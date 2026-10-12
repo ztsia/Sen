@@ -355,7 +355,7 @@ for (const look of LOOKS)
       await sen.getByRole('button', { name: 'How am I doing this cycle?' }).click();
       await expect(sen.getByText('…').first()).toBeVisible({ timeout: 4000 });
       await clean(page, "Sen's sheet, streaming");
-      await expect(sen.getByText("I looked at this cycle's payments.")).toBeVisible({ timeout: 6000 });
+      await expect(sen.getByText("That's a made-up answer")).toBeVisible({ timeout: 6000 });
       await clean(page, "Sen's sheet, answered");
       // a file chosen to send
       await sen.locator('input[type="file"]').setInputFiles({

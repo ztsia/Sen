@@ -664,7 +664,7 @@ export const JOURNEYS: Record<string, Journey> = {
     await sen.getByRole('button', { name: 'How am I doing this cycle?' }).click();
     // the words arrive first, then the finished message
     await expect(sen.getByRole('list', { name: 'Conversation' })).toContainText('How am I doing this cycle?');
-    await expect(sen.getByText("I looked at this cycle's payments.")).toBeVisible({ timeout: 6000 });
+    await expect(sen.getByText("That's a made-up answer")).toBeVisible({ timeout: 6000 });
     await expect(sen.getByRole('button', { name: 'Send' })).toBeDisabled();
     await shot('the answer');
     // a figure it could not check says so

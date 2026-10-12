@@ -1,3 +1,4 @@
+import { Sen } from '@sen/core/schema';
 import { formatSen } from '@sen/core/money';
 import type { SettingsView } from '@sen/core/views';
 import type { Db } from '../db';
@@ -85,8 +86,8 @@ export function seedAdmin(db: Db): Pick<SettingsState, 'claims' | 'members' | 's
           id: uid('scheme:phone'),
           name: 'Phone bill',
           period: 'monthly',
-          cap: rm('80'),
-          deadlineDay: 7,
+          cap: rm('100'),
+          deadlineDay: 25,
           source: 'tagged',
         },
         {
@@ -94,7 +95,7 @@ export function seedAdmin(db: Db): Pick<SettingsState, 'claims' | 'members' | 's
           name: 'Parking',
           period: 'monthly',
           cap: rm('100'),
-          deadlineDay: 7,
+          deadlineDay: 20,
           source: 'evidence',
         },
       ],
@@ -132,7 +133,8 @@ export const applyMembers: AreaApply = (db, cmd) => {
   switch (cmd.type) {
     case 'member.invite': {
       const email = cmd.email.trim().toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail('Type their email, like name@example.com.');
+      if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email))
+        return fail('Type their email, like name@example.com.');
       if (s.members.some((m) => m.email.toLowerCase() === email))
         return { said: 'They are already invited', touched: [] };
       if (cmd.shell && seatsUsed(s.members) >= SEATS) return fail(`All ${SEATS} shell seats are taken.`);
@@ -197,6 +199,7 @@ export const applyMembers: AreaApply = (db, cmd) => {
           if (typeof v !== 'number' || v === 0) return fail('Type an amount.');
           const next = m.balance + v;
           if (next < 0) return fail(`${m.name} has only ${formatSen(m.balance)} of credit to refund.`);
+          if (!Sen.safeParse(next).success) return fail('That is more credit than Sen can hold.');
           m.balance = next;
           return { said: v > 0 ? `Granted credit to ${m.name}` : `Refunded credit from ${m.name}`, touched: [m.id] };
         }

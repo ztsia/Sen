@@ -73,6 +73,8 @@ export function settingsView(db: Db): SettingsView {
   const s = db.settings;
   return {
     ...s,
+    // the member list is the admin's alone (D52); nobody else's reads carry it
+    members: s.admin ? s.members : [],
     switches: {
       shell: true,
       capture: db.capture,

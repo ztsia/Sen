@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-import { expect, test } from '@playwright/test';
-import { db, dialog, open, shot, text, toast, watch } from './b04-helpers';
+import { test } from '@playwright/test';
+import { dialog, open, shot, watch } from './b04-helpers';
 test.use({ baseURL: 'http://127.0.0.1:5180' });
 test('widgets and surfaces', async ({ page }) => {
   const w = watch(page);

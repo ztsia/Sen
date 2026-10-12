@@ -124,7 +124,8 @@ export function readPublicSplit(token: string): PublicSplitView {
       merchant: '',
       total: 0,
       at: s.at,
-      payer: s.payer,
+      // a closed link shows nothing of the bill, not even who paid (screens.md)
+      payer: '',
       state: 'closed',
       you: null,
       people: [],

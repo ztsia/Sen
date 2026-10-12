@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { db, open, tabs } from './b04-helpers';
+import { db, open } from './b04-helpers';
 test.use({ baseURL: 'http://127.0.0.1:5180' });
 test('you payday day saved? SPA nav back', async ({ page }) => {
   await open(page, '/more');
@@ -15,7 +15,15 @@ test('you payday day saved? SPA nav back', async ({ page }) => {
   console.log('url after back', page.url());
   await page.getByRole('button', { name: /^You/ }).click();
   await page.waitForTimeout(800);
-  for (const n of ['Last working day', 'A day', 'Not set']) console.log(n, await page.getByRole('radio', { name: new RegExp(n) }).getAttribute('aria-checked'));
-  console.log('day field:', await page.getByLabel(/Day/).first().inputValue().catch(() => 'no day field'));
+  for (const n of ['Last working day', 'A day', 'Not set'])
+    console.log(n, await page.getByRole('radio', { name: new RegExp(n) }).getAttribute('aria-checked'));
+  console.log(
+    'day field:',
+    await page
+      .getByLabel(/Day/)
+      .first()
+      .inputValue()
+      .catch(() => 'no day field'),
+  );
   console.log('db:', await db<string>(page, `(d) => JSON.stringify(d.settings.you.payday)`));
 });

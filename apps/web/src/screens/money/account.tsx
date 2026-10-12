@@ -21,9 +21,14 @@ export default function Account() {
   const q = useAccount(id ?? '');
   return (
     <Screen bar={<AppBar title="Account" />}>
-      <Loaded q={q} what="this account">
-        {(v) => (v ? <Body v={v} /> : <Gone />)}
-      </Loaded>
+      {/* no id (an old or hand-typed link): gone, not loading forever (QA B04 run 1, finding 10) */}
+      {id ? (
+        <Loaded q={q} what="this account">
+          {(v) => (v ? <Body v={v} /> : <Gone />)}
+        </Loaded>
+      ) : (
+        <Gone />
+      )}
     </Screen>
   );
 }

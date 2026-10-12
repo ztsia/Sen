@@ -3,7 +3,23 @@ import { shot, text, watch } from './b04-helpers';
 test.use({ baseURL: 'http://127.0.0.1:5182' });
 test('production shows nothing made up', async ({ page }) => {
   const w = watch(page);
-  const routes = ['/', '/dev/gallery', '/s/split-public?id=demo', '/s/shared', '/s/accounts', '/s/claims', '/s/payday', '/s/sign-in', '/s/first-run', '/s/new-look', '/s/settings', '/s/settings/members', '/s/sen', '/?scenario=payday&state=offline', '/s/split?id=eb9ebb1f-b041-4f7a-8f61-7f84bf03095c'];
+  const routes = [
+    '/',
+    '/dev/gallery',
+    '/s/split-public?id=demo',
+    '/s/shared',
+    '/s/accounts',
+    '/s/claims',
+    '/s/payday',
+    '/s/sign-in',
+    '/s/first-run',
+    '/s/new-look',
+    '/s/settings',
+    '/s/settings/members',
+    '/s/sen',
+    '/?scenario=payday&state=offline',
+    '/s/split?id=eb9ebb1f-b041-4f7a-8f61-7f84bf03095c',
+  ];
   for (const r of routes) {
     await page.goto(r);
     await page.waitForTimeout(900);

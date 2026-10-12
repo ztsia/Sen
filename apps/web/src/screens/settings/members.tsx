@@ -91,7 +91,7 @@ function Body({ s, inviting, setInviting }: { s: View; inviting: boolean; setInv
 
 // What an invitation starts with; the command sets these, and anything changed is sent after it
 const DEFAULTS = { capture: true, agent: true, splits: true, email: true, calendar: false, claims: false };
-const WELCOME = '5.00';
+const WELCOME = '10.00';
 const ALLOWANCE = '2.00';
 
 function InviteSheet({
@@ -115,7 +115,8 @@ function InviteSheet({
   const send = async () => {
     const e: typeof errors = {};
     const addr = email.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr)) e.email = 'Type their email, like name@example.com.';
+    if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(addr))
+      e.email = 'Type their email, like name@example.com.';
     const w = checkAmount(welcome);
     const a = checkAmount(allowance);
     if (w.error !== undefined) e.welcome = w.error;

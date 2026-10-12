@@ -1,9 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { db, dialog, open, shot, text, toast, watch } from './b04-helpers';
+import { db, open, shot, text, toast, watch } from './b04-helpers';
 test.use({ baseURL: 'http://127.0.0.1:5180' });
-const body = async (p: import('@playwright/test').Page, n = 24) => (await text(p)).split('\n').filter(Boolean).slice(0, n).join(' | ');
+const body = async (p: import('@playwright/test').Page, n = 24) =>
+  (await text(p)).split('\n').filter(Boolean).slice(0, n).join(' | ');
 
-async function play(page: import('@playwright/test').Page, id: string, tag: string, asserts: Record<number, (n: number) => Promise<void>> = {}) {
+async function play(
+  page: import('@playwright/test').Page,
+  id: string,
+  tag: string,
+  asserts: Record<number, (n: number) => Promise<void>> = {},
+) {
   await page.getByRole('button', { name: 'Dev panel' }).click();
   await page.waitForTimeout(400);
   await page.getByRole('button', { name: 'Choose a journey' }).click();
@@ -49,7 +55,10 @@ test('FLOW-C2 pay-new guided (core) + real prompt answer', async ({ page }) => {
   });
   // real prompt: simulator arrives; answer Meals; db rule and review
   await open(page, '/review');
-  const before = await db<{ rules: number; review: number }>(page, `(d) => ({ rules: d.rules.length, review: d.review.filter(r=>r.kind==='new-merchant'&&/ROTI/.test(r.merchant||'')).length })`);
+  const before = await db<{ rules: number; review: number }>(
+    page,
+    `(d) => ({ rules: d.rules.length, review: d.review.filter(r=>r.kind==='new-merchant'&&/ROTI/.test(r.merchant||'')).length })`,
+  );
   await page.getByRole('button', { name: 'Dev panel' }).click();
   await page.waitForTimeout(400);
   await page.getByRole('button', { name: 'A notification arrives' }).click();
@@ -58,15 +67,29 @@ test('FLOW-C2 pay-new guided (core) + real prompt answer', async ({ page }) => {
   console.log('PROMPT:', await body(page, 12));
   await page.getByRole('button', { name: 'Meals', exact: true }).first().click();
   await page.waitForTimeout(900);
-  const after = await db<{ rules: number; review: number }>(page, `(d) => ({ rules: d.rules.length, review: d.review.filter(r=>r.kind==='new-merchant'&&/ROTI/.test(r.merchant||'')).length })`);
-  console.log('RULES/REVIEW before', JSON.stringify(before), 'after', JSON.stringify(after), 'toast', JSON.stringify(await toast(page).innerText().catch(() => 'none')));
+  const after = await db<{ rules: number; review: number }>(
+    page,
+    `(d) => ({ rules: d.rules.length, review: d.review.filter(r=>r.kind==='new-merchant'&&/ROTI/.test(r.merchant||'')).length })`,
+  );
+  console.log(
+    'RULES/REVIEW before',
+    JSON.stringify(before),
+    'after',
+    JSON.stringify(after),
+    'toast',
+    JSON.stringify(
+      await toast(page)
+        .innerText()
+        .catch(() => 'none'),
+    ),
+  );
   await shot(page, 'FLOW-C2-step-5-answered');
   // answer it again (second prompt at same merchant should not ask)
   await page.getByRole('button', { name: 'Dev panel' }).click();
   await page.waitForTimeout(400);
   await page.getByRole('button', { name: 'A notification arrives' }).click();
   await page.waitForTimeout(1200);
-  console.log('SECOND ARRIVAL asks again?', /Pick a category/.test(await text(page)), (await body(page, 6)));
+  console.log('SECOND ARRIVAL asks again?', /Pick a category/.test(await text(page)), await body(page, 6));
   await shot(page, 'FLOW-C2-step-6-second-arrival');
   console.log(w.errors.join('\n'));
 });
@@ -74,7 +97,9 @@ test('FLOW-C2 pay-new guided (core) + real prompt answer', async ({ page }) => {
 test('FLOW-C3 scan-after real flow (core)', async ({ page }) => {
   const w = watch(page);
   await open(page, '/scan');
-  await page.getByTestId('scan-camera').setInputFiles({ name: 'receipt.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
+  await page
+    .getByTestId('scan-camera')
+    .setInputFiles({ name: 'receipt.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
   await page.getByRole('button', { name: 'Use this' }).click();
   await expect(page).toHaveURL(/\/s\/confirm/, { timeout: 10000 });
   await expect(page.getByText('SATE KAJANG HJ SAMURI')).toBeVisible();
@@ -82,11 +107,21 @@ test('FLOW-C3 scan-after real flow (core)', async ({ page }) => {
   console.log('CONFIRM:', await body(page, 40));
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   await page.waitForTimeout(1200);
-  console.log('after Done:', JSON.stringify(await toast(page).innerText().catch(() => 'none')), page.url());
+  console.log(
+    'after Done:',
+    JSON.stringify(
+      await toast(page)
+        .innerText()
+        .catch(() => 'none'),
+    ),
+    page.url(),
+  );
   await shot(page, 'FLOW-C3-step-2-done');
   // same file twice
   await open(page, '/scan');
-  await page.getByTestId('scan-camera').setInputFiles({ name: 'receipt.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
+  await page
+    .getByTestId('scan-camera')
+    .setInputFiles({ name: 'receipt.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
   await page.getByRole('button', { name: 'Use this' }).click();
   await page.waitForTimeout(2500);
   console.log('second scan same file:', page.url(), await body(page, 14));

@@ -71,6 +71,9 @@ describe('Settings admin area', () => {
     run(db, { type: 'member.set', id, key: 'grant', value: -rm('5.50') });
     expect(hui(db).balance).toBe(0);
     expect(() => run(db, { type: 'member.set', id, key: 'grant', value: -1 })).toThrow();
+    // grants can't pile up past what Sen can hold (QA B04 run 1, finding 11)
+    run(db, { type: 'member.set', id, key: 'grant', value: 9_000_000_000_000 });
+    expect(() => run(db, { type: 'member.set', id, key: 'grant', value: 9_000_000_000_000 })).toThrow(/more credit/);
   });
 
   it('suspends and removes others, never the admin', () => {

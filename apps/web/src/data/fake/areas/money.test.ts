@@ -92,7 +92,7 @@ describe('claims', () => {
     const v = ClaimView.parse(claimView(db, missing.id)!);
     expect(v.missing[0]!.how).not.toBe('');
     expect(v.files).toHaveLength(missing.evidence);
-    expect(v.fields.find((f) => f.label === 'Amount')?.value).toBe('RM64.00');
+    expect(v.fields.find((f) => f.label === 'Amount (RM)')?.value).toBe('64.00');
   });
 
   it('marks a claim submitted by hand, once', async () => {

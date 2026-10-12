@@ -97,7 +97,7 @@ export const Command = z.discriminatedUnion('type', [
     type: z.literal('split.assign'),
     splitId: Id,
     itemId: Id,
-    to: z.union([z.literal('everyone'), z.string().min(1)]),
+    to: z.union([z.literal('everyone'), z.string().trim().min(1).max(60)]),
   }),
   /** *I've ticked everything I had*, or *Still ticking* to undo it, until the lock. */
   z.object({ type: z.literal('split.done'), splitId: Id, memberId: Id, done: z.boolean() }),
@@ -108,16 +108,24 @@ export const Command = z.discriminatedUnion('type', [
   /** *I've paid*, for a payment Sen can't see (D65). */
   z.object({ type: z.literal('split.paid-them'), splitId: Id }),
   /** The bank's figures (D18): each difference is booked as *Unaccounted*. */
-  z.object({ type: z.literal('balance.check'), checks: z.array(z.object({ accountId: Id, balance: Sen })) }),
+  z.object({
+    type: z.literal('balance.check'),
+    // one figure per account: the same account twice would book its difference twice (QA B04 run 1, 11)
+    checks: z
+      .array(z.object({ accountId: Id, balance: Sen }))
+      .min(1)
+      .max(50)
+      .refine((cs) => new Set(cs.map((c) => c.accountId)).size === cs.length, 'Each account once'),
+  }),
   /** *Submitted* in ESS by hand, or *Send to ESS* in the shell (§13). */
-  z.object({ type: z.literal('claim.submitted'), id: Id, essRef: z.string().nullable() }),
+  z.object({ type: z.literal('claim.submitted'), id: Id, essRef: z.string().max(64).nullable() }),
   /** A message to Sen, with its id made on the phone, so a retried send is a no-op (§12.5). */
   z.object({
     type: z.literal('sen.send'),
-    id: z.string(),
-    text: z.string(),
-    file: z.object({ name: z.string(), kind: z.enum(['pdf', 'image']) }).nullable(),
-    from: z.string(),
+    id: z.string().max(64),
+    text: z.string().max(4000),
+    file: z.object({ name: z.string().max(200), kind: z.enum(['pdf', 'image']) }).nullable(),
+    from: z.string().max(40),
   }),
   /** An `ask_user` button. */
   z.object({ type: z.literal('sen.answer'), askId: z.string(), answer: z.string() }),
@@ -129,13 +137,13 @@ export const Command = z.discriminatedUnion('type', [
   /** One Settings value, by its path: `you.payday`, `sen.calendar`, `claims.essSender`. */
   z.object({
     type: z.literal('setting.set'),
-    key: z.string(),
-    value: z.union([z.boolean(), z.string(), z.int(), z.null(), z.record(z.string(), z.unknown())]),
+    key: z.string().max(100),
+    value: z.union([z.boolean(), z.string().max(2000), Sen, z.null(), z.record(z.string(), z.unknown())]),
   }),
   /** Settings → Members (D52, D98): invite, a switch, credit, suspend, remove. */
   z.object({
     type: z.literal('member.invite'),
-    email: z.string(),
+    email: z.string().max(254),
     shell: z.boolean(),
     switches: z.object({
       capture: z.boolean(),
@@ -151,8 +159,9 @@ export const Command = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('member.set'),
     id: Id,
-    key: z.string(),
-    value: z.union([z.boolean(), z.int(), z.string()]),
+    key: z.string().max(40),
+    // money in integer sen, within Sen's range, so a grant can't pass a safe integer (QA B04 run 1, 11)
+    value: z.union([z.boolean(), Sen, z.string().max(200)]),
   }),
   z.object({ type: z.literal('member.remove'), id: Id }),
   /** Payday (§9.7): the claims question, a step skipped (it waits in Review), the plan used. */

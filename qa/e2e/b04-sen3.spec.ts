@@ -4,7 +4,8 @@ test.use({ baseURL: 'http://127.0.0.1:5180' });
 const SEN = (p: import('@playwright/test').Page) => p.getByRole('button', { name: 'Ask Sen', exact: true });
 const status = (p: import('@playwright/test').Page) =>
   db<string>(p, `(d) => d.sen.messages.flatMap(m=>m.parts).filter(x=>x.type==='proposal').map(x=>x.status).join(',')`);
-const review = (p: import('@playwright/test').Page) => db<number>(p, `(d) => d.review.filter(r=>r.kind==='proposal').length`);
+const review = (p: import('@playwright/test').Page) =>
+  db<number>(p, `(d) => d.review.filter(r=>r.kind==='proposal').length`);
 
 test('apply, Undo, dismiss; review parity', async ({ page }) => {
   await open(page, '/');

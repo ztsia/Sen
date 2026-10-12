@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Outlet, useMatches, useNavigate } from '@tanstack/react-router';
 import { OfflineBanner } from '@/blocks/states';
 import { Toaster } from '@/components/ui/sonner';
-import { useNeedsYouCount } from '@/data/hooks';
+import { useAgentOn, useNeedsYouCount } from '@/data/hooks';
 import { useOnline } from '@/lib/online';
 import { cn } from '@/lib/utils';
 import { screenById, showsSenButton, showsTabBar, type ScreenDef } from '@/screens/registry';
@@ -85,7 +85,8 @@ function PersonShell({ screen }: { screen: ScreenDef | undefined }) {
   const needsYou = useNeedsYouCount();
   // Lost, the tab bar stays, with no tab active, so there's always a way back.
   const tabs = lost || showsTabBar(screen);
-  const sen = showsSenButton(screen);
+  const agentOn = useAgentOn();
+  const sen = showsSenButton(screen) && agentOn;
   return (
     <LookProvider>
       <div

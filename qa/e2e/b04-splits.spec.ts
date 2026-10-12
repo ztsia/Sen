@@ -1,10 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { db, dialog, dump, open, settled, shot, text, toast, watch } from './b04-helpers';
+import { db, dialog, dump, open, shot, text, toast, watch } from './b04-helpers';
 
 // FLOW-1..4: shared bills. The dev server (5180) lets the test read the fake's own rows.
 test.use({ baseURL: 'http://127.0.0.1:5180' });
-
-const NK = 'split-nk';
 
 test('FLOW-4 split-public: no app chrome, nothing of the person, hostile names, reload', async ({ page }) => {
   const w = watch(page);
@@ -31,7 +29,14 @@ test('FLOW-4 split-public: no app chrome, nothing of the person, hostile names, 
     await cont.click();
     await page.waitForTimeout(400);
     await expect(page.getByText(/^Hi /)).toHaveCount(0);
-    console.log(`name ${JSON.stringify(bad.slice(0, 12))} ->`, (await text(page)).split('\n').filter((l) => /name|called|long|Type/i.test(l)).slice(0, 3).join(' | '));
+    console.log(
+      `name ${JSON.stringify(bad.slice(0, 12))} ->`,
+      (await text(page))
+        .split('\n')
+        .filter((l) => /name|called|long|Type/i.test(l))
+        .slice(0, 3)
+        .join(' | '),
+    );
   }
   await shot(page, 'FLOW-4-step-2-bad-names');
   const evil = '<img src=x onerror=window.__pwn=1>';
@@ -98,7 +103,14 @@ test('FLOW-2/1 payer: stuck split, lock without waiting, shares sum, DB agrees',
   await d.getByLabel("Friend's name").fill('<b>x</b>'.repeat(10));
   await d.getByRole('button', { name: 'Add' }).click();
   await page.waitForTimeout(600);
-  console.log('after hostile friend:', (await text(page)).split('\n').filter((l) => /x|Waiting|Lock/.test(l)).slice(0, 6).join(' | '));
+  console.log(
+    'after hostile friend:',
+    (await text(page))
+      .split('\n')
+      .filter((l) => /x|Waiting|Lock/.test(l))
+      .slice(0, 6)
+      .join(' | '),
+  );
   await shot(page, 'FLOW-2-step-5-hostile-friend-name');
   const lock = page.getByRole('button', { name: /^Lock without waiting/ });
   await expect(lock).toBeVisible();
@@ -124,7 +136,16 @@ test('FLOW-3 owe: I have paid, Undo, double tap', async ({ page }) => {
   const b = page.getByRole('button', { name: "I've paid" });
   await b.dblclick();
   await page.waitForTimeout(700);
-  const paid = await db<number>(page, `(d) => d.members.filter(m => m.isMe && m.paidAt && d.splits.find(s=>s.id===m.splitId)?.paidBy==='other').length`);
-  console.log('paid members', paid, await toast(page).innerText().catch(() => 'no toast'));
+  const paid = await db<number>(
+    page,
+    `(d) => d.members.filter(m => m.isMe && m.paidAt && d.splits.find(s=>s.id===m.splitId)?.paidBy==='other').length`,
+  );
+  console.log(
+    'paid members',
+    paid,
+    await toast(page)
+      .innerText()
+      .catch(() => 'no toast'),
+  );
   await shot(page, 'FLOW-3-step-2-paid');
 });

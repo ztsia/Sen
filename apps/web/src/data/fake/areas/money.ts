@@ -198,7 +198,8 @@ export function balanceCheckView(db: Db): BalanceCheckView {
 const essReady = (db: Db) => db.settings.claims.ess.signedIn;
 
 export function claimsView(db: Db): ClaimsView {
-  const claims = db.claimState.claims;
+  // with the claims switch off there are no claims to show (D52; the API refuses the same)
+  const claims = db.claims ? db.claimState.claims : [];
   // this period is the newest one drafted (the 1st drafts the month before's, §13)
   const period =
     claims.find((c) => c.status === 'to_submit' || c.status === 'submitted')?.period ?? claims[0]?.period ?? '';
@@ -206,7 +207,7 @@ export function claimsView(db: Db): ClaimsView {
 }
 
 export function claimView(db: Db, id: string): ClaimView | null {
-  const c = db.claimState.claims.find((x) => x.id === id);
+  const c = db.claims ? db.claimState.claims.find((x) => x.id === id) : undefined;
   if (!c) return null;
   const s = Object.values(SCHEMES).find((x) => x.name === c.scheme);
   const evidence = s?.evidence ?? 'pdf';
@@ -218,7 +219,8 @@ export function claimView(db: Db, id: string): ClaimView | null {
     fields: [
       { label: 'Claim type', value: c.scheme },
       { label: 'Claim month', value: c.period },
-      { label: 'Amount', value: formatSen(c.amount) },
+      // ESS's amount box takes the number alone: Copy puts 88.00 on the clipboard, not RM88.00
+      { label: 'Amount (RM)', value: formatSen(c.amount).replace(/^RM/, '').replace(/,/g, '') },
       { label: 'Remarks', value: `${c.scheme}, ${c.period}` },
     ],
     files: Array.from({ length: c.evidence }, (_, i) => ({
@@ -300,6 +302,8 @@ export const applyMoney: AreaApply = (db, cmd, ctx) => {
       let booked = 0;
       let found = 0;
       const touched: string[] = [];
+      // the API's schema refuses the same account twice; the fake, which takes commands unparsed, too
+      if (new Set(cmd.checks.map((c) => c.accountId)).size !== cmd.checks.length) throw new Error('Each account once.');
       for (const c of cmd.checks) {
         const a = db.accounts.find((x) => x.id === c.accountId && x.kind === 'tracked');
         if (!a) throw new Error('That account is gone.');

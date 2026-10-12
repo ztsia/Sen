@@ -232,6 +232,36 @@ describe('split-public, on its own state', () => {
     resetPublicSplits();
     const v = readPublicSplit('demo-closed');
     expect(v).toMatchObject({ state: 'closed', items: [], people: [], pay: null, you: null });
+    // nothing of the bill either (QA B04 run 1, finding 3)
+    expect(v).toMatchObject({ merchant: '', total: 0, payer: '', yourShare: 0 });
+  });
+
+  it('everyone done with an item nobody ticked stays still changing (D71)', () => {
+    resetPublicSplits();
+    setPublicName('demo-new', 'Mei');
+    const unclaimed = readPublicSplit('demo-new').items.filter((i) => !i.takers.length);
+    expect(unclaimed.length).toBeGreaterThan(0);
+    donePublic('demo-new', true);
+    const v = readPublicSplit('demo-new');
+    expect(v.people.every((p) => p.done)).toBe(true);
+    expect(v.state).toBe('changing');
+    expect(v.pay).toBeNull();
+  });
+});
+
+describe('the lock (D71)', () => {
+  it('everyone done with an item nobody ticked stays still changing, in the app', () => {
+    const db = buildScenario('wei-ming', false);
+    const id = uid('split:nk');
+    const ctx = { offline: false, later: () => {} };
+    const before = SplitView.parse(splitView(db, id));
+    expect(before.unclaimed).toBeGreaterThan(0);
+    for (const p of before.people.filter((x) => !x.done))
+      applyArea(db, { type: 'split.done', splitId: id, memberId: p.id, done: true }, ctx);
+    const v = SplitView.parse(splitView(db, id));
+    expect(v.people.every((p) => p.done)).toBe(true);
+    expect(v.state).toBe('changing');
+    expect(v.unclaimed).toBeGreaterThan(0);
   });
 });
 

@@ -32,9 +32,14 @@ export default function Claim() {
   const q = useClaim(id ?? '');
   return (
     <Screen bar={<AppBar title="Claim" />}>
-      <Loaded q={q} what="this claim">
-        {(v) => (v ? <Body v={v} /> : <Gone />)}
-      </Loaded>
+      {/* no id (an old or hand-typed link): gone, not loading forever (QA B04 run 1, finding 10) */}
+      {id ? (
+        <Loaded q={q} what="this claim">
+          {(v) => (v ? <Body v={v} /> : <Gone />)}
+        </Loaded>
+      ) : (
+        <Gone />
+      )}
     </Screen>
   );
 }

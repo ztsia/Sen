@@ -4,6 +4,7 @@ import type { Command } from '@sen/core/commands';
 import type { PaymentFilters } from '@sen/core/views';
 import { toastDone, toastUndo } from '@/blocks/toast';
 import { DEV_TOOLS } from '@/lib/env';
+import { SETTLE_MS } from '@/lib/tap-guard';
 import type { Backend } from './backend';
 import { backend, queryClient } from './index';
 
@@ -51,6 +52,12 @@ export const useMatches = (total: number, at: string, enabled: boolean) =>
 export const useNearDuplicate = (amount: number | null, at: string) =>
   useRead(['near', amount, at], (b) => b.nearDuplicate(amount ?? 0, at), amount !== null && amount > 0);
 
+/** Sen's button shows only with the agent switch on (D52). Production has no data to read yet: on. */
+export function useAgentOn(): boolean {
+  const q = useRead(['me'], (b) => b.me(), DEV_TOOLS);
+  return q.data?.agent ?? true;
+}
+
 /** Review's badge: Needs you only (D72). Production has nothing real to count yet, so it reads none. */
 export function useNeedsYouCount(): number {
   const q = useRead(['review'], (b) => b.review(), DEV_TOOLS);
@@ -79,8 +86,17 @@ export async function runCommand(cmd: Command): Promise<{ said: string; undo: ()
  * Every change happens at once, with Undo in a toast (§6.7, patterns.md §7). `quiet` leaves the toast
  * out, for a change the screen shows by itself.
  */
+let lastWrite = { key: '', at: -Infinity };
+
 export function useWrite() {
   return useCallback(async (cmd: Command, opts: { quiet?: boolean } = {}) => {
+    // a double tap sends the same command twice: the second would answer with the no-op's words, and
+    // its toast's Undo would undo nothing (QA B04 run 1, finding 1). The same command within the tap
+    // guard's settle time is the same tap; a different one, or a deliberate repeat later, goes through.
+    const key = JSON.stringify(cmd);
+    const now = performance.now();
+    if (key === lastWrite.key && now - lastWrite.at < SETTLE_MS) return null;
+    lastWrite = { key, at: now };
     try {
       const r = await runCommand(cmd);
       if (!opts.quiet) toastUndo(r.said, r.undo);
