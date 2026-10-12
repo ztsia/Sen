@@ -72,7 +72,7 @@ export default function CaptureRunning() {
               <div className="flex flex-col gap-4 pb-2">
                 {data.brand.sections.map((s) => (
                   <section key={s.heading} className="flex flex-col gap-1">
-                    <h3 className="font-semibold">{s.heading}</h3>
+                    <h3 className="text-lg font-semibold">{s.heading}</h3>
                     {s.steps.map((t) => (
                       <p key={t} className="text-base text-pretty whitespace-pre-line">
                         {t}
@@ -80,7 +80,12 @@ export default function CaptureRunning() {
                     ))}
                   </section>
                 ))}
-                <Button variant="outline" className="self-start" onClick={() => openInBrowser(data.brand!.url)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="self-start"
+                  onClick={() => openInBrowser(data.brand!.url)}
+                >
                   Open dontkillmyapp.com
                 </Button>
               </div>
@@ -126,6 +131,7 @@ function BrandSteps({
                 {s.open !== undefined && brand.opens[s.open] ? (
                   <Button
                     variant="outline"
+                    size="sm"
                     className="self-start"
                     onClick={() => void SenCapture.openBrandStep({ index: s.open! }).catch(onFail)}
                   >
@@ -142,11 +148,11 @@ function BrandSteps({
           </p>
         )}
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={onGuide}>
+          <Button variant="secondary" size="sm" onClick={onGuide}>
             The full guide
           </Button>
           {steps.length ? null : (
-            <Button variant="outline" onClick={() => void SenCapture.openAppInfo().catch(onFail)}>
+            <Button variant="outline" size="sm" onClick={() => void SenCapture.openAppInfo().catch(onFail)}>
               Open Sen's app info
             </Button>
           )}

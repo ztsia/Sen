@@ -38,7 +38,8 @@ export default function Email() {
                   </p>
                   <Button
                     variant="secondary"
-                    className="min-h-12 self-start"
+                    size="sm"
+                    className="self-start"
                     onClick={() => void copyText(address, 'Address')}
                   >
                     <CopyIcon aria-hidden="true" />
@@ -63,7 +64,8 @@ export default function Email() {
                     </p>
                     <Button
                       variant="secondary"
-                      className="min-h-12 self-start"
+                      size="sm"
+                      className="self-start"
                       onClick={() => void copyText(code, 'Code')}
                     >
                       <CopyIcon aria-hidden="true" />

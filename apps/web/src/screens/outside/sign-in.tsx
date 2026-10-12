@@ -36,9 +36,7 @@ function ExpiredInvitation() {
     <div className="flex flex-col gap-4">
       <h2 className="text-2xl font-semibold text-balance">This invitation has expired</h2>
       <p className="text-base text-pretty">An invitation works for a few days. This one is past that.</p>
-      <Button size="lg" onClick={() => toastDone(EXPIRED_ASK)}>
-        Ask for a new invitation
-      </Button>
+      <Button onClick={() => toastDone(EXPIRED_ASK)}>Ask for a new invitation</Button>
     </div>
   );
 }
@@ -109,7 +107,7 @@ function EmailStep({
           )}
         </div>
       </Field>
-      <Button type="submit" size="lg" disabled={!online}>
+      <Button type="submit" disabled={!online}>
         Send the code
       </Button>
     </form>
@@ -191,14 +189,14 @@ function CodeStep({
           {message ? <FieldError>{message}</FieldError> : null}
         </div>
       </Field>
-      <Button type="submit" size="lg" disabled={!online}>
+      <Button type="submit" disabled={!online}>
         Sign in
       </Button>
       <div className="flex flex-col gap-1">
-        <Button type="button" variant={problem === 'expired' ? 'default' : 'outline'} onClick={resend}>
+        <Button type="button" size="sm" variant={problem === 'expired' ? 'default' : 'outline'} onClick={resend}>
           Send a new code
         </Button>
-        <Button type="button" variant="ghost" onClick={onChangeEmail}>
+        <Button type="button" size="sm" variant="ghost" onClick={onChangeEmail}>
           Use a different email
         </Button>
       </div>

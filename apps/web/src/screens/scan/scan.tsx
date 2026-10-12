@@ -47,11 +47,11 @@ export default function Scan() {
             : 'Take a photo of the receipt, flat and in the light.'}{' '}
           In Sen&rsquo;s Android app, the scanner finds the edges by itself.
         </p>
-        <Button size="lg" className="h-16 text-lg" disabled={busy} onClick={() => camera.current?.click()}>
+        <Button disabled={busy} onClick={() => camera.current?.click()}>
           <CameraIcon aria-hidden="true" />
           Take a photo
         </Button>
-        <Button size="lg" variant="secondary" disabled={busy} onClick={() => gallery.current?.click()}>
+        <Button size="sm" variant="secondary" disabled={busy} onClick={() => gallery.current?.click()}>
           <ImageIcon aria-hidden="true" />
           From gallery
         </Button>

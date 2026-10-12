@@ -80,7 +80,9 @@ function Calendar({ connected }: { connected: boolean }) {
             Disconnect
           </Button>
         ) : (
-          <Button onClick={() => setOpen(true)}>Connect</Button>
+          <Button size="sm" onClick={() => setOpen(true)}>
+            Connect
+          </Button>
         )}
       </ActionRow>
       <Sheet

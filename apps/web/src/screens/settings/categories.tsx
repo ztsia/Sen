@@ -3,6 +3,7 @@ import { EmptyState, ListSkeleton } from '@/blocks/states';
 import { useSettings, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
+import { readableName } from '@/lib/names';
 import { Loaded, Section } from '../kit';
 
 /**
@@ -60,7 +61,7 @@ function Body({
             {rules.map((r) => (
               <li key={r.id}>
                 <SettingsRow
-                  label={r.merchant}
+                  label={readableName(r.merchant)}
                   description={r.hawker ? `${r.category} · a hawker` : r.category}
                   checked={r.hawker}
                   onCheckedChange={(on) => void write({ type: 'setting.set', key: `rules.${r.id}.hawker`, value: on })}

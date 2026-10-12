@@ -42,10 +42,8 @@ export default function Crop() {
         <p className="text-center text-sm text-muted-foreground">Adjusting the corners arrives with the scanner.</p>
       </div>
       <div className="sticky bottom-0 flex flex-col gap-2 bg-background px-4 py-3">
-        <Button size="lg" onClick={() => go('reading', { id }, { replace: true })}>
-          Use this
-        </Button>
-        <Button size="lg" variant="ghost" onClick={() => go('scan', {}, { replace: true })}>
+        <Button onClick={() => go('reading', { id }, { replace: true })}>Use this</Button>
+        <Button size="sm" variant="ghost" onClick={() => go('scan', {}, { replace: true })}>
           Take another
         </Button>
       </div>

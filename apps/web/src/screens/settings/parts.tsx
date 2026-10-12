@@ -69,7 +69,7 @@ export function AmountEditor({
         hint={hint}
         onEnter={save}
       />
-      <Button variant="secondary" className="self-start" onClick={save}>
+      <Button variant="secondary" size="sm" className="self-start" onClick={save}>
         {action}
       </Button>
     </div>

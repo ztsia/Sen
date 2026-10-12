@@ -80,7 +80,7 @@ function ReadingBody({ leave }: { leave?: () => void }) {
       <p className="text-center text-lg font-semibold">Reading receipt…</p>
       <p className="text-center text-muted-foreground">You can leave. It waits in Review once it&rsquo;s read.</p>
       {leave ? (
-        <Button variant="secondary" size="lg" onClick={leave}>
+        <Button variant="secondary" size="sm" onClick={leave}>
           Leave it in Review
         </Button>
       ) : null}

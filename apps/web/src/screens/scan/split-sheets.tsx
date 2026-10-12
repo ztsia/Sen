@@ -76,7 +76,7 @@ export function SplitSheet({
           ).map(([v, label]) => (
             <Button
               key={v}
-              size="lg"
+              size="sm"
               variant="secondary"
               onClick={() => {
                 setPaidBy(v);
@@ -89,11 +89,9 @@ export function SplitSheet({
         </div>
       ) : step === 'how' ? (
         <div className="flex flex-col gap-3 pt-2">
-          <Button size="lg" onClick={() => onShare(paidBy)}>
-            Share a link
-          </Button>
+          <Button onClick={() => onShare(paidBy)}>Share a link</Button>
           <p className="text-sm text-muted-foreground">Everyone ticks their own items on their phone.</p>
-          <Button size="lg" variant="secondary" onClick={() => setStep('mine')}>
+          <Button size="sm" variant="secondary" onClick={() => setStep('mine')}>
             Just my part
           </Button>
           <p className="text-sm text-muted-foreground">You tick yours; the rest becomes Others&rsquo; items.</p>
@@ -133,7 +131,7 @@ function MinePicker({ items, onDone }: { items: DraftItem[]; onDone: (mine: stri
         Your part <Money sen={mine} className="text-foreground" /> · Others&rsquo; items{' '}
         <Money sen={others} className="text-foreground" />
       </p>
-      <Button size="lg" disabled={ticked.size === 0} onClick={() => onDone([...ticked])}>
+      <Button disabled={ticked.size === 0} onClick={() => onDone([...ticked])}>
         Done
       </Button>
     </div>

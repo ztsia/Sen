@@ -132,7 +132,7 @@ function Frame({
             onBack={onBack}
             action={
               count ? (
-                <span className="pr-3 text-sm whitespace-nowrap text-muted-foreground">
+                <span className="pr-3 text-xs whitespace-nowrap text-muted-foreground">
                   Step {count.at} of {count.of}
                 </span>
               ) : undefined
@@ -169,11 +169,9 @@ function BuiltStep({ screen: Step, onNext, skip }: { screen: ComponentType; onNe
         <Step />
       </CaptureStep>
       <Actions>
-        <Button size="lg" onClick={onNext}>
-          Next
-        </Button>
+        <Button onClick={onNext}>Next</Button>
         {skip ? (
-          <Button variant="ghost" onClick={onNext}>
+          <Button variant="ghost" size="sm" onClick={onNext}>
             Skip for now
           </Button>
         ) : null}
@@ -229,9 +227,7 @@ function Accounts({
             <EmptyState line="Your accounts appear here once you’ve chosen your apps." />
           )}
           <Actions>
-            <Button size="lg" onClick={() => submit(v.tracked.map((a) => a.id))}>
-              Next
-            </Button>
+            <Button onClick={() => submit(v.tracked.map((a) => a.id))}>Next</Button>
           </Actions>
         </>
       )}
@@ -285,9 +281,7 @@ function NameStep({ value, onChange, onNext }: { value: string; onChange: (v: st
         </Field>
       </div>
       <Actions>
-        <Button type="submit" size="lg">
-          Next
-        </Button>
+        <Button type="submit">Next</Button>
       </Actions>
     </form>
   );
@@ -364,9 +358,7 @@ function PaydayStep({
         ) : null}
       </div>
       <Actions>
-        <Button type="submit" size="lg">
-          {last ? 'Finish' : 'Next'}
-        </Button>
+        <Button type="submit">{last ? 'Finish' : 'Next'}</Button>
       </Actions>
     </form>
   );
@@ -407,7 +399,7 @@ function Categories({
             ))}
           </div>
           <Actions>
-            <Button size="lg" onClick={onDone} disabled={off.size >= cats.length}>
+            <Button onClick={onDone} disabled={off.size >= cats.length}>
               Start using Sen
             </Button>
           </Actions>

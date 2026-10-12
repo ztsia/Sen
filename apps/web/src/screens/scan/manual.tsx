@@ -162,8 +162,8 @@ export default function Manual() {
             {account ? (
               <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
                 <button type="button" onClick={() => setAccountOpen(true)}>
-                  <ItemMedia variant="icon" className="size-10 rounded-full border-0 bg-muted text-icon">
-                    <WalletIcon className="size-5" />
+                  <ItemMedia variant="icon" className="size-8 rounded-full border-0 bg-muted text-icon">
+                    <WalletIcon className="size-4" />
                   </ItemMedia>
                   <ItemContent>
                     <ItemTitle className="text-base font-normal">Paid from {account.label}</ItemTitle>
@@ -175,7 +175,7 @@ export default function Manual() {
               </Item>
             ) : null}
             <div className="flex min-h-12 items-center gap-3 px-4 text-muted-foreground">
-              <ClockIcon className="mx-2.5 size-5 text-icon" aria-hidden="true" />
+              <ClockIcon className="mx-2 size-4 text-icon" aria-hidden="true" />
               <span>{day ? shortDay(day) : 'Now'}</span>
             </div>
           </ItemGroup>
@@ -204,14 +204,14 @@ export default function Manual() {
               </Field>
             </div>
           ) : (
-            <Button type="button" variant="ghost" className="min-h-12 self-start" onClick={() => setMore(true)}>
+            <Button type="button" variant="ghost" size="sm" className="self-start" onClick={() => setMore(true)}>
               More
             </Button>
           )}
         </div>
 
         <div className="sticky bottom-0 border-t border-border bg-background px-4 pt-3 pb-4">
-          <Button type="submit" size="lg" className="w-full" disabled={saving}>
+          <Button type="submit" className="w-full" disabled={saving}>
             Save
           </Button>
         </div>

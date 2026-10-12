@@ -131,7 +131,7 @@ function Body({
               <FieldLabel htmlFor="payday-day">Day of the month</FieldLabel>
               <Input
                 id="payday-day"
-                className="num h-12 max-w-32 text-lg"
+                className="num max-w-32"
                 inputMode="numeric"
                 enterKeyHint="done"
                 autoComplete="off"

@@ -149,7 +149,9 @@ function Ess({ ess }: { ess: Claims['ess'] }) {
           title="Not signed in"
           line="Sign in once and Sen can fetch your payslip and, once taught, submit claims."
         >
-          <Button onClick={() => setSignIn(true)}>Sign in to ESS</Button>
+          <Button size="sm" onClick={() => setSignIn(true)}>
+            Sign in to ESS
+          </Button>
         </ActionRow>
       )}
       {ess.capabilities.map((c) => (
