@@ -1,23 +1,21 @@
 import { test } from '@playwright/test';
-import { db, open, text } from './b04-helpers';
+import { db, open, tabs } from './b04-helpers';
 test.use({ baseURL: 'http://127.0.0.1:5180' });
-test('you payday day saved?', async ({ page }) => {
-  await open(page, '/s/settings/you');
+test('you payday day saved? SPA nav back', async ({ page }) => {
+  await open(page, '/more');
+  await page.getByText('Settings', { exact: true }).click();
+  await page.getByRole('button', { name: /^You/ }).click();
   await page.getByRole('radio', { name: /A day/ }).click();
-  await page.waitForTimeout(500);
-  console.log('after choosing A day: db', await db<string>(page, `(d) => JSON.stringify(d.settings.you.payday)`));
   const day = page.getByLabel(/Day/).first();
   await day.fill('15');
   await day.blur();
-  await page.waitForTimeout(1500);
-  console.log('after fill 15 + blur: db', await db<string>(page, `(d) => JSON.stringify(d.settings.you.payday)`), '| toast', await page.locator('[data-sonner-toast]').allInnerTexts());
-  await day.press('Enter').catch(() => {});
+  await page.waitForTimeout(1000);
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.waitForTimeout(600);
+  console.log('url after back', page.url());
+  await page.getByRole('button', { name: /^You/ }).click();
   await page.waitForTimeout(800);
-  console.log('after Enter: db', await db<string>(page, `(d) => JSON.stringify(d.settings.you.payday)`));
-  await page.goto('/s/settings/you?look=minted&mode=light');
-  await page.waitForTimeout(800);
-  console.log('after reload: db', await db<string>(page, `(d) => JSON.stringify(d.settings.you.payday)`));
-  await open(page, '/s/settings/you');
-  const c = page.getByRole('radio', { name: /Last working day/ });
-  console.log('last working checked', await c.getAttribute('aria-checked'));
+  for (const n of ['Last working day', 'A day', 'Not set']) console.log(n, await page.getByRole('radio', { name: new RegExp(n) }).getAttribute('aria-checked'));
+  console.log('day field:', await page.getByLabel(/Day/).first().inputValue().catch(() => 'no day field'));
+  console.log('db:', await db<string>(page, `(d) => JSON.stringify(d.settings.you.payday)`));
 });

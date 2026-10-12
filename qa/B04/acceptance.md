@@ -47,7 +47,7 @@ AC-4s  Every item claimed but one person not done: still changing, and the payer
        Spec  flows.md `split-stuck`
 
 AC-5   After the lock, payer's view
-       Then  `You're done ✓` with `Still ticking`? no longer applies; the payer sees a tick per friend with the share and how it
+       Then  the payer sees a tick per friend with the share and how it
              was ticked (`matched: Ryt, today 11:58` or `ticked by you`); ticking cash marks `ticked by you`
        Spec  screens.md `split` 6, D65
 AC-5s  A non-payer cannot tick another person's payment (read-only list)

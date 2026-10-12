@@ -1,0 +1,1639 @@
+{
+ "module": "B04",
+ "branch": "B04/skeleton-rest",
+ "verdict": "fix first",
+ "generatedAt": "2026-10-12 UTC",
+ "phases": "1-6 (phase 4: no database, API or RLS exists; run against the fake and shared zod types)",
+ "headline": "The skeleton is solid on money, looks and production hygiene (no float, no secret, no leak, 703/703 suite, 24 routes with no small targets), but a double tap on any B04 action leaves an Undo that does nothing, and the public split's lock rule has no test.",
+ "summary": {
+  "criteria": 90,
+  "pass": 62,
+  "fail": 17,
+  "unreachable": 11
+ },
+ "suites": {
+  "unit": "287/287 pass (sweep)",
+  "e2e": "703 passed, preview and production (sweep)",
+  "typecheck": "clean (sweep)",
+  "lint": "clean (sweep)",
+  "hygiene": "passed"
+ },
+ "findings": [
+  {
+   "id": 1,
+   "severity": "Major",
+   "status": "open",
+   "title": "A double tap on any B04 action replaces the toast with the no-op's message, and Undo then does nothing",
+   "detail": "patterns.md \u00a77's tap guard (`lib/tap-guard.ts`) is imported only by B03's files (`rows.tsx`, `review.tsx`, `skipped.tsx`, `txn.tsx`). No B04 screen uses it. A second tap runs the command again; the fake answers `Already \u2026` with `touched: []`, that message becomes the toast, and its Undo restores a state that is already the changed one. The first change stays, and the person has no way to undo it. The same happens on *Submitted* (claim), and by the same code path on *Lock without waiting*, *Everyone* and the Sen *Apply*-style buttons.",
+   "repro": "dev server or preview: More -> Shared bills -> HAIDILAO -> double-tap \"I've paid\", then tap Undo in the toast. Spec file: qa/e2e/b04-dbl.spec.ts (split) and b04-claims.spec.ts (claim).",
+   "evidence": "split: toast after dbl: \"Already marked as paid\\nUndo\"  ->  paid after Undo: 1\n(single tap: toast \"Marked as paid to Mei\\nUndo\" -> paid after single Undo: 0)\nclaim: toast after dbl submitted: \"Already submitted\\nUndo\"  status: submitted  status after undo: submitted",
+   "spec": "AC-69, AC-11s; patterns.md \u00a77 Toasts and undo (QA B03 run 2 finding 17)",
+   "screenshots": [
+    "FLOW-3-step-2-paid.png",
+    "FLOW-3-step-3-after-dbl-undo.png",
+    "FLOW-8-step-3-after-submitted.png"
+   ]
+  },
+  {
+   "id": 2,
+   "severity": "Major",
+   "status": "open",
+   "title": "Nothing tests that a split must not lock while an item is unclaimed on the public page, and the app-side rule is caught only by a browser journey",
+   "detail": "Probe: dropped `&& s.items.every((i) => i.takers.length)` from `lockIfReady` in `data/fake/public-split.ts`. The unit suite stayed 26/26 and the whole split e2e group stayed 39/39. The D71 rule (a split locks only when everyone is done AND every item is claimed) therefore has no test on the friend's side, which is the side that handles real money in B18. On the app side (`maybeLock` without `!unclaimedOf`), `splits.test.ts` also stayed green; only the e2e journey `split-mine` went red (12 failures). Closed-link leak probe also survived (see probes).",
+   "repro": "Edit public-split.ts as above; `pnpm exec vitest run apps/web/src/data/fake/areas/splits.test.ts`; `pnpm exec playwright test --project=preview -g split` in apps/web.",
+   "evidence": "unit: Test Files 1 passed (1), Tests 26 passed (26)\ne2e (public probe only): 39 passed (2.5m)\napp-side probe, e2e: 12 failed (split-mine in every look, light and dark); unit: 26 passed",
+   "spec": "AC-4, AC-4s; D71; spec \u00a77",
+   "screenshots": []
+  },
+  {
+   "id": 3,
+   "severity": "Minor",
+   "status": "open",
+   "title": "A closed public link returning the real merchant and total is not caught by any test",
+   "detail": "Probe: `readPublicSplit` for a closed link returned `merchant: s.merchant, total: 6413` instead of empty. `splits.test.ts` asserts only `state, items, people, pay, you` with `toMatchObject`, so the probe stayed green. The screen hides it (`Closed` draws one line), so nothing shows today, but the contract B18 copies is `This split is closed, and nothing else` (screens.md).",
+   "repro": "Edit the closed branch in public-split.ts; run splits.test.ts.",
+   "evidence": "Tests 26 passed (26)",
+   "spec": "AC-7s; screens.md split-public Varies",
+   "screenshots": []
+  },
+  {
+   "id": 4,
+   "severity": "Minor",
+   "status": "open",
+   "title": "`split-public` says Sen remembers this browser, but a reload forgets the name",
+   "detail": "Naming yourself shows `Hi <name>. Sen remembers this browser.`; the state lives in a module Map, nothing is written to localStorage/cookie. After a reload the name box is back. (The `demo` token is a canned remembered Mei, which hides this.)",
+   "repro": "/s/split-public?id=demo-new -> enter a name -> Continue -> reload.",
+   "evidence": "STORAGE {\"l\":{},\"s\":{}}\nAFTER RELOAD has name box: true has Hi: false",
+   "spec": "AC-7; spec \u00a77 (random token kept in that browser), D64",
+   "screenshots": [
+    "FLOW-4-step-4-after-reload.png"
+   ]
+  },
+  {
+   "id": 5,
+   "severity": "Minor",
+   "status": "open",
+   "title": "With the agent switch off, Sen's button still shows",
+   "detail": "`frame/app-shell.tsx` shows the button on `showsSenButton(screen)` only; it never reads `me.agent`. screens.md and D52: with the agent off there's no Sen button. No scenario turns the agent off, so the dev panel can't show it.",
+   "repro": "dev server: set `db.agent = false` through the fake, navigate to Home.",
+   "evidence": "agent=false: Ask Sen button count on Home: 1  | me.agent: false",
+   "spec": "AC-8; screens.md rules; D52",
+   "screenshots": []
+  },
+  {
+   "id": 6,
+   "severity": "Minor",
+   "status": "open",
+   "title": "The friend scenario (`month`) shows owner-only things, and a switched-off feature still opens by URL",
+   "detail": "`?scenario=month` (a friend in a browser) keeps `settings.admin = true`: Settings lists Members, Data shows *Last backup* (admin only), Settings -> Sen shows the owner's cost estimate rather than credit and allowance. `/s/claims` with the claims switch off shows the full September claims (only `/s/settings/claims` says *Claims are off for you*). `settingsView` returns the whole `members` list to anyone. The non-admin branch of Members (`Only the admin sees Members.`) can't be reached by any scenario. Hiding is only a menu hide here; B05's API must enforce (D52).",
+   "repro": "/s/settings?scenario=month ; /s/claims?scenario=month ; /s/settings/data?scenario=month",
+   "evidence": "settings (friend): [... \"Features\",\"Sen\",\"Members\",\"Data and account\" ...]\nclaims direct, no claims: [\"Claims\",\"September 2026\",\"\",\"To submit \u00b7 evidence complete\",\"\",\"Phone bill\",\"RM88.00\" ...]\ndata: Backups | Last backup | Yesterday, 03:00",
+   "spec": "AC-22, AC-22s, AC-71; spec \u00a79.6, D52",
+   "screenshots": [
+    "FLOW-9-step-1-settings-friend.png"
+   ]
+  },
+  {
+   "id": 7,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Settings -> Appearance: pinning a look is forgotten when you leave the screen; the reveal's switch pins nothing",
+   "detail": "The look and the mode persist, but `quarterly` is `useState(true)` in Appearance, and new-look's *Change each quarter* switch is local too. After pinning Copper and returning, the screen reads *Changes each quarter* and says the next change date. In new-look, switch off + *Keep it* leaves Appearance at *Changes each quarter*. The code says B14 stores it; the brief listed new-look's frame including the switch.",
+   "repro": "Settings -> Appearance -> Copper -> back -> More -> Settings -> Appearance.",
+   "evidence": "return: quarterly checked? true | copper checked? false\nreload: look copper mode dark | quarterly checked? true",
+   "spec": "AC-23s, AC-33; screens.md new-look, patterns \u00a79",
+   "screenshots": [
+    "FLOW-9-step-3-pinned-copper.png",
+    "FLOW-9-step-4-return.png",
+    "FLOW-13-step-2-appearance-after-keep-switch-off.png"
+   ]
+  },
+  {
+   "id": 8,
+   "severity": "Minor",
+   "status": "open",
+   "title": "The simulator's *A notification arrives* asks again after the rule exists",
+   "detail": "It always shows the hard-coded ROTI BAKAR 88 prompt. After answering Meals the rule exists (`rules: [\"ROTI BAKAR 88\"]`), yet a second arrival shows the prompt again and answering it again 'makes' the same rule. The end state of `pay-new` (second payment asks nothing) and 'a second new merchant replaces the first prompt' can't be walked.",
+   "repro": "Dev panel -> A notification arrives -> Meals -> A notification arrives.",
+   "evidence": "after answer 1: {\"rules\":[\"ROTI BAKAR 88\"],\"roti\":0 ...}\narrival 2: prompt visible true",
+   "spec": "AC-34s, FLOW-C2; spec \u00a76.3, \u00a78",
+   "screenshots": [
+    "FLOW-C2-step-4-arrival.png",
+    "FLOW-C2-step-6-second-arrival.png"
+   ]
+  },
+  {
+   "id": 9,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Made-up claims and payday data contradict each other",
+   "detail": "Settings -> Claims: Phone bill cap RM80.00, deadline day 7; Claims: the September claim is RM88.00 'capped at RM100.00', 'Submit by 25 Oct' (parking 20 Oct). The claim exceeds its scheme's cap, which \u00a713 says is applied. Payday step 1 says 'Sen split RM152.00 of claims from your salary' while both September claims are still *To submit* and Home still reads Left until payday RM5,800.00 (no RM152 taken out as D45 says). ESS references differ in format (ESS-26-04417 vs ESS-26-5700). Skipped-step labels say 'October's claims question' on a November payday. The owner reviews this data on the phone, so it should agree with itself.",
+   "repro": "/s/settings/claims ; /s/claims ; /s/payday?scenario=payday",
+   "evidence": "(see text dumps tour-settings-claims.txt, tour-claims.txt, tour-payday.png)",
+   "spec": "AC-61 (coherence), spec \u00a713, D45",
+   "screenshots": [
+    "FLOW-12-step-2.png"
+   ]
+  },
+  {
+   "id": 10,
+   "severity": "Minor",
+   "status": "open",
+   "title": "`claim` and `account` with no id hang on Loading",
+   "detail": "`/s/claim` and `/s/account` (no `id`) show the skeleton forever; `split`, `txn`, `receipt` and a wrong id show *\u2026 isn't here any more*.",
+   "repro": "/s/claim ; /s/account",
+   "evidence": "== claim \"Claim | Loading | ...\"   == account \"Account | Loading | ...\"",
+   "spec": "AC-16s; patterns \u00a77 Error",
+   "screenshots": []
+  },
+  {
+   "id": 11,
+   "severity": "Minor",
+   "status": "open",
+   "title": "The shared command schemas (`packages/core/src/commands.ts`) accept hostile input, and `balance.check` can double-book",
+   "detail": "No B04 free-text field has a max length (100k-character email, Sen text, friend name, essRef all ACCEPTED); `balance.check` allows 10,000 rows and duplicate `accountId`s. With a duplicate, both adjustments are computed from the same snapshot, so after typing RM14,750.87 the balance is RM14,850.87. `member.set` `grant` takes any safe integer and the balance sums past it (`safe: false`). The UI can't produce these (parseSen caps at RM99,999,999,999.99, one box per account), but B05 turns these schemas into the API's contract.",
+   "repro": "qa/e2e/b04-cmd.spec.ts (dev server).",
+   "evidence": "dupCheck: {before:1465087, typed:1475087, after:1485087}\ninvite 100k email: ACCEPTED ; sen.send 100k text: ACCEPTED ; split.assign 100k name: ACCEPTED ; balance.check 10000 rows: ACCEPTED\ngrantOverflow: {balance:18014398509482324, safe:false}",
+   "spec": "AC-60, AC-17s; spec \u00a716, \u00a717",
+   "screenshots": []
+  },
+  {
+   "id": 12,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Members: invite and member sheets lack what \u00a79.6 lists",
+   "detail": "Welcome credit defaults to RM5.00 (spec: RM10, D98). The invite has no *Unlimited*; invited members have no *Resend* / *Revoke* (their sheet has only *Remove*); *Remove* doesn't offer their export. `<script>@x.co` passes the email check and creates a member (rendered as text, inert).",
+   "repro": "Settings -> Members -> Invite; open Farid.",
+   "evidence": "welcome default 5.00 | allowance 2.00\nINVITE \"<script>@x.co\" => members 3 -> 4",
+   "spec": "AC-26, AC-26s; spec \u00a79.6, D98",
+   "screenshots": []
+  },
+  {
+   "id": 13,
+   "severity": "Minor",
+   "status": "open",
+   "title": "`paid-back` has no *Write off*, and `gap`'s answers don't open `manual` with the day",
+   "detail": "flows.md `paid-back`: 'or write their part off, which adds it to your spending (D19)'; `grep 'Write off'` finds nothing. `gap`: *Yes, I did* only records the answer (toast `Answered: Yes, I did`), and *Add a payment for Sat 4 Oct* opens `manual` with no day (known open point in the handoff). D101's *Pay with TNG* / *Save QR* aren't on `split` or `split-public` either.",
+   "repro": "Sen sheet -> Add a payment for Sat 4 Oct; split -> any locked split.",
+   "evidence": "url after Add a payment: /s/manual   (Add expense | Amount | RM | Category | ...)",
+   "spec": "flows.md paid-back, gap; D19, D101",
+   "screenshots": [
+    "FLOW-5-step-8-gap-manual.png"
+   ]
+  },
+  {
+   "id": 14,
+   "severity": "Minor",
+   "status": "open",
+   "title": "`sign-in` has no expired-invitation state",
+   "detail": "flows.md `invited`: 'an expired invitation: *Ask for a new invitation*'. Not built (`grep \"new invitation\"` finds nothing). Wrong code, expired code and invitation-only are built and work.",
+   "repro": "/s/sign-in?email=\u2026 (no way to reach an expired state).",
+   "evidence": "grep 'new invitation' apps/web/src: no match",
+   "spec": "AC-29; flows.md invited",
+   "screenshots": []
+  },
+  {
+   "id": 15,
+   "severity": "Minor",
+   "status": "open",
+   "title": "*Send to ESS* is offered with no shell check, and *Copy* puts `RM88.00` on the clipboard",
+   "detail": "`essReady` is `settings.claims.ess.signedIn` only, so a browser preview shows *Send to ESS* (\u00a713.1: shell only; the PWA submits by hand). *Copy* on Amount copies the formatted `RM88.00`, which ESS's amount field may not take.",
+   "repro": "/s/claims; /s/claim?id=\u2026 -> Copy next to Amount.",
+   "evidence": "clipboard: \"RM88.00\"",
+   "spec": "AC-19s; spec \u00a713, \u00a713.1",
+   "screenshots": []
+  },
+  {
+   "id": 16,
+   "severity": "Note",
+   "status": "open",
+   "title": "First run saves nothing and its sad paths don't reach Home",
+   "detail": "Choices (balances, name, payday) are kept in the component, so a reload mid-way keeps the step but loses what was typed (patterns \u00a77 Forms). *Skip for now* on access doesn't lead to Home's *Capture is off*. Finishing lands on the ordinary Wei Ming Home (`Left until payday RM1,931.27`), not *Spent since you started* (only the guided journey's scenario shows that). The email field accepts 400 characters. *Start using Sen* is disabled with no words when every category is off. The guided `first-run` journey shows sign-in twice (its own step and first-run's step 1). Documented in the code as B08's job.",
+   "repro": "/s/first-run through all seven steps.",
+   "evidence": "HOME after first-run: Sen | Sen | Home | 2 of 3 moves done | October's payday plan ... Left until payday | RM | 1,931.27",
+   "spec": "AC-30, AC-30s; flows.md first-run",
+   "screenshots": [
+    "FLOW-C1-step-8-home.png"
+   ]
+  },
+  {
+   "id": 17,
+   "severity": "Note",
+   "status": "open",
+   "title": "Canned Sen replies sound like analysis",
+   "detail": "Any free-form question ('What is my salary?', 'How much will I have saved by December?') gets \"I looked at this cycle's payments. Nothing stands out\u2026\". No figure is invented, but it doesn't say it can't answer (\u00a712.2). Skeleton canned text; B27 owns it.",
+   "repro": "Sen sheet -> type a question.",
+   "evidence": "Q \"What is my salary?\" => \"I looked at this cycle's payments. Nothing stands out, so I'd leave things as they are.\"",
+   "spec": "spec \u00a712.2",
+   "screenshots": [
+    "FLOW-5-step-9-free-form.png"
+   ]
+  },
+  {
+   "id": 18,
+   "severity": "Note",
+   "status": "open",
+   "title": "Small things",
+   "detail": "Accounts' *Elsewhere* row is 56 px (patterns \u00a77: list rows 64 px or more). `?state=offline` is honoured in the production build (B03-era; shows the offline banner only). `Wed, 30 Sept` uses a different month abbreviation from `1 Oct`. A friend's Settings -> You hides *Names* correctly, and Account's sign-out rows are B05's, so AC-27 is not reachable.",
+   "repro": "/s/accounts ; production /?state=offline",
+   "evidence": "/s/accounts rows: LI:Maybank No balance=56",
+   "spec": "AC-66; patterns \u00a77",
+   "screenshots": []
+  },
+  {
+   "id": 19,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Scanning the same file twice does not say Already added",
+   "detail": "flows.md `scan-after` sad path: 'The same file twice: Already added (\u00a76.5)'. Choosing the same image (identical bytes) a second time in /scan opened `confirm` again (new draft id, same receipt) with no message. This is scan/confirm code from B03, walked here because `scan-after` is a core journey.",
+   "repro": "/scan -> choose receipt.jpg -> Use this -> Done; /scan -> choose the same file -> Use this.",
+   "evidence": "second scan same file: http://127.0.0.1:5180/s/confirm?id=26e97c3c-\u2026 Check the receipt | SATE KAJANG HJ SAMURI | Today, 20:40 ...",
+   "spec": "AC-40; flows.md scan-after; spec \u00a76.5",
+   "screenshots": [
+    "FLOW-C3-step-3-second-scan.png"
+   ]
+  }
+ ],
+ "probes": [
+  {
+   "broke": "Largest remainder replaced by per-person Math.round(price/n) in the app's `sharesOf`",
+   "caught": true,
+   "note": "splits.test.ts: 2 failed (shares sum 5832 vs 5830)"
+  },
+  {
+   "broke": "App side: `maybeLock` ignores unclaimed items",
+   "caught": true,
+   "note": "unit suite stayed green (26/26); only e2e `split-mine` went red, 12 of 12 looks. Caught late, by a browser journey, not a unit test."
+  },
+  {
+   "broke": "Public side: `lockIfReady` ignores unclaimed items",
+   "caught": false,
+   "note": "unit 26/26 and e2e -g split 39/39 stayed green. Finding 2."
+  },
+  {
+   "broke": "Public page: ticking allowed after the lock",
+   "caught": true,
+   "note": "splits.test.ts 'demo-final is read-only' failed"
+  },
+  {
+   "broke": "`balance.check` booking direction flipped (out/in)",
+   "caught": true,
+   "note": "money.test.ts: 2 failed"
+  },
+  {
+   "broke": "Closed public link returns the real merchant and total",
+   "caught": false,
+   "note": "splits.test.ts 26/26 stayed green. Finding 3."
+  },
+  {
+   "broke": "Members: 'You can't remove yourself' guard dropped",
+   "caught": true,
+   "note": "admin.test.ts 'suspends and removes others, never the admin' failed"
+  },
+  {
+   "broke": "Credit refund allowed to go below zero",
+   "caught": true,
+   "note": "admin.test.ts 'grants and refunds credit' failed"
+  },
+  {
+   "broke": "`DEV_TOOLS = true` (dev panel, fake and simulator in a production build)",
+   "caught": true,
+   "note": "production.spec.ts:7 failed (dev tools); B04's own two production tests stayed green, so B01's test is what protects it."
+  }
+ ],
+ "flows": [
+  {
+   "id": "FLOW-1",
+   "title": "Split a bill you paid, to the lock",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More -> Shared bills; split-public link",
+   "covers": [
+    "AC-2",
+    "AC-3",
+    "AC-4",
+    "AC-5",
+    "AC-7"
+   ],
+   "spec": "\u00a77",
+   "status": "pass",
+   "ends": "Final; shares sum to the bill; Mei sees RM22.14 and Pay",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open the split link as a friend (demo-new)",
+     "assertion": "name box, no chrome, no pay",
+     "status": "pass",
+     "screenshot": "FLOW-4-step-1-public-new.png"
+    },
+    {
+     "n": 2,
+     "action": "Open demo-final",
+     "assertion": "Mei sees RM22.14 = 12.48 + 6.99 + 2.67, read-only, Pay RM22.14",
+     "status": "pass",
+     "screenshot": "FLOW-2-step-2-final-readonly.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-2",
+   "title": "Split sad paths: stuck, early lock, closed, read-only",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "nk split; closed link",
+   "covers": [
+    "AC-2s",
+    "AC-4s",
+    "AC-7s",
+    "AC-7t"
+   ],
+   "spec": "\u00a77",
+   "status": "pass",
+   "ends": "stuck item settled, lock without waiting works, closed link shows one line",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open a closed link",
+     "assertion": "one line, nothing else",
+     "status": "pass",
+     "screenshot": "FLOW-2-step-1-closed.png"
+    },
+    {
+     "n": 2,
+     "action": "Payer: Done with an unclaimed item",
+     "assertion": "stays Still changing",
+     "status": "pass",
+     "screenshot": "FLOW-2-step-4-nk-stuck.png"
+    },
+    {
+     "n": 3,
+     "action": "Someone else\u2026 with a hostile name",
+     "assertion": "rendered as text; Lock without waiting appears",
+     "status": "pass",
+     "screenshot": "FLOW-2-step-5-hostile-friend-name.png"
+    },
+    {
+     "n": 4,
+     "action": "Lock without waiting",
+     "assertion": "Final; shares [2317,2427,466,620] sum to 5830",
+     "status": "pass",
+     "screenshot": "FLOW-2-step-6-locked.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-3",
+   "title": "A bill a friend paid, I owe",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Shared bills -> HAIDILAO",
+   "covers": [
+    "AC-6",
+    "AC-6s",
+    "AC-69"
+   ],
+   "spec": "\u00a77",
+   "status": "fail",
+   "ends": "share ticks once; Undo restores owing; double tap = one change",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Read You owe Mei RM24.40, ticks read-only",
+     "assertion": "visible, checkboxes disabled",
+     "status": "pass",
+     "screenshot": "FLOW-3-step-1-owe.png"
+    },
+    {
+     "n": 2,
+     "action": "Double-tap I've paid",
+     "assertion": "one change, Undo available",
+     "status": "fail",
+     "screenshot": "FLOW-3-step-2-paid.png"
+    },
+    {
+     "n": 3,
+     "action": "Tap Undo",
+     "assertion": "paid again 0",
+     "status": "fail",
+     "screenshot": "FLOW-3-step-3-after-dbl-undo.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-4",
+   "title": "Public split page isolation",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/split-public",
+   "covers": [
+    "AC-7",
+    "AC-7u"
+   ],
+   "spec": "brief Notes",
+   "status": "fail",
+   "ends": "only the bill; nothing else; name remembered",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open demo-new; grep DOM for the scenario",
+     "assertion": "no tab bar, Sen, links or scenario names",
+     "status": "pass",
+     "screenshot": "FLOW-4-step-1-public-new.png"
+    },
+    {
+     "n": 2,
+     "action": "Bad names",
+     "assertion": "blank/space/Ali refused in words",
+     "status": "pass",
+     "screenshot": "FLOW-4-step-2-bad-names.png"
+    },
+    {
+     "n": 3,
+     "action": "Hostile name",
+     "assertion": "inert",
+     "status": "pass",
+     "screenshot": "FLOW-4-step-3-hostile-name-inert.png"
+    },
+    {
+     "n": 4,
+     "action": "Reload",
+     "assertion": "name remembered",
+     "status": "fail",
+     "screenshot": "FLOW-4-step-4-after-reload.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-5",
+   "title": "Ask Sen: answers, proposal, research, ask_user",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Insights -> Sen",
+   "covers": [
+    "AC-8",
+    "AC-9",
+    "AC-10",
+    "AC-11",
+    "AC-14"
+   ],
+   "spec": "\u00a712",
+   "status": "pass",
+   "ends": "marks as spec; Apply/Undo/Dismiss work; menu screens render",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Sen on Insights",
+     "assertion": "Looking at: Insights",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-1-sen-insights.png"
+    },
+    {
+     "n": 2,
+     "action": "Apply a proposal",
+     "assertion": "state applied, Review item gone",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-6-applied.png"
+    },
+    {
+     "n": 3,
+     "action": "Dismiss",
+     "assertion": "dismissed",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-7-dismissed.png"
+    },
+    {
+     "n": 4,
+     "action": "Menu -> memory, research, usage",
+     "assertion": "three screens render",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-4-menu.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-6",
+   "title": "Sen sad states",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "?state=offline, ?scenario=cap",
+   "covers": [
+    "AC-12"
+   ],
+   "spec": "\u00a79.6",
+   "status": "pass",
+   "ends": "offline and paused say so in words",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Offline",
+     "assertion": "Sen needs a connection, composer disabled",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-1-sen-offline.png"
+    },
+    {
+     "n": 2,
+     "action": "Cap",
+     "assertion": "Sen is paused until 1 Nov; everything else works",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-2-sen-paused.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-7",
+   "title": "Balance check",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More -> Accounts -> Check balances",
+   "covers": [
+    "AC-15",
+    "AC-16",
+    "AC-17",
+    "AC-17s"
+   ],
+   "spec": "\u00a77, D18",
+   "status": "pass",
+   "ends": "differences booked; hostile input refused; total = sum",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open balance-check",
+     "assertion": "10 form groups, no tab bar",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-1-balance-check.png"
+    },
+    {
+     "n": 2,
+     "action": "11 hostile inputs",
+     "assertion": "each refused in words, 0 adjustments booked",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-2-hostile.png"
+    },
+    {
+     "n": 3,
+     "action": "No capture: accounts",
+     "assertion": "empty line, entry hidden in More",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-3-accounts-nocapture.png"
+    },
+    {
+     "n": 4,
+     "action": "Open an account",
+     "assertion": "balance, opening, recent payments, checks",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-4-account.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-8",
+   "title": "Claims: kit, copy, Send to ESS",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More -> Claims",
+   "covers": [
+    "AC-18",
+    "AC-19",
+    "AC-19s",
+    "AC-20"
+   ],
+   "spec": "\u00a713",
+   "status": "fail",
+   "ends": "status moves once; ESS gated by evidence and shell",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Parking, evidence missing",
+     "assertion": "Send to ESS disabled",
+     "status": "pass",
+     "screenshot": "FLOW-8-step-1-claim-parking-missing.png"
+    },
+    {
+     "n": 2,
+     "action": "Phone claim, complete",
+     "assertion": "Copy Amount -> clipboard RM88.00",
+     "status": "pass",
+     "screenshot": "FLOW-8-step-2-claim-phone.png"
+    },
+    {
+     "n": 3,
+     "action": "Send to ESS from a browser preview",
+     "assertion": "offered although not in the shell",
+     "status": "fail",
+     "screenshot": "FLOW-8-step-6-send-to-ess-claim.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-9",
+   "title": "Settings tour, owner vs friend",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "More -> Settings",
+   "covers": [
+    "AC-22",
+    "AC-23",
+    "AC-71"
+   ],
+   "spec": "\u00a79.6",
+   "status": "fail",
+   "ends": "sections per role; pin persists",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Friend scenario",
+     "assertion": "Members still listed",
+     "status": "fail",
+     "screenshot": "FLOW-9-step-1-settings-friend.png"
+    },
+    {
+     "n": 2,
+     "action": "Pin Copper",
+     "assertion": "look and dark applied",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-3-pinned-copper.png"
+    },
+    {
+     "n": 3,
+     "action": "Return to Appearance",
+     "assertion": "pin shown",
+     "status": "fail",
+     "screenshot": "FLOW-9-step-4-return.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-10",
+   "title": "Sign-in states",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/sign-in",
+   "covers": [
+    "AC-29",
+    "AC-29s"
+   ],
+   "spec": "flows first-run, invited",
+   "status": "fail",
+   "ends": "each state says its words; expired invitation",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Bad, unknown and hostile emails",
+     "assertion": "format message / Sen is invitation-only",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-1-invitation-only.png"
+    },
+    {
+     "n": 2,
+     "action": "Wrong and expired codes; prefilled invitation",
+     "assertion": "words shown; expired invitation state absent",
+     "status": "fail",
+     "screenshot": "FLOW-10-step-2-wrong-code.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-12",
+   "title": "Payday flow",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "simulator -> Payday",
+   "covers": [
+    "AC-32",
+    "AC-61"
+   ],
+   "spec": "\u00a79.7",
+   "status": "pass",
+   "ends": "skip waits in Review; plan ticks on Home",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Simulator: Payday",
+     "assertion": "Home shows the Payday card",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-1-home-payday-card.png"
+    },
+    {
+     "n": 2,
+     "action": "Step 1 done by payslip",
+     "assertion": "Undo shown",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-2.png"
+    },
+    {
+     "n": 3,
+     "action": "Steps 2-4",
+     "assertion": "balance, look-back, plan",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-5.png"
+    },
+    {
+     "n": 4,
+     "action": "Use this plan",
+     "assertion": "Home: 0 of 5 moves done",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-9-home-after-plan.png"
+    },
+    {
+     "n": 5,
+     "action": "Skip every step",
+     "assertion": "5 payday-step items in Review",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-10-review-skipped.png"
+    },
+    {
+     "n": 6,
+     "action": "Undo step 1",
+     "assertion": "asked, Yes preselected",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-11-claims-asked.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-13",
+   "title": "New look reveal",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "dev panel -> Play the reveal",
+   "covers": [
+    "AC-33",
+    "AC-23"
+   ],
+   "spec": "patterns \u00a79",
+   "status": "fail",
+   "ends": "look as chosen; switch pins",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Reveal",
+     "assertion": "card, Keep it focused",
+     "status": "pass",
+     "screenshot": "FLOW-13-step-1-card.png"
+    },
+    {
+     "n": 2,
+     "action": "Switch off + Keep it",
+     "assertion": "pinned in Appearance",
+     "status": "fail",
+     "screenshot": "FLOW-13-step-2-appearance-after-keep-switch-off.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-15",
+   "title": "Widgets and capture off",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "dev panel -> Widgets",
+   "covers": [
+    "AC-36",
+    "AC-36s"
+   ],
+   "spec": "\u00a79.1",
+   "status": "pass",
+   "ends": "widget figure = Home figure",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Small widget",
+     "assertion": "RM1,931.27 = Home hero",
+     "status": "pass",
+     "screenshot": "FLOW-15-step-1-widgets.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-16",
+   "title": "Offline",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "context.setOffline, simulator",
+   "covers": [
+    "AC-70",
+    "AC-37"
+   ],
+   "spec": "\u00a75",
+   "status": "pass",
+   "ends": "offline says so in words; outbox rows counted",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Sign-in offline",
+     "assertion": "Send the code disabled, banner",
+     "status": "pass",
+     "screenshot": "FLOW-16-step-1-signin-offline.png"
+    },
+    {
+     "n": 2,
+     "action": "Home, simulated offline",
+     "assertion": "figures include 2 outbox rows (spent RM3,879.33 vs 3,873.53)",
+     "status": "pass",
+     "screenshot": "FLOW-16-step-4-home-offline.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-19",
+   "title": "Production build is clean",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "production build",
+   "covers": [
+    "AC-38",
+    "AC-62",
+    "AC-64"
+   ],
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "ends": "no dev tools, no made-up data, no secrets, no third party",
+   "steps": [
+    {
+     "n": 1,
+     "action": "15 routes in production",
+     "assertion": "all Not built yet, 0 dev panel buttons",
+     "status": "pass",
+     "screenshot": "FLOW-19-prod--s-payday.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-C1",
+   "title": "first-run (core)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "guided journey, and /s/first-run",
+   "covers": [
+    "AC-30"
+   ],
+   "spec": "\u00a79.5",
+   "status": "pass",
+   "ends": "guided end reads Spent since you started; real flow lands on the ordinary Home",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Guided: three steps",
+     "assertion": "Home hero reads Spent since you started",
+     "status": "pass",
+     "screenshot": "FLOW-C1-guided-step-3.png"
+    },
+    {
+     "n": 2,
+     "action": "Real: apps",
+     "assertion": "Choose these 4",
+     "status": "pass",
+     "screenshot": "FLOW-C1-step-2-apps.png"
+    },
+    {
+     "n": 3,
+     "action": "Real: access, reload reopens step 3",
+     "assertion": "same step",
+     "status": "pass",
+     "screenshot": "FLOW-C1-step-3-access.png"
+    },
+    {
+     "n": 4,
+     "action": "Real: running -> Home",
+     "assertion": "7 steps, payday 0/32/blank refused, 5 accepted",
+     "status": "pass",
+     "screenshot": "FLOW-C1-step-8-home.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-C2",
+   "title": "pay-new (core)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "simulator: A notification arrives",
+   "covers": [
+    "AC-34",
+    "AC-34s"
+   ],
+   "spec": "\u00a76.3",
+   "status": "fail",
+   "ends": "rule created; second payment asks nothing",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Guided journey",
+     "assertion": "prompt RM9.50 ROTI BAKAR 88",
+     "status": "pass",
+     "screenshot": "FLOW-C2-guided-step-1.png"
+    },
+    {
+     "n": 2,
+     "action": "Answer Meals",
+     "assertion": "rule created, Review row cleared",
+     "status": "pass",
+     "screenshot": "FLOW-C2-step-5-answered.png"
+    },
+    {
+     "n": 3,
+     "action": "Second arrival",
+     "assertion": "asks again",
+     "status": "fail",
+     "screenshot": "FLOW-C2-step-6-second-arrival.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-C3",
+   "title": "scan-after (core)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Scan tab",
+   "covers": [
+    "AC-40"
+   ],
+   "spec": "\u00a76.4",
+   "status": "fail",
+   "ends": "Attached to RM64.13 on Ryt Bank, with Undo",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Scan -> confirm",
+     "assertion": "SATE KAJANG HJ SAMURI, items add up",
+     "status": "pass",
+     "screenshot": "FLOW-C3-step-1-confirm.png"
+    },
+    {
+     "n": 2,
+     "action": "Done",
+     "assertion": "toast Attached to RM64.13 on Ryt Bank",
+     "status": "pass",
+     "screenshot": "FLOW-C3-step-2-done.png"
+    },
+    {
+     "n": 3,
+     "action": "Same file again",
+     "assertion": "opens confirm again (no Already added)",
+     "status": "fail",
+     "screenshot": "FLOW-C3-step-3-second-scan.png"
+    }
+   ]
+  }
+ ],
+ "criteria": [
+  {
+   "id": "AC-1",
+   "title": "shared lists splits",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "3 rows, lines read \"You paid \u00b7 1 of 2 paid you back\" / \"Mei paid \u00b7 you owe RM24.40\""
+  },
+  {
+   "id": "AC-1s",
+   "title": "shared empty",
+   "spec": "patterns \u00a77",
+   "status": "pass",
+   "evidence": "\"No shared bills yet. Open a payment and tap Split to share it.\""
+  },
+  {
+   "id": "AC-2",
+   "title": "split payer view",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "status, QR, Share the link, items, Done button present"
+  },
+  {
+   "id": "AC-2s",
+   "title": "unclaimed item controls",
+   "spec": "D71",
+   "status": "pass",
+   "evidence": "Everyone / Someone else\u2026 for payer; fake throws \"Only Mei can settle\" for non-payer (unit)"
+  },
+  {
+   "id": "AC-3",
+   "title": "largest remainder",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "fried chicken 7.00/7.00/6.99; probe red; Mei 12.48+6.99+2.67 = 22.14"
+  },
+  {
+   "id": "AC-3s",
+   "title": "odd-sen items",
+   "spec": "money",
+   "status": "pass",
+   "evidence": "14.00/3 -> 4.67,4.67,4.66; shares [2317,2427,466,620] = 5830"
+  },
+  {
+   "id": "AC-4",
+   "title": "lock rule",
+   "spec": "D71",
+   "status": "pass",
+   "evidence": "behaviour correct in app and public; tests do not guard public (finding 2)"
+  },
+  {
+   "id": "AC-4s",
+   "title": "lock without waiting only when all claimed",
+   "spec": "flows split-stuck",
+   "status": "pass",
+   "evidence": "button absent with 1 unclaimed, present after Zul; locks"
+  },
+  {
+   "id": "AC-5",
+   "title": "payer tick list",
+   "spec": "D65",
+   "status": "pass",
+   "evidence": "matched/ticked by you wording; split.paid unit tests"
+  },
+  {
+   "id": "AC-5s",
+   "title": "non-payer read-only",
+   "spec": "D65",
+   "status": "pass",
+   "evidence": "checkboxes disabled on HAIDILAO"
+  },
+  {
+   "id": "AC-6",
+   "title": "you owe",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "You owe Mei RM24.40"
+  },
+  {
+   "id": "AC-6s",
+   "title": "paid state",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "StatusCard Paid; no I've paid after (split-theirs journey)"
+  },
+  {
+   "id": "AC-7",
+   "title": "split-public no chrome, remembers name",
+   "spec": "screens",
+   "status": "fail",
+   "evidence": "no chrome; but reload forgets the name (finding 4)"
+  },
+  {
+   "id": "AC-7s",
+   "title": "closed link",
+   "spec": "screens",
+   "status": "pass",
+   "evidence": "\"This split is closed\" only; no KEDAI/RM/Pay in text"
+  },
+  {
+   "id": "AC-7t",
+   "title": "read-only after lock, pay only when final",
+   "spec": "D71",
+   "status": "pass",
+   "evidence": "To change a tick, ask Wei Ming.; demo shows no Pay"
+  },
+  {
+   "id": "AC-7u",
+   "title": "public leaks nothing",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "html grep for NASI KANDAR, HAIDILAO, BBQ PLACE, 29,871, Ryt Bank, TNG, weiming@: none; storage empty"
+  },
+  {
+   "id": "AC-8",
+   "title": "Sen button gating",
+   "spec": "D68, D52",
+   "status": "fail",
+   "evidence": "present with agent=false (finding 5)"
+  },
+  {
+   "id": "AC-8s",
+   "title": "Looking at",
+   "spec": "screens sen",
+   "status": "pass",
+   "evidence": "Looking at: Insights"
+  },
+  {
+   "id": "AC-9",
+   "title": "message kinds",
+   "spec": "\u00a712.3",
+   "status": "pass",
+   "evidence": "note, answer, proposal, research with sources, ask, clip, suggestions all present"
+  },
+  {
+   "id": "AC-9s",
+   "title": "4-option ask_user",
+   "spec": "\u00a712.3",
+   "status": "unreachable",
+   "evidence": "no scenario has four options; ReviewRow shows 3 (handoff open point)"
+  },
+  {
+   "id": "AC-10",
+   "title": "traceability marks",
+   "spec": "D108",
+   "status": "pass",
+   "evidence": "\"RM650.00 not checked\", \"from your file\""
+  },
+  {
+   "id": "AC-10s",
+   "title": "no URLs, external links",
+   "spec": "\u00a712.2, \u00a717",
+   "status": "pass",
+   "evidence": "Source click opens popup, opener null, app stays; 0 anchors in the sheet"
+  },
+  {
+   "id": "AC-11",
+   "title": "Apply/Dismiss",
+   "spec": "\u00a712.1",
+   "status": "pass",
+   "evidence": "applied -> Undo -> open -> dismissed; Review item parity"
+  },
+  {
+   "id": "AC-11s",
+   "title": "Apply twice once",
+   "spec": "tap guard",
+   "status": "fail",
+   "evidence": "same class as finding 1 (no guard on B04 buttons)"
+  },
+  {
+   "id": "AC-12",
+   "title": "offline/paused",
+   "spec": "\u00a79.6",
+   "status": "pass",
+   "evidence": "both strings exact; composer disabled"
+  },
+  {
+   "id": "AC-13",
+   "title": "research unconfirmed",
+   "spec": "\u00a712.2",
+   "status": "pass",
+   "evidence": "\"Draft, not confirmed\"; no user figure in findings"
+  },
+  {
+   "id": "AC-14",
+   "title": "agent/*",
+   "spec": "D98",
+   "status": "pass",
+   "evidence": "memory, research, usage render; owner usage = tokens + estimate"
+  },
+  {
+   "id": "AC-14s",
+   "title": "empty agent screens",
+   "spec": "patterns",
+   "status": "pass",
+   "evidence": "one-line empties for memory and research"
+  },
+  {
+   "id": "AC-15",
+   "title": "accounts",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "total RM29,871.77 = 14,650.87+7,340.00+262.30+7,553.10+65.50; Maybank no balance"
+  },
+  {
+   "id": "AC-15s",
+   "title": "no capture hides accounts",
+   "spec": "D52",
+   "status": "pass",
+   "evidence": "More has no Accounts; direct URL says balances show once Sen reads apps"
+  },
+  {
+   "id": "AC-16",
+   "title": "account",
+   "spec": "screens",
+   "status": "pass",
+   "evidence": "balance, opening RM3,200.00, fed by, recent payments, checks"
+  },
+  {
+   "id": "AC-16s",
+   "title": "unknown account id",
+   "spec": "patterns",
+   "status": "fail",
+   "evidence": "wrong id ok; no id hangs on Loading (finding 10)"
+  },
+  {
+   "id": "AC-17",
+   "title": "balance-check parse, Save",
+   "spec": "D18",
+   "status": "pass",
+   "evidence": "1,284.50 -> booked RM13,366.37 vs RM14,650.87; Matches -> everything matches"
+  },
+  {
+   "id": "AC-17s",
+   "title": "hostile input",
+   "spec": "forms",
+   "status": "pass",
+   "evidence": "11 inputs refused in words, 0 adjustments"
+  },
+  {
+   "id": "AC-17t",
+   "title": "tab bar hidden",
+   "spec": "patterns \u00a76",
+   "status": "pass",
+   "evidence": "tab bar count 0 (draft survival not tested)"
+  },
+  {
+   "id": "AC-18",
+   "title": "claims",
+   "spec": "\u00a713",
+   "status": "pass",
+   "evidence": "two schemes, status, deadline, evidence, Download claim pack"
+  },
+  {
+   "id": "AC-18s",
+   "title": "claims off",
+   "spec": "D52",
+   "status": "fail",
+   "evidence": "/s/claims still shows data with claims off (finding 6)"
+  },
+  {
+   "id": "AC-19",
+   "title": "claim kit",
+   "spec": "\u00a713",
+   "status": "pass",
+   "evidence": "fields in order, Copy Amount -> \"RM88.00\" (finding 15 on format)"
+  },
+  {
+   "id": "AC-19s",
+   "title": "ESS gating",
+   "spec": "\u00a713.1",
+   "status": "fail",
+   "evidence": "disabled with missing evidence (good); offered in a browser with no shell check"
+  },
+  {
+   "id": "AC-20",
+   "title": "status wording",
+   "spec": "patterns",
+   "status": "pass",
+   "evidence": "To submit \u00b7 evidence complete / missing, with icon"
+  },
+  {
+   "id": "AC-21",
+   "title": "no real claim values",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "schemes Phone bill/Parking, example.com sender"
+  },
+  {
+   "id": "AC-22",
+   "title": "Settings per role",
+   "spec": "\u00a79.6",
+   "status": "fail",
+   "evidence": "owner list as table; friend scenario still lists Members"
+  },
+  {
+   "id": "AC-22s",
+   "title": "Members non-admin",
+   "spec": "\u00a717",
+   "status": "unreachable",
+   "evidence": "no non-admin scenario exists"
+  },
+  {
+   "id": "AC-23",
+   "title": "Appearance",
+   "spec": "D44, D77",
+   "status": "pass",
+   "evidence": "dark + copper applied, mode and look survive reload"
+  },
+  {
+   "id": "AC-23s",
+   "title": "pin persists",
+   "spec": "D77",
+   "status": "fail",
+   "evidence": "pin lost on leaving the screen (finding 7)"
+  },
+  {
+   "id": "AC-24",
+   "title": "You",
+   "spec": "D14",
+   "status": "pass",
+   "evidence": "0, 32, abc refused; 15 saved and kept on SPA return"
+  },
+  {
+   "id": "AC-25",
+   "title": "ESS section",
+   "spec": "D103",
+   "status": "pass",
+   "evidence": "no password field; Forget ESS password; Teach/Import present"
+  },
+  {
+   "id": "AC-26",
+   "title": "Members",
+   "spec": "\u00a79.6",
+   "status": "fail",
+   "evidence": "invite/switches/credit/seats/suspend/remove ok; Unlimited at invite, Resend/Revoke, export offer missing; welcome RM5 not RM10"
+  },
+  {
+   "id": "AC-26s",
+   "title": "invite validation",
+   "spec": "\u00a79.6",
+   "status": "pass",
+   "evidence": "\"a@\" refused; remove confirms; refund below zero refused (unit)"
+  },
+  {
+   "id": "AC-27",
+   "title": "Data/Account",
+   "spec": "\u00a717",
+   "status": "unreachable",
+   "evidence": "Account sign-out is B05; Data export is a stub toast"
+  },
+  {
+   "id": "AC-27s",
+   "title": "sign out everywhere",
+   "spec": "\u00a717",
+   "status": "unreachable",
+   "evidence": "B05"
+  },
+  {
+   "id": "AC-28",
+   "title": "capture steps",
+   "spec": "screens",
+   "status": "pass",
+   "evidence": "Settings/capture and first-run embed the same screens"
+  },
+  {
+   "id": "AC-29",
+   "title": "sign-in states",
+   "spec": "flows",
+   "status": "fail",
+   "evidence": "wrong, expired, invitation-only built; expired invitation missing (finding 14)"
+  },
+  {
+   "id": "AC-29s",
+   "title": "sign-in hostile input",
+   "spec": "forms",
+   "status": "pass",
+   "evidence": "abcdef stripped, 5 digits refused, <img> email refused, prefill hostile -> empty"
+  },
+  {
+   "id": "AC-30",
+   "title": "first-run 7 steps",
+   "spec": "\u00a79.5",
+   "status": "fail",
+   "evidence": "7 steps, reload reopens step 3; Home end state is not \"Spent since you started\" (finding 16)"
+  },
+  {
+   "id": "AC-30s",
+   "title": "access refused",
+   "spec": "flows",
+   "status": "fail",
+   "evidence": "Skip for now does not set Capture is off"
+  },
+  {
+   "id": "AC-31",
+   "title": "short first run",
+   "spec": "D79",
+   "status": "pass",
+   "evidence": "sweep journeys.spec invited passed (703/703)"
+  },
+  {
+   "id": "AC-32",
+   "title": "payday",
+   "spec": "\u00a79.7",
+   "status": "pass",
+   "evidence": "4 steps, Skip each, asked variant Yes preselected, Use this plan -> 0 of 5"
+  },
+  {
+   "id": "AC-32s",
+   "title": "steps by role",
+   "spec": "D52",
+   "status": "unreachable",
+   "evidence": "no scenario with agent/claims off and a payday"
+  },
+  {
+   "id": "AC-33",
+   "title": "new-look",
+   "spec": "\u00a79",
+   "status": "fail",
+   "evidence": "crossfade, focus, Keep/Go back right; switch off pins nothing"
+  },
+  {
+   "id": "AC-33s",
+   "title": "reduced motion",
+   "spec": "\u00a79",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-34",
+   "title": "prompts",
+   "spec": "screens",
+   "status": "pass",
+   "evidence": "ROTI BAKAR RM9.50, payback RM25.00, quiet scan; sweep stand-in tests passed"
+  },
+  {
+   "id": "AC-34s",
+   "title": "second prompt replaces first",
+   "spec": "D24",
+   "status": "unreachable",
+   "evidence": "simulator has one hard-coded arrival (finding 8)"
+  },
+  {
+   "id": "AC-35",
+   "title": "pushes, shortcuts, island",
+   "spec": "screens",
+   "status": "pass",
+   "evidence": "sweep: every stand-in axe + journeys passed"
+  },
+  {
+   "id": "AC-36",
+   "title": "widgets",
+   "spec": "\u00a79.1",
+   "status": "pass",
+   "evidence": "S/M/L, light/dark/Capture is off + Fix present"
+  },
+  {
+   "id": "AC-36s",
+   "title": "widget = Home",
+   "spec": "\u00a79.2",
+   "status": "pass",
+   "evidence": "RM1,931.27 both"
+  },
+  {
+   "id": "AC-37",
+   "title": "simulator",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "payday card, offline figures include outbox, capture-off via sweep"
+  },
+  {
+   "id": "AC-37s",
+   "title": "simulator off restores",
+   "spec": "brief",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-38",
+   "title": "dev tools absent in production",
+   "spec": "modules rule 6",
+   "status": "pass",
+   "evidence": "15 routes Not built yet, 0 dev panel, bundle grep clean; probe red"
+  },
+  {
+   "id": "AC-39",
+   "title": "journeys list",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "38 ids; all flows.md journeys present"
+  },
+  {
+   "id": "AC-39s",
+   "title": "journey with missing precondition",
+   "spec": "brief",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-40",
+   "title": "core journeys",
+   "spec": "D124",
+   "status": "fail",
+   "evidence": "first-run and scan-after walked; pay-new asks again (finding 8); same file twice gives no Already added (finding 19)"
+  },
+  {
+   "id": "AC-41",
+   "title": "six looks, light/dark",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "sweep: 703 passed"
+  },
+  {
+   "id": "AC-42",
+   "title": "axe",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "sweep: every B04 screen/state/stand-in passed"
+  },
+  {
+   "id": "AC-43",
+   "title": "touch targets, labels",
+   "spec": "\u00a78",
+   "status": "pass",
+   "evidence": "24 B04 routes, 0 targets under 48 px"
+  },
+  {
+   "id": "AC-60",
+   "title": "no float money",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "diff grep: only Math.round for percent and token counts"
+  },
+  {
+   "id": "AC-60s",
+   "title": "typed money edge cases",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "11 inputs: 1e3, 1.234, 1,5, 12., .5, Arabic digits, 20 digits refused"
+  },
+  {
+   "id": "AC-61",
+   "title": "prediction labelled",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "projection marked not checked; plan not in Left until payday"
+  },
+  {
+   "id": "AC-62",
+   "title": "no secrets in bundle",
+   "spec": "\u00a717",
+   "status": "pass",
+   "evidence": "grep of production bundle for key shapes: none"
+  },
+  {
+   "id": "AC-63",
+   "title": "no real data",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "pnpm hygiene passed (denylist skipped, secret not set)"
+  },
+  {
+   "id": "AC-64",
+   "title": "no third-party requests",
+   "spec": "\u00a717",
+   "status": "pass",
+   "evidence": "external [] on 60+ page loads and journeys"
+  },
+  {
+   "id": "AC-65",
+   "title": "KL time",
+   "spec": "D14",
+   "status": "pass",
+   "evidence": "13 routes identical in KL, Auckland, Los Angeles (clock pinned, so weaker)"
+  },
+  {
+   "id": "AC-66",
+   "title": "patterns",
+   "spec": "patterns \u00a77",
+   "status": "fail",
+   "evidence": "rows >=71 px except Elsewhere 56; no tap guard (findings 1, 18)"
+  },
+  {
+   "id": "AC-66s",
+   "title": "empty/loading/error states",
+   "spec": "patterns \u00a77",
+   "status": "pass",
+   "evidence": "one-line empties, skeleton Loading, Couldn't load + Try again"
+  },
+  {
+   "id": "AC-67",
+   "title": "money format",
+   "spec": "patterns \u00a73",
+   "status": "pass",
+   "evidence": "RM1,284.50 style, +RM on money in"
+  },
+  {
+   "id": "AC-68",
+   "title": "refund/income money in only",
+   "spec": "\u00a77",
+   "status": "pass",
+   "evidence": "sweep B03 test passed"
+  },
+  {
+   "id": "AC-69",
+   "title": "one change per double tap",
+   "spec": "patterns \u00a77",
+   "status": "fail",
+   "evidence": "finding 1"
+  },
+  {
+   "id": "AC-70",
+   "title": "offline sync once",
+   "spec": "\u00a75",
+   "status": "unreachable",
+   "evidence": "fake has no persistence across reload; B07"
+  },
+  {
+   "id": "AC-71",
+   "title": "switches hide, not only the menu",
+   "spec": "D52",
+   "status": "fail",
+   "evidence": "finding 6"
+  },
+  {
+   "id": "AC-72",
+   "title": "OTP never reaches JS",
+   "spec": "\u00a76.2",
+   "status": "unreachable",
+   "evidence": "B04 simulator has no OTP; B02 capture sim does (not B04)"
+  }
+ ],
+ "notTested": [
+  {
+   "what": "Mercury and Copper WebGL in the real WebView, the real widgets, notification prompts, the island",
+   "why": "needs the device; queued in docs/local.md (B04 phone checks)"
+  },
+  {
+   "what": "Offline then app killed, outbox syncs exactly once",
+   "why": "the skeleton fake is in memory and has no outbox; B07"
+  },
+  {
+   "what": "RLS matrix, API routes, SQL views",
+   "why": "the slice has none; no database exists yet (B05)"
+  },
+  {
+   "what": "A non-admin Members screen, agent-off, claims-off payday steps",
+   "why": "no scenario reaches them"
+  },
+  {
+   "what": "OTP and non-allowlisted notifications",
+   "why": "native filter is B02; the B04 simulator carries no such input"
+  },
+  {
+   "what": "Reduced motion in new-look; simulator-off restores state; four-option ask_user",
+   "why": "not run / not reachable"
+  },
+  {
+   "what": "A note on my own tooling",
+   "why": "reads of the fake through my db() helper were sometimes stale after direct loads (one payday read said last-working while the UI had saved day 15); I rechecked those through the UI before reporting. Hangs seen in my offline specs came from a locator waiting without timeout, not from the app."
+  }
+ ]
+}
