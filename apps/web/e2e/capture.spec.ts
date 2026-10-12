@@ -144,7 +144,7 @@ test('More lists each screen once; Settings lists its own sections', async ({ pa
     await expect(page.getByRole('button', { name })).toBeVisible();
 });
 
-for (const look of [LOOKS[0], LOOKS[5]]) {
+for (const look of LOOKS.filter((l) => l === 'minted' || l === 'copper')) {
   for (const mode of MODES) {
     test(`capture's screens pass axe, with 48 px targets, in ${look} ${mode}`, async ({ page }) => {
       for (const id of [
