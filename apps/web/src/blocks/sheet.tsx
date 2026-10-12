@@ -25,7 +25,10 @@ interface SheetProps {
 export function Sheet({ open, onOpenChange, title, description, full, head, children }: SheetProps) {
   useBackClose(open, () => onOpenChange(false));
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    // repositionInputs off: the page already resizes for the keyboard (interactive-widget=resizes-content,
+    // and the shell's adjustResize), and vaul's own resize pinned a sheet at half height when its input
+    // lost focus before the keyboard closed (owner's review of B04)
+    <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
       <DrawerContent
         // a tap on a toast (its Undo) is outside the sheet, but isn't a tap on the scrim: it keeps the sheet open
         onInteractOutside={(e) => {

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { ArrowLeftIcon } from 'lucide-react';
 import { useRouter } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
+import { LookMarkup } from '@/components/look/look-markup';
 import { useLook } from '@/theme/look';
 import { useMode } from '@/theme/store';
 
@@ -28,7 +29,8 @@ export function AppBar({
       <header className="flex h-14 shrink-0 items-center px-5">
         <h1 className="flex items-center">
           <span className="sr-only">Sen</span>
-          {look ? <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: look.wordmark(mode) }} /> : null}
+          {/* through LookMarkup, so a look that draws its wordmark live (Mercury, Line) mounts it */}
+          {look ? <LookMarkup html={look.wordmark(mode)} /> : null}
         </h1>
       </header>
     );
