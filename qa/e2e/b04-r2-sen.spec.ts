@@ -6,7 +6,6 @@ test('F17 canned replies', async ({ page }) => {
   await page.getByRole('button', { name: 'Ask Sen', exact: true }).click();
   const d = dialog(page, 'Sen');
   for (const q of ['What is my salary?', 'How much will I have saved by December?', 'Is my savings rate good?', 'Which card is best?', 'Hello']) {
-    const before = (await d.innerText()).length;
     await d.getByLabel('Message to Sen').fill(q);
     await d.getByRole('button', { name: /Send/i }).click();
     await page.waitForTimeout(3300);
