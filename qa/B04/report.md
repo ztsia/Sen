@@ -1,5 +1,7 @@
 # B04 · QA report (run 1, full)
 
+Published, with every screenshot: https://claude.ai/artifact/EysS8ku2w263ugj35pFXG3
+
 **VERDICT: fix first**
 
 90 criteria, 62 pass, 17 fail, 11 not reachable. Phases run: 1-6 (phase 4: no database, API or RLS exists; run against the fake and shared zod types). Screenshots: `qa-artifacts/B04-skeleton-rest/screens/` (202). Specs: `qa/e2e/b04-*.spec.ts`; criteria and flows: `qa/B04/acceptance.md`, `flows.md`.
