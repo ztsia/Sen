@@ -15,10 +15,20 @@ Rewritten 12 Oct 2026 by the B04 cloud session, before compacting its context. T
   - The full `pnpm e2e` run is 703 of 703 green in 57 min. Unit tests: 289.
 - **QA run 1 (full):** *fix first*, with 62 of 90 criteria passing. Report: `qa/B04/report-run1.md`, published at https://claude.ai/artifact/EysS8ku2w263ugj35pFXG3
   - Fixed in `851cbd0`, tier 1: findings 1, 2, 3, 5, 6, 9, 10, 11, 12 (welcome credit RM10 and email check), 15, 17 and 19.
-- **Running when compacted:** the run-1 reviewer, resumed for a **scoped re-check (run 2)** of those findings.
-  - It writes `qa/B04/report.md` and `results.json`.
-  - When it reports, commit its record, publish its `report.html` to the same artifact URL, and relay the verdict.
-- **Next, after run 2:**
+- **QA run 2 (scoped, done):** 10 of 12 fixed, 2 partly (15, and 12's email). Now 70 of 90 pass.
+  Report: `qa/B04/report.md`, published as version 2 at the same link. Small fixes still to do (tier 1):
+  - 15: *Send to ESS* shows in a browser preview; gate it on the shell or `DEV_TOOLS` with a stand-in label
+  - 20:
+    - bound `setting.set`'s record and the `sen.answer`, `proposal.answer`, `memory.forget` and `research.confirm` strings
+    - cap the composer at 4000 characters and the invite email at 254
+    - reject `a..b@x.co` and `a@-b.co`
+  - 21: in the payday scenario, Parking is approved but still says its receipt is missing, and *Send to ESS* stays with nothing to send; Home's figure ignores the RM152 claims split (D45)
+  - 22:
+    - the closed link still carries `at`; add it to the test
+    - a friend's empty claims page says *Add a scheme*, though their claims are off
+    - a stale *Already added* toast follows to the next screen
+    - the fake's `member.*` has no admin check, and B05's API must add one
+- **Next:** the run-2 fixes above, then:
   1. **One Sonnet batch (D128), the pieces QA found missing:**
      - *Write off* on a split
      - Sen's *Yes, I did* opening `manual` with the day: `ScreenSearch` needs a `day`, and `manual` must read it

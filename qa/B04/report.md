@@ -1,5 +1,7 @@
 # B04 · QA report, run 2 (scoped re-check)
 
+Published, with every screenshot: https://claude.ai/artifact/EysS8ku2w263ugj35pFXG3 (version 2 is this run)
+
 **VERDICT: fix first (small)**
 
 Area: the fixes in commit `851cbd0` for run 1's findings 1, 2, 3, 5, 6, 9, 10, 11, 12 (welcome credit and email only), 15, 17 and 19. Left out on purpose and not re-checked: findings 4, 7, 8, 13, 14, 16, 18 and the rest of 12. Run 1 is in `report-run1.md` and `results-run1.json`. Nothing here reaches beyond the area; the fixes touch `useWrite` (every write), so I also ran the journeys: no full run needed.
