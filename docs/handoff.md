@@ -22,12 +22,11 @@ is *B04 · Review fixes*. **B05** (`docs/briefs/B05-server.md`, branch `B05/serv
 - The app bar mounts the wordmark through `LookMarkup`, so Mercury's and Line's canvases paint.
 - `uiux` skill updated (hierarchy and density checklist); the general form is ztsia/claude_skills#2.
 
-### What to do first (paused for quota; the owner says *resume*)
-1. `pnpm e2e` with `E2E_LOOKS=all` (about an hour; never two at once). Expect failures where a test
-   matches a payee in capitals with `toContainText` (journeys, blocks, screens specs): Review rows and
-   payment rows now show title case. Update the tests, never `readableName`.
-2. Push the branch to `review` (`git push origin B04/skeleton-rest:review`) for the owner's phone check.
-3. Log usage (`node scripts/usage.mjs --log B04-review`), then open the PR *B04 · Review fixes*.
+### What to do first
+- The full e2e run (all six looks) passed after the test fixes: 630 + 82 re-run; the only failures were
+  tests matching payees in capitals, and a toggle group's box counted as a target. The branch is on
+  `review` for the owner's phone check, and its PR *B04 · Review fixes* is open.
+- Act on what the owner reports from the phone, on this branch; then B05 from `main` once merged.
 
 ### Open with the owner
 - ToggleGroup choices (manual's category, Appearance, payday) still wrap rather than scroll; judged
