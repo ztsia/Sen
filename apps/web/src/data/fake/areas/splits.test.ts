@@ -177,6 +177,24 @@ describe('the made-up splits', () => {
     expect(sharedView(d).rows.find((r) => r.merchant === 'HAIDILAO')!.open).toBe(false);
   });
 
+  it('writes off what is still owed: your spending grows by it, only the payer, only while owed', () => {
+    const d = structuredClone(db);
+    const before = view(d, 'bbq');
+    const owed = sum(before.people.filter((p) => !p.isMe && !p.paid).map((p) => p.share));
+    expect(owed).toBeGreaterThan(0);
+    expect(before.writtenOff).toBe(0);
+    run(d, { type: 'split.write-off', splitId: uid('split:bbq') });
+    const after = view(d, 'bbq');
+    expect(after.writtenOff).toBe(owed);
+    expect(after.mySpending).toBe(before.mySpending + owed);
+    expect(after.people.filter((p) => !p.isMe).every((p) => p.paid)).toBe(true);
+    expect(after.link).toBe('closing');
+    // nothing is owed any more
+    expect(() => run(d, { type: 'split.write-off', splitId: uid('split:bbq') })).toThrow(/Nothing is owed/);
+    // a friend paid, so it isn't yours to write off
+    expect(() => run(d, { type: 'split.write-off', splitId: uid('split:haidilao') })).toThrow(/Only the one who paid/);
+  });
+
   it('only the payer settles an item', () => {
     const d = structuredClone(db);
     expect(() =>

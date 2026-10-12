@@ -117,11 +117,11 @@ export function seedSen(db: Db): SenState {
       ]),
       // the gap (flows.md): a question with options, then a button that opens manual with the day filled in
       msg('m:gap', 'sen', at('2026-10-18', '20:00'), [
-        say('Nothing was captured on Sat 4 Oct, and your cash balance moved. Did you pay for anything that day?'),
+        say('Nothing was captured on Sun 4 Oct, and your cash balance moved. Did you pay for anything that day?'),
         {
           type: 'ask',
           id: GAP_ASK,
-          question: 'Did you pay for something on Sat 4 Oct?',
+          question: 'Did you pay for something on Sun 4 Oct?',
           options: [
             { label: 'Yes, I did', tradeoff: 'Opens a new payment with the day filled in.', recommended: true },
             { label: 'No, nothing', tradeoff: 'I stop asking about that day.', recommended: false },
@@ -129,7 +129,7 @@ export function seedSen(db: Db): SenState {
           ],
           answer: null,
         },
-        { type: 'open', label: 'Add a payment for Sat 4 Oct', screen: 'manual', id: null },
+        { type: 'open', label: 'Add a payment for Sun 4 Oct', screen: 'manual', id: '2026-10-04' },
       ]),
     ],
     memory: [

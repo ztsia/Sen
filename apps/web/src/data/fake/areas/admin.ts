@@ -115,6 +115,12 @@ export function seedAdmin(db: Db): Pick<SettingsState, 'claims' | 'members' | 's
   };
 }
 
+// no consecutive dots, no label starting or ending with a hyphen, and at most 254 characters
+const validEmail = (a: string) =>
+  a.length <= 254 &&
+  !a.includes('..') &&
+  /^[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(a);
+
 const fail = (m: string): never => {
   throw new Error(m);
 };
@@ -130,11 +136,12 @@ const isOwner = (db: Db, m: Member) => m.email === db.settings.email;
 
 export const applyMembers: AreaApply = (db, cmd) => {
   const s = db.settings;
+  // Members is the admin's alone (D52): a member.* command from anyone else is refused
+  if (cmd.type.startsWith('member.') && !s.admin) return fail('Only the admin can do that.');
   switch (cmd.type) {
     case 'member.invite': {
       const email = cmd.email.trim().toLowerCase();
-      if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email))
-        return fail('Type their email, like name@example.com.');
+      if (!validEmail(email)) return fail('Type their email, like name@example.com.');
       if (s.members.some((m) => m.email.toLowerCase() === email))
         return { said: 'They are already invited', touched: [] };
       if (cmd.shell && seatsUsed(s.members) >= SEATS) return fail(`All ${SEATS} shell seats are taken.`);
@@ -148,7 +155,7 @@ export const applyMembers: AreaApply = (db, cmd) => {
         balance: cmd.welcome,
         allowance: cmd.allowance,
         allowanceLeft: cmd.allowance,
-        unlimited: false,
+        unlimited: cmd.unlimited,
         dailyCeiling: rm('1'),
         shellVersion: null,
         captureConnected: false,
@@ -218,7 +225,22 @@ export const applyMembers: AreaApply = (db, cmd) => {
       if (isOwner(db, m)) return fail("You can't remove yourself.");
       s.members = s.members.filter((x) => x.id !== m.id);
       s.seats = seatsOf(s.members);
-      return { said: `Removed ${m.name}`, touched: [m.id] };
+      return {
+        said: cmd.exportFirst ? `Removed ${m.name}. Their data export goes to ${m.email}` : `Removed ${m.name}`,
+        touched: [m.id],
+      };
+    }
+    case 'member.resend': {
+      const m = find(db, cmd.id);
+      if (m.status !== 'invited') return fail('They have signed in already.');
+      return { said: 'Invitation sent again', touched: [m.id] };
+    }
+    case 'member.revoke': {
+      const m = find(db, cmd.id);
+      if (m.status !== 'invited') return fail('They have signed in already. Remove them instead.');
+      s.members = s.members.filter((x) => x.id !== m.id);
+      s.seats = seatsOf(s.members);
+      return { said: `Withdrew the invitation to ${m.email}`, touched: [m.id] };
     }
     default:
       return null;

@@ -4,6 +4,8 @@ import { ReviewRow } from '@/blocks/rows';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useWrite } from '@/data/hooks';
+import { useUi } from '@/frame/ui-store';
+import { useGo } from '../kit';
 import { momentLabel, shortDay } from '@/lib/dates';
 import { openInBrowser } from '@/lib/open-in-browser';
 import { cn } from '@/lib/utils';
@@ -144,8 +146,17 @@ function Research({ part, messageId }: { part: Extract<SenPart, { type: 'researc
  * are said in words under the question. A row shows three answers at most, so a fourth option is for the
  * server to keep out of the draft (§12.3 allows 2–4; the skeleton's asks have three).
  */
-function Ask({ part }: { part: Extract<SenPart, { type: 'ask' }> }) {
+/** A KL day, `2026-10-04`: what the gap's button carries as its record id (flows.md). */
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The gap's ask (`ask:gap`): *Yes, I did* opens `manual` on the day the ask is about. */
+function Ask({ part, message }: { part: Extract<SenPart, { type: 'ask' }>; message: SenMessage }) {
   const write = useWrite();
+  const go = useGo();
+  const setSenOpen = useUi((s) => s.setSenOpen);
+  const gapDay = message.parts.find(
+    (p): p is Extract<SenPart, { type: 'open' }> => p.type === 'open' && p.screen === 'manual' && DAY.test(p.id ?? ''),
+  )?.id;
   if (part.answer)
     return (
       <p className="rounded-xl border border-border bg-card p-3 text-sm text-card-foreground">
@@ -166,6 +177,10 @@ function Ask({ part }: { part: Extract<SenPart, { type: 'ask' }> }) {
           suggested: o.recommended,
           onSelect: async () => {
             const r = await write({ type: 'sen.answer', askId: part.id, answer: o.label }, { quiet: true });
+            if (r && part.id === 'ask:gap' && gapDay && o.recommended) {
+              setSenOpen(false);
+              go('manual', { day: gapDay }, { replace: true });
+            }
             return r ? { said: r.said, undo: r.undo } : null;
           },
         }))}
@@ -182,8 +197,20 @@ function Open({
   part: Extract<SenPart, { type: 'open' }>;
   onOpen: (screen: string, id: string | null) => void;
 }) {
+  const go = useGo();
+  const setSenOpen = useUi((s) => s.setSenOpen);
+  // `manual` carries a day, not a record: it opens on that day
+  const dayOnly = part.screen === 'manual' && DAY.test(part.id ?? '');
   return (
-    <Button variant="outline" className="self-start" onClick={() => onOpen(part.screen, part.id)}>
+    <Button
+      variant="outline"
+      className="self-start"
+      onClick={() => {
+        if (!dayOnly) return onOpen(part.screen, part.id);
+        setSenOpen(false);
+        go('manual', { day: part.id! }, { replace: true });
+      }}
+    >
       {part.label}
     </Button>
   );
@@ -208,7 +235,7 @@ export function Part({
     case 'research':
       return <Research part={part} messageId={message.id} />;
     case 'ask':
-      return <Ask part={part} />;
+      return <Ask part={part} message={message} />;
     case 'open':
       return <Open part={part} onOpen={onOpen} />;
   }

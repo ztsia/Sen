@@ -89,6 +89,34 @@ describe('Settings admin area', () => {
     expect(db.settings.seats.used).toBe(1);
   });
 
+  it('invites with Unlimited, and rejects emails with double dots or hyphen-edged labels', () => {
+    const db = buildScenario('wei-ming', false);
+    run(db, { ...invite('free@example.com', false), unlimited: true });
+    expect(db.settings.members.find((m) => m.email === 'free@example.com')!.unlimited).toBe(true);
+    for (const bad of ['a..b@x.co', 'a@-b.co', 'a@b-.co', `${'a'.repeat(250)}@x.co`])
+      expect(() => run(db, invite(bad, false)), bad).toThrow();
+    run(db, invite('a.b-c@x-y.co', false));
+  });
+
+  it('resends and revokes an invitation, only an invited one, only for the admin', () => {
+    const db = buildScenario('wei-ming', false);
+    const farid = db.settings.members.find((m) => m.name === 'Farid')!;
+    expect(run(db, { type: 'member.resend', id: farid.id })!.said).toBe('Invitation sent again');
+    expect(() => run(db, { type: 'member.resend', id: hui(db).id })).toThrow();
+    expect(() => run(db, { type: 'member.revoke', id: hui(db).id })).toThrow();
+    run(db, { type: 'member.revoke', id: farid.id });
+    expect(db.settings.members.some((m) => m.name === 'Farid')).toBe(false);
+    db.settings.admin = false;
+    expect(() => run(db, { type: 'member.resend', id: hui(db).id })).toThrow(/admin/);
+    expect(() => run(db, { type: 'member.revoke', id: hui(db).id })).toThrow(/admin/);
+  });
+
+  it('remove can offer the export first', () => {
+    const db = buildScenario('wei-ming', false);
+    const r = run(db, { type: 'member.remove', id: hui(db).id, exportFirst: true });
+    expect(r!.said).toMatch(/export goes to huimin@example.com/);
+  });
+
   it('leaves other commands alone', () => {
     const db = buildScenario('wei-ming', false);
     expect(run(db, { type: 'memory.forget', id: 'x' })).toBeNull();

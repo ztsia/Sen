@@ -13,7 +13,7 @@ import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { longDay, momentLabel } from '@/lib/dates';
 import { Loaded, Section, useGo, useScreenSearch } from '../kit';
-import { BillHeader, Facts, ItemRows, NameSheet, Roster, StandInQr, type PartItem } from './parts';
+import { BillHeader, Facts, ItemRows, NameSheet, PayActions, Roster, StandInQr, type PartItem } from './parts';
 
 /**
  * One shared bill (screens.md `split`), as the payer and as one who owes. Everyone ticks what they
@@ -89,6 +89,8 @@ function SplitBody({ v }: { v: SplitView }) {
   };
 
   const others = v.people.filter((p) => !p.isMe);
+  // what friends still owe the payer: the payer may write it off, and it becomes their spending (§7)
+  const owed = others.filter((p) => !p.paid).reduce((a, p) => a + p.share, 0);
   const waitingLine = [
     v.waitingOn.length ? `Waiting for ${v.waitingOn.join(', ')}` : null,
     v.unclaimed ? `${v.unclaimed} ${v.unclaimed === 1 ? 'item' : 'items'} nobody has ticked` : null,
@@ -233,6 +235,16 @@ function SplitBody({ v }: { v: SplitView }) {
               );
             })}
           </div>
+          {owed > 0 ? (
+            <div className="flex flex-col gap-1 px-4 pt-3">
+              <Button variant="secondary" onClick={() => void write({ type: 'split.write-off', splitId: v.id })}>
+                Write off
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Stop waiting for <Money sen={owed} />. It counts as your spending.
+              </p>
+            </div>
+          ) : null}
         </Section>
       ) : null}
 
@@ -262,6 +274,7 @@ function SplitBody({ v }: { v: SplitView }) {
           {v.payerQr && !v.owe.paid ? (
             <StandInQr seed={`${v.id}-pay`} title={`${v.owe.to}'s DuitNow QR`} caption={`${v.owe.to}'s DuitNow QR`} />
           ) : null}
+          {v.payerQr && !v.owe.paid ? <PayActions sen={v.owe.sen} who={v.owe.to} /> : null}
         </div>
       ) : null}
 
@@ -288,6 +301,7 @@ function SplitBody({ v }: { v: SplitView }) {
           rows={[
             { label: final ? 'Your share' : 'Your share so far', value: <Money sen={v.myShare} /> },
             { label: final ? 'Your spending' : 'Your spending so far', value: <Money sen={v.mySpending} /> },
+            ...(v.writtenOff > 0 ? [{ label: 'Written off', value: <Money sen={v.writtenOff} /> }] : []),
           ]}
         />
       </Section>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LOOK_IDS } from '@/looks/ids';
-import { checkCode, checkEmail, inviteEmail, nextLook, parseDay, printedName, stepsFor } from './logic';
+import { checkCode, checkEmail, inviteEmail, nextLook, parseDay, printedName, signInState, stepsFor } from './logic';
 
 describe('sign-in', () => {
   it('knows the made-up codes', () => {
@@ -14,6 +14,12 @@ describe('sign-in', () => {
     expect(checkEmail('nope')).toEqual({ ok: false, reason: 'format' });
     expect(checkEmail('  ')).toEqual({ ok: false, reason: 'empty' });
     expect(checkEmail(' Wei.Ming@Example.com ')).toEqual({ ok: true, email: 'wei.ming@example.com' });
+  });
+  it('has an expired-invitation state, from ?state=expired, in previews only', () => {
+    expect(signInState('?state=expired', true)).toBe('expired');
+    expect(signInState('?state=expired', false)).toBeNull();
+    expect(signInState('?state=other', true)).toBeNull();
+    expect(signInState('', true)).toBeNull();
   });
   it('reads the invitation link’s email', () => {
     expect(inviteEmail('?email=mei%40example.com')).toBe('mei@example.com');

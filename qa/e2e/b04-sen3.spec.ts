@@ -30,7 +30,7 @@ test('gap: Yes opens manual with the day?', async ({ page }) => {
   await open(page, '/');
   await SEN(page).click();
   const d = dialog(page, 'Sen');
-  await d.getByRole('button', { name: 'Add a payment for Sat 4 Oct' }).click();
+  await d.getByRole('button', { name: 'Add a payment for Sun 4 Oct' }).click();
   await page.waitForTimeout(900);
   console.log('url after Add a payment:', page.url());
   console.log((await text(page)).split('\n').slice(0, 14).join(' | '));

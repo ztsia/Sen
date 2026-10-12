@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { formatSen } from '@sen/core/money';
 import type { SettingsView } from '@sen/core/views';
 import { Button } from '@/components/ui/button';
-import { DestructiveDialog } from '@/blocks/dialog';
 import { checkAmount, MoneyInput } from '@/blocks/money-input';
 import { SettingsRow } from '@/blocks/rows';
 import { Sheet } from '@/blocks/sheet';
+import { toastDone } from '@/blocks/toast';
 import { useWrite } from '@/data/hooks';
 import { AmountEditor } from './parts';
 
@@ -44,96 +44,138 @@ export function MemberSheet({
   if (!m) return null;
   const set = (key: string, value: boolean | number | string) =>
     void write({ type: 'member.set', id: m.id, key, value });
+  const confirmRemove = (exportFirst: boolean) => {
+    setRemove(false);
+    onClose();
+    void write(
+      { type: 'member.remove', id: m.id, ...(exportFirst ? { exportFirst: true } : {}) },
+      { quiet: true },
+    ).then(
+      (r) =>
+        r && toastDone(exportFirst ? `Removed ${m.name}. Their data export goes to ${m.email}` : `Removed ${m.name}`),
+    );
+  };
   return (
     <>
       <Sheet
         open
         onOpenChange={(o) => !o && onClose()}
-        title={m.name}
-        description={`${m.email} · ${m.status === 'invited' ? 'Invited, not signed in yet' : m.status === 'suspended' ? 'Suspended' : 'Active'}`}
+        title={remove ? `Remove ${m.name}?` : m.name}
+        description={
+          remove
+            ? "They can't sign in any more and their data is deleted. This can't be undone. Send them a copy of their data first?"
+            : `${m.email} · ${m.status === 'invited' ? 'Invited, not signed in yet' : m.status === 'suspended' ? 'Suspended' : 'Active'}`
+        }
       >
-        <div className="-mx-4 flex flex-col pb-2">
-          <h3 className="px-4 pt-2 pb-1 text-sm font-semibold text-muted-foreground">Can use</h3>
-          {SWITCHES.map((s) => (
-            <SettingsRow
-              key={s.key}
-              label={s.label}
-              description={s.about}
-              checked={m.switches[s.key]}
-              disabled={owner && (s.key === 'shell' || s.key === 'agent')}
-              onCheckedChange={(on) => set(s.key, on)}
-            />
-          ))}
-          <h3 className="px-4 pt-5 pb-1 text-sm font-semibold text-muted-foreground">Phone</h3>
-          <SettingsRow label="Shell version" value={m.shellVersion ?? 'Browser only'} />
-          <SettingsRow label="Capture connected" value={m.captureConnected ? 'Yes' : 'No'} />
-          {owner ? null : (
-            <>
-              <h3 className="px-4 pt-5 pb-1 text-sm font-semibold text-muted-foreground">AI credit</h3>
-              <SettingsRow label="Balance" value={formatSen(m.balance)} />
+        {remove ? (
+          // the confirmation is a step inside this sheet: a second sheet would stack a second back step
+          <div className="flex flex-col gap-2 pb-2">
+            <Button variant="secondary" onClick={() => confirmRemove(true)}>
+              Export their data first
+            </Button>
+            <Button variant="destructive" onClick={() => confirmRemove(false)}>
+              Remove
+            </Button>
+            <Button variant="ghost" onClick={() => setRemove(false)}>
+              Keep them
+            </Button>
+          </div>
+        ) : (
+          <div className="-mx-4 flex flex-col pb-2">
+            <h3 className="px-4 pt-2 pb-1 text-sm font-semibold text-muted-foreground">Can use</h3>
+            {SWITCHES.map((s) => (
               <SettingsRow
-                label="Allowance left this month"
-                value={m.unlimited ? 'Unlimited' : `${formatSen(m.allowanceLeft)} of ${formatSen(m.allowance)}`}
+                key={s.key}
+                label={s.label}
+                description={s.about}
+                checked={m.switches[s.key]}
+                disabled={owner && (s.key === 'shell' || s.key === 'agent')}
+                onCheckedChange={(on) => set(s.key, on)}
               />
-              <SettingsRow
-                label="Unlimited"
-                description="No ceiling on their credit."
-                checked={m.unlimited}
-                onCheckedChange={(on) => set('unlimited', on)}
-              />
-              <div className="flex flex-col gap-5 px-4 pt-3">
-                <CreditAmount
-                  label="Grant or refund"
-                  hint="Grant adds to their balance; Refund takes it back."
-                  max={m.balance}
-                  onGrant={(sen) => set('grant', sen)}
-                  onRefund={(sen) => set('grant', -sen)}
+            ))}
+            <h3 className="px-4 pt-5 pb-1 text-sm font-semibold text-muted-foreground">Phone</h3>
+            <SettingsRow label="Shell version" value={m.shellVersion ?? 'Browser only'} />
+            <SettingsRow label="Capture connected" value={m.captureConnected ? 'Yes' : 'No'} />
+            {owner ? null : (
+              <>
+                <h3 className="px-4 pt-5 pb-1 text-sm font-semibold text-muted-foreground">AI credit</h3>
+                <SettingsRow label="Balance" value={formatSen(m.balance)} />
+                <SettingsRow
+                  label="Allowance left this month"
+                  value={m.unlimited ? 'Unlimited' : `${formatSen(m.allowanceLeft)} of ${formatSen(m.allowance)}`}
                 />
-                <AmountEditor
-                  key={`a${m.allowance}`}
-                  label="Monthly allowance"
-                  initial={rmText(m.allowance)}
-                  action="Save allowance"
-                  onSave={(sen) => set('allowance', sen)}
+                <SettingsRow
+                  label="Unlimited"
+                  description="No ceiling on their credit."
+                  checked={m.unlimited}
+                  onCheckedChange={(on) => set('unlimited', on)}
                 />
-                <AmountEditor
-                  key={`d${m.dailyCeiling}`}
-                  label="Daily ceiling"
-                  initial={rmText(m.dailyCeiling)}
-                  action="Save ceiling"
-                  hint="The most Sen spends for them in a day."
-                  onSave={(sen) => set('dailyCeiling', sen)}
-                />
-              </div>
-              <div className="flex flex-col gap-2 px-4 pt-6">
-                {m.status === 'invited' ? null : (
-                  <Button
-                    variant="secondary"
-                    onClick={() => set('status', m.status === 'suspended' ? 'active' : 'suspended')}
-                  >
-                    {m.status === 'suspended' ? 'Let them back in' : 'Suspend'}
-                  </Button>
-                )}
-                <Button variant="destructive" onClick={() => setRemove(true)}>
-                  Remove
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
+                <div className="flex flex-col gap-5 px-4 pt-3">
+                  <CreditAmount
+                    label="Grant or refund"
+                    hint="Grant adds to their balance; Refund takes it back."
+                    max={m.balance}
+                    onGrant={(sen) => set('grant', sen)}
+                    onRefund={(sen) => set('grant', -sen)}
+                  />
+                  <AmountEditor
+                    key={`a${m.allowance}`}
+                    label="Monthly allowance"
+                    initial={rmText(m.allowance)}
+                    action="Save allowance"
+                    onSave={(sen) => set('allowance', sen)}
+                  />
+                  <AmountEditor
+                    key={`d${m.dailyCeiling}`}
+                    label="Daily ceiling"
+                    initial={rmText(m.dailyCeiling)}
+                    action="Save ceiling"
+                    hint="The most Sen spends for them in a day."
+                    onSave={(sen) => set('dailyCeiling', sen)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2 px-4 pt-6">
+                  {m.status === 'invited' ? (
+                    <>
+                      <Button
+                        variant="secondary"
+                        onClick={() =>
+                          void write({ type: 'member.resend', id: m.id }, { quiet: true }).then(
+                            (r) => r && toastDone('Invitation sent again'),
+                          )
+                        }
+                      >
+                        Resend
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          onClose();
+                          void write({ type: 'member.revoke', id: m.id });
+                        }}
+                      >
+                        Revoke
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="secondary"
+                        onClick={() => set('status', m.status === 'suspended' ? 'active' : 'suspended')}
+                      >
+                        {m.status === 'suspended' ? 'Let them back in' : 'Suspend'}
+                      </Button>
+                      <Button variant="destructive" onClick={() => setRemove(true)}>
+                        Remove
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </Sheet>
-      <DestructiveDialog
-        open={remove}
-        onOpenChange={setRemove}
-        title={`Remove ${m.name}?`}
-        description="They can't sign in any more and their data is deleted. This can't be undone."
-        action="Remove"
-        onConfirm={() => {
-          setRemove(false);
-          onClose();
-          void write({ type: 'member.remove', id: m.id }, { quiet: true });
-        }}
-      />
     </>
   );
 }

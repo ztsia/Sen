@@ -91,6 +91,12 @@ function Body({ s, inviting, setInviting }: { s: View; inviting: boolean; setInv
 
 // What an invitation starts with; the command sets these, and anything changed is sent after it
 const DEFAULTS = { capture: true, agent: true, splits: true, email: true, calendar: false, claims: false };
+const EMAIL_MAX = 254;
+// no consecutive dots, and no label that starts or ends with a hyphen
+const validEmail = (a: string) =>
+  a.length <= EMAIL_MAX &&
+  !a.includes('..') &&
+  /^[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(a);
 const WELCOME = '10.00';
 const ALLOWANCE = '2.00';
 
@@ -109,16 +115,16 @@ function InviteSheet({
   const [on, setOn] = useState<typeof DEFAULTS>(DEFAULTS);
   const [welcome, setWelcome] = useState(WELCOME);
   const [allowance, setAllowance] = useState(ALLOWANCE);
+  const [unlimited, setUnlimited] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; welcome?: string; allowance?: string }>({});
   const [busy, setBusy] = useState(false);
 
   const send = async () => {
     const e: typeof errors = {};
     const addr = email.trim();
-    if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(addr))
-      e.email = 'Type their email, like name@example.com.';
+    if (!validEmail(addr)) e.email = 'Type their email, like name@example.com.';
     const w = checkAmount(welcome);
-    const a = checkAmount(allowance);
+    const a = unlimited ? { sen: 0 as number | undefined, error: undefined } : checkAmount(allowance);
     if (w.error !== undefined) e.welcome = w.error;
     if (a.error !== undefined) e.allowance = a.error;
     setErrors(e);
@@ -132,13 +138,14 @@ function InviteSheet({
       switches: { ...DEFAULTS, ...on } as typeof DEFAULTS,
       welcome: w.sen,
       allowance: a.sen,
-      unlimited: false,
+      unlimited,
     });
     if (r) {
       setEmail('');
       setOn(DEFAULTS);
       setWelcome(WELCOME);
       setAllowance(ALLOWANCE);
+      setUnlimited(false);
       onOpenChange(false);
     }
     setBusy(false);
@@ -162,6 +169,7 @@ function InviteSheet({
             autoCapitalize="none"
             spellCheck={false}
             value={email}
+            maxLength={EMAIL_MAX}
             aria-invalid={errors.email ? true : undefined}
             onChange={(e) => {
               setErrors((x) => ({ ...x, email: undefined }));
@@ -213,16 +221,26 @@ function InviteSheet({
           }}
           error={errors.welcome}
         />
-        <MoneyInput
-          label="Monthly allowance"
-          value={allowance}
-          onChange={(t) => {
-            setErrors((x) => ({ ...x, allowance: undefined }));
-            setAllowance(t);
-          }}
-          error={errors.allowance}
-          hint="Free each month before their credit is used."
-        />
+        <div className="-mx-4">
+          <SettingsRow
+            label="Unlimited"
+            description="No ceiling on their credit; their charges are recorded as covered."
+            checked={unlimited}
+            onCheckedChange={setUnlimited}
+          />
+        </div>
+        {unlimited ? null : (
+          <MoneyInput
+            label="Monthly allowance"
+            value={allowance}
+            onChange={(t) => {
+              setErrors((x) => ({ ...x, allowance: undefined }));
+              setAllowance(t);
+            }}
+            error={errors.allowance}
+            hint="Free each month before their credit is used."
+          />
+        )}
         <Button onClick={() => void send()} aria-disabled={busy || undefined}>
           Send invitation
         </Button>

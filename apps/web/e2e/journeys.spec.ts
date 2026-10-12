@@ -745,15 +745,14 @@ export const JOURNEYS: Record<string, Journey> = {
     await go('/');
     await page.getByRole('button', { name: 'Ask Sen' }).click();
     const sen = senSheet(page);
-    await expect(sen.getByText('Did you pay for something on Sat 4 Oct?')).toBeVisible();
-    await sen.getByText('Did you pay for something on Sat 4 Oct?').scrollIntoViewIfNeeded();
+    await expect(sen.getByText('Did you pay for something on Sun 4 Oct?')).toBeVisible();
+    await sen.getByText('Did you pay for something on Sun 4 Oct?').scrollIntoViewIfNeeded();
     await shot('the question');
+    // answering Yes opens Add expense on the day the ask is about (D128)
     await sen.getByRole('button', { name: /^Yes, I did/ }).click();
-    await expect(sen.getByText('You chose: Yes, I did')).toBeVisible();
-    await shot('answered');
-    await sen.getByRole('button', { name: 'Add a payment for Sat 4 Oct' }).click();
     await expect(sen).toHaveCount(0);
-    await expect(page).toHaveURL(/\/s\/manual/);
+    await expect(page).toHaveURL(/\/s\/manual\?.*day=2026-10-04/);
+    await expect(page.getByText(/4 Oct/)).toBeVisible();
     await expect(page.getByLabel('Amount')).toBeVisible();
     await shot('add expense');
   },
@@ -906,4 +905,67 @@ for (const name of Object.keys(JOURNEYS))
 // list uses; a journey added to the list without a walk fails here.
 test('every flows.md journey has a walk', () => {
   expect(GUIDED.map((j) => j.id).filter((id) => !(id in JOURNEYS))).toEqual([]);
+});
+
+// ---- B04, D128: the pieces QA found missing (Minted is enough: the looks share the screens) ----
+
+test.describe('D128', () => {
+  test('write off: the payer stops waiting, spending grows, Undo puts it back', async ({ page }) => {
+    await open(page, `/s/split?id=${uid('split:bbq')}`);
+    await expect(page.getByText('Final', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Write off', exact: true }).click();
+    await expect(toast(page)).toContainText('Wrote off');
+    await expect(page.getByText('Written off', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Write off', exact: true })).toHaveCount(0);
+    await toast(page).getByRole('button', { name: 'Undo' }).click();
+    await expect(page.getByRole('button', { name: 'Write off', exact: true })).toBeVisible();
+  });
+
+  test('pay from the same phone: stand-ins on the split and the friend’s page', async ({ page }) => {
+    await open(page, `/s/split?id=${uid('split:haidilao')}`);
+    await expect(page.getByRole('button', { name: 'Pay with TNG' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Other app…' })).toBeVisible();
+    await page.getByRole('button', { name: 'Save QR' }).click();
+    await expect(toast(page)).toContainText('Simulated: Saves the QR');
+    await open(page, '/s/split-public?id=demo-final');
+    await expect(page.getByRole('button', { name: 'Pay with an app' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Save QR' })).toBeVisible();
+  });
+
+  test('sign-in: an expired invitation says who to ask', async ({ page }) => {
+    await open(page, '/s/sign-in?state=expired');
+    await expect(page.getByRole('heading', { name: 'This invitation has expired' })).toBeVisible();
+    await page.getByRole('button', { name: 'Ask for a new invitation' }).click();
+    await expect(toast(page)).toContainText('Ask whoever runs your Sen');
+  });
+
+  test('members: unlimited at invite, resend and revoke, remove with an export', async ({ page }) => {
+    await open(page, '/s/settings/members');
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
+    const invite = dialog(page, 'Invite someone');
+    await expect(invite.getByLabel('Monthly allowance')).toBeVisible();
+    await invite.getByRole('switch', { name: /Unlimited/ }).click();
+    await expect(invite.getByLabel('Monthly allowance')).toHaveCount(0);
+    await invite.getByLabel('Their email').fill('a..b@x.co');
+    await invite.getByRole('button', { name: 'Send invitation' }).click();
+    await expect(invite.getByText('Type their email')).toBeVisible();
+    await invite.getByLabel('Their email').fill('free@example.com');
+    await invite.getByRole('button', { name: 'Send invitation' }).click();
+    await expect(page.getByRole('button', { name: /^Free/ })).toBeVisible();
+
+    await page.getByRole('button', { name: /^Farid/ }).click();
+    const farid = dialog(page, 'Farid');
+    await farid.getByRole('button', { name: 'Resend' }).click();
+    await expect(toast(page)).toContainText('Invitation sent again');
+    await farid.getByRole('button', { name: 'Revoke' }).click();
+    await expect(page.getByRole('button', { name: /^Farid/ })).toHaveCount(0);
+    await toast(page).getByRole('button', { name: 'Undo' }).click();
+    await expect(page.getByRole('button', { name: /^Farid/ })).toBeVisible();
+
+    await page.getByRole('button', { name: /^Hui Min/ }).click();
+    await dialog(page, 'Hui Min').getByRole('button', { name: 'Remove' }).click();
+    await dialog(page, 'Remove Hui Min?').getByRole('button', { name: 'Export their data first' }).click();
+    await expect(toast(page)).toContainText('export goes to');
+    await expect(page.getByRole('button', { name: /^Hui Min/ })).toHaveCount(0);
+  });
 });

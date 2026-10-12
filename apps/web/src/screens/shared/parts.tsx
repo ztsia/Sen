@@ -1,11 +1,15 @@
 import { useId, type FormEvent, type ReactNode } from 'react';
 import { CheckIcon, CircleDashedIcon, TriangleAlertIcon } from 'lucide-react';
+import { formatSen } from '@sen/core/money';
 import { Money } from '@/blocks/money';
+import { toastDone } from '@/blocks/toast';
 import { Sheet } from '@/blocks/sheet';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { DEV_TOOLS } from '@/lib/env';
+import { inShell } from '@/shell/bridge';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 
 // The pieces `split` and `split-public` share (screens.md: same components and theme). Every one takes
@@ -264,5 +268,50 @@ export function NameSheet({
         </Button>
       </form>
     </Sheet>
+  );
+}
+
+/** An amount as plain digits for a payment app's box, `24.40`, in integer maths. */
+const plainAmount = (sen: number) => formatSen(sen).replace('RM', '').replace(/,/g, '');
+
+async function copyAmount(sen: number): Promise<string> {
+  try {
+    await navigator.clipboard.writeText(plainAmount(sen));
+    return 'amount copied';
+  } catch {
+    return "couldn't copy here";
+  }
+}
+
+/**
+ * Paying from the same phone (D101). In the shell the buttons open the DuitNow QR in TNG or another
+ * app, or save it to the gallery; until B16/B18 give the shell those hand-offs they are stand-ins that
+ * copy the amount and say what the shell would do, and only in the shell or a preview. In a browser
+ * (`browser`, a friend's page) there is no shell: *Pay with an app* and *Save QR* always show.
+ */
+export function PayActions({ sen, who, browser = false }: { sen: number; who: string; browser?: boolean }) {
+  if (!browser && !inShell() && !DEV_TOOLS) return null;
+  const stand = (would: string) => async () => {
+    const copied = await copyAmount(sen);
+    toastDone(`Simulated: ${would} for ${who}; ${copied}`);
+  };
+  const buttons = browser
+    ? [
+        { label: 'Pay with an app', run: stand('Opens your payment app') },
+        { label: 'Save QR', run: stand('Saves the QR to your gallery') },
+      ]
+    : [
+        { label: 'Pay with TNG', run: stand('Opens Touch ’n Go') },
+        { label: 'Other app…', run: stand('Offers your payment apps') },
+        { label: 'Save QR', run: stand('Saves the QR to your gallery') },
+      ];
+  return (
+    <div className="flex w-full flex-wrap justify-center gap-2" role="group" aria-label="Pay from this phone">
+      {buttons.map((b) => (
+        <Button key={b.label} variant="secondary" size="sm" onClick={() => void b.run()}>
+          {b.label}
+        </Button>
+      ))}
+    </div>
   );
 }

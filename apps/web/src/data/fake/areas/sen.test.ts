@@ -122,6 +122,13 @@ describe('answers', () => {
     expect(ask?.type === 'ask' && ask.answer).toBe('Yes, I did');
   });
 
+  it('the gap carries the day it is about, for manual to start on', () => {
+    const db = buildScenario('wei-ming', false);
+    const gap = db.sen.messages.find((m) => m.parts.some((p) => p.type === 'ask' && p.id === 'ask:gap'))!;
+    const open = gap.parts.find((p) => p.type === 'open');
+    expect(open).toMatchObject({ screen: 'manual', id: '2026-10-04' });
+  });
+
   it('answers the proposal in the chat and in Review together', () => {
     for (const answer of ['apply', 'dismiss'] as const) {
       const db = buildScenario('wei-ming', false);

@@ -14,6 +14,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useAccounts, useCategories, useDraft, useNearDuplicate, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
+import { shortDay } from '@/lib/dates';
 import { useScreenSearch } from '../kit';
 
 /**
@@ -24,12 +25,13 @@ import { useScreenSearch } from '../kit';
 export default function Manual() {
   const router = useRouter();
   const write = useWrite();
-  const { id } = useScreenSearch();
+  const { id, day } = useScreenSearch();
   const draft = useDraft(id ?? '');
   const cats = useCategories();
   const accts = useAccounts();
   // when the form was opened: the payment's time, and the key of the near-duplicate check
-  const at = useMemo(() => nowIso(), []);
+  // a day Sen asked about (flows.md, the gap) starts the date there, at midday in KL
+  const at = useMemo(() => (day ? new Date(`${day}T12:00:00+08:00`).toISOString() : nowIso()), [day]);
 
   const [amountText, setAmountText] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -62,7 +64,7 @@ export default function Manual() {
       type: 'txn.create',
       txn: {
         id: newId(),
-        occurredAt: nowIso(),
+        occurredAt: day ? at : nowIso(),
         amount: r.sen,
         categoryId,
         accountId: account?.id ?? null,
@@ -164,7 +166,7 @@ export default function Manual() {
             ) : null}
             <div className="flex min-h-12 items-center gap-3 px-4 text-muted-foreground">
               <ClockIcon className="mx-2.5 size-5 text-icon" aria-hidden="true" />
-              <span>Now</span>
+              <span>{day ? shortDay(day) : 'Now'}</span>
             </div>
           </ItemGroup>
 

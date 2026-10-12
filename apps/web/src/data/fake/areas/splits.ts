@@ -19,7 +19,12 @@ import type { AreaApply } from './ctx';
 // people share an item, so the value is the member ids joined by commas, in the members' order (which
 // decides who gets the odd sen of a shared item).
 
-/** Not in commands.ts yet: the payer's tick for "this friend paid me", cash or matched (D65). */
+/** A friend's share the payer wrote off is marked paid, by this instead of a payment (§7, *Write off*). */
+const WRITTEN_OFF = 'written-off';
+const writtenOffOf = (db: Db, s: Split) =>
+  membersOf(db, s)
+    .filter((m) => m.paidByTransactionId === WRITTEN_OFF)
+    .reduce((a, m) => a + m.share, 0);
 
 // --- the rows ---
 
@@ -81,7 +86,7 @@ function afterChange(db: Db, s: Split) {
   const t = db.txns.find((x) => x.id === s.transactionId);
   const me = membersOf(db, s).find((m) => m.isMe);
   if (t && me) {
-    t.myShare = me.share;
+    t.myShare = me.share + writtenOffOf(db, s);
     t.updatedAt = nowIso();
     me.paidAt ??= t.occurredAt;
     me.paidByTransactionId ??= t.id;
@@ -258,6 +263,7 @@ const owers = (db: Db, s: Split) => membersOf(db, s).filter((m) => m.id !== s.pa
 
 function paidHow(db: Db, m: SplitMember): string | null {
   if (!m.paidAt) return null;
+  if (m.paidByTransactionId === WRITTEN_OFF) return 'written off';
   const t = m.paidByTransactionId ? db.txns.find((x) => x.id === m.paidByTransactionId) : undefined;
   if (!t) return 'ticked by you';
   const acct = db.accounts.find((a) => a.id === t.accountId)?.name;
@@ -344,7 +350,7 @@ export function splitView(db: Db, id: string): SplitView | null {
     mySpending: final && bill.txn ? spendingOf(db, bill.txn) : myShare,
     owe: !mine && final && payer ? { to: payer.name, sen: myShare, paid: me.paidAt !== null } : null,
     payerQr: mine ? db.settings.you.qr : true,
-    writtenOff: 0,
+    writtenOff: mine ? writtenOffOf(db, s) : 0,
     txnId: s.transactionId,
   };
 }
@@ -520,9 +526,24 @@ export const applySplits: AreaApply = (db, cmd) => {
         m.paidAt ??= nowIso();
         return { said: `${m.name} paid you back`, touched: [m.id] };
       }
+      if (m.paidByTransactionId === WRITTEN_OFF) throw new Error('That was written off. Undo it to change it.');
       if (m.paidByTransactionId) throw new Error('Sen matched that payment. Delete the payment to undo it.');
       m.paidAt = null;
       return { said: `${m.name} hasn't paid yet`, touched: [m.id] };
+    }
+    case 'split.write-off': {
+      const s = mustSplit(db, c.splitId);
+      if (s.paidBy !== 'me') throw new Error('Only the one who paid can write off.');
+      const unpaid = owers(db, s).filter((m) => !m.paidAt);
+      if (!s.lockedAt || !unpaid.length) throw new Error('Nothing is owed on this bill.');
+      const now = nowIso();
+      for (const m of unpaid) {
+        m.paidAt = now;
+        m.paidByTransactionId = WRITTEN_OFF;
+      }
+      afterChange(db, s);
+      const sum = unpaid.reduce((a, m) => a + m.share, 0);
+      return { said: `Wrote off ${formatSen(sum)}. It counts as your spending`, touched: unpaid.map((m) => m.id) };
     }
     case 'split.paid-them': {
       const s = mustSplit(db, c.splitId);

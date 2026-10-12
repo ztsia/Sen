@@ -13,7 +13,7 @@ import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { momentLabel } from '@/lib/dates';
 import { Loaded, Section, useScreenSearch } from '../kit';
-import { BillHeader, Facts, ItemRows, Roster, StandInQr, type PartItem } from './parts';
+import { BillHeader, Facts, ItemRows, PayActions, Roster, StandInQr, type PartItem } from './parts';
 
 /**
  * `split-public` (screens.md): a friend's browser, no login (D47, D64, D71). It reads only its own
@@ -147,6 +147,7 @@ function Body({ token, v }: { token: string; v: PublicSplitView }) {
           ) : (
             <p className="text-muted-foreground">Ask {v.payer} how to pay.</p>
           )}
+          {v.pay.qr ? <PayActions browser sen={v.pay.sen} who={v.payer} /> : null}
         </section>
       ) : null}
     </div>

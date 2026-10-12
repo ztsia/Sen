@@ -6,9 +6,10 @@ import { OfflineBanner } from '@/blocks/states';
 import { toastDone } from '@/blocks/toast';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
+import { DEV_TOOLS } from '@/lib/env';
 import { useOnline } from '@/lib/online';
 import { useGo } from '../kit';
-import { EMAIL_MESSAGES, checkCode, checkEmail, inviteEmail } from './logic';
+import { EMAIL_MESSAGES, EXPIRED_ASK, checkCode, checkEmail, inviteEmail, signInState } from './logic';
 
 /**
  * `sign-in` (screens.md, D13, D52): your email, then the 6-digit code it was sent. An invitation's link
@@ -18,13 +19,27 @@ import { EMAIL_MESSAGES, checkCode, checkEmail, inviteEmail } from './logic';
 export default function SignIn() {
   const go = useGo();
   const online = useOnline();
+  const [expired] = useState(() => signInState(window.location.search, DEV_TOOLS) === 'expired');
   return (
     <Screen bar={<AppBar title="Sign in" home />}>
       {online ? null : <OfflineBanner>You’re offline. Signing in needs a connection.</OfflineBanner>}
       <div className="flex flex-col gap-6 px-4 pt-6">
-        <SignInFlow onDone={() => go('home', {}, { replace: true })} />
+        {expired ? <ExpiredInvitation /> : <SignInFlow onDone={() => go('home', {}, { replace: true })} />}
       </div>
     </Screen>
+  );
+}
+
+/** An invitation's link past its time: it says who to ask, and sends nothing (D52). */
+function ExpiredInvitation() {
+  return (
+    <div className="flex flex-col gap-4">
+      <h2 className="text-2xl font-semibold text-balance">This invitation has expired</h2>
+      <p className="text-base text-pretty">An invitation works for a few days. This one is past that.</p>
+      <Button size="lg" onClick={() => toastDone(EXPIRED_ASK)}>
+        Ask for a new invitation
+      </Button>
+    </div>
   );
 }
 

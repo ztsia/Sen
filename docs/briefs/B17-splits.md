@@ -57,6 +57,8 @@ Friends tick on the payer's phone here; B18 adds the public link.
   - your spending is the smaller of `my_share` and the amount minus the linked repayments
   - *Owed to you* is the amount minus `my_share` minus repaid, never below zero
   - *Write off* raises `my_share`
+  - B04's fake marks a written-off friend paid with a stand-in in `paid_by_transaction_id`; the real
+    table needs its own marker (a `written_off_at`), never a fake payment id
 - **If a friend paid:** your share is an amount you owe, not a transaction. Your payment to them,
   within RM5 and 30 days, becomes the spending, in the receipt's categories, with the receipt
   attached. *I've paid* ticks it by hand (Public Bank doesn't notify money out).
