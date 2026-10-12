@@ -369,9 +369,14 @@ export function sharedView(db: Db): SharedView {
     let open: boolean;
     if (s.paidBy === 'me') {
       const others = owers(db, s);
-      const back = others.filter((m) => m.paidAt).length;
-      open = s.status === 'open' && (!s.lockedAt || back < others.length);
-      line = s.lockedAt ? `You paid · ${back} of ${others.length} paid you back` : 'You paid · still changing';
+      const settled = others.filter((m) => m.paidAt).length;
+      // a written-off share is settled, but nobody paid it back (QA B04 run 3, 24)
+      const off = others.filter((m) => m.paidByTransactionId === WRITTEN_OFF).length;
+      const back = settled - off;
+      open = s.status === 'open' && (!s.lockedAt || settled < others.length);
+      line = s.lockedAt
+        ? `You paid · ${back} of ${others.length} paid you back${off ? ` · ${off} written off` : ''}`
+        : 'You paid · still changing';
     } else {
       const who = payer?.name ?? 'A friend';
       const owes = sharesOf(db, s).get(me.id) ?? me.share;

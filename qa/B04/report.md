@@ -1,135 +1,129 @@
-# B04 · QA report, run 2 (scoped re-check)
-
-Published, with every screenshot: https://claude.ai/artifact/EysS8ku2w263ugj35pFXG3 (version 2 is this run)
+# B04 · QA report, run 3 (scoped re-check and D128's new pieces)
 
 **VERDICT: fix first (small)**
 
-Area: the fixes in commit `851cbd0` for run 1's findings 1, 2, 3, 5, 6, 9, 10, 11, 12 (welcome credit and email only), 15, 17 and 19. Left out on purpose and not re-checked: findings 4, 7, 8, 13, 14, 16, 18 and the rest of 12. Run 1 is in `report-run1.md` and `results-run1.json`. Nothing here reaches beyond the area; the fixes touch `useWrite` (every write), so I also ran the journeys: no full run needed.
+102 criteria, **83 pass**, 9 fail, 10 not reachable (run 2: 70 pass of 90).
 
-Suites: unit 289/289, typecheck clean, lint clean (after I fixed two unused names in my own new specs), e2e on the preview build 131 passed (journeys and the guided journeys, minted light and dark).
+Branch `B04/skeleton-rest` at dad3688. Run 2 is `report-run2.md` and `results-run2.json`; run 1 is `report-run1.md`. Servers on ports of my own (5190 dev, 5191 preview, 5192 production), nothing in parallel; the full 707-test e2e was not re-run.
 
 ## Re-check
 
 | # | Finding | Status |
 |---|---|---|
-| 1 | A double tap on any B04 action replaces the toast with the no-op's message, and Undo then does nothing | **fixed** |
-| 2 | Nothing tests that a split must not lock while an item is unclaimed on the public page, and the app-side rule is caught only by a browser journey | **fixed** |
-| 3 | A closed public link returning the real merchant and total is not caught by any test | **fixed** |
-| 5 | With the agent switch off, Sen's button still shows | **fixed** |
-| 6 | The friend scenario (`month`) shows owner-only things, and a switched-off feature still opens by URL | **fixed** |
-| 9 | Made-up claims and payday data contradict each other | **fixed** |
-| 10 | `claim` and `account` with no id hang on Loading | **fixed** |
-| 11 | The shared command schemas (`packages/core/src/commands.ts`) accept hostile input, and `balance.check` can double-book | **fixed** |
-| 12 | Members: invite and member sheets lack what §9.6 lists | **open** (email half still loose) |
-| 15 | *Send to ESS* is offered with no shell check, and *Copy* puts `RM88.00` on the clipboard | **open** (half) |
-| 17 | Canned Sen replies sound like analysis | **fixed** |
-| 19 | Scanning the same file twice does not say Already added | **fixed** |
+| 12 | Members: invite and member sheets lack what §9.6 lists | **email fixed, odd dots and lengths left** |
+| 15 | *Send to ESS* is offered with no shell check, and *Copy* puts `RM88.00` on the clipboard | **fixed** |
+| 20 | Fixed schemas leave gaps, and the UI takes what they now refuse | **fixed** |
+| 21 | Payday scenario: an Approved claim still says its evidence is missing, and Send to ESS stays | **half fixed** |
+| 22 | Small leftovers from the friend and closed-link fixes | **fixed** |
 
-New findings: 20 (Minor), 21 (Minor), 22 (Note).
 
-## Evidence per finding
+### 12 · Members: invite and member sheets lack what §9.6 lists
 
-### 1 · fixed · A double tap on any B04 action replaces the toast with the no-op's message, and Undo then does nothing
+Email check: `a..b@x.co`, `a@-b.co`, `a@b-.co`, `a@x.co.`, `a@b.c`, `<script>@x.co`, a 312-char address all refused, and the field stops at 254. Still accepted: `.a@x.co`, `a.@x.co`, a 129-character local part, a 70-character domain label (leftover, Note). The rest of 12 (Unlimited at invite, Resend/Revoke, export on Remove) was built in D128: see the new-area checks, all pass.
 
-Re-run: double-tap "I've paid" gives one toast "Marked as paid to Mei\nUndo", paid 1, Undo -> paid 0 and "You owe" shows again; Submitted dbl -> "Phone bill marked as submitted\nUndo", status after Undo to_submit; Everyone, Lock without waiting and Sen Apply: one toast each, Undo reverts (Final -> Still changing; Apply visible again). A deliberate repeat after the settle time still goes through.
+### 15 · *Send to ESS* is offered with no shell check, and *Copy* puts `RM88.00` on the clipboard
 
-### 2 · fixed · Nothing tests that a split must not lock while an item is unclaimed on the public page, and the app-side rule is caught only by a browser journey
+Send to ESS: shown on /s/claims with a "A stand-in here: in the app, Sen sends it from your phone." note in the preview; absent from the payday scenario where nothing is left to submit; production builds show Not built yet (no shell, no dev tools). Copy still puts 88.00 on the clipboard (four claims). No way to see it in a real browser outside previews.
 
-Probes re-run: public `lockIfReady` without the claimed check -> 1 failed (everyone done with an item nobody ticked stays still changing (D71): expected 'final' to be 'changing'); app `maybeLock` without it -> 1 failed (same test, in the app). Both were green in run 1.
+### 20 · Fixed schemas leave gaps, and the UI takes what they now refuse
 
-### 3 · fixed · A closed public link returning the real merchant and total is not caught by any test
+Schema probes now all rejected: a 50,000-key setting record, 100k-char sen.answer answer and askId, proposal.answer id, memory.forget id, research.confirm id, 100k sen.send id and file name, a 300-char email. The composer stops at 4000 (fill 5000 -> 4000; pasting 4500 -> 4000). Invite sheet refuses `a..b@x.co`, `a@-b.co`, 312-char addresses. Note: `txn.note` (B03) still takes 100k characters.
 
-Probes re-run: closed view with real merchant/total -> red; with real payer -> red; with a non-zero yourShare -> red. Leftover: the closed view still returns `at` (the bill's date), untested and hidden by the screen (finding 22).
+### 21 · Payday scenario: an Approved claim still says its evidence is missing, and Send to ESS stays
 
-### 5 · fixed · With the agent switch off, Sen's button still shows
+Half fixed. Payday scenario: Parking is Approved with nothing missing and no Send to ESS; Home reads Left until payday RM5,648.00 and the cycle sheet Income +RM5,648.00 while the card is up; the plan reads Left to spend RM2,839.00 (was 2,991). But when the card ends (Use this plan, or skipping every step) Home and the sheet return to RM5,800.00: see finding 23.
 
-A scenario with the agent off (made by rewriting the served variants.ts so `month` builds with db.agent = false, no source edit): Ask Sen buttons on Home, Review, Insights, More = 0; Settings has no Sen row; control with the agent on: 1.
+### 22 · Small leftovers from the friend and closed-link fixes
 
-### 6 · fixed · The friend scenario (`month`) shows owner-only things, and a switched-off feature still opens by URL
+Friend Account row: huimin@example.com. Friend /s/claims: "Claims are off for you. Whoever invited you to Sen can switch them on." Closed and unknown link: `at: null`. A "Already added" toast no longer follows onto the next screen (see 27). member.* refused for non-admins at command level (5 of 5).
 
-Friend scenario: Settings lists no Members, Data shows no Last backup, Settings -> Sen shows Balance RM6.40 and allowance RM1.10 of RM2.00; /s/settings/members says "Only the admin sees Members."; /s/claims shows the empty state; /s/claim?id=<real id> says "This claim isn't here any more."; owner scenario unchanged (Members, Claims, full list). Leftovers in findings 22.
+## New area (D128): happy and sad paths
 
-### 9 · fixed · Made-up claims and payday data contradict each other
+| Piece | Result |
+|---|---|
+| Write off | Works: spending RM48.80 -> RM97.60, Home Spent +RM48.80, Undo restores, double tap one toast. Refused for non-payer, still changing, nothing owed, second write-off. List wording wrong (24) |
+| Gap: Yes, I did | Opens `manual?day=2026-10-04` on `4 Oct`; saves at 12:00 KL that day. Impossible dates crash the screen (25) |
+| Pay with TNG / Other app… / Save QR; Pay with an app / Save QR | Work as stand-ins, copy the amount (24.40, 22.14), hidden when paid, changing or for the payer |
+| Expired invitation | Works; production ignores the flag |
+| Members: Unlimited, Resend, Revoke + Undo, export on Remove | All work; member.* refused for non-admins (5 of 5) |
 
-Settings -> Claims: Phone bill "up to RM100.00, by day 25", Parking "up to RM100.00, by day 20", matching the claims' caps and "Submit by 25 Oct / 20 Oct". Payday scenario: September claims are Approved, so "Sen split RM152.00" is coherent. Leftovers in findings 21.
+## New findings
 
-### 10 · fixed · `claim` and `account` with no id hang on Loading
+### 23 · Minor · Payday: the RM152 claims part re-enters income when the payday card ends
 
-19 routes with a missing, empty or wrong id: claim, account, split, txn, receipt, goal, confirm, reading all say it's gone (or a pick-one line); none hang; split-public says "This split is closed".
+`claimsInSalary` applies only while `db.payday.stage === 'card'`. Home and the cycle sheet leave the claims out while the card is up (RM5,648.00), then jump to RM5,800.00 on *Use this plan* or after skipping every step, although the claims were split out of that salary and nothing undid it.
 
-### 11 · fixed · The shared command schemas (`packages/core/src/commands.ts`) accept hostile input, and `balance.check` can double-book
-
-Schema probes: 255+ char email, 4001-char Sen text, 61-char friend name, balance.check with 0, 51 or duplicate rows, a grant of 9e15, a 65-char essRef, a 101-char key, a 2001-char setting string: all rejected; boundaries (254, 4000, 60) accepted. The fake refuses a duplicate balance check ("Each account once.", 0 adjustments, balance unchanged) and a second grant past the range (balance 9000000000340, safe). Leftovers in finding 20.
-
-### 12 · open · Members: invite and member sheets lack what §9.6 lists
-
-Only the welcome credit and the email check were in scope. Welcome credit now defaults to 10.00 (fixed). `<script>@x.co` and `a@b.c` are refused (fixed). Still accepted: `a..b@x.co`, `a@-b.co`, and a 312-char email (finding 20). The rest of this finding (Unlimited at invite, Resend/Revoke, export offer) is left open on purpose.
-
-### 15 · open · *Send to ESS* is offered with no shell check, and *Copy* puts `RM88.00` on the clipboard
-
-Copy is fixed: the Amount row is now "Amount (RM)" and copies 88.00, 64.00, 88.00, 72.00 (and 1284.50-style amounts have no comma or RM). The other half, Send to ESS offered with no shell check, is not changed: /s/claims in a browser preview still shows Send to ESS. Status: half fixed.
-
-### 17 · fixed · Canned Sen replies sound like analysis
-
-The default reply now reads "That's a made-up answer: Sen's real replies arrive in B27." for "What is my salary?", "Hello" and the savings question. Leftovers: any text with "rate" or "card" ("Is my savings rate good?") still gets "I can look that up for you. It would take a minute, and I'd show you every source.", and "Ask about a category or a day to see how one reads" returns the same made-up text.
-
-### 19 · fixed · Scanning the same file twice does not say Already added
-
-Choosing the same bytes again (same name, renamed, or from the gallery) stays on Scan with the toast "Already added" at once; different bytes go to confirm; an unfinished draft can be re-scanned; after Undo of Done the same file is accepted again.
-
-### New
-
-#### 20 · Minor · Fixed schemas leave gaps, and the UI takes what they now refuse
-
-`setting.set` still accepts a 50,000-key record, and `sen.answer` (askId, answer), `proposal.answer` id, `memory.forget` id and `research.confirm` messageId accept 100k-character strings. The Sen composer takes 5000 characters (the schema stops at 4000) and the invite sheet takes a 312-character email (the schema stops at 254), so once B05 parses these, the person gets a raw refusal; the fake doesn't parse, so nothing shows today. Emails `a..b@x.co` and `a@-b.co` pass the UI check.
-
-**Repro:** qa/e2e/b04-r2-cmd.spec.ts, b04-r2-fake.spec.ts
+**Repro:** /?scenario=payday; Payday -> Use this plan (or Skip x4); read Home.
 
 ```
-setting.set huge record: ACCEPTED ; sen.answer 100k answer: ACCEPTED ; proposal.answer 100k id: ACCEPTED ; memory.forget 100k id: ACCEPTED ; research.confirm 100k: ACCEPTED
-composer value length after fill(5000): 5000
-EMAIL "xxxxxxxxxxxxxxxx" (len 312) => ACCEPTED ; EMAIL "a..b@x.co" => ACCEPTED
+card up: hero Left until payday RM 5,648.00 ... cycle sheet Income received +RM5,648.00
+after skipping all four: hero Left until payday RM 5,800.00 ... Income received +RM5,800.00
+HOME after Use this plan: Left until payday | RM | 5,800.00
 ```
 
-#### 21 · Minor · Payday scenario: an Approved claim still says its evidence is missing, and Send to ESS stays
+### 24 · Minor · After a write-off the Shared bills list says the share was paid back
 
-In the payday scenario both September claims are Approved, but Parking still reads "Receipt for 21 Sep not added yet", the page still says "A claim with evidence missing waits until you've added it" and offers Send to ESS with nothing left to send. Home also still reads Left until payday RM5,800.00 although the payday card says RM152.00 of claims was split out of the salary (D45).
+BBQ PLACE reads `1 of 2 paid you back` before and `2 of 2 paid you back` after *Write off*, but Kah Hoe never paid; the split view itself says `written off`. The list counts written-off shares as paid.
 
-**Repro:** /s/claims?scenario=payday ; /?scenario=payday
-
-```
-CLAIMS in payday scenario: Claims | September 2026 | Approved | Phone bill | RM88.00 | ... | Approved | Parking | RM64.00 | 4 files · capped at RM100.00 | Receipt for 21 Sep not added yet | Open the claim | Download claim pack | Send to ESS | A claim with evidence missing waits until you've added it.
-```
-
-#### 22 · Note · Small leftovers from the friend and closed-link fixes
-
-The closed `split-public` view still returns `at` (the bill's date and time) for any token, and no test asserts it. A friend's Settings -> Account still shows `weiming@example.com`. A friend with claims off who opens /s/claims by URL is told "Add a scheme in Settings → Claims", where Claims says "Claims are off for you". The fake's member.* commands have no admin check (B05's API must). A stale toast ("Already added") carries onto the next screen when a different file is chosen straight after.
-
-**Repro:** readPublicSplit('demo-closed'); /s/settings/account?scenario=month; /s/claims?scenario=month
+**Repro:** More -> Shared bills -> BBQ PLACE -> Write off -> Back.
 
 ```
-closed view: at: s.at ; friend Settings: Account | weiming@example.com ; claims (friend): "Each scheme's claim drafts itself on the 1st. Add a scheme in Settings → Claims."
+SHARED before: ... BBQ PLACE | 10 Oct · You paid · 1 of 2 paid you back
+SHARED after write-off: ... Settled | BBQ PLACE | 10 Oct · You paid · 2 of 2 paid you back
+```
+
+### 25 · Minor · `manual?day=` checks the shape of the date, not that it is a date
+
+The router accepts any `dddd-dd-dd`. `2026-13-45` and `0000-00-00` throw inside `new Date(...).toISOString()` and show "Something went wrong / This screen didn't open" (the error boundary catches it, no blank page). `2027-01-01`, `1999-01-01` and `9999-12-31` open the form on a future or ancient day, and a payment can be saved there. Reachable only by a typed or old link; Sen's own buttons carry a valid day.
+
+**Repro:** /s/manual?day=2026-13-45
+
+```
+day "2026-13-45"   NO FORM | Something went wrong | This screen didn't open
+day "0000-00-00"   NO FORM
+day "9999-12-31"   form
+```
+
+### 26 · Note · A no-op answer still offers Undo
+
+Inviting an address already invited says `They are already invited` with an Undo that undoes nothing (the double-tap guard only covers a repeat within 500 ms). Same for the other `Already …` answers.
+
+**Repro:** Invite dup@example.com twice, 1 s apart.
+
+```
+toasts: ["They are already invited\nUndo"]
+```
+
+### 27 · Note · Choosing the next file takes down the previous Undo toast
+
+The fix for the stale `Already added` toast calls `dismissToast()` for whatever toast is up, so `Attached to RM64.13 on Ryt Bank` + Undo disappears when the next receipt's file is picked, a few seconds into its six.
+
+**Repro:** Scan -> Done -> Scan tab -> pick a different file.
+
+```
+after Done toasts: ["Attached to RM64.13 on Ryt Bank\nUndo"]
+on scan page, toasts: ["Attached to RM64.13 on Ryt Bank\nUndo"]
+after picking a new file, toasts: []
 ```
 
 ## Probes
 
 | Broke | Caught | Note |
 |---|---|---|
-| Run 2: public `lockIfReady` ignores unclaimed items | yes | splits.test.ts: 'everyone done with an item nobody ticked stays still changing (D71)' failed; was green in run 1 |
-| Run 2: app `maybeLock` ignores unclaimed items | yes | splits.test.ts 'the lock (D71)' failed in the unit suite itself; in run 1 only e2e caught it |
-| Run 2: closed link leaks merchant+total, or payer, or yourShare | yes | 'a closed or unknown link shows nothing' failed for each of the three |
-| Run 2: closed link's `at` (not asserted) | **no** | `at` is still returned and no test checks it (finding 22) |
-
-`git status` was clean of source changes after each probe.
-
-## Method notes
-
-- Finding 5: judged through `me`, as a scenario would set it. A direct `db.agent` flip from my helper changed nothing in the app (the helper's copy of the fake is separate), so I rewrote the served `variants.ts` response so the `month` scenario builds with the agent off. No source was edited.
-- Finding 19: my first rescans used a page load, which rebuilds the in-memory fake; I redid them with client-side navigation.
-- The run-2 specs are `qa/e2e/b04-r2-*.spec.ts`.
+| Run 3: write-off not added to my share | yes | splits.test.ts "writes off what is still owed" failed (expected 4880 to be 9760) |
+| Run 3: write-off allowed for a non-payer | yes | same test failed (expected [Function] to throw) |
+| Run 3: write-off allowed with nothing owed / still changing | yes | same test failed |
+| Run 3: member.* guard for non-admins dropped | yes | admin.test.ts "resends and revokes…only for the admin" failed |
+| Run 3: revoke allowed on a signed-in member | yes | admin.test.ts failed |
+| Run 3: invite email double-dot check dropped | yes | admin.test.ts "invites with Unlimited, and rejects emails…" failed (a..b@x.co) |
+| Run 3: Unlimited ignored at invite | yes | same test failed (expected false to be true) |
+| Run 3: manual saves "now" instead of the gap day | **no / unproven** | the suite asserts the URL day and the "4 Oct" label only; I could not read the saved time reliably after the probe (my db() read returned another row), so this one is unproven. Before the probe, my run showed the payment saved at 2026-10-04T04:00:00Z (12:00 KL). |
 
 ## What I couldn't test, and why
 
-- Findings left open on purpose (4, 7, 8, 13, 14, 16, 18, rest of 12): not re-checked.
-- The full 703-test suite: 131 affected tests only.
-- The device: queued in `docs/local.md`.
+- **Findings 4, 7, 8, 13 (rest), 14 (now built), 16, 18**: left to the owner or later slices; not re-checked except 13 and 14, whose D128 pieces are in the new-area checks
+- **The 707-test e2e suite**: ran in the main session; I ran only my own specs
+- **Saved day of a gap payment under a probe**: my db() read returned another row after the probe; unproven
+- **The paying island and the real hand-offs to TNG**: stand-ins only; device (docs/local.md)
+
+The `qa/e2e/b04-*.spec.ts` ports are back at 5180/5181/5182. Specs for this run: `b04-r3-*.spec.ts`.

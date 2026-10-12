@@ -120,6 +120,8 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     }
     const before = structuredClone(db);
     const { said, touched } = applyArea(db, cmd, ctx) ?? apply(db, cmd);
+    // a no-op (*They are already invited*, *Already added*) offers no Undo (QA B04 run 3, 26)
+    if (JSON.stringify(db) === JSON.stringify(before)) return { said, undo: null };
     const since = new Date().toISOString();
     for (const id of touched) db.unsynced[id] = since;
     const token = newId();

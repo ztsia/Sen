@@ -14,8 +14,15 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useAccounts, useCategories, useDraft, useNearDuplicate, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
+import { klDay } from '@sen/core/cycles';
 import { shortDay } from '@/lib/dates';
 import { useScreenSearch } from '../kit';
+
+/** `2026-10-04` names a day on the calendar, and it isn't after today in KL. */
+function isPastDay(day: string): boolean {
+  const d = new Date(`${day}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === day && day <= klDay(nowIso());
+}
 
 /**
  * Add expense (screens.md `manual`, §6.8): a payment Sen didn't see. The amount, large, typed as text and
@@ -25,7 +32,10 @@ import { useScreenSearch } from '../kit';
 export default function Manual() {
   const router = useRouter();
   const write = useWrite();
-  const { id, day } = useScreenSearch();
+  const search = useScreenSearch();
+  const { id } = search;
+  // only a real day, today or before: a typed link with another starts from now (QA B04 run 3, 25)
+  const day = search.day && isPastDay(search.day) ? search.day : undefined;
   const draft = useDraft(id ?? '');
   const cats = useCategories();
   const accts = useAccounts();

@@ -189,6 +189,10 @@ describe('the made-up splits', () => {
     expect(after.mySpending).toBe(before.mySpending + owed);
     expect(after.people.filter((p) => !p.isMe).every((p) => p.paid)).toBe(true);
     expect(after.link).toBe('closing');
+    // Shared bills doesn't count a written-off share as paid back (QA B04 run 3, 24)
+    const row = sharedView(d).rows.find((r) => r.id === uid('split:bbq'))!;
+    expect(row.line).toMatch(/written off/);
+    expect(row.line).not.toMatch(/2 of 2 paid you back/);
     // nothing is owed any more
     expect(() => run(d, { type: 'split.write-off', splitId: uid('split:bbq') })).toThrow(/Nothing is owed/);
     // a friend paid, so it isn't yours to write off

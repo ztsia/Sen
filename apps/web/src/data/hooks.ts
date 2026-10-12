@@ -65,13 +65,15 @@ export function useNeedsYouCount(): number {
 }
 
 /** Runs one command and refreshes every screen. Returns what happened and its Undo, for a row that raises its own toast. */
-export async function runCommand(cmd: Command): Promise<{ said: string; undo: () => void }> {
+export async function runCommand(cmd: Command): Promise<{ said: string; undo: () => void; canUndo: boolean }> {
   const b = await backend();
   const r = await b.run(cmd);
   await queryClient.invalidateQueries();
   const undo = r.undo;
   return {
     said: r.said,
+    // a write that changed nothing (*They are already invited*) has nothing to undo
+    canUndo: !!undo,
     undo: () => {
       if (!undo) return;
       void b.run(undo).then((u) => {
@@ -99,7 +101,10 @@ export function useWrite() {
     lastWrite = { key, at: now };
     try {
       const r = await runCommand(cmd);
-      if (!opts.quiet) toastUndo(r.said, r.undo);
+      if (!opts.quiet) {
+        if (r.canUndo) toastUndo(r.said, r.undo);
+        else toastDone(r.said);
+      }
       return r;
     } catch (e) {
       toastDone(e instanceof Error ? e.message : "That didn't save. Try again.");

@@ -169,7 +169,13 @@ describe('payday', () => {
     expect(fake.db().review.filter((r) => r.id === 'r:payday:balance')).toHaveLength(1);
     await fake.run({ type: 'payday.plan', use: true });
     expect(fake.db().payday).toMatchObject({ stage: 'progress', done: 0 });
+    // the claims part stays out of income once the card is done (QA B04 run 3, 23)
+    expect(homeView(fake.db()).figure.income).toBe(rm('5,800.00') - rm('152.00'));
     await fake.run({ type: 'payday.plan', use: false });
     expect(fake.db().payday).toBeNull();
+    expect(homeView(fake.db()).figure.income).toBe(rm('5,800.00') - rm('152.00'));
+    // a write that changes nothing offers no Undo (QA B04 run 3, 26)
+    const again = await fake.run({ type: 'payday.skip', step: 'balance' });
+    expect(again.undo).toBeNull();
   });
 });
