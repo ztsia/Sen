@@ -1,4 +1,4 @@
-import { DatabaseBackupIcon, DownloadIcon } from 'lucide-react';
+import { DownloadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GroupCard, GroupLabel, NavRow } from '@/blocks/group';
@@ -45,7 +45,6 @@ export default function Data() {
             {v.admin ? (
               <GroupCard label="Backups">
                 <NavRow
-                  icon={DatabaseBackupIcon}
                   title="Last backup"
                   value={v.data.lastBackup ? momentLabel(new Date(v.data.lastBackup)) : 'None yet'}
                 />

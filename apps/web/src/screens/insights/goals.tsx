@@ -1,3 +1,4 @@
+import { useUi } from '@/frame/ui-store';
 import { ChevronRightIcon, TargetIcon } from 'lucide-react';
 import { formatSen, percent } from '@sen/core/money';
 import type { GoalSummary, GoalsView } from '@sen/core/views';
@@ -62,7 +63,14 @@ export function GoalRing({ saved, target, size = 'md' }: { saved: number; target
 function Body({ v }: { v: GoalsView }) {
   const go = useGo();
   if (!v.goals.length)
-    return <EmptyState icon={TargetIcon} line="Your goals and buckets show here once you've set one." />;
+    return (
+      <EmptyState
+        icon={TargetIcon}
+        title="No goals yet"
+        line="Tell Sen what you're saving for, and your goals and buckets show here."
+        action={{ label: 'Ask Sen', onSelect: () => useUi.getState().setSenOpen(true) }}
+      />
+    );
   const groups: [string, GoalSummary[]][] = [
     ['Goals', v.goals.filter((g) => g.kind === 'goal')],
     ['Buckets', v.goals.filter((g) => g.kind === 'bucket')],

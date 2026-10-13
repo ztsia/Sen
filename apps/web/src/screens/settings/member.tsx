@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CircleCheckIcon, ClockIcon, SmartphoneIcon, UserRoundXIcon, WalletIcon } from 'lucide-react';
+import { UserRoundXIcon, WalletIcon } from 'lucide-react';
 import { useRouter } from '@tanstack/react-router';
 import { formatSen } from '@sen/core/money';
 import type { SettingsView } from '@sen/core/views';
@@ -112,13 +112,8 @@ function Body({ m, owner }: { m: Member; owner: boolean }) {
         ))}
       </GroupCard>
       <GroupCard label="Phone">
-        <NavRow icon={SmartphoneIcon} title="Shell version" value={m.shellVersion ?? 'Browser only'} />
-        <NavRow
-          icon={m.captureConnected ? CircleCheckIcon : ClockIcon}
-          tone={m.captureConnected ? 'accent' : 'neutral'}
-          title="Capture connected"
-          value={m.captureConnected ? 'Yes' : 'No'}
-        />
+        <NavRow title="Shell version" value={m.shellVersion ?? 'Browser only'} />
+        <NavRow title="Capture connected" value={m.captureConnected ? 'Yes' : 'No'} />
       </GroupCard>
       {owner ? null : (
         <>

@@ -1,3 +1,4 @@
+import { useUi } from '@/frame/ui-store';
 import { BrainIcon, Trash2Icon } from 'lucide-react';
 import type { MemoryView } from '@sen/core/views';
 import { EmptyState } from '@/blocks/states';
@@ -31,7 +32,9 @@ function Body({ v }: { v: MemoryView }) {
     return (
       <EmptyState
         icon={BrainIcon}
-        line="Sen hasn't kept any notes about you yet. When you tell it something worth remembering, it shows here."
+        title="No notes yet"
+        line="When you tell Sen something worth remembering, it shows here."
+        action={{ label: 'Ask Sen', onSelect: () => useUi.getState().setSenOpen(true) }}
       />
     );
   return (

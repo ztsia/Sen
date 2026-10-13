@@ -142,7 +142,7 @@ export function PaceChart({
                   x={t.x}
                   y={(typeof t.y === 'number' ? t.y : 0) + 12}
                   textAnchor={anchor}
-                  fontSize={11}
+                  fontSize={12}
                   fill="var(--muted-foreground)"
                 >
                   {d === today ? 'Today' : d === days ? 'Payday' : `Day ${d}`}
@@ -159,7 +159,7 @@ export function PaceChart({
                 value: `Income ${formatSen(income)}`,
                 position: 'insideTopLeft',
                 fill: 'var(--muted-foreground)',
-                fontSize: 11,
+                fontSize: 12,
               }}
             />
           ) : null}
@@ -379,7 +379,7 @@ export function SpendCalendar({ spent, days, label }: { spent: (number | undefin
                 fill={fill}
                 stroke={v === undefined ? 'var(--border)' : 'none'}
               />
-              <text x={x + 5} y={y + 13} fontSize={10} fill={step >= 3 ? 'var(--card)' : 'var(--muted-foreground)'}>
+              <text x={x + 5} y={y + 15} fontSize={12} fill={step >= 3 ? 'var(--card)' : 'var(--muted-foreground)'}>
                 {i + 1}
               </text>
             </g>
@@ -547,7 +547,7 @@ export function ColumnBars({
           tickLine={false}
           axisLine={{ stroke: 'var(--border)' }}
           interval={0}
-          tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+          tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
         />
         <YAxis hide domain={[low, high]} />
         {reference ? (
@@ -560,7 +560,7 @@ export function ColumnBars({
               position: 'insideTopLeft',
               dy: -14,
               fill: 'var(--muted-foreground)',
-              fontSize: 11,
+              fontSize: 12,
             }}
           />
         ) : null}

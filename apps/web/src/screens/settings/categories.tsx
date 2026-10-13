@@ -13,7 +13,7 @@ import { categoryIcon, categoryTone } from '../icons';
 import { Loaded } from '../kit';
 
 type Cat = { id: string; name: string; kind: 'spend' | 'income'; rules: number };
-type Rule = { id: string; merchant: string; category: string; hawker: boolean };
+type Rule = { id: string; merchant: string; category: string; hawker: boolean; setBy: 'user' | 'agent' };
 
 /**
  * Settings → Categories and rules (screens.md; D70, D130): the categories as a grid of tinted tiles,
@@ -135,7 +135,8 @@ function RuleList({ rules }: { rules: Rule[] }) {
             icon={categoryIcon(r.category)}
             tone={categoryTone(r.category)}
             title={`When the payee has “${readableName(r.merchant)}” → ${r.category}`}
-            description={r.hawker ? 'A hawker' : undefined}
+            // where it came from, and the switch's state in words either way (QA B04 redesign, finding 8)
+            description={`${r.setBy === 'agent' ? "Sen's suggestion, confirmed" : 'From your answer'} · ${r.hawker ? 'A hawker' : 'Not a hawker'}`}
             checked={r.hawker}
             onCheckedChange={(on) => void write({ type: 'setting.set', key: `rules.${r.id}.hawker`, value: on })}
           />

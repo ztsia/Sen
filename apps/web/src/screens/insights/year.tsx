@@ -1,4 +1,4 @@
-import { TagIcon } from 'lucide-react';
+import { CalendarRangeIcon, TagIcon } from 'lucide-react';
 import { formatSen, percent } from '@sen/core/money';
 import type { YearView } from '@sen/core/views';
 import { StatTiles } from '@/blocks/facts';
@@ -25,7 +25,15 @@ export default function Year() {
 
 function Body({ v }: { v: YearView }) {
   const last = v.months[v.months.length - 1];
-  if (!last) return <EmptyState line="Your year shows once you've a month of payments." />;
+  // a year with no spending yet draws no chart and names no heaviest month (patterns §4)
+  if (!last || v.months.every((m) => m.spent === 0))
+    return (
+      <EmptyState
+        icon={CalendarRangeIcon}
+        title="No year yet"
+        line="Your year shows once you've a month of payments."
+      />
+    );
   const top = v.months.reduce((a, m) => (m.spent > a.spent ? m : a), last);
   return (
     <div className="flex flex-col gap-4 pt-1 pb-4">

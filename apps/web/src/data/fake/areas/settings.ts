@@ -32,11 +32,11 @@ export function blankSettings(): SettingsState {
 const LAST_BACKUP = '2026-10-17T03:00:00+08:00';
 
 /** Made-up merchant rules on top of the scenario's own. Invented names, one hawker (D70). */
-const MADE_UP_RULES: { merchant: string; category: string; hawker: boolean }[] = [
-  { merchant: 'WARUNG PAK HAMID', category: 'Meals', hawker: true },
-  { merchant: 'KEDAI KOPI TAMAN BAYU', category: 'Drinks & desserts', hawker: true },
-  { merchant: 'DAPUR BIBI DELIVERY', category: 'Meals', hawker: false },
-  { merchant: 'PASAR MALAM SEKSYEN 9', category: 'Groceries', hawker: true },
+const MADE_UP_RULES: { merchant: string; category: string; hawker: boolean; setBy: 'user' | 'agent' }[] = [
+  { merchant: 'WARUNG PAK HAMID', category: 'Meals', hawker: true, setBy: 'user' },
+  { merchant: 'KEDAI KOPI TAMAN BAYU', category: 'Drinks & desserts', hawker: true, setBy: 'user' },
+  { merchant: 'DAPUR BIBI DELIVERY', category: 'Meals', hawker: false, setBy: 'agent' },
+  { merchant: 'PASAR MALAM SEKSYEN 9', category: 'Groceries', hawker: true, setBy: 'user' },
 ];
 
 export function seedSettings(db: Db): SettingsState {
@@ -54,6 +54,7 @@ export function seedSettings(db: Db): SettingsState {
     merchant: r.merchantKey,
     category: r.categoryId ? (names.get(r.categoryId) ?? 'Unknown') : 'Ask each time',
     hawker: false,
+    setBy: r.setBy,
   }));
   const made = MADE_UP_RULES.map((r) => ({ id: uid(`rule:${r.merchant}`), ...r }));
   const rules = [...fromDb, ...made];

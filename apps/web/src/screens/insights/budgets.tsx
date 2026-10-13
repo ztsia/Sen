@@ -68,7 +68,8 @@ function BudgetsBody({ v, onEdit }: { v: BudgetsView; onEdit: (e: Editing) => vo
         <p className="px-4 pt-1 pb-2 text-sm text-muted-foreground">{cycle}</p>
         <EmptyState
           icon={PiggyBankIcon}
-          line="No budgets yet. Add one to see how a category is going."
+          title="No budgets yet"
+          line="Add one to see how a category is going."
           action={
             v.others.length
               ? { label: 'Add a budget', onSelect: () => onEdit({ categoryId: null, label: '', cap: null }) }

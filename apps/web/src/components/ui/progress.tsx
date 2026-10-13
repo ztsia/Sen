@@ -1,4 +1,4 @@
-// Sen: shadcn/ui's progress, changed in place (CLAUDE.md, shadcn first): the track in `muted` and the fill in the look's chart accent (patterns.md §4), or `warning` on the warn colour; corners follow the look; an aria-label is required, so every bar is named.
+// Sen: shadcn/ui's progress, changed in place (CLAUDE.md, shadcn first): the track in `muted` and the fill in the look's chart accent (patterns.md §4), or `warning` on the warn colour; corners follow the look; an aria-label is required, so every bar is named; `value` reaches the root, so it announces its figure.
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Progress as ProgressPrimitive } from 'radix-ui';
@@ -16,6 +16,7 @@ function Progress({
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
+      value={value}
       className={cn('relative h-2 w-full overflow-hidden rounded-full bg-muted', className)}
       {...props}
     >

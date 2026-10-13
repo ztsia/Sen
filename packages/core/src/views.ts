@@ -746,7 +746,16 @@ export const SettingsView = z.object({
     qr: z.boolean(),
   }),
   categories: z.array(z.object({ id: Id, name: z.string(), kind: z.enum(['spend', 'income']), rules: z.int() })),
-  rules: z.array(z.object({ id: Id, merchant: z.string(), category: z.string(), hawker: z.boolean() })),
+  rules: z.array(
+    z.object({
+      id: Id,
+      merchant: z.string(),
+      category: z.string(),
+      hawker: z.boolean(),
+      /** Where the rule came from (merchant_rules.set_by): your answer, or Sen's suggestion you confirmed. */
+      setBy: z.enum(['user', 'agent']),
+    }),
+  ),
   receiptsByEmail: z.object({ address: z.string(), code: z.string().nullable(), received: z.int() }),
   claims: z.object({
     schemes: z.array(

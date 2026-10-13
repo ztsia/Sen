@@ -1,3 +1,4 @@
+import { useUi } from '@/frame/ui-store';
 import { useState } from 'react';
 import { CheckIcon, ChevronDownIcon, CircleDashedIcon, RepeatIcon, XIcon, type LucideIcon } from 'lucide-react';
 import { formatSen } from '@sen/core/money';
@@ -63,7 +64,15 @@ function tally(history: History): string {
 }
 
 function Body({ v }: { v: SubscriptionsView }) {
-  if (!v.rows.length) return <EmptyState icon={RepeatIcon} line="No subscriptions declared yet." />;
+  if (!v.rows.length)
+    return (
+      <EmptyState
+        icon={RepeatIcon}
+        title="No subscriptions yet"
+        line="Tell Sen what you pay for, and each renewal shows here."
+        action={{ label: 'Ask Sen', onSelect: () => useUi.getState().setSenOpen(true) }}
+      />
+    );
   return (
     <div className="flex flex-col gap-4 pt-1 pb-4">
       <div>
