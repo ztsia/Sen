@@ -37,7 +37,7 @@ layout also changed (finding 3), which the reviewer named as the reason a full r
   correction stand-in, Minted's micro-print band and Line's flat cards: cosmetic, scenario data, or
   B14's. None was changed.
 
-## Finding 1's pins: each test against its break
+## The pins: each test against its break
 
 | Break | Test that failed | First error |
 |---|---|---|
@@ -45,3 +45,11 @@ layout also changed (finding 3), which the reviewer named as the reason a full r
 | `balance-form.tsx` `less`/`more` swapped | balance check: the difference says more or less than Sen has | `Expected substring: "RM0.10 more than Sen has"` |
 | `txn.tsx` delete with `{ quiet: true }` | payments: Delete offers Undo, and Undo brings the payment back | `expect(locator).toBeVisible() failed` at the toast |
 | `settings.tsx` Appearance `value="Minted"` | settings: the Appearance row names the look in use | `Expected substring: "Copper"`, got `Appearance Minted` |
+| `rows.tsx` chip row back to `py-0.5`, no `overflow-y-hidden` (6) | review: an answer row does not scroll up and down | `answer rows that scroll up and down: [{"scroll":42,"client":36},…]` |
+| `progress.tsx` without `value={value}` (7) | progress bars announce their value | `aria-valuenow on the claims bar`, received `null` |
+| `subscriptions.tsx` without its title (4) | empty states: each says what is missing and offers Ask Sen | `element(s) not found` |
+| `year.tsx` without the no-spending check (9) | the year with no spending shows an empty state | `element(s) not found` for `No year yet` |
+| `categories.tsx` `'From you'` (8) | categories: each rule says where it came from | `Expected substring: "From your answer · A hawker"` |
+| `charts.tsx` calendar `fontSize={10}` (10) | chart text is at least 12 px | `/insights: svg text under 12 px` |
+
+All ten pass with the code as committed.

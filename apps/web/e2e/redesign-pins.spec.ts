@@ -98,3 +98,105 @@ test('settings: the Appearance row names the look in use', async ({ page }) => {
 
   expect(errors).toEqual([]);
 });
+
+test('review: an answer row does not scroll up and down', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page, '/review');
+  await settled(page);
+
+  const strips = page.locator('[data-review="new-merchant"] div.overflow-x-auto');
+  await expect(strips.first()).toBeVisible();
+  const sizes = await strips.evaluateAll((els) =>
+    els.map((el) => ({ scroll: el.scrollHeight, client: el.clientHeight })),
+  );
+
+  expect(sizes.length, 'at least one answer row was measured').toBeGreaterThan(0);
+  const vertical = sizes.filter((s) => s.scroll > s.client);
+  expect(vertical, `answer rows that scroll up and down: ${JSON.stringify(vertical)}`).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('progress bars announce their value', async ({ page }) => {
+  const errors = watchErrors(page);
+
+  await open(page, '/s/claims');
+  await settled(page);
+  const claimed = page.getByRole('progressbar', { name: 'September 2026: claimed against caps' });
+  await expect(claimed).toBeVisible();
+  expect(await claimed.getAttribute('aria-valuenow'), 'aria-valuenow on the claims bar').not.toBeNull();
+
+  await open(page, '/s/settings/members');
+  await settled(page);
+  await expect(page.getByRole('progressbar', { name: 'Shell seats in use' })).toHaveAttribute('aria-valuenow', '10');
+
+  expect(errors).toEqual([]);
+});
+
+test('empty states: each says what is missing and offers Ask Sen; Ask Sen opens Sen', async ({ page }) => {
+  const errors = watchErrors(page);
+  const EMPTY: [path: string, title: string][] = [
+    ['/s/subscriptions', 'No subscriptions yet'],
+    ['/s/goals', 'No goals yet'],
+    ['/s/agent/memory', 'No notes yet'],
+    ['/s/agent/research', 'No research yet'],
+  ];
+  for (const [path, title] of EMPTY) {
+    await test.step(`${path} says "${title}" and offers Ask Sen`, async () => {
+      await open(page, `${path}?state=empty`);
+      const main = page.locator('main');
+      await expect(main.getByText(title, { exact: true })).toBeVisible();
+      const ask = main.getByRole('button', { name: 'Ask Sen', exact: true });
+      await expect(ask).toBeVisible();
+      if (path === '/s/subscriptions') {
+        await ask.click();
+        await expect(page.getByRole('dialog').first()).toBeVisible();
+      }
+    });
+  }
+  expect(errors).toEqual([]);
+});
+
+test('the year with no spending shows an empty state, and names no heaviest month', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page, '/s/insights/year?state=empty');
+  await settled(page);
+
+  const main = page.locator('main');
+  await expect(main.getByText('No year yet', { exact: true })).toBeVisible();
+  await expect(main).not.toContainText(/heaviest month/i);
+  expect(errors).toEqual([]);
+});
+
+test('categories: each rule says where it came from, and whether it is a hawker', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page, '/s/settings/categories');
+  await settled(page);
+
+  await page.getByRole('radio', { name: 'Rules' }).click();
+  const rule = (merchant: string) => page.locator('[data-slot="item"]').filter({ hasText: merchant });
+
+  await expect(rule('Warung Pak Hamid')).toHaveCount(1);
+  await expect(rule('Warung Pak Hamid')).toContainText('From your answer · A hawker');
+  await expect(rule('Dapur Bibi Delivery')).toHaveCount(1);
+  await expect(rule('Dapur Bibi Delivery')).toContainText("Sen's suggestion, confirmed · Not a hawker");
+  expect(errors).toEqual([]);
+});
+
+test('chart text is at least 12 px on On track and on the year', async ({ page }) => {
+  const errors = watchErrors(page);
+  for (const path of ['/insights', '/s/insights/year']) {
+    await test.step(path, async () => {
+      await open(page, path);
+      await settled(page);
+      const text = page.locator('main svg text');
+      await expect(text.first()).toBeAttached();
+      const px = await text.evaluateAll((els) => els.map((el) => parseFloat(getComputedStyle(el).fontSize)));
+      expect(px.length, `${path}: svg text measured`).toBeGreaterThan(0);
+      expect(
+        px.filter((n) => n < 12),
+        `${path}: svg text under 12 px`,
+      ).toEqual([]);
+    });
+  }
+  expect(errors).toEqual([]);
+});
