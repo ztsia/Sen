@@ -63,7 +63,9 @@ Each line below is a miss that happened because a brief left it unsaid:
 - **The scope.** Its files, the ones it mustn't touch, and what other agents are editing now. (One
   ran a repo-wide formatter over another agent's files.)
 - **How it proves it's done.** The checks, and *wait for long runs to end*. (One reported a test
-  run while it was still going.)
+  run while it was still going.) For a run over ten minutes, say how to wait: one wait that ends
+  when the run does (an until-loop on its exit file), not a check every minute. Each time the agent
+  stops to wait, the main session is woken for a turn; an hour of minute checks was sixty turns.
 - **Its environment.** The absolute working directory, a port of its own, *don't commit*. A worktree
   may start at `main`: tell it which commit to check out. (One worked in the main checkout instead
   of its worktree, was blocked, and was judged a failure of the model; the same model succeeded
