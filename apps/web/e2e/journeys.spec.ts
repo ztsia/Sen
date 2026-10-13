@@ -37,7 +37,8 @@ async function standIn(page: Page, id: string) {
 
 /** The scanned receipt, from /scan to its confirm screen (the made-up SATE KAJANG HJ SAMURI, RM64.13). */
 async function scanToConfirm(page: Page) {
-  await page.getByTestId('scan-camera').setInputFiles(SCAN_FILE);
+  // the scanner screen's own camera input: the app shell has one too, outside the screen
+  await page.locator('main').getByTestId('scan-camera').setInputFiles(SCAN_FILE);
   await page.getByRole('button', { name: 'Use this' }).click();
   await expect(page).toHaveURL(/\/s\/confirm/, { timeout: 10_000 });
   await expect(page.getByText('SATE KAJANG HJ SAMURI')).toBeVisible();
@@ -230,7 +231,8 @@ export const JOURNEYS: Record<string, Journey> = {
       .getByRole('button', { name: /Shopping/ })
       .first()
       .click();
-    await page.getByLabel('Budget each cycle').fill('400');
+    // the amount is typed as digits from the right: 400.00 is what reads as RM400.00 (D132)
+    await page.getByLabel('Budget each cycle').fill('400.00');
     await shot('new amount');
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('RM320.30 of RM400.00')).toBeVisible();
@@ -264,12 +266,12 @@ export const JOURNEYS: Record<string, Journey> = {
   // scan-after (core): Scan reads the receipt, you check it, and Done attaches it to its payment
   'scan-after': async (page, shot, go) => {
     await go('/');
-    await tabs(page).getByRole('button', { name: 'Scan a receipt' }).click();
-    await expect(page).toHaveURL(/\/scan/);
-    await shot('scan');
-    await page
-      .getByTestId('scan-camera')
-      .setInputFiles({ name: 'receipt.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
+    // a tap on Scan opens the camera's chooser straight away, from Home (no scanner screen first)
+    const [camera] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      tabs(page).getByRole('button', { name: 'Scan a receipt' }).click(),
+    ]);
+    await camera.setFiles({ name: 'receipt.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
     await expect(page.getByRole('button', { name: 'Use this' })).toBeVisible();
     await shot('crop');
     await page.getByRole('button', { name: 'Use this' }).click();
@@ -293,6 +295,7 @@ export const JOURNEYS: Record<string, Journey> = {
   'receipt-first': async (page, shot, go) => {
     await go('/scan');
     await page
+      .locator('main')
       .getByTestId('scan-camera')
       .setInputFiles({ name: 'receipt-nomatch.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
     await page.getByRole('button', { name: 'Use this' }).click();
@@ -349,10 +352,9 @@ export const JOURNEYS: Record<string, Journey> = {
     await shot('keep Sen running');
     await page.getByRole('button', { name: 'Skip for now' }).click();
     await expect(page.getByText('Step 5 of 7')).toBeVisible();
-    // an amount typed as text is checked before it moves on
+    // an amount is typed as digits only (D132): the dot and the second one are ignored, so 12.3.4 reads 12.34
     await page.getByLabel('Ryt Bank').fill('12.3.4');
-    await page.getByRole('button', { name: 'Next' }).click();
-    await expect(page.getByText('Step 5 of 7')).toBeVisible();
+    await expect(page.getByLabel('Ryt Bank')).toHaveValue('12.34');
     await page.getByLabel('Ryt Bank').fill('1,200.50');
     await shot('your accounts');
     await page.getByRole('button', { name: 'Next' }).click();

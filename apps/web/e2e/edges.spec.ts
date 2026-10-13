@@ -53,17 +53,21 @@ test("a finger's long-press on Scan opens the sheet, and lifting it chooses noth
   // still on Home, the sheet still open: the lift's click was swallowed
   await expect(page).toHaveURL(/\/(\?.*)?$/);
   await expect(sheet).toBeVisible();
-  // and the next tap on a row works as normal
+  // and the next tap on a row works as normal: From gallery opens the gallery's chooser straight away
+  const gallery = page.waitForEvent('filechooser', { timeout: 5_000 });
   await sheet.getByRole('button', { name: 'From gallery' }).tap();
-  // From gallery opens Scan, which has the gallery picker in a browser (QA B03 run 1, finding 7)
-  await expect(page).toHaveURL(/\/scan/);
+  expect(await (await gallery).element().getAttribute('data-testid')).toBe('scan-gallery');
+  await expect(page.getByRole('dialog', { name: 'Add a payment' })).toBeHidden();
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/');
 });
 
-test("a finger's tap on Scan opens the scanner", async ({ page }) => {
+test("a finger's tap on Scan opens the camera's chooser, and stays on Home", async ({ page }) => {
   await open(page, '/');
   const box = (await tabs(page).getByRole('button', { name: 'Scan a receipt' }).boundingBox())!;
+  const camera = page.waitForEvent('filechooser', { timeout: 5_000 });
   await touchHold(page, box.x + box.width / 2, box.y + box.height / 2, 80);
-  await expect(page).toHaveURL(/\/scan/);
+  expect(await (await camera).element().getAttribute('data-testid')).toBe('scan-camera');
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/');
   await expect(page.getByRole('dialog')).toBeHidden();
 });
 

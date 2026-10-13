@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { uid } from '../src/data/fake/ids';
 import { LOOKS, open, settled, watchErrors } from './helpers';
 
 // The redesign's behaviours that the suite had no test for (QA: each could be broken with every
@@ -234,9 +235,11 @@ test('add expense: a zero amount and a missing category are refused, and the for
   const errors = watchErrors(page);
   await open(page, '/s/manual');
 
+  // a zero cannot be typed (D132: the digits read from the right, and leading zeros are not kept), so the
+  // field is empty and says so: the zero is still refused and the form stays open
   await page.getByLabel('Amount').fill('0');
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByText(/above zero/)).toBeVisible();
+  await expect(page.getByText('Type the amount.', { exact: true })).toBeVisible();
 
   await page.getByLabel('Amount').fill('12.50');
   await page.getByRole('button', { name: 'Save' }).click();
@@ -361,4 +364,341 @@ test('insights: under reduced motion the pager jumps to its step at once', async
   });
   expect(Math.abs(at.left - 4 * at.width), `scrollLeft ${at.left}, page width ${at.width}`).toBeLessThanOrEqual(2);
   expect(errors).toEqual([]);
+});
+
+// QA run 3 and the owner's list (13 Oct): one pin per behaviour changed in this run. Each passes on the
+// code as it is and fails when its break (named in the report) is made; its name says the behaviour.
+test.describe("QA run 3 and the owner's list (13 Oct)", () => {
+  test('task screens hide the tab bar, and Home shows one', async ({ page }) => {
+    const errors = watchErrors(page);
+    const bar = page.getByRole('navigation', { name: 'Tabs' });
+    for (const path of ['/s/payday?scenario=payday', '/s/manual', '/s/balance-check']) {
+      await test.step(path, async () => {
+        await open(page, path);
+        await settled(page);
+        await expect(bar).toBeHidden();
+      });
+    }
+    await open(page, '/');
+    await settled(page);
+    await expect(bar).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test("estimates are worded as estimates: Insights' card and Sen's usage", async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/insights');
+    await settled(page);
+    const card = page.locator('[data-slot="card"]').filter({ hasText: 'Am I on track?' });
+    await expect(card).toContainText('An estimate for payday:');
+
+    await open(page, '/s/agent/usage');
+    await settled(page);
+    const main = page.locator('main');
+    await expect(main).toContainText('Estimated cost');
+    await expect(main.getByText(/^About RM/).first()).toBeVisible();
+    await expect(main).toContainText('The cost is an estimate');
+    expect(errors).toEqual([]);
+  });
+
+  test('money in carries a plus sign on Payments', async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/s/payments');
+    await settled(page);
+    await expect(page.getByText(/^\+RM\d/).first()).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('the Insights pager moves its own names row, never the frame or the tab bar', async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/insights');
+    await settled(page);
+
+    // a click dispatched on the tab, not a tap: Playwright's own scroll into view would move the frame
+    // before the app did, and this pin is about what the app does
+    await page.getByRole('tab', { name: 'Goals' }).dispatchEvent('click');
+    await page.getByRole('tab', { name: 'Year' }).dispatchEvent('click');
+    // the smooth scroll of the pages and of the names row settles
+    await page.waitForTimeout(800);
+
+    const frame = await page.evaluate(() => {
+      // the pager's own rows: its names (a tab list) and its track of pages
+      const inPager = (el: Element) => !!el.closest('[role="tablist"], [aria-label^="Insights: "]');
+      const offenders: string[] = [];
+      for (const el of document.querySelectorAll<HTMLElement>('*')) {
+        if (inPager(el)) continue;
+        if (el.scrollLeft !== 0 || el.scrollTop !== 0) {
+          offenders.push(
+            `${el.tagName.toLowerCase()}[${el.getAttribute('class')?.slice(0, 90)}] ${el.scrollLeft},${el.scrollTop}`,
+          );
+        }
+      }
+      return {
+        offenders,
+        tabBarLeft: document.querySelector('.tabbar')?.getBoundingClientRect().left ?? null,
+        windowX: window.scrollX,
+      };
+    });
+    expect(frame.offenders, 'elements scrolled outside the pager').toEqual([]);
+    expect(frame.windowX, 'the window scrolled sideways').toBe(0);
+    expect(frame.tabBarLeft, 'the tab bar left edge').toBe(0);
+    expect(errors).toEqual([]);
+  });
+
+  test('memory: Forget takes one note per double tap, not two', async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/s/agent/memory');
+    await settled(page);
+
+    const forget = page.getByRole('button', { name: /^Forget:/ });
+    const before = await forget.count();
+    expect(before, 'notes listed').toBeGreaterThan(1);
+
+    // two taps 150 ms apart on the same spot: the note under it goes, and the one that closes up into it stays
+    const box = (await forget.first().boundingBox())!;
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    await page.mouse.click(x, y);
+    await page.waitForTimeout(150);
+    await page.mouse.click(x, y);
+    await page.waitForTimeout(800);
+
+    await expect(forget, 'one note forgotten, not two').toHaveCount(before - 1);
+    expect(errors).toEqual([]);
+  });
+
+  test("a toast never covers a task screen's main button", async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/s/payday?scenario=payday');
+    await settled(page);
+
+    // the first step has Skip, and so does the second; the third (Last cycle) ends in Next
+    await page.getByRole('button', { name: 'Skip', exact: true }).click();
+    await expect(page.getByText('Step 2 of 4')).toBeVisible();
+    await page.getByRole('button', { name: 'Skip', exact: true }).click();
+    await expect(page.getByText('Step 3 of 4')).toBeVisible();
+    const toast = page.locator('[data-sonner-toast]').first();
+    await expect(toast).toBeVisible();
+    // the toast slides up into its place: the check waits until it has stopped moving
+    await expect
+      .poll(async () => {
+        const a = await toast.boundingBox();
+        await page.waitForTimeout(150);
+        const b = await toast.boundingBox();
+        return JSON.stringify(a) === JSON.stringify(b);
+      }, 'the toast has settled')
+      .toBe(true);
+
+    const next = page.getByRole('button', { name: 'Next', exact: true });
+    await expect(next).toBeVisible();
+    // the element on top at the centre of Next is Next itself, not the toast over it
+    const onTop = () =>
+      next.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return hit !== null && (hit === el || el.contains(hit));
+      });
+    await expect.poll(onTop, 'Next is the element at its own centre').toBe(true);
+    expect(errors).toEqual([]);
+  });
+
+  test('Delete on a payment opened by its address goes Home, not to a blank page', async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, `/s/txn?id=${uid('txn:roti-bakar')}`);
+    await settled(page);
+
+    await page.getByRole('button', { name: 'More', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
+
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/');
+    await expect(page.getByRole('navigation', { name: 'Tabs' })).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('money entry types digits from the right, with the dot and letters ignored (D132)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/s/manual');
+    const amount = page.getByLabel('Amount', { exact: true });
+    await expect(amount).toBeVisible();
+    await expect(amount).toHaveAttribute('inputmode', 'numeric');
+
+    await amount.click();
+    // the dot and the letter do nothing: the digits 1, 2, 5, 0 make 12.50
+    await amount.pressSequentially('12.5a0');
+    await expect(amount).toHaveValue('12.50');
+
+    await page.keyboard.press('Backspace');
+    await expect(amount).toHaveValue('1.25');
+    await page.keyboard.press('0');
+    await expect(amount).toHaveValue('12.50');
+
+    // the value that is saved is the digits' amount, not the text the field shows: 12.50 is saved as RM12.50
+    await page.getByRole('radio', { name: 'Meals' }).click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.locator('[data-sonner-toast]').filter({ hasText: 'Added RM12.50 · Meals' })).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test('a tap on Scan opens the camera chooser, not the scanner screen', async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/');
+    await settled(page);
+    const scan = page.getByRole('navigation', { name: 'Tabs' }).getByRole('button', { name: 'Scan a receipt' });
+
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 5_000 }), scan.click()]);
+    expect(await chooser.element().getAttribute('data-testid')).toBe('scan-camera');
+    await expect.poll(() => new URL(page.url()).pathname).toBe('/');
+    expect(errors).toEqual([]);
+  });
+
+  test("Sen opens with the message started: Add a scheme, and Insights' Ask Sen about this", async ({ page }) => {
+    const errors = watchErrors(page);
+    const message = () => page.getByRole('textbox', { name: 'Message to Sen' });
+
+    await open(page, '/s/settings/claims');
+    await settled(page);
+    await page.getByRole('button', { name: 'Add a scheme' }).click();
+    await expect(message()).toHaveValue('I want to add a claim scheme: ');
+    await page.keyboard.press('Escape');
+    await expect(message()).toHaveCount(0);
+
+    await open(page, '/insights');
+    await settled(page);
+    await page
+      .locator('[data-slot="card"]')
+      .filter({ hasText: 'Am I on track?' })
+      .getByRole('button', { name: 'Ask Sen about this' })
+      .click();
+    await expect(message()).toHaveValue('Am I on track?');
+    expect(errors).toEqual([]);
+  });
+
+  test('add forms: a subscription and a goal are added by hand, and Save names what is missing (D134)', async ({
+    page,
+  }) => {
+    const errors = watchErrors(page);
+
+    await open(page, '/s/subscriptions');
+    await settled(page);
+    await page.getByRole('button', { name: 'Add a subscription' }).click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByText('Type its name.')).toBeVisible();
+
+    await page.getByLabel('Name', { exact: true }).fill('Canva Pro');
+    await page.getByRole('button', { name: 'USD', exact: true }).click();
+    await page.getByLabel('Amount each time', { exact: true }).pressSequentially('1299');
+    await page.getByRole('radio', { name: 'Yearly', exact: true }).click();
+    await page.getByLabel('Next renewal', { exact: true }).fill('2027-03-01');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByText('Canva Pro').first()).toBeVisible();
+
+    await open(page, '/s/goals');
+    await settled(page);
+    await page.getByRole('button', { name: 'Add a goal' }).click();
+    await page.getByLabel('Name', { exact: true }).fill('New laptop');
+    await page.getByLabel('Target', { exact: true }).pressSequentially('450000');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByText("Pick the account it's kept in.")).toBeVisible();
+
+    await page.locator('[role="group"][aria-labelledby="goal-account"] button').first().click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByText('New laptop').first()).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
+  test("the cycle sheet's stat tiles keep each figure on one line", async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/');
+    await settled(page);
+    await page.getByTestId('hero').click();
+    const sheet = page.getByRole('dialog', { name: 'This cycle' });
+    await expect(sheet).toBeVisible();
+
+    const figures = sheet.locator('div.grid > div > span.text-lg');
+    await expect(figures.first()).toBeVisible();
+    // a figure is one line when its box is one line high (its sr-only copy is taken out of the flow)
+    const tall = await figures.evaluateAll((els) =>
+      els.map((el) => {
+        const line = parseFloat(getComputedStyle(el).lineHeight);
+        return { text: el.textContent, height: el.getBoundingClientRect().height, line };
+      }),
+    );
+    expect(tall.length, 'stat figures measured').toBeGreaterThan(0);
+    expect(
+      tall.filter((t) => t.height > t.line + 1),
+      'figures on more than one line',
+    ).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+
+  test('large text on a 360 px phone: budget figures and settings values stay on screen', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.addInitScript(() => localStorage.setItem('sen.dev.textScale', '1.5'));
+
+    const fits = (sel: string) =>
+      page.locator(sel).evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect();
+          return {
+            text: (el.textContent ?? '').trim().slice(0, 40),
+            onScreen: r.left >= -0.5 && r.right <= window.innerWidth + 0.5,
+            cut: el.scrollWidth > el.clientWidth + 1,
+          };
+        }),
+      );
+
+    await open(page, '/s/budgets');
+    await settled(page);
+    const figures = page.locator('span.num').filter({ hasText: / of RM/ });
+    await expect(figures.first()).toBeVisible();
+    const budgets = await fits('span.num');
+    const figs = budgets.filter((b) => / of RM/.test(b.text));
+    expect(figs.length, 'budget figures measured').toBeGreaterThan(0);
+    expect(
+      figs.filter((b) => !b.onScreen || b.cut),
+      'budget figures cut off or past the edge',
+    ).toEqual([]);
+    // at this size the label and the figure don't fit side by side, so each figure drops under its label
+    // (the row wraps); beside it, the figure is squeezed into what is left of the row
+    const under = await page
+      .locator('span.num')
+      .filter({ hasText: / of RM/ })
+      .evaluateAll((els) =>
+        els.map((el) => {
+          const label = el.parentElement?.firstElementChild as HTMLElement | null;
+          return {
+            text: el.textContent,
+            dropped: !!label && el.getBoundingClientRect().top >= label.getBoundingClientRect().bottom - 1,
+          };
+        }),
+      );
+    expect(
+      under.filter((u) => !u.dropped),
+      'budget figures beside their labels, not under them',
+    ).toEqual([]);
+
+    await open(page, '/s/settings');
+    await settled(page);
+    const rows = await fits('main [data-slot="item"]');
+    expect(rows.length, 'settings rows measured').toBeGreaterThan(0);
+    expect(
+      rows.filter((b) => !b.onScreen || b.cut),
+      'settings rows cut off or past the edge',
+    ).toEqual([]);
+
+    const sideways = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    expect(sideways, 'the page scrolls sideways').toBe(false);
+    expect(errors).toEqual([]);
+  });
+
+  test("Ask Sen about this shows Sen's avatar, not an icon", async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/insights');
+    await settled(page);
+    const ask = page.getByRole('button', { name: 'Ask Sen about this' }).first();
+    await expect(ask).toBeVisible();
+    await expect(ask.locator('canvas.av')).toHaveCount(1);
+    expect(errors).toEqual([]);
+  });
 });

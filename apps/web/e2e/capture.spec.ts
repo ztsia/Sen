@@ -112,7 +112,7 @@ test('a phone brand with no steps gets the battery step and plain words', async 
   await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Capture' }).click();
   await page.getByRole('button', { name: /Keep Sen running/ }).click();
-  await expect(page.getByText('Sen has no extra steps for Fairphone phones.', { exact: false })).toBeVisible();
+  await expect(page.getByText('No extra steps for Fairphone phones', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Allow' })).toBeVisible();
 });
 

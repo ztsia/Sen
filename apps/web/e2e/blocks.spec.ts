@@ -38,16 +38,15 @@ test('a change made right after Undo still gets its own toast, with Undo', async
   await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
 });
 
-test('the money input parses text into sen, says what is wrong, and keeps what was typed', async ({ page }) => {
+test('the money input reads digits from the right, and keeps what was typed (D132)', async ({ page }) => {
   await open(page, '/dev/gallery');
   const forms = page.getByTestId('gallery-forms');
   const amount = forms.getByLabel('Amount');
-  await expect(amount).toHaveAttribute('inputmode', 'decimal');
+  await expect(amount).toHaveAttribute('inputmode', 'numeric');
+  // digits only, each entering from the right: the dot in 12.345 is ignored, so it reads 123.45
   await amount.fill('12.345');
-  await forms.getByRole('button', { name: 'Add' }).click();
-  await expect(forms.getByText('Two decimals at most, like 12.50.')).toBeVisible();
-  await expect(amount).toHaveValue('12.345');
-  await expect(amount).toHaveAttribute('aria-invalid', 'true');
+  await expect(amount).toHaveValue('123.45');
+  await expect(amount).not.toHaveAttribute('aria-invalid', 'true');
   await amount.fill('1,284.50');
   await forms.getByRole('button', { name: 'Add' }).click();
   await expect(page.getByText('Added RM1,284.50')).toBeVisible();
