@@ -15,25 +15,20 @@ contrast, unnamed progress bars, the pager's focus, stat tiles truncating, two d
 48 px extension covered Back, Subscriptions' 40 px toggle). Last run, Minted and Copper: 308 of 312,
 the 4 being that toggle, since fixed.
 
-**In progress: QA (the `qa` skill), step 2.** A Haiku sweep agent (high effort) is running the
-typecheck, lint, unit tests and the full e2e with `E2E_SHOTS`, writing raw results to
-`qa-artifacts/B04-redesign/sweep/` (`index.md` when done, about an hour). Its report arrives as a
-notification; if the session lost it, read `sweep/index.md`, or re-run the sweep.
+**In progress: QA (the `qa` skill), step 3.** The Haiku sweep passed: typecheck, lint, 301 unit
+tests, and 720 of 720 e2e in all six looks (`qa-artifacts/B04-redesign/sweep/`). A fresh
+`qa-reviewer` (Sonnet) is running in the background, writing to `qa/B04-redesign/`. If the session
+lost it, spawn a new one with the same thin prompt (the `qa` skill, step 4).
 
 ### What to do next (this session continues after a compact)
-1. When the sweep reports: read `qa-artifacts/B04-redesign/sweep/index.md`. Fix any failure that is
-   the product's yourself; a test's old wording, brief a Haiku agent with the exact change.
-2. Spawn `qa-reviewer` per the `qa` skill, thin prompt only: branch `B04/redesign`, label
-   *B04 · Redesign*, brief `docs/briefs/B04-redesign.md`, the sweep's folder, and its record goes in
-   `qa/B04-redesign/`. Nothing about how it was built. Run it in the background.
-3. Commit its record at once, publish the report (`node scripts/qa-report.mjs qa-artifacts/<dir>`,
-   then the Artifact tool), fix findings by the skill's tiers, then
-   `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign` (this session's transcripts
-   are under `/home/user`'s project folder; move the row it writes into `Sen/docs/usage.md` if it
-   lands elsewhere), and open the PR *B04 · Redesign*.
-4. A dev server may still be up on port 5180 (started from `apps/web`); stop it with
-   `kill $(pgrep -f "vite.*5180")` in its own command, never inside a longer one (`pkill -f` once
-   matched its own shell).
+1. When the reviewer reports: commit its record at once, publish the report
+   (`node scripts/qa-report.mjs qa-artifacts/B04-redesign`, then the Artifact tool), fix findings
+   by the skill's tiers.
+2. `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign` (this session's transcripts are
+   under `/home/user`'s project folder; move the row into `Sen/docs/usage.md` if it lands
+   elsewhere), then open the PR *B04 · Redesign*.
+3. Stop stray dev servers with `kill` on a pid from `pgrep -f vite` in a separate command: a
+   `kill $(pgrep -f ...)` matches its own shell.
 
 ### Decided with the owner (13 Oct; all recommended options taken)
 - **Home fits one screen** at 390×844 by compressing: the payday plan becomes a one-line strip, the
@@ -49,7 +44,7 @@ notification; if the session lost it, read `sweep/index.md`, or re-run the sweep
 
 ### Open with the owner
 - `claude_skills` branch `workflow/brain-and-cards` (D130's uiux rules, D131's model principle, the
-  implementer on Haiku at high) is pushed; the owner opens or asks for its PR.
+  implementer on Haiku at high, the `brief` skill) is pushed; the owner opens or asks for its PR.
 
 ## Don't argue again
 - D129's levels and the 48 px target rule; D130's card-based structure; D131, Opus decides and briefs
