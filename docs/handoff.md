@@ -8,20 +8,20 @@ facts and actions look alike. **D130 decides the redesign:** calm, card-based sc
 Its brief is `docs/briefs/B04-redesign.md`, branch `B04/redesign`, PR *B04 · Redesign*.
 **B05** (`docs/briefs/B05-server.md`) waits until it's merged.
 
-So far on `B04/redesign`: the brief, D130, and this handoff. **No code yet.**
+**Phase 1 is done and pushed** (13 Oct), and `review` points at it for the owner's phone check:
+D130's blocks in `apps/web/src/blocks/` (`tile`, `group`, `facts`, `choice`, `steps`) and the gallery,
+`patterns.md` §7 rewritten, and `txn`, `settings` and `settings/appearance` rebuilt as the references.
+`apps/web/scripts/shots.mjs` takes screenshots for any batch.
 
-### What to do first (this session continues after a compact)
-1. Read `docs/briefs/B04-redesign.md` in full. It holds the rules, the new blocks, every screen's
-   changes, the phases, and the Haiku A/B test the owner asked for.
-2. **Phase 1, yourself:**
-   - Rewrite `patterns.md` §7 to D130.
-   - Build the blocks in `blocks/` and the gallery.
-   - Rebuild `txn`, `settings` and `settings/appearance` as reference screens.
-   - Push, and move `review` to the branch, so the owner can check them on *Sen review*.
-3. Then start batches A–C on Sonnet, and D–E twice (Sonnet and Haiku, each in a worktree), from
-   short pointer briefs (*Briefs stay small* in the brief). Don't wait for the owner's phone check,
-   unless they redirect.
-4. Run the Haiku sweep, then e2e, then QA, then the PR.
+**Phase 2 is running:** batches A, B and C on Sonnet in the main tree; D and E twice each (Sonnet and
+Haiku), each in its own worktree, for the A/B test. If this session ends before they report, re-run a
+batch from its rows in the brief: nothing of theirs is committed until reviewed.
+
+### What to do next
+1. Review each report and diff, fix what's off, and commit. For D and E, compare the two runs (cost
+   from `node scripts/usage.mjs`, review fixes needed, screenshots), keep the better, and log the result.
+2. Remove `DetailPage` and `SettingsRow` once no screen uses them.
+3. Haiku sweep of screenshots in all six looks, then e2e fixes, then QA, then the PR *B04 · Redesign*.
 
 ### Decided with the owner (13 Oct; all recommended options taken)
 - **Home fits one screen** at 390×844 by compressing: the payday plan becomes a one-line strip, the
