@@ -1,5 +1,7 @@
 # B04 · Redesign: QA report (run 2, full)
 
+Published report: https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa (version 2)
+
 **VERDICT: fix first.** 51 new criteria (R2-AC-1 to 51): 42 pass, 9 fail, 0 not reachable. 36 flows walked, 14 findings: **2 Major, 11 Minor, 1 Note, no Blocker.**
 Phases run: 1-3, 5, 6. Phase 4 does not apply (no database, API or RLS in this slice).
 Screenshots: `qa-artifacts/B04-redesign/screens/` (R2-FLOW-n-step-m-*.png). Rendered page: `qa-artifacts/B04-redesign/report.html`. Contact sheets: `qa-artifacts/B04-redesign/contact/`.
