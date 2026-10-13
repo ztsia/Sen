@@ -15,19 +15,34 @@ contrast, unnamed progress bars, the pager's focus, stat tiles truncating, two d
 48 px extension covered Back, Subscriptions' 40 px toggle). Last run, Minted and Copper: 308 of 312,
 the 4 being that toggle, since fixed.
 
-**In progress: QA run 3 (tier 3).** Runs 1 and 2 (`qa/B04-redesign/report-run1.md`, `report.md`,
-published at https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa) both said *fix first*; every
-finding is fixed or deliberately left in `qa/B04-redesign/ledger.md`. Run 2's fixes reach `cn()`,
-the inputs, the theme store and the tab bar, so run 3 is a fresh sweep and a fresh reviewer. A Haiku
-agent is adding nine e2e pins to `apps/web/e2e/redesign-pins.spec.ts` (each proven under a break).
+**QA run 3 is done: *fix first*** (`qa/B04-redesign/report.md`, published at
+https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa): 3 Major, 5 Minor, 4 Note, no Blocker. Runs 1 and
+2's fixes hold. **Waiting for the owner's approval** before any fix: run 3's findings and the owner's
+list below go in one batch (owner, 13 Oct), then one fresh full QA run (run 4).
 
-### What to do next (this session continues after a compact)
-1. When the pins agent reports: check `git status` shows only the pins file, commit it.
-2. Before the new run: rename `qa/B04-redesign/report.md` to `report-run2.md` and `results.json`
-   to `results-run2.json`. Then the Haiku sweep (brief as in the `brief` skill: wait for the run
-   with one until-loop), then a **new** `qa-reviewer` with the thin prompt.
-3. Commit its record, republish to the same URL, fix by tiers. Then
-   `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign` and open the PR *B04 · Redesign*.
+### The owner's list (13 Oct), decided; add D132–D135 to `docs/decisions.md` when work starts
+1. Cycle sheet: figures never wrap (`StatTiles`, `blocks/facts.tsx`): at most 2 tiles across.
+2. **D132, money entry like bank apps:** digits only, each enters from the right (1250 → 12.50), the
+   dot and letters ignored, always 2 decimals, number pad, backspace drops a digit. `MoneyInput`,
+   every caller. Main session (non-negotiable territory), with tests.
+3. Scan tab in a browser: a tap opens the camera at once, long-press the menu (D69 already says so).
+   ML Kit is native only (B15) and does its own edges and enhancement; our 4-corner crop is browser-only.
+4. **D134:** Add forms for subscriptions and goals, like Add a budget.
+5. **D133, goals sit in their own account:** each names its account or pocket (shared allowed); the
+   payday plan says *move RMx to …*; a notification ticks the move, or **a hand tick** (the owner's
+   Ryt pocket moves have no notification) books the transfer between the two accounts, counts it,
+   amount editable, deduped by plan step; a later notification matches it. Spec §10, §15
+   `goals.account_id`. Here only the form's field; the rest is the goals slice's.
+6. **D135, Sen opens with a prefill:** `setSenOpen(true, draft)`. Claim schemes get *Add* (*I want to
+   add a claim scheme: *) and edit (*Change my … scheme: *); every set-up *Ask Sen* likewise.
+7. Not now: suggestion pills that know the screen Sen opened from → add to B27 in `modules.md`.
+
+### What to do next
+1. On the owner's approval: decisions and spec first, then fixes by who makes each (`qa` skill),
+   with a ledger "Run 3" section. Run 3's reviewer was a383ab0d19f4f3335 (gone after rotation).
+2. Rename `report.md`/`results.json` to `-run3`, Haiku sweep, then a **new** `qa-reviewer`.
+3. Then `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign` and the PR *B04 · Redesign*.
+4. The published artifact holds old runs' screenshots; it allows 512 files, so null old ones on publish.
 
 ### Decided with the owner (13 Oct; all recommended options taken)
 - **Home fits one screen** at 390×844 by compressing: the payday plan becomes a one-line strip, the
