@@ -1,3 +1,4 @@
+// Sen: shadcn/ui's badge, changed in place (CLAUDE.md, shadcn first): `muted`, `accent` and `warning` variants for a row's state (D130), on the look's tokens; a warning badge always carries its words.
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
@@ -14,6 +15,9 @@ const badgeVariants = cva(
           'bg-destructive text-white focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 [a&]:hover:bg-destructive/90',
         outline: 'border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         ghost: '[a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
+        muted: 'bg-muted text-muted-foreground',
+        accent: 'bg-primary/12 text-primary',
+        warning: 'bg-warn-bg text-warn-fg',
         link: 'text-primary underline-offset-4 [a&]:hover:underline',
       },
     },
