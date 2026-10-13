@@ -24,7 +24,7 @@ Skip it for a docs-only change. If `git diff --stat main...HEAD` shows nothing o
    slice adds those commands.
 2. **The sweep, on Haiku, first (owner, 11 Oct).** A subagent can't start subagents (measured
    11 Oct: it gets no Agent tool), so the reviewer can't hand its mechanical work down itself. The
-   main session does it before the review: spawn `implementer` with `model: "haiku"` at low effort to
+   main session does it before the review: spawn `implementer` (Haiku at high effort, its default) to
    run the mechanical part and gather the raw results in `qa-artifacts/<branch>/sweep/`:
    - `pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm e2e`, each with its exit code and, for a
      failure, the test's name, file and first error lines;
