@@ -59,7 +59,7 @@ function InsightsSkeleton() {
   );
 }
 
-const askSen = () => useUi.getState().setSenOpen(true);
+const askSen = (question: string) => useUi.getState().askSen(question);
 const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const DAYS = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
 

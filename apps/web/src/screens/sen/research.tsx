@@ -1,3 +1,4 @@
+import { SenMark } from '@/components/look/avatar';
 import { useUi } from '@/frame/ui-store';
 import type { ResearchView } from '@sen/core/views';
 import { EmptyState } from '@/blocks/states';
@@ -32,7 +33,7 @@ function Body({ v }: { v: ResearchView }) {
         icon={SearchIcon}
         title="No research yet"
         line="Ask Sen to look something up, such as which card pays the most cashback."
-        action={{ label: 'Ask Sen', onSelect: () => useUi.getState().setSenOpen(true) }}
+        action={{ label: 'Ask Sen', icon: SenMark, onSelect: () => useUi.getState().askSen('Look into this for me: ') }}
       />
     );
   return (

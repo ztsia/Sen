@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { cn } from '@/lib/utils';
 import type { AvatarState } from '@sen/looks';
 import { useLook } from '@/theme/look';
 import { useMode, useReducedMotion } from '@/theme/store';
@@ -32,5 +33,17 @@ export function Avatar({ state, size }: { state: AvatarState; size: number }) {
   }, [look, state, mode, reduced]);
   return (
     <canvas ref={ref} className="av" data-state={state} style={{ width: size, height: size }} aria-hidden="true" />
+  );
+}
+
+/**
+ * Sen's avatar as an icon, for the buttons that open Sen (*Ask Sen*, *Ask Sen about this*), so they
+ * show who you're asking in the look's own drawing. Shaped like a lucide icon, so it fits wherever one goes.
+ */
+export function SenMark({ className }: { className?: string }) {
+  return (
+    <span className={cn('inline-flex shrink-0 items-center justify-center', className)}>
+      <Avatar state="resting" size={20} />
+    </span>
   );
 }

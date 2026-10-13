@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { MessageCircleIcon, TriangleAlertIcon } from 'lucide-react';
+import { TriangleAlertIcon } from 'lucide-react';
+import { SenMark } from '@/components/look/avatar';
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts';
 import { formatSen, percent } from '@sen/core/money';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,8 @@ export function ChartCard({
   takeaway: string;
   children: ReactNode;
   table: ReactNode;
-  onAskSen?: () => void;
+  /** Opens Sen with this card's question started in its message box (§9, D135). */
+  onAskSen?: (question: string) => void;
 }) {
   return (
     <Card className="gap-3">
@@ -39,8 +41,8 @@ export function ChartCard({
       <CardFooter className="flex-col items-start gap-1">
         <p className="text-sm text-muted-foreground">{takeaway}</p>
         {onAskSen ? (
-          <Button variant="ghost" size="sm" className="-ml-3" onClick={onAskSen}>
-            <MessageCircleIcon aria-hidden="true" />
+          <Button variant="ghost" size="sm" className="-ml-3" onClick={() => onAskSen(question)}>
+            <SenMark />
             Ask Sen about this
           </Button>
         ) : null}

@@ -1,4 +1,4 @@
-import { CheckIcon, ListIcon, ScaleIcon, SparklesIcon, WalletIcon } from 'lucide-react';
+import { CheckIcon, ListIcon, ScaleIcon, WalletIcon } from 'lucide-react';
 import { klDay } from '@sen/core/cycles';
 import { formatSen as formatMoney } from '@sen/core/money';
 import type { AccountView } from '@sen/core/views';
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAccount, useMe } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
+import { SenMark } from '@/components/look/avatar';
 import { useUi } from '@/frame/ui-store';
 import { shortDay } from '@/lib/dates';
 import { categoryIcon, categoryTone } from '../icons';
@@ -59,7 +60,7 @@ function Body({ v }: { v: AccountView }) {
     { icon: ListIcon, label: 'Payments', onSelect: () => go('payments', { account: a.id }) },
   ];
   if (me.data?.agent !== false)
-    actions.push({ icon: SparklesIcon, label: 'Ask Sen', onSelect: () => useUi.getState().setSenOpen(true) });
+    actions.push({ icon: SenMark, label: 'Ask Sen', onSelect: () => useUi.getState().setSenOpen(true) });
   return (
     <div className="flex flex-col gap-4 pt-2 pb-8">
       <HeaderCard

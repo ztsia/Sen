@@ -1,3 +1,4 @@
+import { SenMark } from '@/components/look/avatar';
 import { useUi } from '@/frame/ui-store';
 import { useState } from 'react';
 import { CheckIcon, ChevronDownIcon, CircleDashedIcon, RepeatIcon, XIcon, type LucideIcon } from 'lucide-react';
@@ -70,7 +71,11 @@ function Body({ v }: { v: SubscriptionsView }) {
         icon={RepeatIcon}
         title="No subscriptions yet"
         line="Tell Sen what you pay for, and each renewal shows here."
-        action={{ label: 'Ask Sen', onSelect: () => useUi.getState().setSenOpen(true) }}
+        action={{
+          label: 'Ask Sen',
+          icon: SenMark,
+          onSelect: () => useUi.getState().askSen('I want to add a subscription: '),
+        }}
       />
     );
   return (

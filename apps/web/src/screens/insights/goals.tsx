@@ -1,3 +1,4 @@
+import { SenMark } from '@/components/look/avatar';
 import { useUi } from '@/frame/ui-store';
 import { ChevronRightIcon, TargetIcon } from 'lucide-react';
 import { formatSen, percent } from '@sen/core/money';
@@ -68,7 +69,7 @@ function Body({ v }: { v: GoalsView }) {
         icon={TargetIcon}
         title="No goals yet"
         line="Tell Sen what you're saving for, and your goals and buckets show here."
-        action={{ label: 'Ask Sen', onSelect: () => useUi.getState().setSenOpen(true) }}
+        action={{ label: 'Ask Sen', icon: SenMark, onSelect: () => useUi.getState().askSen('I want to save for ') }}
       />
     );
   const groups: [string, GoalSummary[]][] = [

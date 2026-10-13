@@ -41,7 +41,7 @@ function Body({ v }: { v: YearView }) {
         <ChartCard
           question={`How did ${v.year} go, month by month?`}
           takeaway={`${top.label} was the heaviest month at ${formatSen(top.spent)}.`}
-          onAskSen={() => useUi.getState().setSenOpen(true)}
+          onAskSen={(q) => useUi.getState().askSen(q)}
           table={
             <ChartTable
               caption={`Spent each month of ${v.year}`}

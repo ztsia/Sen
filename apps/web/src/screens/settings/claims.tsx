@@ -5,6 +5,7 @@ import {
   LogInIcon,
   MailIcon,
   PencilIcon,
+  PlusIcon,
   ReceiptTextIcon,
   UserCheckIcon,
 } from 'lucide-react';
@@ -29,6 +30,7 @@ import { toastDone } from '@/blocks/toast';
 import { useSettings, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
+import { SenMark } from '@/components/look/avatar';
 import { useUi } from '@/frame/ui-store';
 import { longDay } from '@/lib/dates';
 import { DEV_TOOLS } from '@/lib/env';
@@ -45,7 +47,19 @@ type Claims = SettingsView['claims'];
 export default function ClaimsSettings() {
   const q = useSettings();
   return (
-    <Screen bar={<AppBar title="Claims" />}>
+    <Screen
+      bar={
+        <AppBar
+          title="Claims"
+          action={
+            <Button variant="outline" size="sm" onClick={() => useUi.getState().askSen(ADD_SCHEME)}>
+              <PlusIcon aria-hidden="true" />
+              Add a scheme
+            </Button>
+          }
+        />
+      }
+    >
       <Loaded q={q} what="your claims settings">
         {(s) =>
           s.switches.claims ? (
@@ -65,8 +79,12 @@ const ordinal = (n: number) => {
   return `${n}${suffix}`;
 };
 
+/** What Sen's message box starts with, for you to finish in your own words (D95, D135). */
+const ADD_SCHEME = 'I want to add a claim scheme: ';
+const editScheme = (name: string) => `Change my ${name} scheme: `;
+
 function Body({ claims }: { claims: Claims }) {
-  const { setSenOpen } = useUi();
+  const askSen = useUi((s) => s.askSen);
   return (
     <div className="flex flex-col gap-4 pt-2 pb-8">
       {claims.schemes.length ? (
@@ -84,7 +102,12 @@ function Body({ claims }: { claims: Claims }) {
                 c.source === 'tagged' ? 'spending you tag' : 'receipts kept as evidence'
               }`}
               trailing={
-                <Button variant="ghost" size="icon" aria-label={`Edit ${c.name}`} onClick={() => setSenOpen(true)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Edit ${c.name}`}
+                  onClick={() => askSen(editScheme(c.name))}
+                >
                   <PencilIcon />
                 </Button>
               }
@@ -96,7 +119,7 @@ function Body({ claims }: { claims: Claims }) {
           icon={HandCoinsIcon}
           title="No schemes yet"
           line="Tell Sen about one in your own words and it sets it up for you to confirm."
-          action={{ label: 'Describe a scheme to Sen', onSelect: () => setSenOpen(true) }}
+          action={{ label: 'Describe a scheme to Sen', icon: SenMark, onSelect: () => askSen(ADD_SCHEME) }}
         />
       )}
       <EssCard claims={claims} showEss={captureReachable() || DEV_TOOLS} />

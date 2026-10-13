@@ -21,7 +21,8 @@ export function EmptyState({
   icon?: ComponentType<{ className?: string }>;
   title?: string;
   line: string;
-  action?: { label: string; onSelect: () => void };
+  /** Its icon goes before the label: `SenMark` when the action opens Sen. */
+  action?: { label: string; onSelect: () => void; icon?: ComponentType<{ className?: string }> };
 }) {
   return (
     <Empty className="gap-3 border-0 p-6">
@@ -39,7 +40,10 @@ export function EmptyState({
       </EmptyHeader>
       {action ? (
         <EmptyContent>
-          <Button onClick={action.onSelect}>{action.label}</Button>
+          <Button onClick={action.onSelect}>
+            {action.icon ? <action.icon /> : null}
+            {action.label}
+          </Button>
         </EmptyContent>
       ) : null}
     </Empty>

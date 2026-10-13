@@ -10,7 +10,6 @@ import {
   ScanLineIcon,
   SearchXIcon,
   ShoppingBagIcon,
-  SparklesIcon,
   SplitIcon,
   StickyNoteIcon,
   Undo2Icon,
@@ -31,6 +30,7 @@ import { newId } from '@/lib/uid';
 import { startDraft, useCategories, useMe, usePayments, useTxn, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
+import { SenMark } from '@/components/look/avatar';
 import { useUi } from '@/frame/ui-store';
 import { momentLabel } from '@/lib/dates';
 import { readableName } from '@/lib/names';
@@ -138,7 +138,7 @@ function TxnBody({ v }: { v: TxnView }) {
   else if (spend && !t.noReceipt) actions.push({ icon: ScanLineIcon, label: 'Scan receipt', onSelect: scan });
   if (spend) actions.push({ icon: SplitIcon, label: 'Split', onSelect: split });
   if (me.data?.agent !== false)
-    actions.push({ icon: SparklesIcon, label: 'Ask Sen', onSelect: () => useUi.getState().setSenOpen(true) });
+    actions.push({ icon: SenMark, label: 'Ask Sen', onSelect: () => useUi.getState().setSenOpen(true) });
 
   // *These were two payments* (D88) shows only on a payment a pair rule merged; the made-up scenario
   // has none, so it arrives with B11, which merges them.

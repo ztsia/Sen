@@ -1,3 +1,4 @@
+import { SenMark } from '@/components/look/avatar';
 import { useUi } from '@/frame/ui-store';
 import { BrainIcon, Trash2Icon } from 'lucide-react';
 import type { MemoryView } from '@sen/core/views';
@@ -34,7 +35,7 @@ function Body({ v }: { v: MemoryView }) {
         icon={BrainIcon}
         title="No notes yet"
         line="When you tell Sen something worth remembering, it shows here."
-        action={{ label: 'Ask Sen', onSelect: () => useUi.getState().setSenOpen(true) }}
+        action={{ label: 'Ask Sen', icon: SenMark, onSelect: () => useUi.getState().askSen('Remember this: ') }}
       />
     );
   return (

@@ -36,10 +36,26 @@ function Body({ v, from }: { v: SenView; from: string }) {
   const [file, setFile] = useState<File | null>(null);
   const picker = useRef<HTMLInputElement>(null);
   const end = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLTextAreaElement>(null);
+  const draft = useUi((s) => s.senDraft);
+  const setDraft = useUi((s) => s.setSenDraft);
   // a reply is on its way: streaming, or yours is the last message and Sen hasn't started yet
   const streaming = v.messages.some((m) => m.streaming) || v.messages.at(-1)?.role === 'you';
   const ready = v.state === 'ready';
   const canSend = ready && !streaming && (text.trim() !== '' || file !== null);
+
+  // a button that opened Sen to set something up starts the message; you finish it (D135)
+  useEffect(() => {
+    if (draft === null) return;
+    setText(draft);
+    setDraft(null);
+    requestAnimationFrame(() => {
+      const el = box.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(draft.length, draft.length);
+    });
+  }, [draft, setDraft]);
 
   // the newest message stays in view as it arrives and as it streams
   const last = v.messages.at(-1);
@@ -157,6 +173,7 @@ function Body({ v, from }: { v: SenView; from: string }) {
           <PaperclipIcon />
         </Button>
         <Textarea
+          ref={box}
           value={text}
           rows={1}
           onChange={(e) => setText(e.target.value)}
