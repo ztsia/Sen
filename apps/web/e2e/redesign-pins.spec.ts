@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { open, settled, watchErrors } from './helpers';
+import { LOOKS, open, settled, watchErrors } from './helpers';
 
-// The redesign's four behaviours that the suite had no test for (QA: each could be broken with every
+// The redesign's the redesign's behaviours that the suite had no test for (QA: each could be broken with every
 // test still green). Each test fails when its behaviour breaks, and says which one in its name:
 //   1. Review's answer chips are drawn at 32 px (patterns.md §2, Sizes: chips are 32).
 //   2. The balance check says which way the bank's figure differs from Sen's.
@@ -198,5 +198,167 @@ test('chart text is at least 12 px on On track and on the year', async ({ page }
       ).toEqual([]);
     });
   }
+  expect(errors).toEqual([]);
+});
+
+// Nine more pins, one per behaviour QA found broken on purpose (a-d) or fixed since (e-i). Each fails
+// when its behaviour breaks.
+
+test('review: one tap answers one question, even when a second tap lands on the row that slid up', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page, '/review');
+  await settled(page);
+
+  const needs = page.getByRole('heading', { name: /Needs you/ });
+  const readCount = async () => Number((await needs.textContent())?.match(/Needs you · (\d+)/)?.[1]);
+  const before = await readCount();
+  expect(before, 'the Needs you count is read').toBeGreaterThan(1);
+
+  // the first answer chip of the first new-merchant row, by its screen position: the row after it slides
+  // under the same point, so the second tap lands on it
+  const chip = page.locator('[data-review="new-merchant"]').first().getByRole('button').first();
+  await expect(chip).toBeVisible();
+  const box = (await chip.boundingBox())!;
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await page.mouse.click(x, y);
+  await page.waitForTimeout(150);
+  await page.mouse.click(x, y);
+  await page.waitForTimeout(800);
+
+  expect(await readCount(), 'one answer, not two').toBe(before - 1);
+  expect(errors).toEqual([]);
+});
+
+test('add expense: a zero amount and a missing category are refused, and the form stays open', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page, '/s/manual');
+
+  await page.getByLabel('Amount').fill('0');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText(/above zero/)).toBeVisible();
+
+  await page.getByLabel('Amount').fill('12.50');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByText('Pick a category.')).toBeVisible();
+
+  await expect(page).toHaveURL(/\/s\/manual/);
+  expect(errors).toEqual([]);
+});
+
+test('insights: the pager hides every page but the one shown, from screen readers and taps', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page, '/insights');
+  await settled(page);
+
+  const panels = page.locator('[role="tabpanel"]');
+  await expect(panels).toHaveCount(5);
+  const state = () =>
+    panels.evaluateAll((els) =>
+      els.map((e) => ({ inert: e.hasAttribute('inert'), hidden: e.getAttribute('aria-hidden') === 'true' })),
+    );
+  // on the page shown, the flags are off; on every other page, both are on
+  const showing = (on: number) => Array.from({ length: 5 }, (_, i) => ({ inert: i !== on, hidden: i !== on }));
+
+  await expect.poll(state).toEqual(showing(0));
+
+  await page.getByRole('tab', { name: 'Budgets' }).click();
+  await expect.poll(state).toEqual(showing(1));
+
+  expect(errors).toEqual([]);
+});
+
+test('skipped: This was a payment, tapped twice quickly, restores one payment', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page, '/s/skipped');
+  await settled(page);
+
+  const cards = page.getByRole('article');
+  await expect(cards).toHaveCount(3);
+
+  const restore = page.getByRole('button', { name: 'This was a payment' }).first();
+  await restore.click({ clickCount: 1 });
+  await page.waitForTimeout(50);
+  await restore.click({ clickCount: 1 });
+  await page.waitForTimeout(800);
+
+  // one card restored: the one that slid into its place was not
+  await expect(cards).toHaveCount(2);
+  expect(errors).toEqual([]);
+});
+
+test('review: the Apply all button is drawn with 14 px labels', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page, '/review');
+  await settled(page);
+
+  const apply = page.getByRole('button', { name: 'Apply all', exact: true });
+  await expect(apply).toBeVisible();
+  expect(await apply.evaluate((el) => getComputedStyle(el).fontSize)).toBe('14px');
+  expect(errors).toEqual([]);
+});
+
+test('payments: the search input is drawn with 16 px text, so no phone zooms on focus', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page, '/s/payments');
+  await settled(page);
+
+  const search = page.getByRole('searchbox');
+  await expect(search).toBeVisible();
+  expect(await search.evaluate((el) => getComputedStyle(el).fontSize)).toBe('16px');
+  expect(errors).toEqual([]);
+});
+
+test('tab bar: every tab label is at least 12 px, in every look', async ({ page }) => {
+  const errors = watchErrors(page);
+  for (const look of LOOKS) {
+    await test.step(look, async () => {
+      await open(page, '/', look);
+      await settled(page);
+      const labels = page.locator('.tab .tl');
+      await expect(labels.first()).toBeAttached();
+      const px = await labels.evaluateAll((els) => els.map((el) => parseFloat(getComputedStyle(el).fontSize)));
+      expect(px.length, `${look}: tab labels measured`).toBeGreaterThan(0);
+      expect(
+        px.filter((n) => n < 12),
+        `${look}: tab labels under 12 px`,
+      ).toEqual([]);
+    });
+  }
+  expect(errors).toEqual([]);
+});
+
+test('appearance: a chosen look is kept after a reload, and the quarterly switch stays off', async ({ page }) => {
+  const errors = watchErrors(page);
+  await open(page, '/s/settings/appearance');
+  await settled(page);
+
+  await page.getByRole('radio', { name: 'Copper' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-look', 'copper');
+  await expect(page.getByRole('switch', { name: 'Change each quarter' })).not.toBeChecked();
+
+  // reload with no look in the address: the look chosen on this phone is the one shown
+  await page.goto('/s/settings/appearance');
+  await settled(page);
+  await expect(page.locator('html')).toHaveAttribute('data-look', 'copper');
+  await expect(page.getByRole('switch', { name: 'Change each quarter' })).not.toBeChecked();
+  await expect(page.getByRole('radio', { name: 'Copper' })).toHaveAttribute('aria-checked', 'true');
+  expect(errors).toEqual([]);
+});
+
+test('insights: under reduced motion the pager jumps to its step at once', async ({ page }) => {
+  const errors = watchErrors(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await open(page, '/insights');
+  await settled(page);
+
+  await page.getByRole('tab', { name: 'Year' }).click();
+  // on the next animation frame the track is already at the Year step: 4 pages in, to within 2 px
+  const at = await page.locator('[aria-label^="Insights: "]').evaluate(async (el) => {
+    const track = el as HTMLElement;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    return { left: track.scrollLeft, width: track.clientWidth };
+  });
+  expect(Math.abs(at.left - 4 * at.width), `scrollLeft ${at.left}, page width ${at.width}`).toBeLessThanOrEqual(2);
   expect(errors).toEqual([]);
 });
