@@ -1,4 +1,4 @@
-import { ChevronDownIcon, CopyIcon, InboxIcon, KeyRoundIcon } from 'lucide-react';
+import { ChevronDownIcon, CopyIcon, KeyRoundIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GroupCard, GroupLabel, NavRow } from '@/blocks/group';
@@ -107,7 +107,7 @@ export default function Email() {
                 )}
               </section>
               <GroupCard label="Received">
-                <NavRow icon={InboxIcon} title="Received by email" value={String(received)} />
+                <NavRow title="Received by email" value={String(received)} />
               </GroupCard>
             </div>
           );

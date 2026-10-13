@@ -31,7 +31,8 @@ export default function NewLook() {
   const [old] = useState<LookId>(current);
   const [fresh] = useState<LookId>(() => nextLook(LOOK_IDS, old));
   const [arrived, setArrived] = useState(false);
-  const [quarterly, setQuarterly] = useState(true);
+  const quarterly = useTheme((t) => t.quarterly);
+  const setQuarterly = useTheme((t) => t.setQuarterly);
   const keep = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {

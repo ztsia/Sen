@@ -122,6 +122,14 @@ describe("Wei Ming's month", () => {
     for (const i of due) expect(claimView(db, i.claimId)).toMatchObject({ claim: { scheme: i.name } });
   });
 
+  it('names who had each item on a split receipt, never their member ids', () => {
+    const r = v.receiptView(db, uid('receipt:nasi-kandar'))!;
+    const who = r.items.flatMap((i) => (i.who ? [i.who] : []));
+    expect(who.length).toBeGreaterThan(0);
+    for (const w of who) expect(w).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}/);
+    expect(who.join(', ')).toContain('You');
+  });
+
   it('is the same on every load', () => {
     expect(v.home(buildScenario('wei-ming', false))).toEqual(home);
   });
@@ -153,6 +161,12 @@ describe('edge states', () => {
 });
 
 describe('writes, with Undo (§6.7)', () => {
+  it('opens a receipt Sen could not read as a failed draft, so Add expense says so', async () => {
+    const fake = createFake();
+    const d = await fake.draft(uid('receipt:blurry'));
+    expect(d).toMatchObject({ status: 'failed', byHand: false });
+  });
+
   it('answers a new merchant, makes its rule, and undoes it', async () => {
     const fake = createFake();
     const siti = uid('txn:siti');

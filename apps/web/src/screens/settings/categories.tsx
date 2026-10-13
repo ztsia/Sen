@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ListChecksIcon, TagsIcon } from 'lucide-react';
+import { LayoutGridIcon, ListChecksIcon, TagsIcon } from 'lucide-react';
 import { Segmented } from '@/blocks/choice';
 import { GroupCard, SwitchRow } from '@/blocks/group';
 import { Sheet } from '@/blocks/sheet';
@@ -59,7 +59,14 @@ function Body({ categories, rules }: { categories: Cat[]; rules: Rule[] }) {
 }
 
 function CategoryGrid({ categories, onOpen }: { categories: Cat[]; onOpen: (id: string) => void }) {
-  if (!categories.length) return <EmptyState line="Categories show here once your first payment is in." />;
+  if (!categories.length)
+    return (
+      <EmptyState
+        icon={LayoutGridIcon}
+        title="No categories yet"
+        line="Categories show here once your first payment is in."
+      />
+    );
   const groups = [
     { label: 'Spending categories', items: categories.filter((c) => c.kind === 'spend') },
     { label: 'Income categories', items: categories.filter((c) => c.kind === 'income') },

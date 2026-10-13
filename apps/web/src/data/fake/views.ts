@@ -551,6 +551,15 @@ export function txnView(db: Db, env: FakeEnv, id: string): TxnView | null {
   };
 }
 
+/** Who had an item on a split, by name (You for yourself), or null when no one has ticked it. */
+function whoHad(db: Db, itemId: string): string | null {
+  const ids = db.picks[itemId]?.split(',') ?? [];
+  const names = ids
+    .map((id) => db.members.find((m) => m.id === id))
+    .flatMap((m) => (m ? [m.isMe ? 'You' : m.name] : []));
+  return names.length ? names.join(', ') : null;
+}
+
 export function receiptView(db: Db, id: string): ReceiptView | null {
   const r = db.receipts.find((x) => x.id === id);
   if (!r) return null;
@@ -565,7 +574,8 @@ export function receiptView(db: Db, id: string): ReceiptView | null {
         qty: i.qty,
         price: i.price,
         category: catName(db, i.categoryId),
-        who: db.picks[i.id] ?? null,
+        // the people who had it, by name: picks holds member ids (D71), never shown as they are (QA B04 redesign run 2, 1)
+        who: whoHad(db, i.id),
         kind: i.kind,
       })),
     hasPhoto: r.source !== 'manual',

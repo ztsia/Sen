@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { CalendarSyncIcon, MonitorSmartphoneIcon, MoonIcon, SunIcon } from 'lucide-react';
 import { ChoiceCards, Segmented, type Segment } from '@/blocks/choice';
 import { GroupCard, GroupLabel, SwitchRow } from '@/blocks/group';
@@ -29,8 +28,8 @@ export function nextQuarterStart(at: Date): string {
 /**
  * Settings → Appearance (D44, D77, D78, D130): the mode with its icons, whether the look changes each
  * quarter, and the six looks, each shown as a mini Home drawn in it. The theme is kept on this phone,
- * so it isn't a setting.set write. The store has no "changes each quarter" flag yet, so that choice is
- * local state here.
+ * so it isn't a setting.set write. Whether it changes each quarter is kept with it, in the theme store
+ * (QA B04 redesign run 2, 6).
  */
 export default function Appearance() {
   const look = useTheme((t) => t.look);
@@ -38,7 +37,8 @@ export default function Appearance() {
   const setLook = useTheme((t) => t.setLook);
   const setModePref = useTheme((t) => t.setModePref);
   const mode = useMode();
-  const [quarterly, setQuarterly] = useState(true);
+  const quarterly = useTheme((t) => t.quarterly);
+  const setQuarterly = useTheme((t) => t.setQuarterly);
   return (
     <Screen bar={<AppBar title="Appearance" />}>
       <div className="flex flex-col gap-6 pt-2 pb-8">

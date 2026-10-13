@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDownIcon, SearchIcon } from 'lucide-react';
+import { ChevronDownIcon, ReceiptIcon, SearchIcon, SearchXIcon } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { PaymentFilters, PaymentRow } from '@sen/core/views';
 import { DayHeader, ListRow } from '@/blocks/rows';
-import { EmptyState, ListSkeleton } from '@/blocks/states';
+import { EmptyState, ErrorState, ListSkeleton } from '@/blocks/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -278,14 +278,27 @@ function PaymentsList({
     <div ref={anchor}>
       <div ref={controlsRef}>{controls}</div>
       {failed ? (
-        <EmptyState line="Couldn't load your payments." action={{ label: 'Try again', onSelect: retry }} />
+        <div className="p-4">
+          <ErrorState
+            title="Couldn't load your payments"
+            detail="Check your connection and try again."
+            action="Try again"
+            onAction={retry}
+          />
+        </div>
       ) : rows === null ? (
         <ListSkeleton rows={8} />
       ) : rows.length === 0 ? (
-        <EmptyState
-          line={active ? 'No payments match.' : 'No payments yet.'}
-          action={active ? { label: 'Clear the filters', onSelect: clear } : undefined}
-        />
+        active ? (
+          <EmptyState
+            icon={SearchXIcon}
+            title="No payments match"
+            line="Try other words, or clear the filters."
+            action={{ label: 'Clear the filters', onSelect: clear }}
+          />
+        ) : (
+          <EmptyState icon={ReceiptIcon} title="No payments yet" line="Payments show here as Sen captures them." />
+        )
       ) : (
         <div className="relative w-full" style={{ height: v.getTotalSize() }}>
           {sticky ? (

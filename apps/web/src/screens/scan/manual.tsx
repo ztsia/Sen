@@ -1,7 +1,7 @@
 import { newId } from '@/lib/uid';
 import { nowIso } from '@/lib/clock';
 import { useMemo, useState } from 'react';
-import { ChevronDownIcon, ClockIcon, ImageIcon, TriangleAlertIcon, WalletIcon } from 'lucide-react';
+import { ChevronDownIcon, ImageIcon, TriangleAlertIcon, WalletIcon } from 'lucide-react';
 import { useRouter } from '@tanstack/react-router';
 import { CategorySheet } from '@/blocks/category-sheet';
 import { checkAmount, MoneyInput } from '@/blocks/money-input';
@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { GroupCard, NavRow } from '@/blocks/group';
+import { ErrorState, ListSkeleton } from '@/blocks/states';
 import { IconTile } from '@/blocks/tile';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -141,30 +142,41 @@ export default function Manual() {
 
           <Field data-invalid={errors.category ? true : undefined}>
             <FieldLabel id="category-label">Category</FieldLabel>
-            <ToggleGroup
-              type="single"
-              spacing={2}
-              aria-labelledby="category-label"
-              className="grid grid-cols-4 items-stretch"
-              value={categoryId}
-              onValueChange={(v) => {
-                if (v) {
-                  setCategoryId(v);
-                  setErrors((x) => ({ ...x, category: undefined }));
-                }
-              }}
-            >
-              {(cats.data ?? []).map((c) => (
-                <ToggleGroupItem
-                  key={c.id}
-                  value={c.id}
-                  className="h-auto min-h-20 w-full min-w-0 flex-col justify-start gap-1.5 rounded-[var(--radius-card,16px)] bg-card px-1 py-2 text-xs leading-tight font-normal whitespace-normal ring-primary data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:ring-2"
-                >
-                  <IconTile icon={categoryIcon(c.label)} tone={categoryTone(c.label)} />
-                  <span className="line-clamp-2 text-center">{c.label}</span>
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+            {cats.isPending ? (
+              <ListSkeleton rows={4} />
+            ) : cats.isError ? (
+              <ErrorState
+                title="Couldn't load your categories"
+                detail="Check your connection and try again."
+                action="Try again"
+                onAction={() => void cats.refetch()}
+              />
+            ) : (
+              <ToggleGroup
+                type="single"
+                spacing={2}
+                aria-labelledby="category-label"
+                className="grid grid-cols-4 items-stretch"
+                value={categoryId}
+                onValueChange={(v) => {
+                  if (v) {
+                    setCategoryId(v);
+                    setErrors((x) => ({ ...x, category: undefined }));
+                  }
+                }}
+              >
+                {(cats.data ?? []).map((c) => (
+                  <ToggleGroupItem
+                    key={c.id}
+                    value={c.id}
+                    className="h-auto min-h-20 w-full min-w-0 flex-col justify-start gap-1.5 rounded-[var(--radius-card,16px)] bg-card px-1 py-2 text-xs leading-tight font-normal whitespace-normal ring-primary data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:ring-2"
+                  >
+                    <IconTile icon={categoryIcon(c.label)} tone={categoryTone(c.label)} />
+                    <span className="line-clamp-2 text-center">{c.label}</span>
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            )}
             {errors.category ? <FieldError>{errors.category}</FieldError> : null}
           </Field>
 
@@ -172,7 +184,7 @@ export default function Manual() {
             {account ? (
               <NavRow icon={WalletIcon} title={`Paid from ${account.label}`} onOpen={() => setAccountOpen(true)} />
             ) : null}
-            <NavRow icon={ClockIcon} title="When" value={day ? shortDay(day) : 'Now'} />
+            <NavRow title="When" value={day ? shortDay(day) : 'Now'} />
           </GroupCard>
 
           <Button

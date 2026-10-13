@@ -124,12 +124,13 @@ function Body({ v }: { v: SubscriptionsView }) {
 function HistoryList({ name, history }: { name: string; history: History }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="flex flex-col border-t border-border px-4 pt-1">
+    <div className="flex flex-col border-t border-border px-4 py-1">
+      {/* drawn 40 px, a secondary control (D129); tap gives it the 48 px target, inside the 4 px padding above and below */}
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="flex min-h-12 w-full items-center justify-between gap-3 text-left text-sm active:bg-accent"
+        className="tap relative flex min-h-10 w-full items-center justify-between gap-3 text-left text-sm active:bg-accent"
       >
         <span>{tally(history)}</span>
         <ChevronDownIcon

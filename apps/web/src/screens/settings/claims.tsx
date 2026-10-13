@@ -177,7 +177,6 @@ function EssCard({ claims, showEss }: { claims: Claims; showEss: boolean }) {
         ? ess.capabilities.map((c) => (
             <div key={c.name}>
               <NavRow
-                icon={ReceiptTextIcon}
                 title={c.name}
                 description={
                   c.recorded ? 'Sen knows these steps.' : 'Show Sen the steps once, or import a recipe someone made.'

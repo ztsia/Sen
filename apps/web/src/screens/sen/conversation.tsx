@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { PaperclipIcon, SendHorizontalIcon, XIcon } from 'lucide-react';
+import { PaperclipIcon, SendHorizontalIcon, SparklesIcon, XIcon } from 'lucide-react';
 import type { SenView } from '@sen/core/views';
 import { EmptyState, ListSkeleton } from '@/blocks/states';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -82,7 +82,11 @@ function Body({ v, from }: { v: SenView; from: string }) {
             ))}
           </ol>
         ) : (
-          <EmptyState line="Ask about your money. Sen only states figures it has looked up, and shows you where a file's figure came from." />
+          <EmptyState
+            icon={SparklesIcon}
+            title="Ask Sen about your money"
+            line="Sen only states figures it has looked up, and shows you where a file's figure came from."
+          />
         )}
         <div ref={end} />
       </div>

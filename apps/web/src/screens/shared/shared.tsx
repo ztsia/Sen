@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckIcon, SplitIcon } from 'lucide-react';
+import { CheckIcon, CircleCheckIcon, SplitIcon, UsersIcon } from 'lucide-react';
 import type { SharedView } from '@sen/core/views';
 import { Segmented } from '@/blocks/choice';
 import { PersonAvatar } from '@/blocks/group';
@@ -62,10 +62,10 @@ function Lists({ rows }: { rows: SharedView['rows'] }) {
             </li>
           ))}
         </ul>
+      ) : which === 'open' ? (
+        <EmptyState icon={UsersIcon} title="Nothing open" line="Nothing is waiting on anyone." />
       ) : (
-        <p className="px-5 text-muted-foreground">
-          {which === 'open' ? 'Nothing is waiting on anyone.' : 'No settled bills yet.'}
-        </p>
+        <EmptyState icon={CircleCheckIcon} title="Nothing settled yet" line="Bills move here once everyone has paid." />
       )}
     </div>
   );

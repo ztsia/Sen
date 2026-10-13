@@ -142,8 +142,9 @@ export function ReviewRow({
         <p className="w-full text-base font-semibold text-pretty wrap-anywhere">{question}</p>
         <p className="text-sm text-muted-foreground">{knows}</p>
       </div>
-      {/* the padding holds the chips' 48 px tap extension inside the scroller, so the row never scrolls up and down (QA B04 redesign, 6) */}
-      <div className="[scrollbar-width:none] -mx-3 -my-1.5 flex gap-2 overflow-x-auto overflow-y-hidden px-3 py-2">
+      {/* the answers wrap rather than hide off the edge (QA B04 redesign run 2, 10): a 16 px gap between lines keeps the
+          chips' 48 px tap areas apart, and the padding holds them inside the box, so it never scrolls (run 1, 6) */}
+      <div className="-mx-3 -my-1.5 flex flex-wrap gap-x-2 gap-y-4 overflow-x-auto overflow-y-hidden px-3 py-2">
         {answers.slice(0, 3).map((a) => (
           <Button
             key={a.label}

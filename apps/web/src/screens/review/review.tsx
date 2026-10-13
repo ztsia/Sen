@@ -10,7 +10,6 @@ import {
   SparklesIcon,
   SplitIcon,
   TagsIcon,
-  Undo2Icon,
   type LucideIcon,
 } from 'lucide-react';
 import type { Command } from '@sen/core/commands';
@@ -20,7 +19,6 @@ import { CategorySheet } from '@/blocks/category-sheet';
 import { Money } from '@/blocks/money';
 import { GroupCard, NavRow } from '@/blocks/group';
 import { ListRow, ReviewRow, type ReviewAnswer } from '@/blocks/rows';
-import { IconTile } from '@/blocks/tile';
 import { Sheet } from '@/blocks/sheet';
 import { EmptyState } from '@/blocks/states';
 import { toastUndo } from '@/blocks/toast';
@@ -136,7 +134,6 @@ function ReviewBody({ r }: { r: ReviewView }) {
                 ))}
                 {r.waiting.refunds.map((x) => (
                   <Item key={x.id} size="sm" className="min-h-16 flex-nowrap gap-3 rounded-none">
-                    <IconTile icon={Undo2Icon} />
                     <ItemContent className="min-w-0">
                       <ItemTitle className="text-base">{readableName(x.counterparty)} refund</ItemTitle>
                       <ItemDescription>Sen is watching for it, by {longDay(x.by)}</ItemDescription>

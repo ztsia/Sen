@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { Command } from '@sen/core/commands';
 import { SettingsView } from '@sen/core/views';
 import { buildScenario } from '../variants';
-import { applySettings } from './settings';
+import { apply } from '../apply';
+import { applySettings, settingsView } from './settings';
 import type { Ctx } from './ctx';
 
 // Settings' made-up data parses with the shared schema, and setting.set changes the path it names.
@@ -29,12 +30,37 @@ describe('settings seed', () => {
   });
 
   it('counts each category’s rules, and includes one hawker', () => {
-    const db = buildScenario('wei-ming', false);
-    const meals = db.settings.categories.find((c) => c.name === 'Meals');
+    const v = settingsView(buildScenario('wei-ming', false));
+    const meals = v.categories.find((c) => c.name === 'Meals');
     expect(meals?.rules).toBeGreaterThan(0);
-    expect(db.settings.rules.some((r) => r.hawker)).toBe(true);
-    for (const c of db.settings.categories)
-      expect(c.rules).toBe(db.settings.rules.filter((r) => r.category === c.name).length);
+    expect(v.rules.some((r) => r.hawker)).toBe(true);
+    for (const c of v.categories) expect(c.rules).toBe(v.rules.filter((r) => r.category === c.name).length);
+  });
+
+  it('lists a rule the moment an answer makes it, and counts it under its category', () => {
+    const db = buildScenario('wei-ming', false);
+    const before = settingsView(db);
+    const t = db.txns.find(
+      (x) => x.status === 'needs_attention' && x.merchantKey && !db.rules.some((r) => r.merchantKey === x.merchantKey),
+    )!;
+    const meals = db.categories.find((c) => c.name === 'Meals')!;
+    apply(db, Command.parse({ type: 'txn.category', id: t.id, categoryId: meals.id, scope: 'once' }) as never);
+    const after = settingsView(db);
+    expect(after.rules.map((r) => r.merchant)).toContain(t.merchantKey);
+    expect(after.rules.find((r) => r.merchant === t.merchantKey)).toMatchObject({ category: 'Meals', setBy: 'user' });
+    expect(after.categories.find((c) => c.name === 'Meals')!.rules).toBe(
+      before.categories.find((c) => c.name === 'Meals')!.rules + 1,
+    );
+  });
+
+  it('keeps a hawker switch on a rule an answer made', () => {
+    const db = buildScenario('wei-ming', false);
+    const t = db.txns.find((x) => x.status === 'needs_attention' && x.merchantKey)!;
+    const meals = db.categories.find((c) => c.name === 'Meals')!;
+    apply(db, Command.parse({ type: 'txn.category', id: t.id, categoryId: meals.id, scope: 'once' }) as never);
+    const id = db.rules.find((r) => r.merchantKey === t.merchantKey)!.id;
+    set(db, `rules.${id}.hawker`, true);
+    expect(settingsView(db).rules.find((r) => r.id === id)?.hawker).toBe(true);
   });
 
   it('shows the Gmail code and the backup from yesterday at 3 am', () => {

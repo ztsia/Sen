@@ -3,6 +3,7 @@ import { CheckIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useReducedMotion } from '@/theme/store';
 
 // Steps (patterns.md §7, D130): a how-to as numbered steps instead of paragraphs, and a pager that
 // shows one card at a time under named steps.
@@ -77,6 +78,8 @@ export function StepPager({
   const track = useRef<HTMLDivElement>(null);
   const names = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(initial);
+  // with reduced motion the pages jump to their place (patterns.md §8; QA B04 redesign run 2, 12)
+  const behavior: ScrollBehavior = useReducedMotion() ? 'auto' : 'smooth';
 
   useEffect(() => {
     const el = track.current;
@@ -84,13 +87,13 @@ export function StepPager({
   }, [initial]);
   // the chosen name stays in view as the pages move
   useEffect(() => {
-    names.current?.children[at]?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-  }, [at]);
+    names.current?.children[at]?.scrollIntoView({ block: 'nearest', inline: 'center', behavior });
+  }, [at, behavior]);
 
   const go = (i: number) => {
     const el = track.current;
     if (!el) return;
-    el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' });
+    el.scrollTo({ left: i * el.clientWidth, behavior });
     setAt(i);
   };
 

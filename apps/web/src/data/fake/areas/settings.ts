@@ -40,25 +40,11 @@ const MADE_UP_RULES: { merchant: string; category: string; hawker: boolean; setB
 ];
 
 export function seedSettings(db: Db): SettingsState {
-  const names = new Map(db.categories.map((c) => [c.id, c.name]));
   const categories = db.categories
     .filter((c) => !c.archivedAt)
-    .map((c) => ({
-      id: c.id,
-      name: c.name,
-      kind: c.kind,
-      rules: db.rules.filter((r) => r.categoryId === c.id).length,
-    }));
-  const fromDb = db.rules.map((r) => ({
-    id: r.id,
-    merchant: r.merchantKey,
-    category: r.categoryId ? (names.get(r.categoryId) ?? 'Unknown') : 'Ask each time',
-    hawker: false,
-    setBy: r.setBy,
-  }));
-  const made = MADE_UP_RULES.map((r) => ({ id: uid(`rule:${r.merchant}`), ...r }));
-  const rules = [...fromDb, ...made];
-  for (const c of categories) c.rules += made.filter((r) => r.category === c.name).length;
+    .map((c) => ({ id: c.id, name: c.name, kind: c.kind, rules: 0 }));
+  // only the made-up rules are kept here; the scenario's own are read live from db.rules (settingsView)
+  const rules = MADE_UP_RULES.map((r) => ({ id: uid(`rule:${r.merchant}`), ...r }));
   return {
     ...blankSettings(),
     ...seedAdmin(db),
@@ -72,8 +58,23 @@ export function seedSettings(db: Db): SettingsState {
 
 export function settingsView(db: Db): SettingsView {
   const s = db.settings;
+  // Rules are read live, so one made by answering in Review shows at once (QA B04 redesign run 2, 7).
+  // A rule's hawker flag lives in s.rules, by id; the made-up rules live there whole.
+  const names = new Map(db.categories.map((c) => [c.id, c.name]));
+  const fromDb = db.rules.map((r) => ({
+    id: r.id,
+    merchant: r.merchantKey,
+    category: r.categoryId ? (names.get(r.categoryId) ?? 'Unknown') : 'Ask each time',
+    hawker: s.rules.find((x) => x.id === r.id)?.hawker ?? false,
+    setBy: r.setBy,
+  }));
+  const made = s.rules.filter((x) => !db.rules.some((r) => r.id === x.id));
+  const rules = [...fromDb, ...made];
+  const categories = s.categories.map((c) => ({ ...c, rules: rules.filter((r) => r.category === c.name).length }));
   return {
     ...s,
+    categories,
+    rules,
     // the member list is the admin's alone (D52); nobody else's reads carry it
     members: s.admin ? s.members : [],
     switches: {
@@ -109,8 +110,14 @@ export const applySettings: AreaApply = (db, cmd) => {
   const { key, value } = cmd;
   const hawker = /^rules\.([^.]+)\.hawker$/.exec(key);
   if (hawker) {
-    const rule = s.rules.find((r) => r.id === hawker[1]);
-    if (!rule) throw new Error('That rule is gone.');
+    let rule = s.rules.find((r) => r.id === hawker[1]);
+    if (!rule) {
+      // a rule from db.rules: its hawker flag is kept here, by id
+      const r = db.rules.find((x) => x.id === hawker[1]);
+      if (!r) throw new Error('That rule is gone.');
+      rule = { id: r.id, merchant: r.merchantKey, category: '', hawker: false, setBy: r.setBy };
+      s.rules.push(rule);
+    }
     rule.hawker = value === true;
     return { said: rule.hawker ? `${rule.merchant} is a hawker` : `${rule.merchant} is not a hawker`, touched: [] };
   }
