@@ -225,8 +225,8 @@ agents are in `.claude/agents/`:
 
 | Agent | Use it when | Don't, when |
 |---|---|---|
-| `implementer` (Sonnet) | A slice's build splits into **batches already decided**, each worth a brief: a group of screens from `patterns.md`, tests from given criteria, a port, boilerplate across files. Each batch owns its own files, so several run **in parallel, in the background** | The change is under about 100 lines, needs a design decision, or touches a non-negotiable's logic (money, RLS, dedupe, the listener's filters): do it yourself |
-| `implementer` on **Haiku** (`model: haiku` on the Agent call, at medium effort like Sonnet) | A **mechanical** batch: a batch of up to about 8 screens once their reference screens and blocks exist and the brief says what's primary on each (the A/B below), copying a finished example to more files, test boilerplate from given criteria, lint and format fixes, doc syncs to a decision, reading logs, screenshot sweeps. About a twentieth of Sonnet's price | The batch needs judgment (layout choices, a tricky state, anything a reviewer would argue about): Sonnet |
+| `implementer` (**Haiku at high effort**, its default) | A slice's build splits into **batches already decided**, each **fully specified** (the test below): screens copied from a reference, tests from given criteria, a port, boilerplate across files, lint fixes, doc syncs, reading logs, screenshot sweeps. Each batch owns its own files, so several run **in parallel, in the background**. About a twentieth of Sonnet's price per token | The task fails the test below: Sonnet. Under about 100 lines, or a non-negotiable's logic (money, RLS, dedupe, the listener's filters): do it yourself |
+| `implementer` on **Sonnet** (`model: sonnet`, `effort: medium` on the Agent call; `high` for the hardest) | A batch that leaves something to decide: it sets a pattern others will copy, holds a tricky state, crosses many files whose contracts aren't written down, or has an unknown cause to find. Also the re-run of a Haiku batch that failed its checks | |
 | `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill: a full run when a slice is finished, then the tiers | |
 | `scout` (Haiku) | Something too big to read: a long CI log, a large unfamiliar area | A lookup one `grep` or a filtered log answers; its cold start costs more than it saves |
 
@@ -236,35 +236,49 @@ diffs it checks. Sonnet is about half Opus's price, and four batches ran at once
 tokens each). The cost is a cold start per agent, so:
 - **Build the shared ground first, yourself** (types, data layer, one screen in the house style),
   then brief the batches against it.
-- **Keep briefs lean:** the exact files and sections to read, the files it owns, the checks to run,
-  a port of its own for a dev server, and *don't commit*. Point at a finished example rather than
-  restating rules.
+- **Keep briefs lean,** and make them pass the test below: the outcome, the decisions, the exact
+  files and sections to read, a finished example to copy rather than restated rules, the files it
+  owns, the checks to run, its paths and port, and *don't commit*.
 - **Review every report and diff yourself**, fix what's off, then commit. No per-task review loops:
   QA checks the slice.
-- **Haiku, measured on B04 (D125):** about 13× cheaper than Sonnet on a comparable batch ($0.08
-  against $1.07), but it slipped on unstated contracts (it accepted only its own settings keys and ran
-  a repo-wide formatter) and twice reported an hour-long test run as done while it was running. Keep
-  it for mechanical work, with the contract spelled out, *only your files*, and *wait for long runs
-  to end*.
-- **The A/B test, on the B04 redesign (13 Oct):** batches D and E each ran on Sonnet (medium, the
-  `implementer`'s default) and on Haiku (low, an uneven start) from the same pointer brief, each in a worktree. *D* (8 screens): Haiku $0.11 against
-  Sonnet $1.12, comparable screens, no slips; Haiku's was kept. *E* (17 screens): Haiku $0.16 against
-  Sonnet $3.10, but Haiku didn't finish. **The briefs were the same; what differed was paths.** E's
-  Haiku `cd`'d into the main checkout (`/home/user/Sen/...`) for its first edits instead of its
-  worktree, wrote two files there, and the permission checker then blocked its formatter and lint. D's
-  Haiku used its worktree's path from its fifth command. **Haiku did well because nothing was left to
-  decide:** the brief had a row per screen saying what's primary, two reference screens and the blocks
-  existed, and it copied them. So:
-  - **Haiku gets screen batches once the references exist**, up to about 8 screens each; Sonnet keeps
-    the batch that sets a pattern, crosses many files, or needs a design call.
-  - **No worktree unless two agents edit the same files.** Disjoint batches share the main checkout,
-    each owning listed files (A–C did, with no clash). A worktree agent starts with `pwd`, and its
-    brief says *every path you use starts with that*. A worktree may start at `main`'s head, so it
-    checks out the slice's commit first.
-  - **Check a Haiku diff's file list** before applying it, and that it ran its checks.
-  - **Haiku runs at medium, as Sonnet does.** Per token it's a twentieth of Sonnet's price
-    ($0.10/$0.50 against $2/$10 per million), so even if more effort doubles its tokens it stays about
-    ten times cheaper; low saved cents and may cost a retry.
+- **Is the task fully specified?** This is what decides Haiku, not the kind of task (the A/B below):
+  1. **The outcome is stated, and every decision is made:** what's primary, the names, the
+     behaviour. Nothing is left that a reviewer would argue about.
+  2. **A worked example to copy**, or the exact contract written out: types, keys, test selectors,
+     names that must not change.
+  3. **A bounded scope:** the files it owns and the ones it mustn't touch, about one sitting of
+     work (eight screens was fine).
+  4. **A checkable finish:** the commands that prove it's done, and *wait for runs to end*.
+  5. **The environment spelled out:** its working directory and absolute paths, its port, *don't
+     commit*.
+  All five → Haiku at high. A missing one is usually cheaper to write into the brief than to buy
+  from Sonnet, since the decisions belong to the main session anyway; when it can't be written down,
+  Sonnet. **If Haiku's checks fail or it slips, re-run that piece on Sonnet**: running cheap first
+  and re-running only the failures higher held the pass rate for about half the cost in Anthropic's
+  runs.
+- **Effort, from Anthropic's model docs (13 Oct).** Haiku 5.5: `medium` is its default; `high` is for
+  longer agent tasks and strict instruction following, which is what a brief asks; at `low` and
+  `medium` it sometimes reports a code change as done without running a check, and at `low` stops
+  early in long prompts; `xhigh` and `max` only with a measured gain, since its thinking and replies
+  get much longer and at `xhigh` it sometimes ends a turn with no visible text. Sonnet 5.5: `medium`
+  is the starting point for agentic coding; `xhigh` and `max` only with a measured gain. Per token,
+  Haiku is $0.10/$0.50 per million against Sonnet's $2/$10, a twentieth, so `high`'s longer thinking
+  still leaves it about ten times cheaper. No published comparison of Haiku at `high` against Sonnet
+  at `medium` exists; the A/B below is ours.
+- **Haiku's earlier slips (B04, D125)** all came from what a brief left unsaid: it accepted only its
+  own settings keys where a shared one was expected, ran a repo-wide formatter, and twice reported an
+  hour-long test run as done while it was running. Each maps to points 2, 3 and 4 above.
+- **The A/B test, on the B04 redesign (13 Oct):** batches D and E each ran on Sonnet (`medium`) and on
+  Haiku (`low`, an uneven start) from the same pointer brief, each in a worktree. *D* (8 screens):
+  Haiku $0.11 against Sonnet $1.12, comparable screens, no slips; Haiku's was kept. *E* (17 screens):
+  Haiku $0.16 against Sonnet $3.10, but Haiku didn't finish: it `cd`'d into the main checkout for its
+  first edits instead of its worktree (point 5), and the permission checker then blocked its
+  formatter and lint. **The briefs were the same; what differed was paths.**
+- **No worktree unless two agents edit the same files.** Disjoint batches share the main checkout,
+  each owning listed files (A–C did, with no clash). A worktree agent starts with `pwd`, and its
+  brief says *every path you use starts with that*. A worktree may start at `main`'s head, so it
+  checks out the slice's commit first.
+- **Check every diff's file list** before applying it, and that the agent ran its checks.
 - **Subagents can't start subagents** (tested twice). Anything an agent would delegate, the main
   session starts itself: the `qa` skill's Haiku sweep runs before the reviewer, not inside it.
 - **Two end-to-end runs never overlap**: they share ports 4173/4174 and the build folders. Queue them.
