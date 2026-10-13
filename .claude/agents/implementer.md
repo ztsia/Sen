@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Use proactively, by standing request of the owner (D125), whenever a slice's build splits into batches already decided, each worth a brief and owning its own files (a group of screens built from patterns.md, tests written from given criteria, a port, boilerplate across several files, docs updated to match a decision); run several in parallel in the background. It runs on Haiku at high effort by default, for any batch the brief fully specifies (CLAUDE.md, Models and subagents); pass model sonnet and effort medium on the Agent call when the batch leaves something to decide. Not for design choices, the non-negotiables' logic, or a change under about 100 lines the main session can make faster itself.
+description: Use proactively, by standing request of the owner (D125), whenever a slice's build splits into batches already decided, each worth a brief and owning its own files (a group of screens built from patterns.md, tests written from given criteria, a port, boilerplate across several files, docs updated to match a decision); run several in parallel in the background. It runs on Haiku at high effort by default, for any batch the brief fully specifies (the `brief` skill); the main session passes model sonnet and an effort on the Agent call when what's left can't be written down in advance. Not for design choices, the non-negotiables' logic, or a change under about 100 lines the main session can make faster itself.
 model: haiku
 effort: high
 ---

@@ -123,7 +123,7 @@ each in its own worktree (`isolation: "worktree"`) and port, with no e2e runs. T
 - screenshots against the references
 
 Keep the better diff per batch and drop the other. Log the result in `docs/usage.md` and in
-CLAUDE.md's *Models and subagents*, as a rule for which batches go to Haiku.
+the `brief` skill, as a rule for which batches go to Haiku.
 
 ### Briefs stay small
 
@@ -140,4 +140,4 @@ If a prompt would come out longer than the diff it asks for, the main session ma
 
 **What the A/B showed (13 Oct):** a pointer brief like this is enough for Haiku once the reference
 screens and blocks exist (batch D, a tenth of Sonnet's cost). Its one failure was paths, not the
-brief: the run in a worktree edited the main checkout. CLAUDE.md's *Models and subagents* has the rule.
+brief: the run in a worktree edited the main checkout. the `brief` skill has the rule.

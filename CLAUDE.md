@@ -199,27 +199,11 @@ owner, makes every decision, works on the non-negotiables, writes the briefs, an
 back. Subagents carry out work that is decided but too long or too repetitive to be worth Opus's
 price. This is the owner's standing request, so a session spawns them without being asked.
 
-**A brief that leaves thinking to the subagent is the main session's failure, not the model's.**
-Before sending one, check that it says:
-- **the outcome, and every decision behind it** (what's primary, names, behaviour), so nothing is
-  left that a reviewer would argue about
-- **what to copy**: a finished example, or the exact contract (types, keys, test selectors, names that
-  must not change), pointed at rather than restated
-- **the scope**: the files it owns and the ones it mustn't touch
-- **how it proves it's done**: the checks to run, and *wait for long runs to end*
-- **its environment**: working directory and absolute paths, a port of its own, *don't commit*
-
-**Choosing the model is a judgment, made per task, with the reason in mind:**
-- **Haiku at `high` effort** (the `implementer`'s default) for any task the brief can fully specify.
-  It costs a twentieth of Sonnet per token, so even long thinking leaves it about ten times cheaper,
-  and Anthropic's docs put `high` at "longer agent tasks and strict instruction following".
-- **Sonnet at `medium`, or `high`** (`model: sonnet` and `effort` on the Agent call) when what's left
-  can't honestly be written down in advance: an unknown cause to find, a large body of unfamiliar
-  code to reason across, a batch whose output sets a pattern before the main session can show one.
-  Also to re-run a piece Haiku failed.
-- **The main session itself** for a change under about 100 lines, a design call, or a
-  non-negotiable's logic (money, RLS, dedupe, the listener's filters).
-- `xhigh` and `max` only for a measured gain. Measurements and the A/B are in `docs/usage.md`.
+**A brief that leaves thinking to the subagent is the main session's failure, not the model's.** The
+`brief` skill holds how: choosing the model (Haiku at `high` for whatever a brief can fully specify,
+Sonnet for what can't be written down in advance, Opus itself for small changes, design calls and
+the non-negotiables' logic), the brief's template and checks, and what to do when work comes back
+wrong. Measurements are in `docs/usage.md`.
 
 | Agent | What it's for |
 |---|---|
@@ -227,25 +211,17 @@ Before sending one, check that it says:
 | `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill |
 | `scout` (Haiku) | Something too big to read, such as a long log; not what one `grep` answers |
 
-**Working rules:**
-- **Build the shared ground first, yourself** (types, blocks, one finished example), then brief
-  against it.
-- **Review every report and diff:** check its file list and that it ran its checks, fix what's off,
-  then commit. A report is a claim, not proof.
-- **One checkout unless two agents edit the same files.** A worktree agent starts with `pwd` and uses
-  only paths under it, and checks out the slice's commit first (a worktree may start at `main`).
-- **Subagents can't start subagents.** What an agent would delegate, the main session starts.
 - **Two end-to-end runs never overlap** (shared ports 4173/4174 and build folders).
 - **Measure:** `node scripts/usage.mjs` (run it from the session's starting directory);
   `--log <slice>` keeps a row in `docs/usage.md` before every handoff and PR. The main session's
   own context is the largest cost, so keep its reading and writing small and hand off early.
-- An agent stopped at a usage limit is resumed (`SendMessage`), never restarted.
 
 ## Skills
 
 | Skill | Use it when |
 |---|---|
 | `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent and **sets the three tiers for fixing what QA finds**: small fixes self-verified, scoped ones re-checked by resuming the last run's reviewer, and a fresh full run only when a fix reaches the whole flow (D117, D121) |
+| `brief` | Before every Agent call that does work, and when a subagent's work comes back short: the model, the brief, and what to do about a miss (D131) |
 | `uiux` | Choosing shadcn components for a screen, building one, or checking one before it's done. Ported from GCO_events (D43): it reads its component index first, then only the docs it shortlists |
 | `dataviz` | Any chart, stat tile or chart colour. It comes from the owner's claude.ai account, not the repo |
 | `frontend-design` | Narrowed when `S2` closed (D57, D84): only for a look's own drawing (its figure, strip, avatar, tab bar and reveal) or a new look for the pool. Every screen follows `docs/ui/patterns.md` and `uiux` instead. Installed with `npx skills add` |
