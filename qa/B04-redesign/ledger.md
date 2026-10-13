@@ -87,3 +87,40 @@ Also: QA's committed run 2 specs had unused imports that failed `pnpm lint`; the
 - **Settings → Receipts by email's "No code yet" card** is hand-built; it reads as a status, with no
   action, so it stays until B05 gives it one.
 - Run 2's Note 14 items, as run 1 left them.
+
+# Run 3
+
+Every fix for QA run 3 (`report.md`, 13 Oct 2026), with the owner's own list (13 Oct), which the
+owner asked to go in the same batch. Fixed on `B04/redesign`, 13 Oct.
+
+## The batch is tier 3: a fresh full QA run (run 4)
+
+The fixes change shared blocks (`StepPager`, `StatTiles`, `NavRow`, `SwitchRow`, the meters, the
+empty state's action), the app shell (the toaster, the Scan tab), `MoneyInput` (every money field,
+D132) and the money module. A new sweep and a new `qa-reviewer` run every phase.
+
+| # | Sev. | Fix | Who | Evidence |
+|---|---|---|---|---|
+| 1 | Major | The pager scrolls only its row of names, never the frame | Main session | Pin 4 |
+| 2 | Major | *Forget* takes one note per double tap (`settled`) | Main session | Pin 5 |
+| 3 | Major | Pins for the tab bar on task screens, estimates worded as estimates, and money in's `+` | Haiku (`implementer`) | Pins 1–3 |
+| 4 | Minor | A waiting split's line is *1 of 2 paid you back*; what's still to come is the row's figure | Main session | |
+| 5 | Minor | Meter figures drop under their label, and a row's value wraps between words, instead of overflowing or cutting off | Main session | Pin 13 |
+| 6 | Minor | A toast sits 88 px up on a screen without the tab bar, above its main button | Main session | Pin 6 |
+| 7 | Minor | An empty form error no longer hides the blur check (`error \|\| blurError`) | Main session | With D132 |
+| 8 | Minor | Back and Delete go Home when nothing is behind (`goBack`) | Main session | Pin 7 |
+| 9 | Note | D136: a card's group label is a caption, not a heading (owner) | Owner | Decision |
+| 10 | Note | The four footnotes are shorter | Main session | |
+| 12 | Note | *1,151 payments*; a no-break space keeps the Split row's `·`; the hawker switch is named *… is a hawker* | Main session | |
+
+**The owner's list:** stat tiles two across with whole figures (pin 12); D132 money entry
+(`typedSen`, `pastedSen`: `money.test.ts`, pin 8); the Scan tab opens the camera, its long-press rows
+the camera and gallery (pin 9); D133–D134 *Add a subscription* and *Add a goal*, with a goal's
+account (`fake.test.ts`, pin 11; the forms by Haiku); D135 Sen opens with the message started, and
+its buttons show its avatar (pins 10, 14).
+
+## Left as they are
+
+- **Note 11, first-cycle's payday strip**, as run 1 left it: the person set up on payday morning and
+  the salary landed after, so that cycle's plan is real.
+- **Note 9's labels**: the owner chose captions (D136); nothing on screen changes.
