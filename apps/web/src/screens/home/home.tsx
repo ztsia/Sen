@@ -53,6 +53,8 @@ function HomeBody({ h }: { h: HomeView }) {
   const label = f.over ? 'Over by' : FIGURE_LABEL[f.kind];
   const sub = `${f.daysToGo} ${f.daysToGo === 1 ? 'day' : 'days'} to go${month ? ' this month' : ''}`;
   const unit = month ? 'month' : 'cycle';
+  // Home fits one screen (D130): when something asks you to act, Sen's note gives way; Sen's button still opens it.
+  const act = h.health.length > 0 || h.payday?.stage === 'card';
 
   return (
     <HomeMaterial payday={h.payday?.stage === 'card'} patina={f.income > 0 ? f.spent / f.income : 0}>
@@ -126,8 +128,8 @@ function HomeBody({ h }: { h: HomeView }) {
               </p>
               <ChevronRightIcon className="size-4 shrink-0 text-icon" aria-hidden="true" />
             </div>
-            {/* PaceSpark has no height prop: held to 72 px here, so it letterboxes a little (block gap) */}
-            <div className="h-[72px] [&>svg]:h-full [&>svg]:w-full">
+            {/* PaceSpark has no height prop: held to 64 px here (the brief), so it letterboxes a little (block gap) */}
+            <div className="h-16 [&>svg]:h-full [&>svg]:w-full">
               <PaceSpark thisCycle={h.pace.thisCycle} lastCycle={h.pace.lastCycle} days={f.days} />
             </div>
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -161,7 +163,7 @@ function HomeBody({ h }: { h: HomeView }) {
           </Badge>
         ) : null}
 
-        {h.note ? <SenNote at={h.note.at} text={h.note.text} onOpen={() => setSenOpen(true)} /> : null}
+        {h.note && !act ? <SenNote at={h.note.at} text={h.note.text} onOpen={() => setSenOpen(true)} /> : null}
 
         {h.quiet ? (
           <Item asChild size="sm" variant="outline" className="w-full flex-nowrap text-left active:bg-accent">

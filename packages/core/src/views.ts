@@ -163,7 +163,7 @@ export const ReviewItem = z.discriminatedUnion('kind', [
     accounts: z.array(Choice),
   }),
   z.object({ ...reviewBase, kind: z.literal('balance-check'), lastOn: Day.nullable() }),
-  z.object({ ...reviewBase, kind: z.literal('claim-due'), name: z.string(), amount: Amount, deadline: Day }),
+  z.object({ ...reviewBase, kind: z.literal('claim-due'), claimId: Id, name: z.string(), amount: Amount, deadline: Day }),
   z.object({ ...reviewBase, kind: z.literal('payday-step'), step: z.string() }),
   z.object({ ...reviewBase, kind: z.literal('proposal'), title: z.string(), detail: z.string() }),
 ]);

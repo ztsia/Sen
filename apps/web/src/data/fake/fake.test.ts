@@ -18,6 +18,7 @@ import {
   YearView,
 } from '@sen/core/views';
 import { createFake } from './index';
+import { claimView } from './areas/money';
 import { uid } from './ids';
 import { acctId, catId, rm, txn } from './scenario';
 import { buildScenario, SCENARIOS } from './variants';
@@ -113,6 +114,12 @@ describe("Wei Ming's month", () => {
     expect(r.waiting.splits[0]).toMatchObject({ bill: 'BBQ PLACE', people: '1 of 2 paid you back' });
     expect(r.waiting.receipts[0]).toMatchObject({ merchant: 'MR DIY' });
     expect(r.waiting.refunds[0]).toMatchObject({ counterparty: 'SHOPEE' });
+  });
+
+  it('opens a claim that exists from each claim-due item', () => {
+    const due = v.review(db).needsYou.filter((i) => i.kind === 'claim-due');
+    expect(due.length).toBeGreaterThan(0);
+    for (const i of due) expect(claimView(db, i.claimId)).toMatchObject({ claim: { scheme: i.name } });
   });
 
   it('is the same on every load', () => {

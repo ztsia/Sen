@@ -477,7 +477,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
             </>
           }
           detail={`Due ${longDay(i.deadline)}`}
-          onOpen={() => go('claim')}
+          onOpen={() => go('claim', { id: i.claimId })}
         />
       );
     case 'payday-step':

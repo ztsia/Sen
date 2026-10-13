@@ -1369,6 +1369,7 @@ function review(ids: Record<string, string>): ReviewItem[] {
       id: 'r:claim',
       at: at('2026-10-10', '07:30'),
       suggested: null,
+      claimId: uid('claim:phone:2026-09'),
       name: 'Phone bill',
       amount: rm('88.00'),
       deadline: '2026-10-25',
