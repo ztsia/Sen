@@ -17,6 +17,7 @@ import { readableName } from '@/lib/names';
 import { Money, type MoneyKind } from './money';
 import { settleTap } from '@/lib/tap-guard';
 import { toastUndo } from './toast';
+import { IconTile, type TileTone } from './tile';
 
 // The rows every list is made of (patterns.md §7), composed from shadcn's Item. A row is one control:
 // the whole row opens its detail, and nothing inside it is a button.
@@ -53,17 +54,15 @@ export function Marks({ marks }: { marks: RowMark[] }) {
   );
 }
 
-/** A leading mark: the category's or account's icon, in a disc. */
-export function RowMarkIcon({ icon: Icon }: { icon: ComponentType<{ className?: string }> }) {
-  return (
-    <ItemMedia variant="icon" className="size-8 rounded-full border-0 bg-muted text-icon" aria-hidden="true">
-      <Icon className="size-4" />
-    </ItemMedia>
-  );
+/** A leading mark: the category's or account's icon tile, tinted by its category (D130). */
+export function RowMarkIcon({ icon, tone }: { icon: ComponentType<{ className?: string }>; tone?: TileTone }) {
+  return <IconTile icon={icon} tone={tone} />;
 }
 
 interface ListRowProps {
   icon: ComponentType<{ className?: string }>;
+  /** The category's tint: `categoryTone(category)`. */
+  tone?: TileTone;
   /** The merchant, or the account. It truncates before the amount ever does. */
   title: string;
   /** Category · account. */
@@ -75,7 +74,7 @@ interface ListRowProps {
 }
 
 /** A payment, an account or a shared bill: 56 px or more, a stable height, so long lists virtualise. */
-export function ListRow({ icon, title, secondary, sen, kind = 'out', marks = [], onOpen }: ListRowProps) {
+export function ListRow({ icon, tone, title, secondary, sen, kind = 'out', marks = [], onOpen }: ListRowProps) {
   return (
     <Item
       asChild
@@ -83,7 +82,7 @@ export function ListRow({ icon, title, secondary, sen, kind = 'out', marks = [],
       className="min-h-14 w-full flex-nowrap gap-3 rounded-none py-2 text-left text-base active:bg-accent"
     >
       <button type="button" onClick={onOpen}>
-        <RowMarkIcon icon={icon} />
+        <RowMarkIcon icon={icon} tone={tone} />
         <ItemContent className="min-w-0 gap-0">
           <ItemTitle className="block w-full truncate text-base">{readableName(title)}</ItemTitle>
           {secondary || marks.length ? (

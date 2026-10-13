@@ -329,6 +329,7 @@ function MarkAsSheet({ open, onOpenChange, v }: { open: boolean; onOpenChange: (
             <ListRow
               key={x.id}
               icon={categoryIcon(x.category)}
+              tone={categoryTone(x.category)}
               title={x.title}
               secondary={`${x.category ?? ''} · ${momentLabel(new Date(x.at))}`}
               sen={x.amount}

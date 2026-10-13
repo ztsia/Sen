@@ -11,7 +11,7 @@ import { useAccounts, useCategories, useInsights, useMe, usePayments } from '@/d
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { dayOfInstant } from '@/lib/dates';
-import { categoryIcon } from '../icons';
+import { categoryIcon, categoryTone } from '../icons';
 import { useGo, useScreenSearch } from '../kit';
 import { FilterSheet } from './filter-sheet';
 
@@ -303,6 +303,7 @@ function PaymentsList({
                 ) : (
                   <ListRow
                     icon={categoryIcon(f.row.category)}
+                    tone={categoryTone(f.row.category)}
                     title={f.row.title}
                     secondary={[f.row.category, f.row.account, f.row.note].filter(Boolean).join(' · ')}
                     sen={f.row.amount}
