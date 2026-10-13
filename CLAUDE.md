@@ -273,7 +273,11 @@ tokens each). The cost is a cold start per agent, so:
   Haiku $0.11 against Sonnet $1.12, comparable screens, no slips; Haiku's was kept. *E* (17 screens):
   Haiku $0.16 against Sonnet $3.10, but Haiku didn't finish: it `cd`'d into the main checkout for its
   first edits instead of its worktree (point 5), and the permission checker then blocked its
-  formatter and lint. **The briefs were the same; what differed was paths.**
+  formatter and lint. **The briefs were the same; what differed was paths.** A rematch of E on Haiku at
+  `medium`, with its path stated, finished all 17 screens with its checks passing for $0.21 against
+  Sonnet's $3.43 (16× cheaper), and stayed in its worktree. The screens were comparable: Haiku
+  followed the brief more literally (capture's setup as `Steps`), Sonnet adapted more to the tests.
+  Sonnet's was kept, being on the branch already.
 - **No worktree unless two agents edit the same files.** Disjoint batches share the main checkout,
   each owning listed files (A–C did, with no clash). A worktree agent starts with `pwd`, and its
   brief says *every path you use starts with that*. A worktree may start at `main`'s head, so it
