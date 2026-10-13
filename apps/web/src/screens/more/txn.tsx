@@ -204,7 +204,7 @@ function TxnBody({ v }: { v: TxnView }) {
               onOpen={() => go('receipt', { id: v.receipt!.id })}
             />
           ) : spend && t.noReceipt ? (
-            <NavRow icon={ReceiptTextIcon} title="No receipt" value="You said so" />
+            <NavRow title="No receipt" value="You said so" />
           ) : null}
           {v.split ? (
             <NavRow

@@ -142,7 +142,8 @@ export function ReviewRow({
         <p className="w-full text-base font-semibold text-pretty wrap-anywhere">{question}</p>
         <p className="text-sm text-muted-foreground">{knows}</p>
       </div>
-      <div className="[scrollbar-width:none] -mx-3 flex gap-2 overflow-x-auto px-3 py-0.5">
+      {/* the padding holds the chips' 48 px tap extension inside the scroller, so the row never scrolls up and down (QA B04 redesign, 6) */}
+      <div className="[scrollbar-width:none] -mx-3 -my-1.5 flex gap-2 overflow-x-auto overflow-y-hidden px-3 py-2">
         {answers.slice(0, 3).map((a) => (
           <Button
             key={a.label}
