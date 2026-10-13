@@ -91,6 +91,25 @@ If you disagree with a finding, argue it from the spec, not from what you meant.
 genuinely ambiguous, that's a spec bug: fix the spec, because the next slice will misread it the
 same way.
 
+## Who makes each fix
+
+The tiers below decide how a fix is re-checked; this decides who makes it. Sort each fix the way the
+`brief` skill sorts any work:
+
+- **The main session, itself (the usual case):** a fix under about 100 lines, one with a design
+  call in it, or one touching a non-negotiable. Most findings are these: small, spread across
+  files, each with a decision in it. Briefing and reviewing them would cost more than doing them.
+- **A new `implementer` (Haiku, `high`):** a fix already decided but long or repetitive, such as
+  tests written to stated assertions, each proven against a deliberate break, or one change
+  across many screens.
+- **The agent that just did the part, resumed:** when it finished recently and the new work builds
+  on what it holds (its file, its helpers, its method), so the brief can be short. Don't resume a
+  builder from hours ago: it reloads its whole conversation at full price, and a fresh agent with a
+  tight brief costs less.
+
+A test that guards a fix must fail on the code before the fix: either red first (tier 1), or shown
+failing under the exact break QA used.
+
 ## Fixing the findings: three tiers
 
 Sort each **fix**, not each finding, by how far it reaches. Check the tiers from 3 down to 1; the
