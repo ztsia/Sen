@@ -53,3 +53,37 @@ layout also changed (finding 3), which the reviewer named as the reason a full r
 | `charts.tsx` calendar `fontSize={10}` (10) | chart text is at least 12 px | `/insights: svg text under 12 px` |
 
 All ten pass with the code as committed.
+
+# Run 2
+
+Every fix for QA run 2 (`report.md`, 13 Oct 2026). Fixed on `B04/redesign`, 13 Oct.
+
+## The batch is tier 3 again: a fresh full QA run
+
+Finding 3 changes `cn()` in `lib/utils.ts`, which every component passes through; finding 4 changes
+`components/ui/input.tsx` and `textarea.tsx`; finding 6 changes the theme store; finding 5 the tab
+bar in every look. A new sweep and a new `qa-reviewer` run every phase.
+
+| # | Sev. | Fix | Who | Evidence |
+|---|---|---|---|---|
+| 1 | Major | The receipt view names who had each item (*You*, *Ali*), from the split's members, instead of the member ids in `picks` | Main session | `fake.test.ts`: red `expected 'f3e4e98f-…' not to match /[0-9a-f]{8}-[0-9a-f]{4}/`; green 36 of 36 |
+| 2 | Major | E2E pins for the four behaviours QA broke unseen: Review's one answer per tap, Add expense's refusals, the pager's hidden pages, Skipped's guard; each shown to fail under QA's break | Haiku (`implementer`) | `redesign-pins.spec.ts`; the table below |
+| 3 | Minor | `cn()` extends tailwind-merge with the `label` text size, so `text-label` survives beside a text colour | Main session | `lib/utils.test.ts`: red `expected 'text-primary-foreground' to be 'text-label text-primary-foreground'`; green |
+| 4 | Minor | Inputs and textareas are `text-[1rem]`, 16 px (the body size is 15) | Main session | Pinned |
+| 5 | Minor | Tab labels 0.75rem (12 px); Instrument's own rule was 0.656rem | Main session | Pinned in all six looks |
+| 6 | Minor | Whether the look changes each quarter is in the theme store (`sen.lookQuarterly`), read by Appearance and the new-look card | Main session | Pinned (survives a reload) |
+| 7 | Minor | Settings' rules are read live from `db.rules`; a rule's hawker flag is kept by id | Main session | `settings.test.ts`: red `expected [ 'WARUNG PAK HAMID', …(3) ] to include 'LIM K H'`; green 14 of 14 |
+| 8 | Minor | Payments (empty, no match, error), the empty Categories grid, Sen's empty chat, both Shared tabs and Add expense's loading and error use `EmptyState`, `ErrorState` and `ListSkeleton` in full | Haiku (`implementer`) | Diff reviewed; the next run walks them |
+| 9 | Minor | No tile on the refund row, Add expense's When, Received by email and the ESS capability rows | Haiku (`implementer`) | Diff reviewed |
+| 10 | Minor | Review's answers wrap (16 px between lines keeps the 48 px targets apart) instead of hiding off the edge | Main session | The existing pins (32 px chips, no vertical scroll) still hold |
+| 11 | Minor | A receipt Sen couldn't read opens Add expense as a failed draft, so it shows the photo and says so | Main session | `fake.test.ts`: red `expected null to match object { status: 'failed' }`; green |
+| 12 | Minor | The pager scrolls with `auto` under reduced motion | Main session | Pinned |
+| 13 | Minor | Subscriptions' disclosures are drawn 40 px with `tap` for the 48 px target, inside 4 px padding | Main session | The sweep's 48 px check |
+
+Also: QA's committed run 2 specs had unused imports that failed `pnpm lint`; they're removed.
+
+## Left as they are
+
+- **Settings → Receipts by email's "No code yet" card** is hand-built; it reads as a status, with no
+  action, so it stays until B05 gives it one.
+- Run 2's Note 14 items, as run 1 left them.
