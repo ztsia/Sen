@@ -418,9 +418,10 @@ export function BudgetMeter({
   const risk = share > cycleShare + 0.1;
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex justify-between gap-3 text-base">
-        <span>{label}</span>
-        <span className="num text-right text-muted-foreground">
+      {/* the figures drop under the label when both don't fit, as with large text (QA B04 redesign run 3, 5) */}
+      <div className="flex flex-wrap justify-between gap-x-3 text-base">
+        <span className="min-w-0 wrap-anywhere">{label}</span>
+        <span className="num ml-auto text-right text-muted-foreground">
           {formatSen(sen)} of {formatSen(cap)}
         </span>
       </div>
@@ -671,9 +672,9 @@ export function GoalMeter({ label, saved, target }: { label: string; saved: numb
   const share = target > 0 ? Math.min(1, saved / target) : 0;
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex justify-between gap-3 text-base">
+      <div className="flex flex-wrap justify-between gap-x-3 text-base">
         <span className="min-w-0 wrap-anywhere">{label}</span>
-        <span className="num text-right text-muted-foreground">
+        <span className="num ml-auto text-right text-muted-foreground">
           {formatSen(saved)} of {formatSen(target)}
         </span>
       </div>

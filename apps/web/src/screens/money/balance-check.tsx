@@ -15,7 +15,7 @@ export default function BalanceCheck() {
   return (
     <Screen bar={<AppBar title="Balance check" />} className="flex flex-col pb-0">
       <p className="px-4 pt-1 pb-3 text-sm text-muted-foreground">
-        Type what each bank app shows now, or tap Matches. Any difference is booked as Unaccounted.
+        Type each bank app's balance, or tap Matches. A difference is booked as Unaccounted.
       </p>
       <Loaded q={q} what="your balances">
         {(v) => (

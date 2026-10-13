@@ -159,7 +159,7 @@ function PaymentsBody() {
           </div>
           <p role="status" className="text-sm text-muted-foreground">
             {data
-              ? `${data.rows.length} ${data.rows.length === 1 ? 'payment' : 'payments'}${active ? ' match' : ''}`
+              ? `${String(data.rows.length).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} ${data.rows.length === 1 ? 'payment' : 'payments'}${active ? ' match' : ''}`
               : 'Loading'}
           </p>
           <FilterSheet

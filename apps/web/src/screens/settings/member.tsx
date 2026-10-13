@@ -12,7 +12,7 @@ import { EmptyState, ListSkeleton } from '@/blocks/states';
 import { toastDone } from '@/blocks/toast';
 import { Badge } from '@/components/ui/badge';
 import { useSettings, useWrite } from '@/data/hooks';
-import { AppBar } from '@/frame/app-bar';
+import { AppBar, goBack } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { Loaded, useGo, useScreenSearch } from '../kit';
 import { AmountEditor } from './parts';
@@ -77,7 +77,7 @@ function Body({ m, owner }: { m: Member; owner: boolean }) {
   const [remove, setRemove] = useState(false);
   const set = (key: string, value: boolean | number | string) =>
     void write({ type: 'member.set', id: m.id, key, value });
-  const back = () => router.history.back();
+  const back = () => goBack(router);
   const confirmRemove = (exportFirst: boolean) => {
     setRemove(false);
     back();

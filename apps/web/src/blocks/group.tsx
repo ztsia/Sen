@@ -92,7 +92,8 @@ export function NavRow({
       </ItemContent>
       {value || trailing || onOpen ? (
         <ItemActions className="max-w-[48%] shrink-0 gap-2 text-right text-sm text-muted-foreground">
-          {value ? <span className="truncate">{value}</span> : null}
+          {/* a value wraps between words rather than cutting off, so an amount is never hidden (QA B04 redesign run 3, 5) */}
+          {value ? <span className="min-w-0 text-pretty">{value}</span> : null}
           {trailing}
           {onOpen ? <ChevronRightIcon className="size-5 shrink-0 text-icon" aria-hidden="true" /> : null}
         </ItemActions>
@@ -125,9 +126,12 @@ export function SwitchRow({
   checked,
   onCheckedChange,
   disabled,
+  name,
 }: {
   icon?: ComponentType<{ className?: string }>;
   tone?: TileTone;
+  /** What the switch turns on, when the row's title says something else (a rule's *A hawker*). */
+  name?: string;
   /** A leading mark of its own, such as an app's icon (B02's picker). */
   media?: ReactNode;
   title: string;
@@ -170,6 +174,7 @@ export function SwitchRow({
       <ItemActions className="relative">
         <Switch
           id={id}
+          aria-label={name}
           checked={checked}
           disabled={disabled}
           aria-describedby={about}

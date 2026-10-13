@@ -113,8 +113,7 @@ function BrandSteps({
     return (
       <Section title={`Your ${manufacturer}`}>
         <p className="px-5 text-base text-pretty">
-          Sen has no extra steps for {manufacturer} phones. The battery step above is usually enough. If capture stops,
-          the heartbeat under Captured on this phone shows when it last ran.
+          No extra steps for {manufacturer} phones: the battery step above is usually enough.
         </p>
       </Section>
     );
@@ -136,8 +135,7 @@ function BrandSteps({
         />
       ) : (
         <p className="px-5 text-base text-pretty">
-          {brand.name} phones stop apps in the background in their own ways. The guide says where to look; Sen's info
-          page holds most of the switches.
+          {brand.name} phones stop background apps their own way. The guide says where to look.
         </p>
       )}
       <div className="flex flex-wrap gap-2 px-4 pt-3">
@@ -154,8 +152,8 @@ function BrandSteps({
       <p className="px-5 pt-2 pb-8 text-sm text-muted-foreground">
         Steps from dontkillmyapp.com.{' '}
         {brand.tested
-          ? `Sen is tried on a ${brand.name} first; the heartbeat shows whether capture keeps running.`
-          : `Not tried on a ${brand.name} yet. If capture stops, the heartbeat under Captured on this phone shows when it last ran.`}
+          ? `Sen is tried on a ${brand.name} first.`
+          : `Not tried on a ${brand.name} yet: Captured on this phone shows when capture last ran.`}
       </p>
     </Section>
   );

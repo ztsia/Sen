@@ -1,4 +1,5 @@
 import { SenMark } from '@/components/look/avatar';
+import { settled } from '@/lib/tap-guard';
 import { useUi } from '@/frame/ui-store';
 import { BrainIcon, Trash2Icon } from 'lucide-react';
 import type { MemoryView } from '@sen/core/views';
@@ -57,7 +58,8 @@ function Body({ v }: { v: MemoryView }) {
                   variant="ghost"
                   size="icon"
                   aria-label={`Forget: ${n.text}`}
-                  onClick={() => void write({ type: 'memory.forget', id: n.id })}
+                  // one note per double tap: the list closes up under the finger (QA B04 redesign run 3, 2)
+                  onClick={settled(() => void write({ type: 'memory.forget', id: n.id }))}
                 >
                   <Trash2Icon aria-hidden="true" />
                 </Button>

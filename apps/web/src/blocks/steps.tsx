@@ -85,9 +85,15 @@ export function StepPager({
     const el = track.current;
     if (el && initial) el.scrollLeft = initial * el.clientWidth;
   }, [initial]);
-  // the chosen name stays in view as the pages move
+  // the chosen name stays in view as the pages move: only its own row scrolls, since scrollIntoView
+  // would scroll the app's frame too and slide the whole screen sideways (QA B04 redesign run 3, 1)
   useEffect(() => {
-    names.current?.children[at]?.scrollIntoView({ block: 'nearest', inline: 'center', behavior });
+    const row = names.current;
+    const name = row?.children[at];
+    if (!row || !name) return;
+    const r = row.getBoundingClientRect();
+    const n = name.getBoundingClientRect();
+    row.scrollTo({ left: row.scrollLeft + n.left - r.left - (r.width - n.width) / 2, behavior });
   }, [at, behavior]);
 
   const go = (i: number) => {

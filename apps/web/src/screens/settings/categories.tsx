@@ -142,6 +142,8 @@ function RuleList({ rules }: { rules: Rule[] }) {
             icon={categoryIcon(r.category)}
             tone={categoryTone(r.category)}
             title={`When the payee has “${readableName(r.merchant)}” → ${r.category}`}
+            // the switch says what it turns on (QA B04 redesign run 3, 12)
+            name={`${readableName(r.merchant)} is a hawker`}
             // where it came from, and the switch's state in words either way (QA B04 redesign, finding 8)
             description={`${r.setBy === 'agent' ? "Sen's suggestion, confirmed" : 'From your answer'} · ${r.hawker ? 'A hawker' : 'Not a hawker'}`}
             checked={r.hawker}

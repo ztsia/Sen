@@ -90,9 +90,8 @@ export default function CaptureApps() {
             <ChevronDownIcon className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
           </summary>
           <p className="pt-1 text-pretty">
-            Sen stores what they say. When an app's wording is new to Sen, that one notification goes to Google once,
-            with long numbers masked, so Sen can learn to read it. Other apps' notifications are ignored and never
-            stored.
+            Sen keeps what they say. Wording new to Sen goes to Google once, long numbers masked, so Sen learns to read
+            it. Other apps are ignored and never stored.
           </p>
         </details>
       </div>

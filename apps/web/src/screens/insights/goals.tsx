@@ -1,30 +1,181 @@
 import { SenMark } from '@/components/look/avatar';
 import { useUi } from '@/frame/ui-store';
-import { ChevronRightIcon, TargetIcon } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronRightIcon, PlusIcon, TargetIcon } from 'lucide-react';
 import { formatSen, percent } from '@sen/core/money';
 import type { GoalSummary, GoalsView } from '@sen/core/views';
 import { GroupCard } from '@/blocks/group';
+import { MoneyInput, checkAmount } from '@/blocks/money-input';
 import { Money } from '@/blocks/money';
+import { Sheet } from '@/blocks/sheet';
 import { EmptyState } from '@/blocks/states';
-import { useGoals } from '@/data/hooks';
+import { Button } from '@/components/ui/button';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useAccountList, useGoals, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { shortDay } from '@/lib/dates';
+import { newId } from '@/lib/uid';
 import { cn } from '@/lib/utils';
 import { Loaded, useGo } from '../kit';
 
 /**
  * Goals (screens.md, spec §10): each goal and bucket with its progress, what it needs each cycle, and
- * the median surplus that needs paying for, with how many cycles it comes from.
+ * the median surplus that needs paying for, with how many cycles it comes from. Adding one by hand is
+ * in the app bar (D134); it's kept in one of the person's accounts, so it needs one to add to.
  */
 export default function Goals() {
   const q = useGoals();
+  const accounts = useAccountList();
+  const [adding, setAdding] = useState(false);
+  const kept = [...(accounts.data?.tracked ?? []), ...(accounts.data?.elsewhere ?? [])];
   return (
-    <Screen bar={<AppBar title="Goals" />}>
+    <Screen
+      bar={
+        <AppBar
+          title="Goals"
+          action={
+            <Button variant="outline" size="sm" disabled={!kept.length} onClick={() => setAdding(true)}>
+              <PlusIcon aria-hidden="true" />
+              Add a goal
+            </Button>
+          }
+        />
+      }
+    >
       <Loaded q={q} what="your goals">
         {(v) => <Body v={v} />}
       </Loaded>
+      <Sheet open={adding} onOpenChange={setAdding} title="Add a goal">
+        {/* the form's body remounts each time the sheet opens, so nothing typed for one shows in the next */}
+        {adding ? <GoalForm accounts={kept} onClose={() => setAdding(false)} /> : null}
+      </Sheet>
     </Screen>
+  );
+}
+
+/** Which field an error is about: one message at a time (Budgets). */
+type Where = 'name' | 'target' | 'account';
+
+/** Adds a goal or a yearly bucket by hand (D134): its name, what it's for, its target, when, and the account it's kept in. */
+function GoalForm({ accounts, onClose }: { accounts: { id: string; name: string }[]; onClose: () => void }) {
+  const write = useWrite();
+  const [name, setName] = useState('');
+  const [kind, setKind] = useState<'goal' | 'bucket'>('goal');
+  const [target, setTarget] = useState('');
+  const [by, setBy] = useState('');
+  const [accountId, setAccountId] = useState<string | null>(null);
+  const [error, setError] = useState<{ at: Where; message: string }>();
+  const save = async () => {
+    if (name.trim() === '') return setError({ at: 'name', message: 'Type its name.' });
+    const r = checkAmount(target);
+    if (r.error !== undefined && target !== '') return setError({ at: 'target', message: r.error });
+    const sen = r.sen;
+    if (sen === undefined || sen === 0) return setError({ at: 'target', message: 'Type the target.' });
+    if (accountId === null) return setError({ at: 'account', message: "Pick the account it's kept in." });
+    onClose();
+    await write({
+      type: 'goal.add',
+      id: newId(),
+      name: name.trim(),
+      kind,
+      target: sen,
+      by: by === '' ? null : by,
+      accountId,
+    });
+  };
+  return (
+    <div className="flex flex-col gap-4">
+      <Field data-invalid={error?.at === 'name' ? true : undefined}>
+        <FieldLabel htmlFor="goal-name">Name</FieldLabel>
+        <Input
+          id="goal-name"
+          value={name}
+          maxLength={60}
+          autoFocus
+          aria-invalid={error?.at === 'name' ? true : undefined}
+          onChange={(e) => {
+            setError(undefined);
+            setName(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void save();
+          }}
+        />
+        {error?.at === 'name' ? <FieldError>{error.message}</FieldError> : null}
+      </Field>
+      <Field>
+        <FieldLabel id="goal-kind">Kind</FieldLabel>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          spacing={2}
+          aria-labelledby="goal-kind"
+          value={kind}
+          onValueChange={(v) => v && setKind(v as 'goal' | 'bucket')}
+        >
+          <ToggleGroupItem value="goal">A goal</ToggleGroupItem>
+          <ToggleGroupItem value="bucket">Every year</ToggleGroupItem>
+        </ToggleGroup>
+      </Field>
+      <MoneyInput
+        label="Target"
+        value={target}
+        onChange={(t) => {
+          setError(undefined);
+          setTarget(t);
+        }}
+        error={error?.at === 'target' ? error.message : undefined}
+        onEnter={() => void save()}
+      />
+      <Field>
+        <FieldLabel htmlFor="goal-by">By when (optional)</FieldLabel>
+        <Input
+          id="goal-by"
+          type="date"
+          value={by}
+          onChange={(e) => {
+            setError(undefined);
+            setBy(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void save();
+          }}
+        />
+      </Field>
+      <Field data-invalid={error?.at === 'account' ? true : undefined}>
+        <FieldLabel id="goal-account">Kept in</FieldLabel>
+        <div
+          className="-mx-4 flex gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none]"
+          role="group"
+          aria-labelledby="goal-account"
+        >
+          {accounts.map((a) => (
+            <Button
+              key={a.id}
+              variant={accountId === a.id ? 'default' : 'outline'}
+              size="chip"
+              aria-pressed={accountId === a.id}
+              className={cn(accountId === a.id && 'font-semibold')}
+              onClick={() => {
+                setAccountId(a.id);
+                setError(undefined);
+              }}
+            >
+              {a.name}
+            </Button>
+          ))}
+        </div>
+        {error?.at === 'account' ? (
+          <FieldError>{error.message}</FieldError>
+        ) : (
+          <FieldDescription>Sen can't move money: on payday it says how much to move here.</FieldDescription>
+        )}
+      </Field>
+      <Button onClick={() => void save()}>Save</Button>
+    </div>
   );
 }
 

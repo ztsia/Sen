@@ -13,7 +13,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { Command } from '@sen/core/commands';
-import { formatSen } from '@sen/core/money';
 import type { ReviewItem, ReviewView } from '@sen/core/views';
 import { CategorySheet } from '@/blocks/category-sheet';
 import { Money } from '@/blocks/money';
@@ -127,7 +126,8 @@ function ReviewBody({ r }: { r: ReviewView }) {
                     key={s.splitId}
                     icon={SplitIcon}
                     title={s.bill}
-                    secondary={`${s.people} · ${formatSen(s.back)} of ${formatSen(s.of)}`}
+                    // what's still to come is the row's amount, so the line under it fits (QA B04 redesign run 3, 4)
+                    secondary={s.people}
                     sen={s.of - s.back}
                     onOpen={() => go('split', { id: s.splitId })}
                   />

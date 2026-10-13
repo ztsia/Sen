@@ -83,8 +83,8 @@ export default function CapturedOnPhone() {
       {first.data ? (
         <div className="flex min-h-full flex-col">
           <p className="px-4 pt-2 pb-2 text-sm text-muted-foreground">
-            {total === 1 ? '1 notification' : `${total} notifications`}, newest first, as the apps wrote them, with
-            their numbers hidden. They stay on this phone.
+            {total === 1 ? '1 notification' : `${total} notifications`}, newest first, numbers hidden. They stay on this
+            phone.
           </p>
           {events.length === 0 ? (
             <EmptyState

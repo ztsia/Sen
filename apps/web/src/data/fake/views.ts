@@ -518,7 +518,8 @@ export function txnView(db: Db, env: FakeEnv, id: string): TxnView | null {
     splitView = {
       id: split.id,
       state: split.lockedAt ? 'Final' : 'Still changing',
-      detail: `${paid.length} of ${others.length} paid you back · ${formatSen(sum(paid.map((m) => m.share)))} of ${formatSen(sum(others.map((m) => m.share)))}`,
+      // a no-break space keeps the · with the words before it when the line wraps (QA B04 redesign run 3, 12)
+      detail: `${paid.length} of ${others.length} paid you back\u00a0· ${formatSen(sum(paid.map((m) => m.share)))} of ${formatSen(sum(others.map((m) => m.share)))}`,
     };
   }
   return {

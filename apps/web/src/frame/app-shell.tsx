@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Outlet, useMatches, useNavigate } from '@tanstack/react-router';
+import { Outlet, useMatches } from '@tanstack/react-router';
 import { OfflineBanner } from '@/blocks/states';
 import { Toaster } from '@/components/ui/sonner';
 import { useAgentOn, useNeedsYouCount } from '@/data/hooks';
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { screenById, showsSenButton, showsTabBar, type ScreenDef } from '@/screens/registry';
 import { LookProvider } from '@/theme/look';
 import { SenButton } from './sen-button';
+import { useReceiptPicker } from './receipt-picker';
 import { ScanMoreSheet, SenSheet } from './sheets';
 import { TabBar } from './tab-bar';
 import { useUi } from './ui-store';
@@ -80,7 +81,8 @@ function PersonShell({ screen }: { screen: ScreenDef | undefined }) {
   // the dev panel's offline state shows what offline looks like without cutting the connection
   const devOffline = useUi((s) => s.devState) === 'offline';
   const online = useOnline() && !devOffline;
-  const navigate = useNavigate();
+  // a tap on Scan opens the camera straight away (D69)
+  const pick = useReceiptPicker();
   const { reviewCount, senState, setSenOpen, setScanMoreOpen } = useUi();
   const needsYou = useNeedsYouCount();
   // Lost, the tab bar stays, with no tab active, so there's always a way back.
@@ -103,19 +105,22 @@ function PersonShell({ screen }: { screen: ScreenDef | undefined }) {
             <TabBar
               active={screen?.tab ?? null}
               reviewCount={reviewCount ?? needsYou}
-              onScan={() => void navigate({ to: '/scan' })}
+              onScan={pick.openCamera}
               onScanMore={() => setScanMoreOpen(true)}
             />
           </div>
         ) : null}
       </div>
       <SenSheet from={screen?.title ?? 'Home'} />
-      <ScanMoreSheet />
+      <ScanMoreSheet onCamera={pick.openCamera} onGallery={pick.openGallery} />
+      {pick.inputs}
       <Toaster
         position="bottom-center"
         visibleToasts={1}
-        offset={{ bottom: tabs ? 96 : 16 }}
-        mobileOffset={{ bottom: tabs ? 96 : 16, left: 12, right: sen ? 84 : 12 }}
+        // above the tab bar, or on a task screen above its main button, so a toast never takes its tap
+        // (QA B04 redesign run 3, 6)
+        offset={{ bottom: tabs ? 96 : 88 }}
+        mobileOffset={{ bottom: tabs ? 96 : 88, left: 12, right: sen ? 84 : 12 }}
       />
       {DevPanel ? (
         <Suspense>

@@ -1,33 +1,198 @@
 import { SenMark } from '@/components/look/avatar';
 import { useUi } from '@/frame/ui-store';
 import { useState } from 'react';
-import { CheckIcon, ChevronDownIcon, CircleDashedIcon, RepeatIcon, XIcon, type LucideIcon } from 'lucide-react';
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  CircleDashedIcon,
+  PlusIcon,
+  RepeatIcon,
+  XIcon,
+  type LucideIcon,
+} from 'lucide-react';
+import { SUB_CURRENCIES } from '@sen/core/commands';
 import { formatSen } from '@sen/core/money';
 import type { SubscriptionsView } from '@sen/core/views';
 import { StatTiles } from '@/blocks/facts';
+import { MoneyInput, checkAmount } from '@/blocks/money-input';
 import { Money } from '@/blocks/money';
+import { Sheet } from '@/blocks/sheet';
 import { EmptyState } from '@/blocks/states';
 import { IconTile } from '@/blocks/tile';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useSubscriptions } from '@/data/hooks';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useSubscriptions, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { shortDay } from '@/lib/dates';
+import { newId } from '@/lib/uid';
+import { cn } from '@/lib/utils';
 import { Loaded } from '../kit';
 
 /**
  * Subscriptions (screens.md, spec §11): the monthly commitment, then each declared subscription with
  * its next renewal and what was expected against what was charged. A subscription's history is
- * collapsed to a count until you open it (D130).
+ * collapsed to a count until you open it (D130). Adding one by hand is in the app bar (D134).
  */
 export default function Subscriptions() {
   const q = useSubscriptions();
+  const [adding, setAdding] = useState(false);
   return (
-    <Screen bar={<AppBar title="Subscriptions" />}>
+    <Screen
+      bar={
+        <AppBar
+          title="Subscriptions"
+          action={
+            <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
+              <PlusIcon aria-hidden="true" />
+              Add a subscription
+            </Button>
+          }
+        />
+      }
+    >
       <Loaded q={q} what="your subscriptions">
         {(v) => <Body v={v} />}
       </Loaded>
+      <Sheet
+        open={adding}
+        onOpenChange={setAdding}
+        title="Add a subscription"
+        description="A forecast: the charge that matches it is what counts."
+      >
+        {/* the form's body remounts each time the sheet opens, so nothing typed for one shows in the next */}
+        {adding ? <SubscriptionForm onClose={() => setAdding(false)} /> : null}
+      </Sheet>
     </Screen>
+  );
+}
+
+type Currency = (typeof SUB_CURRENCIES)[number];
+
+/** The sign before a subscription's amount: the currency's own, `RM` for ringgit. */
+const PREFIX: Record<Currency, string> = { MYR: 'RM', USD: 'US$', SGD: 'S$', EUR: '€', GBP: '£' };
+
+/** Which field an error is about: one message at a time (Budgets). */
+type Where = 'name' | 'amount' | 'renewal';
+
+/** Adds a subscription by hand (D134): its name, the currency and amount of each charge, how often, and the next renewal. */
+function SubscriptionForm({ onClose }: { onClose: () => void }) {
+  const write = useWrite();
+  const [name, setName] = useState('');
+  const [currency, setCurrency] = useState<Currency>('MYR');
+  const [amount, setAmount] = useState('');
+  const [cadence, setCadence] = useState<'monthly' | 'yearly'>('monthly');
+  const [renewal, setRenewal] = useState('');
+  const [error, setError] = useState<{ at: Where; message: string }>();
+  const save = async () => {
+    if (name.trim() === '') return setError({ at: 'name', message: 'Type its name.' });
+    const r = checkAmount(amount);
+    if (r.error !== undefined && amount !== '') return setError({ at: 'amount', message: r.error });
+    const sen = r.sen;
+    if (sen === undefined || sen === 0) return setError({ at: 'amount', message: 'Type the amount.' });
+    if (renewal === '') return setError({ at: 'renewal', message: 'Pick the next renewal date.' });
+    onClose();
+    await write({
+      type: 'subscription.add',
+      id: newId(),
+      name: name.trim(),
+      amount: sen,
+      currency,
+      cadence,
+      nextRenewal: renewal,
+    });
+  };
+  return (
+    <div className="flex flex-col gap-4">
+      <Field data-invalid={error?.at === 'name' ? true : undefined}>
+        <FieldLabel htmlFor="subscription-name">Name</FieldLabel>
+        <Input
+          id="subscription-name"
+          value={name}
+          maxLength={60}
+          autoFocus
+          aria-invalid={error?.at === 'name' ? true : undefined}
+          onChange={(e) => {
+            setError(undefined);
+            setName(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void save();
+          }}
+        />
+        {error?.at === 'name' ? <FieldError>{error.message}</FieldError> : null}
+      </Field>
+      <Field>
+        <FieldLabel id="subscription-currency">Currency</FieldLabel>
+        <div
+          className="-mx-4 flex gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none]"
+          role="group"
+          aria-labelledby="subscription-currency"
+        >
+          {SUB_CURRENCIES.map((c) => (
+            <Button
+              key={c}
+              variant={currency === c ? 'default' : 'outline'}
+              size="chip"
+              aria-pressed={currency === c}
+              className={cn(currency === c && 'font-semibold')}
+              onClick={() => {
+                setCurrency(c);
+                setError(undefined);
+              }}
+            >
+              {c}
+            </Button>
+          ))}
+        </div>
+      </Field>
+      <MoneyInput
+        label="Amount each time"
+        prefix={PREFIX[currency]}
+        value={amount}
+        onChange={(t) => {
+          setError(undefined);
+          setAmount(t);
+        }}
+        error={error?.at === 'amount' ? error.message : undefined}
+        onEnter={() => void save()}
+      />
+      <Field>
+        <FieldLabel id="subscription-cadence">How often</FieldLabel>
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          spacing={2}
+          aria-labelledby="subscription-cadence"
+          value={cadence}
+          onValueChange={(v) => v && setCadence(v as 'monthly' | 'yearly')}
+        >
+          <ToggleGroupItem value="monthly">Monthly</ToggleGroupItem>
+          <ToggleGroupItem value="yearly">Yearly</ToggleGroupItem>
+        </ToggleGroup>
+      </Field>
+      <Field data-invalid={error?.at === 'renewal' ? true : undefined}>
+        <FieldLabel htmlFor="subscription-renewal">Next renewal</FieldLabel>
+        <Input
+          id="subscription-renewal"
+          type="date"
+          value={renewal}
+          aria-invalid={error?.at === 'renewal' ? true : undefined}
+          onChange={(e) => {
+            setError(undefined);
+            setRenewal(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void save();
+          }}
+        />
+        {error?.at === 'renewal' ? <FieldError>{error.message}</FieldError> : null}
+      </Field>
+      <Button onClick={() => void save()}>Save</Button>
+    </div>
   );
 }
 

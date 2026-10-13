@@ -28,7 +28,7 @@ import { IconTile } from '@/blocks/tile';
 import { toastDone } from '@/blocks/toast';
 import { newId } from '@/lib/uid';
 import { startDraft, useCategories, useMe, usePayments, useTxn, useWrite } from '@/data/hooks';
-import { AppBar } from '@/frame/app-bar';
+import { AppBar, goBack } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { SenMark } from '@/components/look/avatar';
 import { useUi } from '@/frame/ui-store';
@@ -151,7 +151,7 @@ function TxnBody({ v }: { v: TxnView }) {
     // a double tap deletes once and goes back once (QA B03 run 2, finding 21)
     onSelect: settled(() => {
       void write({ type: 'txn.delete', id: t.id }).then((r) => {
-        if (r) router.history.back();
+        if (r) goBack(router);
       });
     }),
   });

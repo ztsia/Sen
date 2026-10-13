@@ -184,24 +184,29 @@ export interface Stat {
   emphasis?: boolean;
 }
 
-/** Two or three figures side by side, each with its caption. */
+/**
+ * Two or three figures, each with its caption: two across at most, so a figure never breaks over lines;
+ * a third takes the next row whole (owner, 13 Oct).
+ */
 export function StatTiles({ stats, className }: { stats: Stat[]; className?: string }) {
   return (
     <div
       className={cn('grid gap-2 px-4', className)}
-      style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))` }}
+      style={{ gridTemplateColumns: `repeat(${Math.min(2, stats.length)}, minmax(0, 1fr))` }}
     >
-      {stats.map((s) => (
+      {stats.map((s, i) => (
         <div
           key={s.label}
           className={cn(
             'flex min-w-0 flex-col gap-0.5 rounded-[var(--radius-card,16px)] border px-3 py-3',
             // the emphasised tile is tinted, not a card: a look's card material would repaint it (Line)
             s.emphasis ? 'border-primary/25 bg-primary/10' : 'card bg-card',
+            stats.length > 2 && stats.length % 2 === 1 && i === stats.length - 1 && 'col-span-2',
           )}
         >
           <span className="text-xs text-foreground">{s.label}</span>
-          <span className="text-lg font-semibold wrap-anywhere">{s.value}</span>
+          {/* two across leaves room for a whole figure; it breaks only if even that is too narrow (very large text) */}
+          <span className="text-lg font-semibold wrap-break-word">{s.value}</span>
         </div>
       ))}
     </div>
