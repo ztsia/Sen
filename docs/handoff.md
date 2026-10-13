@@ -8,20 +8,19 @@ facts and actions look alike. **D130 decides the redesign:** calm, card-based sc
 Its brief is `docs/briefs/B04-redesign.md`, branch `B04/redesign`, PR *B04 · Redesign*.
 **B05** (`docs/briefs/B05-server.md`) waits until it's merged.
 
-**Phase 1 is done and pushed** (13 Oct), and `review` points at it for the owner's phone check:
-D130's blocks in `apps/web/src/blocks/` (`tile`, `group`, `facts`, `choice`, `steps`) and the gallery,
-`patterns.md` §7 rewritten, and `txn`, `settings` and `settings/appearance` rebuilt as the references.
-`apps/web/scripts/shots.mjs` takes screenshots for any batch.
+**Phases 1 and 2 are done and pushed** (13 Oct). D130's blocks, `patterns.md` §7, and every screen
+rebuilt in batches A–E; `SettingsRow` and `DetailPage` are gone. `apps/web/scripts/shots.mjs` takes
+screenshots. A full e2e run (148 failures, about 21 distinct tests) found real product bugs, now
+fixed: avatar contrast, unnamed progress bars, the pager's focus, stat tiles truncating, and two
+disclosures whose 48 px extension covered the Back button. The rest are tests on old wording.
 
-**Phase 2 is running:** batches A, B and C on Sonnet in the main tree; D and E twice each (Sonnet and
-Haiku), each in its own worktree, for the A/B test. If this session ends before they report, re-run a
-batch from its rows in the brief: nothing of theirs is committed until reviewed.
+**In progress:** a Haiku agent (high effort) updating the e2e tests to the redesign, with a full
+run at `E2E_LOOKS=minted,copper` at the end. If this session ends first, re-run it from its list in
+the session's last message or from the run's failures.
 
 ### What to do next
-1. Review each report and diff, fix what's off, and commit. For D and E, compare the two runs (cost
-   from `node scripts/usage.mjs`, review fixes needed, screenshots), keep the better, and log the result.
-2. Remove `DetailPage` and `SettingsRow` once no screen uses them.
-3. Haiku sweep of screenshots in all six looks, then e2e fixes, then QA, then the PR *B04 · Redesign*.
+1. Review the e2e diff and commit; fix any product finding it reports yourself.
+2. Haiku screenshot sweep in all six looks, then QA (`qa` skill), then the PR *B04 · Redesign*.
 
 ### Decided with the owner (13 Oct; all recommended options taken)
 - **Home fits one screen** at 390×844 by compressing: the payday plan becomes a one-line strip, the
@@ -36,10 +35,10 @@ batch from its rows in the brief: nothing of theirs is committed until reviewed.
   the skeleton keeps a still placeholder.
 
 ### Open with the owner
-- The A/B result goes in CLAUDE.md's *Models and subagents* once measured.
-- ztsia/claude_skills#2 (the shared `uiux` update) waits for the owner's merge. Add D130's rules
-  there after this slice.
+- `claude_skills` branch `workflow/brain-and-cards` (D130's uiux rules, D131's model principle, the
+  implementer on Haiku at high) is pushed; the owner opens or asks for its PR.
 
 ## Don't argue again
-- D129's levels and the 48 px target rule; D130's card-based structure (owner's calls).
+- D129's levels and the 48 px target rule; D130's card-based structure; D131, Opus decides and briefs
+  completely, Haiku at high by default (owner's calls).
 - Deploys only by merge (D122); the review build follows the `review` branch (D115).
