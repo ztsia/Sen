@@ -226,7 +226,7 @@ agents are in `.claude/agents/`:
 | Agent | Use it when | Don't, when |
 |---|---|---|
 | `implementer` (Sonnet) | A slice's build splits into **batches already decided**, each worth a brief: a group of screens from `patterns.md`, tests from given criteria, a port, boilerplate across files. Each batch owns its own files, so several run **in parallel, in the background** | The change is under about 100 lines, needs a design decision, or touches a non-negotiable's logic (money, RLS, dedupe, the listener's filters): do it yourself |
-| `implementer` on **Haiku** (`model: haiku` on the Agent call, low effort) | A **mechanical** batch: a batch of up to about 8 screens once their reference screens and blocks exist and the brief says what's primary on each (the A/B below), copying a finished example to more files, test boilerplate from given criteria, lint and format fixes, doc syncs to a decision, reading logs, screenshot sweeps. About a twentieth of Sonnet's price | The batch needs judgment (layout choices, a tricky state, anything a reviewer would argue about): Sonnet |
+| `implementer` on **Haiku** (`model: haiku` on the Agent call, at medium effort like Sonnet) | A **mechanical** batch: a batch of up to about 8 screens once their reference screens and blocks exist and the brief says what's primary on each (the A/B below), copying a finished example to more files, test boilerplate from given criteria, lint and format fixes, doc syncs to a decision, reading logs, screenshot sweeps. About a twentieth of Sonnet's price | The batch needs judgment (layout choices, a tricky state, anything a reviewer would argue about): Sonnet |
 | `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill: a full run when a slice is finished, then the tiers | |
 | `scout` (Haiku) | Something too big to read: a long CI log, a large unfamiliar area | A lookup one `grep` or a filtered log answers; its cold start costs more than it saves |
 
@@ -246,8 +246,8 @@ tokens each). The cost is a cold start per agent, so:
   a repo-wide formatter) and twice reported an hour-long test run as done while it was running. Keep
   it for mechanical work, with the contract spelled out, *only your files*, and *wait for long runs
   to end*.
-- **The A/B test, on the B04 redesign (13 Oct):** batches D and E each ran on Sonnet and on Haiku
-  (low effort) from the same pointer brief, each in a worktree. *D* (8 screens): Haiku $0.11 against
+- **The A/B test, on the B04 redesign (13 Oct):** batches D and E each ran on Sonnet (medium, the
+  `implementer`'s default) and on Haiku (low, an uneven start) from the same pointer brief, each in a worktree. *D* (8 screens): Haiku $0.11 against
   Sonnet $1.12, comparable screens, no slips; Haiku's was kept. *E* (17 screens): Haiku $0.16 against
   Sonnet $3.10, but Haiku didn't finish. **The briefs were the same; what differed was paths.** E's
   Haiku `cd`'d into the main checkout (`/home/user/Sen/...`) for its first edits instead of its
@@ -262,6 +262,9 @@ tokens each). The cost is a cold start per agent, so:
     brief says *every path you use starts with that*. A worktree may start at `main`'s head, so it
     checks out the slice's commit first.
   - **Check a Haiku diff's file list** before applying it, and that it ran its checks.
+  - **Haiku runs at medium, as Sonnet does.** Per token it's a twentieth of Sonnet's price
+    ($0.10/$0.50 against $2/$10 per million), so even if more effort doubles its tokens it stays about
+    ten times cheaper; low saved cents and may cost a retry.
 - **Subagents can't start subagents** (tested twice). Anything an agent would delegate, the main
   session starts itself: the `qa` skill's Haiku sweep runs before the reviewer, not inside it.
 - **Two end-to-end runs never overlap**: they share ports 4173/4174 and the build folders. Queue them.
