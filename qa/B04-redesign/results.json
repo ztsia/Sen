@@ -1,0 +1,2161 @@
+{
+ "module": "B04-redesign",
+ "branch": "B04/redesign",
+ "verdict": "fix first",
+ "generatedAt": "2026-10-13 15:30 UTC",
+ "phases": "1-3, 5, 6 (phase 4 does not apply)",
+ "headline": "Run 3 found one visible bug on a starred screen (Insights slides sideways after Goals or Year), one way to lose data with a double tap (Sen's memory), and three behaviours the suite cannot see breaking (tab bar on task screens, estimate wording, the + on money in). Run 1 and 2's fixes hold: 232 of 233 of their specs pass.",
+ "summary": {
+  "criteria": 57,
+  "pass": 49,
+  "fail": 7,
+  "unreachable": 1
+ },
+ "suites": {
+  "unit": "307/307 pass (also under TZ=America/Los_Angeles and TZ=Pacific/Auckland)",
+  "typecheck": "clean at HEAD 1ec88b7 (the sweep, at c60cc48, had TS2304 in data/fake/index.ts; fixed by HEAD)",
+  "lint": "clean, including qa/e2e/b04r-r3-*",
+  "hygiene": "passed",
+  "e2e (project, sweep)": "811 pass, 0 fail (preview and production, 1512 screenshots)",
+  "QA run 1 and 2 specs, rerun on this commit": "232 of 233 pass; the one red is run 1 Note 12 (first-cycle strip)",
+  "QA run 3 specs (qa/e2e/b04r-r3-*)": "46 tests in the final pass (flows A-F, evidence); 37 pass, 9 red, each a finding (FLOW-4b, X1, 14b, EV-1 to EV-6)",
+  "QA run 3 survey": "48 screens x 5 configurations, 0 external requests, 0 page errors"
+ },
+ "findings": [
+  {
+   "id": 1,
+   "severity": "Major",
+   "status": "open",
+   "title": "Insights: choosing Goals or Year (or swiping there) slides the whole screen sideways, cutting off the left edge of every card and the tab bar",
+   "detail": "`StepPager` calls `scrollIntoView({ block: 'nearest', inline: 'center' })` on the chosen step name (`apps/web/src/blocks/steps.tsx:90`). `scrollIntoView` scrolls every scrollable ancestor, and the app shell (`div.safe-top`, `overflow: hidden`, `scrollWidth` 1917) is one, so it moves sideways until the name is centred in the shell too. The first two steps need no shift; the later ones do. The shift is not reset until you leave Insights. It is the screen the owner marked with a star.",
+   "repro": "/insights in any look -> tap Goals, then Year (or swipe to them). In the console: document.querySelector('div.safe-top').scrollLeft. Spec: qa/e2e/b04r-r3-flowsA.spec.ts 'R3-FLOW-4b', b04r-r3-evidence.spec.ts 'R3-EV-3'",
+   "evidence": "shell scrollLeft after each step: {\"Budgets\":0,\"Subscriptions\":0,\"Goals\":36,\"Year\":97}\nat 360 px: 0, 0, 21, 82; at 412 px: 0, 0, 47, 108; at 430 px: 0, 0, 56, 117\nR3-EV-3: shell scrollLeft 97, tab bar left edge -97\n(the first card sits at x=-97: its \"Insights\" title reads \"ghts\")",
+   "spec": "R3-AC-7, brief insights, patterns §7 StepPager",
+   "screenshots": [
+    "R3-EV-3-insights-year-shifted.png",
+    "R3-FLOW-4-step-8-year-shifted.png"
+   ]
+  },
+  {
+   "id": 2,
+   "severity": "Major",
+   "status": "open",
+   "title": "Sen's memory: a double tap on Forget forgets two notes, and Undo brings back only one",
+   "detail": "`memory.tsx` calls `write({ type: 'memory.forget' })` straight from `onClick`, with no tap guard. The list closes up under the finger, so a second tap forgets the next note; one toast replaces the other, so Undo restores only the last. The first note is gone for good. patterns §7 says every destructive or list-changing action uses `settled()`; txn Delete, Skipped and Review do, Forget does not.",
+   "repro": "/s/agent/memory -> tap the first Forget twice, 150 ms apart on the same pixel -> Undo. Spec: b04r-r3-flowsB.spec.ts 'R3-FLOW-X1', b04r-r3-evidence.spec.ts 'R3-EV-4'",
+   "evidence": "R3-EV-4: 4 notes, 2 after a double tap, 3 after Undo\ntoasts after the double tap: [ 'Forgotten\\nUndo' ] (one)",
+   "spec": "R3-AC-24, patterns §7 Toasts and undo (one change per double tap)",
+   "screenshots": [
+    "R3-EV-4-memory-two-forgotten.png",
+    "R3-EV-4-memory-after-undo.png"
+   ]
+  },
+  {
+   "id": 3,
+   "severity": "Major",
+   "status": "open",
+   "title": "Three behaviours the contract cares about can be broken with every test staying green",
+   "detail": "Probed by one-line breaks against the project's own suites (apps/web, minted, 239 tests on a dev server; the red ones in every run are the production-only and slow-look tests that cannot pass on a dev server, 8 of them, also red with no break). (a) The tab bar hides on task screens (P §6): `showsTabBar` returning true for everything, and `manual`, `payday`, `confirm`, `balance-check` marked `pushed`, turned only `frame.spec`'s /scan check red (the first) and nothing (the second). (b) Predictions are words, not facts: Insights' takeaway `An estimate for payday:` changed to `Left at payday:`, and Usage's `Estimated cost` / `About RM` / `The cost is an estimate…` changed to `Cost` / `RM` / `The cost.`: no test noticed. Only the cycle sheet's `An estimate` is asserted. (c) Money in carries a `+` (P §3, colour is never the only signal): `const plus = false` in `Money` turned nothing red (one unrelated timing flake in blocks.spec 'right after Undo' appeared once under load; it passes 3 of 3 with the break when the machine is quiet).",
+   "repro": "see the Probes table; scripts in qa/e2e/b04r3-proj.config.ts",
+   "evidence": "(a) 53 passed, 1 failed: frame.spec.ts:174 'the frame clears the status bar and, with no tab bar...' (the /scan assertion). With manual/payday/confirm/balance-check set to 'pushed': 231 passed, 8 failed, all in edges.spec/production.spec (the same 8 as on clean source)\n(b) and (c): 231 passed, 8 failed (the same 8)\ngrep '+RM' apps/web/e2e: no assertion",
+   "spec": "R3-AC-57, CLAUDE.md \"a prediction never shares a table with a fact\", patterns §3, §6",
+   "screenshots": []
+  },
+  {
+   "id": 4,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Review > Waiting on others: the total after \"of\" is cut off with an ellipsis at 390 px, in every look",
+   "detail": "The second line of a waiting split (`1 of 2 paid you back · RM48.80 of RM97.60`) is `truncate`d in a column 196 px wide, so `of RM97.60` / `of RM28.93` never shows. patterns §3: amounts are never truncated; a merchant name truncates first. The same line wraps correctly on the Payment screen.",
+   "repro": "/review -> scroll to Waiting on others. Spec: b04r-r3-evidence.spec.ts 'R3-EV-1'",
+   "evidence": "R3-EV-1: [\"1 of 2 paid you back · RM48.80 of RM97.60 | scrollWidth 252 > clientWidth 196\",\"0 of 2 paid you back · RM0.00 of RM28.93 | scrollWidth 250 > clientWidth 196\"]",
+   "spec": "R3-AC-40, patterns §3",
+   "screenshots": [
+    "R3-EV-1-review-waiting-amount-cut.png"
+   ]
+  },
+  {
+   "id": 5,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Text at 1.5x on a 360 px phone: Budgets runs off the screen, Settings cuts its amount, and the app bar title becomes \"B…\"",
+   "detail": "patterns §8 says text scales to at least 1.5x without clipping and amounts wrap before they truncate. At 390 px the project's own check passes; at 360 px (a common Android width) Budgets' `RM0.00 of RM150.00` ends at x=399 of 360, the Settings Sen row's `~RM3.80 this month` and Settings > Sen's `About RM3.80` are cut by an ellipsis, the Appearance row's title and state overlap, and with *Add a budget* in the bar the title is `B…`. The project check runs at 390 only.",
+   "repro": "set localStorage 'sen.dev.textScale' = '1.5', viewport 360x740: /s/budgets and /s/settings. Spec: b04r-r3-evidence.spec.ts 'R3-EV-2'; survey b04r-r3-survey.spec.ts",
+   "evidence": "R3-EV-2: budgets past the right edge: [\"RM0.00 of RM150.00 right=399 of 360\"]\nR3-EV-2: settings truncated: [\"~RM3.80 this month scrollW 181 > 83\"]\nsurvey 360-1.5x: /s/settings truncated \"~RM3.80 this month\"; /s/settings/sen truncated \"About RM3.80\"",
+   "spec": "R3-AC-43, patterns §8",
+   "screenshots": [
+    "R3-EV-2-budgets-1.5x-360.png",
+    "R3-EV-2-settings-1.5x-360.png"
+   ]
+  },
+  {
+   "id": 6,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Payday: the toast after Skip sits on the next step's main button and takes the tap",
+   "detail": "On a task screen there is no tab bar, so the 6-second toast (\"Skipped. It waits in Review\") lands at y 756-804, exactly where Next or Save is. `document.elementFromPoint` at the button's centre returns the toast, and a real tap does nothing. Skipping and then tapping Next is the usual rhythm.",
+   "repro": "/s/payday?scenario=payday -> Next, then Skip, then tap Next at once. Spec: b04r-r3-evidence.spec.ts 'R3-EV-6'",
+   "evidence": "R3-EV-6: Next {\"y\":\"756-804\",\"topmostIsToast\":true}\nR3-EV-6: a real tap on Next: Step 3 of 4 -> Step 3 of 4",
+   "spec": "R3-AC-55, patterns §7 Toasts and undo",
+   "screenshots": [
+    "R3-EV-6-payday-toast-over-next.png"
+   ]
+  },
+  {
+   "id": 7,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Balance check and first-run's accounts step don't validate when you leave a field",
+   "detail": "Both screens reset a field's error to the empty string on every keystroke (`setErrors(... : '')`); `MoneyInput` shows `error ?? blurError`, and `''` is not nullish, so the blur message never shows. Add expense passes `undefined` and works. patterns §7: validate on blur and on submit.",
+   "repro": "/s/balance-check -> type 14,65O.87 in a field -> Tab. Spec: b04r-r3-flowsC.spec.ts 'R3-FLOW-14b'",
+   "evidence": "R3-FLOW-14: typo \"14,65O.87\": messages on blur [], on Save [\"Type the amount in ringgit, like 12.50.\"]\nfirst-run accounts, \"12x\" then Tab: FIRSTRUN blur []\nsources: screens/money/balance-form.tsx (`setErrors((e) => ({ ...e, [r.id]: '' }))`), screens/outside/first-run.tsx:222",
+   "spec": "R3-AC-54, patterns §7 Forms",
+   "screenshots": [
+    "R3-FLOW-14-step-3-blur.png"
+   ]
+  },
+  {
+   "id": 8,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Delete (and the app bar's Back) call history.back() with nothing to go back to when a payment is opened from a link",
+   "detail": "`txn.tsx` Delete ends with `router.history.back()` and `AppBar` Back is `router.history.back()`; Add expense and Balance check check `router.history.canGoBack()` first. A payment opened from a notification or widget has no earlier in-app screen. In a browser tab the page after Delete is the previous document (here `about:blank`); I could not try the Android shell.",
+   "repro": "open /s/txn?id=<a payment> directly -> ⋯ -> Delete. Spec: b04r-r3-evidence.spec.ts 'R3-EV-5' (the harness adds an about:blank entry, so history.length is 2)",
+   "evidence": "R3-EV-5: history.length 2; after Delete the page is about:blank",
+   "spec": "R3-AC-56, screens.md \"Back always returns to where you came from\"",
+   "screenshots": [
+    "R3-EV-5-delete-direct-load.png"
+   ]
+  },
+  {
+   "id": 9,
+   "severity": "Note",
+   "status": "open",
+   "title": "D129 and patterns §7 disagree on small labels over cards",
+   "detail": "D129: a heading is always bigger than what it heads. §7's `GroupCard` takes a label above it in secondary text (13 px), and Review's kinds (*Categories · 2*), Accounts' *Elsewhere* and Subscriptions' *Declared* are 13 px over 15 px rows. The code follows §7. The owner should say which wins.",
+   "repro": "survey: b04r-r3-survey.spec.ts (heading)",
+   "evidence": "/review \"Categories · 2\" 13px < 15px; /s/accounts \"Elsewhere\" 13px < 15px; /s/subscriptions \"Declared\" 13px < 15px",
+   "spec": "D129, patterns §2, §7",
+   "screenshots": []
+  },
+  {
+   "id": 10,
+   "severity": "Note",
+   "status": "open",
+   "title": "Four screens carry a 3 to 4 line paragraph where the brief allows one line",
+   "detail": "At 390 px: Balance check's intro (3 lines), Capture > Your apps' and Keep Sen running's closing paragraphs (4 lines each), Captured on this phone (3 lines, allowed by §7's raw-notification rule). They are footnotes rather than how-tos.",
+   "repro": "survey: b04r-r3-survey.spec.ts (intro)",
+   "evidence": "intro: /s/balance-check 3 lines; /s/settings/capture/apps 4 lines; /s/settings/capture/running 4 lines; /s/settings/capture/captured 3 lines",
+   "spec": "brief rule 7",
+   "screenshots": []
+  },
+  {
+   "id": 11,
+   "severity": "Note",
+   "status": "still failing",
+   "title": "Carried from run 1: the first-cycle scenario shows the Payday plan strip",
+   "detail": "b04r-home.spec.ts 'home: strip opens payday...' is still red for `first-cycle` (232 of 233 of runs 1 and 2 pass). Left on purpose in the ledger.",
+   "repro": "/?scenario=first-cycle",
+   "evidence": "Locator: getByRole('button', { name: /Payday plan/ })  Expected: 0  Received: 1",
+   "spec": "brief home, S home",
+   "screenshots": []
+  },
+  {
+   "id": 12,
+   "severity": "Note",
+   "status": "open",
+   "title": "Small things on the way",
+   "detail": "Payments' count reads `1151 payments` while More reads `1,151`. The Split row on a payment wraps its separator to the start of a line (`· RM0.00 of RM28.93`). A rule's switch in Settings > Categories > Rules is named by its sentence, not by what it switches (*A hawker*). `RM58.30 on Ryt Bank` on the receipt is cut by 3 px.",
+   "repro": "/s/payments; /s/txn?id=<Nasi Kandar>; /s/settings/categories (Rules)",
+   "evidence": "status \"1151 payments\"; ariaSnapshot: switch \"When the payee has “Warung Pak Hamid” → Meals\" [checked]; receipt: \"RM58.30 on Ryt Bank | scrollW=130 clientW=127\"",
+   "spec": "patterns §3, §5, §8",
+   "screenshots": []
+  }
+ ],
+ "probes": [
+  {
+   "broke": "Review tap guard: `if (pending.current || !settleTap()) return;` -> `if (false) return;` (blocks/rows.tsx)",
+   "caught": true,
+   "note": "redesign-pins 'one tap answers one question': Expected 11, Received 10 (the first attempt passed only because Vite had not yet served the edit; verified by curl on the retry)"
+  },
+  {
+   "broke": "scaleSen rounding: `(a * 2n + d) / (d * 2n)` -> `a / d` (money.ts, floors instead of rounding)",
+   "caught": true,
+   "note": "money.test.ts: 3 failed (expected 2 to be 3; 150 to be 151; 4195 to be 4196)"
+  },
+  {
+   "broke": "split shares: even shares by `Math.floor(price / n)` instead of `apportion` (areas/splits.ts)",
+   "caught": true,
+   "note": "splits.test.ts: 2 failed (expected 5828 to be 5830; 5826 to be 5830)"
+  },
+  {
+   "broke": "`.tap` utility's 48 px extension removed (styles/app.css)",
+   "caught": true,
+   "note": "screens.spec 'every B04 screen in minted, light': targets are 48 px, red"
+  },
+  {
+   "broke": "DEV_TOOLS = true in a production build (lib/env.ts)",
+   "caught": true,
+   "note": "production.spec 'production shows Not built yet, the pinned look, and no dev tools': red"
+  },
+  {
+   "broke": "txn.create dedupe removed (`if (false && existing)`)",
+   "caught": true,
+   "note": "fake.test.ts 'adds a payment by hand once, however often the outbox retries it': expected length 1, got 2"
+  },
+  {
+   "broke": "listener stand-in: OTP no longer dropped (dev/capture-sim.ts)",
+   "caught": true,
+   "note": "capture.spec 'Captured on this phone lists what arrived': red. (The stand-in is outside this slice's diff)"
+  },
+  {
+   "broke": "tab bar shown on every screen (`showsTabBar` = `!!d`)",
+   "caught": true,
+   "note": "only frame.spec 'the frame clears the status bar and, with no tab bar...' (it checks /scan only)"
+  },
+  {
+   "broke": "payday, manual, confirm, balance-check marked `pushed` instead of `task` (tab bar shows on them)",
+   "caught": false,
+   "note": "239 tests: only the 8 environment failures (the same as with no break). Finding 3"
+  },
+  {
+   "broke": "Insights takeaway `An estimate for payday:` -> `Left at payday:`; Usage `Estimated cost`/`About RM`/note dropped",
+   "caught": false,
+   "note": "239 tests: only the same 8 environment failures. Finding 3"
+  },
+  {
+   "broke": "Money in loses its `+` (`const plus = false` in blocks/money.tsx)",
+   "caught": false,
+   "note": "239 tests: the 8 environment failures plus one timing flake in blocks.spec 'right after Undo' that passes 3 of 3 with the break on a quiet machine. No test asserts +RM. Finding 3"
+  },
+  {
+   "broke": "`Number(t)` planted in packages/core/src/money.ts",
+   "caught": true,
+   "note": "eslint: 'Money is integer sen: parse typed text with parseSen, never Number()'"
+  }
+ ],
+ "flows": [
+  {
+   "id": "R3-FLOW-1",
+   "title": "Home fits in every scenario, look and mode; the cycle sheet adds up",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/ in 7 scenarios x 6 looks x light/dark",
+   "covers": [
+    "R3-AC-1",
+    "R3-AC-2",
+    "R3-AC-9"
+   ],
+   "spec": "brief home, cycle",
+   "status": "pass",
+   "ends": "no scroll in 42 combinations; income minus spending equals left to the sen; the estimate is its own line",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Home (Minted light)",
+     "assertion": "no scroll in 42 scenario/look/mode combinations",
+     "status": "pass",
+     "screenshot": "R3-FLOW-1-step-1-home.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap the large figure",
+     "assertion": "income - spending = left, to the sen; the estimate is its own line labelled An estimate",
+     "status": "pass",
+     "screenshot": "R3-FLOW-1-step-2-cycle-sheet.png"
+    },
+    {
+     "n": 3,
+     "action": "Without capture: tap the figure",
+     "assertion": "the sheet counts by month and never says payday",
+     "status": "pass",
+     "screenshot": "R3-FLOW-1-step-3-month-sheet.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-2",
+   "title": "Home under pressure: health bar, Payday card, Sen still reachable",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/?scenario=capture-off, /?scenario=payday",
+   "covers": [
+    "R3-AC-1"
+   ],
+   "spec": "brief home",
+   "status": "pass",
+   "ends": "still fits, nothing clipped, Sen opens \"Looking at: Home\"",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Home, capture-off, minted light",
+     "assertion": "fits, shows \"Capture may be off\", nothing clipped",
+     "status": "pass",
+     "screenshot": "R3-FLOW-2-step-1-capture-off-minted.png"
+    },
+    {
+     "n": 2,
+     "action": "Open Home, capture-off, firefly dark",
+     "assertion": "fits, shows \"Capture may be off\", nothing clipped",
+     "status": "pass",
+     "screenshot": "R3-FLOW-2-step-2-capture-off-firefly.png"
+    },
+    {
+     "n": 3,
+     "action": "Open Home, payday, minted light",
+     "assertion": "fits, shows \"Payday\", nothing clipped",
+     "status": "pass",
+     "screenshot": "R3-FLOW-2-step-3-payday-minted.png"
+    },
+    {
+     "n": 4,
+     "action": "Open Home, payday, firefly dark",
+     "assertion": "fits, shows \"Payday\", nothing clipped",
+     "status": "pass",
+     "screenshot": "R3-FLOW-2-step-4-payday-firefly.png"
+    },
+    {
+     "n": 5,
+     "action": "Tap Sen's button",
+     "assertion": "Sen opens with \"Looking at: Home\" and the note is in the conversation",
+     "status": "pass",
+     "screenshot": "R3-FLOW-2-step-5-sen-sheet.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-3",
+   "title": "Review: counts add up, chips, one change per double tap, Undo, Apply all",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Review tab",
+   "covers": [
+    "R3-AC-3",
+    "R3-AC-4",
+    "R3-AC-5",
+    "R3-AC-6"
+   ],
+   "spec": "brief review, patterns §7",
+   "status": "pass",
+   "ends": "groups sum to the header and badge; one answer per tap; Undo restores; nothing applied before Apply all",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Review",
+     "assertion": "group counts sum to the header and the badge; Waiting on others is not counted",
+     "status": "pass",
+     "screenshot": "R3-FLOW-3-step-1-groups.png"
+    },
+    {
+     "n": 2,
+     "action": "Measure the answer chips",
+     "assertion": "drawn 32 px, tap area 48 px, at most 3 answers + Other",
+     "status": "pass",
+     "screenshot": "R3-FLOW-3-step-2-chips.png"
+    },
+    {
+     "n": 3,
+     "action": "Tap Meals",
+     "assertion": "the count falls by one and a toast offers Undo",
+     "status": "pass",
+     "screenshot": "R3-FLOW-3-step-3-answered.png"
+    },
+    {
+     "n": 4,
+     "action": "Tap Undo",
+     "assertion": "the count is back and the card is back in place",
+     "status": "pass",
+     "screenshot": "R3-FLOW-3-step-4-undone.png"
+    },
+    {
+     "n": 5,
+     "action": "Tap Apply all",
+     "assertion": "both of Sen's picks are applied and the banner is gone; an Undo is offered",
+     "status": "pass",
+     "screenshot": "R3-FLOW-3-step-5-apply-all.png"
+    },
+    {
+     "n": 6,
+     "action": "Review with nothing to do",
+     "assertion": "\"Nothing needs you.\"",
+     "status": "pass",
+     "screenshot": "R3-FLOW-3-step-6-empty.png"
+    },
+    {
+     "n": 7,
+     "action": "Two taps 900 ms apart",
+     "assertion": "two cards answered",
+     "status": "pass",
+     "screenshot": "R3-FLOW-3-step-7-two-answers.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-4",
+   "title": "Insights: named steps, counter, swipe, empty; and the sideways shift (fails)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Insights tab",
+   "covers": [
+    "R3-AC-7",
+    "R3-AC-44"
+   ],
+   "spec": "brief insights, patterns §7 StepPager",
+   "status": "fail",
+   "ends": "one card at a time, counter right, reduced motion jumps; BUT choosing Goals or Year scrolls the shell sideways",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Insights",
+     "assertion": "five named steps, \"1 of 5\", the first selected",
+     "status": "pass",
+     "screenshot": "R3-FLOW-4-step-1-first.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap Goals",
+     "assertion": "\"4 of 5\", Goals selected, only that card is exposed",
+     "status": "pass",
+     "screenshot": "R3-FLOW-4-step-2-goals.png"
+    },
+    {
+     "n": 3,
+     "action": "Swipe right",
+     "assertion": "the counter moves to 3 of 5",
+     "status": "pass",
+     "screenshot": "R3-FLOW-4-step-3-swiped.png"
+    },
+    {
+     "n": 4,
+     "action": "Look for the cycle picker",
+     "assertion": "the cycle picker is above the steps and not inside the pager",
+     "status": "pass",
+     "screenshot": "R3-FLOW-4-step-4-picker.png"
+    },
+    {
+     "n": 5,
+     "action": "Insights with no data",
+     "assertion": "an EmptyState, no pager",
+     "status": "pass",
+     "screenshot": "R3-FLOW-4-step-5-empty.png"
+    },
+    {
+     "n": 6,
+     "action": "Tap Budgets, Subscriptions, Goals, Year in turn",
+     "assertion": "the screen never scrolls sideways (the app shell stays at scrollLeft 0, the card is at x=0)",
+     "status": "fail",
+     "screenshot": "R3-FLOW-4-step-8-year-shifted.png"
+    },
+    {
+     "n": 7,
+     "action": "Tap Budgets with and without reduced motion",
+     "assertion": "under reduced motion the first sample already sits at 390 (no slide); without it the samples pass through intermediate values",
+     "status": "pass",
+     "screenshot": "R3-FLOW-4-step-9-reduced-motion.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-5",
+   "title": "Settings tour and Appearance; the friend's Settings",
+   "kind": "happy",
+   "actor": "owner, friend",
+   "entry": "More -> Settings",
+   "covers": [
+    "R3-AC-25",
+    "R3-AC-26"
+   ],
+   "spec": "brief settings, appearance",
+   "status": "pass",
+   "ends": "states are words; Copper and Dark survive a reload; System follows the phone; a friend sees no Members, Capture or Claims",
+   "steps": [
+    {
+     "n": 1,
+     "action": "More -> Settings (owner)",
+     "assertion": "a profile card, Setup / Features / Data groups, each row with its state, no placeholder words",
+     "status": "pass",
+     "screenshot": "R3-FLOW-5-step-1-settings.png"
+    },
+    {
+     "n": 2,
+     "action": "Open Appearance",
+     "assertion": "Mode has System/Light/Dark with icons; Look is six cards, each a live preview; the quarterly switch is on with the next change date",
+     "status": "pass",
+     "screenshot": "R3-FLOW-5-step-2-appearance.png"
+    },
+    {
+     "n": 3,
+     "action": "Choose Copper, then Dark",
+     "assertion": "the look and mode change at once; choosing a look turns the quarterly switch off and says it is pinned",
+     "status": "pass",
+     "screenshot": "R3-FLOW-5-step-3-pinned.png"
+    },
+    {
+     "n": 4,
+     "action": "Reload with no query string",
+     "assertion": "Copper and Dark are kept; the quarterly switch is still off",
+     "status": "pass",
+     "screenshot": "R3-FLOW-5-step-4-reloaded.png"
+    },
+    {
+     "n": 5,
+     "action": "Choose System, then flip the phone to dark",
+     "assertion": "the mode follows the phone, live",
+     "status": "pass",
+     "screenshot": "R3-FLOW-5-step-5-system.png"
+    },
+    {
+     "n": 6,
+     "action": "Turn Change each quarter back on",
+     "assertion": "the switch is on and names the next change",
+     "status": "pass",
+     "screenshot": "R3-FLOW-5-step-6-quarterly-on.png"
+    },
+    {
+     "n": 7,
+     "action": "Open Settings as a friend without capture",
+     "assertion": "no Members, Capture, Claims rows; their own email on the profile card",
+     "status": "pass",
+     "screenshot": "R3-FLOW-5-step-7-friend.png"
+    },
+    {
+     "n": 8,
+     "action": "A friend opens the Members URL directly",
+     "assertion": "the member list (people, emails, credit) is not shown",
+     "status": "pass",
+     "screenshot": "R3-FLOW-5-step-8-friend-members.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-6",
+   "title": "Payment detail: facts, actions, Delete behind the menu, Undo restores exactly",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Payments -> a row",
+   "covers": [
+    "R3-AC-17"
+   ],
+   "spec": "brief txn",
+   "status": "pass",
+   "ends": "Undo returns every field of the payment; a double tap deletes one",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Nasi Kandar Abc",
+     "assertion": "title-cased payee; RM58.30; \"Fri, 16 Oct, 19:32 · Ryt Bank\"; where it came from; four round actions (Receipt, Split, Ask Sen, More); facts: Category, Your spending, Note",
+     "status": "pass",
+     "screenshot": "R3-FLOW-6-step-1-detail.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap More",
+     "assertion": "a menu with Mark as… and Delete (No receipt is only offered when there is none)",
+     "status": "pass",
+     "screenshot": "R3-FLOW-6-step-2-menu.png"
+    },
+    {
+     "n": 3,
+     "action": "Tap Delete",
+     "assertion": "the payment is deleted in the db; the toast offers Undo",
+     "status": "pass",
+     "screenshot": "R3-FLOW-6-step-3-deleted.png"
+    },
+    {
+     "n": 4,
+     "action": "Tap Undo",
+     "assertion": "the same payment is back, with every field as it was (amount, category, share, note, account, time)",
+     "status": "pass",
+     "screenshot": "R3-FLOW-6-step-4-restored.png"
+    },
+    {
+     "n": 5,
+     "action": "Double tap Delete",
+     "assertion": "one payment deleted, not two (the second tap lands on the row that slid under it)",
+     "status": "pass",
+     "screenshot": "R3-FLOW-6-step-5-double-delete.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-7",
+   "title": "More hub states follow the scenario",
+   "kind": "happy",
+   "actor": "owner, friend",
+   "entry": "More tab",
+   "covers": [
+    "R3-AC-8"
+   ],
+   "spec": "brief more",
+   "status": "pass",
+   "ends": "states real; no Accounts or Claims for a friend without capture",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open More (owner, capture on, claims on)",
+     "assertion": "Payments, Shared bills, Accounts, Claims, Settings each with a state",
+     "status": "pass",
+     "screenshot": "R3-FLOW-7-step-1-default.png"
+    },
+    {
+     "n": 2,
+     "action": "Open More as a friend without capture or claims",
+     "assertion": "no Accounts row, no Claims row",
+     "status": "pass",
+     "screenshot": "R3-FLOW-7-step-2-friend.png"
+    },
+    {
+     "n": 3,
+     "action": "More with an empty ledger",
+     "assertion": "Payments says 0 / none in words",
+     "status": "pass",
+     "screenshot": "R3-FLOW-7-step-3-empty.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-8",
+   "title": "Manual entry: text becomes exact sen, or is refused; double save; Undo",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Review -> Add it",
+   "covers": [
+    "R3-AC-12",
+    "R3-AC-13",
+    "R3-AC-40"
+   ],
+   "spec": "CLAUDE.md money, patterns §7 Forms",
+   "status": "pass",
+   "ends": "seven valid amounts stored as exact sen; fifteen malformed refused with nothing saved; one payment per double tap; Undo removes it",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Save seven valid amounts",
+     "assertion": "each is stored as exactly the integer sen typed (1250, 10, 123456, 1250, 1, 9999999999999, 700)",
+     "status": "pass",
+     "screenshot": "R3-FLOW-8-step-1-saved.png"
+    },
+    {
+     "n": 2,
+     "action": "Try fifteen malformed amounts",
+     "assertion": "each is refused in words under the field and nothing is saved; the form stays open",
+     "status": "pass",
+     "screenshot": "R3-FLOW-8-step-2-refused.png"
+    },
+    {
+     "n": 3,
+     "action": "Double-click Save",
+     "assertion": "exactly one payment of 2345 sen is added",
+     "status": "pass",
+     "screenshot": "R3-FLOW-8-step-9-double-save.png"
+    },
+    {
+     "n": 4,
+     "action": "Save RM31.07",
+     "assertion": "a toast with Undo; the db holds 3107",
+     "status": "pass",
+     "screenshot": "R3-FLOW-8-step-10-saved-toast.png"
+    },
+    {
+     "n": 5,
+     "action": "Tap Undo",
+     "assertion": "the payment is gone: the manual list is what it was",
+     "status": "pass",
+     "screenshot": "R3-FLOW-8-step-11-undone.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-9",
+   "title": "Splits: public link, shared bills, shares add up, Share sheet",
+   "kind": "happy",
+   "actor": "owner, friend",
+   "entry": "split link in a clean browser; More -> Shared",
+   "covers": [
+    "R3-AC-18",
+    "R3-AC-19"
+   ],
+   "spec": "brief shared, split, split-public",
+   "status": "pass",
+   "ends": "hostile name stays literal; final is read-only; unknown links say closed; shares add to the bill to the sen",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open a split link with no login",
+     "assertion": "a name box; items are disabled until you type your name; no tab bar and no Sen button",
+     "status": "pass",
+     "screenshot": "R3-FLOW-9-step-1-name.png"
+    },
+    {
+     "n": 2,
+     "action": "Type a 300-letter name containing an <img onerror>",
+     "assertion": "the markup is shown as text (no img element is created), nothing scrolls sideways",
+     "status": "pass",
+     "screenshot": "R3-FLOW-9-step-2-hostile-name.png"
+    },
+    {
+     "n": 3,
+     "action": "Mei unticks Kuey teow goreng",
+     "assertion": "Your share so far falls to RM0.00 and the item says nobody has ticked it",
+     "status": "pass",
+     "screenshot": "R3-FLOW-9-step-3-untick.png"
+    },
+    {
+     "n": 4,
+     "action": "Re-tick, then tap I've ticked everything I had",
+     "assertion": "Mei was the last to finish and every item is claimed, so the split locks: \"Final\", the share is RM12.48, ticks are read-only",
+     "status": "pass",
+     "screenshot": "R3-FLOW-9-step-4-done.png"
+    },
+    {
+     "n": 5,
+     "action": "Open a final split",
+     "assertion": "ticks are read-only with \"To change a tick, ask Wei Ming.\"; the share is RM22.14; Pay RM22.14 is offered",
+     "status": "pass",
+     "screenshot": "R3-FLOW-9-step-5-final.png"
+    },
+    {
+     "n": 6,
+     "action": "Open a closed link",
+     "assertion": "\"This split is closed\" and nothing else",
+     "status": "pass",
+     "screenshot": "R3-FLOW-9-step-6-closed.png"
+    },
+    {
+     "n": 7,
+     "action": "Open Shared bills",
+     "assertion": "Open selected: three bills, each with a status line in words; \"you owe RM24.40\" present",
+     "status": "pass",
+     "screenshot": "R3-FLOW-9-step-20-shared-open.png"
+    },
+    {
+     "n": 8,
+     "action": "Choose Settled",
+     "assertion": "an EmptyState with an icon, a title and a line; no bare text",
+     "status": "pass",
+     "screenshot": "R3-FLOW-9-step-21-shared-settled.png"
+    },
+    {
+     "n": 9,
+     "action": "Open the Nasi Kandar split (still changing)",
+     "assertion": "shares + the unclaimed item = the bill: 23.17 + 24.27 + 4.66 + 6.20 = 58.30",
+     "status": "pass",
+     "screenshot": "R3-FLOW-9-step-30-shares-before.png"
+    },
+    {
+     "n": 10,
+     "action": "Tick Telur dadar",
+     "assertion": "nothing is unclaimed; the three shares add to exactly RM58.30",
+     "status": "pass",
+     "screenshot": "R3-FLOW-9-step-31-ticked.png"
+    },
+    {
+     "n": 11,
+     "action": "Tap Share",
+     "assertion": "a sheet with the QR for the table and the link; the QR has a text alternative",
+     "status": "pass",
+     "screenshot": "R3-FLOW-9-step-32-share-sheet.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-10",
+   "title": "Claims: month card, one main action, a claim shows where it is",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More -> Claims",
+   "covers": [
+    "R3-AC-20",
+    "R3-AC-21"
+   ],
+   "spec": "brief claims, claim",
+   "status": "pass",
+   "ends": "the pack is in the app bar; Send to ESS sends only what is ready; the stepper marks one current step",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Claims",
+     "assertion": "a September card \"2 to submit · RM152.00 of RM200.00\" with a bar whose value is 76; Send to ESS is the one 48 px primary button; Download claim pack is an icon button in the app bar",
+     "status": "pass",
+     "screenshot": "R3-FLOW-10-step-1-claims.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap Send to ESS",
+     "assertion": "only the claim with its evidence complete is sent: the toast says \"Sending 1 claim\", never 2",
+     "status": "pass",
+     "screenshot": "R3-FLOW-10-step-2-send.png"
+    },
+    {
+     "n": 3,
+     "action": "Open the Parking claim (evidence missing)",
+     "assertion": "a stepper Draft, Ready, Sent, Approved, Paid where exactly one step is marked current for a screen reader (aria-current or hidden text); missing evidence says how to add it",
+     "status": "pass",
+     "screenshot": "R3-FLOW-10-step-3-claim.png"
+    },
+    {
+     "n": 4,
+     "action": "Open the Phone bill claim (evidence complete)",
+     "assertion": "the current step is Ready",
+     "status": "pass",
+     "screenshot": "R3-FLOW-10-step-4-claim-ready.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-11",
+   "title": "Members and the admin's blindness",
+   "kind": "happy",
+   "actor": "admin",
+   "entry": "Settings -> Members",
+   "covers": [
+    "R3-AC-31",
+    "R3-AC-25"
+   ],
+   "spec": "brief members, D52",
+   "status": "pass",
+   "ends": "a pushed screen; the only amounts are AI credit; bad invite refused; same address twice is one row; Remove asks",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Members (admin)",
+     "assertion": "Invite in the app bar; seats \"2 of 20\" as a meter; a row per person with a status badge",
+     "status": "pass",
+     "screenshot": "R3-FLOW-11-step-1-members.png"
+    },
+    {
+     "n": 2,
+     "action": "Open Hui Min",
+     "assertion": "a pushed screen (URL changed, no dialog); the only amounts are AI credit (balance, allowance); nothing about their payments, accounts or balances; Remove is last, in destructive",
+     "status": "pass",
+     "screenshot": "R3-FLOW-11-step-2-member.png"
+    },
+    {
+     "n": 3,
+     "action": "Tap Remove",
+     "assertion": "it asks first (\"Remove Hui Min?\") and Cancel leaves them in place",
+     "status": "pass",
+     "screenshot": "R3-FLOW-11-step-3-remove.png"
+    },
+    {
+     "n": 4,
+     "action": "Invite \"nope\"",
+     "assertion": "an error under the field; nobody is added; the sheet stays open",
+     "status": "pass",
+     "screenshot": "R3-FLOW-11-step-4-bad-email.png"
+    },
+    {
+     "n": 5,
+     "action": "Invite a valid address",
+     "assertion": "one new row \"Invited\"; seats stay 2 of 20 for a browser friend",
+     "status": "pass",
+     "screenshot": "R3-FLOW-11-step-5-invited.png"
+    },
+    {
+     "n": 6,
+     "action": "Invite the same address again (other case, spaces)",
+     "assertion": "still one row: the second is a no-op",
+     "status": "pass",
+     "screenshot": "R3-FLOW-11-step-6-invite-again.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-12",
+   "title": "Categories and rules",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Settings -> Categories",
+   "covers": [
+    "R3-AC-27"
+   ],
+   "spec": "brief categories",
+   "status": "pass",
+   "ends": "hue tiles that differ by position; sentence rules with their origin",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Categories",
+     "assertion": "a grid of tiles, each named, with its rule count in the accessible name; the segment says Categories",
+     "status": "pass",
+     "screenshot": "R3-FLOW-12-step-1-grid.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap Meals",
+     "assertion": "its sheet opens (a dialog) and names the category and its rules",
+     "status": "pass",
+     "screenshot": "R3-FLOW-12-step-2-sheet.png"
+    },
+    {
+     "n": 3,
+     "action": "Open the Rules segment",
+     "assertion": "one intro line; each rule is a sentence card with where it came from",
+     "status": "pass",
+     "screenshot": "R3-FLOW-12-step-3-rules.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-14",
+   "title": "Balance check: differences by sign, Unaccounted booked once; blur validation (fails)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More -> Accounts -> Check balances",
+   "covers": [
+    "R3-AC-16",
+    "R3-AC-54"
+   ],
+   "spec": "brief balance-check, patterns §7 Forms",
+   "status": "fail",
+   "ends": "RM5.00 more, RM1.00 less, No difference; two Unaccounted payments for a double click; BUT a typo is not flagged on blur",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Type a higher, a lower and an equal figure",
+     "assertion": "\"RM5.00 more than Sen has\", \"RM1.00 less than Sen has\", and \"No difference\" for the equal one",
+     "status": "pass",
+     "screenshot": "R3-FLOW-14-step-1-differences.png"
+    },
+    {
+     "n": 2,
+     "action": "Double-click Save",
+     "assertion": "two checks (Ryt, Public Bank; the equal one books nothing extra but is a check) and exactly two Unaccounted payments, not four",
+     "status": "pass",
+     "screenshot": "R3-FLOW-14-step-2-saved.png"
+    },
+    {
+     "n": 3,
+     "action": "Type a typo and tab out of the field",
+     "assertion": "the field says \"Type the amount in ringgit\" when you leave it, as Add expense does (patterns §7: validate on blur and on submit)",
+     "status": "fail",
+     "screenshot": "R3-FLOW-14-step-3-blur.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-15",
+   "title": "Budgets, subscriptions, goals, goal, year",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Insights cards",
+   "covers": [
+    "R3-AC-22",
+    "R3-AC-23"
+   ],
+   "spec": "brief",
+   "status": "pass",
+   "ends": "over budget in words and an icon; history collapsed; goals never in the warning colour",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Budgets",
+     "assertion": "At risk: Meals 78% spent / Shopping \"Over by RM20.30\" with an icon and words; On track below; \"Add a budget\" in the app bar; each row says its figure and status in words",
+     "status": "pass",
+     "screenshot": "R3-FLOW-15-step-1-budgets.png"
+    },
+    {
+     "n": 2,
+     "action": "Open Subscriptions",
+     "assertion": "RM141.90 committed each month; four compact cards; each history collapsed (\"3 matched · 1 expected\", \"4 matched\") and expandable",
+     "status": "pass",
+     "screenshot": "R3-FLOW-15-step-2-subs.png"
+    },
+    {
+     "n": 3,
+     "action": "Open Goals",
+     "assertion": "Japan 49%, \"RM2,950.00 of RM6,000.00\", \"Needs RM610.00 a cycle\"; no goal bar or text in the warning colour",
+     "status": "pass",
+     "screenshot": "R3-FLOW-15-step-3-goals.png"
+    },
+    {
+     "n": 4,
+     "action": "Open the Japan goal",
+     "assertion": "a large ring, a fact grid, \"At this pace\" labelled About <date> (a projection, in words), contributions listed; sum of contributions = the saved RM2,950.00",
+     "status": "pass",
+     "screenshot": "R3-FLOW-15-step-4-goal.png"
+    },
+    {
+     "n": 5,
+     "action": "Open The year",
+     "assertion": "a chart with a table equivalent (12 months); savings rate 15% as a stat tile; \"Relief tags\" group",
+     "status": "pass",
+     "screenshot": "R3-FLOW-15-step-5-year.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-16",
+   "title": "Sen's memory, research and usage",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Sen -> more",
+   "covers": [
+    "R3-AC-24",
+    "R3-AC-50"
+   ],
+   "spec": "brief agent/*",
+   "status": "pass",
+   "ends": "named Forget buttons; draft/confirmed badges; usage parts add to the total and the cost says estimate",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open What Sen remembers",
+     "assertion": "four notes, each with a Forget icon button named \"Forget: <the note>\"; none contains an amount",
+     "status": "pass",
+     "screenshot": "R3-FLOW-16-step-1-memory.png"
+    },
+    {
+     "n": 2,
+     "action": "Open Research",
+     "assertion": "three briefs with status badges (Draft, Confirmed, Draft) and the number of findings; the intro says a draft is not confirmed",
+     "status": "pass",
+     "screenshot": "R3-FLOW-16-step-2-research.png"
+    },
+    {
+     "n": 3,
+     "action": "Open Usage",
+     "assertion": "StatTiles \"Used this month 320k tokens\" and \"Estimated cost About RM3.80\"; a stacked bar with a legend: 182k + 96k + 42k = 320k",
+     "status": "pass",
+     "screenshot": "R3-FLOW-16-step-3-usage.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-18",
+   "title": "Offline: a banner, Not synced yet, one row after reconnecting",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "preview build with its service worker, setOffline",
+   "covers": [
+    "R3-AC-46"
+   ],
+   "spec": "patterns §7 Offline",
+   "status": "pass",
+   "ends": "one RM13.37 row; marked while offline; plain after 6 s online",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Go offline",
+     "assertion": "a banner \"You're offline\" (not an error toast); the screen keeps working",
+     "status": "pass",
+     "screenshot": "R3-FLOW-18-step-1-offline.png"
+    },
+    {
+     "n": 2,
+     "action": "Save RM13.37 while offline",
+     "assertion": "exactly one RM13.37 row in Payments, marked \"Not synced yet\"",
+     "status": "pass",
+     "screenshot": "R3-FLOW-18-step-2-saved-offline.png"
+    },
+    {
+     "n": 3,
+     "action": "Come back online and wait 6 seconds",
+     "assertion": "the banner is gone, the row no longer says Not synced yet, and there is still exactly one RM13.37 row",
+     "status": "pass",
+     "screenshot": "R3-FLOW-18-step-3-online.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-19",
+   "title": "Time zone: Los Angeles and Auckland read the same as Kuala Lumpur",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "three browser contexts",
+   "covers": [
+    "R3-AC-45"
+   ],
+   "spec": "CLAUDE.md conventions",
+   "status": "pass",
+   "ends": "Home, the cycle sheet, Payments and Insights are word for word the same",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Read Home, the cycle sheet, Payments and Insights in three zones",
+     "assertion": "the text is identical in Kuala Lumpur, Los Angeles and Auckland",
+     "status": "pass",
+     "screenshot": "R3-FLOW-19-step-1-tz.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-20",
+   "title": "Text at 1.5x on a 360 px phone: amounts must wrap, not be cut off",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "textScale 1.5, 360x740",
+   "covers": [
+    "R3-AC-43"
+   ],
+   "spec": "patterns §8",
+   "status": "fail",
+   "ends": "nothing clipped; amounts wrap before they truncate",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Budgets at 1.5x text on 360 px",
+     "assertion": "no amount runs past the right edge (RM0.00 of RM150.00 ends at x=399 of 360)",
+     "status": "fail",
+     "screenshot": "R3-EV-2-budgets-1.5x-360.png"
+    },
+    {
+     "n": 2,
+     "action": "Open Settings at the same size",
+     "assertion": "no amount is truncated (~RM3.80 this month is cut to 83 px of 181)",
+     "status": "fail",
+     "screenshot": "R3-EV-2-settings-1.5x-360.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-21",
+   "title": "Production build: no dev tools, no gallery, no made-up data, the look pinned",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "production build on :5293",
+   "covers": [
+    "R3-AC-47",
+    "R3-AC-51"
+   ],
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "ends": "/dev/gallery and ?scenario= do nothing; bundle holds no key, token or fixture",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open /dev/gallery on the production build",
+     "assertion": "it is not served: the app says \"Not built yet\"; no Dev panel button; the look stays Minted",
+     "status": "pass",
+     "screenshot": "R3-FLOW-21-step-1-gallery-absent.png"
+    },
+    {
+     "n": 2,
+     "action": "Open /?scenario=payday&state=error",
+     "assertion": "no made-up data: no Payday card, no RM figure; \"Not built yet\"",
+     "status": "pass",
+     "screenshot": "R3-FLOW-21-step-2-scenario-ignored.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-C1",
+   "title": "first-run (core): wrong codes fail in words; no tab bar until Home",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/first-run",
+   "covers": [
+    "R3-AC-32",
+    "R3-AC-52"
+   ],
+   "spec": "flows first-run, D124",
+   "status": "pass",
+   "ends": "three different wrong-code messages; blocked apps stay off; RM12.345 and an empty name refused; Home with the tab bar",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Type a wrong, a short and an expired code",
+     "assertion": "three different messages in words; still on step 1 of 7; \"Send a new code\" offered; no tab bar",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C1-step-1-wrong-codes.png"
+    },
+    {
+     "n": 2,
+     "action": "Choose the four suggested apps",
+     "assertion": "Ryt Bank, Grab, Touch n Go, MyPB on; WhatsApp, Gmail, Instagram, Messages stay off and disabled",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C1-step-2-apps.png"
+    },
+    {
+     "n": 3,
+     "action": "Type a balance, then a three-decimal one",
+     "assertion": "RM12.345 is refused in words; the step does not advance",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C1-step-3-balances.png"
+    },
+    {
+     "n": 4,
+     "action": "Next with no name",
+     "assertion": "it asks for the name in words and stays on step 6",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C1-step-4-name.png"
+    },
+    {
+     "n": 5,
+     "action": "Finish",
+     "assertion": "Home, with the tab bar back",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C1-step-5-home.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-C2",
+   "title": "pay-new (core): an answer files the payment and makes one rule",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Review -> Roti Bakar 88",
+   "covers": [
+    "R3-AC-52",
+    "R3-AC-27"
+   ],
+   "spec": "flows pay-new, D124",
+   "status": "pass",
+   "ends": "one rule, the payment is done with a category; the rule is listed in Settings; unanswered it waits",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Review shows the new merchant",
+     "assertion": "RM9.50 · Roti Bakar 88 with two guesses and Other…",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C2-step-1-prompt.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap Meals",
+     "assertion": "the card is gone; one rule exists in the db; a toast says \"from now on\" with Undo",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C2-step-2-answered.png"
+    },
+    {
+     "n": 3,
+     "action": "Settings -> Categories -> Rules",
+     "assertion": "a sentence card names Roti Bakar 88 and Meals, with where it came from",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C2-step-3-rule-listed.png"
+    },
+    {
+     "n": 4,
+     "action": "Reload without answering",
+     "assertion": "it still waits in Review (nothing was dropped)",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C2-step-4-waits.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-C3",
+   "title": "scan-after (core): items add up, three people is RM21.38, Attached, Undo, same file twice",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Scan tab",
+   "covers": [
+    "R3-AC-14",
+    "R3-AC-52"
+   ],
+   "spec": "flows scan-after, D124",
+   "status": "pass",
+   "ends": "prices sum to 6413 sen; Done attaches; Undo detaches; the same file says Already added",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Tap the Scan tab",
+     "assertion": "the scanner screen (no tab bar): three tips, Take a photo, From gallery, Add by hand",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C3-step-1-scan.png"
+    },
+    {
+     "n": 2,
+     "action": "Take a (fake) photo and use it",
+     "assertion": "the five item prices add to the total to the sen; the screen says so; no tab bar",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C3-step-2-confirm.png"
+    },
+    {
+     "n": 3,
+     "action": "Tap + twice",
+     "assertion": "RM64.13 / 3 = RM21.38 a person (6413/3 = 2137.67 rounded to 2138 sen); the - button is enabled",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C3-step-3-people.png"
+    },
+    {
+     "n": 4,
+     "action": "Tap Done",
+     "assertion": "a toast \"Attached to RM64.13 on Ryt Bank\" with Undo; one more receipt is attached to a payment",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C3-step-4-attached.png"
+    },
+    {
+     "n": 5,
+     "action": "Tap Undo",
+     "assertion": "the receipt is detached again (attached count back)",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C3-step-5-undone.png"
+    },
+    {
+     "n": 6,
+     "action": "Scan the very same file again",
+     "assertion": "\"Already added\" and no new receipt row",
+     "status": "pass",
+     "screenshot": "R3-FLOW-C3-step-10-same-twice.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-X1",
+   "title": "Double tap on Forget loses two notes (fails)",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Sen -> What Sen remembers",
+   "covers": [
+    "R3-AC-24"
+   ],
+   "spec": "patterns §7 Toasts and undo",
+   "status": "fail",
+   "ends": "one note forgotten, and Undo restores everything the double tap took",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Double tap Forget on the first note, then Undo",
+     "assertion": "one note forgotten, and Undo brings every forgotten note back (before = after Undo)",
+     "status": "fail",
+     "screenshot": "R3-FLOW-X1-step-1-double-tap-forget.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-X3",
+   "title": "Sen's button: tab screens only, labelled, never over the last row",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "four tab screens and six pushed ones",
+   "covers": [
+    "R3-AC-38"
+   ],
+   "spec": "patterns §6",
+   "status": "pass",
+   "ends": "present on the tabs and opens \"Looking at: <tab>\"; absent on pushed screens; covers nothing at the bottom",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Scroll Home to the bottom",
+     "assertion": "nothing at the end of the screen is under Sen's button",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X3-step-1-bottom-home.png"
+    },
+    {
+     "n": 2,
+     "action": "Scroll Review to the bottom",
+     "assertion": "nothing at the end of the screen is under Sen's button",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X3-step-2-bottom-review.png"
+    },
+    {
+     "n": 3,
+     "action": "Scroll Insights to the bottom",
+     "assertion": "nothing at the end of the screen is under Sen's button",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X3-step-3-bottom-insights.png"
+    },
+    {
+     "n": 4,
+     "action": "Scroll More to the bottom",
+     "assertion": "nothing at the end of the screen is under Sen's button",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X3-step-4-bottom-more.png"
+    },
+    {
+     "n": 5,
+     "action": "Open six pushed or task screens",
+     "assertion": "Sen's button is absent on each",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X3-step-5-pushed.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-X4",
+   "title": "Hostile text in a note and in search stays literal",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "txn note, payments search",
+   "covers": [
+    "R3-AC-15"
+   ],
+   "spec": "brief payments",
+   "status": "pass",
+   "ends": "no element created, no script run, nothing scrolls sideways; hostile queries match nothing",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Save a note full of markup, SQL, a path and 400 W",
+     "assertion": "the text shows literally; no element is created; nothing scrolls sideways",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X4-step-1-note.png"
+    },
+    {
+     "n": 2,
+     "action": "Search with %, _, SQL, markup, backslash, a path, 5,000 letters, an emoji, spaces",
+     "assertion": "no script runs, nothing scrolls sideways, and each hostile query shows an empty state rather than every payment",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X4-step-2-search.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-X5",
+   "title": "Payday: a task with an end, every step skippable, skipped steps wait in Review",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/?scenario=payday",
+   "covers": [
+    "R3-AC-10"
+   ],
+   "spec": "brief payday",
+   "status": "pass",
+   "ends": "no tab bar; Undo ghost <= 40 px; four skips leave their steps in Review",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Start the payday card",
+     "assertion": "Step 1 of 4; no tab bar, no Sen button; Undo is a ghost button at most 40 px; Skip is offered",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X5-step-1-step1.png"
+    },
+    {
+     "n": 2,
+     "action": "Skip step 1, 2 and 3",
+     "assertion": "each skip moves on one step (1, 2, 3 of 4)",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X5-step-2-skipped-all.png"
+    },
+    {
+     "n": 3,
+     "action": "Skip the fourth step, then open Review",
+     "assertion": "every skipped step waits in Review (at least the look-back and the plan), nothing is dropped",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X5-step-3-review-waits.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-X6",
+   "title": "Skipped notifications: a card each, two lines, one booking, Undo",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Review -> Skipped",
+   "covers": [
+    "R3-AC-11"
+   ],
+   "spec": "brief skipped",
+   "status": "pass",
+   "ends": "body clamped to 2 lines; one card booked per tap; Undo returns it",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Skipped",
+     "assertion": "three cards; the body text is clamped to 2 lines; each has \"This was a payment\" with an icon",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X6-step-1-cards.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap This was a payment on the first card",
+     "assertion": "one card left the list (two remain) and a toast offers Undo",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X6-step-2-booked.png"
+    },
+    {
+     "n": 3,
+     "action": "Tap Undo",
+     "assertion": "the card is back (three)",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X6-step-3-undone.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-X7",
+   "title": "Add expense layout",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/manual",
+   "covers": [
+    "R3-AC-13"
+   ],
+   "spec": "brief manual",
+   "status": "pass",
+   "ends": "large focused amount; 4 columns of 17 icon tiles; no tab bar; More details discloses",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Add expense",
+     "assertion": "the amount is large (>= 28 px) and focused; categories sit in 4 columns, each an icon tile; no tab bar; Paid from and When are rows in a card; More details is a disclosure",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X7-step-1-layout.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap More details",
+     "assertion": "merchant and note fields appear",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X7-step-2-more.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-X8",
+   "title": "Structure of Payments, Accounts, Capture, You, Email, Account, sign-in, new-look",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "each screen",
+   "covers": [
+    "R3-AC-15",
+    "R3-AC-16",
+    "R3-AC-28",
+    "R3-AC-29",
+    "R3-AC-30",
+    "R3-AC-32"
+   ],
+   "spec": "brief",
+   "status": "pass",
+   "ends": "rows 56+ with marks; accounts and badges; capture checklist; payday choices on one line; delete account in the destructive colour; invitation-only; new-look card",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Payments",
+     "assertion": "rows are 56 px or more with a tinted icon mark; the search box has a search icon",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X8-step-1-payments.png"
+    },
+    {
+     "n": 2,
+     "action": "Open Accounts",
+     "assertion": "five tracked accounts with bank-initial tiles; Ryt \"Checked 1 Oct\", the others \"Not checked\"; Elsewhere holds Maybank with no balance",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X8-step-2-accounts.png"
+    },
+    {
+     "n": 3,
+     "action": "Open Ryt Bank",
+     "assertion": "a header card; facts (Opening balance, Fed by, Last checked); an action bar Check, Payments, Ask Sen; recent payments in a card",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X8-step-3-account.png"
+    },
+    {
+     "n": 4,
+     "action": "Open Capture (nothing chosen yet)",
+     "assertion": "a status card; the checklist Your apps / Notification access / Keep Sen running with their states; Captured on this phone with a count",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X8-step-4-capture.png"
+    },
+    {
+     "n": 5,
+     "action": "Open You",
+     "assertion": "the payday choices are two cards that do not wrap; sharing is a row with its explanation",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X8-step-5-you.png"
+    },
+    {
+     "n": 6,
+     "action": "Open Receipts by email",
+     "assertion": "the address in a card with an inline Copy button that has a name; Gmail steps; the confirmation code card; Received as a row",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X8-step-6-email.png"
+    },
+    {
+     "n": 7,
+     "action": "Open Account",
+     "assertion": "About (Version) and Account (Sign out, Delete account in destructive); until B05 Delete only says nothing was deleted",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X8-step-7-account-screen.png"
+    },
+    {
+     "n": 8,
+     "action": "Sign in as an address that was never invited",
+     "assertion": "it says \"Sen is invitation-only\" in words and sends no code (no code field)",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X8-step-8-invitation-only.png"
+    },
+    {
+     "n": 9,
+     "action": "Open the new-look card",
+     "assertion": "the look name large, Keep it as the main button, Go back, and a Change each quarter switch; a still placeholder (no animation)",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X8-step-9-new-look.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-X9",
+   "title": "Web behaviour: overscroll, selection, context menu, focus",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/txn",
+   "covers": [
+    "R3-AC-49"
+   ],
+   "spec": "patterns §10",
+   "status": "pass",
+   "ends": "overscroll none; bank text selectable, titles not; context menu cancelled; Tab shows focus-visible",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Read the computed styles on a payment page",
+     "assertion": "overscroll none on html and body; what the bank said is selectable; titles are not; the context menu on a title is cancelled; touch-action manipulation",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X9-step-1-css.png"
+    },
+    {
+     "n": 2,
+     "action": "Press Tab",
+     "assertion": "the focused control matches :focus-visible and shows a ring",
+     "status": "pass",
+     "screenshot": "R3-FLOW-X9-step-2-focus.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-E1",
+   "title": "Review, Waiting on others: the total after \"of\" is cut off at 390 px (fails)",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Review tab",
+   "covers": [
+    "R3-AC-40"
+   ],
+   "spec": "patterns §3",
+   "status": "fail",
+   "ends": "no amount is truncated",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Look at Waiting on others",
+     "assertion": "the second line shows \"RM48.80 of RM97.60\" in full",
+     "status": "fail",
+     "screenshot": "R3-EV-1-review-waiting-amount-cut.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-E2",
+   "title": "Insights: the screen slides sideways (fails)",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Insights -> Year",
+   "covers": [
+    "R3-AC-7"
+   ],
+   "spec": "brief insights",
+   "status": "fail",
+   "ends": "the shell stays at scrollLeft 0",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Tap Year",
+     "assertion": "the app shell is still at x=0 (it is at -97)",
+     "status": "fail",
+     "screenshot": "R3-EV-3-insights-year-shifted.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-E3",
+   "title": "Memory: a double tap forgets two notes (fails)",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "What Sen remembers",
+   "covers": [
+    "R3-AC-24"
+   ],
+   "spec": "patterns §7",
+   "status": "fail",
+   "ends": "one note, one Undo",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Double tap Forget on the first note",
+     "assertion": "four notes become two",
+     "status": "fail",
+     "screenshot": "R3-EV-4-memory-two-forgotten.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap Undo",
+     "assertion": "all four are back (three are)",
+     "status": "fail",
+     "screenshot": "R3-EV-4-memory-after-undo.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-E4",
+   "title": "Delete on a payment opened without in-app history",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/txn?id=… loaded directly",
+   "covers": [
+    "R3-AC-56"
+   ],
+   "spec": "screens rules",
+   "status": "fail",
+   "ends": "goes to Home or the tab root",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Delete from the menu",
+     "assertion": "the page after Delete is the app, not the previous document (it is about:blank)",
+     "status": "fail",
+     "screenshot": "R3-EV-5-delete-direct-load.png"
+    }
+   ]
+  },
+  {
+   "id": "R3-FLOW-E5",
+   "title": "Payday: the toast after Skip covers the next main button (fails)",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/payday?scenario=payday",
+   "covers": [
+    "R3-AC-55"
+   ],
+   "spec": "patterns §7 toasts",
+   "status": "fail",
+   "ends": "the Next button is topmost and a tap advances",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Skip a step, then tap Next at once",
+     "assertion": "the tap goes to Step 4 (it stays at Step 3: the toast took it)",
+     "status": "fail",
+     "screenshot": "R3-EV-6-payday-toast-over-next.png"
+    }
+   ]
+  }
+ ],
+ "criteria": [
+  {
+   "id": "R3-AC-1",
+   "title": "Home fits one screen",
+   "spec": "brief home",
+   "status": "pass",
+   "evidence": "42 scenario/look/mode loads, 0 px over; capture-off and payday pass; nothing clipped; Sen reachable (R3-FLOW-1, 2)"
+  },
+  {
+   "id": "R3-AC-2",
+   "title": "Payday strip",
+   "spec": "brief home",
+   "status": "pass",
+   "evidence": "\"Payday plan · 2 of 3\" with icon and chevron in Wei Ming's month; absent in before-salary and month (run-1 spec rerun). Shown in first-cycle (Note 11, carried). The every-move-ticked state is not reachable in the fake"
+  },
+  {
+   "id": "R3-AC-3",
+   "title": "Review grouped by kind, counts add up",
+   "spec": "brief review",
+   "status": "pass",
+   "evidence": "Needs you 12 = Categories 2 + Splits 2 + Checks 7 + New wording 1 = badge 12; Waiting on others not counted (R3-FLOW-3)"
+  },
+  {
+   "id": "R3-AC-4",
+   "title": "Answer chips 32 px, one row",
+   "spec": "brief review",
+   "status": "pass",
+   "evidence": "Meals, Drinks & desserts, Other…: 32 px tall, tap area 63/140/70 px wide; three answers plus Other…"
+  },
+  {
+   "id": "R3-AC-5",
+   "title": "One change per double tap, with Undo",
+   "spec": "P §7",
+   "status": "pass",
+   "evidence": "Review: tap, 150 ms, tap on the same pixel answers one (count 12 to 11); 900 ms apart answers two; Undo restores. (Forget does not: R3-AC-24)"
+  },
+  {
+   "id": "R3-AC-6",
+   "title": "Sen's pick and Apply all",
+   "spec": "brief review",
+   "status": "pass",
+   "evidence": "two marked answers, nothing applied until Apply all (12 to 10); an Undo is offered; banner gone after"
+  },
+  {
+   "id": "R3-AC-7",
+   "title": "Insights is one card at a time",
+   "spec": "brief insights",
+   "status": "fail",
+   "evidence": "Five named steps, \"1 of 5\", swipe and tap work, empty state works; but Goals and Year scroll the whole shell sideways by 36 and 97 px at 390 px (21/82 at 360, 47/108 at 412, 56/117 at 430) (finding 1)"
+  },
+  {
+   "id": "R3-AC-8",
+   "title": "More is a card of NavRows with states",
+   "spec": "brief more",
+   "status": "pass",
+   "evidence": "Payments 1,151 · Shared bills 3 open · Accounts 5 · Claims 2 to submit; a friend without capture sees neither Accounts nor Claims"
+  },
+  {
+   "id": "R3-AC-9",
+   "title": "The cycle sheet",
+   "spec": "brief cycle",
+   "status": "pass",
+   "evidence": "5,804.80 - 3,873.53 = 1,931.27; \"An estimate:\" is outside the three tiles; month scenario says month and never payday"
+  },
+  {
+   "id": "R3-AC-10",
+   "title": "Payday is a task with an end",
+   "spec": "brief payday",
+   "status": "pass",
+   "evidence": "no tab bar or Sen button; Step n of 4; Undo ghost <= 40 px; four skips leave five skipped steps in Review (R3-FLOW-X5). See R3-AC-55 for the toast"
+  },
+  {
+   "id": "R3-AC-11",
+   "title": "Skipped notifications",
+   "spec": "brief skipped",
+   "status": "pass",
+   "evidence": "three cards, body clamped to 2 lines, chip with icon; one tap books one, Undo returns it"
+  },
+  {
+   "id": "R3-AC-12",
+   "title": "Manual entry parses text into sen",
+   "spec": "CLAUDE.md money",
+   "status": "pass",
+   "evidence": "7 valid amounts stored exactly (1250, 10, 123456, 1250, 1, 9999999999999, 700); 15 malformed (12,50; RM 12.50; full-width and Arabic digits; .5; 5.; +5; 1_000; NaN; Infinity; 12.50.00; 100,000,000,000.00; 40 nines; 0.00; <script>) refused with nothing saved"
+  },
+  {
+   "id": "R3-AC-13",
+   "title": "Manual layout and guarantees",
+   "spec": "brief manual",
+   "status": "pass",
+   "evidence": "amount 36 px and focused; 4 columns; 17 icon tiles; no tab bar; More details collapsed; double-click Save adds one payment; Undo removes it"
+  },
+  {
+   "id": "R3-AC-14",
+   "title": "Scan, confirm, the receipt",
+   "spec": "brief scan, confirm",
+   "status": "pass",
+   "evidence": "prices 2972+1715+514+960+252 = 6413 = total; \"Items add up to the total ✓\"; 3 people = RM21.38; Attached with Undo; same file twice: \"Already added\", receipts 48 to 48"
+  },
+  {
+   "id": "R3-AC-15",
+   "title": "Payments list and search",
+   "spec": "brief payments",
+   "status": "pass",
+   "evidence": "rows 58-74 px with icon tiles; search icon; nine hostile queries (%, _, SQL, markup, backslash, path, 5,000 letters, emoji) show an empty state, no script ran"
+  },
+  {
+   "id": "R3-AC-16",
+   "title": "Accounts, account, balance-check",
+   "spec": "brief accounts",
+   "status": "pass",
+   "evidence": "Ryt \"Checked 1 Oct\", four \"Not checked\"; Maybank no balance; account facts and action bar; RM5.00 more, RM1.00 less, No difference; double-click Save booked 2 Unaccounted payments, not 4. (Blur validation: R3-AC-54)"
+  },
+  {
+   "id": "R3-AC-17",
+   "title": "Payment detail (txn)",
+   "spec": "brief txn",
+   "status": "pass",
+   "evidence": "header, facts, four actions, menu Mark as… and Delete; Undo restored amount, category, share, note, account and time exactly; stored payee text NASI KANDAR ABC unchanged"
+  },
+  {
+   "id": "R3-AC-18",
+   "title": "Shared bills and split",
+   "spec": "brief shared, split",
+   "status": "pass",
+   "evidence": "Open · 3, Settled empty state; shares 2317+2427+466+620 unclaimed = 5830; after a tick 2937+2427+466 = 5830; Share sheet has the link and a named QR"
+  },
+  {
+   "id": "R3-AC-19",
+   "title": "split-public needs no login",
+   "spec": "brief split-public",
+   "status": "pass",
+   "evidence": "name box; items disabled until named; no tab bar, no Sen button; final read-only with \"To change a tick, ask Wei Ming.\"; closed, unknown, hostile and 2,000-letter tokens say \"This split is closed\" and nothing else; hostile name stays literal"
+  },
+  {
+   "id": "R3-AC-20",
+   "title": "Claims",
+   "spec": "brief claims",
+   "status": "pass",
+   "evidence": "September card 2 to submit · RM152.00 of RM200.00, bar value 76; one default button, 48 px; Download claim pack in the app bar; Send to ESS says \"Sending 1 claim\""
+  },
+  {
+   "id": "R3-AC-21",
+   "title": "A claim's status",
+   "spec": "brief claim",
+   "status": "pass",
+   "evidence": "stepper Draft/Ready/Sent/Approved/Paid, one aria-current step (Draft for evidence missing, Ready for complete)"
+  },
+  {
+   "id": "R3-AC-22",
+   "title": "Budgets",
+   "spec": "brief budgets",
+   "status": "pass",
+   "evidence": "\"Over by RM20.30\" with icon and words; Add a budget in the app bar; each row names its figure and status"
+  },
+  {
+   "id": "R3-AC-23",
+   "title": "Subscriptions, goals, goal, year",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "RM141.90; four collapsed histories that expand; Japan 49%; no warning classes; \"At this pace About …\"; savings rate 15%"
+  },
+  {
+   "id": "R3-AC-24",
+   "title": "Sen's memory, research, usage",
+   "spec": "brief agent/*",
+   "status": "fail",
+   "evidence": "Forget: 4 notes, a double tap leaves 2, Undo brings back 3: one note is lost for good (finding 2). Research and usage pass"
+  },
+  {
+   "id": "R3-AC-25",
+   "title": "Settings home",
+   "spec": "brief settings",
+   "status": "pass",
+   "evidence": "states are words (Appearance Minted, Claims 2 schemes, Sen ~RM3.80 this month, Members 2 of 20); a friend sees no Members/Capture/Claims; the Members URL says \"Admin only\""
+  },
+  {
+   "id": "R3-AC-26",
+   "title": "Appearance",
+   "spec": "brief appearance",
+   "status": "pass",
+   "evidence": "mode with three icons; six previews in six different backgrounds; choosing Copper then Dark kept after a reload with no query string; the quarterly switch turns off, and on again; System follows the phone"
+  },
+  {
+   "id": "R3-AC-27",
+   "title": "Categories and rules",
+   "spec": "brief categories",
+   "status": "pass",
+   "evidence": "hue tiles rotate blue/orchid/gold by position; sheet opens; rules read as sentences with their origin; a rule from an answer appears live"
+  },
+  {
+   "id": "R3-AC-28",
+   "title": "Claims settings and ESS",
+   "spec": "brief settings/claims",
+   "status": "pass",
+   "evidence": "schemes as sentences with Edit; ESS card with ⋯ (Teach again, Forget password); Forget password opens an alert dialog"
+  },
+  {
+   "id": "R3-AC-29",
+   "title": "Capture settings and steps",
+   "spec": "brief capture",
+   "status": "pass",
+   "evidence": "status card; Your apps None yet / Access Off / Keep running Not done / Captured 0; blocked apps disabled in first-run. The simulator walk is the project's capture.spec (sweep: pass)"
+  },
+  {
+   "id": "R3-AC-30",
+   "title": "You, email, Sen, data, account",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "payday choices one line each; address, copy button, 6-digit code, Received row; Delete account in the destructive colour; until B05 it only says nothing was deleted (the confirm dialog is not reachable)"
+  },
+  {
+   "id": "R3-AC-31",
+   "title": "Members and a member",
+   "spec": "brief members, D52",
+   "status": "pass",
+   "evidence": "a pushed screen; only AI credit amounts on it; Remove asks and Cancel keeps; \"nope\" refused; same address twice is one row; a friend gets \"Admin only\""
+  },
+  {
+   "id": "R3-AC-32",
+   "title": "Sign-in, first run, new-look",
+   "spec": "brief, flows first-run",
+   "status": "pass",
+   "evidence": "wrong, short and expired codes each have their words; \"Sen is invitation-only\" and no code field; Keep it is 48 px; first-run has no tab bar. The card is a still placeholder (B14)"
+  },
+  {
+   "id": "R3-AC-33",
+   "title": "Type sizes and hierarchy",
+   "spec": "P §2 Sizes",
+   "status": "pass",
+   "evidence": "survey of 48 screens: titles 22, inputs >= 16, nothing under 12 px at 390; headings smaller than their cards are the 13 px group labels (Note 9)"
+  },
+  {
+   "id": "R3-AC-34",
+   "title": "Touch targets",
+   "spec": "P §8",
+   "status": "pass",
+   "evidence": "sweep: every screen in six looks and two modes under axe with 48 px targets (811 pass); survey: no tap extension covers another control outside sticky bars"
+  },
+  {
+   "id": "R3-AC-35",
+   "title": "Icon-only buttons are named",
+   "spec": "P §5, §8",
+   "status": "pass",
+   "evidence": "sweep axe clean on every screen; Forget, Edit, Download claim pack, More about ESS, Copy all named"
+  },
+  {
+   "id": "R3-AC-36",
+   "title": "Information and actions never look alike",
+   "spec": "brief rules 2-4",
+   "status": "pass",
+   "evidence": "run-1/2 specs rerun 232 of 233; X8 structure checks"
+  },
+  {
+   "id": "R3-AC-37",
+   "title": "One intro line per screen",
+   "spec": "brief rule 7",
+   "status": "pass",
+   "evidence": "at 390 only four screens have a 3-4 line paragraph outside a card (Balance check, Capture apps, Keep running, Captured); footnotes, not how-tos (Note 10)"
+  },
+  {
+   "id": "R3-AC-38",
+   "title": "Navigation is one set",
+   "spec": "P §6",
+   "status": "pass",
+   "evidence": "tab bar absent on scan, manual, payday, first-run, split-public (project test only asserts /scan: finding 3); Sen's button on the four tab screens only, \"Looking at: <tab>\", covers nothing at the bottom"
+  },
+  {
+   "id": "R3-AC-39",
+   "title": "Empty, loading, error use the shared pattern",
+   "spec": "B rule 9",
+   "status": "pass",
+   "evidence": "Review, Insights, Settled, Payments, Sen's empty chat show EmptyState; run-2 states spec rerun passes"
+  },
+  {
+   "id": "R3-AC-40",
+   "title": "Money display, amounts never truncated",
+   "spec": "P §3",
+   "status": "fail",
+   "evidence": "No NaN/undefined/[object]/float artefacts on 48 screens x 5 configurations; but Review > Waiting on others cuts \"of RM97.60\"/\"of RM28.93\" at 390 px (scrollWidth 252 > 196) (finding 4)"
+  },
+  {
+   "id": "R3-AC-41",
+   "title": "No float arithmetic on money",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "diff grep: only display ratios; planted Number() in money.ts fails eslint (\"Money is integer sen\"); no-float tests pass"
+  },
+  {
+   "id": "R3-AC-42",
+   "title": "Six looks, two modes",
+   "spec": "P §1, §2, §8",
+   "status": "pass",
+   "evidence": "sweep axe clean in all 12; Appearance previews in six looks; survey in Minted, Copper, Firefly"
+  },
+  {
+   "id": "R3-AC-43",
+   "title": "Text scale and narrow screens",
+   "spec": "P §8",
+   "status": "fail",
+   "evidence": "1.5x text on 360 px: Budgets amounts run to x=399, the Settings state and \"About RM3.80\" are cut, Appearance row text overlaps, the title \"Budgets\" is cut to \"B…\" (finding 5). 390 px at 1.5x passes in the project suite"
+  },
+  {
+   "id": "R3-AC-44",
+   "title": "Reduced motion",
+   "spec": "P §8",
+   "status": "pass",
+   "evidence": "pager scrollLeft samples [390 x 8] under reduced motion; [0,18,75,165,265,321,384,390] without"
+  },
+  {
+   "id": "R3-AC-45",
+   "title": "Time zone",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "Home, cycle sheet, Payments, Insights identical in Asia/Kuala_Lumpur, America/Los_Angeles, Pacific/Auckland; unit tests pass under TZ=America/Los_Angeles and TZ=Pacific/Auckland. The 23:59 KL boundary needs a movable clock (not reachable)"
+  },
+  {
+   "id": "R3-AC-46",
+   "title": "Offline",
+   "spec": "P §7, CLAUDE.md dedupe",
+   "status": "pass",
+   "evidence": "banner not a toast; one RM13.37 row marked Not synced yet; one row, unmarked, 6 s after reconnecting; a retried txn.create is \"Already added\" (unit test)"
+  },
+  {
+   "id": "R3-AC-47",
+   "title": "Production ships no dev tools or secrets",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "73 files in dist, 0 maps; no key/token/URL patterns; no Dev panel, Wei Ming, ROTI BAKAR or weiming@ strings; preview build does have them"
+  },
+  {
+   "id": "R3-AC-48",
+   "title": "Only our own site is loaded",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "survey: 0 external requests on 48 screens x 5 configurations; CSP header present (default-src 'self')"
+  },
+  {
+   "id": "R3-AC-49",
+   "title": "Web behaviour",
+   "spec": "P §10",
+   "status": "pass",
+   "evidence": "overscroll none on html and body; bank text selectable, titles not; contextmenu cancelled; touch-action manipulation; Tab shows :focus-visible"
+  },
+  {
+   "id": "R3-AC-50",
+   "title": "Models draft, the owner confirms",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "proposal needs Apply; research drafts say they are drafts; run-2 FLOW-23 rerun pass"
+  },
+  {
+   "id": "R3-AC-51",
+   "title": "Gallery in every look; absent in production",
+   "spec": "B, P §7",
+   "status": "pass",
+   "evidence": "project gallery spec passes in the sweep; production: /dev/gallery says Not built yet, no Dev panel (R3-FLOW-21)"
+  },
+  {
+   "id": "R3-AC-52",
+   "title": "Core journeys",
+   "spec": "F, D124",
+   "status": "pass",
+   "evidence": "first-run, pay-new, scan-after walked with their sad paths (R3-FLOW-C1, C2, C3)"
+  },
+  {
+   "id": "R3-AC-53",
+   "title": "Fixtures are made up",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "pnpm hygiene passes; grep of data fixtures for phone and 12-digit numbers: none"
+  },
+  {
+   "id": "R3-AC-54",
+   "title": "Forms validate on blur and on submit",
+   "spec": "P §7 Forms",
+   "status": "fail",
+   "evidence": "Balance check and first-run accounts: \"14,65O.87\" then Tab shows no message; Save shows it. Add expense validates on blur (finding 7)"
+  },
+  {
+   "id": "R3-AC-55",
+   "title": "A toast never sits on the main action",
+   "spec": "P §7",
+   "status": "fail",
+   "evidence": "Payday after Skip: the toast is topmost at the centre of Next (y 756-804); a real tap leaves Step 3 of 4 (finding 6)"
+  },
+  {
+   "id": "R3-AC-56",
+   "title": "Back works with no in-app history",
+   "spec": "S rules",
+   "status": "unreachable",
+   "evidence": "txn Delete and the app bar Back call history.back() unconditionally; Add expense and Balance check check canGoBack. Needs the shell's deep link to prove (finding 8)"
+  },
+  {
+   "id": "R3-AC-57",
+   "title": "The suite fails when a breakable behaviour breaks",
+   "spec": "qa skill",
+   "status": "fail",
+   "evidence": "three one-line breaks left every related test green: task screens showing the tab bar, \"An estimate\" worded as fact, money in without + (finding 3)"
+  }
+ ],
+ "notTested": [
+  {
+   "what": "The Android shell: a notification or widget deep link into a pushed screen, TalkBack, the largest Android font, Remove animations, the real keyboard",
+   "why": "needs the device; four checks added to docs/local.md as 'B04 · Redesign, device checks from QA run 3'"
+  },
+  {
+   "what": "Phase 4 (database, RLS, API)",
+   "why": "the slice has no SQL, API or RLS; B05 builds the server"
+  },
+  {
+   "what": "The Kotlin capture core and the real listener's OTP and unchosen-app filter",
+   "why": "the slice does not touch apps/shell; `gradle -p apps/shell/core test --offline` could not resolve dependencies in this VM. The web stand-in's filter and dedupe were probed (OTP: caught; dropping `when` from the dedupe key: not caught, outside this slice's diff)"
+  },
+  {
+   "what": "Delete account, Sign out, ESS sign-in and the 'confirm' dialog behind them",
+   "why": "stand-ins that only toast until B05 ('Nothing was deleted')"
+  },
+  {
+   "what": "The every-move-ticked state of the payday plan strip, and the 23:59 Kuala Lumpur cycle boundary",
+   "why": "the fake has no movable clock and no way to tick a move"
+  },
+  {
+   "what": "R3-FLOW-13 (capture simulator end to end) and R3-FLOW-17 (every screen's empty state)",
+   "why": "re-run only through the project's capture.spec and run 2's states spec (both pass); no new screenshots"
+  },
+  {
+   "what": "Every flow in every look",
+   "why": "my flows ran in Minted (Home fit in six looks, Appearance in six previews, the survey in Minted, Copper, Firefly); other looks come from the sweep's 1512 screenshots and its axe pass"
+  },
+  {
+   "what": "Cancelling the browser's file picker, and the `first-run` end state against real data",
+   "why": "not drivable; the fake does not change Home after first-run"
+  }
+ ]
+}

@@ -720,3 +720,454 @@ R2-AC-51 Core journeys still work
          Then   first-run, pay-new and scan-after (F, core) complete on the redesigned screens (see flows)
          Sad    each one's listed failure (wrong code, swiped prompt, reading fails, same file twice) fails the right way
          Spec   F, D124
+
+# Run 3 (full run, fresh reviewer; written from the docs before any source was read)
+
+Sources: `docs/briefs/B04-redesign.md` (B), `docs/ui/patterns.md` (P), `docs/screens.md` (S),
+`docs/flows.md` (F), D129, D130 and `CLAUDE.md`'s non-negotiables. Ids are `R3-AC-n`. The slice has no
+database and no API (B05 builds the server): phase 4 does not apply. The app runs on the in-browser
+fake. Viewports: 390x844 (the brief's "fit" size) and 412x915 (phone preset). Every criterion has a
+sad twin (`Sad`). Where the written criteria overlap run 2's, they are re-asserted on the code as it
+stands after run 2's fixes, because those fixes reached `cn()`, the inputs, the theme store and the
+tab bar.
+
+## A. Structure and rules (D130)
+
+R3-AC-1  Home fits one screen
+         Given  Home in each of the six looks, light and dark, at 390x844, in every scenario
+         When   the page's scrollable height is read
+         Then   the document and the screen's scroller have scrollHeight <= clientHeight (no scroll)
+         Sad    with a health bar or the Payday card present it still fits, and Sen's note stays reachable
+                (Sen's button opens it); nothing is clipped (no text node cut by overflow:hidden)
+         Spec   B `home`, D130
+
+R3-AC-2  Payday strip
+         Given  the payday plan is active (2 of 3 moves done)
+         When   Home is opened
+         Then   one line "Payday plan · 2 of 3" with an icon and a chevron is shown and it opens `payday`/the plan
+         Sad    with every move ticked or hidden, no strip is rendered; the strip never shows when no plan exists
+         Spec   B `home`, S `home` item 3
+
+R3-AC-3  Review is grouped by kind with counts that add up
+         Given  Review with items of several kinds
+         When   Review is opened
+         Then   group headers (icon + "Categories · N" etc.) count their own cards, and the sum of the groups
+                equals the tab badge ("N to review" label)
+         Sad    "Waiting on others" items are not in the badge or the groups' sum; with nothing to do the screen
+                reads "Nothing needs you."
+         Spec   B `review`, P §6, P §7 Review row, S `review`
+
+R3-AC-4  Review answers are chip-sized and scroll sideways only
+         Given  a Review card with answers
+         When   the answers' drawn height and the row's scroll are measured
+         Then   each answer is drawn 32 px high with a >= 48 px hit area, at most 3 plus "Other…", in one row
+                that scrolls horizontally and not vertically; the amount/payee is semibold and larger than the chips' text
+         Sad    a very long payee or 1.5x text size does not push an answer out of reach (the row scrolls) or
+                clip the amount (the amount wraps, never truncates)
+         Spec   B `review`, P §2 Sizes, P §3
+
+R3-AC-5  Answering clears the row, with Undo, once per double tap
+         Given  two Review cards
+         When   the first answer is tapped, and a second tap lands within 500 ms at the same spot
+         Then   exactly one card is answered, the next card (now under the finger) is not, and a toast offers Undo
+         Sad    tapping Undo restores the card in its place and the payment's category goes back; two taps spaced
+                > 600 ms answer two cards
+         Spec   P §7 Toasts and undo (one change per double tap)
+
+R3-AC-6  Sen's pick and Apply all
+         Given  Sen has suggested answers
+         When   Review is opened
+         Then   suggested answers carry a sparkle and an accent outline; "Apply all" is a compact banner with an
+                `sm` (40 px) button; nothing is applied until it is tapped
+         Sad    after Apply all each applied answer can be undone; with no suggestions the banner is absent
+         Spec   B `review`, S `review` item 1, CLAUDE.md "models draft, the owner confirms"
+
+R3-AC-7  Insights is one card at a time
+         Given  Insights with N cards that have data
+         When   opened, then a step is tapped, then the pager is swiped sideways
+         Then   named steps sit on top, the label reads "k of N", one card fills the width with no neighbour peeking,
+                the tapped step/ swipe changes k and the active step is marked by more than colour (aria-current)
+         Sad    a card with no data is not a step and N shrinks; with no data at all an `EmptyState` shows; the cycle
+                picker stays above and is not inside the pager
+         Spec   B `insights`, P §7 StepPager, S `insights`
+
+R3-AC-8  More is a card of NavRows that state their state
+         Given  More with capture and claims on
+         When   opened
+         Then   Payments, Shared, Accounts, Claims, Settings are NavRows with icon tiles; each shows a value
+                (Payments count, "RM… owed to you", Accounts count, "N to submit"), and the values equal the data
+                behind those screens
+         Sad    with capture off no Accounts row; with the claims switch off no Claims row; with nothing owed
+                Shared says so in words (no "RM0.00 owed")
+         Spec   B `more`, S `more`, S "A person sees only what they can use"
+
+R3-AC-9  The cycle sheet
+         Given  Home's large figure tapped
+         When   the sheet opens
+         Then   StatTiles show in, spent, left with "left" emphasised; the payday estimate is a separate card with an
+                icon, labelled as an estimate; the figures add up (in - spent = left) in integer sen
+         Sad    counting by month (no capture) shows the month against last month instead; an estimate never appears
+                inside the StatTiles (a prediction does not share a figure with a fact)
+         Spec   B `cycle`, S `cycle`, CLAUDE.md "a prediction never shares a table with a fact"
+
+R3-AC-10 Payday is a task with an end
+         Given  the payday flow
+         When   it is started
+         Then   the tab bar and Sen's button are hidden, a segmented progress bar reads "Step 1 of 4" and advances,
+                claims are in a GroupCard with icons, "Undo" is a ghost `sm` button
+         Sad    every step has Skip and a skipped step appears in Review afterwards; Close leaves with no change
+         Spec   B `payday`, P §6, S `payday`
+
+R3-AC-11 Skipped notifications
+         Given  skipped notifications exist
+         When   `skipped` is opened
+         Then   one card each: app tile and time, title semibold, body text clamped to 2 lines, a "This was a payment" chip with an icon
+         Sad    tapping the chip books exactly one payment with Undo; with none skipped an `EmptyState` shows
+         Spec   B `skipped`, S `skipped`
+
+R3-AC-12 Manual entry parses money as text into sen
+         Given  `manual` and the amount field
+         When   typing "12.5", "0.1", "1,234.56", "12.345", "abc", "-5", "0", "1e3", "99999999999999.99"
+         Then   "12.5" shows RM12.50 and saves 1250 sen, "0.1" saves 10 sen, "1,234.56" saves 123456 sen
+         Sad    "abc", "-5", "1e3" and "0" are rejected with a message under the field and the Save button stays enabled and says
+                what is missing; "12.345" is rejected or rounded in a stated rule, never silently in floating point;
+                a huge value does not become "…e+" or lose digits
+         Spec   CLAUDE.md money rule, P §7 Forms, S `manual`
+
+R3-AC-13 Manual's layout and its guarantees
+         Given  `manual`
+         When   opened
+         Then   amount large and centred, categories as a 4-column grid of icon tiles, "Paid from" and "When" as NavRows in one card,
+                "More details" a ghost disclosure; the tab bar is hidden; the amount field is focused
+         Sad    a near-duplicate of a captured payment warns without blocking; Save then Undo removes the payment
+         Spec   B `manual`, S `manual`, P §6
+
+R3-AC-14 Scan, confirm and the receipt
+         Given  scan -> reading -> confirm for a fake receipt
+         When   walked
+         Then   scan: 3 tips as icon rows, "Take a photo" main (48), "From gallery" secondary, "Add by hand" a link;
+                confirm: items in a GroupCard add up to the total in sen, the check says so, totals in a FactGrid, one main action;
+                "How many people ate?" 3 -> RM64.13 / 3 = RM21.38 (rounded, integer)
+         Sad    items that do not add up say so in words; the stepper cannot go below 1; reading failure goes to `manual` with the
+                image kept; the same file twice says "Already added"
+         Spec   B `scan`/`confirm`, S `confirm`, F `scan-after`, CLAUDE.md money
+
+R3-AC-15 Payments list and search
+         Given  `payments`
+         When   opened and searched ("zus", "RM", a nonsense string, `%` and `'; DROP`)
+         Then   rows keep 56 px height and a hue-tinted IconTile mark, the search field has a search icon, amounts are never truncated
+         Sad    no results show an `EmptyState`, not blank; hostile text is matched literally and breaks nothing
+         Spec   B `payments`, P §7 Rows
+
+R3-AC-16 Accounts, account and balance-check
+         Given  `accounts`, one `account`, `balance-check`
+         When   walked
+         Then   accounts in a GroupCard with bank-initial tiles and "Checked 1 Oct"/"Not checked"; Elsewhere in a muted card with no balances;
+                `account` has HeaderCard, FactGrid, ActionBar (Check, Payments, Ask Sen); balance-check has a card per account with "Sen has RM…",
+                a live difference, "Matches" chip with a tick; the tab bar is hidden
+         Sad    typing a figure 5.00 above Sen's shows "+RM5.00" in the right direction and a match shows no difference; non-numeric input is
+                rejected; Save books the difference as Unaccounted exactly once
+         Spec   B `accounts`..`balance-check`, S
+
+R3-AC-17 Payment detail (txn)
+         Given  a payment's detail
+         When   opened
+         Then   HeaderCard (tile, payee in title case, amount, "Today 19:58 · Ryt Bank", "From Ryt Bank's notification"); FactGrid with a
+                tappable Category chip, Your share, Note; ActionBar Receipt, Split, Ask Sen, ⋯ (No receipt, Mark as…, Delete); the receipt state is its own card
+         Sad    Delete is behind ⋯, removes the payment, and the toast Undo restores it exactly (same amount, same category); changing a category
+                with a rule asks "Just this one" or "From now on"; the stored payee text is unchanged by title-casing
+         Spec   B `txn`, P §7 Detail page, S `txn`, D129
+
+R3-AC-18 Shared bills and split
+         Given  `shared` and a `split`
+         When   walked
+         Then   Segmented Open/Settled; each bill a card with avatars, status badge, "you owe"/"owed to you" in colour AND words;
+                split has the header and a status card stating "Still changing"/"Final" in words with an icon first, PersonRows in one card,
+                the QR inside a Share sheet, items in a GroupCard
+         Sad    a bill with an unticked item says what it is waiting for; a final split's shares are locked (no tick buttons);
+                a share total always equals the bill in sen (no rounding drift)
+         Spec   B `shared`/`split`, S `split`, P §7 Status cards
+
+R3-AC-19 split-public needs no login
+         Given  the public link of a split in a fresh browser context
+         When   opened
+         Then   header with the payer's avatar, items as a check list in one card, sticky "I'm done" as the one main action, no tab bar, no Sen button, no app navigation
+         Sad    after the lock ticks are read-only with "To change a tick, ask Wei Ming."; a closed/unknown link shows "This split is closed" and nothing else
+         Spec   B `split-public`, S `split-public`
+
+R3-AC-20 Claims
+         Given  the claims screen with the claims switch on
+         When   opened
+         Then   each month a summary card ("September · 2 to submit · RM152 of RM200" with a bar) holding claims with status icons; "Send to ESS" is the one
+                main action; "Download pack" is in the app bar; no stand-in text
+         Sad    a month with nothing to submit says so; with the claims switch off the entry and the route show nothing (EmptyState or redirect), never a crash
+         Spec   B `claims`, S `claims`
+
+R3-AC-21 A claim's status
+         Given  one claim
+         When   opened
+         Then   a stepper Draft, Ready, Sent, Approved, Paid with the current one marked by an icon and words; evidence as a thumbnail grid; FactGrid (amount, cap, due)
+         Sad    a claim past its cap or due date states it in words with an icon; missing evidence says how to add it
+         Spec   B `claim`, S `claim`
+
+R3-AC-22 Budgets
+         Given  `budgets`
+         When   opened
+         Then   a card each (category tile, bar, status badge); "Add a budget" in the app bar; a budget over its limit reads "Over by RM…" in money-warning with an icon and words
+         Sad    the bar value is exposed (aria-valuenow) and capped sensibly at 100%; no budgets shows an `EmptyState` with a title, a line and one button
+         Spec   B `budgets`, P §3
+
+R3-AC-23 Subscriptions, goals, goal, year
+         Given  those four screens
+         When   opened
+         Then   subscriptions: compact cards, history collapsed to "4 matched" and expandable; goals: ring, "RM2,950 of RM6,000", "needs RM610 a cycle", the goal
+                meter never in the warning colour; goal: large ring, FactGrid, contributions card; year: chart card, savings rate as a stat tile, relief tags in a GroupCard
+         Sad    a year with no spending shows an `EmptyState` (no flat chart); a goal that is behind is not an alarm (no warning colour); the projected finish is labelled as a projection
+         Spec   B, P §4 Marks, CLAUDE.md predictions
+
+R3-AC-24 Sen's memory, research, usage
+         Given  `agent/memory`, `agent/research`, `agent/usage`
+         When   opened
+         Then   memory: a card per note with an icon, a "Forget" icon button with an accessible name; research: cards with status badges and a findings count;
+                usage: StatTiles (used, estimated cost) and one stacked bar with a legend
+         Sad    Forget is undoable; a research draft's figures are marked unconfirmed until confirmed; the usage cost is labelled estimated; empty states use `EmptyState`
+         Spec   B `agent/*`, CLAUDE.md "models draft, the owner confirms"
+
+R3-AC-25 Settings home
+         Given  `settings` as the owner (admin) and as an invited friend
+         When   opened
+         Then   a profile card (avatar, name, email) then GroupCards of NavRows with states: Appearance (look thumbnail), Capture "4 apps · running", Claims "2 schemes", Sen "RM3.80 this month"
+         Sad    the friend does not see Members (admin only) or rows for switched-off features; no row's state is a placeholder ("undefined", "[object Object]", "NaN")
+         Spec   B `settings`, S Settings table
+
+R3-AC-26 Appearance
+         Given  `settings/appearance`
+         When   walked
+         Then   Segmented mode with Monitor, Sun, Moon icons; "Changes each quarter" a switch card with the next change date; looks as 2-column ChoiceCards, each a live mini preview in that look's
+                background/accent/font; choosing a look sets data-look and persists across reload
+         Sad    choosing one pins it (the quarterly switch turns off); switching the switch back on unpins; System mode follows prefers-color-scheme; a reload keeps the choice (the theme store)
+         Spec   B `settings/appearance`, S Settings, D77/D78
+
+R3-AC-27 Categories and rules
+         Given  `settings/categories`
+         When   walked
+         Then   Segmented Categories/Rules; categories a grid of hue tiles with names (hues from the 3-hue palette, neighbours differ); tapping one opens its sheet; rules are sentence cards
+                ("When the payee has "ZUS" -> Drinks & desserts") with where each came from; one intro line
+         Sad    a rule whose payee has quotes or HTML renders literally; an empty rules list shows an `EmptyState`; no category is identified by colour alone
+         Spec   B `settings/categories`, P §7 item 10
+
+R3-AC-28 Claims settings and ESS
+         Given  `settings/claims`
+         When   opened
+         Then   each scheme a card that reads as one sentence with an edit icon; ESS one connection card (signed in, recipe, sender) with "Teach again" and "Forget password" behind ⋯
+         Sad    Forget password is destructive, asks before acting (it cannot be undone) or offers Undo; no claim values are real data (fixtures are made-up)
+         Spec   B `settings/claims`, CLAUDE.md real-data rule, D95/D110
+
+R3-AC-29 Capture settings and steps
+         Given  `settings/capture` with the dev simulator
+         When   walked
+         Then   the status card on top; a 3-step checklist (Your apps, Access, Keep running) with done/undone; "Captured on this phone" a NavRow; the three step screens have a 1-line intro, "How it works" as a disclosure, and `sm` buttons per step
+         Sad    with access off, the Access step is not done and the status card says capture may be off with a Fix; a chosen app can never be a messaging, SMS, email or social app, and OTP messages never appear in "Captured on this phone"
+         Spec   B capture, CLAUDE.md listener rule, D86
+
+R3-AC-30 You, email, Sen settings, data, account
+         Given  those five screens
+         When   opened
+         Then   you: payday ChoiceCards, one line each (no wrap), sharing a switch row; email: address in a card with an inline copy icon button (has an accessible name), Gmail steps collapsed once confirmed, code card, Received NavRow;
+                sen: NavRows with tiles, Calendar "Not connected" with a Connect `sm` button; data: export card with one button; account: About (version) and Account (Sign out, Delete account in destructive)
+         Sad    Delete account asks (cannot be undone); the copy button reports "Copied" or equivalent; a disabled switch says why in its line
+         Spec   B, P §7 Settings row
+
+R3-AC-31 Members and a member
+         Given  `settings/members` as the admin
+         When   opened, and a person tapped
+         Then   Invite in the app bar; a seats meter ("2 of 20"); PersonRows with status badges; the member is a pushed screen (not a sheet) with header, access switches in one GroupCard, phone and usage cards, "Remove" at the foot in destructive
+         Sad    the admin sees no one's money (no balances, payments, amounts of the member's own spending) anywhere on these screens; an invalid invite email is rejected with a message; Remove asks or offers Undo; a non-admin cannot open the route
+         Spec   B, CLAUDE.md RLS/admin rule, D52
+
+R3-AC-32 Sign-in, first run, new-look
+         Given  `sign-in`, `first-run`, `new-look`
+         When   opened
+         Then   centred, the look's avatar or wordmark large above, one field, one main action; first-run and sign-in hide the tab bar; new-look's card follows D130 with a still placeholder (the animation is B14's)
+         Sad    a wrong code shows an error in words and "Send a new code"; an unknown email says "Sen is invitation-only"; first-run reopened mid-way resumes at the same step
+         Spec   B, S `sign-in`, F `first-run`
+
+## B. Cross-cutting
+
+R3-AC-33 Type sizes and hierarchy (D129)
+         Given  every screen in a sample of looks and modes
+         When   computed font sizes are read
+         Then   body 15, secondary 13, caption 12, section headings 17 semibold, titles 22, inputs 16; no visible text under 12 px
+         Sad    a heading is never smaller than the text it heads on any screen; no screen shows 16 px list body text
+         Spec   P §2 Sizes
+
+R3-AC-34 Touch targets
+         Given  every interactive element on every screen
+         When   bounding boxes (including the `tap` extension) are measured
+         Then   each target is >= 48x48 CSS px (full-width rows excepted)
+         Sad    two neighbouring targets are never closer than 8 px; an invisible extension never covers another control (e.g. a back button)
+         Spec   P §8, D129
+
+R3-AC-35 Icon-only buttons are named
+         Given  every screen
+         When   buttons with no text are listed
+         Then   each has an aria-label (or visible-hidden text)
+         Sad    a toggle (a switch, a Forget button) exposes its state to the accessibility tree (aria-checked/expanded)
+         Spec   P §5, P §8
+
+R3-AC-36 Information and actions never look alike
+         Given  a detail screen
+         When   its facts and actions are compared
+         Then   facts are in a FactGrid (no icon tile, no round button), actions in an ActionBar or one button; an information row (version, last backup, capture connected) has no tile; a destination row has a tile
+         Sad    no hairline full-bleed dividers inside grouped lists; no screen has its own list-row or form pattern
+         Spec   B rules 2-4, P §7
+
+R3-AC-37 One intro line per screen
+         Given  every screen
+         When   non-label paragraphs above the first card are counted
+         Then   at most one intro line; how-tos are `Steps` or behind "How it works"
+         Sad    a long intro is never shown as a sheet's body for a how-to
+         Spec   B rule 7
+
+R3-AC-38 Navigation is one set
+         Given  the five tabs and each pushed screen
+         When   walked
+         Then   the tab bar shows on the five tabs and pushed screens, is hidden on first-run, payday, confirm, manual, balance-check, scan, split-public; Sen's button is only on the five tab screens; the active tab has aria-current="page"; back returns to where you came from
+         Sad    back on a tab other than Home goes to Home; the badge reads the count in its label ("5 to review")
+         Spec   P §6, S rules
+
+R3-AC-39 Empty, loading and error states use the shared pattern
+         Given  each screen's empty state (`?state=empty`) and error/loading states
+         When   rendered
+         Then   empty: icon tile, a title, one line, at most one button (EmptyState); loading: a skeleton shaped like the content; error: what happened and a button that does it
+         Sad    no bare text plus a button; no full-screen spinner; typed text is kept after an error
+         Spec   B rule 9, P §7 Empty, loading, error
+
+R3-AC-40 Money display
+         Given  any screen showing money
+         When   text is read
+         Then   always `RM1,284.50` form (separators, two decimals); money in has "+" and money-in colour; amounts never truncated (no ellipsis class on an amount)
+         Sad    a warning is money-warning with an icon and words, not colour only; no "NaN", "undefined", "0.30000000000000004" or float artefacts anywhere in the DOM
+         Spec   P §3, CLAUDE.md money
+
+R3-AC-41 No float arithmetic on money
+         Given  the source diff for the branch
+         When   grepped for float operations on money fields (parseFloat, Number(…) * , toFixed, Math.round on amounts, `* 100`, `/ 100`)
+         Then   none in money paths except display formatting of integers; the repo's no-float lint rule is active
+         Sad    a deliberately added `0.1 + 0.2` in a money path fails `pnpm lint` or `pnpm test`
+         Spec   CLAUDE.md non-negotiable 1
+
+R3-AC-42 Six looks, two modes
+         Given  the gallery and the key screens
+         When   viewed in all six looks, light and dark
+         Then   no unreadable text (contrast >= 4.5:1 text, 3:1 icons) and no layout change between looks (only materials)
+         Sad    the category tint differs by position yet the icon and name carry meaning; text does not use a chart series colour
+         Spec   P §1, §2, §8
+
+R3-AC-43 Text scale and narrow screens
+         Given  390 px and 320 px wide, system text at 1.5x
+         When   Home, Review, txn, settings, manual are opened
+         Then   nothing is clipped, no horizontal page scroll, amounts wrap before they truncate
+         Sad    chips/answers scroll sideways rather than overflow the page
+         Spec   P §8
+
+R3-AC-44 Reduced motion
+         Given  prefers-reduced-motion
+         When   the pager, sheets and toasts animate
+         Then   animations are 0 ms or crossfade; nothing loops
+         Sad    without the preference motion is 150-250 ms
+         Spec   P §8
+
+R3-AC-45 Timezone
+         Given  the browser's timezone set to America/Los_Angeles (not Asia/Kuala_Lumpur)
+         When   Home, payments (day headers) and Today/Yesterday labels are read
+         Then   identical to the run in KL time
+         Sad    a payment at 23:59 KL time on the last day of a cycle stays in that cycle
+         Spec   CLAUDE.md conventions
+
+R3-AC-46 Offline
+         Given  the app loaded, then context.setOffline(true)
+         When   a change is made (a manual payment), reloaded, and back online
+         Then   an offline banner (not an error) shows, the row is marked "Not synced yet" only while offline or after 5 s, and after reconnecting it syncs exactly once
+         Sad    the same change submitted twice (retry) creates one record (the dedupe key)
+         Spec   P §7 Offline, CLAUDE.md dedupe
+
+R3-AC-47 The production build ships no dev tools or secrets
+         Given  `pnpm build`
+         When   the output is searched
+         Then   no dev panel, no `/dev/gallery`, no simulator, no `?scenario=` switch effect, and no API key/token patterns (sk-, AIza, pk_, Bearer , -----BEGIN)
+         Sad    a preview build (SEN_ENV=preview) does have them (so the test is meaningful)
+         Spec   CLAUDE.md "Secrets never ship", "A build is production"
+
+R3-AC-48 The shell loads only our own site
+         Given  any screen
+         When   network requests are recorded
+         Then   all are same-origin (fonts self-hosted), the CSP is set, no third-party script
+         Sad    an external link opens outside the app (target/rel), never in the WebView
+         Spec   CLAUDE.md two rules, P §10
+
+R3-AC-49 Web behaviour
+         Given  any screen
+         When   computed styles and events are inspected
+         Then   overscroll-behavior none on html/body, user-select none except on text, contextmenu cancelled except text, focus rings only for :focus-visible, no tap highlight
+         Sad    amounts/notes/notification text remain selectable
+         Spec   P §10
+
+R3-AC-50 Models draft, the owner confirms
+         Given  Sen's note, a proposal and a research draft
+         When   shown
+         Then   a proposal has Apply and Dismiss and nothing is stored before Apply; any figure from Sen is traced or marked "not checked"
+         Sad    Sen asked for a fact no tool returned says it does not know
+         Spec   CLAUDE.md, D108
+
+R3-AC-51 Gallery shows each block in every look
+         Given  `/dev/gallery` on a preview build
+         When   opened
+         Then   IconTile, GroupCard, NavRow, SwitchRow, PersonRow, HeaderCard, FactGrid, ActionBar, StatTiles, Segmented, ChoiceCards, Steps, StepPager, EmptyState each render
+         Sad    on a production build the route is not served
+         Spec   B "New building blocks", P §7
+
+R3-AC-52 Core journeys still work
+         Given  first-run, pay-new, scan-after on the redesigned screens
+         When   walked
+         Then   they complete (see flows)
+         Sad    wrong code, swiped prompt, reading fails, same file twice each fail the right way
+         Spec   F, D124
+
+R3-AC-53 Fixtures are made up
+         Given  the fixtures and screenshots
+         When   grepped for real names/numbers (account numbers, real phone numbers, 12-digit IDs)
+         Then   only made-up data (Wei Ming, Mei, Ali, ROTI BAKAR 88, ...) and `pnpm hygiene` passes
+         Sad    a tracked path under `private/` fails hygiene
+         Spec   CLAUDE.md non-negotiable 4
+
+## C. Added during phases 3 to 5 (after the code was open; weaker evidence by the ordering rule)
+
+R3-AC-54 Forms validate when you leave a field, and again on submit
+         Given  any money field (Add expense, Balance check, first-run accounts)
+         When   "12x" is typed and focus moves on
+         Then   the field says "Type the amount in ringgit, like 12.50." before Save or Next is pressed
+         Sad    pressing Save or Next with the same text shows the same message and saves nothing
+         Spec   P §7 Forms ("Validate on blur and on submit")
+
+R3-AC-55 A toast never sits on the screen's main action
+         Given  a task screen with no tab bar and its main button in the bottom third (Payday)
+         When   Skip is tapped and the toast appears
+         Then   the next step's main button is the topmost element at its centre, and a tap on it advances
+         Sad    the toast still offers Undo, and tapping Undo works
+         Spec   P §7 Toasts and undo, P §7 Screens (main action in the bottom third), B rule 1
+
+R3-AC-56 Back works on a screen opened with no in-app history
+         Given  a payment (or any pushed screen) opened from a notification, widget or link
+         When   Delete finishes, or the app bar's Back is tapped
+         Then   the app goes to the tab's root or Home, never to the previous document
+         Sad    Add expense and Balance check already do (`canGoBack`); the rest must too
+         Spec   S "Back always returns to where you came from"
+
+R3-AC-57 The suite fails when a non-negotiable-adjacent behaviour breaks
+         Given  deliberate one-line breaks: the tab bar shown on task screens, an estimate worded as a fact, money in
+                drawn without its +
+         When   the project's suites run
+         Then   each break turns at least one test red
+         Sad    a break that leaves every related test green is a finding
+         Spec   qa skill phase 3; P §3, P §6

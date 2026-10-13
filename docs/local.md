@@ -299,3 +299,10 @@ Each slice that needs one of these lists it under *Needs from you first* in its 
       or any chip row wraps; (4) turn on *Remove animations* (Android's reduced motion) and tap *Year* on
       Insights: it should jump, not slide (a browser slides: QA B04 redesign run 2); (5) type an amount on
       *Add expense* and in Search payments and say whether the keyboard zooms or covers the Save button.
+- [ ] **B04 · Redesign, device checks from QA run 3.** On the debug shell: (1) Insights: tap *Goals*, then
+      *Year*, and say whether the whole screen (cards, tab bar) slides sideways by a few dozen pixels;
+      a browser does at every width from 360 to 430 px; (2) open a payment from a notification or
+      widget (not from Payments), then tap ⋯ → *Delete* and the app bar's Back, and say where you land;
+      (3) on Payday, tap *Skip*, then *Next* at once, and say whether the first tap is lost to the
+      toast; (4) on a narrow phone (360 dp) with the largest font, open Budgets and Settings and say
+      whether *RM0.00 of RM150.00* or *~RM3.80 this month* is cut off.

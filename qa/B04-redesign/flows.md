@@ -392,3 +392,164 @@ R2-FLOW-30 Production build hygiene                                        (sad)
 R2-FLOW-C1 first-run (core): same as R2-FLOW-16 and 17.
 R2-FLOW-C2 pay-new (core): same as R2-FLOW-14 and 15.
 R2-FLOW-C3 scan-after (core): same as R2-FLOW-12 and 13.
+
+# Run 3 flows (fresh reviewer; written from the docs before any source was read)
+
+Actor is the owner (Wei Ming, admin) unless named. Viewport 390x844 unless named. The app runs on the in-browser fake on a
+preview build; native parts go through the dev panel. Each step is asserted, then screenshotted.
+
+R3-FLOW-1  Home fits, in every look                                   (happy)
+           Entry  `/` for each look x mode
+           Steps  1. open Home  2. read scrollHeight vs clientHeight  3. tap the large figure -> the cycle sheet
+                  4. tap Sen's note More  5. tap the payday strip (if shown)
+           Ends   no scroll in the 12 combinations; the sheet shows StatTiles and an estimate card; the strip opens payday
+           Covers R3-AC-1, R3-AC-2, R3-AC-9
+
+R3-FLOW-2  Home under pressure                                        (sad)
+           Entry  a scenario with a health warning, the Payday card, a long note
+           Steps  1. open Home  2. measure  3. look for clipped text  4. tap Sen's button
+           Ends   still fits, nothing clipped, the note reachable through Sen
+           Covers R3-AC-1
+
+R3-FLOW-3  Review: answer, undo, double tap, apply all               (happy + sad)
+           Entry  Review tab
+           Steps  1. read the group headers and badge  2. tap an answer, see the toast  3. Undo  4. double-tap an answer
+                  5. Apply all  6. undo one applied answer
+           Ends   counts add up; exactly one card per double tap; Undo restores; nothing applied before Apply all
+           Covers R3-AC-3..6
+
+R3-FLOW-4  Insights pager                                             (happy / sad)
+           Entry  Insights tab
+           Steps  1. read steps and "1 of N"  2. tap a step  3. swipe sideways  4. tap Ask Sen about this
+                  5. change the cycle picker  6. the empty scenario
+           Ends   one card at a time; counter right; a no-data card absent; the empty scenario shows EmptyState
+           Covers R3-AC-7
+
+R3-FLOW-5  Settings tour                                              (happy)
+           Entry  More -> Settings
+           Steps  1. read profile and states  2. Appearance: choose a look, switch mode  3. reload  4. Capture, You, Email,
+                  Claims, Sen, Members, Data, Account each open and back
+           Ends   states are real words; choice persisted across reload; every sub-screen has back, a title, a card layout
+           Covers R3-AC-25..32, R3-AC-26
+
+R3-FLOW-6  Payment detail                                             (happy / sad)
+           Entry  Payments -> a row
+           Steps  1. read header, facts, action bar  2. tap the category chip  3. ⋯ -> Delete  4. Undo  5. ⋯ -> Mark as…
+           Ends   the payment exists again with the same amount/category after Undo
+           Covers R3-AC-17
+
+R3-FLOW-7  More hub states                                            (happy / sad)
+           Entry  More tab in the default scenario and the no-capture / claims-off scenarios
+           Ends   rows and states as scenario demands
+           Covers R3-AC-8
+
+R3-FLOW-8  Manual entry: money parsing                                (happy / sad)
+           Entry  Review "Missing a payment?" -> manual
+           Steps  1. type each of the hostile/valid amounts  2. pick a category tile  3. Save  4. Undo  5. open Payments
+           Ends   the saved row shows exactly the typed amount; invalid ones never save; Undo removes it
+           Covers R3-AC-12, R3-AC-13, R3-AC-40
+
+R3-FLOW-9  Splits and the public link                                 (happy / sad)
+           Entry  More -> Shared -> a bill; then the public link in a clean context
+           Steps  1. Open/Settled  2. open a bill  3. Share sheet shows the QR  4. open the public link  5. tick an item, I'm done
+                  6. open a locked split's link  7. open an unknown token
+           Ends   per AC 18, 19
+           Covers R3-AC-18, R3-AC-19
+
+R3-FLOW-10 Claims and a claim                                         (happy / sad)
+           Entry  More -> Claims; Settings -> Claims
+           Steps  1. month cards  2. Send to ESS  3. open a claim, read the stepper  4. Download pack from the app bar
+                  5. claims switch off
+           Covers R3-AC-20, R3-AC-21, R3-AC-28
+
+R3-FLOW-11 Members and the admin's blindness                          (happy / sad)
+           Entry  Settings -> Members as admin; then as an invited friend
+           Steps  1. seats meter  2. open a member (a pushed screen)  3. switches, usage  4. Remove at the foot
+                  5. the friend's Settings
+           Ends   no member money visible to the admin; the friend has no Members row
+           Covers R3-AC-31, R3-AC-25
+
+R3-FLOW-12 Categories and rules                                       (happy)
+           Entry  Settings -> Categories
+           Steps  1. grid  2. tap a tile -> sheet  3. Rules segment  4. read origin text
+           Covers R3-AC-27
+
+R3-FLOW-13 Capture setup with the simulator                           (happy / sad)
+           Entry  Settings -> Capture, dev panel simulating access off then on
+           Ends   checklist, status card and Home's Capture-off warning agree
+           Covers R3-AC-29
+
+R3-FLOW-14 Balance check                                              (happy / sad)
+           Entry  More -> Accounts -> Check balances
+           Steps  1. type a matching figure  2. a higher figure  3. a lower figure  4. text  5. Save
+           Ends   differences by sign and sen; saved once
+           Covers R3-AC-16
+
+R3-FLOW-15 Budgets, subscriptions, goals, year                        (happy / sad)
+           Entry  Insights steps / cards
+           Covers R3-AC-22, R3-AC-23
+
+R3-FLOW-16 Sen's memory / research / usage                            (happy)
+           Entry  Sen button -> ⋯
+           Covers R3-AC-24, R3-AC-50
+
+R3-FLOW-17 Empty states of every screen                               (sad)
+           Entry  `?state=empty` per screen id
+           Ends   EmptyState each: icon, title, one line, at most one button
+           Covers R3-AC-39
+
+R3-FLOW-18 Offline                                                    (sad)
+           Entry  load, setOffline(true), add a manual payment, reload, setOffline(false)
+           Covers R3-AC-46
+
+R3-FLOW-19 Timezone                                                   (sad)
+           Entry  browser timezone America/Los_Angeles
+           Covers R3-AC-45
+
+R3-FLOW-20 Text scale and narrow screens                              (sad)
+           Entry  320 and 390 wide, root font size 1.5x
+           Covers R3-AC-43
+
+R3-FLOW-21 Production build vs preview build                          (sad)
+           Entry  `pnpm build` output grep; `/dev/gallery`, `?scenario=` on production
+           Covers R3-AC-47, R3-AC-51, R3-AC-48
+
+## Core journeys (D124)
+
+R3-FLOW-C1 first-run (core)
+           Entry  fresh storage, `/first-run` (or the first-run scenario)
+           Steps  1. sign in with email + code (wrong code first)  2. apps  3. access  4. keep running  5. accounts  6. your name
+                  7. payday  8. Home reads "Spent since you started"
+           Ends   Home with no tab-bar during the steps; wrong code -> error + "Send a new code"
+           Covers R3-AC-32, R3-AC-52
+
+R3-FLOW-C2 pay-new (core)
+           Entry  dev panel: simulate a payment at a new merchant "12.90 · ROTI BAKAR 88"
+           Steps  1. the category prompt stand-in appears  2. tap a category  3. simulate a second from the same merchant
+           Ends   first is categorised; the second is categorised with no prompt; one rule exists (Settings -> Categories -> Rules)
+           Sad    swipe the prompt away -> it waits in Review
+           Covers R3-AC-52, R3-AC-27
+
+R3-FLOW-C3 scan-after (core)
+           Entry  Scan tab -> scan -> reading -> confirm
+           Steps  1. take a (fake) photo  2. adjust crop  3. confirm: check items add up  4. people stepper + twice  5. Done
+           Ends   "Attached to RM… on …" with Undo; Undo detaches
+           Sad    reading fails -> manual with the image; the same file twice -> "Already added"
+           Covers R3-AC-14, R3-AC-52
+
+## Run 3: flows added while walking (after the code was open)
+
+R3-FLOW-X1  Double tap on Forget (Sen's memory)                          (sad) fails: finding 2
+R3-FLOW-X3  Sen's button: tab screens only, labelled, never over the last row (happy)
+R3-FLOW-X4  Hostile text in a note and in search stays literal           (sad)
+R3-FLOW-X5  Payday: a task with an end, every step skippable             (happy)
+R3-FLOW-X6  Skipped notifications: a card each, one booking, Undo        (happy)
+R3-FLOW-X7  Add expense layout                                           (happy)
+R3-FLOW-X8  Structure of Payments, Accounts, Capture, You, Email, Account, sign-in, new-look (happy)
+R3-FLOW-X9  Web behaviour: overscroll, selection, context menu, focus    (happy)
+R3-FLOW-E1..E5  Evidence for findings 1, 2, 4, 5, 6, 8 (each a failing assertion, kept red on purpose)
+
+Not walked in this run (covered only by re-running the project's and runs 1 and 2's specs): R3-FLOW-13
+(capture simulator end to end) and R3-FLOW-17 (every screen's empty state). Specs: `qa/e2e/b04r-r3-*.spec.ts`;
+run them with `qa/e2e/b04r.config.ts`, against a dev server on :5291 (flows C, D, F), a preview build on :5292
+(A, B, E, survey) and a production build on :5293 (R3-FLOW-21).
