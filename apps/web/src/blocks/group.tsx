@@ -180,7 +180,8 @@ export function SwitchRow({
   );
 }
 
-const AVATAR_TONE = ['bg-chart-1/14 text-chart-1', 'bg-chart-2/14 text-chart-2', 'bg-chart-3/16 text-chart-3'];
+// the initials are text, so they take the text colour; the hue tints only the disc (axe's contrast)
+const AVATAR_TONE = ['bg-chart-1/16 text-foreground', 'bg-chart-2/16 text-foreground', 'bg-chart-3/20 text-foreground'];
 /** Up to two initials: *Mei Ling* → *ML*. */
 export const initials = (name: string) =>
   name

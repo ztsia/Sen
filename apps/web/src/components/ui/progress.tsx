@@ -1,4 +1,4 @@
-// Sen: shadcn/ui's progress, changed in place (CLAUDE.md, shadcn first): the track in `muted` and the fill in the look's chart accent (patterns.md §4), or `warning` on the warn colour; corners follow the look.
+// Sen: shadcn/ui's progress, changed in place (CLAUDE.md, shadcn first): the track in `muted` and the fill in the look's chart accent (patterns.md §4), or `warning` on the warn colour; corners follow the look; an aria-label is required, so every bar is named.
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Progress as ProgressPrimitive } from 'radix-ui';
@@ -8,7 +8,11 @@ function Progress({
   value,
   tone = 'accent',
   ...props
-}: React.ComponentProps<typeof ProgressPrimitive.Root> & { tone?: 'accent' | 'warning' }) {
+}: React.ComponentProps<typeof ProgressPrimitive.Root> & {
+  tone?: 'accent' | 'warning';
+  /** What it measures, for screen readers: *Spent of the cap* (axe's aria-progressbar-name). */
+  'aria-label': string;
+}) {
   return (
     <ProgressPrimitive.Root
       data-slot="progress"

@@ -200,8 +200,8 @@ export function StatTiles({ stats, className }: { stats: Stat[]; className?: str
             s.emphasis ? 'border-primary/25 bg-primary/10' : 'card bg-card',
           )}
         >
-          <span className="text-xs text-muted-foreground">{s.label}</span>
-          <span className="truncate text-lg font-semibold">{s.value}</span>
+          <span className="text-xs text-foreground">{s.label}</span>
+          <span className="text-lg font-semibold wrap-anywhere">{s.value}</span>
         </div>
       ))}
     </div>

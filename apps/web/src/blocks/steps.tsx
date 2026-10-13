@@ -124,6 +124,9 @@ export function StepPager({
       </div>
       <div
         ref={track}
+        // a scrolling region is focusable, so a keyboard can reach and scroll it (axe)
+        tabIndex={0}
+        aria-label={`${label}: ${pages[at]?.name ?? ''}`}
         className="[scrollbar-width:none] flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
         onScroll={(e) => {
           const el = e.currentTarget;

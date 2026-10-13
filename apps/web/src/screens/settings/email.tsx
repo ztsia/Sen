@@ -62,7 +62,7 @@ export default function Email() {
               <section className="flex flex-col gap-2" aria-label="Set up Gmail">
                 {confirmed ? (
                   <details className="group px-4">
-                    <summary className="tap flex cursor-pointer list-none items-center justify-between gap-2 px-1 text-sm font-medium text-muted-foreground [&::-webkit-details-marker]:hidden">
+                    <summary className="relative tap flex cursor-pointer list-none items-center justify-between gap-2 px-1 text-sm font-medium text-muted-foreground [&::-webkit-details-marker]:hidden">
                       Set up Gmail
                       <ChevronDownIcon
                         className="size-4 transition-transform group-open:rotate-180"

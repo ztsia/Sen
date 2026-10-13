@@ -85,7 +85,7 @@ export default function CaptureApps() {
       <div className="flex flex-col gap-1 px-4 pt-2">
         <p className="text-base text-pretty">Sen reads notifications only from the apps you choose here.</p>
         <details className="group text-sm text-muted-foreground">
-          <summary className="tap inline-flex cursor-pointer list-none items-center gap-1 font-medium text-primary [&::-webkit-details-marker]:hidden">
+          <summary className="relative tap inline-flex cursor-pointer list-none items-center gap-1 font-medium text-primary [&::-webkit-details-marker]:hidden">
             How it works
             <ChevronDownIcon className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
           </summary>

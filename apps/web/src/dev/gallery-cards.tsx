@@ -153,7 +153,7 @@ export function CardsGallery() {
             <Card>
               <CardContent className="flex flex-col gap-3">
                 <p className="text-lg font-semibold">{name}</p>
-                <Progress value={30 + i * 15} tone={i === 1 ? 'warning' : 'accent'} />
+                <Progress value={30 + i * 15} tone={i === 1 ? 'warning' : 'accent'} aria-label={`${name}, made up`} />
                 <p className="text-sm text-muted-foreground">One card at a time, swiped or chosen above.</p>
               </CardContent>
             </Card>
