@@ -289,3 +289,13 @@ Each slice that needs one of these lists it under *Needs from you first* in its 
       the real WebView; hold a widget stand-in against your launcher's real widget picker and say whether the
       sizes match what Android will draw; and, with *Capture off* from the simulator, check that every
       widget stand-in reads the same figure as Home.
+
+- [ ] **B04 · Redesign on the real phone** (QA B04 redesign, run 2). A browser can't show what the owner's
+      thumb and TalkBack do, so on the debug shell: (1) Home at 390 px should not scroll in your look,
+      light and dark, and Sen's button should not cover *Total balance*; (2) turn on TalkBack and walk
+      Review: each answer chip should read its label (and *Sen suggests this*), and Insights' step row
+      should read *1 of 5*; the cards you've swiped past should not be reachable; (3) set Android's font
+      size to the largest, then open Payments, Review and Settings and say whether any amount is cut off
+      or any chip row wraps; (4) turn on *Remove animations* (Android's reduced motion) and tap *Year* on
+      Insights: it should jump, not slide (a browser slides: QA B04 redesign run 2); (5) type an amount on
+      *Add expense* and in Search payments and say whether the keyboard zooms or covers the Save button.
