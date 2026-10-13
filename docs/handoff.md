@@ -15,20 +15,19 @@ contrast, unnamed progress bars, the pager's focus, stat tiles truncating, two d
 48 px extension covered Back, Subscriptions' 40 px toggle). Last run, Minted and Copper: 308 of 312,
 the 4 being that toggle, since fixed.
 
-**In progress: QA run 2 (tier 3).** Run 1 (`qa/B04-redesign/report-run1.md`, published at
-https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa) said *fix first*: 2 Major, 8 Minor, no Blocker.
-Every finding is fixed or deliberately left, with evidence, in `qa/B04-redesign/ledger.md`; ten new
-e2e pins in `apps/web/e2e/redesign-pins.spec.ts` each failed under its break. The fixes touch
-`components/ui/progress.tsx`, so the batch is tier 3: a fresh sweep (Haiku, running in the
-background into `qa-artifacts/B04-redesign/sweep/`), then a fresh `qa-reviewer`.
+**In progress: QA run 3 (tier 3).** Runs 1 and 2 (`qa/B04-redesign/report-run1.md`, `report.md`,
+published at https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa) both said *fix first*; every
+finding is fixed or deliberately left in `qa/B04-redesign/ledger.md`. Run 2's fixes reach `cn()`,
+the inputs, the theme store and the tab bar, so run 3 is a fresh sweep and a fresh reviewer. A Haiku
+agent is adding nine e2e pins to `apps/web/e2e/redesign-pins.spec.ts` (each proven under a break).
 
 ### What to do next (this session continues after a compact)
-1. When the sweep reports, check its `index.md`. If it's green, spawn a **new** `qa-reviewer` with
-   the thin prompt (branch, label, brief, the sweep's folder, record in `qa/B04-redesign/`); if
-   not, fix first.
-2. When it reports: commit its record, publish to the same artifact URL above, and fix by tiers.
-3. `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign` (move the row into
-   `Sen/docs/usage.md` if it lands elsewhere), then open the PR *B04 · Redesign*.
+1. When the pins agent reports: check `git status` shows only the pins file, commit it.
+2. Before the new run: rename `qa/B04-redesign/report.md` to `report-run2.md` and `results.json`
+   to `results-run2.json`. Then the Haiku sweep (brief as in the `brief` skill: wait for the run
+   with one until-loop), then a **new** `qa-reviewer` with the thin prompt.
+3. Commit its record, republish to the same URL, fix by tiers. Then
+   `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign` and open the PR *B04 · Redesign*.
 
 ### Decided with the owner (13 Oct; all recommended options taken)
 - **Home fits one screen** at 390×844 by compressing: the payday plan becomes a one-line strip, the
