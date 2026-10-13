@@ -307,6 +307,41 @@ export function apply(db: Db, cmd: Exclude<Command, { type: 'undo' }>): Applied 
         touched: [],
       };
     }
+    case 'subscription.add': {
+      // the same id again is a no-op (every input has a dedupe key)
+      if (db.subscriptions.some((x) => x.id === cmd.id)) return { said: 'Already added', touched: [] };
+      db.subscriptions.push({
+        id: cmd.id,
+        userId: db.userId,
+        name: cmd.name,
+        merchantKey: null,
+        amount: cmd.amount,
+        currency: cmd.currency,
+        cadence: cmd.cadence,
+        nextRenewalDate: cmd.nextRenewal,
+        status: 'active',
+        displayFxRate: null,
+        displayFxOn: null,
+        displayFxSource: null,
+      });
+      return { said: `${cmd.name} added`, touched: [] };
+    }
+    case 'goal.add': {
+      if (db.goals.some((x) => x.id === cmd.id)) return { said: 'Already added', touched: [] };
+      if (!db.accounts.some((a) => a.id === cmd.accountId)) throw new Error('Choose the account it sits in.');
+      db.goals.push({
+        id: cmd.id,
+        userId: db.userId,
+        name: cmd.name,
+        kind: cmd.kind,
+        targetAmount: cmd.target,
+        targetDate: cmd.by,
+        repeatsYearly: cmd.kind === 'bucket',
+        accountId: cmd.accountId,
+        status: 'active',
+      });
+      return { said: `${cmd.name} added`, touched: [] };
+    }
     default:
       // B04's commands belong to their areas (areas/index.ts), which run first
       throw new Error(`No fake for ${cmd.type}`);

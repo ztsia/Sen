@@ -161,6 +161,34 @@ describe('edge states', () => {
 });
 
 describe('writes, with Undo (§6.7)', () => {
+  it('adds a subscription by hand, once for the same id (D134)', async () => {
+    const fake = createFake();
+    const id = uid('sub:test');
+    const cmd = Command.parse({
+      type: 'subscription.add',
+      id,
+      name: 'Canva Pro',
+      amount: 1299,
+      currency: 'USD',
+      cadence: 'yearly',
+      nextRenewal: '2026-11-02',
+    });
+    expect((await fake.run(cmd)).said).toBe('Canva Pro added');
+    expect((await fake.run(cmd)).said).toBe('Already added');
+    expect(fake.db().subscriptions.filter((x) => x.id === id)).toHaveLength(1);
+    expect(JSON.stringify(await fake.subscriptions())).toContain('Canva Pro');
+  });
+
+  it('adds a goal by hand in the account it sits in, and refuses an unknown account (D133, D134)', async () => {
+    const fake = createFake();
+    const id = uid('goal:test');
+    const goal = { type: 'goal.add', id, name: 'New laptop', kind: 'goal', target: 450000, by: null };
+    await expect(fake.run(Command.parse({ ...goal, accountId: uid('account:none') }))).rejects.toThrow(/account/);
+    expect((await fake.run(Command.parse({ ...goal, accountId: acctId('ryt') }))).said).toBe('New laptop added');
+    expect(fake.db().goals.find((g) => g.id === id)).toMatchObject({ accountId: acctId('ryt'), targetAmount: 450000 });
+    expect((await fake.goals()).goals.map((g) => g.name)).toContain('New laptop');
+  });
+
   it('opens a receipt Sen could not read as a failed draft, so Add expense says so', async () => {
     const fake = createFake();
     const d = await fake.draft(uid('receipt:blurry'));

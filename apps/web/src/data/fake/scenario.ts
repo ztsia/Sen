@@ -1162,6 +1162,7 @@ function addThisCycle(db: Db) {
       targetAmount: rm(target),
       targetDate: date,
       repeatsYearly: kind === 'bucket',
+      accountId: acctId('ryt'),
       status: 'active',
     });
     saved.forEach((s, i) =>
