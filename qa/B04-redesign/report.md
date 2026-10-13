@@ -1,5 +1,7 @@
 # B04 · Redesign: QA report (run 1, full)
 
+Published report: https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa
+
 **VERDICT: fix first.** 105 criteria: 87 pass, 5 fail, 13 not reachable. No Blocker.
 Phases run: 1-3, 5, 6. Phase 4 does not apply (no database, API or RLS in this slice).
 Screenshots: `qa-artifacts/B04-redesign/screens/` (218 named in the report, plus the tour). Rendered report: `qa-artifacts/B04-redesign/report.html`.
