@@ -4,6 +4,7 @@ import { momentLabel } from '@/lib/dates';
 import { rm } from './scenario';
 import type { Backend } from '../backend';
 import type { Db } from './db';
+import type { ReceiptDraft } from '@sen/core/views';
 import { apply, matchesFor, spread } from './apply';
 import { buildScenario, withOffline, type ScenarioId } from './variants';
 import * as v from './views';
