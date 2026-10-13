@@ -1,6 +1,8 @@
 import { useId, useState, type FormEvent } from 'react';
-import { CheckCircle2Icon, HourglassIcon, LockIcon } from 'lucide-react';
+import { CheckCircle2Icon, HourglassIcon, LockIcon, SplitIcon } from 'lucide-react';
 import type { PublicSplitView } from '@sen/core/views';
+import { FactGrid } from '@/blocks/facts';
+import { GroupCard } from '@/blocks/group';
 import { Money } from '@/blocks/money';
 import { EmptyState } from '@/blocks/states';
 import { StatusCard } from '@/blocks/status';
@@ -12,8 +14,8 @@ import { usePublicSplit, usePublicWrite } from '@/data/public';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { momentLabel } from '@/lib/dates';
-import { Loaded, Section, useScreenSearch } from '../kit';
-import { BillHeader, Facts, ItemRows, PayActions, Roster, StandInQr, type PartItem } from './parts';
+import { Loaded, useScreenSearch } from '../kit';
+import { BillHeader, ItemRows, PayActions, Roster, StandInQr, type PartItem } from './parts';
 
 /**
  * `split-public` (screens.md): a friend's browser, no login (D47, D64, D71). It reads only its own
@@ -35,7 +37,7 @@ export default function SplitPublic() {
 }
 
 function Closed() {
-  return <EmptyState line="This split is closed" />;
+  return <EmptyState icon={SplitIcon} title="Closed" line="This split is closed" />;
 }
 
 const messageOf = (e: unknown) => (e instanceof Error ? e.message : "That didn't save. Try again.");
@@ -63,14 +65,37 @@ function Body({ token, v }: { token: string; v: PublicSplitView }) {
     .filter(Boolean)
     .join(' · ');
 
+  const doneBar =
+    named && !final ? (
+      // sticky: the main action stays in reach while the list scrolls
+      <div className="sticky bottom-0 z-10 mt-auto border-t border-border bg-background px-4 py-3">
+        {v.youDone ? (
+          <div className="flex items-center justify-between gap-3">
+            <p className="inline-flex items-center gap-2 font-medium">
+              <CheckCircle2Icon className="size-5 text-icon" aria-hidden="true" />
+              You're done ✓
+            </p>
+            <Button variant="ghost" size="sm" onClick={() => void run(write.done(false))}>
+              Still ticking
+            </Button>
+          </div>
+        ) : (
+          <Button className="w-full" onClick={() => void run(write.done(true))}>
+            I've ticked everything I had
+          </Button>
+        )}
+      </div>
+    ) : null;
+
   return (
-    <div className="flex flex-col gap-4 pt-2">
+    <div className="flex min-h-full flex-1 flex-col gap-4 pt-2">
+      <BillHeader
+        merchant={v.merchant}
+        total={v.total}
+        payer={v.payer}
+        line={`Paid by ${v.payer} · ${v.at ? momentLabel(new Date(v.at)) : ''}`}
+      />
       <div className="flex flex-col gap-4 px-4">
-        <BillHeader
-          merchant={v.merchant}
-          total={v.total}
-          line={`Paid by ${v.payer} · ${v.at ? momentLabel(new Date(v.at)) : ''}`}
-        />
         {named ? (
           <p className="text-muted-foreground">Hi {v.you}. Sen remembers this browser.</p>
         ) : (
@@ -95,50 +120,26 @@ function Body({ token, v }: { token: string; v: PublicSplitView }) {
         )}
       </div>
 
-      <Section title={final ? 'Everyone' : "Who's done"}>
-        <Roster people={v.people.map((p) => ({ name: p.name === v.you ? 'You' : p.name, done: p.done }))} />
-      </Section>
-
-      <Section title="Items">
+      <GroupCard label="Items" footer={!named ? 'Type your name to tick what you had.' : undefined}>
         <ItemRows
           items={items}
           // a name first, and after the lock only the payer changes a tick
           locked={final || !named}
           onTick={(itemId, on) => void run(write.tick(itemId, on))}
         />
-        {!named ? (
-          <p className="px-4 pt-3 text-sm text-muted-foreground">Type your name to tick what you had.</p>
-        ) : null}
-      </Section>
+      </GroupCard>
+
+      <Roster
+        label={final ? 'Everyone' : "Who's done"}
+        people={v.people.map((p) => ({ name: p.name === v.you ? 'You' : p.name, done: p.done }))}
+      />
 
       {named ? (
-        <Section title="You">
-          <Facts rows={[{ label: final ? 'Your share' : 'Your share so far', value: <Money sen={v.yourShare} /> }]} />
-        </Section>
-      ) : null}
-
-      {named && !final ? (
-        <div className="px-4">
-          {v.youDone ? (
-            <div className="flex items-center justify-between gap-3">
-              <p className="inline-flex items-center gap-2 font-medium">
-                <CheckCircle2Icon className="size-5 text-icon" aria-hidden="true" />
-                You're done ✓
-              </p>
-              <Button variant="ghost" size="sm" onClick={() => void run(write.done(false))}>
-                Still ticking
-              </Button>
-            </div>
-          ) : (
-            <Button className="w-full" onClick={() => void run(write.done(true))}>
-              I've ticked everything I had
-            </Button>
-          )}
-        </div>
+        <FactGrid facts={[{ label: final ? 'Your share' : 'Your share so far', value: <Money sen={v.yourShare} /> }]} />
       ) : null}
 
       {v.pay ? (
-        <section aria-label="Pay" className="flex flex-col items-center gap-3 px-4 pt-2">
+        <section aria-label="Pay" className="flex flex-col items-center gap-3 px-4 pt-2 pb-4">
           <p className="text-2xl font-semibold">
             Pay <Money sen={v.pay.sen} whole className="text-2xl font-semibold" />
           </p>
@@ -150,6 +151,7 @@ function Body({ token, v }: { token: string; v: PublicSplitView }) {
           {v.pay.qr ? <PayActions browser sen={v.pay.sen} who={v.payer} /> : null}
         </section>
       ) : null}
+      {doneBar}
     </div>
   );
 }

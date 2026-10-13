@@ -1,15 +1,8 @@
 import { useId, useRef, useState, type ComponentType, type HTMLAttributes, type ReactNode } from 'react';
 import { ChevronRightIcon, CloudOffIcon, InboxIcon, ReceiptTextIcon, SparklesIcon, SplitIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemFooter,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item';
+import { Card } from '@/components/ui/card';
+import { Item, ItemActions, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
 import { dayLabel } from '@/lib/dates';
 import { cn } from '@/lib/utils';
@@ -145,17 +138,21 @@ export function ReviewRow({
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
   return (
-    <Item size="sm" className="rounded-none text-base">
-      <ItemContent className="min-w-0 gap-1">
-        <ItemTitle className="w-full text-base text-pretty wrap-anywhere">{question}</ItemTitle>
-        <ItemDescription>{knows}</ItemDescription>
-      </ItemContent>
-      <ItemFooter className="flex-wrap justify-start">
+    <Card className="gap-2 p-3 text-base">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <p className="w-full text-base font-semibold text-pretty wrap-anywhere">{question}</p>
+        <p className="text-sm text-muted-foreground">{knows}</p>
+      </div>
+      <div className="[scrollbar-width:none] -mx-3 flex gap-2 overflow-x-auto px-3 py-0.5">
         {answers.slice(0, 3).map((a) => (
           <Button
             key={a.label}
-            variant={a.suggested ? 'default' : 'secondary'}
-            size="sm"
+            variant="outline"
+            size="chip"
+            className={cn(
+              'shrink-0 whitespace-nowrap',
+              a.suggested && 'border-primary text-primary ring-2 ring-primary/40',
+            )}
             aria-disabled={busy || undefined}
             onClick={() => {
               // one answer per row, and none while the last change settles: the next row slides into
@@ -180,12 +177,12 @@ export function ReviewRow({
           </Button>
         ))}
         {onOther ? (
-          <Button variant="ghost" size="sm" onClick={onOther}>
+          <Button variant="ghost" size="chip" className="shrink-0 whitespace-nowrap" onClick={onOther}>
             Other…
           </Button>
         ) : null}
-      </ItemFooter>
-    </Item>
+      </div>
+    </Card>
   );
 }
 

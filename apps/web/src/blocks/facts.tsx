@@ -195,11 +195,12 @@ export function StatTiles({ stats, className }: { stats: Stat[]; className?: str
         <div
           key={s.label}
           className={cn(
-            'card flex min-w-0 flex-col gap-0.5 rounded-[var(--radius-card,16px)] border px-3 py-3',
-            s.emphasis ? 'border-transparent bg-primary text-primary-foreground' : 'bg-card',
+            'flex min-w-0 flex-col gap-0.5 rounded-[var(--radius-card,16px)] border px-3 py-3',
+            // the emphasised tile is tinted, not a card: a look's card material would repaint it (Line)
+            s.emphasis ? 'border-primary/25 bg-primary/10' : 'card bg-card',
           )}
         >
-          <span className={cn('text-xs', s.emphasis ? 'opacity-80' : 'text-muted-foreground')}>{s.label}</span>
+          <span className="text-xs text-muted-foreground">{s.label}</span>
           <span className="truncate text-lg font-semibold">{s.value}</span>
         </div>
       ))}

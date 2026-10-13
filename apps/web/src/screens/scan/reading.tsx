@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
+import { ScanLineIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState, ErrorState } from '@/blocks/states';
 import { useDraft, useMe } from '@/data/hooks';
@@ -29,6 +31,8 @@ export default function Reading() {
       {/* no id: nothing to read, so say so rather than wait for ever (QA B03 run 2, finding 22) */}
       {!id ? (
         <EmptyState
+          icon={ScanLineIcon}
+          title="No receipt here"
           line="Sen can't find this receipt."
           action={{ label: 'Go Home', onSelect: () => go('home', {}, { replace: true }) }}
         />
@@ -38,6 +42,8 @@ export default function Reading() {
             if (!d)
               return (
                 <EmptyState
+                  icon={ScanLineIcon}
+                  title="No receipt here"
                   line="Sen can't find this receipt."
                   action={{ label: 'Go Home', onSelect: () => go('home', {}, { replace: true }) }}
                 />
@@ -76,7 +82,9 @@ export default function Reading() {
 function ReadingBody({ leave }: { leave?: () => void }) {
   return (
     <div className="flex flex-col gap-4 px-4 pt-2" role="status" aria-live="polite">
-      <Skeleton className="mx-auto aspect-[3/4] w-full max-w-72" aria-hidden="true" />
+      <Card className="mx-auto w-full max-w-72 p-3">
+        <Skeleton className="aspect-[3/4] w-full" aria-hidden="true" />
+      </Card>
       <p className="text-center text-lg font-semibold">Reading receipt…</p>
       <p className="text-center text-muted-foreground">You can leave. It waits in Review once it&rsquo;s read.</p>
       {leave ? (

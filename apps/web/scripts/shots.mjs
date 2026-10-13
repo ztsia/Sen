@@ -21,12 +21,17 @@ mkdirSync(out, { recursive: true });
 const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
 for (const spec of args) {
-  const [name, rest] = spec.split('=');
+  const name = spec.slice(0, spec.indexOf('='));
+  const rest = spec.slice(spec.indexOf('=') + 1);
   const fit = rest.endsWith('!fit');
   const [path, tap] = rest.replace(/!fit$/, '').split('@');
   for (const [look, mode] of looks) {
     await p.goto(`http://localhost:${port}${path}${path.includes('?') ? '&' : '?'}look=${look}&mode=${mode}`);
-    await p.waitForTimeout(1000);
+    // wait for the loading skeletons to clear, then for the drawing to settle
+    await p
+      .waitForFunction(() => !document.querySelector('[data-slot="skeleton"]'), null, { timeout: 15000 })
+      .catch(() => {});
+    await p.waitForTimeout(600);
     if (tap) {
       await p.locator('main').getByRole('button').filter({ hasText: tap }).first().click();
       await p.waitForTimeout(800);

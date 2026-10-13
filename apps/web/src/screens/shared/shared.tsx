@@ -1,14 +1,20 @@
-import { SplitIcon } from 'lucide-react';
+import { useState } from 'react';
+import { CheckIcon, SplitIcon } from 'lucide-react';
 import type { SharedView } from '@sen/core/views';
+import { Segmented } from '@/blocks/choice';
+import { PersonAvatar } from '@/blocks/group';
+import { Money } from '@/blocks/money';
 import { EmptyState } from '@/blocks/states';
-import { ListRow } from '@/blocks/rows';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { useShared } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { dayOfInstant, shortDay } from '@/lib/dates';
-import { Loaded, Section, useGo } from '../kit';
+import { readableName } from '@/lib/names';
+import { Loaded, useGo } from '../kit';
 
-/** `shared` (screens.md): every split, open ones first. A row opens `split`. */
+/** `shared` (screens.md, D130): every bill as a card, Open or Settled. A card opens `split`. */
 export default function Shared() {
   const q = useShared();
   const go = useGo();
@@ -20,7 +26,9 @@ export default function Shared() {
             <Lists rows={v.rows} />
           ) : (
             <EmptyState
-              line="No shared bills yet. Open a payment and tap Split to share it."
+              icon={SplitIcon}
+              title="No shared bills yet"
+              line="Open a payment and tap Split to share it."
               action={{ label: 'See all payments', onSelect: () => go('payments') }}
             />
           )
@@ -33,36 +41,66 @@ export default function Shared() {
 function Lists({ rows }: { rows: SharedView['rows'] }) {
   const open = rows.filter((r) => r.open);
   const settled = rows.filter((r) => !r.open);
+  const [which, setWhich] = useState<'open' | 'settled'>(open.length ? 'open' : 'settled');
+  const shown = which === 'open' ? open : settled;
   return (
-    <div className="flex flex-col pb-4">
-      {open.length ? (
-        <Section title="Open">
-          <Rows rows={open} />
-        </Section>
-      ) : null}
-      {settled.length ? (
-        <Section title="Settled">
-          <Rows rows={settled} />
-        </Section>
-      ) : null}
+    <div className="flex flex-col gap-4 pt-2 pb-4">
+      <Segmented
+        label="Which bills"
+        value={which}
+        onChange={setWhich}
+        options={[
+          { value: 'open', label: `Open · ${open.length}` },
+          { value: 'settled', label: `Settled · ${settled.length}` },
+        ]}
+      />
+      {shown.length ? (
+        <ul className="flex flex-col gap-3 px-4">
+          {shown.map((r) => (
+            <li key={r.id}>
+              <Bill row={r} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="px-5 text-muted-foreground">
+          {which === 'open' ? 'Nothing is waiting on anyone.' : 'No settled bills yet.'}
+        </p>
+      )}
     </div>
   );
 }
 
-function Rows({ rows }: { rows: SharedView['rows'] }) {
+/** Mei paid → *Mei paid · you owe RM24.40*: the payer's name is the line's first word(s). */
+const payerOf = (r: SharedView['rows'][number]) => (r.paidBy === 'me' ? 'You' : r.line.split(' paid')[0] || 'Them');
+
+function Bill({ row: r }: { row: SharedView['rows'][number] }) {
   const go = useGo();
+  const payer = payerOf(r);
+  // you owe is money out, owed to you is money in; a settled bill says neither in colour
+  const tone = !r.open ? 'text-muted-foreground' : r.paidBy === 'me' ? 'text-money-in' : 'text-money-out';
   return (
-    <div className="flex flex-col">
-      {rows.map((r) => (
-        <ListRow
-          key={r.id}
-          icon={SplitIcon}
-          title={r.merchant}
-          secondary={`${shortDay(dayOfInstant(r.at))} · ${r.line}`}
-          sen={r.sen}
-          onOpen={() => go('split', { id: r.id })}
-        />
-      ))}
-    </div>
+    <button type="button" className="w-full text-left active:opacity-80" onClick={() => go('split', { id: r.id })}>
+      <Card className="gap-2 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <span className="flex shrink-0 -space-x-2">
+            {r.paidBy === 'other' ? <PersonAvatar name="You" size="default" /> : null}
+            <PersonAvatar name={payer} size="default" />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-base font-semibold">{readableName(r.merchant)}</span>
+            <span className="text-sm text-muted-foreground">{shortDay(dayOfInstant(r.at))}</span>
+          </div>
+          <Money sen={r.sen} className="text-base font-semibold text-foreground" />
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <p className={`min-w-0 text-sm ${tone}`}>{r.line}</p>
+          <Badge variant={r.open ? 'accent' : 'muted'}>
+            {r.open ? null : <CheckIcon />}
+            {r.open ? 'Open' : 'Settled'}
+          </Badge>
+        </div>
+      </Card>
+    </button>
   );
 }

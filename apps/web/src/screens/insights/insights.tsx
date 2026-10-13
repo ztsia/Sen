@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { CheckIcon, ChevronRightIcon } from 'lucide-react';
+import { CalendarRangeIcon, ChartLineIcon, CheckIcon, ChevronRightIcon } from 'lucide-react';
 import { formatSen, medianSen, percent, scaleSen } from '@sen/core/money';
 import type { InsightsView } from '@sen/core/views';
 import {
@@ -16,9 +16,10 @@ import {
   Sparkline,
 } from '@/blocks/charts';
 import { Money } from '@/blocks/money';
-import { SettingsRow } from '@/blocks/rows';
+import { GroupCard, NavRow } from '@/blocks/group';
 import { Sheet } from '@/blocks/sheet';
 import { EmptyState } from '@/blocks/states';
+import { StepPager } from '@/blocks/steps';
 import { Button } from '@/components/ui/button';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,7 +28,7 @@ import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { useUi } from '@/frame/ui-store';
 import { shortDay } from '@/lib/dates';
-import { Loaded, Section, useGo } from '../kit';
+import { Loaded, useGo } from '../kit';
 
 /**
  * Insights (screens.md, D62, D73, spec §9.3): where is my money going, and am I on track? One scroll
@@ -86,13 +87,16 @@ function InsightsBody({ v, onPick }: { v: InsightsView; onPick: (id: string) => 
   const [pickerOpen, setPickerOpen] = useState(false);
   const picker = (
     <>
-      <SettingsRow
-        label={
-          v.cycle.current ? `${v.cycle.label} (this ${v.cycle.basis === 'pay' ? 'cycle' : 'month'})` : v.cycle.label
-        }
-        value={`${shortDay(v.cycle.start)} – ${shortDay(v.cycle.end)}`}
-        onOpen={() => setPickerOpen(true)}
-      />
+      <GroupCard>
+        <NavRow
+          icon={CalendarRangeIcon}
+          title={
+            v.cycle.current ? `${v.cycle.label} (this ${v.cycle.basis === 'pay' ? 'cycle' : 'month'})` : v.cycle.label
+          }
+          value={`${shortDay(v.cycle.start)} – ${shortDay(v.cycle.end)}`}
+          onOpen={() => setPickerOpen(true)}
+        />
+      </GroupCard>
       <Sheet
         open={pickerOpen}
         onOpenChange={setPickerOpen}
@@ -137,40 +141,43 @@ function InsightsBody({ v, onPick }: { v: InsightsView; onPick: (id: string) => 
     return (
       <>
         {picker}
-        <EmptyState line="Your first insights show once you've a few payments." />
+        <EmptyState
+          icon={ChartLineIcon}
+          title="No insights yet"
+          line="Your first insights show once you've a few payments."
+        />
       </>
     );
 
+  // one named step per question group; a step with no data isn't shown (D62)
   const groups: [string, (ReactNode | null)[]][] = [
-    [
-      'This cycle',
-      [
-        onTrackCard(v),
-        budgetsCard(v, go),
-        whereWentCard(v, go),
-        leakCard(v),
-        v.smallThings ? smallCard(v.smallThings) : null,
-      ],
-    ],
-    ['Food', [mealCard(v), experimentCard(v), eatOutCard(v)]],
-    ['Commitments', [spokenCard(v), renewsCard(v, go)]],
-    ['Over time', [savingCard(v), goalsCard(v, go), trustCard(v), merchantsCard(v)]],
+    ['On track', [onTrackCard(v), whereWentCard(v, go), leakCard(v), v.smallThings ? smallCard(v.smallThings) : null]],
+    ['Budgets', [budgetsCard(v, go), mealCard(v), experimentCard(v), eatOutCard(v)]],
+    ['Subscriptions', [spokenCard(v), renewsCard(v, go)]],
+    ['Goals', [goalsCard(v, go)]],
+    ['Year', [savingCard(v), trustCard(v), merchantsCard(v)]],
   ];
+  const pages = groups
+    .map(([name, cards]) => ({ name, shown: cards.filter((c) => c !== null) }))
+    .filter((g) => g.shown.length)
+    .map((g) => ({
+      name: g.name,
+      content: <div className="flex flex-col gap-3 pb-4">{g.shown}</div>,
+    }));
 
   return (
-    <div className="flex flex-col pb-4">
+    <div className="flex flex-col gap-3 pb-4">
       {picker}
-      {groups.map(([title, cards]) => {
-        const shown = cards.filter((c) => c !== null);
-        return shown.length ? (
-          <Section key={title} title={title}>
-            <div className="flex flex-col gap-3 px-4 pt-1">{shown}</div>
-          </Section>
-        ) : null;
-      })}
-      <div className="pt-5">
-        <SettingsRow label="The year" value={v.cycle.end.slice(0, 4)} onOpen={() => go('insights/year')} />
-      </div>
+      <StepPager label="Insights" pages={pages} />
+      <GroupCard>
+        <NavRow
+          icon={CalendarRangeIcon}
+          tone="accent"
+          title="The year"
+          value={v.cycle.end.slice(0, 4)}
+          onOpen={() => go('insights/year')}
+        />
+      </GroupCard>
     </div>
   );
 }

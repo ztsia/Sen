@@ -4,7 +4,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { checkAmount, MoneyInput } from '@/blocks/money-input';
-import { SettingsRow } from '@/blocks/rows';
+import { GroupCard, SwitchRow } from '@/blocks/group';
 import { EmptyState, OfflineBanner } from '@/blocks/states';
 import CaptureAccess from '../capture/access';
 import CaptureApps from '../capture/apps';
@@ -15,6 +15,7 @@ import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { useOnline } from '@/lib/online';
 import { readStored, writeStored } from '@/lib/storage';
+import { categoryIcon, categoryTone } from '../icons';
 import { Loaded, useGo } from '../kit';
 import { SignInFlow } from './sign-in';
 import { parseDay, printedName, stepsFor, type StepId } from './logic';
@@ -383,20 +384,24 @@ function Categories({
             These describe your spending. Switch off any you won’t use; you can rename, add or switch them back in
             Settings. You count by calendar month, and can set a payday later.
           </p>
-          <div className="pt-2">
-            {cats.map((c) => (
-              <SettingsRow
-                key={c.id}
-                label={c.label}
-                checked={!off.has(c.id)}
-                onCheckedChange={(on) => {
-                  const next = new Set(off);
-                  if (on) next.delete(c.id);
-                  else next.add(c.id);
-                  setOff(next);
-                }}
-              />
-            ))}
+          <div className="pt-3">
+            <GroupCard>
+              {cats.map((c) => (
+                <SwitchRow
+                  key={c.id}
+                  icon={categoryIcon(c.label)}
+                  tone={categoryTone(c.label)}
+                  title={c.label}
+                  checked={!off.has(c.id)}
+                  onCheckedChange={(on) => {
+                    const next = new Set(off);
+                    if (on) next.delete(c.id);
+                    else next.add(c.id);
+                    setOff(next);
+                  }}
+                />
+              ))}
+            </GroupCard>
           </div>
           <Actions>
             <Button onClick={onDone} disabled={off.size >= cats.length}>

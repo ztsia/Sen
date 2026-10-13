@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { CameraIcon, ImageIcon } from 'lucide-react';
+import { CameraIcon, ImageIcon, PencilIcon, RectangleVerticalIcon, ScanLineIcon, SunIcon } from 'lucide-react';
+import { GroupCard, NavRow } from '@/blocks/group';
 import { dismissToast, toastDone } from '@/blocks/toast';
 import { Button } from '@/components/ui/button';
 import { startDraft } from '@/data/hooks';
@@ -40,21 +41,30 @@ export default function Scan() {
 
   return (
     <Screen bar={<AppBar title="Scan a receipt" />}>
-      <div className="flex flex-col gap-4 px-4 pt-4">
-        <p className="text-muted-foreground">
-          {forTxnId
-            ? 'Take a photo of the receipt for this payment.'
-            : 'Take a photo of the receipt, flat and in the light.'}{' '}
-          In Sen&rsquo;s Android app, the scanner finds the edges by itself.
+      <div className="flex flex-col gap-4 pt-2">
+        <p className="px-4 text-muted-foreground">
+          {forTxnId ? 'Take a photo of the receipt for this payment.' : 'Take a photo of the receipt.'} In Sen&rsquo;s
+          Android app, the scanner finds the edges by itself.
         </p>
-        <Button disabled={busy} onClick={() => camera.current?.click()}>
-          <CameraIcon aria-hidden="true" />
-          Take a photo
-        </Button>
-        <Button size="sm" variant="secondary" disabled={busy} onClick={() => gallery.current?.click()}>
-          <ImageIcon aria-hidden="true" />
-          From gallery
-        </Button>
+        <GroupCard label="For a good read">
+          <NavRow icon={RectangleVerticalIcon} title="Lay it flat" />
+          <NavRow icon={SunIcon} title="Stand in the light" />
+          <NavRow icon={ScanLineIcon} title="Get the whole receipt in" />
+        </GroupCard>
+        <div className="flex flex-col gap-3 px-4">
+          <Button disabled={busy} onClick={() => camera.current?.click()}>
+            <CameraIcon aria-hidden="true" />
+            Take a photo
+          </Button>
+          <Button size="sm" variant="secondary" disabled={busy} onClick={() => gallery.current?.click()}>
+            <ImageIcon aria-hidden="true" />
+            From gallery
+          </Button>
+          <Button size="sm" variant="ghost" disabled={busy} onClick={() => go('manual', {})}>
+            <PencilIcon aria-hidden="true" />
+            Add by hand
+          </Button>
+        </div>
         <input
           ref={camera}
           type="file"
