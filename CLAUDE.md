@@ -61,39 +61,15 @@ safety net.
 
 ## Where the build is
 
-**Nothing is built, deliberately.** The design track comes first. The owner's previous project
-built module by module, and every feature worked but the app didn't hang together
-(`docs/decisions.md` D7). The track has three steps:
+**Design came first, deliberately** (D7: the owner's previous app worked feature by feature but
+didn't hang together). The design track is done: the spec grilled and decided (`S1`), journeys,
+screens, patterns and six looks (`S2`, D75–D84), and the slice map, forty slices in nine stages with
+a brief each (`S3`, D111). The spec's later revisions are D85–D110.
 
-1. **`S1`** (done, 5 Oct): grill `spec_v2.md` with the owner, section by section, and log the decisions.
-2. **`S2`** (done, 7 Oct): user journeys, screen map and shared UI patterns. Journeys, screens and the wireframe are approved (6 Oct). The identity is settled (D75).
-   Six looks, each a theme, an icon and Sen's avatar (D76), make a pool: four play each year, one a
-   quarter (D77, D78). All six are built in `docs/ui/directions/`: Minted, Instrument, Firefly, Line,
-   Mercury and Copper. Each draws its own tab bar on shared outlines (D80), and everything a look
-   draws is saved in `docs/ui/directions/assets/`. Each look has its chart palette (one set of hues,
-   tuned per look by `palette.mjs`) and icon tokens (D81), and `docs/ui/patterns.md` is written,
-   with the reveal's shared frame (§9). Screens weren't mocked up: the walking skeleton is the
-   mockup, in all six looks, and each look's reveal is built in code (D84).
-   On 7 Oct the owner refined the spec once more (2.8, D85–D102): open source, capture from apps each
-   person chooses, templates that start from nothing, Sen's structure, claims with Sen and a printable
-   claim pack, ESS filed from the phone, AI credit, realtime, and the island.
-   On 8 Oct, spec 2.9 (D103–D110): ESS becomes an adapter run from recipes, which signs in from the
-   phone and fetches the payslip on payday; Sen's figures are traceable rather than clipped, skills
-   run on Sen's model, and its chat takes files.
-3. **`S3`** (done, 8 Oct): the slice map in `docs/modules.md`, with one brief per slice in
-   `docs/briefs/` (D111). Forty slices in nine stages, built one at a time: the design system and
-   looks, the shell and listener, the walking skeleton with the owner's review, then the server, and
-   capture to ledger, after which daily use starts (B13). Claims by hand come before Sen; the ESS
-   adapter after it.
-
-**No app code until `S3`'s slice map is merged, and Sen is published** (`docs/local.md`). Then B01
-starts in `ztsia/Sen`. The next slice waits only for the owner's merge.
-
-**Built so far:** B01, the design system and the six looks (the workspace, money, the frame, the
-building blocks, the dev panel and the gallery); B02, the shell and the listener (merged 9 Oct; its
-week on the owner's phone is still to run). Vercel is linked and the shell's release is signed
-(10 Oct, D122). B03, the five tabs' skeleton on made-up data, with the data layer every later slice
-plugs into (merged 11 Oct). ESS's API was captured on the owner's laptop (10 Oct, D110). Next: B04.
+**Built:** B01 (design system and the six looks), B02 (the shell and the listener; its week on the
+owner's phone is still to run), B03 (the five tabs on made-up data, with the data layer), B04 (the
+walking skeleton and its review). **In progress:** the B04 redesign (D130), then B05. Each slice
+waits only for the owner's merge; `docs/handoff.md` says where things stand now.
 
 ## Non-negotiables
 
@@ -218,81 +194,52 @@ Works from a phone through cloud sessions, rarely at a laptop.
 
 ### Models and subagents
 
-**This is the owner's standing request to use subagents (D125)**, so a session spawns them without
-being asked each time; it overrides any default that says to spawn only on request. The main session
-(Opus) decides, talks with the owner, works on the non-negotiables, and reviews what comes back. The
-agents are in `.claude/agents/`:
+**Opus is the brain; subagents are its hands (D125, D131).** The main session (Opus) talks with the
+owner, makes every decision, works on the non-negotiables, writes the briefs, and reviews what comes
+back. Subagents carry out work that is decided but too long or too repetitive to be worth Opus's
+price. This is the owner's standing request, so a session spawns them without being asked.
 
-| Agent | Use it when | Don't, when |
-|---|---|---|
-| `implementer` (**Haiku at high effort**, its default) | A slice's build splits into **batches already decided**, each **fully specified** (the test below): screens copied from a reference, tests from given criteria, a port, boilerplate across files, lint fixes, doc syncs, reading logs, screenshot sweeps. Each batch owns its own files, so several run **in parallel, in the background**. About a twentieth of Sonnet's price per token | The task fails the test below: Sonnet. Under about 100 lines, or a non-negotiable's logic (money, RLS, dedupe, the listener's filters): do it yourself |
-| `implementer` on **Sonnet** (`model: sonnet`, `effort: medium` on the Agent call; `high` for the hardest) | A batch that leaves something to decide: it sets a pattern others will copy, holds a tricky state, crosses many files whose contracts aren't written down, or has an unknown cause to find. Also the re-run of a Haiku batch that failed its checks | |
-| `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill: a full run when a slice is finished, then the tiers | |
-| `scout` (Haiku) | Something too big to read: a long CI log, a large unfamiliar area | A lookup one `grep` or a filtered log answers; its cold start costs more than it saves |
+**A brief that leaves thinking to the subagent is the main session's failure, not the model's.**
+Before sending one, check that it says:
+- **the outcome, and every decision behind it** (what's primary, names, behaviour), so nothing is
+  left that a reviewer would argue about
+- **what to copy**: a finished example, or the exact contract (types, keys, test selectors, names that
+  must not change), pointed at rather than restated
+- **the scope**: the files it owns and the ones it mustn't touch
+- **how it proves it's done**: the checks to run, and *wait for long runs to end*
+- **its environment**: working directory and absolute paths, a port of its own, *don't commit*
 
-**Why, measured on B03:** the main session's context is re-read every turn, so code it writes costs
-again on every later turn; an implementer's code costs the main session only its report and the
-diffs it checks. Sonnet is about half Opus's price, and four batches ran at once (about 150–190k
-tokens each). The cost is a cold start per agent, so:
-- **Build the shared ground first, yourself** (types, data layer, one screen in the house style),
-  then brief the batches against it.
-- **Keep briefs lean,** and make them pass the test below: the outcome, the decisions, the exact
-  files and sections to read, a finished example to copy rather than restated rules, the files it
-  owns, the checks to run, its paths and port, and *don't commit*.
-- **Review every report and diff yourself**, fix what's off, then commit. No per-task review loops:
-  QA checks the slice.
-- **Is the task fully specified?** This is what decides Haiku, not the kind of task (the A/B below):
-  1. **The outcome is stated, and every decision is made:** what's primary, the names, the
-     behaviour. Nothing is left that a reviewer would argue about.
-  2. **A worked example to copy**, or the exact contract written out: types, keys, test selectors,
-     names that must not change.
-  3. **A bounded scope:** the files it owns and the ones it mustn't touch, about one sitting of
-     work (eight screens was fine).
-  4. **A checkable finish:** the commands that prove it's done, and *wait for runs to end*.
-  5. **The environment spelled out:** its working directory and absolute paths, its port, *don't
-     commit*.
-  All five → Haiku at high. A missing one is usually cheaper to write into the brief than to buy
-  from Sonnet, since the decisions belong to the main session anyway; when it can't be written down,
-  Sonnet. **If Haiku's checks fail or it slips, re-run that piece on Sonnet**: running cheap first
-  and re-running only the failures higher held the pass rate for about half the cost in Anthropic's
-  runs.
-- **Effort, from Anthropic's model docs (13 Oct).** Haiku 5.5: `medium` is its default; `high` is for
-  longer agent tasks and strict instruction following, which is what a brief asks; at `low` and
-  `medium` it sometimes reports a code change as done without running a check, and at `low` stops
-  early in long prompts; `xhigh` and `max` only with a measured gain, since its thinking and replies
-  get much longer and at `xhigh` it sometimes ends a turn with no visible text. Sonnet 5.5: `medium`
-  is the starting point for agentic coding; `xhigh` and `max` only with a measured gain. Per token,
-  Haiku is $0.10/$0.50 per million against Sonnet's $2/$10, a twentieth, so `high`'s longer thinking
-  still leaves it about ten times cheaper. No published comparison of Haiku at `high` against Sonnet
-  at `medium` exists; the A/B below is ours.
-- **Haiku's earlier slips (B04, D125)** all came from what a brief left unsaid: it accepted only its
-  own settings keys where a shared one was expected, ran a repo-wide formatter, and twice reported an
-  hour-long test run as done while it was running. Each maps to points 2, 3 and 4 above.
-- **The A/B test, on the B04 redesign (13 Oct):** batches D and E each ran on Sonnet (`medium`) and on
-  Haiku (`low`, an uneven start) from the same pointer brief, each in a worktree. *D* (8 screens):
-  Haiku $0.11 against Sonnet $1.12, comparable screens, no slips; Haiku's was kept. *E* (17 screens):
-  Haiku $0.16 against Sonnet $3.10, but Haiku didn't finish: it `cd`'d into the main checkout for its
-  first edits instead of its worktree (point 5), and the permission checker then blocked its
-  formatter and lint. **The briefs were the same; what differed was paths.** A rematch of E on Haiku at
-  `medium`, with its path stated, finished all 17 screens with its checks passing for $0.21 against
-  Sonnet's $3.43 (16× cheaper), and stayed in its worktree. The screens were comparable: Haiku
-  followed the brief more literally (capture's setup as `Steps`), Sonnet adapted more to the tests.
-  Sonnet's was kept, being on the branch already.
-- **No worktree unless two agents edit the same files.** Disjoint batches share the main checkout,
-  each owning listed files (A–C did, with no clash). A worktree agent starts with `pwd`, and its
-  brief says *every path you use starts with that*. A worktree may start at `main`'s head, so it
-  checks out the slice's commit first.
-- **Check every diff's file list** before applying it, and that the agent ran its checks.
-- **Subagents can't start subagents** (tested twice). Anything an agent would delegate, the main
-  session starts itself: the `qa` skill's Haiku sweep runs before the reviewer, not inside it.
-- **Two end-to-end runs never overlap**: they share ports 4173/4174 and the build folders. Queue them.
-- **Measure, then tune.** `node scripts/usage.mjs` shows what each agent and model cost this session,
-  read from the transcripts; `--log <slice>` keeps a row in `docs/usage.md`, before every handoff
-  and PR (the transcripts go with the VM). B03's first row: the main session was 73% of the cost,
-  and most of that was re-reading its own long context each turn, so keep the main session's own
-  reading and writing small, and hand off before its context grows long.
-- Subagents spend the same quota as the main session. When one stops at a usage limit, resume it
-  (`SendMessage`), never restart it.
+**Choosing the model is a judgment, made per task, with the reason in mind:**
+- **Haiku at `high` effort** (the `implementer`'s default) for any task the brief can fully specify.
+  It costs a twentieth of Sonnet per token, so even long thinking leaves it about ten times cheaper,
+  and Anthropic's docs put `high` at "longer agent tasks and strict instruction following".
+- **Sonnet at `medium`, or `high`** (`model: sonnet` and `effort` on the Agent call) when what's left
+  can't honestly be written down in advance: an unknown cause to find, a large body of unfamiliar
+  code to reason across, a batch whose output sets a pattern before the main session can show one.
+  Also to re-run a piece Haiku failed.
+- **The main session itself** for a change under about 100 lines, a design call, or a
+  non-negotiable's logic (money, RLS, dedupe, the listener's filters).
+- `xhigh` and `max` only for a measured gain. Measurements and the A/B are in `docs/usage.md`.
+
+| Agent | What it's for |
+|---|---|
+| `implementer` | A batch already decided, owning its own files; several run in parallel, in the background |
+| `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill |
+| `scout` (Haiku) | Something too big to read, such as a long log; not what one `grep` answers |
+
+**Working rules:**
+- **Build the shared ground first, yourself** (types, blocks, one finished example), then brief
+  against it.
+- **Review every report and diff:** check its file list and that it ran its checks, fix what's off,
+  then commit. A report is a claim, not proof.
+- **One checkout unless two agents edit the same files.** A worktree agent starts with `pwd` and uses
+  only paths under it, and checks out the slice's commit first (a worktree may start at `main`).
+- **Subagents can't start subagents.** What an agent would delegate, the main session starts.
+- **Two end-to-end runs never overlap** (shared ports 4173/4174 and build folders).
+- **Measure:** `node scripts/usage.mjs` (run it from the session's starting directory);
+  `--log <slice>` keeps a row in `docs/usage.md` before every handoff and PR. The main session's
+  own context is the largest cost, so keep its reading and writing small and hand off early.
+- An agent stopped at a usage limit is resumed (`SendMessage`), never restarted.
 
 ## Skills
 

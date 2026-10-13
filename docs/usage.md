@@ -6,9 +6,27 @@ part used, not a bill. Read it when tuning which model does what: a mechanical b
 Haiku could have done, a main session doing work a subagent should have, a scout that cost more than
 the reading it saved.
 
-**A/B, 13 Oct (B04 redesign):** batch D, Haiku $0.11 against Sonnet $1.12, comparable, Haiku's kept;
-batch E, Haiku $0.16 (unfinished, wrote outside its worktree) against Sonnet $3.43, Sonnet's kept; a rematch on Haiku at medium with its path stated finished for $0.21, comparable. The
-rule is in CLAUDE.md's *Models and subagents*.
+## Haiku against Sonnet (13 Oct, the B04 redesign)
+
+The same pointer brief, run on both models, each in its own worktree:
+
+| Batch | Sonnet | Haiku | Kept |
+|---|---|---|---|
+| D, 8 screens | `medium`: $1.12, 5 min | `low`: $0.11, 7 min, comparable, no slips | Haiku's |
+| E, 17 screens | `medium`: $3.43, 11 min | `low`: $0.16, unfinished; it edited the main checkout, not its worktree, and was blocked | Sonnet's |
+| E rematch | | `medium`, path stated: $0.21, 10 min, comparable, followed the brief more literally | Sonnet's, already on the branch |
+
+- **What decided it was the brief, not the model.** Each Haiku slip, here and earlier in B04
+  (accepting only its own settings keys, a repo-wide formatter, reporting a running test as done),
+  came from something the brief left unsaid.
+- **Effort, from Anthropic's model docs:**
+  - **Haiku 5.5** defaults to `medium`. `high` is "for longer agent tasks and strict instruction
+    following". At `low` and `medium` it sometimes reports a code change done without running a check.
+  - **Sonnet 5.5** starts at `medium` for agentic coding.
+  - **On both**, `xhigh` and `max` are for a measured gain only.
+  - **Price:** Haiku costs $0.10/$0.50 per million tokens against Sonnet's $2/$10.
+  - No published comparison of Haiku at `high` with Sonnet at `medium` exists.
+- **The rule this gave** is D131.
 
 | Date | Slice | Session | Main | Subagents | Total | By model |
 |---|---|---|--:|---|--:|---|
