@@ -1,5 +1,7 @@
 # B04 · Redesign: QA report (run 3, full, fresh reviewer)
 
+Published, with every screenshot: https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa
+
 Saved by the main session from the reviewer's final message (a subagent can't write a report `.md`).
 
 ```
