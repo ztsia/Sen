@@ -246,6 +246,14 @@ tokens each). The cost is a cold start per agent, so:
   a repo-wide formatter) and twice reported an hour-long test run as done while it was running. Keep
   it for mechanical work, with the contract spelled out, *only your files*, and *wait for long runs
   to end*.
+- **The A/B test, on the B04 redesign (13 Oct):** two batches each ran on Sonnet and on Haiku (low
+  effort) from the same pointer brief, in separate worktrees. *Batch D* (eight screens, some
+  judgment): Haiku $0.11 against Sonnet $1.12, comparable screens, no slips; Haiku's was kept. *Batch
+  E* (seventeen screens, mostly copying the references): Haiku $0.16 against Sonnet $3.10, but Haiku
+  wrote into the main tree from a relative path, was then stopped by the permission checker, and
+  didn't finish; Sonnet's was kept. **The rule:** once reference screens and blocks exist, give Haiku
+  batches of up to about eight screens with absolute worktree paths stated; give Sonnet the large or
+  cross-cutting ones. Check a Haiku diff's file list before applying it.
 - **Subagents can't start subagents** (tested twice). Anything an agent would delegate, the main
   session starts itself: the `qa` skill's Haiku sweep runs before the reviewer, not inside it.
 - **Two end-to-end runs never overlap**: they share ports 4173/4174 and the build folders. Queue them.

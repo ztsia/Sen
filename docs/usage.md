@@ -6,6 +6,10 @@ part used, not a bill. Read it when tuning which model does what: a mechanical b
 Haiku could have done, a main session doing work a subagent should have, a scout that cost more than
 the reading it saved.
 
+**A/B, 13 Oct (B04 redesign):** batch D, Haiku $0.11 against Sonnet $1.12, comparable, Haiku's kept;
+batch E, Haiku $0.16 (unfinished, wrote outside its worktree) against Sonnet $3.10, Sonnet's kept. The
+rule is in CLAUDE.md's *Models and subagents*.
+
 | Date | Slice | Session | Main | Subagents | Total | By model |
 |---|---|---|--:|---|--:|---|
 | 11 Oct | B03 | `01a75b9c` | $85.5 | 4× implementer on sonnet-5-5 $5.96; 3× qa-reviewer on sonnet-5-5 $28.42 | $119.88 | opus 71%, sonnet 29% |
