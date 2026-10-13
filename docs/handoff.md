@@ -15,20 +15,20 @@ contrast, unnamed progress bars, the pager's focus, stat tiles truncating, two d
 48 px extension covered Back, Subscriptions' 40 px toggle). Last run, Minted and Copper: 308 of 312,
 the 4 being that toggle, since fixed.
 
-**In progress: QA (the `qa` skill), step 3.** The Haiku sweep passed: typecheck, lint, 301 unit
-tests, and 720 of 720 e2e in all six looks (`qa-artifacts/B04-redesign/sweep/`). A fresh
-`qa-reviewer` (Sonnet) is running in the background, writing to `qa/B04-redesign/`. If the session
-lost it, spawn a new one with the same thin prompt (the `qa` skill, step 4).
+**In progress: QA run 2 (tier 3).** Run 1 (`qa/B04-redesign/report-run1.md`, published at
+https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa) said *fix first*: 2 Major, 8 Minor, no Blocker.
+Every finding is fixed or deliberately left, with evidence, in `qa/B04-redesign/ledger.md`; ten new
+e2e pins in `apps/web/e2e/redesign-pins.spec.ts` each failed under its break. The fixes touch
+`components/ui/progress.tsx`, so the batch is tier 3: a fresh sweep (Haiku, running in the
+background into `qa-artifacts/B04-redesign/sweep/`), then a fresh `qa-reviewer`.
 
 ### What to do next (this session continues after a compact)
-1. When the reviewer reports: commit its record at once, publish the report
-   (`node scripts/qa-report.mjs qa-artifacts/B04-redesign`, then the Artifact tool), fix findings
-   by the skill's tiers.
-2. `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign` (this session's transcripts are
-   under `/home/user`'s project folder; move the row into `Sen/docs/usage.md` if it lands
-   elsewhere), then open the PR *B04 · Redesign*.
-3. Stop stray dev servers with `kill` on a pid from `pgrep -f vite` in a separate command: a
-   `kill $(pgrep -f ...)` matches its own shell.
+1. When the sweep reports, check its `index.md`. If it's green, spawn a **new** `qa-reviewer` with
+   the thin prompt (branch, label, brief, the sweep's folder, record in `qa/B04-redesign/`); if
+   not, fix first.
+2. When it reports: commit its record, publish to the same artifact URL above, and fix by tiers.
+3. `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign` (move the row into
+   `Sen/docs/usage.md` if it lands elsewhere), then open the PR *B04 · Redesign*.
 
 ### Decided with the owner (13 Oct; all recommended options taken)
 - **Home fits one screen** at 390×844 by compressing: the payday plan becomes a one-line strip, the
