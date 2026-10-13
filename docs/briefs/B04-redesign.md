@@ -96,7 +96,7 @@ The owner's notes are marked ★. "Fit" means no scroll at 390×844 in all six l
 | `settings/data` | Export | An export card with an icon, one line and a button; backups as a `NavRow` with its state |
 | `settings/account` | The account | Groups for *About* (version) and *Account* (*Sign out*, *Delete account* in `destructive`) |
 | `sign-in`, `first-run` | The one field | Centred, with the look's avatar or wordmark large above; one field; one main action |
-| `new-look` | The reveal | Unchanged: it's the look's own (D84) |
+| `new-look` | The reveal | Not redesigned here. The animation (the old Home giving way in the new look's own motion, then the card) is B14's, per `patterns.md` §9; until then the skeleton shows a still placeholder. Only its card follows D130 |
 
 ## Phases and who does what
 
