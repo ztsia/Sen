@@ -22,7 +22,8 @@ import { DestructiveDialog } from '@/blocks/dialog';
 import { HeroFigure } from '@/blocks/hero';
 import { Money } from '@/blocks/money';
 import { checkAmount, MoneyInput } from '@/blocks/money-input';
-import { DayHeader, ListRow, ReviewRow, SettingsRow } from '@/blocks/rows';
+import { DayHeader, ListRow, ReviewRow } from '@/blocks/rows';
+import { GroupCard, NavRow, SwitchRow } from '@/blocks/group';
 import { Sheet } from '@/blocks/sheet';
 import { EmptyState, ErrorState, ListSkeleton, OfflineBanner, UpdatedAgo } from '@/blocks/states';
 import { HealthBar, StatusCard } from '@/blocks/status';
@@ -270,15 +271,10 @@ export default function Gallery() {
         ) : (
           <EmptyState line="Nothing to review. New questions appear here." />
         )}
-        <ItemGroup>
-          <SettingsRow
-            label="Appearance"
-            value="Changes each quarter"
-            onOpen={() => toastDone('Settings arrive in B04')}
-          />
-          <ItemSeparator />
-          <SettingsRow label="Just paid in the island" checked={switchOn} onCheckedChange={setSwitchOn} />
-        </ItemGroup>
+        <GroupCard>
+          <NavRow title="Appearance" value="Changes each quarter" onOpen={() => toastDone('Opens Appearance')} />
+          <SwitchRow title="Just paid in the island" checked={switchOn} onCheckedChange={setSwitchOn} />
+        </GroupCard>
       </Section>
 
       <Section id="detail" title="Detail">
@@ -482,9 +478,9 @@ export default function Gallery() {
       <Sheet open={sheet} onOpenChange={setSheet} title="Which category?" description="RM9.50 at ROTI BAKAR 88">
         <ItemGroup>
           {['Meals', 'Drinks & desserts', 'Groceries', 'Shopping', 'Transport'].map((c) => (
-            <SettingsRow
+            <NavRow
               key={c}
-              label={c}
+              title={c}
               onOpen={() => {
                 setSheet(false);
                 setAnswered(true);
