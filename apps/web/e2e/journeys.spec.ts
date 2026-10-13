@@ -222,6 +222,7 @@ export const JOURNEYS: Record<string, Journey> = {
   budget: async (page, shot, go) => {
     await go('/insights');
     await settled(page);
+    await page.getByRole('tab', { name: 'Budgets' }).click();
     await page.getByRole('button', { name: /Open budgets/ }).click();
     await expect(page).toHaveURL(/\/s\/budgets/);
     await shot('budgets');
@@ -252,6 +253,7 @@ export const JOURNEYS: Record<string, Journey> = {
   subscription: async (page, shot, go) => {
     await go('/insights');
     await settled(page);
+    await page.getByRole('tab', { name: 'Subscriptions' }).click();
     await page.getByRole('button', { name: /Open subscriptions/ }).click();
     await settled(page);
     await expect(page.getByText('Claude Pro')).toBeVisible();
@@ -416,9 +418,12 @@ export const JOURNEYS: Record<string, Journey> = {
     await expect(page).toHaveURL(/\/s\/split\?id=/);
     await expect(page.getByText('Still changing')).toBeVisible();
     await expect(page.getByText('Paid by You')).toBeVisible();
+    await page.getByRole('button', { name: 'Share', exact: true }).click();
     await expect(page.getByRole('img', { name: 'QR code for the table' })).toBeVisible();
-    await expect(page.getByText('Nobody has ticked this')).toHaveCount(5);
     await shot('still changing, with a QR for the table');
+    await page.keyboard.press('Escape');
+    await expect(dialog(page, 'Share this bill')).toBeHidden();
+    await expect(page.getByText('Nobody has ticked this')).toHaveCount(5);
     await page.getByText('Sate ayam (20)', { exact: true }).click();
     await page.getByText('Teh o ais (3)', { exact: true }).click();
     await expect(page.getByText('Your share so far').locator('..')).toContainText('RM39.32');
@@ -462,7 +467,9 @@ export const JOURNEYS: Record<string, Journey> = {
     await page.getByText('Shared bills', { exact: true }).click();
     await settled(page);
     await shot('shared bills');
-    await page.getByRole('button', { name: /^BBQ PLACE/i }).click();
+    // the bill is settled now, so it sits under the Settled segment (its name is the avatar, then Bbq Place)
+    await page.getByRole('radio', { name: /^Settled/ }).click();
+    await page.getByRole('button', { name: /Bbq Place/i }).click();
     await settled(page);
     await expect(page.getByText('Final', { exact: true })).toBeVisible();
     const back = page.getByRole('region', { name: 'Who has paid you back' });
@@ -601,7 +608,7 @@ export const JOURNEYS: Record<string, Journey> = {
     await expect(page.getByText('Step 4 of 4')).toBeVisible();
     await shot('the plan');
     await page.getByRole('button', { name: 'Use this plan' }).click();
-    await expect(page.getByText(/moves done/)).toBeVisible();
+    await expect(page.getByTestId('payday-strip')).toContainText('Payday plan · 0 of 5');
     await expect(page.getByRole('button', { name: 'Start' })).toHaveCount(0);
     await shot('home, the plan in progress');
     await tabs(page)
@@ -730,13 +737,11 @@ export const JOURNEYS: Record<string, Journey> = {
     await sen.getByRole('button', { name: 'More about Sen' }).click();
     await page.getByRole('menuitem', { name: 'Research' }).click();
     await expect(page).toHaveURL(/\/s\/agent\/research/);
-    const brief = page
-      .getByText('Cashback cards for groceries in Malaysia')
-      .locator('xpath=ancestor::*[@data-slot="item"][1]');
+    const brief = page.locator('[data-slot="card"]', { hasText: 'Cashback cards for groceries in Malaysia' });
     await expect(brief).toContainText('Confirmed');
-    await expect(
-      page.getByText('Savings accounts with daily interest').locator('xpath=ancestor::*[@data-slot="item"][1]'),
-    ).toContainText('Draft');
+    await expect(page.locator('[data-slot="card"]', { hasText: 'Savings accounts with daily interest' })).toContainText(
+      'Draft',
+    );
     await shot('research');
   },
 
@@ -846,13 +851,17 @@ export const JOURNEYS: Record<string, Journey> = {
   // calendar: Settings → Sen → Connect; Google's sign-in is a stand-in here (D41)
   calendar: async (page, shot, go) => {
     await go('/s/settings/sen');
-    await expect(page.getByText('Not connected')).toBeVisible();
+    await expect(
+      page.getByText('Not connected. Without it, Review and pushes still remind you.', { exact: true }),
+    ).toBeVisible();
     await shot('not connected');
     await page.getByRole('button', { name: 'Connect' }).click();
     await expect(dialog(page, 'Connect Google Calendar')).toBeVisible();
     await shot("Google's sign-in");
     await page.getByRole('button', { name: 'Continue to Google' }).click();
-    await expect(page.getByText('Connected', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('Connected. Sen puts claim deadlines and bills on your calendar.', { exact: true }),
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Disconnect' })).toBeVisible();
     await shot('connected');
   },
@@ -954,16 +963,15 @@ test.describe('D128', () => {
     await expect(page.getByRole('button', { name: /^Free/ })).toBeVisible();
 
     await page.getByRole('button', { name: /^Farid/ }).click();
-    const farid = dialog(page, 'Farid');
-    await farid.getByRole('button', { name: 'Resend' }).click();
+    await page.getByRole('button', { name: 'Resend', exact: true }).click();
     await expect(toast(page)).toContainText('Invitation sent again');
-    await farid.getByRole('button', { name: 'Revoke' }).click();
+    await page.getByRole('button', { name: 'Revoke', exact: true }).click();
     await expect(page.getByRole('button', { name: /^Farid/ })).toHaveCount(0);
     await toast(page).getByRole('button', { name: 'Undo' }).click();
     await expect(page.getByRole('button', { name: /^Farid/ })).toBeVisible();
 
     await page.getByRole('button', { name: /^Hui Min/ }).click();
-    await dialog(page, 'Hui Min').getByRole('button', { name: 'Remove' }).click();
+    await page.getByRole('button', { name: 'Remove', exact: true }).click();
     await dialog(page, 'Remove Hui Min?').getByRole('button', { name: 'Export their data first' }).click();
     await expect(toast(page)).toContainText('export goes to');
     await expect(page.getByRole('button', { name: /^Hui Min/ })).toHaveCount(0);
