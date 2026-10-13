@@ -1,39 +1,43 @@
 # Handoff
 
-## Where things stand (12 Oct)
+## Where things stand (13 Oct)
 
-**B04 is merged** (ztsia/Sen#11). The owner's phone review of it is being answered on
-`B04/skeleton-rest`, restarted from `main` (a fast-forward of the merged branch). Its PR, when done,
-is *B04 · Review fixes*. **B05** (`docs/briefs/B05-server.md`, branch `B05/server`) starts after.
+**B04 and its review fixes are merged** (ztsia/Sen#11, ztsia/Sen#12, D129's size hierarchy).
+On the phone the owner found the main tabs fine, but most other screens plain lists of text, where
+facts and actions look alike. **D130 decides the redesign:** calm, card-based screens.
+Its brief is `docs/briefs/B04-redesign.md`, branch `B04/redesign`, PR *B04 · Redesign*.
+**B05** (`docs/briefs/B05-server.md`) waits until it's merged.
 
-### Done and pushed on `B04/skeleton-rest`
-- **D129, one size hierarchy** (`docs/ui/patterns.md` §2 *Sizes*). The owner found every screen dense
-  and overwhelming. Five levels each set text, drawn height, icons and spacing together: title 22,
-  section 17 semibold, body 15, secondary 13, caption 12, through Tailwind's `--text-*` (`app.css`).
-  **48 px is the touch target, not the drawn size:** Button sizes `default` 48 (one main action per
-  screen), `sm` 40, `chip` 32, `icon` 40, each extended to 48 by the `tap` utility (`::after`).
-  `e2e/helpers.ts`'s `smallTargets` reads that box. Rows are 56 px with 32 px marks; payees in capitals
-  show through `readableName` (`lib/names.ts`). Filters scroll in one row.
-- Both sweeps applied it to every screen (Sonnet, reviewed); typecheck, lint and unit tests pass.
-- Home: the Spent card is chart-first (`PaceSpark` in `blocks/charts.tsx`); `Item`'s corners are the
-  look's `--radius-card`, so the balance strip isn't square.
-- Sheets: vaul's `repositionInputs` is off (`blocks/sheet.tsx`): it pinned Sen's sheet at half height
-  when the input blurred before the keyboard closed. A test in `e2e/edges.spec.ts` covers it.
-- The app bar mounts the wordmark through `LookMarkup`, so Mercury's and Line's canvases paint.
-- `uiux` skill updated (hierarchy and density checklist); the general form is ztsia/claude_skills#2.
+So far on `B04/redesign`: the brief, D130, and this handoff. **No code yet.**
 
-### What to do first
-- The full e2e run (all six looks) passed after the test fixes: 630 + 82 re-run; the only failures were
-  tests matching payees in capitals, and a toggle group's box counted as a target. The branch is on
-  `review` for the owner's phone check, and its PR *B04 · Review fixes* is open.
-- Act on what the owner reports from the phone, on this branch; then B05 from `main` once merged.
+### What to do first (a fresh session)
+1. Read `docs/briefs/B04-redesign.md` in full. It holds the rules, the new blocks, every screen's
+   changes, the phases, and the Haiku A/B test the owner asked for.
+2. **Phase 1, yourself:**
+   - Rewrite `patterns.md` §7 to D130.
+   - Build the blocks in `blocks/` and the gallery.
+   - Rebuild `txn`, `settings` and `settings/appearance` as reference screens.
+   - Push, and move `review` to the branch, so the owner can check them on *Sen review*.
+3. Then start batches A–C on Sonnet, and D–E twice (Sonnet and Haiku, each in a worktree), from
+   short pointer briefs (*Briefs stay small* in the brief). Don't wait for the owner's phone check,
+   unless they redirect.
+4. Run the Haiku sweep, then e2e, then QA, then the PR.
+
+### Decided with the owner (13 Oct; all recommended options taken)
+- **Home fits one screen** at 390×844 by compressing: the payday plan becomes a one-line strip, the
+  chart gets shorter, and Sen's note is clamped. A test asserts no scroll.
+- **Insights is one card at a time:** sideways swipe with named steps on top.
+- **Order:** phase 1 reference screens checked on the phone, then the batches.
+- **This redesign comes before B05,** on its own branch.
+- **48 px stays the touch target**, invisible; what's drawn follows D129's levels. Review's answer
+  chips are still 40 px Toggles: make them `chip` size.
+- **The owner asked for the screens they didn't mention too:** all are in the brief's table.
 
 ### Open with the owner
-- ToggleGroup choices (manual's category, Appearance, payday) still wrap rather than scroll; judged
-  fine for long choice lists. Raise it if they look heavy on the phone.
-- Next time a sweep has a mechanical half, split it: decisions listed by Sonnet or the main session,
-  the edits by Haiku.
+- The A/B result goes in CLAUDE.md's *Models and subagents* once measured.
+- ztsia/claude_skills#2 (the shared `uiux` update) waits for the owner's merge. Add D130's rules
+  there after this slice.
 
 ## Don't argue again
-- D129's levels and the 48 px target rule (owner's call, 12 Oct).
+- D129's levels and the 48 px target rule; D130's card-based structure (owner's calls).
 - Deploys only by merge (D122); the review build follows the `review` branch (D115).
