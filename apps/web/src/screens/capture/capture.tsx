@@ -1,12 +1,23 @@
-import { CircleCheckIcon, CirclePauseIcon, CircleSlashIcon, RadioIcon } from 'lucide-react';
+import type { ComponentType } from 'react';
+import {
+  BatteryChargingIcon,
+  BellIcon,
+  CheckIcon,
+  CircleCheckIcon,
+  CirclePauseIcon,
+  CircleSlashIcon,
+  InboxIcon,
+  LayoutGridIcon,
+  RadioIcon,
+} from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
-import { SettingsRow } from '@/blocks/rows';
+import { GroupCard, NavRow } from '@/blocks/group';
 import { ListSkeleton } from '@/blocks/states';
 import { StatusCard } from '@/blocks/status';
 import { momentLabel } from '@/lib/dates';
 import { SenCapture, type CaptureStatus } from '@/shell/bridge';
 import { useBridge } from '@/shell/use-bridge';
-import { BridgeError, CaptureScreen, Section } from './common';
+import { BridgeError, CaptureScreen } from './common';
 
 /** What the listener is doing, in words first (patterns.md §7, Status cards). */
 export function listenerState(s: CaptureStatus): {
@@ -48,10 +59,37 @@ const ICONS = {
   neutral: RadioIcon,
 } as const;
 
+/** One step of the setup checklist: a tick when it's done, its state on the right; the whole row opens its screen. */
+function StepRow({
+  done,
+  title,
+  value,
+  icon,
+  onOpen,
+}: {
+  done: boolean;
+  title: string;
+  value: string;
+  icon: ComponentType<{ className?: string }>;
+  onOpen: () => void;
+}) {
+  return (
+    <NavRow
+      icon={icon}
+      tone={done ? 'accent' : 'warn'}
+      title={title}
+      value={value}
+      trailing={done ? <CheckIcon className="size-4 text-primary" aria-hidden="true" /> : undefined}
+      onOpen={onOpen}
+    />
+  );
+}
+
 /**
- * Settings → Capture (screens.md; spec §6.2, §9.5 steps 2-4): the listener's state, then your apps,
- * notification access and Keep Sen running, each opening its own step, and, for the soak, what was
- * captured on this phone. B09 and B10 add wordings, rules and skipped notifications.
+ * Settings → Capture (screens.md; spec §6.2, §9.5 steps 2-4): the listener's state, then setup as a
+ * three-step checklist (your apps, notification access, keep Sen running), each row opening its own
+ * step, and, for the soak, what was captured on this phone. B09 and B10 add wordings, rules and
+ * skipped notifications.
  */
 export default function CaptureSettings() {
   const navigate = useNavigate();
@@ -62,7 +100,7 @@ export default function CaptureSettings() {
       {error ? <BridgeError onRetry={reload} /> : null}
       {!s && !error ? <ListSkeleton rows={4} /> : null}
       {s ? (
-        <>
+        <div className="flex flex-col pb-8">
           <div className="px-4 pt-2">
             {(() => {
               const l = listenerState(s);
@@ -84,32 +122,39 @@ export default function CaptureSettings() {
             })()}
           </div>
           {s.enabled ? (
-            <Section title="Setup">
-              <SettingsRow
-                label="Your apps"
+            <GroupCard label="Setup" className="pt-5">
+              <StepRow
+                done={s.chosen.length > 0}
+                title="Your apps"
                 value={s.chosen.length ? `${s.chosen.length} chosen` : 'None yet'}
+                icon={LayoutGridIcon}
                 onOpen={() => open('settings/capture/apps')}
               />
-              <SettingsRow
-                label="Notification access"
+              <StepRow
+                done={s.access}
+                title="Notification access"
                 value={s.access ? 'On' : 'Off'}
+                icon={BellIcon}
                 onOpen={() => open('settings/capture/access')}
               />
-              <SettingsRow
-                label="Keep Sen running"
+              <StepRow
+                done={s.ignoringBattery}
+                title="Keep Sen running"
                 value={s.ignoringBattery ? 'Battery step done' : 'Not done'}
+                icon={BatteryChargingIcon}
                 onOpen={() => open('settings/capture/running')}
               />
-            </Section>
+            </GroupCard>
           ) : null}
-          <Section title="On this phone">
-            <SettingsRow
-              label="Captured on this phone"
+          <GroupCard label="On this phone" className="pt-5">
+            <NavRow
+              icon={InboxIcon}
+              title="Captured on this phone"
               value={String(s.events)}
               onOpen={() => open('settings/capture/captured')}
             />
-          </Section>
-        </>
+          </GroupCard>
+        </div>
       ) : null}
     </CaptureScreen>
   );

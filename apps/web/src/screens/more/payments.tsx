@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDownIcon } from 'lucide-react';
+import { ChevronDownIcon, SearchIcon } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { PaymentFilters, PaymentRow } from '@sen/core/views';
 import { DayHeader, ListRow } from '@/blocks/rows';
@@ -113,16 +113,23 @@ function PaymentsBody() {
             <Label htmlFor="payments-search" className="sr-only">
               Search payments
             </Label>
-            <Input
-              id="payments-search"
-              type="search"
-              inputMode="search"
-              enterKeyHint="search"
-              autoComplete="off"
-              placeholder="Search, such as Grab or char kuey teow"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-            />
+            <div className="relative">
+              <SearchIcon
+                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-icon"
+                aria-hidden="true"
+              />
+              <Input
+                className="pl-9"
+                id="payments-search"
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                autoComplete="off"
+                placeholder="Search, such as Grab or char kuey teow"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+            </div>
           </div>
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none]">
             <Chip on={!!cycle} onClick={() => setPicking('cycle')}>

@@ -1,14 +1,14 @@
 import { useState } from 'react';
+import { InfoIcon, LogOutIcon, Trash2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
-import { SettingsRow } from '@/blocks/rows';
+import { GroupCard, NavRow } from '@/blocks/group';
 import { Sheet } from '@/blocks/sheet';
 import { toastDone } from '@/blocks/toast';
 import { useLongPress } from '@/lib/long-press';
 import { captureReachable, SenShell } from '@/shell/bridge';
 import { useBridge } from '@/shell/use-bridge';
-import { Section } from './capture/common';
 
 /**
  * Settings → Account. B02 puts the shell's version here, and behind a long-press on it the hidden
@@ -27,9 +27,25 @@ export default function AccountSettings() {
   const version = i ? `${i.version} · ${i.build}` : shell ? '…' : 'Web app';
   return (
     <Screen bar={<AppBar title="Account" />}>
-      <Section title="About">
-        <SettingsRow label="Version" value={version} press={shell ? press : undefined} />
-      </Section>
+      <div className="flex flex-col gap-6 pt-2 pb-8">
+        <GroupCard label="About">
+          <NavRow icon={InfoIcon} title="Version" value={version} press={shell ? press : undefined} />
+        </GroupCard>
+        <GroupCard label="Account">
+          {/* stand-ins: accounts arrive with B05 */}
+          <NavRow
+            icon={LogOutIcon}
+            title="Sign out"
+            onOpen={() => toastDone('Signing out arrives with accounts. You’re still signed in.')}
+          />
+          <NavRow
+            icon={Trash2Icon}
+            destructive
+            title="Delete account"
+            onOpen={() => toastDone('Deleting an account arrives with accounts. Nothing was deleted.')}
+          />
+        </GroupCard>
+      </div>
       <Sheet
         open={tests}
         onOpenChange={setTests}

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { BatteryFullIcon, BatteryWarningIcon } from 'lucide-react';
+import { BatteryFullIcon, BatteryWarningIcon, BookOpenIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/blocks/sheet';
+import { Steps } from '@/blocks/steps';
 import { ListSkeleton } from '@/blocks/states';
 import { StatusCard } from '@/blocks/status';
 import { toastDone } from '@/blocks/toast';
@@ -111,7 +112,7 @@ function BrandSteps({
   if (!brand)
     return (
       <Section title={`Your ${manufacturer}`}>
-        <p className="px-4 text-base text-pretty">
+        <p className="px-5 text-base text-pretty">
           Sen has no extra steps for {manufacturer} phones. The battery step above is usually enough. If capture stops,
           the heartbeat under Captured on this phone shows when it last ran.
         </p>
@@ -120,50 +121,42 @@ function BrandSteps({
   const steps = brand.id === 'xiaomi' ? XIAOMI_STEPS : [];
   return (
     <Section title={`Your ${brand.name}`}>
-      <div className="flex flex-col gap-3 px-4">
-        {steps.length ? (
-          <ol className="flex flex-col gap-3">
-            {steps.map((s, i) => (
-              <li key={s.text} className="flex flex-col gap-2">
-                <p className="text-base text-pretty">
-                  {i + 1}. {s.text}
-                </p>
-                {s.open !== undefined && brand.opens[s.open] ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="self-start"
-                    onClick={() => void SenCapture.openBrandStep({ index: s.open! }).catch(onFail)}
-                  >
-                    Open {brand.opens[s.open].label}
-                  </Button>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p className="text-base text-pretty">
-            {brand.name} phones stop apps in the background in their own ways. The guide says where to look; Sen's info
-            page holds most of the switches.
-          </p>
-        )}
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" size="sm" onClick={onGuide}>
-            The full guide
-          </Button>
-          {steps.length ? null : (
-            <Button variant="outline" size="sm" onClick={() => void SenCapture.openAppInfo().catch(onFail)}>
-              Open Sen's app info
-            </Button>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Steps from dontkillmyapp.com.{' '}
-          {brand.tested
-            ? `Sen is tried on a ${brand.name} first; the heartbeat shows whether capture keeps running.`
-            : `Not tried on a ${brand.name} yet. If capture stops, the heartbeat under Captured on this phone shows when it last ran.`}
+      {steps.length ? (
+        <Steps
+          steps={steps.map((s) => ({
+            title: s.text,
+            action:
+              s.open !== undefined && brand.opens[s.open]
+                ? {
+                    label: `Open ${brand.opens[s.open]!.label}`,
+                    onSelect: () => void SenCapture.openBrandStep({ index: s.open! }).catch(onFail),
+                  }
+                : undefined,
+          }))}
+        />
+      ) : (
+        <p className="px-5 text-base text-pretty">
+          {brand.name} phones stop apps in the background in their own ways. The guide says where to look; Sen's info
+          page holds most of the switches.
         </p>
+      )}
+      <div className="flex flex-wrap gap-2 px-4 pt-3">
+        <Button variant="secondary" size="sm" onClick={onGuide}>
+          <BookOpenIcon aria-hidden="true" />
+          The full guide
+        </Button>
+        {steps.length ? null : (
+          <Button variant="outline" size="sm" onClick={() => void SenCapture.openAppInfo().catch(onFail)}>
+            Open Sen's app info
+          </Button>
+        )}
       </div>
+      <p className="px-5 pt-2 pb-8 text-sm text-muted-foreground">
+        Steps from dontkillmyapp.com.{' '}
+        {brand.tested
+          ? `Sen is tried on a ${brand.name} first; the heartbeat shows whether capture keeps running.`
+          : `Not tried on a ${brand.name} yet. If capture stops, the heartbeat under Captured on this phone shows when it last ran.`}
+      </p>
     </Section>
   );
 }

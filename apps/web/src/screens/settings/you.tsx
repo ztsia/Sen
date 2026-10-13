@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { QrCodeIcon } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { SettingsRow } from '@/blocks/rows';
+import { ChoiceCards } from '@/blocks/choice';
+import { GroupCard, GroupLabel, SwitchRow } from '@/blocks/group';
 import { ListSkeleton } from '@/blocks/states';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { useMe, useSettings, useWrite } from '@/data/hooks';
-import { Loaded, Section } from '../kit';
+import { Loaded } from '../kit';
 
 type PaydayKind = 'last-working' | 'day' | 'none';
 
@@ -81,10 +83,11 @@ function Body({
   };
 
   return (
-    <div className="flex flex-col pb-6">
+    <div className="flex flex-col gap-6 pt-2 pb-8">
       {capture ? (
-        <Section title="Names">
-          <div className="flex flex-col gap-3 px-4 pt-1">
+        <section className="flex flex-col gap-2 px-4" aria-label="Names">
+          <GroupLabel>Names</GroupLabel>
+          <Card className="px-4">
             <Field>
               <FieldLabel htmlFor="bank-names">Your names as banks print them</FieldLabel>
               <Textarea
@@ -99,66 +102,61 @@ function Body({
               />
               <FieldDescription>One to a line. Sen matches a notification’s name against these.</FieldDescription>
             </Field>
-          </div>
-        </Section>
+          </Card>
+        </section>
       ) : null}
-      <Section title="Payday">
-        <div className="flex flex-col gap-3 px-4 pt-1">
-          <ToggleGroup
-            type="single"
-            variant="outline"
-            spacing={2}
-            aria-label="Expected payday"
-            className="w-full"
-            value={kind}
-            onValueChange={(v) => choose(v as PaydayKind)}
-          >
-            <ToggleGroupItem
-              value="last-working"
-              className="h-auto min-h-12 flex-1 px-2 py-2 leading-tight whitespace-normal"
-            >
-              Last working day
-            </ToggleGroupItem>
-            <ToggleGroupItem value="day" className="h-auto min-h-12 flex-1 px-2 py-2 leading-tight whitespace-normal">
-              A day
-            </ToggleGroupItem>
-            <ToggleGroupItem value="none" className="h-auto min-h-12 flex-1 px-2 py-2 leading-tight whitespace-normal">
-              Not set
-            </ToggleGroupItem>
-          </ToggleGroup>
-          {kind === 'day' ? (
-            <Field data-invalid={dayError ? true : undefined}>
-              <FieldLabel htmlFor="payday-day">Day of the month</FieldLabel>
-              <Input
-                id="payday-day"
-                className="num max-w-32"
-                inputMode="numeric"
-                enterKeyHint="done"
-                autoComplete="off"
-                placeholder="25"
-                value={day}
-                onChange={(e) => setDay(e.target.value)}
-                onBlur={saveDay}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') saveDay();
-                }}
-              />
-              <FieldError>{dayError}</FieldError>
-            </Field>
-          ) : null}
-          <FieldDescription>
-            Sen counts each cycle from it. {capture ? '' : 'Without capture, a payday is optional.'}
-          </FieldDescription>
+      <section className="flex flex-col gap-2" aria-label="Payday">
+        <div className="px-4">
+          <GroupLabel>Payday</GroupLabel>
         </div>
-      </Section>
-      <Section title="Sharing">
-        <SettingsRow
-          label="DuitNow QR"
+        <ChoiceCards<PaydayKind>
+          label="Expected payday"
+          columns={1}
+          value={kind}
+          onChange={choose}
+          options={[
+            { value: 'last-working', label: 'Last working day' },
+            { value: 'day', label: 'A day' },
+            { value: 'none', label: 'Not set' },
+          ]}
+        />
+        {kind === 'day' ? (
+          <div className="px-4">
+            <Card className="px-4">
+              <Field data-invalid={dayError ? true : undefined}>
+                <FieldLabel htmlFor="payday-day">Day of the month</FieldLabel>
+                <Input
+                  id="payday-day"
+                  className="num max-w-32"
+                  inputMode="numeric"
+                  enterKeyHint="done"
+                  autoComplete="off"
+                  placeholder="25"
+                  value={day}
+                  onChange={(e) => setDay(e.target.value)}
+                  onBlur={saveDay}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveDay();
+                  }}
+                />
+                <FieldError>{dayError}</FieldError>
+              </Field>
+            </Card>
+          </div>
+        ) : null}
+        <p className="px-5 text-sm text-muted-foreground">
+          Sen counts each cycle from it. {capture ? '' : 'Without capture, a payday is optional.'}
+        </p>
+      </section>
+      <GroupCard label="Sharing">
+        <SwitchRow
+          icon={QrCodeIcon}
+          title="DuitNow QR"
           description="Friends who owe you a split see it once you’ve paid."
           checked={qr}
           onCheckedChange={(on) => void write({ type: 'setting.set', key: 'you.qr', value: on })}
         />
-      </Section>
+      </GroupCard>
     </div>
   );
 }

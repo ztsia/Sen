@@ -1,6 +1,8 @@
+import { BellRingIcon } from 'lucide-react';
 import { createContext, useContext, type ReactNode } from 'react';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
+import { GroupLabel } from '@/blocks/group';
 import { EmptyState, ErrorState } from '@/blocks/states';
 import { captureReachable } from '@/shell/bridge';
 
@@ -16,7 +18,11 @@ export function CaptureScreen({ title, children, action }: { title: string; chil
   const body = captureReachable() ? (
     children
   ) : (
-    <EmptyState line="Capture works in Sen's Android app, which reads your bank notifications on the phone." />
+    <EmptyState
+      icon={BellRingIcon}
+      title="Capture is in the Android app"
+      line="Capture works in Sen's Android app, which reads your bank notifications on the phone."
+    />
   );
   if (bare) return <>{body}</>;
   return <Screen bar={<AppBar title={title} action={action} />}>{body}</Screen>;
@@ -39,8 +45,10 @@ export function BridgeError({ onRetry }: { onRetry: () => void }) {
 /** A section's heading inside a screen. */
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col pt-7" aria-label={title}>
-      <h2 className="px-4 pb-2 text-lg font-semibold">{title}</h2>
+    <section className="flex flex-col gap-2 pt-5" aria-label={title}>
+      <div className="px-4">
+        <GroupLabel>{title}</GroupLabel>
+      </div>
       {children}
     </section>
   );
