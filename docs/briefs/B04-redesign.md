@@ -137,3 +137,7 @@ anyway, and every agent reads its own rows. An agent's prompt is a pointer, abou
 - *don't commit; wait for long runs to end; report in at most 15 lines*
 
 If a prompt would come out longer than the diff it asks for, the main session makes the change itself.
+
+**What the A/B showed (13 Oct):** a pointer brief like this is enough for Haiku once the reference
+screens and blocks exist (batch D, a tenth of Sonnet's cost). Its one failure was paths, not the
+brief: the run in a worktree edited the main checkout. CLAUDE.md's *Models and subagents* has the rule.
