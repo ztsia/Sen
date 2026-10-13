@@ -15,24 +15,24 @@ contrast, unnamed progress bars, the pager's focus, stat tiles truncating, two d
 48 px extension covered Back, Subscriptions' 40 px toggle). Last run, Minted and Copper: 308 of 312,
 the 4 being that toggle, since fixed.
 
-**QA run 3 said *fix first*; its fixes and the owner's list are done and pushed** (13 Oct, through
-99483ac): decisions D132–D136, spec §10/§11/§15, B27's note, and the ledger's "Run 3" section
-(`qa/B04-redesign/ledger.md`). Report: `qa/B04-redesign/report.md`, published at
-https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa.
+**QA run 3 said *fix first*; its fixes and the owner's list are done and pushed** (13 Oct):
+decisions D132–D136, spec §10/§11/§15, B27's note, and the ledger's "Run 3" section
+(`qa/B04-redesign/ledger.md`). Run 3's record: `report-run3.md`, `results-run3.json`, published at
+https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa. The e2e suite follows the deliberate changes and
+has 14 new pins, each shown failing under its break (e71bd6d; full e2e 825 passed).
 
-**Running: a Haiku `implementer`** (owns `apps/web/e2e/` only) updating tests to the deliberate
-changes and adding 14 pins to `redesign-pins.spec.ts`, each shown failing under its break. It ends
-with a full `pnpm e2e`.
+**Running: run 4's Haiku sweep** into `qa-artifacts/B04-redesign/sweep/` (about an hour; it writes
+`sweep/e2e.exit` when done). If the session restarted mid-run, check that file before re-running.
 
 ### What to do next
-1. When it reports: check its pins table (each pin failed under its break, passed undone),
-   `git diff --stat -- apps/web/src` is empty, and anything it couldn't place. Fix what it lists that
-   matches no deliberate change; commit `apps/web/e2e` with explicit paths.
-2. Rename `report.md`/`results.json` to `-run3`. Haiku sweep (the `qa` skill; wait with one
-   until-loop), then a **new** `qa-reviewer`, thin prompt (run 4, tier 3).
-3. Its record, republished to the same URL. The artifact allows 512 files: null run 1 and 2's old
-   screenshots (`FLOW-*`, `R2-*`) when publishing. Then fix by tiers.
-4. Clean → `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign`, PR *B04 · Redesign*.
+1. When the sweep reports: a **new** `qa-reviewer`, thin prompt (run 4, tier 3): branch, label,
+   brief `docs/briefs/B04-redesign.md`, D129/D130/D132–D136, `patterns.md` §7, the sweep's path.
+2. Its record, committed, then republished to the same URL. The artifact allows 512 files: null run
+   1 and 2's old screenshots (`FLOW-*`, `R2-*`) when publishing. Then fix by tiers.
+3. Clean → `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign`, PR *B04 · Redesign*.
+4. **Then, before B05: D137's QA tooling** (diff-driven QA: aria snapshots of every screen on the
+   golden scenario, behaviour in one look, pixel diff against `main` in all 12, the reviewer gets
+   only the changed screens). Its own small branch and brief; update the `qa` skill to match.
 
 ### Decided with the owner (13 Oct; all recommended options taken)
 - **Home fits one screen** at 390×844 by compressing: the payday plan becomes a one-line strip, the
