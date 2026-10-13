@@ -15,34 +15,24 @@ contrast, unnamed progress bars, the pager's focus, stat tiles truncating, two d
 48 px extension covered Back, Subscriptions' 40 px toggle). Last run, Minted and Copper: 308 of 312,
 the 4 being that toggle, since fixed.
 
-**QA run 3 is done: *fix first*** (`qa/B04-redesign/report.md`, published at
-https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa): 3 Major, 5 Minor, 4 Note, no Blocker. Runs 1 and
-2's fixes hold. **Waiting for the owner's approval** before any fix: run 3's findings and the owner's
-list below go in one batch (owner, 13 Oct), then one fresh full QA run (run 4).
+**QA run 3 said *fix first*; its fixes and the owner's list are done and pushed** (13 Oct, through
+99483ac): decisions D132–D136, spec §10/§11/§15, B27's note, and the ledger's "Run 3" section
+(`qa/B04-redesign/ledger.md`). Report: `qa/B04-redesign/report.md`, published at
+https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa.
 
-### The owner's list (13 Oct), decided; add D132–D135 to `docs/decisions.md` when work starts
-1. Cycle sheet: figures never wrap (`StatTiles`, `blocks/facts.tsx`): at most 2 tiles across.
-2. **D132, money entry like bank apps:** digits only, each enters from the right (1250 → 12.50), the
-   dot and letters ignored, always 2 decimals, number pad, backspace drops a digit. `MoneyInput`,
-   every caller. Main session (non-negotiable territory), with tests.
-3. Scan tab in a browser: a tap opens the camera at once, long-press the menu (D69 already says so).
-   ML Kit is native only (B15) and does its own edges and enhancement; our 4-corner crop is browser-only.
-4. **D134:** Add forms for subscriptions and goals, like Add a budget.
-5. **D133, goals sit in their own account:** each names its account or pocket (shared allowed); the
-   payday plan says *move RMx to …*; a notification ticks the move, or **a hand tick** (the owner's
-   Ryt pocket moves have no notification) books the transfer between the two accounts, counts it,
-   amount editable, deduped by plan step; a later notification matches it. Spec §10, §15
-   `goals.account_id`. Here only the form's field; the rest is the goals slice's.
-6. **D135, Sen opens with a prefill:** `setSenOpen(true, draft)`. Claim schemes get *Add* (*I want to
-   add a claim scheme: *) and edit (*Change my … scheme: *); every set-up *Ask Sen* likewise.
-7. Not now: suggestion pills that know the screen Sen opened from → add to B27 in `modules.md`.
+**Running: a Haiku `implementer`** (owns `apps/web/e2e/` only) updating tests to the deliberate
+changes and adding 14 pins to `redesign-pins.spec.ts`, each shown failing under its break. It ends
+with a full `pnpm e2e`.
 
 ### What to do next
-1. On the owner's approval: decisions and spec first, then fixes by who makes each (`qa` skill),
-   with a ledger "Run 3" section. Run 3's reviewer was a383ab0d19f4f3335 (gone after rotation).
-2. Rename `report.md`/`results.json` to `-run3`, Haiku sweep, then a **new** `qa-reviewer`.
-3. Then `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign` and the PR *B04 · Redesign*.
-4. The published artifact holds old runs' screenshots; it allows 512 files, so null old ones on publish.
+1. When it reports: check its pins table (each pin failed under its break, passed undone),
+   `git diff --stat -- apps/web/src` is empty, and anything it couldn't place. Fix what it lists that
+   matches no deliberate change; commit `apps/web/e2e` with explicit paths.
+2. Rename `report.md`/`results.json` to `-run3`. Haiku sweep (the `qa` skill; wait with one
+   until-loop), then a **new** `qa-reviewer`, thin prompt (run 4, tier 3).
+3. Its record, republished to the same URL. The artifact allows 512 files: null run 1 and 2's old
+   screenshots (`FLOW-*`, `R2-*`) when publishing. Then fix by tiers.
+4. Clean → `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign`, PR *B04 · Redesign*.
 
 ### Decided with the owner (13 Oct; all recommended options taken)
 - **Home fits one screen** at 390×844 by compressing: the payday plan becomes a one-line strip, the
