@@ -1,0 +1,2054 @@
+{
+ "module": "B04 · Redesign",
+ "branch": "B04/redesign",
+ "verdict": "fix first",
+ "generatedAt": "2026-10-13 UTC",
+ "phases": "1-3, 5, 6 (4 not applicable: no database, API or RLS)",
+ "headline": "The redesign is faithful and the money and Undo behaviours I walked hold, but the suite does not pin its structure (4 of 9 probes survived), Review > claim due is a dead end, and Home scrolls with a health bar or the Payday card. No Blocker.",
+ "summary": {
+  "criteria": 105,
+  "pass": 87,
+  "fail": 5,
+  "unreachable": 13
+ },
+ "suites": {
+  "unit": "301/301 pass (re-run)",
+  "e2e": "720/720 pass (sweep, 51 min); my 119 walk tests: 93 pass, 26 fail = 24 Home-fit combos (capture-off, payday) + the chip-row test + the first-cycle strip check, all findings or notes",
+  "typecheck": "clean",
+  "lint": "clean (after my qa/ files were tidied)",
+  "hygiene": "passed"
+ },
+ "findings": [
+  {
+   "id": 1,
+   "severity": "Major",
+   "status": "open",
+   "title": "Four of eight deliberate defects stayed green: the redesign's structure and two money behaviours are untested",
+   "detail": "Probes on the project suite (apps/web/e2e, and unit) run against QA's dev server. Caught: Home height, Apply-all double tap, messaging apps selectable, money arithmetic (apportion float + no-float lint). NOT caught: (a) Review answer chips changed from size chip (32) to default; (b) balance check difference text swapped (more/less); (c) txn Delete no longer offers Undo; (d) Settings > Appearance row hard-coded to Minted. The chip size is the exact bug D130 set out to fix, and the suite only checks targets are at least 48 px, which a bigger button also passes.",
+   "repro": "sed one line, then `playwright test -c qa/e2e/b04r-probe.config.ts <spec>`; see probes",
+   "evidence": "rows.tsx size=\"chip\"->\"default\": 61 passed. balance-form.tsx less/more swapped: 2 passed. txn.tsx delete {quiet:true}: 2 passed. settings.tsx value=\"Minted\": 12 passed",
+   "spec": "AC-13, AC-23s, AC-4s, AC-5s; CLAUDE.md money",
+   "screenshots": []
+  },
+  {
+   "id": 2,
+   "severity": "Major",
+   "status": "open",
+   "title": "Review \"claim due\" opens a claim that does not exist",
+   "detail": "In Review > Checks, tapping \"<scheme> claim · RMxx\" goes to /s/claim with no id, so the screen says \"Not here any more. This claim isn't here any more.\" The review item carries no claim id. Present on origin/main too (go('claim') at review.tsx), but the redesign rebuilt that row and the dead end remains in a core path (flows `claims` step 3).",
+   "repro": "Review tab > the \"Phone bill claim\" card (Checks) > tap",
+   "evidence": "url http://127.0.0.1:5291/s/claim | \"Not here any more / This claim isn't here any more. / See all claims\"",
+   "spec": "flows.md claims; AC-29",
+   "screenshots": [
+    "FLOW-10-step-6-review-claim-due.png"
+   ]
+  },
+  {
+   "id": 3,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Home scrolls in the two states that add a bar or card: capture off (63-80 px) and payday (81-92 px), and Sen's button then covers the Gap amount",
+   "detail": "Brief: Home fits at 390x844. The project test asserts only the default scenario. With \"Capture may be off\" or the Payday card the main area overflows in all six looks, light and dark; unscrolled, Sen's button sits over \"RM42.10\" (amounts never truncate, patterns §3).",
+   "repro": "/?scenario=capture-off or /?scenario=payday at 390x844",
+   "evidence": "FIT capture-off minted light doc=0 main=63 ... copper main=69, firefly 80; payday copper 81, firefly 92; wei-ming, before-salary, first-cycle, cap, month: 0",
+   "spec": "AC-11s, brief home",
+   "screenshots": [
+    "FLOW-1-home-payday-minted-light.png",
+    "FLOW-1-home-capture-off-copper-dark.png"
+   ]
+  },
+  {
+   "id": 4,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Empty states without a title or button: Subscriptions, Goals, Memory, Research; Skipped has no button",
+   "detail": "Rule 9: icon, title, one line, one button. These show an icon and one sentence only.",
+   "repro": "/s/subscriptions?state=empty (also goals, agent/memory, agent/research, skipped)",
+   "evidence": "subscriptions: text=\"No subscriptions declared yet.\" buttons=[]; goals: \"Your goals and buckets show here once you've set one.\" buttons=[]",
+   "spec": "AC-9, brief rule 9",
+   "screenshots": [
+    "FLOW-17-empty-subscriptions.png",
+    "FLOW-17-empty-memory.png"
+   ]
+  },
+  {
+   "id": 5,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Information rows carry an icon tile",
+   "detail": "Rule 3 and patterns §7: a row that opens nothing is information and has no tile. Seen: Data > Last backup, Member > Shell version and Capture connected, txn > No receipt · You said so.",
+   "repro": "open those screens",
+   "evidence": "NavRow with icon and no onOpen in member.tsx, txn.tsx; Last backup tile in contact sheet chunk-04",
+   "spec": "AC-3s",
+   "screenshots": [
+    "FLOW-11-step-2-member.png"
+   ]
+  },
+  {
+   "id": 6,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Review answer rows can be scrolled vertically by 6 px",
+   "detail": "The chip row is overflow-x-auto, so overflow-y becomes auto too; the 48 px tap extension makes scrollHeight 42 against clientHeight 36. A finger on the row can nudge it.",
+   "repro": "/review; measure `[data-review] div.overflow-x-auto`",
+   "evidence": "sh=42 ch=36 on 10 rows (b04r-core FLOW-3s fails with max extra 6)",
+   "spec": "AC-13",
+   "screenshots": [
+    "FLOW-3-step-1-grouped.png"
+   ]
+  },
+  {
+   "id": 7,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Progress bars announce no value",
+   "detail": "Claims month bar and the Members seat meter have role progressbar with aria-valuemax 100 but no aria-valuenow, so a screen reader hears no figure. They are named (label) but the value only exists in the visible text.",
+   "repro": "/s/claims, /s/settings/members",
+   "evidence": "September 2026: claimed against caps=null/100 ; Shell seats in use=null/100",
+   "spec": "patterns §8 TalkBack",
+   "screenshots": []
+  },
+  {
+   "id": 8,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Rules do not say where they came from, and are switch rows in one card",
+   "detail": "Brief: each rule a sentence card \"with where it came from (from your answer, 3 Oct)\". The rows show the sentence and, for some, \"A hawker\"; none shows an origin. Also More says Shared bills \"3 open\", the brief says RM24.40 owed to you; PaceSpark is 72 px not 64.",
+   "repro": "Settings > Categories and rules > Rules",
+   "evidence": "\"When the payee has “Warung Pak Hamid” → Meals / A hawker\"",
+   "spec": "AC-34, brief settings/categories",
+   "screenshots": [
+    "FLOW-12-step-4-rules-origin.png"
+   ]
+  },
+  {
+   "id": 9,
+   "severity": "Minor",
+   "status": "open",
+   "title": "The year with no data draws an empty chart and says \"Heaviest month: Oct, RM0.00\"",
+   "detail": "patterns §4: a card with no data is not shown. The savings rate itself is handled (None yet, no NaN).",
+   "repro": "/s/insights/year?state=empty",
+   "evidence": "\"Oct was the heaviest month at RM0.00.\"",
+   "spec": "AC-31s, patterns §4",
+   "screenshots": [
+    "FLOW-17-empty-year.png"
+   ]
+  },
+  {
+   "id": 10,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Chart text is 10-11 px, below the 12 px caption floor",
+   "detail": "Axis labels at 11 and the spend calendar's day numbers at 10 on Insights and The year (34 and 10 text nodes).",
+   "repro": "/insights, /s/insights/year",
+   "evidence": "11:Day 1, 11:Today, 11:Income RM5,804.80, 10:1; 11:Jan...",
+   "spec": "AC-45s, patterns §2",
+   "screenshots": []
+  },
+  {
+   "id": 11,
+   "severity": "Note",
+   "status": "open",
+   "title": "Members list shows an unlabelled RM3.40 and RM5.00 beside Hui Min and Farid",
+   "detail": "They are AI credit (allowed); the row does not say so.",
+   "repro": "/s/settings/members",
+   "evidence": "RM3.40 / RM5.00",
+   "spec": "AC-40s",
+   "screenshots": []
+  },
+  {
+   "id": 12,
+   "severity": "Note",
+   "status": "open",
+   "title": "first-cycle scenario shows \"Payday plan · 2 of 3\"",
+   "detail": "A first cycle, set up before any salary, has no plan to be part-done.",
+   "repro": "/?scenario=first-cycle",
+   "evidence": "toHaveCount(0) got 1",
+   "spec": "AC-12s",
+   "screenshots": []
+  },
+  {
+   "id": 13,
+   "severity": "Note",
+   "status": "open",
+   "title": "Title case turns BBQ into \"Bbq Place\"; txn \"Correct amount, time or account\" only toasts \"arrives with B12\"; Minted's micro-print band covers the top border of Home's balance card",
+   "detail": "Cosmetic or known skeleton behaviour.",
+   "repro": "/s/shared; txn; Home in Minted",
+   "evidence": "zoom-home-bottom.png",
+   "spec": "D129",
+   "screenshots": [
+    "zoom-home-bottom.png"
+   ]
+  },
+  {
+   "id": 14,
+   "severity": "Note",
+   "status": "open",
+   "title": "Line look draws cards without an edge",
+   "detail": "Line's material makes Review and Claims read as ruled sections rather than cards; hairlines return in that look. A look choice, but it sits against rule 2.",
+   "repro": "Review in Line",
+   "evidence": "looks-review-light contact sheet",
+   "spec": "AC-2",
+   "screenshots": []
+  }
+ ],
+ "probes": [
+  {
+   "broke": "Home: PaceSpark box 72 px -> 200 px",
+   "caught": true,
+   "note": "home-fit.spec red, 96 px over"
+  },
+  {
+   "broke": "Review answer chips size chip -> default",
+   "caught": false,
+   "note": "61 passed (screens, blocks, journeys, edges at minted light)"
+  },
+  {
+   "broke": "Review Apply all: tap guard and applying flag removed",
+   "caught": true,
+   "note": "screens.spec \"Apply all, double-tapped\" red (Needs you 11, not 12)"
+  },
+  {
+   "broke": "Balance check: more/less swapped",
+   "caught": false,
+   "note": "journeys balance-check and payday passed; no test names the text"
+  },
+  {
+   "broke": "txn Delete without Undo toast (quiet)",
+   "caught": false,
+   "note": "fix and manual journeys passed; no test deletes a payment from the menu"
+  },
+  {
+   "broke": "Capture apps: blocked switches no longer disabled",
+   "caught": true,
+   "note": "capture.spec red at toBeDisabled (WhatsApp)"
+  },
+  {
+   "broke": "Settings Appearance row hard-coded to Minted",
+   "caught": false,
+   "note": "12 passed (edges look tests cannot run on the dev server; they fail without the defect too)"
+  },
+  {
+   "broke": "money.ts apportion floor -> Math.round of a float",
+   "caught": true,
+   "note": "7 unit tests red: money properties, no-float lint, splits, receipt-math"
+  },
+  {
+   "broke": "balance-form difference done in floats (injected)",
+   "caught": true,
+   "note": "lint: no-restricted-syntax x3"
+  }
+ ],
+ "flows": [
+  {
+   "id": "FLOW-1",
+   "title": "Home fits",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/",
+   "covers": [
+    "AC-11",
+    "AC-12"
+   ],
+   "spec": "brief home",
+   "status": "pass",
+   "ends": "default Home does not scroll in 12 combos; strip opens payday; note clamped to 2 lines",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Home",
+     "assertion": "Payday plan · 2 of 3 and the note's More are shown",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-1-home.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap More on the note",
+     "assertion": "Sen's sheet opens",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-3-more-opens-sen.png"
+    },
+    {
+     "n": 3,
+     "action": "Tap the strip",
+     "assertion": "/s/payday opens",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-4-strip-opens-payday.png"
+    },
+    {
+     "n": 4,
+     "action": "Tap the hero",
+     "assertion": "cycle sheet shows income, spending, left and an estimate",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-5-cycle-sheet.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-2",
+   "title": "Home under pressure",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/?scenario=capture-off and payday",
+   "covers": [
+    "AC-11s",
+    "AC-12s"
+   ],
+   "spec": "brief home",
+   "status": "fail",
+   "ends": "still fits; actually scrolls 63-92 px",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Home with Capture may be off",
+     "assertion": "main overflow 63-80 px (all looks)",
+     "status": "fail",
+     "screenshot": "FLOW-1-home-capture-off-copper-dark.png"
+    },
+    {
+     "n": 2,
+     "action": "Open Home on payday",
+     "assertion": "main overflow 81-92 px; Sen's button covers the Gap amount",
+     "status": "fail",
+     "screenshot": "FLOW-1-home-payday-minted-light.png"
+    },
+    {
+     "n": 3,
+     "action": "Open before the first salary",
+     "assertion": "no strip, fits",
+     "status": "pass",
+     "screenshot": "FLOW-1-home-before-salary-minted-light.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-3",
+   "title": "Review: answer, undo, double tap",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Review tab",
+   "covers": [
+    "AC-13",
+    "AC-13s"
+   ],
+   "spec": "brief review",
+   "status": "pass",
+   "ends": "one answer; rule +1; Undo restores",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Review",
+     "assertion": "four kinds with counts, 32 px chips",
+     "status": "pass",
+     "screenshot": "FLOW-3-step-1-grouped.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap Meals on Siti Aminah",
+     "assertion": "toast; Needs you 12 -> 11; rule created",
+     "status": "pass",
+     "screenshot": "FLOW-3-step-2-answered-toast.png"
+    },
+    {
+     "n": 3,
+     "action": "Undo",
+     "assertion": "12 again; rule and category cleared",
+     "status": "pass",
+     "screenshot": "FLOW-3-step-3-undone.png"
+    },
+    {
+     "n": 4,
+     "action": "Double tap Meals",
+     "assertion": "answered once",
+     "status": "pass",
+     "screenshot": "FLOW-3-step-6-double-tap-once.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-4",
+   "title": "Insights pager",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Insights tab",
+   "covers": [
+    "AC-14",
+    "AC-14s"
+   ],
+   "spec": "brief insights",
+   "status": "pass",
+   "ends": "page and step marker agree",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Insights",
+     "assertion": "five steps, 1 of 5",
+     "status": "pass",
+     "screenshot": "FLOW-4-step-1-pager.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap Budgets",
+     "assertion": "2 of 5, panel shown",
+     "status": "pass",
+     "screenshot": "FLOW-4-step-2-budgets.png"
+    },
+    {
+     "n": 3,
+     "action": "Enter on the last step",
+     "assertion": "5 of 5",
+     "status": "pass",
+     "screenshot": "FLOW-4-step-4-keyboard-last.png"
+    },
+    {
+     "n": 4,
+     "action": "Empty variant",
+     "assertion": "one Empty, no cards",
+     "status": "pass",
+     "screenshot": "FLOW-4-step-5-empty.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-5",
+   "title": "Settings tour and appearance",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More > Settings",
+   "covers": [
+    "AC-5",
+    "AC-5s",
+    "AC-6",
+    "AC-6s",
+    "AC-33"
+   ],
+   "spec": "brief settings",
+   "status": "pass",
+   "ends": "one look chosen, row state follows",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Settings",
+     "assertion": "row says Minted",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-1-settings.png"
+    },
+    {
+     "n": 2,
+     "action": "Open Appearance",
+     "assertion": "six preview cards",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-2-appearance.png"
+    },
+    {
+     "n": 3,
+     "action": "Pick Copper",
+     "assertion": "html data-look copper, one ring",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-3-copper.png"
+    },
+    {
+     "n": 4,
+     "action": "Mode Dark",
+     "assertion": "data-mode dark",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-4-dark.png"
+    },
+    {
+     "n": 5,
+     "action": "Back",
+     "assertion": "row says Copper",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-5-state-follows.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-6",
+   "title": "Payment detail and actions",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Payments > row",
+   "covers": [
+    "AC-4",
+    "AC-4s",
+    "AC-24",
+    "AC-24s"
+   ],
+   "spec": "brief txn",
+   "status": "pass",
+   "ends": "payment restored",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Roti Bakar 88",
+     "assertion": "header, bar, facts",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-1-txn.png"
+    },
+    {
+     "n": 2,
+     "action": "Category chip",
+     "assertion": "sheet opens",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-2-category-sheet.png"
+    },
+    {
+     "n": 3,
+     "action": "Choose Meals",
+     "assertion": "categoryId set, toast",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-3-categorised.png"
+    },
+    {
+     "n": 4,
+     "action": "More menu",
+     "assertion": "No receipt…, Mark as…, Delete",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-4-menu.png"
+    },
+    {
+     "n": 5,
+     "action": "Delete",
+     "assertion": "deletedAt set, toast with Undo",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-5-deleted-toast.png"
+    },
+    {
+     "n": 6,
+     "action": "Undo",
+     "assertion": "deletedAt null, 950 sen",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-6-undone.png"
+    },
+    {
+     "n": 7,
+     "action": "Unknown id",
+     "assertion": "Not here any more",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-7-gone.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-7",
+   "title": "More hub states",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More tab",
+   "covers": [
+    "AC-5",
+    "AC-5s"
+   ],
+   "spec": "brief more",
+   "status": "pass",
+   "ends": "Payments 1,152",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open More",
+     "assertion": "Payments 1,151",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-1-more.png"
+    },
+    {
+     "n": 2,
+     "action": "Add a manual payment",
+     "assertion": "manual row 1250 sen",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-2-saved.png"
+    },
+    {
+     "n": 3,
+     "action": "Back to More",
+     "assertion": "Payments 1,152",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-3-count-up.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-8",
+   "title": "Manual entry",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Review > Missing a payment?",
+   "covers": [
+    "AC-18",
+    "AC-18s",
+    "AC-47"
+   ],
+   "spec": "brief manual",
+   "status": "pass",
+   "ends": "bad inputs refused; 0.1 = 10 sen",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Type 12.345",
+     "assertion": "Two decimals at most",
+     "status": "pass",
+     "screenshot": "FLOW-8-step-2-bad-three-decimals.png"
+    },
+    {
+     "n": 2,
+     "action": "Type 0.1 and save",
+     "assertion": "10 sen stored",
+     "status": "pass",
+     "screenshot": "FLOW-8-step-5-point-one.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-9",
+   "title": "Split a bill",
+   "kind": "happy",
+   "actor": "owner and a friend",
+   "entry": "Shared > Nasi Kandar Abc",
+   "covers": [
+    "AC-25",
+    "AC-26",
+    "AC-26s",
+    "AC-27",
+    "AC-27s"
+   ],
+   "spec": "brief split",
+   "status": "pass",
+   "ends": "Final only when all done and claimed",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Shared list",
+     "assertion": "Open · 3",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-0-shared.png"
+    },
+    {
+     "n": 2,
+     "action": "Open the split",
+     "assertion": "Still changing, Who's done",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-1-split.png"
+    },
+    {
+     "n": 3,
+     "action": "Share",
+     "assertion": "QR in the sheet",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-2-share-sheet.png"
+    },
+    {
+     "n": 4,
+     "action": "Everyone on the orphan item",
+     "assertion": "shares recomputed",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-3-everyone.png"
+    },
+    {
+     "n": 5,
+     "action": "Friend's page, name",
+     "assertion": "Hi Mei",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-4-public-name.png"
+    },
+    {
+     "n": 6,
+     "action": "Tick kuey teow, done",
+     "assertion": "Final, Pay RM12.48",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-7-final.png"
+    },
+    {
+     "n": 7,
+     "action": "Final public split",
+     "assertion": "Mei RM22.14, 6.99 and 2.67 parts",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-5-public-final.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-10",
+   "title": "Claims",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More > Claims",
+   "covers": [
+    "AC-28",
+    "AC-29",
+    "AC-35",
+    "AC-35s"
+   ],
+   "spec": "brief claims",
+   "status": "fail",
+   "ends": "one main action; Review claim-due must open its claim (does not)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Claims",
+     "assertion": "summary card and bar",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-1-claims.png"
+    },
+    {
+     "n": 2,
+     "action": "Open the phone bill",
+     "assertion": "stepper and facts",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-3-claim.png"
+    },
+    {
+     "n": 3,
+     "action": "Send to ESS",
+     "assertion": "stand-in note",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-4-sent.png"
+    },
+    {
+     "n": 4,
+     "action": "Settings > Claims > ⋯",
+     "assertion": "Forget password behind the menu",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-5b-ess-menu.png"
+    },
+    {
+     "n": 5,
+     "action": "Review > claim due",
+     "assertion": "lands on \"Not here any more\"",
+     "status": "fail",
+     "screenshot": "FLOW-10-step-6-review-claim-due.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-11",
+   "title": "Members and the admin's blindness",
+   "kind": "happy",
+   "actor": "admin",
+   "entry": "Settings > Members",
+   "covers": [
+    "AC-8",
+    "AC-8s",
+    "AC-40",
+    "AC-40s"
+   ],
+   "spec": "brief members",
+   "status": "pass",
+   "ends": "no money outside AI credit",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Members",
+     "assertion": "2 of 20, PersonRows",
+     "status": "pass",
+     "screenshot": "FLOW-11-step-1-members.png"
+    },
+    {
+     "n": 2,
+     "action": "Open Hui Min",
+     "assertion": "pushed screen, no dialog",
+     "status": "pass",
+     "screenshot": "FLOW-11-step-2-member.png"
+    },
+    {
+     "n": 3,
+     "action": "Flip Claims",
+     "assertion": "switch kept after Back",
+     "status": "pass",
+     "screenshot": "FLOW-11-step-3-switch.png"
+    },
+    {
+     "n": 4,
+     "action": "Remove",
+     "assertion": "confirm sheet, Keep them",
+     "status": "pass",
+     "screenshot": "FLOW-11-step-5-remove-confirm.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-12",
+   "title": "Categories and rules",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Settings > Categories",
+   "covers": [
+    "AC-10",
+    "AC-34",
+    "AC-34s"
+   ],
+   "spec": "brief categories",
+   "status": "fail",
+   "ends": "rules show their origin (they do not)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open",
+     "assertion": "hue tile grid",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-1-categories.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap Meals",
+     "assertion": "sheet",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-2-sheet.png"
+    },
+    {
+     "n": 3,
+     "action": "Rules",
+     "assertion": "sentence rows without origin",
+     "status": "fail",
+     "screenshot": "FLOW-12-step-4-rules-origin.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-13",
+   "title": "Capture setup",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Settings > Capture",
+   "covers": [
+    "AC-36",
+    "AC-36s"
+   ],
+   "spec": "brief capture",
+   "status": "pass",
+   "ends": "no messaging app selectable",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Capture",
+     "assertion": "3-step checklist",
+     "status": "pass",
+     "screenshot": "FLOW-13-step-1-capture.png"
+    },
+    {
+     "n": 2,
+     "action": "Your apps",
+     "assertion": "WhatsApp, Gmail, Messages, Instagram disabled with reasons",
+     "status": "pass",
+     "screenshot": "FLOW-13-step-3-blocked.png"
+    },
+    {
+     "n": 3,
+     "action": "Choose these 4, Back",
+     "assertion": "row reads 4 apps",
+     "status": "pass",
+     "screenshot": "FLOW-13-step-4-state.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-14",
+   "title": "Balance check",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Accounts > Check balances",
+   "covers": [
+    "AC-22",
+    "AC-23",
+    "AC-23s"
+   ],
+   "spec": "brief balance-check",
+   "status": "pass",
+   "ends": "difference exact; adjustment 10 sen in",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Type 14650.97",
+     "assertion": "RM0.10 more than Sen has",
+     "status": "pass",
+     "screenshot": "FLOW-14-step-2-difference.png"
+    },
+    {
+     "n": 2,
+     "action": "Matches on Public Bank",
+     "assertion": "No difference",
+     "status": "pass",
+     "screenshot": "FLOW-14-step-3-matches.png"
+    },
+    {
+     "n": 3,
+     "action": "Save",
+     "assertion": "adjustment [10,\"in\"] booked",
+     "status": "pass",
+     "screenshot": "FLOW-14-step-4-saved.png"
+    },
+    {
+     "n": 4,
+     "action": "Type 1e3",
+     "assertion": "refused in words",
+     "status": "pass",
+     "screenshot": "FLOW-14-step-5-hostile.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-15",
+   "title": "Budgets, subscriptions, goals, year",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Insights",
+   "covers": [
+    "AC-30",
+    "AC-30s",
+    "AC-31",
+    "AC-31s"
+   ],
+   "spec": "brief rows",
+   "status": "pass",
+   "ends": "no NaN; warning in words",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Budgets",
+     "assertion": "Over by RM20.30",
+     "status": "pass",
+     "screenshot": "FLOW-15-budgets.png"
+    },
+    {
+     "n": 2,
+     "action": "Subscriptions expand",
+     "assertion": "4 matched",
+     "status": "pass",
+     "screenshot": "FLOW-15-subs-expanded.png"
+    },
+    {
+     "n": 3,
+     "action": "Goals",
+     "assertion": "49%, needs RM610.00 a cycle",
+     "status": "pass",
+     "screenshot": "FLOW-15-goals.png"
+    },
+    {
+     "n": 4,
+     "action": "Year",
+     "assertion": "savings 15%",
+     "status": "pass",
+     "screenshot": "FLOW-15-year.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-16",
+   "title": "Sen memory",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Sen > Memory",
+   "covers": [
+    "AC-32",
+    "AC-32s"
+   ],
+   "spec": "brief agent",
+   "status": "pass",
+   "ends": "Forget undone",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Forget one note",
+     "assertion": "4 -> 3",
+     "status": "pass",
+     "screenshot": "FLOW-16-step-2-forgotten.png"
+    },
+    {
+     "n": 2,
+     "action": "Undo",
+     "assertion": "back to 4",
+     "status": "pass",
+     "screenshot": "FLOW-16-step-3-undone.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-17",
+   "title": "Empty states",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "?state=empty",
+   "covers": [
+    "AC-9",
+    "AC-9s"
+   ],
+   "spec": "brief rule 9",
+   "status": "fail",
+   "ends": "icon, title, line, button everywhere (not so)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Subscriptions empty",
+     "assertion": "icon and one line, no title or button",
+     "status": "fail",
+     "screenshot": "FLOW-17-empty-subscriptions.png"
+    },
+    {
+     "n": 2,
+     "action": "Memory empty",
+     "assertion": "icon and one paragraph",
+     "status": "fail",
+     "screenshot": "FLOW-17-empty-memory.png"
+    },
+    {
+     "n": 3,
+     "action": "Claims empty",
+     "assertion": "title, line, Add a scheme",
+     "status": "pass",
+     "screenshot": "FLOW-17-empty-claims.png"
+    },
+    {
+     "n": 4,
+     "action": "The year, no data",
+     "assertion": "empty chart, Heaviest month Oct RM0.00",
+     "status": "fail",
+     "screenshot": "FLOW-17-empty-year.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-18",
+   "title": "Offline",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Review",
+   "covers": [
+    "AC-51",
+    "AC-51s"
+   ],
+   "spec": "patterns offline",
+   "status": "pass",
+   "ends": "synced exactly once",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Go offline",
+     "assertion": "banner \"You're offline\"",
+     "status": "pass",
+     "screenshot": "FLOW-18-step-1-offline.png"
+    },
+    {
+     "n": 2,
+     "action": "Answer, wait 6 s",
+     "assertion": "row cleared, unsynced map holds the txn",
+     "status": "pass",
+     "screenshot": "FLOW-18-step-3-after-6s.png"
+    },
+    {
+     "n": 3,
+     "action": "Back online",
+     "assertion": "unsynced empty, rules still 1",
+     "status": "pass",
+     "screenshot": "FLOW-18-step-5-online.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-19",
+   "title": "Timezone",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Home, Payments",
+   "covers": [
+    "AC-50",
+    "AC-50s"
+   ],
+   "spec": "CLAUDE.md conventions",
+   "status": "pass",
+   "ends": "identical text in 3 zones",
+   "steps": [
+    {
+     "n": 1,
+     "action": "KL",
+     "assertion": "Left RM1,931.27; Sun 18 Oct RM197.63",
+     "status": "pass",
+     "screenshot": "FLOW-19-Asia_Kuala_Lumpur.png"
+    },
+    {
+     "n": 2,
+     "action": "Los Angeles",
+     "assertion": "identical",
+     "status": "pass",
+     "screenshot": "FLOW-19-America_Los_Angeles.png"
+    },
+    {
+     "n": 3,
+     "action": "Auckland",
+     "assertion": "identical",
+     "status": "pass",
+     "screenshot": "FLOW-19-Pacific_Auckland.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-20",
+   "title": "Text at 1.5x",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "28 screens",
+   "covers": [
+    "AC-44",
+    "AC-46s"
+   ],
+   "spec": "patterns §8",
+   "status": "pass",
+   "ends": "no page overflow",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Home at 150%",
+     "assertion": "no horizontal overflow",
+     "status": "pass",
+     "screenshot": "FLOW-20-scale-home.png"
+    },
+    {
+     "n": 2,
+     "action": "Settings at 150%",
+     "assertion": "values truncate",
+     "status": "pass",
+     "screenshot": "FLOW-20-scale-settings.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-21",
+   "title": "Production build",
+   "kind": "sad",
+   "actor": "visitor",
+   "entry": "dist-production",
+   "covers": [
+    "AC-52",
+    "AC-52s"
+   ],
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "ends": "no dev tools or scenarios",
+   "steps": [
+    {
+     "n": 1,
+     "action": "/?scenario=payday&state=empty",
+     "assertion": "Not built yet",
+     "status": "pass",
+     "screenshot": "FLOW-21-prod-home.png"
+    },
+    {
+     "n": 2,
+     "action": "/s/txn?id=x",
+     "assertion": "Not built yet",
+     "status": "pass",
+     "screenshot": "FLOW-21-prod-txn.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-C1",
+   "title": "First run (core)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/first-run",
+   "covers": [
+    "AC-42",
+    "AC-42s"
+   ],
+   "spec": "flows first-run",
+   "status": "pass",
+   "ends": "Home: Spent since you started RM1,450.03",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Sign-in",
+     "assertion": "email field",
+     "status": "pass",
+     "screenshot": "FLOW-C1-step-1-sign-in.png"
+    },
+    {
+     "n": 2,
+     "action": "Bad email",
+     "assertion": "\"That doesn't look like an email\"",
+     "status": "pass",
+     "screenshot": "FLOW-C1-step-1b-bad-email.png"
+    },
+    {
+     "n": 3,
+     "action": "Wrong code",
+     "assertion": "\"That's not the right code\"",
+     "status": "pass",
+     "screenshot": "FLOW-C1-step-2-wrong-code.png"
+    },
+    {
+     "n": 4,
+     "action": "Right code",
+     "assertion": "Step 2 of 7",
+     "status": "pass",
+     "screenshot": "FLOW-C1-step-3-apps.png"
+    },
+    {
+     "n": 5,
+     "action": "Reload",
+     "assertion": "same step",
+     "status": "pass",
+     "screenshot": "FLOW-C1-step-4-reload.png"
+    },
+    {
+     "n": 6,
+     "action": "Finish",
+     "assertion": "Home",
+     "status": "pass",
+     "screenshot": "FLOW-C1-step-8-home.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-C2",
+   "title": "New merchant (core)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "dev panel > Surfaces",
+   "covers": [
+    "AC-49"
+   ],
+   "spec": "flows pay-new",
+   "status": "pass",
+   "ends": "category set, rule +1",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Category prompt",
+     "assertion": "Meals / Groceries / Scan receipt",
+     "status": "pass",
+     "screenshot": "FLOW-C2-step-1-prompt.png"
+    },
+    {
+     "n": 2,
+     "action": "Meals",
+     "assertion": "rule ROTI BAKAR 88 -> Meals created",
+     "status": "pass",
+     "screenshot": "FLOW-C2-step-2-answered.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-C3",
+   "title": "Scan after paying (core)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Scan tab",
+   "covers": [
+    "AC-19",
+    "AC-20"
+   ],
+   "spec": "flows scan-after",
+   "status": "pass",
+   "ends": "attached, Undo detaches, same file twice = Already added",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Scan",
+     "assertion": "tips, Take a photo",
+     "status": "pass",
+     "screenshot": "FLOW-C3-step-1-scan.png"
+    },
+    {
+     "n": 2,
+     "action": "Crop",
+     "assertion": "Use this",
+     "status": "pass",
+     "screenshot": "FLOW-C3-step-2-crop.png"
+    },
+    {
+     "n": 3,
+     "action": "Reading",
+     "assertion": "Reading receipt…",
+     "status": "pass",
+     "screenshot": "FLOW-C3-step-3-reading.png"
+    },
+    {
+     "n": 4,
+     "action": "Confirm",
+     "assertion": "Sate Kajang Hj Samuri",
+     "status": "pass",
+     "screenshot": "FLOW-C3-step-4-confirm.png"
+    },
+    {
+     "n": 5,
+     "action": "3 people",
+     "assertion": "÷ 3 =",
+     "status": "pass",
+     "screenshot": "FLOW-C3-step-5-three-people.png"
+    },
+    {
+     "n": 6,
+     "action": "Done",
+     "assertion": "Attached to RM64.13 on Ryt Bank",
+     "status": "pass",
+     "screenshot": "FLOW-C3-step-6-attached.png"
+    },
+    {
+     "n": 7,
+     "action": "Same file again",
+     "assertion": "Already added",
+     "status": "pass",
+     "screenshot": "FLOW-C3-step-8-file-2.png"
+    }
+   ]
+  }
+ ],
+ "criteria": [
+  {
+   "id": "AC-1",
+   "title": "One primary thing, at most one 48 px action",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "tour: only Save/Send/Next/Take a photo/Check balances/Remove are full-width 48 px; subscriptions has four 48 px disclosure rows (see Note)"
+  },
+  {
+   "id": "AC-1s",
+   "title": "No decoy main action when nothing to do",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-17: Review all clear and Claims empty show no 48 px button"
+  },
+  {
+   "id": "AC-2",
+   "title": "Cards, not hairline lists",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "contact sheets: every hub/detail is in rounded GroupCards; Line look draws flat cards (Note)"
+  },
+  {
+   "id": "AC-2s",
+   "title": "Long lists stay rows",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "payments tour: day headers + 56 px rows"
+  },
+  {
+   "id": "AC-3",
+   "title": "Icon tiles lead destinations and actions",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "More, Settings, Review header, ActionBar all lead with tiles"
+  },
+  {
+   "id": "AC-3s",
+   "title": "Information rows have no tile or chevron",
+   "spec": "brief / patterns §7",
+   "status": "fail",
+   "evidence": "Data > Last backup, Member > Shell version / Capture connected, txn > No receipt carry a tile with nothing to open (finding 5)"
+  },
+  {
+   "id": "AC-4",
+   "title": "Facts and actions look different",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-6: HeaderCard, ActionBar (round, caption beneath, 73 px tall), FactGrid"
+  },
+  {
+   "id": "AC-4s",
+   "title": "Destructive acts offer Undo or a dialog",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-6 Delete -> toast Undo -> row restored (deletedAt null, 950 sen); FLOW-16 Forget -> Undo; FLOW-10 Forget password -> alertdialog; Remove -> confirm sheet"
+  },
+  {
+   "id": "AC-5",
+   "title": "A destination row says its state",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "More: Payments 1,151 / Shared bills 3 open / Accounts 5 / Claims 2 to submit; Settings states (brief says Shared \"RM24.40 owed to you\": Note)"
+  },
+  {
+   "id": "AC-5s",
+   "title": "States are derived",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-7 Payments 1,151 -> 1,152 after a manual payment; FLOW-5 Appearance row Minted -> Copper; FLOW-13 Your apps None yet -> 4"
+  },
+  {
+   "id": "AC-6",
+   "title": "Visual choices are visual",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-5: six live-preview ChoiceCards, Monitor/Sun/Moon mode"
+  },
+  {
+   "id": "AC-6s",
+   "title": "One look chosen at a time",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-5 step 3: only Copper has the ring and check"
+  },
+  {
+   "id": "AC-7",
+   "title": "One intro line",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "contact sheets: one muted line per screen (How it works is a disclosure)"
+  },
+  {
+   "id": "AC-7s",
+   "title": "Empty state does not stack text",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "not measured"
+  },
+  {
+   "id": "AC-8",
+   "title": "Long things get a screen",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-11: member opens /s/settings/member?id=, no dialog"
+  },
+  {
+   "id": "AC-8s",
+   "title": "Back keeps changes",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-11: switch flipped, Back, reopened, still flipped"
+  },
+  {
+   "id": "AC-9",
+   "title": "Empty states: icon, title, line, button",
+   "spec": "brief / patterns §7",
+   "status": "fail",
+   "evidence": "subscriptions, goals, memory, research have no title and no button; skipped has no button (finding 4)"
+  },
+  {
+   "id": "AC-9s",
+   "title": "Empty button acts",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "not clicked"
+  },
+  {
+   "id": "AC-10",
+   "title": "Categories have tint, names stay",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "categories, manual grids: three hues, name under every tile"
+  },
+  {
+   "id": "AC-10s",
+   "title": "Name always present",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "same"
+  },
+  {
+   "id": "AC-11",
+   "title": "Home fits at 390x844",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "default scenario passes in 6 looks x light/dark (project test + FLOW-1: wei-ming, before-salary, first-cycle, cap, month all 0 px over)"
+  },
+  {
+   "id": "AC-11s",
+   "title": "Home with plan, warning, long note",
+   "spec": "brief / patterns §7",
+   "status": "fail",
+   "evidence": "capture-off overflows main by 63-80 px and payday by 81-92 px in all 12 look/mode combinations; the note is clamped to 2 lines and More opens Sen (finding 3)"
+  },
+  {
+   "id": "AC-12",
+   "title": "Payday plan is a one-line strip",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-1: \"Payday plan · 2 of 3\", chevron, opens /s/payday"
+  },
+  {
+   "id": "AC-12s",
+   "title": "Strip absent when plan not active",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "absent in before-salary; shown in first-cycle (Note 11)"
+  },
+  {
+   "id": "AC-13",
+   "title": "Review grouped by kind",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-3: Categories 2, Splits 2, Checks 7, New wording 1; chips 32 px; amounts weight 600+; Sen suggested 2 = 2 marked chips"
+  },
+  {
+   "id": "AC-13s",
+   "title": "Undo and double tap",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-3: answer -> rule +1, categoryId set; Undo restores both; double tap 12 -> 11 once"
+  },
+  {
+   "id": "AC-14",
+   "title": "Insights StepPager",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-4: On track|Budgets|Subscriptions|Goals|Year, \"1 of 5\", tap Budgets -> 2 of 5, scroll back -> 1 of 5"
+  },
+  {
+   "id": "AC-14s",
+   "title": "Empty/keyboard",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "empty -> single \"No insights yet\"; Enter on last tab -> 5 of 5"
+  },
+  {
+   "id": "AC-15",
+   "title": "Cycle sheet figures",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "sheet: Income +RM5,804.80, Spending RM3,873.53, Left RM1,931.27"
+  },
+  {
+   "id": "AC-15s",
+   "title": "Estimate labelled as estimate",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "\"An estimate: at this pace, about RM740.53 left on payday\""
+  },
+  {
+   "id": "AC-16",
+   "title": "Payday segmented progress",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "Step 1 of 4 bar, claims in card, Undo ghost sm"
+  },
+  {
+   "id": "AC-16s",
+   "title": "Undo restores",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "Undo not clicked"
+  },
+  {
+   "id": "AC-17",
+   "title": "Skipped cards",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "tour: app, time, semibold title, clamped text, This was a payment chip"
+  },
+  {
+   "id": "AC-17s",
+   "title": "Anonymised / OTP masked",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "fixtures anonymised (seen); OTP masking not exercised"
+  },
+  {
+   "id": "AC-18",
+   "title": "Manual: amount, tile grid, rows",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "tour + FLOW-8: Meals tile + Save stored 1250 sen"
+  },
+  {
+   "id": "AC-18s",
+   "title": "Hostile amounts",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "12.345, abc, empty, -5, 0, 99999999999999999999, 1e3, 12.5.5 all refused in words, 0 rows; 0.1 -> 10 sen; 1,284.50 -> 128450"
+  },
+  {
+   "id": "AC-19",
+   "title": "Scan tips and buttons",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-C3 step 1"
+  },
+  {
+   "id": "AC-19s",
+   "title": "No tab bar on tasks",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "scan, manual, balance-check, payday, split-public show none"
+  },
+  {
+   "id": "AC-20",
+   "title": "Confirm receipt",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-C3: confirm, 3 people ÷ 3, attached to RM64.13 on Ryt Bank, Undo -1"
+  },
+  {
+   "id": "AC-20s",
+   "title": "Same file twice",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "second upload: \"Already added\", receipts +1 only"
+  },
+  {
+   "id": "AC-21",
+   "title": "Payments tiles and search",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "tour payments"
+  },
+  {
+   "id": "AC-21s",
+   "title": "No-match search",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-22",
+   "title": "Accounts / account",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "Checked 1 Oct / Not checked badges; Elsewhere muted; HeaderCard + FactGrid + ActionBar"
+  },
+  {
+   "id": "AC-22s",
+   "title": "Never-checked shown honestly",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "4 of 5 say Not checked"
+  },
+  {
+   "id": "AC-23",
+   "title": "Balance check cards",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-14"
+  },
+  {
+   "id": "AC-23s",
+   "title": "Exact differences",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "14650.97 -> RM0.10 more; .77 -> RM0.10 less; 0.1 vs 262.30 -> RM262.20 less; Save booked adjustment [10,\"in\"]; 1e3 refused; empty Save says what is missing"
+  },
+  {
+   "id": "AC-24",
+   "title": "txn header, facts, actions",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-6"
+  },
+  {
+   "id": "AC-24s",
+   "title": "Delete/Undo, category",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-6 steps 2-6"
+  },
+  {
+   "id": "AC-25",
+   "title": "Shared Open/Settled cards",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-9 step 0"
+  },
+  {
+   "id": "AC-25s",
+   "title": "Direction in words",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "\"you owe RM24.40\", \"You paid · 1 of 2 paid you back\""
+  },
+  {
+   "id": "AC-26",
+   "title": "Split PersonRows, QR in Share sheet",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-9 steps 1-2; no QR on the page"
+  },
+  {
+   "id": "AC-26s",
+   "title": "Largest remainder and lock",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "NK shares 23.17+24.27+4.66+6.20 orphan = 58.30; Teh ÷3 4.67/4.67/4.66; Mei 22.14 (6.99+2.67+12.48); Final only when all done and claimed"
+  },
+  {
+   "id": "AC-27",
+   "title": "split-public",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-9 steps 4-7"
+  },
+  {
+   "id": "AC-27s",
+   "title": "Friend sees no app chrome",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "no tab bar; Done with nothing ticked stays Still changing, no error"
+  },
+  {
+   "id": "AC-28",
+   "title": "Claims summary card",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "2 to submit · RM152.00 of RM200.00, Send to ESS single 48 px, download in app bar"
+  },
+  {
+   "id": "AC-28s",
+   "title": "Nothing to submit",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "empty: \"No claims yet\", no Send button"
+  },
+  {
+   "id": "AC-29",
+   "title": "Claim stepper, facts",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "Draft..Paid, Amount/Capped at/Submit by/Evidence"
+  },
+  {
+   "id": "AC-29s",
+   "title": "Missing evidence in words",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "Claims: \"Receipt for 21 Sep not added yet\" (claim page for it not opened)"
+  },
+  {
+   "id": "AC-30",
+   "title": "Budgets/subscriptions/goals",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-15"
+  },
+  {
+   "id": "AC-30s",
+   "title": "Over-budget in words",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "\"Over by RM20.30\", no NaN/Infinity on any of 5 screens"
+  },
+  {
+   "id": "AC-31",
+   "title": "Year",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-15; savings rate 15% matches hand sum (14.7%)"
+  },
+  {
+   "id": "AC-31s",
+   "title": "No-income year",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "empty: \"None yet\" and a sentence; but see finding 9"
+  },
+  {
+   "id": "AC-32",
+   "title": "Memory/research/usage",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "Forget labelled per note; stacked bar + legend; Draft/Confirmed badges"
+  },
+  {
+   "id": "AC-32s",
+   "title": "Forget Undo; cost labelled estimate",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-16 4 -> 3 -> 4; \"About RM3.80 ... an estimate, not a bill\""
+  },
+  {
+   "id": "AC-33",
+   "title": "Settings profile + groups",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-5 step 1"
+  },
+  {
+   "id": "AC-34",
+   "title": "Categories grid, rule sentence cards with origin",
+   "spec": "brief / patterns §7",
+   "status": "fail",
+   "evidence": "sentence cards present; no origin line (\"from your answer, 3 Oct\"), rules are switch rows in one card (finding 8)"
+  },
+  {
+   "id": "AC-34s",
+   "title": "Rule origin / Undo",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-35",
+   "title": "Settings/claims",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "one-sentence schemes, ESS card, ⋯ holds Teach again/Fetch payslip/Forget password"
+  },
+  {
+   "id": "AC-35s",
+   "title": "Made-up values, Forget confirms",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "example.com addresses, RM100 caps; Forget password opens an alertdialog (confirmation outcome not followed)"
+  },
+  {
+   "id": "AC-36",
+   "title": "Capture checklist",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-13"
+  },
+  {
+   "id": "AC-36s",
+   "title": "Messaging apps cannot be chosen",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "Messages, WhatsApp, Gmail, Instagram switches disabled with a reason; probe: removing disabled turned the project test red"
+  },
+  {
+   "id": "AC-37",
+   "title": "You: payday ChoiceCards",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "one line each"
+  },
+  {
+   "id": "AC-37s",
+   "title": "Day outside 1-31",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-38",
+   "title": "Email screen",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "copy icon button, Steps, code card"
+  },
+  {
+   "id": "AC-38s",
+   "title": "Copy feedback",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-39",
+   "title": "Settings/sen",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "Calendar Connect sm, Memory 4 notes, cost"
+  },
+  {
+   "id": "AC-40",
+   "title": "Members and member screen",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-11"
+  },
+  {
+   "id": "AC-40s",
+   "title": "Admin never sees money",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "no RM figure on the member screen outside the AI credit card; Remove asks first (members list shows unlabelled AI-credit RM3.40/RM5.00, Note 10)"
+  },
+  {
+   "id": "AC-41",
+   "title": "Data and Account",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "tour"
+  },
+  {
+   "id": "AC-41s",
+   "title": "Delete account confirm / Sign out",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "not clicked"
+  },
+  {
+   "id": "AC-42",
+   "title": "Sign-in / first run",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-C1"
+  },
+  {
+   "id": "AC-42s",
+   "title": "Bad email / wrong code / resume",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "both said in words, email kept; reload returned to Step 2 of 7"
+  },
+  {
+   "id": "AC-43",
+   "title": "new-look card",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "tour: Instrument, Keep it / Go back"
+  },
+  {
+   "id": "AC-44",
+   "title": "Touch targets 48 px",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "sweep: 720 e2e pass incl. smallTargets on every screen/state in 6 looks x 2 modes"
+  },
+  {
+   "id": "AC-44s",
+   "title": "Icon buttons named",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "axe clean in the sweep; tour: all icon buttons named (switch labels via <label>)"
+  },
+  {
+   "id": "AC-45",
+   "title": "Size hierarchy",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "tour: no heading smaller than its content"
+  },
+  {
+   "id": "AC-45s",
+   "title": "No text under 12 px",
+   "spec": "brief / patterns §7",
+   "status": "fail",
+   "evidence": "chart text 10-11 px on Insights and The year (34 and 10 nodes) (finding 10)"
+  },
+  {
+   "id": "AC-46",
+   "title": "Six looks light/dark",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "sweep 1512 screenshots, contact sheets of daily/review/claims in 12 combos; axe 720 pass"
+  },
+  {
+   "id": "AC-46s",
+   "title": "1.5x text",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-20: no horizontal page overflow on 28 screens; merchant/state values truncate before amounts"
+  },
+  {
+   "id": "AC-47",
+   "title": "Money integer sen",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "diff grep: no float on money; lint rule caught an injected float"
+  },
+  {
+   "id": "AC-47s",
+   "title": "Diff has no float on money",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "only Math.round(scrollLeft/width) and bar-width ratios"
+  },
+  {
+   "id": "AC-48",
+   "title": "One set of patterns",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "SettingsRow and DetailPage gone; shadcn edits carry // Sen: notes"
+  },
+  {
+   "id": "AC-48s",
+   "title": "No raw colours",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "no hex/rgb/oklch added in screens or blocks"
+  },
+  {
+   "id": "AC-49",
+   "title": "Behaviour unchanged",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "core journeys C1-C3 walked; Undo, tap guard, offline all work"
+  },
+  {
+   "id": "AC-49s",
+   "title": "Back order",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "not walked"
+  },
+  {
+   "id": "AC-50",
+   "title": "KL timezone",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-19"
+  },
+  {
+   "id": "AC-50s",
+   "title": "Two other zones identical",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "LA and Auckland identical to KL text for Home and Payments"
+  },
+  {
+   "id": "AC-51",
+   "title": "Offline",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "FLOW-18: banner \"You're offline\", answer kept, synced once"
+  },
+  {
+   "id": "AC-51s",
+   "title": "No double apply",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "rules stayed 1 after reconnect, unsynced map emptied"
+  },
+  {
+   "id": "AC-52",
+   "title": "Production build clean",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "no gallery/dev panel/scenario; grep of dist-production for key patterns: none"
+  },
+  {
+   "id": "AC-52s",
+   "title": "?scenario in production",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "/?scenario=payday&state=empty shows Not built yet"
+  },
+  {
+   "id": "AC-53",
+   "title": "No real data in repo",
+   "spec": "brief / patterns §7",
+   "status": "pass",
+   "evidence": "pnpm hygiene passed; fixtures use example.com and made-up names"
+  },
+  {
+   "id": "AC-53s",
+   "title": "Hygiene control",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-54",
+   "title": "Reduced motion / scale",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "not run"
+  },
+  {
+   "id": "AC-54s",
+   "title": "Nothing depends on hover",
+   "spec": "brief / patterns §7",
+   "status": "unreachable",
+   "evidence": "not run"
+  }
+ ],
+ "notTested": [
+  {
+   "what": "Phone Chromium webview and TalkBack",
+   "why": "needs the device; owner phone check of Sen review"
+  },
+  {
+   "what": "Phase 4 (SQL, RLS, API)",
+   "why": "no database or API in this slice"
+  },
+  {
+   "what": "A look-by-look walk of every flow",
+   "why": "walked in Minted, with Copper and Line spot-checks; the rest from the sweep's 1512 screenshots as contact sheets"
+  },
+  {
+   "what": "AC-7s, 9s, 16s, 17s, 21s, 34s, 37s, 38s, 41s, 49s, 53s, 54",
+   "why": "no time; marked not reachable"
+  },
+  {
+   "what": "edges.spec look tests on the dev server",
+   "why": "they fail on a clean tree against vite dev (environment), pass in the sweep on the preview build"
+  }
+ ]
+}
