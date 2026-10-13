@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { LOOKS, open, settled, watchErrors } from './helpers';
 
-// The redesign's the redesign's behaviours that the suite had no test for (QA: each could be broken with every
+// The redesign's behaviours that the suite had no test for (QA: each could be broken with every
 // test still green). Each test fails when its behaviour breaks, and says which one in its name:
 //   1. Review's answer chips are drawn at 32 px (patterns.md §2, Sizes: chips are 32).
 //   2. The balance check says which way the bank's figure differs from Sen's.
