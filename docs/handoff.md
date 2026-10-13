@@ -10,7 +10,7 @@ Its brief is `docs/briefs/B04-redesign.md`, branch `B04/redesign`, PR *B04 · Re
 
 So far on `B04/redesign`: the brief, D130, and this handoff. **No code yet.**
 
-### What to do first (a fresh session)
+### What to do first (this session continues after a compact)
 1. Read `docs/briefs/B04-redesign.md` in full. It holds the rules, the new blocks, every screen's
    changes, the phases, and the Haiku A/B test the owner asked for.
 2. **Phase 1, yourself:**
@@ -32,6 +32,8 @@ So far on `B04/redesign`: the brief, D130, and this handoff. **No code yet.**
 - **48 px stays the touch target**, invisible; what's drawn follows D129's levels. Review's answer
   chips are still 40 px Toggles: make them `chip` size.
 - **The owner asked for the screens they didn't mention too:** all are in the brief's table.
+- **The new-look reveal's animation is B14's** (`patterns.md` §9). Here only its card follows D130;
+  the skeleton keeps a still placeholder.
 
 ### Open with the owner
 - The A/B result goes in CLAUDE.md's *Models and subagents* once measured.
