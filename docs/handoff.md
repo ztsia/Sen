@@ -1,60 +1,52 @@
 # Handoff
 
-## Where things stand (13 Oct)
+## Where things stand (14 Oct)
 
-**B04 and its review fixes are merged** (ztsia/Sen#11, ztsia/Sen#12, D129's size hierarchy).
-On the phone the owner found the main tabs fine, but most other screens plain lists of text, where
-facts and actions look alike. **D130 decides the redesign:** calm, card-based screens.
-Its brief is `docs/briefs/B04-redesign.md`, branch `B04/redesign`, PR *B04 · Redesign*.
-**B05** (`docs/briefs/B05-server.md`) waits until it's merged.
+**The B04 redesign (D130) is done; its PR *B04 · Redesign* waits for the owner's merge.** Branch
+`B04/redesign`. Calm, card-based screens throughout, plus the owner's list from QA run 3: bank-style
+amounts (D132), a goal's money in its own account (D133), subscriptions and goals added by hand
+(D134), buttons that open Sen start the message and show its avatar (D135), group labels as captions
+(D136); the Scan tab opens the camera, its long-press the menu.
 
-**Phases 1 and 2 are done and pushed** (13 Oct). D130's blocks, `patterns.md` §7, and every screen
-rebuilt in batches A–E; `SettingsRow` and `DetailPage` are gone; `apps/web/scripts/shots.mjs` takes
-screenshots. The e2e tests follow the redesign, and the product bugs the run found are fixed (avatar
-contrast, unnamed progress bars, the pager's focus, stat tiles truncating, two disclosures whose
-48 px extension covered Back, Subscriptions' 40 px toggle). Last run, Minted and Copper: 308 of 312,
-the 4 being that toggle, since fixed.
+**QA:** four full runs and a scoped re-check. Run 4 (fresh, tier 3) said *fix first* (1 Major, 6
+Minor); its fixes went back to the same reviewer, scoped (tier 2), which said **ship**; its five
+small findings were fixed by the main session (tier 1). Record: `qa/B04-redesign/` (`report.md` is
+run 4 and its re-check; `ledger.md` has every tier decision and its evidence), published at
+https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa. Last checks on d6023d2: typecheck, lint, unit
+tests, full e2e 833 passed. Usage logged (`docs/usage.md`; `scripts/usage.mjs --from /home/user`
+when the session started outside the repo).
 
-**QA run 3 said *fix first*; its fixes and the owner's list are done and pushed** (13 Oct):
-decisions D132–D136, spec §10/§11/§15, B27's note, and the ledger's "Run 3" section
-(`qa/B04-redesign/ledger.md`). Run 3's record: `report-run3.md`, `results-run3.json`, published at
-https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa. The e2e suite follows the deliberate changes and
-has 14 new pins, each shown failing under its break (e71bd6d; full e2e 825 passed).
-
-**QA run 4 said *fix first*** (1 Major, 6 Minor, 4 Notes, no Blocker): `qa/B04-redesign/report.md`,
-published at the same URL (version 4). Its fixes are in 4de5471, with the ledger's "Run 4" section:
-tier 2, scoped to money entry, subscriptions and goals added by hand, and the buttons that open Sen.
+**Device checks for the owner** are queued in `docs/local.md` (QA runs 3 and 4): Select all in a
+money field, the number pad, the Scan tab's camera, TalkBack's focus after a sheet.
 
 ### What to do next
-1. The full `pnpm e2e` on 4de5471 is running (log in the scratchpad); it must pass before step 2.
-2. **Resume run 4's reviewer** (agent `a55f117fed5c8972e`, if this session still has it; otherwise a
-   fresh `qa-reviewer` in scoped mode reading the committed `acceptance.md`, `flows.md`,
-   `results.json`) with the three areas, findings 1–5, 7, 10 and the range
-   0110260..4de5471. Nothing about how they were fixed.
-3. Clean → `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign`, PR *B04 · Redesign*.
-4. **Then, before B05: D137's QA tooling** (diff-driven QA: aria snapshots of every screen on the
-   golden scenario, behaviour in one look, pixel diff against `main` in all 12, the reviewer gets
-   only the changed screens), plus its quality half: the eyes pass, `qa/escapes.md`, scripted visual
-   checks, and the reviewer spawning its own helpers (add `Agent` to its tools). Own branch and brief;
-   update the `qa` skill to match.
+1. **When the PR is merged: D137's QA tooling, before B05**, on its own branch with a brief:
+   - diff-driven QA: each screen's accessibility tree (`toMatchAriaSnapshot`) on the golden scenario,
+     behaviour in one look, pixels against `main` in all twelve look-and-mode pairs, and the reviewer
+     gets only the screens that changed, with each diff;
+   - its quality half: a human-eyes pass on Opus over each changed screen at full size, answering
+     fixed questions in writing; `qa/escapes.md` (the owner's hand-found bugs, each a pin and a
+     question; the redesign's density is the first entry); scripted visual checks (clipped text,
+     overlaps, a button under a toast or keyboard, invisible focus, contrast);
+   - the reviewer spawns its own helpers (add `Agent` to `qa-reviewer`'s tools; subagents may nest to
+     three levels), from templates in the `qa` skill that fix each helper's model and prompt.
+   Update the `qa` skill and `CLAUDE.md`'s QA lines to match.
+2. Then **B05** (`docs/briefs/B05-server.md`).
 
-### Decided with the owner (13 Oct; all recommended options taken)
-- **Home fits one screen** at 390×844 by compressing: the payday plan becomes a one-line strip, the
-  chart gets shorter, and Sen's note is clamped. A test asserts no scroll.
-- **Insights is one card at a time:** sideways swipe with named steps on top.
-- **Order:** phase 1 reference screens checked on the phone, then the batches.
-- **This redesign comes before B05,** on its own branch.
-- **48 px stays the touch target**, invisible; what's drawn follows D129's levels. Review's answer
-  chips are still 40 px Toggles: make them `chip` size.
-- **The owner asked for the screens they didn't mention too:** all are in the brief's table.
-- **The new-look reveal's animation is B14's** (`patterns.md` §9). Here only its card follows D130;
-  the skeleton keeps a still placeholder.
+### Left on purpose (in the ledger)
+- The hand tick for a payday move and the plan's moves into a goal's account are B30's (its brief
+  has them, D133). The Add sheets don't hand focus back on close (queued for TalkBack). Four
+  paragraphs run 3–4 lines; the D137 eyes pass will judge them.
 
 ### Open with the owner
+- Merge *B04 · Redesign*.
 - `claude_skills` branch `workflow/brain-and-cards` (D130's uiux rules, D131's model principle, the
   implementer on Haiku at high, the `brief` skill) is pushed; the owner opens or asks for its PR.
+  D137 will change its `qa` skill too.
 
 ## Don't argue again
 - D129's levels and the 48 px target rule; D130's card-based structure; D131, Opus decides and briefs
-  completely, Haiku at high by default (owner's calls).
+  completely, Haiku at high by default; D132–D137 (owner's calls).
+- Home fits one screen at 390×844; Insights is one card at a time; the new-look reveal's animation is
+  B14's.
 - Deploys only by merge (D122); the review build follows the `review` branch (D115).
