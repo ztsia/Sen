@@ -53,16 +53,7 @@ export const smallTargets = (page: Page) =>
   });
 
 type ProbeKind =
-  | 'clipped'
-  | 'overlap'
-  | 'covered'
-  | 'fields'
-  | 'focusField'
-  | 'reach'
-  | 'tabReset'
-  | 'tabStep'
-  | 'save'
-  | 'restore';
+  'clipped' | 'overlap' | 'covered' | 'fields' | 'focusField' | 'reach' | 'tabReset' | 'tabStep' | 'save' | 'restore';
 interface Probe {
   kind: ProbeKind;
   /** Which field, for the keyboard check. */
@@ -92,10 +83,12 @@ const probe = (a: Probe): string[] | number => {
   const textOf = (el: Element) => {
     const labelled = (el as HTMLInputElement).labels?.[0]?.textContent;
     const raw =
-      el.getAttribute('aria-label') ??
-      labelled ??
-      (el as HTMLInputElement).placeholder ??
-      (el.textContent || el.getAttribute('name') || '');
+      el.getAttribute('aria-label') ||
+      labelled ||
+      (el as HTMLInputElement).placeholder ||
+      el.textContent ||
+      el.getAttribute('name') ||
+      '';
     return raw.replace(/\s+/g, ' ').trim().slice(0, 30);
   };
   const size = (r: DOMRect) => `${round(r.width)}×${round(r.height)}`;
@@ -104,17 +97,18 @@ const probe = (a: Probe): string[] | number => {
   /** What sits on top of a target: `div.toast "Saved"`, by the name the app gave it, else its first class. */
   const cover = (el: Element) => {
     const id =
-      el.getAttribute('data-slot') ??
-      el.getAttribute('data-testid') ??
-      el.id ??
+      el.getAttribute('data-slot') ||
+      el.getAttribute('data-testid') ||
+      el.id ||
       (typeof el.className === 'string' ? el.className.split(/\s+/)[0] : '');
     const t = (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 30);
     return `${tag(el)}${id ? `.${id}` : ''}${t ? ` "${t}"` : ''}`;
   };
   const shown = (el: Element) => {
     const r = el.getBoundingClientRect();
-    if (r.width === 0 || r.height === 0 || getComputedStyle(el).visibility === 'hidden') return false;
-    if (el.closest(SKIP)) return false;
+    if (r.width === 0 || r.height === 0 || el.closest(SKIP)) return false;
+    // not drawn at all (display, visibility, opacity, or the inside of a closed <details>)
+    if (!el.checkVisibility({ checkVisibilityCSS: true, checkOpacity: true })) return false;
     // the dev panel's handle: previews only, a strip in the side gutter
     return !el.hasAttribute('data-dev-handle');
   };
@@ -123,44 +117,77 @@ const probe = (a: Probe): string[] | number => {
   const box = (r: DOMRect | Box): Box =>
     'left' in r ? { l: r.left, t: r.top, r: r.right, b: r.bottom } : { l: r.l, t: r.t, r: r.r, b: r.b };
   /**
-   * The box with the ancestors that cut it off applied: those with overflow hidden or clip always, those
-   * that scroll too when `scrolls` is set. Null when nothing of it is left. A fixed box ignores them.
+   * The box with the ancestors that cut it off applied: those that scroll or hide their overflow, sideways
+   * and, when `down` is set, vertically too. Null when nothing of it is left to see. A fixed box ignores
+   * them.
    */
-  const clip = (el: Element, from: Box, scrolls: boolean): Box | null => {
+  const clip = (el: Element, from: Box, down: boolean): Box | null => {
     const b = { ...from };
     for (let n: Element | null = el; n && n !== document.body && n !== document.documentElement; n = n.parentElement) {
       const cs = getComputedStyle(n);
       if (n !== el) {
         const r = n.getBoundingClientRect();
-        const cuts = (v: string) => v === 'hidden' || v === 'clip' || (scrolls && (v === 'scroll' || v === 'auto'));
-        if (cuts(cs.overflowX)) (b.l = Math.max(b.l, r.left)), (b.r = Math.min(b.r, r.right));
-        if (!scrolls && cuts(cs.overflowY)) (b.t = Math.max(b.t, r.top)), (b.b = Math.min(b.b, r.bottom));
+        const cuts = (v: string) => v === 'hidden' || v === 'clip' || v === 'scroll' || v === 'auto';
+        if (cuts(cs.overflowX)) {
+          b.l = Math.max(b.l, r.left);
+          b.r = Math.min(b.r, r.right);
+        }
+        if (down && cuts(cs.overflowY)) {
+          b.t = Math.max(b.t, r.top);
+          b.b = Math.min(b.b, r.bottom);
+        }
       }
       if (cs.position === 'fixed') break;
     }
     return b.r > b.l && b.b > b.t ? b : null;
   };
-  /** The nearest fixed or sticky box around an element (itself included), the layer it moves in. */
-  const pinned = (el: Element) => {
+  /** Whether an element is a scroll container: it holds the page's content rather than being a control. */
+  const scrolls = (el: Element) => {
+    const cs = getComputedStyle(el);
+    const by = (v: string) => v === 'auto' || v === 'scroll';
+    return (
+      (by(cs.overflowY) && el.scrollHeight > el.clientHeight + 1) ||
+      (by(cs.overflowX) && el.scrollWidth > el.clientWidth + 1)
+    );
+  };
+  /**
+   * The layer an element lives in: pinned (a fixed or sticky box around it), the content of the scroller
+   * it sits in, or the page. What scrolls under what is pinned or floats above it is `covered`'s to find.
+   */
+  const layer = (el: Element): Element | string => {
     for (let n: Element | null = el; n; n = n.parentElement) {
       const p = getComputedStyle(n).position;
-      if (p === 'fixed' || p === 'sticky') return n;
+      if (p === 'fixed' || p === 'sticky') return 'pinned';
+      if (n !== el && scrolls(n)) return n;
     }
-    return null;
+    return 'page';
   };
   /** The boxes of the lines an element's own text is set in, each the height of the font: line spacing
    *  tighter than the font (leading-none) overlaps the lines' own boxes, and the glyphs don't. */
   const ownText = (el: Element) => {
     const lines: Box[] = [];
+    const cs = getComputedStyle(el);
+    const own = el.getBoundingClientRect();
+    const hides = (v: string) => v === 'hidden' || v === 'clip';
     for (const n of el.childNodes) {
       if (n.nodeType !== Node.TEXT_NODE || !n.textContent?.trim()) continue;
       const range = document.createRange();
       range.selectNodeContents(n);
-      const fs = parseFloat(getComputedStyle(el).fontSize) || 0;
+      const fs = parseFloat(cs.fontSize) || 0;
       for (const r of range.getClientRects()) {
         if (r.width === 0 || r.height === 0) continue;
         const mid = (r.top + r.bottom) / 2;
-        lines.push({ l: r.left, t: Math.max(r.top, mid - fs / 2), r: r.right, b: Math.min(r.bottom, mid + fs / 2) });
+        const line = { l: r.left, t: Math.max(r.top, mid - fs / 2), r: r.right, b: Math.min(r.bottom, mid + fs / 2) };
+        // lines a clamp or a hidden edge cuts off aren't seen (a clamped paragraph keeps its other lines' boxes)
+        if (hides(cs.overflowY)) {
+          line.t = Math.max(line.t, own.top);
+          line.b = Math.min(line.b, own.bottom);
+        }
+        if (hides(cs.overflowX)) {
+          line.l = Math.max(line.l, own.left);
+          line.r = Math.min(line.r, own.right);
+        }
+        if (line.r > line.l && line.b > line.t) lines.push(line);
       }
     }
     return lines;
@@ -175,8 +202,10 @@ const probe = (a: Probe): string[] | number => {
     [document.documentElement, ...document.querySelectorAll('*')].filter(
       (e) => e.scrollHeight > e.clientHeight || e.scrollWidth > e.clientWidth,
     );
+  // not innerWidth: a phone's layout viewport widens to take in whatever sticks out sideways
+  const screenWidth = () => document.documentElement.clientWidth;
   const inView = (r: DOMRect) =>
-    r.left >= -1 && r.top >= -1 && r.right <= window.innerWidth + 1 && r.bottom <= window.innerHeight + 1;
+    r.left >= -1 && r.top >= -1 && r.right <= screenWidth() + 1 && r.bottom <= window.innerHeight + 1;
   /** What is on top at the middle of a target, when it isn't the target or part of it; null when it is. */
   const coveredBy = (el: Element): Element | null | undefined => {
     const r = el.getBoundingClientRect();
@@ -193,7 +222,7 @@ const probe = (a: Probe): string[] | number => {
     const first = coveredBy(el);
     if (first === null) return null;
     el.scrollIntoView({ block: 'center', behavior: 'instant' });
-    return coveredBy(el) ?? (inView(el.getBoundingClientRect()) ? null : undefined);
+    return coveredBy(el) || null;
   };
 
   if (a.kind === 'save') {
@@ -206,7 +235,10 @@ const probe = (a: Probe): string[] | number => {
   if (a.kind === 'restore') {
     const s = w.__senScroll;
     delete w.__senScroll;
-    for (const [e, x, y] of s?.boxes ?? []) (e.scrollLeft = x), (e.scrollTop = y);
+    for (const [e, x, y] of s?.boxes ?? []) {
+      e.scrollLeft = x;
+      e.scrollTop = y;
+    }
     if (s) window.scrollTo(s.win[0], s.win[1]);
     return 0;
   }
@@ -234,21 +266,21 @@ const probe = (a: Probe): string[] | number => {
         r: Math.max(m.r, l.r),
         b: Math.max(m.b, l.b),
       }));
-      const seen = clip(el, all, true);
-      if (seen && (seen.l < -1 || seen.r > window.innerWidth + 1))
+      const seen = clip(el, all, false);
+      if (seen && (seen.l < -1 || seen.r > screenWidth() + 1))
         out.push(
-          `${here} text runs past the ${seen.l < -1 ? 'left' : 'right'} edge (x ${round(seen.l)} to ${round(seen.r)} of ${window.innerWidth})`,
+          `${here} text runs past the ${seen.l < -1 ? 'left' : 'right'} edge (x ${round(seen.l)} to ${round(seen.r)} of ${screenWidth()})`,
         );
     }
     return out;
   }
 
   if (a.kind === 'overlap') {
-    const seen = (el: Element) => clip(el, box(el.getBoundingClientRect()), false);
+    const seen = (el: Element) => clip(el, box(el.getBoundingClientRect()), true);
     const hit = (kind: string, x: Element, y: Element, bx: Box[], by: Box[]) => {
       if (x.contains(y) || y.contains(x)) return;
-      // something that scrolls under a fixed bar is covered, not overlapped: the check after this one
-      if (!!pinned(x) !== !!pinned(y)) return;
+      // something that scrolls under a fixed bar, or has a button floating over it, is covered, not overlapped
+      if (layer(x) !== layer(y)) return;
       for (const p of bx)
         for (const q of by)
           if (touch(p, q)) {
@@ -256,7 +288,9 @@ const probe = (a: Probe): string[] | number => {
             return;
           }
     };
-    const ts = targets().filter((el) => seen(el));
+    // a scroll container with a tab stop (for the keyboard) holds controls; it isn't one
+    // (nor is anything holding other controls, such as main or a card: its parts are what overlap)
+    const ts = targets().filter((el) => !scrolls(el) && !el.querySelector(a.targets) && seen(el));
     for (let i = 0; i < ts.length; i++)
       for (let j = i + 1; j < ts.length; j++) {
         const x = ts[i]!;
@@ -268,17 +302,27 @@ const probe = (a: Probe): string[] | number => {
       .map((el) => ({ el, lines: ownText(el) }))
       .filter((t) => t.lines.length > 0 && seen(t.el));
     for (let i = 0; i < texts.length; i++)
-      for (let j = i + 1; j < texts.length; j++) hit('text', texts[i]!.el, texts[j]!.el, texts[i]!.lines, texts[j]!.lines);
+      for (let j = i + 1; j < texts.length; j++)
+        hit('text', texts[i]!.el, texts[j]!.el, texts[i]!.lines, texts[j]!.lines);
     return out;
   }
 
   if (a.kind === 'covered') {
-    const saved = [window.scrollX, window.scrollY, scrollers().map((e) => [e, e.scrollLeft, e.scrollTop] as const)] as const;
+    const saved = [
+      window.scrollX,
+      window.scrollY,
+      scrollers().map((e) => [e, e.scrollLeft, e.scrollTop] as const),
+    ] as const;
     for (const el of targets()) {
+      // a disabled control takes no taps (pointer-events: none), so nothing covers it
+      if (getComputedStyle(el).pointerEvents === 'none') continue;
       const over = covering(el);
       if (over) out.push(`${label(el)} under ${cover(over)}`);
     }
-    for (const [e, x, y] of saved[2]) (e.scrollLeft = x), (e.scrollTop = y);
+    for (const [e, x, y] of saved[2]) {
+      e.scrollLeft = x;
+      e.scrollTop = y;
+    }
     window.scrollTo(saved[0], saved[1]);
     return out;
   }
@@ -294,21 +338,26 @@ const probe = (a: Probe): string[] | number => {
     const field = fields()[a.i ?? 0];
     if (!field) return out;
     /** In the screen once scrolled to, and not under something. */
-    const reach = (el: Element, what: string) => {
+    const reach = (el: Element) => {
       el.scrollIntoView({ block: 'center', behavior: 'instant' });
       const r = el.getBoundingClientRect();
-      if (!inView(r)) out.push(`${what} ${label(el)} out of reach: ${round(r.top)} to ${round(r.bottom)} in a ${window.innerHeight} px screen`);
-      else {
+      if (!inView(r))
+        out.push(
+          `${label(el)} out of reach: ${round(r.top)} to ${round(r.bottom)} in a ${window.innerHeight} px screen`,
+        );
+      else if (getComputedStyle(el).pointerEvents !== 'none') {
         const over = coveredBy(el);
-        if (over) out.push(`${what} ${label(el)} under ${cover(over)}`);
+        if (over) out.push(`${label(el)} under ${cover(over)}`);
       }
     };
-    reach(field, 'field');
+    reach(field);
     // the form's main button: its submit, else the last one that can be pressed in the form or sheet
     const scope = field.form ?? field.closest('[role="dialog"], [role="alertdialog"]');
-    const buttons = scope ? [...scope.querySelectorAll<HTMLButtonElement>('button')].filter((b) => !b.disabled && shown(b)) : [];
+    const buttons = scope
+      ? [...scope.querySelectorAll<HTMLButtonElement>('button')].filter((b) => !b.disabled && shown(b))
+      : [];
     const main = scope?.querySelector<HTMLButtonElement>('button[type="submit"]') ?? buttons[buttons.length - 1];
-    if (main) reach(main, 'button');
+    if (main) reach(main);
     return out;
   }
 
@@ -325,15 +374,18 @@ const probe = (a: Probe): string[] | number => {
     w.__senSeen = new Set();
     return 0;
   }
-  // a transition would still be at its start: jump each to its end to read the focused look
-  for (const t of document.getAnimations())
-    if (t instanceof CSSTransition)
-      try {
-        t.finish();
-      } catch {
-        /* one that can't finish isn't a ring */
-      }
-  const el = document.activeElement;
+  /** A transition would still be at its start: jump each to its end to read the look it is heading for. */
+  const finish = () => {
+    for (const t of document.getAnimations())
+      if (t instanceof CSSTransition)
+        try {
+          t.finish();
+        } catch {
+          /* one that can't finish isn't a ring */
+        }
+  };
+  finish();
+  const el = document.activeElement as HTMLElement | null;
   const seen = (w.__senSeen ??= new Set());
   if (!el || el === document.body || seen.has(el)) return ['cycled'];
   seen.add(el);
@@ -364,16 +416,29 @@ const probe = (a: Probe): string[] | number => {
       base = [r * al + base[0] * (1 - al), g * al + base[1] * (1 - al), b * al + base[2] * (1 - al)];
     return base;
   };
-  const bg = behind(el);
-  const differs = (c: string) => {
+  /** A ring is drawn outside the control, over what is behind it, or inside it over the control itself. */
+  const differs = (node: Element, c: string, inside: boolean) => {
+    const bg = behind(inside || !node.parentElement ? node : node.parentElement);
     const [r, g, b, al] = rgba(c);
     if (al === 0) return false;
     // on top of the background, ten of 255 on any channel is a difference to see
-    return Math.max(Math.abs(r * al + bg[0] * (1 - al) - bg[0]), Math.abs(g * al + bg[1] * (1 - al) - bg[1]), Math.abs(b * al + bg[2] * (1 - al) - bg[2])) >= 10;
+    return (
+      Math.max(
+        Math.abs(r * al + bg[0] * (1 - al) - bg[0]),
+        Math.abs(g * al + bg[1] * (1 - al) - bg[1]),
+        Math.abs(b * al + bg[2] * (1 - al) - bg[2]),
+      ) >= 10
+    );
   };
-  const drawn = (cs: CSSStyleDeclaration) => {
-    if (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) >= 1 && differs(cs.outlineColor)) return true;
-    if (cs.boxShadow === 'none') return false;
+  /** An outline, or with `shadows` a shadow with some reach, in a colour that shows against what is behind it. */
+  const drawn = (node: Element, cs: CSSStyleDeclaration, shadows: boolean) => {
+    if (
+      cs.outlineStyle !== 'none' &&
+      parseFloat(cs.outlineWidth) >= 1 &&
+      differs(node, cs.outlineColor, parseFloat(cs.outlineOffset) < 0)
+    )
+      return true;
+    if (!shadows || cs.boxShadow === 'none') return false;
     // split the shadows at the commas outside brackets, and read each one's colour and reach
     const parts: string[] = [];
     let level = 0;
@@ -386,18 +451,62 @@ const probe = (a: Probe): string[] | number => {
         from = k + 1;
       }
     });
-    return parts.some((s) => {
-      const colour = s.match(/(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\([^)]*\)/)?.[0] ?? s.split(' ')[0]!;
-      const lengths = s.replace(colour, '').match(/-?[\d.]+px/g)?.map(parseFloat) ?? [];
-      return (lengths[2] ?? 0) >= 1 || (lengths[3] ?? 0) >= 1 ? differs(colour) : false;
+    return parts.some((sh) => {
+      const colour = sh.match(/(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\([^)]*\)/)?.[0] ?? sh.split(' ')[0]!;
+      const lengths =
+        sh
+          .replace(colour, '')
+          .match(/-?[\d.]+px/g)
+          ?.map(parseFloat) ?? [];
+      return (lengths[2] ?? 0) >= 1 || (lengths[3] ?? 0) >= 1 ? differs(node, colour, /\binset\b/.test(sh)) : false;
     });
   };
-  const ring =
-    drawn(getComputedStyle(el)) ||
+  const pseudo = (node: Element, shadows: boolean) =>
     ['::before', '::after'].some((p) => {
-      const cs = getComputedStyle(el, p);
-      return cs.content !== 'none' && drawn(cs);
+      const cs = getComputedStyle(node, p);
+      return cs.content !== 'none' && drawn(node, cs, shadows);
     });
+  // an outline on the control is a ring as it stands
+  if (drawn(el, getComputedStyle(el), false) || pseudo(el, false)) return out;
+
+  // Otherwise look at what changes when focus leaves: a shadow or a border a control always has (shadcn's
+  // soft shadow, a card's edge) isn't a focus ring. A field can show focus by the edge of what wraps it (an
+  // underline that darkens, a box that takes a ring), so the wrappers that hold the focus are looked at too.
+  const wraps = [el];
+  for (let n = el.parentElement; n && n !== document.body && wraps.length < 4; n = n.parentElement)
+    if (n.matches(':focus-within')) wraps.push(n);
+  const edges = (n: Element) => {
+    const cs = getComputedStyle(n);
+    return ['Top', 'Right', 'Bottom', 'Left'].map(
+      (side) =>
+        `${cs.getPropertyValue(`border-${side.toLowerCase()}-style`)} ${cs.getPropertyValue(`border-${side.toLowerCase()}-width`)} ${cs.getPropertyValue(`border-${side.toLowerCase()}-color`)}`,
+    );
+  };
+  const look = (n: Element) => {
+    const cs = getComputedStyle(n);
+    const side = ['::before', '::after'].map((p) => {
+      const ps = getComputedStyle(n, p);
+      return `${ps.content} ${ps.outlineStyle} ${ps.outlineWidth} ${ps.outlineColor} ${ps.boxShadow}`;
+    });
+    return `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor} ${cs.boxShadow} ${edges(n).join('|')} ${side.join('|')}`;
+  };
+  const focused = wraps.map(look);
+  const focusedEdges = wraps.map(edges);
+  el.blur();
+  finish();
+  const plain = wraps.map(look);
+  const plainEdges = wraps.map(edges);
+  el.focus({ preventScroll: true });
+  finish();
+  const ring = wraps.some((n, i) => {
+    if (focused[i] === plain[i]) return false;
+    if (drawn(n, getComputedStyle(n), true) || pseudo(n, true)) return true;
+    return focusedEdges[i]!.some((e, k) => {
+      if (e === plainEdges[i]![k]) return false;
+      const [style, width, ...colour] = e.split(' ');
+      return style !== 'none' && parseFloat(width!) >= 1 && differs(n, colour.join(' '), false);
+    });
+  });
   if (!ring) out.push(`${label(el)} takes focus with no ring to see`);
   return out;
 };
@@ -421,6 +530,44 @@ async function axe(page: Page): Promise<Finding[]> {
 const frames = (page: Page) =>
   page.evaluate(() => new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))));
 
+/**
+ * Waits for what is moving to stop (a reveal, a sheet sliding in), up to three seconds, and for a view
+ * transition to hand the page back, up to five: a person can't tap a button under one either, but nothing
+ * is wrong with the page once it's over. Animations that never end (a spinner, the tab bar's strip) are
+ * left out.
+ */
+const calm = async (page: Page) => {
+  await page.evaluate(async () => {
+    const ends = document
+      .getAnimations()
+      .filter((x) => x.effect?.getComputedTiming().endTime !== Infinity)
+      .map((x) => x.finished.catch(() => undefined));
+    await Promise.race([Promise.all(ends), new Promise((done) => setTimeout(done, 3000))]);
+  });
+  // under a view transition the whole page answers a tap as the root element
+  await page
+    .waitForFunction(
+      (sel) =>
+        ![...document.querySelectorAll(sel)].some((el) => {
+          const r = el.getBoundingClientRect();
+          const x = (r.left + r.right) / 2;
+          const y = (r.top + r.bottom) / 2;
+          return (
+            r.width > 0 &&
+            r.height > 0 &&
+            x >= 0 &&
+            y >= 0 &&
+            x < innerWidth &&
+            y < innerHeight &&
+            document.elementFromPoint(x, y) === document.documentElement
+          );
+        }),
+      TARGETS,
+      { timeout: 5000 },
+    )
+    .catch(() => undefined);
+};
+
 /** A field, and its form's main button, reachable with the keyboard open (Android shrinks the viewport). */
 async function keyboard(page: Page): Promise<Finding[]> {
   const found: Finding[] = [];
@@ -432,7 +579,9 @@ async function keyboard(page: Page): Promise<Finding[]> {
     for (let i = 0; i < n; i++) {
       await page.evaluate(probe, args('focusField', i));
       await frames(page);
-      for (const detail of await lines(page, 'reach', i)) found.push({ check: 'keyboard', detail });
+      // each field of one form reaches the same button: say it once
+      for (const detail of await lines(page, 'reach', i))
+        if (!found.some((f) => f.detail === detail)) found.push({ check: 'keyboard', detail });
     }
   } finally {
     await page.setViewportSize(was);
@@ -460,8 +609,14 @@ async function focus(page: Page): Promise<Finding[]> {
  */
 export async function runChecks(page: Page): Promise<Finding[]> {
   const all: Finding[] = [];
+  await calm(page);
   all.push(...(await axe(page)));
-  all.push(...found('target', (await smallTargets(page)).map((s) => `${s} under 48 px`)));
+  all.push(
+    ...found(
+      'target',
+      (await smallTargets(page)).map((s) => `${s} under 48 px`),
+    ),
+  );
   all.push(...found('clipped', await lines(page, 'clipped')));
   all.push(...found('overlap', await lines(page, 'overlap')));
   all.push(...(await coveredTargets(page)));
@@ -478,5 +633,6 @@ export async function runChecks(page: Page): Promise<Finding[]> {
 
 /** Targets under something fixed (a toast, the tab bar, a sheet's footer) that scrolling can't free. */
 export async function coveredTargets(page: Page): Promise<Finding[]> {
+  await calm(page);
   return found('covered', await lines(page, 'covered'));
 }

@@ -1,0 +1,71 @@
+- navigation "Tabs": /, \d+ to review/
+- region "Notifications alt+T"
+- dialog "Sen":
+  - text: "Sen Looking at: Home"
+  - button "More about Sen"
+  - button "Close"
+  - heading "Sen" [level=2]
+  - paragraph: Sen
+  - list "Conversation":
+    - listitem "Sen":
+      - paragraph: Evening note
+      - paragraph: /Groceries are RM96\.\d+ under last month by this date\. Meals are about the same\./
+      - paragraph: /Yesterday, \d+:\d+/
+    - listitem "You":
+      - paragraph: How much have I spent on meals out this cycle?
+      - paragraph: /Today, \d+:\d+/
+    - listitem "Sen":
+      - paragraph: /You've spent RM412\.\d+ on meals out this cycle, over \d+ payments\. That's about RM21\.\d+ a day, and at that pace it comes to RM650\.\d+ not checked by payday\./
+      - paragraph: /Today, \d+:\d+/
+    - listitem "Sen":
+      - paragraph: I noticed two coffee places you always put in the same category.
+      - paragraph: Sen suggests
+      - paragraph: ZUS COFFEE, CHAGEE → Drinks & desserts, from now on
+      - paragraph: /You chose Drinks & desserts the last 6 times\. \d+ past payments stay as they are\./
+      - button "Apply"
+      - button "Dismiss"
+      - paragraph: /Today, \d+:\d+/
+    - listitem "You":
+      - paragraph: "PDF: phone-bill-oct.pdf"
+      - paragraph: Is this bill more than usual?
+      - paragraph: /Today, \d+:\d+/
+    - listitem "Sen":
+      - paragraph: /This bill is for RM98\.\d+ from your file , due \d+ Oct\. September was RM88\.\d+, so it is higher\. Nothing in the file says why\./
+      - paragraph: /Today, \d+:\d+/
+    - listitem "You":
+      - paragraph: Which cards give cashback on groceries?
+      - paragraph: /Today, \d+:\d+/
+    - listitem "Sen":
+      - text: Draft, not confirmed Research
+      - paragraph: Cashback cards for groceries in Malaysia
+      - list:
+        - listitem: Pelita Everyday gives 5% cashback at supermarkets, capped at RM50 a month. Source [1]
+        - listitem: Setia Plus gives 3% on groceries with no cap, and charges an annual fee of RM120. Source [2]
+        - listitem: /Pelita Everyday waives its annual fee with \d+ purchases in a year\. Source \[1\]/
+      - list "Sources":
+        - listitem:
+          - 'button /Source 1: Pelita Everyday card: rates and fees, pelita\.example, checked \d+ Oct \d+\. Opens in your browser/'
+        - listitem:
+          - 'button /Source 2: Setia Plus cashback card, setia\.example, checked \d+ Oct \d+\. Opens in your browser/'
+      - button "Confirm these figures"
+      - paragraph: /Today, \d+:\d+/
+    - listitem "Sen":
+      - paragraph: These are drafts from the web, not figures I've checked. Confirm the ones you trust, and I'll compare them with what you spend on groceries.
+      - paragraph: /Today, \d+:\d+/
+    - listitem "Sen":
+      - paragraph: Nothing was captured on Sun 4 Oct, and your cash balance moved. Did you pay for anything that day?
+      - paragraph: Did you pay for something on Sun 4 Oct?
+      - paragraph: Yes, I did. Opens a new payment with the day filled in. No, nothing. I stop asking about that day. Ask me again later. The gap stays on your balance check.
+      - button "Yes, I did , Sen suggests this"
+      - button "No, nothing"
+      - button "Ask me again later"
+      - button "Add a payment for Sun 4 Oct"
+      - paragraph: /Today, \d+:\d+/
+  - group "Suggested questions":
+    - button "How am I doing this cycle?"
+    - button "What is due before payday?"
+    - button "Where did most of my money go?"
+  - button "Add a photo, screenshot or PDF"
+  - textbox "Message to Sen":
+    - /placeholder: Ask Sen
+  - button "Send" [disabled]

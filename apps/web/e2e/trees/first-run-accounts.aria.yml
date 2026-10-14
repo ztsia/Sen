@@ -1,0 +1,29 @@
+- banner:
+  - button "Back"
+  - heading "Your accounts" [level=1]
+  - text: Step 5 of 7
+- main:
+  - paragraph: Type today’s balance in each account, as your bank shows it. Sen counts from here. Leave one blank to set it later.
+  - group:
+    - text: Ryt Bank
+    - textbox "Ryt Bank":
+      - /placeholder: "0.00"
+  - group:
+    - text: Public Bank
+    - textbox "Public Bank":
+      - /placeholder: "0.00"
+  - group:
+    - text: TNG eWallet
+    - textbox "TNG eWallet":
+      - /placeholder: "0.00"
+  - group:
+    - text: GO+
+    - textbox "GO+":
+      - /placeholder: "0.00"
+  - group:
+    - text: GrabPay Wallet
+    - textbox "GrabPay Wallet":
+      - /placeholder: "0.00"
+  - button "Next"
+- region "Notifications alt+T"
+- button "Dev panel"

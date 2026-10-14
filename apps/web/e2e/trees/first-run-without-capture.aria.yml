@@ -1,0 +1,14 @@
+- banner:
+  - button "Back"
+  - heading "Sign in" [level=1]
+  - text: Step 1 of 2
+- main:
+  - heading "Sign in to Sen" [level=2]
+  - group:
+    - text: Your email
+    - textbox "Your email":
+      - /placeholder: you@example.com
+    - paragraph: Sen emails you a 6-digit code. There’s no password.
+  - button "Send the code"
+- region "Notifications alt+T"
+- button "Dev panel"

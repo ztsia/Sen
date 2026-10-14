@@ -1,0 +1,27 @@
+- banner:
+  - button "Back"
+  - heading "Budgets" [level=1]
+  - button "Add a budget"
+- main:
+  - paragraph: /October, \d+ Sept – \d+ Oct\. Tap a budget to change it\. The line on each bar is how far through the cycle you are\./
+  - region "At risk":
+    - heading "At risk" [level=2]
+    - 'button /Meals RM932\.\d+ of RM1,\d+\.\d+ At risk: \d+% spent, \d+% of the cycle gone/'
+    - button /Shopping RM320\.\d+ of RM300\.\d+ Over by RM20\.\d+/
+  - region "On track":
+    - heading "On track" [level=2]
+    - button /Drinks & desserts RM73\.\d+ of RM150\.\d+ On track/
+    - button /Entertainment RM0\.\d+ of RM150\.\d+ On track/
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

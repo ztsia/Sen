@@ -1,0 +1,74 @@
+- banner:
+  - button "Back"
+  - heading "The year" [level=1]
+- main:
+  - text: /How did \d+ go, month by month\?/
+  - application: Jan Feb Mar Apr May Jun Jul Aug Sep Oct
+  - table /Spent each month of \d+/:
+    - caption: /Spent each month of \d+/
+    - rowgroup:
+      - row "Month Spent Income":
+        - columnheader "Month"
+        - columnheader "Spent"
+        - columnheader "Income"
+    - rowgroup:
+      - row /Jan RM6,\d+\.\d+ RM5,\d+\.\d+/:
+        - cell "Jan"
+        - cell /RM6,\d+\.\d+/
+        - cell /RM5,\d+\.\d+/
+      - row /Feb RM4,\d+\.\d+ RM5,\d+\.\d+/:
+        - cell "Feb"
+        - cell /RM4,\d+\.\d+/
+        - cell /RM5,\d+\.\d+/
+      - row /Mar RM2,\d+\.\d+ RM5,\d+\.\d+/:
+        - cell "Mar"
+        - cell /RM2,\d+\.\d+/
+        - cell /RM5,\d+\.\d+/
+      - row /Apr RM4,\d+\.\d+ RM5,\d+\.\d+/:
+        - cell "Apr"
+        - cell /RM4,\d+\.\d+/
+        - cell /RM5,\d+\.\d+/
+      - row /May RM6,\d+\.\d+ RM5,\d+\.\d+/:
+        - cell "May"
+        - cell /RM6,\d+\.\d+/
+        - cell /RM5,\d+\.\d+/
+      - row /Jun RM2,\d+\.\d+ RM5,\d+\.\d+/:
+        - cell "Jun"
+        - cell /RM2,\d+\.\d+/
+        - cell /RM5,\d+\.\d+/
+      - row /Jul RM4,\d+\.\d+ RM5,\d+\.\d+/:
+        - cell "Jul"
+        - cell /RM4,\d+\.\d+/
+        - cell /RM5,\d+\.\d+/
+      - row /Aug RM4,\d+\.\d+ RM5,\d+\.\d+/:
+        - cell "Aug"
+        - cell /RM4,\d+\.\d+/
+        - cell /RM5,\d+\.\d+/
+      - row /Sep RM4,\d+\.\d+ RM5,\d+\.\d+/:
+        - cell "Sep"
+        - cell /RM4,\d+\.\d+/
+        - cell /RM5,\d+\.\d+/
+      - row /Oct RM3,\d+\.\d+ RM4\.\d+/:
+        - cell "Oct"
+        - cell /RM3,\d+\.\d+/
+        - cell /RM4\.\d+/
+  - paragraph: /Jan was the heaviest month at RM6,\d+\.\d+\./
+  - button "Ask Sen about this"
+  - text: /Savings rate \d+% Heaviest month Jan/
+  - paragraph: /You kept \d+% of what came in this year\./
+  - region "Relief tags":
+    - heading "Relief tags" [level=2]
+    - text: /Lifestyle RM90\.\d+/
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

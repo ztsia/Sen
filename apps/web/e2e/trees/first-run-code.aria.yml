@@ -1,0 +1,16 @@
+- banner:
+  - button "Back"
+  - heading "Sign in" [level=1]
+  - text: Step 1 of 7
+- main:
+  - heading "Type the code" [level=2]
+  - paragraph: Sen sent a 6-digit code to wei.ming@example.com.
+  - group:
+    - text: 6-digit code
+    - textbox "6-digit code":
+      - /placeholder: "------"
+  - button "Sign in"
+  - button "Send a new code"
+  - button "Use a different email"
+- region "Notifications alt+T"
+- button "Dev panel"

@@ -1,0 +1,24 @@
+- banner:
+  - button "Back"
+  - heading "Data" [level=1]
+- main:
+  - region "Export":
+    - heading "Export" [level=2]
+    - paragraph: Every payment, receipt and setting, as files you can keep.
+    - button "Export everything"
+  - region "Backups":
+    - heading "Backups" [level=2]
+    - text: /Last backup Yesterday, \d+:\d+/
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

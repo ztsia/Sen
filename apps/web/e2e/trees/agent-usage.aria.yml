@@ -1,0 +1,26 @@
+- banner:
+  - button "Back"
+  - heading "Usage" [level=1]
+- main:
+  - text: /Used this month [\d,.]+[bkmBKM]+ tokens Estimated cost About RM3\.\d+/
+  - paragraph: The cost is an estimate from the token counts, not a bill, and is never stored.
+  - region "By what used it":
+    - heading "By what used it" [level=2]
+    - img "Tokens by use"
+    - list:
+      - listitem: /Chat · [\d,.]+[bkmBKM]+ tokens/
+      - listitem: /Receipts · [\d,.]+[bkmBKM]+ tokens/
+      - listitem: /Evening notes · [\d,.]+[bkmBKM]+ tokens/
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

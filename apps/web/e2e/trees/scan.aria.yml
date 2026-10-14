@@ -1,0 +1,13 @@
+- banner:
+  - button "Back"
+  - heading "Scan a receipt" [level=1]
+- main:
+  - paragraph: Take a photo of the receipt. In Sen’s Android app, the scanner finds the edges by itself.
+  - region "For a good read":
+    - heading "For a good read" [level=2]
+    - text: Lay it flat Stand in the light Get the whole receipt in
+  - button "Take a photo"
+  - button "From gallery"
+  - button "Add by hand"
+- region "Notifications alt+T"
+- button "Dev panel"

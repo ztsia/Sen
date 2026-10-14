@@ -1,0 +1,9 @@
+- navigation "Tabs": /, \d+ to review/
+- region "Notifications alt+T"
+- dialog "Add a payment":
+  - heading "Add a payment" [level=2]
+  - button "Close"
+  - paragraph: Add a payment
+  - button "Scan"
+  - button "From gallery"
+  - button "Add manually"

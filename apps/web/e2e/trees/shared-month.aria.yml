@@ -1,0 +1,24 @@
+- banner:
+  - button "Back"
+  - heading "Shared bills" [level=1]
+- main:
+  - radiogroup "Which bills":
+    - radio "Open · 1" [checked]
+    - radio "Settled · 0"
+  - list:
+    - listitem:
+      - button /Haidilao \d+ Oct RM \d+\.\d+ Mei paid · you owe RM24\.\d+ Open/:
+        - paragraph: /Mei paid · you owe RM24\.\d+/
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link "Review , 4 to review":
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: ", 4 to review"
+- region "Notifications alt+T"
+- button "Dev panel"

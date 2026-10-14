@@ -1,0 +1,47 @@
+- banner:
+  - button "Back"
+  - heading "Account" [level=1]
+- main:
+  - paragraph: Ryt Bank
+  - text: /RM \d+,\d+\.\d+/
+  - paragraph: Balance now
+  - paragraph: /Computed from your notifications since \d+ Oct\. Not the bank's own figure\./
+  - button "Check"
+  - button "Payments"
+  - button "Ask Sen"
+  - term: Opening balance
+  - definition: /RM \d+,\d+\.\d+ on \d+ Oct/
+  - term: Fed by
+  - definition: Ryt Bank
+  - term: Last checked
+  - definition: 1 Oct
+  - region "Recent payments":
+    - heading "Recent payments" [level=2]
+    - button /Sate Kajang Hj Samuri Meals RM \d+\.\d+/:
+      - paragraph: Meals
+    - button /Nando's Meals RM \d+\.\d+/:
+      - paragraph: Meals
+    - button /Roti Bakar \d+ No category yet In Review RM \d+\.\d+/:
+      - paragraph: No category yet In Review
+    - button /Lim K H Money in In Review plus RM \d+\.\d+/:
+      - paragraph: Money in In Review
+    - button /Nando's Meals Receipt RM \d+\.\d+/:
+      - paragraph: Meals Receipt
+    - button /Kedai Maju Meals In Review RM \d+\.\d+/:
+      - paragraph: Meals In Review
+  - region "Checks":
+    - heading "Checks" [level=2]
+    - text: "/1 Oct: bank showed RM4,\\d+\\.\\d+ RM42\\.\\d+ less/"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

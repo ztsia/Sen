@@ -1,0 +1,27 @@
+- banner:
+  - button "Back"
+  - heading "Capture" [level=1]
+- main:
+  - paragraph: Not listening
+  - paragraph: Sen needs notification access to read your bank apps.
+  - region "Setup":
+    - heading "Setup" [level=2]
+    - button "Your apps None yet"
+    - button "Notification access Off"
+    - button "Keep Sen running Not done"
+  - region "On this phone":
+    - heading "On this phone" [level=2]
+    - button "Captured on this phone 0"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

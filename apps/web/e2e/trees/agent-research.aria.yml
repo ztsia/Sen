@@ -1,0 +1,31 @@
+- banner:
+  - button "Back"
+  - heading "Research" [level=1]
+- main:
+  - paragraph: What Sen finds on the web is a draft until you confirm it. Briefs are deleted after 2 years.
+  - list:
+    - listitem:
+      - paragraph: Cashback cards for groceries in Malaysia
+      - paragraph: /3 findings · \d+ Oct/
+      - text: Draft
+    - listitem:
+      - paragraph: Fixed deposit rates at banks in Malaysia
+      - paragraph: /4 findings · \d+ Sept/
+      - text: Confirmed
+    - listitem:
+      - paragraph: Savings accounts with daily interest
+      - paragraph: /5 findings · \d+ Aug/
+      - text: Draft
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

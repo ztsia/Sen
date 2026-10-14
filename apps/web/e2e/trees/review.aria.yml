@@ -1,0 +1,85 @@
+- banner:
+  - button "Back"
+  - heading "Review" [level=1]
+- main:
+  - status:
+    - paragraph: Sen suggested 2 answers, marked below.
+    - button "Apply all"
+  - region /Needs you · \d+/:
+    - heading /Needs you · \d+/ [level=2]
+    - heading "Categories · 2" [level=3]
+    - paragraph: /RM \d+\.\d+ · Siti Aminah Bt Yusof/
+    - paragraph: /New on TNG eWallet · Today, \d+:\d+/
+    - button "Meals"
+    - button "Drinks & desserts"
+    - button "Other…"
+    - paragraph: /RM \d+\.\d+ · Roti Bakar \d+/
+    - paragraph: /New on Ryt Bank · Today, \d+:\d+/
+    - button "Meals"
+    - button "Groceries"
+    - button "Other…"
+    - heading "Splits · 2" [level=3]
+    - paragraph: /plus RM \d+\.\d+ from Lim K H/
+    - paragraph: /Whose split share is it\? · Yesterday, \d+:\d+/
+    - button "Kah Hoe · BBQ PLACE"
+    - button "Not a split"
+    - paragraph: /You owe Mei RM \d+\.\d+/
+    - paragraph: "HAIDILAO · If you've paid already, tick it: Sen can't see every payment"
+    - button "I've paid"
+    - button "Open the split"
+    - heading "Checks · 7" [level=3]
+    - button "A balance check is due The last one was Thu, 1 Oct":
+      - paragraph: The last one was Thu, 1 Oct
+    - button /A receipt Sen couldn't read Enter it by hand; the photo is kept · Yesterday, \d+:\d+/:
+      - paragraph: /Enter it by hand; the photo is kept · Yesterday, \d+:\d+/
+    - paragraph: /plus RM \d+,\d+\.\d+ into Ryt Bank from your own name/
+    - paragraph: Where did it come from? Sen will remember next time
+    - button "Public Bank , Sen suggests this"
+    - button "Maybank"
+    - button "Elsewhere"
+    - paragraph: /plus RM \d+\.\d+ from Tan Ah Kow/
+    - paragraph: /Into Public Bank · Mon, \d+ Oct, \d+:\d+\. Your note says it’s a gift/
+    - button "Income , Sen suggests this"
+    - button "Transfer"
+    - button "Refund of…"
+    - paragraph: ZUS COFFEE, CHAGEE → Drinks & desserts, from now on
+    - paragraph: /Sen proposes · \d+ past payments stay as they are\./
+    - button "Apply"
+    - button "Dismiss"
+    - button /Phone bill claim · RM \d+\.\d+ Due Sun, \d+ Oct/:
+      - paragraph: /Due Sun, \d+ Oct/
+    - button "A payday step you skipped September's look-back, skipped on payday":
+      - paragraph: September's look-back, skipped on payday
+    - heading "New wording · 1" [level=3]
+    - paragraph: /Paid RM6\.\d+ to KEDAI MAJU\. Right\?/
+    - paragraph: /New wording from Ryt Bank, already booked · Yesterday, \d+:\d+/
+    - button "Yes"
+    - button "No"
+  - region "Waiting on others":
+    - heading "Waiting on others" [level=2]
+    - button /Bbq Place 1 of 2 paid you back RM \d+\.\d+/:
+      - paragraph: 1 of 2 paid you back
+    - button /Nasi Kandar Abc 0 of 2 paid you back RM \d+\.\d+/:
+      - paragraph: 0 of 2 paid you back
+    - paragraph: /Sen is watching for it, by Sun, \d+ Oct/
+    - paragraph: /RM \d+\.\d+ · Mr Diy receipt/
+    - paragraph: /Waiting for its payment · Today, \d+:\d+/
+    - button "Attach to a payment…"
+    - button "Evidence only"
+    - button "Enter the payment"
+  - button "Missing a payment? Add it"
+  - button "Skipped notifications 3"
+- button "Ask Sen"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

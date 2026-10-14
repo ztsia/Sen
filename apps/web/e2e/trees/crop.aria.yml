@@ -1,0 +1,10 @@
+- banner:
+  - button "Back"
+  - heading "Adjust the photo" [level=1]
+- main:
+  - img "Your photo, with a handle on each corner"
+  - paragraph: Adjusting the corners arrives with the scanner.
+  - button "Use this"
+  - button "Take another"
+- region "Notifications alt+T"
+- button "Dev panel"

@@ -1,0 +1,59 @@
+- status: You're offline. What you add is kept and syncs when you're back.
+- banner:
+  - button "Back"
+  - heading "Payments" [level=1]
+- main:
+  - text: Search payments
+  - searchbox "Search payments"
+  - button "All cycles"
+  - button "Any account"
+  - button "Any category"
+  - button "Shared"
+  - status: /\d+,\d+ payments/
+  - heading /Sun, \d+ Oct/ [level=3]
+  - text: /Spent RM \d+\.\d+/
+  - button /Kuih Meals · TNG eWallet Not synced yet RM \d+\.\d+/:
+    - paragraph: Meals · TNG eWallet Not synced yet
+  - button /Teh tarik Meals · TNG eWallet Not synced yet RM \d+\.\d+/:
+    - paragraph: Meals · TNG eWallet Not synced yet
+  - button /Sate Kajang Hj Samuri Meals · Ryt Bank RM \d+\.\d+/:
+    - paragraph: Meals · Ryt Bank
+  - button /Grabfood Meals · GrabPay Wallet RM \d+\.\d+/:
+    - paragraph: Meals · GrabPay Wallet
+  - button /Nando's Meals · Ryt Bank RM \d+\.\d+/:
+    - paragraph: Meals · Ryt Bank
+  - button /Siti Aminah Bt Yusof No category yet · TNG eWallet In Review RM \d+\.\d+/:
+    - paragraph: No category yet · TNG eWallet In Review
+  - button /Roti Bakar \d+ No category yet · Ryt Bank In Review RM \d+\.\d+/:
+    - paragraph: No category yet · Ryt Bank In Review
+  - heading /Sat, \d+ Oct/ [level=3]
+  - text: /Spent RM \d+\.\d+/
+  - button /Lim K H Money in · Ryt Bank In Review plus RM \d+\.\d+/:
+    - paragraph: Money in · Ryt Bank In Review
+  - button /Nando's Meals · Ryt Bank Receipt RM \d+\.\d+/:
+    - paragraph: Meals · Ryt Bank Receipt
+  - button /Kedai Maju Meals · Ryt Bank In Review RM \d+\.\d+/:
+    - paragraph: Meals · Ryt Bank In Review
+  - button /Jaya Grocer Groceries · Ryt Bank Receipt RM \d+\.\d+/:
+    - paragraph: Groceries · Ryt Bank Receipt
+  - heading /Fri, \d+ Oct/ [level=3]
+  - text: /Spent RM \d+\.\d+/
+  - button /Nasi Kandar Abc Meals · Ryt Bank Receipt Split RM \d+\.\d+/:
+    - paragraph: Meals · Ryt Bank Receipt Split
+  - button /Chicken Rice Shop Meals · TNG eWallet RM \d+\.\d+/:
+    - paragraph: Meals · TNG eWallet
+  - heading /Thu, \d+ Oct/ [level=3]
+  - text: /Spent RM \d+\.\d+/
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

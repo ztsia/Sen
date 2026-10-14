@@ -1,0 +1,57 @@
+- banner:
+  - button "Back"
+  - heading "Shared bill" [level=1]
+- main:
+  - paragraph: Bbq Place
+  - text: /RM \d+\.\d+/
+  - paragraph: /Paid by You · Sat, \d+ Oct, \d+:\d+/
+  - paragraph: Final
+  - paragraph: Everyone is done and every item is claimed.
+  - paragraph: The shares are locked. Only you can change a tick.
+  - region "Shares":
+    - heading "Shares" [level=2]
+    - text: /You Done RM \d+\.\d+ Ali Done RM \d+\.\d+ Kah Hoe Done RM \d+\.\d+/
+  - region "Items":
+    - heading "Items" [level=2]
+    - checkbox /Set A You RM \d+\.\d+/ [checked]
+    - text: Set A
+    - paragraph: You
+    - text: /RM \d+\.\d+/
+    - checkbox /Set B Ali RM \d+\.\d+/
+    - text: Set B
+    - paragraph: Ali
+    - text: /RM \d+\.\d+/
+    - checkbox /Set C Kah Hoe RM \d+\.\d+/
+    - text: Set C
+    - paragraph: Kah Hoe
+    - text: /RM \d+\.\d+/
+    - 'checkbox /BBQ platter \(to share\) Shared ÷3: You, Ali, Kah Hoe · your part RM \d+\.\d+ RM \d+\.\d+/ [checked]'
+    - text: BBQ platter (to share)
+    - paragraph: "/Shared ÷3: You, Ali, Kah Hoe · your part RM \\d+\\.\\d+/"
+    - text: /RM \d+\.\d+/
+  - region "Who has paid you back":
+    - heading "Who has paid you back" [level=2]
+    - 'checkbox /Ali matched: TNG eWallet, Sun, \d+ Oct, \d+:\d+ RM \d+\.\d+/ [checked] [disabled]'
+    - paragraph: "/matched: TNG eWallet, Sun, \\d+ Oct, \\d+:\\d+/"
+    - checkbox /Kah Hoe Not paid yet RM \d+\.\d+/
+    - paragraph: Not paid yet
+  - button "Write off"
+  - paragraph: /Stop waiting for RM \d+\.\d+ \. It counts as your spending\./
+  - term: Your share
+  - definition: /RM \d+\.\d+/
+  - term: Your spending
+  - definition: /RM \d+\.\d+/
+  - paragraph: The link stays open until the last payment is ticked, then closes a day later.
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

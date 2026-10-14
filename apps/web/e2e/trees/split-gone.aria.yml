@@ -1,0 +1,19 @@
+- banner:
+  - button "Back"
+  - heading "Shared bill" [level=1]
+- main:
+  - text: Not here any more This split isn't here any more.
+  - button "See shared bills"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

@@ -1,0 +1,27 @@
+- banner:
+  - button "Back"
+  - heading "Keep Sen running" [level=1]
+  - text: Step 4 of 7
+- main:
+  - region "Every phone":
+    - heading "Every phone" [level=2]
+    - paragraph: Not done
+    - paragraph: Let Sen run in the background, so Android doesn't stop it to save battery.
+    - button "Allow"
+  - region "Your Xiaomi":
+    - heading "Your Xiaomi" [level=2]
+    - list:
+      - listitem:
+        - paragraph: "Autostart: turn it on for Sen."
+        - button "Open Autostart"
+      - listitem:
+        - paragraph: "Battery saver: choose No restrictions."
+        - button "Open Battery saver"
+      - listitem:
+        - paragraph: "Lock Sen in recent apps: open recent apps, then drag Sen's card down, or long-press it and tap the padlock."
+    - button "The full guide"
+    - paragraph: Steps from dontkillmyapp.com. Sen is tried on a Xiaomi first.
+  - button "Next"
+  - button "Skip for now"
+- region "Notifications alt+T"
+- button "Dev panel"

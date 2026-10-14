@@ -1,0 +1,8 @@
+- banner:
+  - button "Back"
+  - heading "Payday" [level=1]
+- main:
+  - text: Nothing to go through There's no payday to go through right now.
+  - button "Back to Home"
+- region "Notifications alt+T"
+- button "Dev panel"

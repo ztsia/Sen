@@ -1,0 +1,24 @@
+- banner:
+  - button "Back"
+  - heading "Account" [level=1]
+- main:
+  - region "About":
+    - heading "About" [level=2]
+    - button "Version simulated · sim"
+  - region "Account":
+    - heading "Account" [level=2]
+    - button "Sign out"
+    - button "Delete account"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

@@ -1,0 +1,33 @@
+- banner:
+  - button "Back"
+  - heading "Settings" [level=1]
+- main:
+  - button "Account, weiming@example.com": weiming Admin weiming@example.com
+  - button "Appearance Minted"
+  - region "Setup":
+    - heading "Setup" [level=2]
+    - button "Capture 0 apps · not listening"
+    - button "You Last working day"
+    - button "Categories and rules 4 rules"
+    - button "Receipts by email Not confirmed"
+  - region "Features":
+    - heading "Features" [level=2]
+    - button "Claims 2 schemes"
+    - button /Sen ~RM3\.\d+ this month/
+    - button /Members 2 of \d+/
+  - region "Data":
+    - heading "Data" [level=2]
+    - button /Export and backups Backed up Sat, \d+ Oct/
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

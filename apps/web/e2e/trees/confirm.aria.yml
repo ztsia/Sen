@@ -1,0 +1,38 @@
+- banner:
+  - button "Back"
+  - heading "Check the receipt" [level=1]
+- main:
+  - img "Your receipt photo"
+  - heading "Sate Kajang Hj Samuri" [level=2]
+  - paragraph: /Today, \d+:\d+/
+  - button "View photo"
+  - region "Category":
+    - heading "Category" [level=2]
+    - button "Meals"
+  - region "Items":
+    - heading "Items" [level=2]
+    - button /Sate ayam \(\d+\) RM \d+\.\d+/
+    - button /Sate daging \(\d+\) RM \d+\.\d+/
+    - button /Nasi impit Check this price RM \d+\.\d+/:
+      - paragraph: Check this price
+    - button /Teh o ais \(3\) RM \d+\.\d+/
+    - button /Kuah kacang \(extra\) RM \d+\.\d+/
+  - term: Service charge, spread in
+  - definition: /RM \d+\.\d+/
+  - term: Tax, spread in
+  - definition: /RM \d+\.\d+/
+  - term: Total
+  - definition: /RM \d+\.\d+/
+  - status: Items add up to the total ✓
+  - region "How many people ate?":
+    - heading "How many people ate?" [level=2]
+    - button "Fewer people" [disabled]
+    - button "More people"
+    - paragraph: /RM \d+\.\d+ ÷ 1 = RM \d+\.\d+ a person/
+    - paragraph: Without a split, the whole bill is your spending.
+  - button "Add a note"
+  - button "Done"
+  - button "Split"
+  - button "Not a payment? Keep it as evidence"
+- region "Notifications alt+T"
+- button "Dev panel"

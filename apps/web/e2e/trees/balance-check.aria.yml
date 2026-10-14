@@ -1,0 +1,49 @@
+- banner:
+  - button "Back"
+  - heading "Balance check" [level=1]
+- main:
+  - paragraph: Type each bank app's balance, or tap Matches. A difference is booked as Unaccounted.
+  - list:
+    - listitem:
+      - group "Ryt Bank":
+        - paragraph: /Ryt Bank Sen has RM \d+,\d+\.\d+/
+        - group:
+          - text: What the bank app shows
+          - textbox "What the bank app shows":
+            - /placeholder: "0.00"
+        - button "Ryt Bank matches"
+    - listitem:
+      - group "Public Bank":
+        - paragraph: /Public Bank Sen has RM \d+,\d+\.\d+/
+        - group:
+          - text: What the bank app shows
+          - textbox "What the bank app shows":
+            - /placeholder: "0.00"
+        - button "Public Bank matches"
+    - listitem:
+      - group "TNG eWallet":
+        - paragraph: /TNG eWallet Sen has RM \d+\.\d+/
+        - group:
+          - text: What the bank app shows
+          - textbox "What the bank app shows":
+            - /placeholder: "0.00"
+        - button "TNG eWallet matches"
+    - listitem:
+      - group "GO+":
+        - paragraph: /GO\+ Sen has RM \d+,\d+\.\d+/
+        - group:
+          - text: What the bank app shows
+          - textbox "What the bank app shows":
+            - /placeholder: "0.00"
+        - button "GO+ matches"
+    - listitem:
+      - group "GrabPay Wallet":
+        - paragraph: /GrabPay Wallet Sen has RM \d+\.\d+/
+        - group:
+          - text: What the bank app shows
+          - textbox "What the bank app shows":
+            - /placeholder: "0.00"
+        - button "GrabPay Wallet matches"
+  - button "Save"
+- region "Notifications alt+T"
+- button "Dev panel"

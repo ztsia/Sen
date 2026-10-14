@@ -1,5 +1,7 @@
-# Every PR and every push to main: hygiene, typecheck, lint, format, unit tests and Playwright in two
-# looks (Minted and Copper, light and dark). Nightly, and by hand: Playwright in all six (owner, 12 Oct).
+# Every PR and every push to main: hygiene, typecheck, lint, format, unit tests and Playwright. Behaviour
+# (the journeys) runs once, in Minted, light; the catalogue of every screen (its tree, pixels and
+# checks) runs in the looks E2E_LOOKS names: two on a PR (Minted and Copper, light and dark), all six
+# nightly and by hand (owner, 12 Oct; D137). A screen's tree is committed, and a changed one fails here.
 # No pull_request_target and no secret but DENYLIST, which a fork's PR never sees (spec §17).
 name: CI
 

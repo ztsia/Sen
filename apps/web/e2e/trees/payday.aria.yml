@@ -1,0 +1,16 @@
+- banner:
+  - button "Back"
+  - heading "Payday" [level=1]
+- main:
+  - paragraph: Step 1 of 4
+  - button "Skip"
+  - heading "Your claims" [level=2]
+  - paragraph: /Your salary of RM \d+,\d+\.\d+ landed\./
+  - paragraph: Done
+  - paragraph: /Your payslip matched, so Sen split RM \d+\.\d+ of claims from your salary\./
+  - paragraph: The payslip arrived by itself, a few minutes after the salary.
+  - text: /Phone bill RM88\.\d+ Parking RM64\.\d+/
+  - button "Undo"
+  - button "Next"
+- region "Notifications alt+T"
+- button "Dev panel"

@@ -1,0 +1,68 @@
+- banner:
+  - button "Back"
+  - heading "Categories and rules" [level=1]
+- main:
+  - radiogroup "Show":
+    - radio "Categories" [checked]
+    - radio "Rules"
+  - region "Spending categories":
+    - heading "Spending categories" [level=2]
+    - list:
+      - listitem:
+        - button "Meals, 2 rules"
+      - listitem:
+        - button "Drinks & desserts, 1 rule"
+      - listitem:
+        - button "Groceries, 1 rule"
+      - listitem:
+        - button "Transport, no rules"
+      - listitem:
+        - button "Car, no rules"
+      - listitem:
+        - button "Phone & internet, no rules"
+      - listitem:
+        - button "Home & bills, no rules"
+      - listitem:
+        - button "Shopping, no rules"
+      - listitem:
+        - button "Entertainment, no rules"
+      - listitem:
+        - button "Subscriptions, no rules"
+      - listitem:
+        - button "Health, no rules"
+      - listitem:
+        - button "Personal care, no rules"
+      - listitem:
+        - button "Gifts & treats, no rules"
+      - listitem:
+        - button "Family, no rules"
+      - listitem:
+        - button "Travel, no rules"
+      - listitem:
+        - button "Fees & charges, no rules"
+      - listitem:
+        - button "Cash, no rules"
+      - listitem:
+        - button "Unaccounted, no rules"
+  - region "Income categories":
+    - heading "Income categories" [level=2]
+    - list:
+      - listitem:
+        - button "Salary, no rules"
+      - listitem:
+        - button "Interest & returns, no rules"
+      - listitem:
+        - button "Other income, no rules"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

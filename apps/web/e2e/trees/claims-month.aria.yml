@@ -1,0 +1,17 @@
+- banner:
+  - button "Back"
+  - heading "Claims" [level=1]
+- main: No claims yet Claims are off for you. Whoever invited you to Sen can switch them on.
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link "Review , 4 to review":
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: ", 4 to review"
+- region "Notifications alt+T"
+- button "Dev panel"

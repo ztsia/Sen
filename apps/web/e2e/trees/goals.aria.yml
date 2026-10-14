@@ -1,0 +1,26 @@
+- banner:
+  - button "Back"
+  - heading "Goals" [level=1]
+  - button "Add a goal"
+- main:
+  - paragraph: /Your median surplus is RM \d+,\d+\.\d+ over 6 cycles\./
+  - region "Goals":
+    - heading "Goals" [level=2]
+    - button /Japan in spring RM2,\d+\.\d+ of RM6,\d+\.\d+ · in Ryt Bank Needs RM \d+\.\d+ a cycle to be done by \d+ Mar/
+    - button /Emergency fund RM5,\d+\.\d+ of RM15,\d+\.\d+ · in Ryt Bank Needs RM \d+\.\d+ a cycle/
+  - region "Buckets":
+    - heading "Buckets" [level=2]
+    - button /Road tax and insurance RM700\.\d+ of RM1,\d+\.\d+ · in Ryt Bank Needs RM \d+\.\d+ a cycle to be done by 1 Feb/
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

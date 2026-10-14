@@ -1,0 +1,22 @@
+- banner:
+  - button "Back"
+  - heading "Review" [level=1]
+- main:
+  - region "Needs you · 0":
+    - heading "Needs you · 0" [level=2]
+    - text: All clear Nothing needs you.
+  - button "Missing a payment? Add it"
+  - button "Skipped notifications 0"
+- button "Ask Sen"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link "Review":
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+- region "Notifications alt+T"
+- button "Dev panel"

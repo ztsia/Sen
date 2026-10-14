@@ -1,0 +1,29 @@
+- banner:
+  - button "Back"
+  - heading "Members" [level=1]
+  - button "Invite"
+- main:
+  - paragraph: Shell seats in use
+  - paragraph: /2 of \d+/
+  - progressbar "Shell seats in use"
+  - region "People":
+    - heading "People" [level=2]
+    - button "Wei Ming (you) Active weiming@example.com · Android shell":
+      - paragraph: weiming@example.com · Android shell
+    - button /Hui Min Active huimin@example\.com · Android shell RM3\.\d+/:
+      - paragraph: huimin@example.com · Android shell
+    - button /Farid Invited farid@example\.com · Browser RM5\.\d+/:
+      - paragraph: farid@example.com · Browser
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

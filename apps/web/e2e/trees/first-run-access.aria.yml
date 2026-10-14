@@ -1,0 +1,24 @@
+- banner:
+  - button "Back"
+  - heading "Notification access" [level=1]
+  - text: Step 3 of 7
+- main:
+  - paragraph: "Off"
+  - paragraph: Sen can’t read your bank notifications yet.
+  - paragraph: Open settings, find Sen, switch it on, then come back here.
+  - region "If Sen's switch is greyed out":
+    - heading "If Sen's switch is greyed out" [level=2]
+    - list:
+      - listitem:
+        - paragraph: Open Sen's app info.
+        - button "Open Sen's app info"
+      - listitem:
+        - paragraph: Tap the menu (⋮) at the top right, then Allow restricted settings, and confirm.
+      - listitem:
+        - paragraph: Come back and tap Open settings again.
+    - paragraph: Android asks this of apps installed from outside Play. It changes nothing else.
+  - button "Open settings"
+  - button "Next"
+  - button "Skip for now"
+- region "Notifications alt+T"
+- button "Dev panel"

@@ -1,0 +1,39 @@
+- banner:
+  - button "Back"
+  - heading "Subscriptions" [level=1]
+  - button "Add a subscription"
+- main:
+  - text: /Committed each month RM \d+\.\d+/
+  - paragraph: Yearly ones count a twelfth. Foreign ones are about, at the rate shown.
+  - region "Declared":
+    - heading "Declared" [level=2]
+    - heading "Claude Pro" [level=3]
+    - paragraph: /Next renewal \d+ Oct/
+    - text: /US\$\d+\.\d+ a month/
+    - paragraph: /≈ RM \d+\.\d+ · rate \d+\.\d+, from the last charge/
+    - button "3 matched · 1 expected"
+    - heading "Netflix Basic" [level=3]
+    - paragraph: /Next renewal \d+ Oct/
+    - text: /RM28\.\d+ a month/
+    - button "3 matched · 1 expected"
+    - heading /iCloud\+ \d+ GB/ [level=3]
+    - paragraph: Next renewal 3 Nov
+    - text: /RM4\.\d+ a month/
+    - button "4 matched"
+    - heading "Spotify Premium" [level=3]
+    - paragraph: /Next renewal \d+ Nov/
+    - text: /RM23\.\d+ a month/
+    - button "4 matched"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"
