@@ -94,7 +94,9 @@ wrong. When a miss came from the brief, carry that line into the next brief too.
 
 - **One checkout unless two agents edit the same files.** Worktree agents check out the slice's
   commit first.
-- **Subagents can't start subagents.** What an agent would delegate, the main session starts.
+- **Subagents start subagents only when `Agent` is in their tools** (up to three layers, D137).
+  Only `qa-reviewer` has it, for its sweep and eyes pass; for everything else, what an agent would
+  delegate, the main session starts.
 - **An agent stopped at a usage limit is resumed** (SendMessage), never restarted.
 - **Commit an agent's files only after reviewing its report**, staging explicit paths, never `-a`,
   while other agents are still editing.
