@@ -1,14 +1,19 @@
+import { TrendingUpIcon } from 'lucide-react';
+import { StatTiles } from '@/blocks/facts';
 import { Money } from '@/blocks/money';
 import { Sheet } from '@/blocks/sheet';
 import { ListSkeleton } from '@/blocks/states';
+import { IconTile } from '@/blocks/tile';
+import { Card } from '@/components/ui/card';
 import { useCycle } from '@/data/hooks';
 import { longDay, shortDay } from '@/lib/dates';
 import { Loaded } from '../kit';
 
 /**
  * `cycle` (screens.md): how *left until payday* is worked out, and where it will end. Income received,
- * spending, the result; the cycle's dates and expected payday; and the estimate at payday, labelled as
- * one. Counting by month, this month's spending against last month's instead (D79).
+ * spending, the result as three figures with the last emphasised; the cycle's dates and expected
+ * payday; and the estimate at payday, labelled as one. Counting by month, this month's spending
+ * against last month's instead (D79).
  */
 export function CycleSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const q = useCycle();
@@ -24,61 +29,60 @@ export function CycleSheet({ open, onOpenChange }: { open: boolean; onOpenChange
                 ? `. Payday expected ${longDay(c.cycle.expectedPayday)}`
                 : ''}
             </p>
-            <dl className="flex flex-col">
-              {c.cycle.basis === 'pay' && !c.salary ? (
-                // before the first salary: what's been spent, never a misleading "over" (QA B03 run 3, 34)
-                <>
-                  {c.income ? <Row label="Money in so far" value={<Money sen={c.income} kind="in" />} /> : null}
-                  <Row
-                    label="Spent since you started"
-                    value={<Money sen={c.spending} className="font-semibold" />}
-                    strong
-                  />
-                </>
-              ) : c.cycle.basis === 'month' ? (
-                <>
-                  <Row label="Spent this month" value={<Money sen={c.spending} />} />
-                  {c.lastSpending !== null ? <Row label="Last month" value={<Money sen={c.lastSpending} />} /> : null}
-                </>
-              ) : (
-                <>
-                  <Row label="Income received" value={<Money sen={c.income} kind="in" />} />
-                  <Row label="Spending" value={<Money sen={c.spending} />} />
-                  <Row
-                    label={c.result < 0 ? 'Over by' : 'Left until payday'}
-                    value={
+            {c.cycle.basis === 'pay' && !c.salary ? (
+              // before the first salary: what's been spent, never a misleading "over" (QA B03 run 3, 34)
+              <StatTiles
+                className="px-0"
+                stats={[
+                  ...(c.income ? [{ label: 'Money in so far', value: <Money sen={c.income} kind="in" /> }] : []),
+                  {
+                    label: 'Spent since you started',
+                    value: <Money sen={c.spending} className="font-semibold" />,
+                    emphasis: true,
+                  },
+                ]}
+              />
+            ) : c.cycle.basis === 'month' ? (
+              <StatTiles
+                className="px-0"
+                stats={[
+                  { label: 'Spent this month', value: <Money sen={c.spending} />, emphasis: true },
+                  ...(c.lastSpending !== null ? [{ label: 'Last month', value: <Money sen={c.lastSpending} /> }] : []),
+                ]}
+              />
+            ) : (
+              <StatTiles
+                className="px-0"
+                stats={[
+                  { label: 'Income received', value: <Money sen={c.income} kind="in" /> },
+                  { label: 'Spending', value: <Money sen={c.spending} /> },
+                  {
+                    label: c.result < 0 ? 'Over by' : 'Left until payday',
+                    value: (
                       <Money
                         sen={Math.abs(c.result)}
                         kind={c.result < 0 ? 'warning' : 'out'}
                         className="font-semibold"
                       />
-                    }
-                    strong
-                  />
-                </>
-              )}
-            </dl>
+                    ),
+                    emphasis: true,
+                  },
+                ]}
+              />
+            )}
             {c.estimate !== null ? (
-              <p className="rounded-lg bg-muted p-3 text-sm">
-                <span className="font-medium">An estimate:</span> at this pace, about{' '}
-                <Money sen={Math.abs(c.estimate)} className="font-medium" /> {c.estimate < 0 ? 'over' : 'left'} on
-                payday. It assumes you keep spending as you have so far.
-              </p>
+              <Card className="flex-row items-start gap-3 p-3 text-sm">
+                <IconTile icon={TrendingUpIcon} tone="accent" />
+                <p>
+                  <span className="font-medium">An estimate:</span> at this pace, about{' '}
+                  <Money sen={Math.abs(c.estimate)} className="font-medium" /> {c.estimate < 0 ? 'over' : 'left'} on
+                  payday. It assumes you keep spending as you have so far.
+                </p>
+              </Card>
             ) : null}
           </div>
         )}
       </Loaded>
     </Sheet>
-  );
-}
-
-function Row({ label, value, strong }: { label: string; value: React.ReactNode; strong?: boolean }) {
-  return (
-    <div
-      className={`flex min-h-12 items-baseline justify-between gap-4 border-b border-border py-3 ${strong ? 'font-semibold' : ''}`}
-    >
-      <dt className={strong ? '' : 'text-muted-foreground'}>{label}</dt>
-      <dd className="text-right">{value}</dd>
-    </div>
   );
 }

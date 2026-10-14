@@ -1,14 +1,17 @@
 import { newId } from '@/lib/uid';
 import { nowIso } from '@/lib/clock';
 import { useMemo, useState } from 'react';
-import { ChevronRightIcon, ClockIcon, ImageIcon, TriangleAlertIcon, WalletIcon } from 'lucide-react';
+import { ChevronDownIcon, ImageIcon, TriangleAlertIcon, WalletIcon } from 'lucide-react';
 import { useRouter } from '@tanstack/react-router';
 import { CategorySheet } from '@/blocks/category-sheet';
 import { checkAmount, MoneyInput } from '@/blocks/money-input';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia, ItemTitle } from '@/components/ui/item';
+import { GroupCard, NavRow } from '@/blocks/group';
+import { ErrorState, ListSkeleton } from '@/blocks/states';
+import { IconTile } from '@/blocks/tile';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useAccounts, useCategories, useDraft, useNearDuplicate, useWrite } from '@/data/hooks';
@@ -16,6 +19,7 @@ import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { klDay } from '@sen/core/cycles';
 import { shortDay } from '@/lib/dates';
+import { categoryIcon, categoryTone } from '../icons';
 import { useScreenSearch } from '../kit';
 
 /** `2026-10-04` names a day on the calendar, and it isn't after today in KL. */
@@ -102,7 +106,7 @@ export default function Manual() {
       >
         <div className="flex flex-1 flex-col gap-5 px-4 pt-2 pb-4">
           {unreadable ? (
-            <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+            <Card className="flex-row items-center gap-3 p-3">
               <div
                 className="flex h-20 w-14 shrink-0 items-center justify-center rounded-md bg-muted"
                 role="img"
@@ -111,21 +115,23 @@ export default function Manual() {
                 <ImageIcon className="size-6 text-icon" aria-hidden="true" />
               </div>
               <p className="text-sm">Sen couldn&rsquo;t read this one. The photo is kept.</p>
-            </div>
+            </Card>
           ) : null}
 
           <div className="flex flex-col gap-2">
-            <MoneyInput
-              label="Amount"
-              value={amountText}
-              onChange={(t) => {
-                setErrors((x) => ({ ...x, amount: undefined }));
-                setAmountText(t);
-              }}
-              error={errors.amount}
-              autoFocus
-              onEnter={() => void save()}
-            />
+            <div className="[&_div.flex]:justify-center [&_input]:w-[8ch] [&_input]:flex-none [&_input]:text-center [&_label]:text-center">
+              <MoneyInput
+                label="Amount"
+                value={amountText}
+                onChange={(t) => {
+                  setErrors((x) => ({ ...x, amount: undefined }));
+                  setAmountText(t);
+                }}
+                error={errors.amount}
+                autoFocus
+                onEnter={() => void save()}
+              />
+            </div>
             {near.data ? (
               <p className="flex items-start gap-2 text-sm" role="status">
                 <TriangleAlertIcon className="mt-0.5 size-4 shrink-0 text-icon" aria-hidden="true" />
@@ -136,50 +142,62 @@ export default function Manual() {
 
           <Field data-invalid={errors.category ? true : undefined}>
             <FieldLabel id="category-label">Category</FieldLabel>
-            <ToggleGroup
-              type="single"
-              variant="outline"
-              spacing={2}
-              aria-labelledby="category-label"
-              value={categoryId}
-              onValueChange={(v) => {
-                if (v) {
-                  setCategoryId(v);
-                  setErrors((x) => ({ ...x, category: undefined }));
-                }
-              }}
-            >
-              {(cats.data ?? []).map((c) => (
-                <ToggleGroupItem key={c.id} value={c.id}>
-                  {c.label}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+            {cats.isPending ? (
+              <ListSkeleton rows={4} />
+            ) : cats.isError ? (
+              <ErrorState
+                title="Couldn't load your categories"
+                detail="Check your connection and try again."
+                action="Try again"
+                onAction={() => void cats.refetch()}
+              />
+            ) : (
+              <ToggleGroup
+                type="single"
+                spacing={2}
+                aria-labelledby="category-label"
+                className="grid grid-cols-4 items-stretch"
+                value={categoryId}
+                onValueChange={(v) => {
+                  if (v) {
+                    setCategoryId(v);
+                    setErrors((x) => ({ ...x, category: undefined }));
+                  }
+                }}
+              >
+                {(cats.data ?? []).map((c) => (
+                  <ToggleGroupItem
+                    key={c.id}
+                    value={c.id}
+                    className="h-auto min-h-20 w-full min-w-0 flex-col justify-start gap-1.5 rounded-[var(--radius-card,16px)] bg-card px-1 py-2 text-xs leading-tight font-normal whitespace-normal ring-primary data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:ring-2"
+                  >
+                    <IconTile icon={categoryIcon(c.label)} tone={categoryTone(c.label)} />
+                    <span className="line-clamp-2 text-center">{c.label}</span>
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            )}
             {errors.category ? <FieldError>{errors.category}</FieldError> : null}
           </Field>
 
-          <ItemGroup className="-mx-4">
+          <GroupCard className="px-0">
             {account ? (
-              <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
-                <button type="button" onClick={() => setAccountOpen(true)}>
-                  <ItemMedia variant="icon" className="size-8 rounded-full border-0 bg-muted text-icon">
-                    <WalletIcon className="size-4" />
-                  </ItemMedia>
-                  <ItemContent>
-                    <ItemTitle className="text-base font-normal">Paid from {account.label}</ItemTitle>
-                  </ItemContent>
-                  <ItemActions>
-                    <ChevronRightIcon className="size-5 text-icon" aria-hidden="true" />
-                  </ItemActions>
-                </button>
-              </Item>
+              <NavRow icon={WalletIcon} title={`Paid from ${account.label}`} onOpen={() => setAccountOpen(true)} />
             ) : null}
-            <div className="flex min-h-12 items-center gap-3 px-4 text-muted-foreground">
-              <ClockIcon className="mx-2 size-4 text-icon" aria-hidden="true" />
-              <span>{day ? shortDay(day) : 'Now'}</span>
-            </div>
-          </ItemGroup>
+            <NavRow title="When" value={day ? shortDay(day) : 'Now'} />
+          </GroupCard>
 
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="self-start"
+            aria-expanded={more}
+            onClick={() => setMore((m) => !m)}
+          >
+            More details
+            <ChevronDownIcon className={more ? 'rotate-180' : undefined} aria-hidden="true" />
+          </Button>
           {more ? (
             <div className="flex flex-col gap-4">
               <Field>
@@ -203,11 +221,7 @@ export default function Manual() {
                 />
               </Field>
             </div>
-          ) : (
-            <Button type="button" variant="ghost" size="sm" className="self-start" onClick={() => setMore(true)}>
-              More
-            </Button>
-          )}
+          ) : null}
         </div>
 
         <div className="sticky bottom-0 border-t border-border bg-background px-4 pt-3 pb-4">

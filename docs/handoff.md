@@ -1,39 +1,52 @@
 # Handoff
 
-## Where things stand (12 Oct)
+## Where things stand (14 Oct)
 
-**B04 is merged** (ztsia/Sen#11). The owner's phone review of it is being answered on
-`B04/skeleton-rest`, restarted from `main` (a fast-forward of the merged branch). Its PR, when done,
-is *B04 · Review fixes*. **B05** (`docs/briefs/B05-server.md`, branch `B05/server`) starts after.
+**The B04 redesign (D130) is done; its PR *B04 · Redesign* waits for the owner's merge.** Branch
+`B04/redesign`. Calm, card-based screens throughout, plus the owner's list from QA run 3: bank-style
+amounts (D132), a goal's money in its own account (D133), subscriptions and goals added by hand
+(D134), buttons that open Sen start the message and show its avatar (D135), group labels as captions
+(D136); the Scan tab opens the camera, its long-press the menu.
 
-### Done and pushed on `B04/skeleton-rest`
-- **D129, one size hierarchy** (`docs/ui/patterns.md` §2 *Sizes*). The owner found every screen dense
-  and overwhelming. Five levels each set text, drawn height, icons and spacing together: title 22,
-  section 17 semibold, body 15, secondary 13, caption 12, through Tailwind's `--text-*` (`app.css`).
-  **48 px is the touch target, not the drawn size:** Button sizes `default` 48 (one main action per
-  screen), `sm` 40, `chip` 32, `icon` 40, each extended to 48 by the `tap` utility (`::after`).
-  `e2e/helpers.ts`'s `smallTargets` reads that box. Rows are 56 px with 32 px marks; payees in capitals
-  show through `readableName` (`lib/names.ts`). Filters scroll in one row.
-- Both sweeps applied it to every screen (Sonnet, reviewed); typecheck, lint and unit tests pass.
-- Home: the Spent card is chart-first (`PaceSpark` in `blocks/charts.tsx`); `Item`'s corners are the
-  look's `--radius-card`, so the balance strip isn't square.
-- Sheets: vaul's `repositionInputs` is off (`blocks/sheet.tsx`): it pinned Sen's sheet at half height
-  when the input blurred before the keyboard closed. A test in `e2e/edges.spec.ts` covers it.
-- The app bar mounts the wordmark through `LookMarkup`, so Mercury's and Line's canvases paint.
-- `uiux` skill updated (hierarchy and density checklist); the general form is ztsia/claude_skills#2.
+**QA:** four full runs and a scoped re-check. Run 4 (fresh, tier 3) said *fix first* (1 Major, 6
+Minor); its fixes went back to the same reviewer, scoped (tier 2), which said **ship**; its five
+small findings were fixed by the main session (tier 1). Record: `qa/B04-redesign/` (`report.md` is
+run 4 and its re-check; `ledger.md` has every tier decision and its evidence), published at
+https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa. Last checks on d6023d2: typecheck, lint, unit
+tests, full e2e 833 passed. Usage logged (`docs/usage.md`; `scripts/usage.mjs --from /home/user`
+when the session started outside the repo).
 
-### What to do first
-- The full e2e run (all six looks) passed after the test fixes: 630 + 82 re-run; the only failures were
-  tests matching payees in capitals, and a toggle group's box counted as a target. The branch is on
-  `review` for the owner's phone check, and its PR *B04 · Review fixes* is open.
-- Act on what the owner reports from the phone, on this branch; then B05 from `main` once merged.
+**Device checks for the owner** are queued in `docs/local.md` (QA runs 3 and 4): Select all in a
+money field, the number pad, the Scan tab's camera, TalkBack's focus after a sheet.
+
+### What to do next
+1. **When the PR is merged: D137's QA tooling, before B05**, on its own branch with a brief:
+   - diff-driven QA: each screen's accessibility tree (`toMatchAriaSnapshot`) on the golden scenario,
+     behaviour in one look, pixels against `main` in all twelve look-and-mode pairs, and the reviewer
+     gets only the screens that changed, with each diff;
+   - its quality half: a human-eyes pass on Opus over each changed screen at full size, answering
+     fixed questions in writing; `qa/escapes.md` (the owner's hand-found bugs, each a pin and a
+     question; the redesign's density is the first entry); scripted visual checks (clipped text,
+     overlaps, a button under a toast or keyboard, invisible focus, contrast);
+   - the reviewer spawns its own helpers (add `Agent` to `qa-reviewer`'s tools; subagents may nest to
+     three levels), from templates in the `qa` skill that fix each helper's model and prompt.
+   Update the `qa` skill and `CLAUDE.md`'s QA lines to match.
+2. Then **B05** (`docs/briefs/B05-server.md`).
+
+### Left on purpose (in the ledger)
+- The hand tick for a payday move and the plan's moves into a goal's account are B30's (its brief
+  has them, D133). The Add sheets don't hand focus back on close (queued for TalkBack). Four
+  paragraphs run 3–4 lines; the D137 eyes pass will judge them.
 
 ### Open with the owner
-- ToggleGroup choices (manual's category, Appearance, payday) still wrap rather than scroll; judged
-  fine for long choice lists. Raise it if they look heavy on the phone.
-- Next time a sweep has a mechanical half, split it: decisions listed by Sonnet or the main session,
-  the edits by Haiku.
+- Merge *B04 · Redesign*.
+- `claude_skills` branch `workflow/brain-and-cards` (D130's uiux rules, D131's model principle, the
+  implementer on Haiku at high, the `brief` skill) is pushed; the owner opens or asks for its PR.
+  D137 will change its `qa` skill too.
 
 ## Don't argue again
-- D129's levels and the 48 px target rule (owner's call, 12 Oct).
+- D129's levels and the 48 px target rule; D130's card-based structure; D131, Opus decides and briefs
+  completely, Haiku at high by default; D132–D137 (owner's calls).
+- Home fits one screen at 390×844; Insights is one card at a time; the new-look reveal's animation is
+  B14's.
 - Deploys only by merge (D122); the review build follows the `review` branch (D115).

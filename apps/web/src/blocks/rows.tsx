@@ -1,22 +1,15 @@
-import { useId, useRef, useState, type ComponentType, type HTMLAttributes, type ReactNode } from 'react';
-import { ChevronRightIcon, CloudOffIcon, InboxIcon, ReceiptTextIcon, SparklesIcon, SplitIcon } from 'lucide-react';
+import { useRef, useState, type ComponentType, type ReactNode } from 'react';
+import { CloudOffIcon, InboxIcon, ReceiptTextIcon, SparklesIcon, SplitIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemFooter,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/ui/item';
-import { Switch } from '@/components/ui/switch';
+import { Card } from '@/components/ui/card';
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { dayLabel } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import { readableName } from '@/lib/names';
 import { Money, type MoneyKind } from './money';
 import { settleTap } from '@/lib/tap-guard';
 import { toastUndo } from './toast';
+import { IconTile, type TileTone } from './tile';
 
 // The rows every list is made of (patterns.md §7), composed from shadcn's Item. A row is one control:
 // the whole row opens its detail, and nothing inside it is a button.
@@ -53,17 +46,15 @@ export function Marks({ marks }: { marks: RowMark[] }) {
   );
 }
 
-/** A leading mark: the category's or account's icon, in a disc. */
-export function RowMarkIcon({ icon: Icon }: { icon: ComponentType<{ className?: string }> }) {
-  return (
-    <ItemMedia variant="icon" className="size-8 rounded-full border-0 bg-muted text-icon" aria-hidden="true">
-      <Icon className="size-4" />
-    </ItemMedia>
-  );
+/** A leading mark: the category's or account's icon tile, tinted by its category (D130). */
+export function RowMarkIcon({ icon, tone }: { icon: ComponentType<{ className?: string }>; tone?: TileTone }) {
+  return <IconTile icon={icon} tone={tone} />;
 }
 
 interface ListRowProps {
   icon: ComponentType<{ className?: string }>;
+  /** The category's tint: `categoryTone(category)`. */
+  tone?: TileTone;
   /** The merchant, or the account. It truncates before the amount ever does. */
   title: string;
   /** Category · account. */
@@ -75,7 +66,7 @@ interface ListRowProps {
 }
 
 /** A payment, an account or a shared bill: 56 px or more, a stable height, so long lists virtualise. */
-export function ListRow({ icon, title, secondary, sen, kind = 'out', marks = [], onOpen }: ListRowProps) {
+export function ListRow({ icon, tone, title, secondary, sen, kind = 'out', marks = [], onOpen }: ListRowProps) {
   return (
     <Item
       asChild
@@ -83,7 +74,7 @@ export function ListRow({ icon, title, secondary, sen, kind = 'out', marks = [],
       className="min-h-14 w-full flex-nowrap gap-3 rounded-none py-2 text-left text-base active:bg-accent"
     >
       <button type="button" onClick={onOpen}>
-        <RowMarkIcon icon={icon} />
+        <RowMarkIcon icon={icon} tone={tone} />
         <ItemContent className="min-w-0 gap-0">
           <ItemTitle className="block w-full truncate text-base">{readableName(title)}</ItemTitle>
           {secondary || marks.length ? (
@@ -146,17 +137,23 @@ export function ReviewRow({
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
   return (
-    <Item size="sm" className="rounded-none text-base">
-      <ItemContent className="min-w-0 gap-1">
-        <ItemTitle className="w-full text-base text-pretty wrap-anywhere">{question}</ItemTitle>
-        <ItemDescription>{knows}</ItemDescription>
-      </ItemContent>
-      <ItemFooter className="flex-wrap justify-start">
+    <Card className="gap-2 p-3 text-base">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <p className="w-full text-base font-semibold text-pretty wrap-anywhere">{question}</p>
+        <p className="text-sm text-muted-foreground">{knows}</p>
+      </div>
+      {/* the answers wrap rather than hide off the edge (QA B04 redesign run 2, 10): a 16 px gap between lines keeps the
+          chips' 48 px tap areas apart, and the padding holds them inside the box, so it never scrolls (run 1, 6) */}
+      <div className="-mx-3 -my-1.5 flex flex-wrap gap-x-2 gap-y-4 overflow-x-auto overflow-y-hidden px-3 py-2">
         {answers.slice(0, 3).map((a) => (
           <Button
             key={a.label}
-            variant={a.suggested ? 'default' : 'secondary'}
-            size="sm"
+            variant="outline"
+            size="chip"
+            className={cn(
+              'shrink-0 whitespace-nowrap',
+              a.suggested && 'border-primary text-primary ring-2 ring-primary/40',
+            )}
             aria-disabled={busy || undefined}
             onClick={() => {
               // one answer per row, and none while the last change settles: the next row slides into
@@ -181,115 +178,11 @@ export function ReviewRow({
           </Button>
         ))}
         {onOther ? (
-          <Button variant="ghost" size="sm" onClick={onOther}>
+          <Button variant="ghost" size="chip" className="shrink-0 whitespace-nowrap" onClick={onOther}>
             Other…
           </Button>
         ) : null}
-      </ItemFooter>
-    </Item>
-  );
-}
-
-/** The handlers of lib/long-press.ts's useLongPress, for a row with a hidden long-press (B02's version row). */
-type PressHandlers = Partial<
-  Pick<
-    HTMLAttributes<HTMLButtonElement>,
-    'onPointerDown' | 'onPointerMove' | 'onPointerUp' | 'onPointerLeave' | 'onPointerCancel' | 'onClick'
-  >
->;
-
-type SettingsRowProps =
-  | {
-      label: string;
-      value?: string;
-      /** Opens a screen: the row shows a chevron. With neither this nor press, the row only shows its value. */
-      onOpen?: () => void;
-      /** A long-press on a row that opens nothing, such as the version (B02's hidden tests). */
-      press?: PressHandlers;
-      checked?: never;
-      onCheckedChange?: never;
-      media?: never;
-      description?: never;
-      disabled?: never;
-    }
-  | {
-      label: string;
-      value?: never;
-      onOpen?: never;
-      press?: never;
-      checked: boolean;
-      onCheckedChange: (on: boolean) => void;
-      /** A leading mark, such as an app's icon (the picker, B02). */
-      media?: ReactNode;
-      /** A line under the label; for a disabled switch, why it can't be turned on. */
-      description?: string;
-      disabled?: boolean;
-    };
-
-/** A label, its current value or a switch on the right, and a chevron when it opens a screen. */
-export function SettingsRow(props: SettingsRowProps) {
-  const id = useId();
-  if (props.onCheckedChange) {
-    const about = props.description ? `${id}-about` : undefined;
-    return (
-      // the label stretches over the whole row, so a tap anywhere on it flips the switch (patterns.md §8)
-      <Item
-        size="sm"
-        className={cn(
-          'relative min-h-14 flex-nowrap rounded-none py-0 pr-2 text-base',
-          props.disabled ? 'opacity-70' : 'active:bg-accent',
-        )}
-      >
-        {props.media ? (
-          <ItemMedia className="size-10 shrink-0 overflow-hidden rounded-xl" aria-hidden="true">
-            {props.media}
-          </ItemMedia>
-        ) : null}
-        <ItemContent className="min-w-0 gap-0 py-3">
-          <label htmlFor={id} className="wrap-anywhere after:absolute after:inset-0">
-            {props.label}
-          </label>
-          {props.description ? (
-            <ItemDescription id={about} className="text-sm">
-              {props.description}
-            </ItemDescription>
-          ) : null}
-        </ItemContent>
-        <ItemActions className="relative">
-          <Switch
-            id={id}
-            checked={props.checked}
-            disabled={props.disabled}
-            aria-describedby={about}
-            onCheckedChange={props.onCheckedChange}
-          />
-        </ItemActions>
-      </Item>
-    );
-  }
-  const inner = (
-    <>
-      <ItemContent className="min-w-0">
-        <ItemTitle className="text-base font-normal">{props.label}</ItemTitle>
-      </ItemContent>
-      <ItemActions className="max-w-[50%] text-right text-sm text-muted-foreground">
-        {props.value ? <span>{props.value}</span> : null}
-        {props.onOpen ? <ChevronRightIcon className="size-5 shrink-0 text-icon" aria-hidden="true" /> : null}
-      </ItemActions>
-    </>
-  );
-  // a row that opens nothing and holds no long-press is information, not a control
-  if (!props.onOpen && !props.press)
-    return (
-      <Item size="sm" className="min-h-14 flex-nowrap rounded-none text-base">
-        {inner}
-      </Item>
-    );
-  return (
-    <Item asChild size="sm" className="min-h-14 w-full flex-nowrap rounded-none text-left text-base active:bg-accent">
-      <button type="button" onClick={props.onOpen} {...props.press}>
-        {inner}
-      </button>
-    </Item>
+      </div>
+    </Card>
   );
 }

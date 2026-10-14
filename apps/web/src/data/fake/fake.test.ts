@@ -18,6 +18,7 @@ import {
   YearView,
 } from '@sen/core/views';
 import { createFake } from './index';
+import { claimView } from './areas/money';
 import { uid } from './ids';
 import { acctId, catId, rm, txn } from './scenario';
 import { buildScenario, SCENARIOS } from './variants';
@@ -115,6 +116,20 @@ describe("Wei Ming's month", () => {
     expect(r.waiting.refunds[0]).toMatchObject({ counterparty: 'SHOPEE' });
   });
 
+  it('opens a claim that exists from each claim-due item', () => {
+    const due = v.review(db).needsYou.filter((i) => i.kind === 'claim-due');
+    expect(due.length).toBeGreaterThan(0);
+    for (const i of due) expect(claimView(db, i.claimId)).toMatchObject({ claim: { scheme: i.name } });
+  });
+
+  it('names who had each item on a split receipt, never their member ids', () => {
+    const r = v.receiptView(db, uid('receipt:nasi-kandar'))!;
+    const who = r.items.flatMap((i) => (i.who ? [i.who] : []));
+    expect(who.length).toBeGreaterThan(0);
+    for (const w of who) expect(w).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}/);
+    expect(who.join(', ')).toContain('You');
+  });
+
   it('is the same on every load', () => {
     expect(v.home(buildScenario('wei-ming', false))).toEqual(home);
   });
@@ -146,6 +161,44 @@ describe('edge states', () => {
 });
 
 describe('writes, with Undo (§6.7)', () => {
+  it('adds a subscription by hand, once for the same id (D134)', async () => {
+    const fake = createFake();
+    const id = uid('sub:test');
+    const cmd = Command.parse({
+      type: 'subscription.add',
+      id,
+      name: 'Canva Pro',
+      amount: 1299,
+      currency: 'USD',
+      cadence: 'yearly',
+      nextRenewal: '2026-11-02',
+    });
+    expect((await fake.run(cmd)).said).toBe('Canva Pro added');
+    expect((await fake.run(cmd)).said).toBe('Already added');
+    expect(fake.db().subscriptions.filter((x) => x.id === id)).toHaveLength(1);
+    // in another currency it's shown at Bank Negara's rate, never as RM0.00 (QA B04 redesign run 4, 1)
+    const row = (await fake.subscriptions()).rows.find((r) => r.id === id)!;
+    expect(row).toMatchObject({ rate: '4.2180', rateFrom: { source: 'bnm', on: '2026-10-16' } });
+    expect(row.approx).toBe(5479);
+  });
+
+  it('adds a goal by hand in the account it sits in, and refuses an unknown account (D133, D134)', async () => {
+    const fake = createFake();
+    const id = uid('goal:test');
+    const goal = { type: 'goal.add', id, name: 'New laptop', kind: 'goal', target: 450000, by: null };
+    await expect(fake.run(Command.parse({ ...goal, accountId: uid('account:none') }))).rejects.toThrow(/account/);
+    expect((await fake.run(Command.parse({ ...goal, accountId: acctId('ryt') }))).said).toBe('New laptop added');
+    expect(fake.db().goals.find((g) => g.id === id)).toMatchObject({ accountId: acctId('ryt'), targetAmount: 450000 });
+    // the account it's kept in is shown, by name (QA B04 redesign run 4, 3)
+    expect((await fake.goals()).goals.find((g) => g.id === id)?.keptIn).toBe('Ryt Bank');
+  });
+
+  it('opens a receipt Sen could not read as a failed draft, so Add expense says so', async () => {
+    const fake = createFake();
+    const d = await fake.draft(uid('receipt:blurry'));
+    expect(d).toMatchObject({ status: 'failed', byHand: false });
+  });
+
   it('answers a new merchant, makes its rule, and undoes it', async () => {
     const fake = createFake();
     const siti = uid('txn:siti');

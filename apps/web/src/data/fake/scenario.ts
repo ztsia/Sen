@@ -26,6 +26,19 @@ export function rm(text: string): number {
 }
 export const at = (day: string, hm: string) => `${day}T${hm}:00+08:00`;
 /** Uppercase, spaces collapsed, punctuation and trailing references gone (§8). */
+/**
+ * Bank Negara's middle rates, as the morning job would hold them (spec §11, D99): made up. A subscription
+ * declared in another currency takes its currency's rate until its first charge sets its own.
+ */
+export const BNM_RATES: Readonly<Record<string, string>> = {
+  USD: '4.2180',
+  SGD: '3.2650',
+  EUR: '4.9310',
+  GBP: '5.6420',
+};
+// Friday: Bank Negara publishes on working days (QA B04 redesign run 4, 15)
+export const BNM_RATES_ON = '2026-10-16';
+
 export const merchantKey = (raw: string) =>
   raw
     .toUpperCase()
@@ -1162,6 +1175,7 @@ function addThisCycle(db: Db) {
       targetAmount: rm(target),
       targetDate: date,
       repeatsYearly: kind === 'bucket',
+      accountId: acctId('ryt'),
       status: 'active',
     });
     saved.forEach((s, i) =>
@@ -1369,6 +1383,7 @@ function review(ids: Record<string, string>): ReviewItem[] {
       id: 'r:claim',
       at: at('2026-10-10', '07:30'),
       suggested: null,
+      claimId: uid('claim:phone:2026-09'),
       name: 'Phone bill',
       amount: rm('88.00'),
       deadline: '2026-10-25',

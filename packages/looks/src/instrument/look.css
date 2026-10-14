@@ -68,7 +68,7 @@
     font-stretch: 85%;
   }
   .tab .tl {
-    font-size: 0.656rem;
+    font-size: 0.75rem; /* the 12 px caption floor (D129); was 10.5 px */
     font-weight: 600;
     letter-spacing: 0.07em;
     text-transform: uppercase;

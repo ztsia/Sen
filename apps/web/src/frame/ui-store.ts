@@ -25,6 +25,8 @@ function fromUrl<T extends string>(key: string, allowed: readonly string[], fall
 
 interface UiState {
   senOpen: boolean;
+  /** What Sen's message box starts with when a button opens Sen to set something up (D135). */
+  senDraft: string | null;
   scanMoreOpen: boolean;
   /** The dev panel's override for Review's badge; otherwise it counts Needs you (D72). */
   reviewCount: number | null;
@@ -33,6 +35,9 @@ interface UiState {
   /** The skeleton's made-up scenario: Wei Ming's month, or one of its edge states. */
   scenario: ScenarioId;
   setSenOpen: (open: boolean) => void;
+  /** Opens Sen with its message box already started, for the person to finish (D135). */
+  askSen: (draft: string) => void;
+  setSenDraft: (draft: string | null) => void;
   setScanMoreOpen: (open: boolean) => void;
   setReviewCount: (n: number | null) => void;
   setSenState: (s: AvatarState) => void;
@@ -42,12 +47,15 @@ interface UiState {
 
 export const useUi = create<UiState>((set) => ({
   senOpen: false,
+  senDraft: null,
   scanMoreOpen: false,
   reviewCount: null,
   senState: 'resting',
   devState: fromUrl('state', DEV_STATES, 'normal'),
   scenario: fromUrl('scenario', SCENARIO_IDS, 'wei-ming'),
   setSenOpen: (senOpen) => set({ senOpen }),
+  askSen: (senDraft) => set({ senOpen: true, senDraft }),
+  setSenDraft: (senDraft) => set({ senDraft }),
   setScanMoreOpen: (scanMoreOpen) => set({ scanMoreOpen }),
   setReviewCount: (reviewCount) => set({ reviewCount }),
   setSenState: (senState) => set({ senState }),

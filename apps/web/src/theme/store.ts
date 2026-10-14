@@ -21,13 +21,22 @@ interface ThemeState {
   forceReducedMotion: boolean;
   systemReducedMotion: boolean;
   textScale: TextScale;
+  /** A new look each quarter (D77), or the one you chose, kept until you change it. Kept on this phone. */
+  quarterly: boolean;
   setLook: (look: LookId) => void;
+  setQuarterly: (on: boolean) => void;
   setModePref: (pref: ModePref) => void;
   setForceReducedMotion: (on: boolean) => void;
   setTextScale: (scale: TextScale) => void;
 }
 
-const KEYS = { look: 'sen.look', mode: 'sen.mode', motion: 'sen.dev.reducedMotion', scale: 'sen.dev.textScale' };
+const KEYS = {
+  look: 'sen.look',
+  quarterly: 'sen.lookQuarterly',
+  mode: 'sen.mode',
+  motion: 'sen.dev.reducedMotion',
+  scale: 'sen.dev.textScale',
+};
 
 const mq = (q: string) => (typeof window !== 'undefined' && window.matchMedia ? window.matchMedia(q) : null);
 const darkMq = mq('(prefers-color-scheme: dark)');
@@ -57,6 +66,11 @@ export const useTheme = create<ThemeState>((set, get) => ({
   forceReducedMotion: DEV_TOOLS && readStored(KEYS.motion) === '1',
   systemReducedMotion: motionMq?.matches ?? false,
   textScale: DEV_TOOLS && readStored(KEYS.scale) === '1.5' ? 1.5 : 1,
+  quarterly: readStored(KEYS.quarterly) !== '0',
+  setQuarterly: (quarterly) => {
+    writeStored(KEYS.quarterly, quarterly ? null : '0');
+    set({ quarterly });
+  },
   setLook: (look) => {
     set({ wantLook: look });
     // Switch only once the look's code is here. If it can't come (offline), keep the look on show.

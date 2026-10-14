@@ -1,30 +1,34 @@
 import { readableName } from '@/lib/names';
 import { useState } from 'react';
-import { ChevronRightIcon, SparklesIcon, SplitIcon } from 'lucide-react';
+import {
+  BellOffIcon,
+  CheckCheckIcon,
+  ChevronRightIcon,
+  ListChecksIcon,
+  MessageSquareTextIcon,
+  PlusIcon,
+  SparklesIcon,
+  SplitIcon,
+  TagsIcon,
+  type LucideIcon,
+} from 'lucide-react';
 import type { Command } from '@sen/core/commands';
-import { formatSen } from '@sen/core/money';
 import type { ReviewItem, ReviewView } from '@sen/core/views';
 import { CategorySheet } from '@/blocks/category-sheet';
 import { Money } from '@/blocks/money';
-import { ListRow, ReviewRow, SettingsRow, type ReviewAnswer } from '@/blocks/rows';
+import { GroupCard, NavRow } from '@/blocks/group';
+import { ListRow, ReviewRow, type ReviewAnswer } from '@/blocks/rows';
 import { Sheet } from '@/blocks/sheet';
 import { EmptyState } from '@/blocks/states';
 import { toastUndo } from '@/blocks/toast';
 import { Button } from '@/components/ui/button';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemSeparator,
-  ItemTitle,
-} from '@/components/ui/item';
+import { Card } from '@/components/ui/card';
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item';
 import { runCommand, useCategories, usePayments, useReview } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { longDay, momentLabel } from '@/lib/dates';
-import { categoryIcon } from '../icons';
+import { categoryIcon, categoryTone } from '../icons';
 import { Loaded, Section, useGo } from '../kit';
 import { settleTap } from '@/lib/tap-guard';
 
@@ -68,11 +72,19 @@ function ReviewBody({ r }: { r: ReviewView }) {
     toastUndo(`Applied ${undos.length} of Sen's answers`, () => undos.reverse().forEach((u) => u()));
   };
 
+  const kinds = KINDS.map((k) => ({ ...k, items: r.needsYou.filter((i) => k.of.includes(i.kind)) })).filter(
+    (k) => k.items.length,
+  );
+  const hasWaiting = r.waiting.splits.length || r.waiting.receipts.length || r.waiting.refunds.length;
+
   return (
     <>
       {suggested.length ? (
-        <div className="mx-4 mt-2 flex items-center gap-3 rounded-lg bg-muted px-3 py-2" role="status">
-          <SparklesIcon className="size-5 shrink-0 text-icon" aria-hidden="true" />
+        <div
+          className="mx-4 mt-2 flex items-center gap-3 rounded-[var(--radius-card,16px)] bg-primary/10 py-2 pr-2 pl-3"
+          role="status"
+        >
+          <SparklesIcon className="size-4 shrink-0 text-primary" aria-hidden="true" />
           <p className="min-w-0 flex-1 text-sm">
             Sen suggested {suggested.length === 1 ? 'an answer' : `${suggested.length} answers`}, marked below.
           </p>
@@ -84,38 +96,61 @@ function ReviewBody({ r }: { r: ReviewView }) {
 
       <Section title={`Needs you · ${r.needsYou.length}`}>
         {r.needsYou.length ? (
-          <ItemGroup>
-            {r.needsYou.map((i, n) => (
-              <div key={i.id} data-review={i.kind}>
-                {n ? <ItemSeparator /> : null}
-                <ReviewEntry item={i} go={go} setOther={setOther} setRefundFor={setRefundFor} />
+          <div className="flex flex-col gap-5 px-4">
+            {kinds.map((k) => (
+              <div key={k.title} className="flex flex-col gap-2">
+                <h3 className="flex items-center gap-2 px-1 text-sm font-medium text-muted-foreground">
+                  <k.icon className="size-4 text-icon" aria-hidden="true" />
+                  {k.title} · {k.items.length}
+                </h3>
+                {k.items.map((i) => (
+                  <div key={i.id} data-review={i.kind}>
+                    <ReviewEntry item={i} go={go} setOther={setOther} setRefundFor={setRefundFor} />
+                  </div>
+                ))}
               </div>
             ))}
-          </ItemGroup>
+          </div>
         ) : (
-          <EmptyState line="Nothing needs you." />
+          <EmptyState icon={CheckCheckIcon} title="All clear" line="Nothing needs you." />
         )}
       </Section>
 
-      {r.waiting.splits.length || r.waiting.receipts.length || r.waiting.refunds.length ? (
+      {hasWaiting ? (
         <Section title="Waiting on others">
-          <ItemGroup>
-            {r.waiting.splits.map((s) => (
-              <ListRow
-                key={s.splitId}
-                icon={SplitIcon}
-                title={s.bill}
-                secondary={`${s.people} · ${formatSen(s.back)} of ${formatSen(s.of)}`}
-                sen={s.of - s.back}
-                onOpen={() => go('split', { id: s.splitId })}
-              />
-            ))}
+          <div className="flex flex-col gap-2 px-4">
+            {r.waiting.splits.length || r.waiting.refunds.length ? (
+              <Card className="gap-0 divide-y divide-border overflow-hidden py-0">
+                {r.waiting.splits.map((s) => (
+                  <ListRow
+                    key={s.splitId}
+                    icon={SplitIcon}
+                    title={s.bill}
+                    // what's still to come is the row's amount, so the line under it fits (QA B04 redesign run 3, 4)
+                    secondary={s.people}
+                    sen={s.of - s.back}
+                    onOpen={() => go('split', { id: s.splitId })}
+                  />
+                ))}
+                {r.waiting.refunds.map((x) => (
+                  <Item key={x.id} size="sm" className="min-h-16 flex-nowrap gap-3 rounded-none">
+                    <ItemContent className="min-w-0">
+                      <ItemTitle className="text-base">{readableName(x.counterparty)} refund</ItemTitle>
+                      <ItemDescription>Sen is watching for it, by {longDay(x.by)}</ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <Money sen={x.amount} kind="in" />
+                    </ItemActions>
+                  </Item>
+                ))}
+              </Card>
+            ) : null}
             {r.waiting.receipts.map((x) => (
               <ReviewRow
                 key={x.receiptId}
                 question={
                   <>
-                    <Money sen={x.total} /> · {readableName(x.merchant)} receipt
+                    <Money sen={x.total} className="font-semibold" /> · {readableName(x.merchant)} receipt
                   </>
                 }
                 knows={`Waiting for its payment · ${momentLabel(new Date(x.at))}`}
@@ -129,26 +164,22 @@ function ReviewBody({ r }: { r: ReviewView }) {
                 ]}
               />
             ))}
-            {r.waiting.refunds.map((x) => (
-              <Item key={x.id} size="sm" className="min-h-16 rounded-none">
-                <ItemContent>
-                  <ItemTitle className="text-base">{readableName(x.counterparty)} refund</ItemTitle>
-                  <ItemDescription>Sen is watching for it, by {longDay(x.by)}</ItemDescription>
-                </ItemContent>
-                <ItemActions>
-                  <Money sen={x.amount} kind="in" />
-                </ItemActions>
-              </Item>
-            ))}
-          </ItemGroup>
+          </div>
         </Section>
       ) : null}
 
-      <div className="mt-5 border-t border-border">
-        <SettingsRow label="Missing a payment?" value="Add it" onOpen={() => go('manual')} />
-        {r.capture ? (
-          <SettingsRow label="Skipped notifications" value={String(r.skipped)} onOpen={() => go('skipped')} />
-        ) : null}
+      <div className="mt-6">
+        <GroupCard>
+          <NavRow icon={PlusIcon} tone="accent" title="Missing a payment?" value="Add it" onOpen={() => go('manual')} />
+          {r.capture ? (
+            <NavRow
+              icon={BellOffIcon}
+              title="Skipped notifications"
+              value={String(r.skipped)}
+              onOpen={() => go('skipped')}
+            />
+          ) : null}
+        </GroupCard>
       </div>
 
       <CategorySheet
@@ -195,6 +226,27 @@ function ReviewBody({ r }: { r: ReviewView }) {
     </>
   );
 }
+
+/** The kinds of question, in the order they're asked (D130): a header with an icon, then a card each. */
+const KINDS: { title: string; icon: LucideIcon; of: ReviewItem['kind'][] }[] = [
+  { title: 'Categories', icon: TagsIcon, of: ['new-merchant'] },
+  { title: 'Splits', icon: SplitIcon, of: ['money-in-share', 'owe-share'] },
+  {
+    title: 'Checks',
+    icon: ListChecksIcon,
+    of: [
+      'money-in',
+      'transfer-missing',
+      'proposal',
+      'receipt-waiting',
+      'receipt-unread',
+      'balance-check',
+      'claim-due',
+      'payday-step',
+    ],
+  },
+  { title: 'New wording', icon: MessageSquareTextIcon, of: ['new-wording'] },
+];
 
 type Go = ReturnType<typeof useGo>;
 interface Ctx {
@@ -294,17 +346,23 @@ function answersFor(
 /** A Needs you item that opens a screen to clear it, rather than answering in place. */
 function OpensRow({ title, detail, onOpen }: { title: React.ReactNode; detail: string; onOpen: () => void }) {
   return (
-    <Item asChild size="sm" className="min-h-16 w-full flex-nowrap rounded-none text-left text-base active:bg-accent">
-      <button type="button" onClick={onOpen}>
-        <ItemContent className="min-w-0">
-          <ItemTitle className="text-base text-pretty">{title}</ItemTitle>
-          <ItemDescription>{detail}</ItemDescription>
-        </ItemContent>
-        <ItemActions>
-          <ChevronRightIcon className="size-5 text-icon" aria-hidden="true" />
-        </ItemActions>
-      </button>
-    </Item>
+    <Card className="p-0">
+      <Item
+        asChild
+        size="sm"
+        className="min-h-16 w-full flex-nowrap rounded-[inherit] text-left text-base active:bg-accent"
+      >
+        <button type="button" onClick={onOpen}>
+          <ItemContent className="min-w-0 gap-0.5">
+            <ItemTitle className="text-base font-semibold text-pretty">{title}</ItemTitle>
+            <ItemDescription>{detail}</ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <ChevronRightIcon className="size-5 text-icon" aria-hidden="true" />
+          </ItemActions>
+        </button>
+      </Item>
+    </Card>
   );
 }
 
@@ -317,7 +375,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
         <ReviewRow
           question={
             <>
-              <Money sen={i.amount} /> · {readableName(i.merchant)}
+              <Money sen={i.amount} className="font-semibold" /> · {readableName(i.merchant)}
             </>
           }
           knows={`New on ${i.account} · ${when}`}
@@ -330,7 +388,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
         <ReviewRow
           question={
             <>
-              <Money sen={i.amount} kind="in" /> from {readableName(i.from)}
+              <Money sen={i.amount} className="font-semibold" kind="in" /> from {readableName(i.from)}
             </>
           }
           knows={`Whose split share is it? · ${when}`}
@@ -342,7 +400,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
         <ReviewRow
           question={
             <>
-              <Money sen={i.amount} kind="in" /> from {readableName(i.from)}
+              <Money sen={i.amount} className="font-semibold" kind="in" /> from {readableName(i.from)}
             </>
           }
           knows={`Into ${i.account} · ${when}${i.suggested ? '. Your note says it’s a gift' : ''}`}
@@ -354,7 +412,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
         <ReviewRow
           question={
             <>
-              You owe {i.to} <Money sen={i.amount} />
+              You owe {i.to} <Money sen={i.amount} className="font-semibold" />
             </>
           }
           knows={`${i.bill} · If you've paid already, tick it: Sen can't see every payment`}
@@ -370,7 +428,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
         <ReviewRow
           question={
             <>
-              <Money sen={i.amount} kind="in" /> into {i.to} from your own name
+              <Money sen={i.amount} className="font-semibold" kind="in" /> into {i.to} from your own name
             </>
           }
           knows="Where did it come from? Sen will remember next time"
@@ -384,7 +442,7 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
         <OpensRow
           title={
             <>
-              <Money sen={i.total} /> · {readableName(i.merchant)} receipt
+              <Money sen={i.total} className="font-semibold" /> · {readableName(i.merchant)} receipt
             </>
           }
           detail="Read and waiting for you to check it"
@@ -412,11 +470,11 @@ function ReviewEntry({ item: i, go, setOther, setRefundFor }: { item: ReviewItem
         <OpensRow
           title={
             <>
-              {i.name} claim · <Money sen={i.amount} />
+              {i.name} claim · <Money sen={i.amount} className="font-semibold" />
             </>
           }
           detail={`Due ${longDay(i.deadline)}`}
-          onOpen={() => go('claim')}
+          onOpen={() => go('claim', { id: i.claimId })}
         />
       );
     case 'payday-step':
@@ -456,6 +514,7 @@ function PaymentPicker({
           <ListRow
             key={x.id}
             icon={categoryIcon(x.category)}
+            tone={categoryTone(x.category)}
             title={x.title}
             secondary={`${x.category ?? ''} · ${momentLabel(new Date(x.at))}`}
             sen={x.amount}

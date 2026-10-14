@@ -44,7 +44,7 @@ test("Review's badge counts Needs you, up to 99+, and is read as words", async (
   await expect(page.getByTestId('review-badge').locator('svg')).toBeVisible();
 });
 
-test('Scan: a tap opens the scanner; a long-press of 500 ms opens scan-more, and a shorter one does not', async ({
+test('Scan: a tap opens the camera; a long-press of 500 ms opens scan-more, and a shorter one does not', async ({
   page,
 }) => {
   await open(page, '/');
@@ -64,15 +64,17 @@ test('Scan: a tap opens the scanner; a long-press of 500 ms opens scan-more, and
   await expect(page.getByRole('dialog', { name: 'Add a payment' })).toBeHidden();
   await expect(tabs(page).getByRole('link', { name: /^Home/ })).toHaveAttribute('aria-current', 'page');
 
-  // held for 300 ms only: a tap, so it opens the scanner and no sheet
+  // held for 300 ms only: a tap, so it opens the camera's chooser and no sheet
+  const camera = page.waitForEvent('filechooser', { timeout: 5_000 });
   await page.mouse.move(at.x, at.y);
   await page.mouse.down();
   await page.waitForTimeout(300);
   await page.mouse.up();
-  await expect(page).toHaveURL(/\/scan/);
+  expect(await (await camera).element().getAttribute('data-testid')).toBe('scan-camera');
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/');
   await expect(page.getByRole('dialog')).toBeHidden();
-  // the scanner is a task with an end: no tab bar
-  await expect(tabs(page)).toBeHidden();
+  // a tap on Scan leaves the tab bar where it is: no screen opened
+  await expect(tabs(page)).toBeVisible();
 });
 
 test("Sen's button is on the tab screens only, labelled, and opens Sen's sheet over the screen", async ({ page }) => {

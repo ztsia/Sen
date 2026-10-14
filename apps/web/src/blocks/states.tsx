@@ -1,23 +1,49 @@
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { CloudOffIcon, TriangleAlertIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader } from '@/components/ui/empty';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { updatedAgo } from '@/lib/dates';
 
 // Empty, loading, error, offline and stale (patterns.md §7). No screen invents its own.
 
-/** One line saying what will appear here, and the action that fills it. No illustrations. */
-export function EmptyState({ line, action }: { line: string; action?: { label: string; onSelect: () => void } }) {
+/**
+ * What will appear here, and the action that fills it: an icon in a tile, a title, one line and one
+ * button (D130). No illustrations.
+ */
+export function EmptyState({
+  icon: Icon,
+  title,
+  line,
+  action,
+}: {
+  icon?: ComponentType<{ className?: string }>;
+  title?: string;
+  line: string;
+  /** Its icon goes before the label: `SenMark` when the action opens Sen. */
+  action?: { label: string; onSelect: () => void; icon?: ComponentType<{ className?: string }> };
+}) {
   return (
     <Empty className="gap-3 border-0 p-6">
       <EmptyHeader>
+        {Icon ? (
+          <EmptyMedia
+            variant="icon"
+            className="size-12 rounded-[calc(var(--radius-card,16px)*0.85)] bg-muted text-icon"
+          >
+            <Icon className="size-6" />
+          </EmptyMedia>
+        ) : null}
+        {title ? <EmptyTitle className="text-lg font-semibold">{title}</EmptyTitle> : null}
         <EmptyDescription className="text-base text-muted-foreground">{line}</EmptyDescription>
       </EmptyHeader>
       {action ? (
         <EmptyContent>
-          <Button onClick={action.onSelect}>{action.label}</Button>
+          <Button onClick={action.onSelect}>
+            {action.icon ? <action.icon /> : null}
+            {action.label}
+          </Button>
         </EmptyContent>
       ) : null}
     </Empty>

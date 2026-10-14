@@ -26,6 +26,7 @@ const BUILT = new Set([
   'settings/capture/running',
   'settings/capture/captured',
   'settings/account',
+  'settings/member',
 ]);
 
 const s = (id: string, title: string, kind: ScreenKind, tab: TabId | undefined, slice: string): ScreenDef => ({
@@ -93,6 +94,7 @@ export const SCREENS: ScreenDef[] = [
   s('settings/claims', 'Claims', 'pushed', 'more', 'B25'),
   s('settings/sen', 'Sen', 'pushed', 'more', 'B27'),
   s('settings/members', 'Members', 'pushed', 'more', 'B38'),
+  s('settings/member', 'Member', 'pushed', 'more', 'B38'),
   s('settings/data', 'Data', 'pushed', 'more', 'B37'),
   s('settings/account', 'Account', 'pushed', 'more', 'B05'),
   // outside the tabs

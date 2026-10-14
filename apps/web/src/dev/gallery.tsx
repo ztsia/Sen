@@ -18,12 +18,12 @@ import { Avatar } from '@/components/look/avatar';
 import { Button } from '@/components/ui/button';
 import { ItemGroup, ItemSeparator } from '@/components/ui/item';
 import { BudgetMeter, CategoryBars, ChartCard, ChartTable, PaceChart, PartsBar, SpendCalendar } from '@/blocks/charts';
-import { DetailPage } from '@/blocks/detail';
 import { DestructiveDialog } from '@/blocks/dialog';
 import { HeroFigure } from '@/blocks/hero';
 import { Money } from '@/blocks/money';
 import { checkAmount, MoneyInput } from '@/blocks/money-input';
-import { DayHeader, ListRow, ReviewRow, SettingsRow } from '@/blocks/rows';
+import { DayHeader, ListRow, ReviewRow } from '@/blocks/rows';
+import { GroupCard, NavRow, SwitchRow } from '@/blocks/group';
 import { Sheet } from '@/blocks/sheet';
 import { EmptyState, ErrorState, ListSkeleton, OfflineBanner, UpdatedAgo } from '@/blocks/states';
 import { HealthBar, StatusCard } from '@/blocks/status';
@@ -31,6 +31,7 @@ import { toastDone, toastUndo } from '@/blocks/toast';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { AVATAR_NAMES } from './dev-panel';
+import { CardsGallery, DetailGallery } from './gallery-cards';
 
 // The gallery (B01): every building block in patterns.md §7, in every state, in the current look.
 // Switch the look, light and dark, reduced motion and text size in the dev panel. All figures are
@@ -105,15 +106,17 @@ export default function Gallery() {
   return (
     <Screen bar={<AppBar title="Gallery" />}>
       <nav aria-label="Sections" className="flex flex-wrap gap-2 px-4 pt-2 text-sm">
-        {['figure', 'sen', 'money', 'rows', 'detail', 'forms', 'overlays', 'status', 'states', 'charts'].map((s) => (
-          <a
-            key={s}
-            href={`#${s}`}
-            className="inline-flex min-h-12 min-w-12 items-center justify-center px-1 text-primary underline underline-offset-4"
-          >
-            {s}
-          </a>
-        ))}
+        {['figure', 'sen', 'money', 'rows', 'detail', 'cards', 'forms', 'overlays', 'status', 'states', 'charts'].map(
+          (s) => (
+            <a
+              key={s}
+              href={`#${s}`}
+              className="inline-flex min-h-12 min-w-12 items-center justify-center px-1 text-primary underline underline-offset-4"
+            >
+              {s}
+            </a>
+          ),
+        )}
       </nav>
 
       <Section id="figure" title="The large figure">
@@ -268,36 +271,18 @@ export default function Gallery() {
         ) : (
           <EmptyState line="Nothing to review. New questions appear here." />
         )}
-        <ItemGroup>
-          <SettingsRow
-            label="Appearance"
-            value="Changes each quarter"
-            onOpen={() => toastDone('Settings arrive in B04')}
-          />
-          <ItemSeparator />
-          <SettingsRow label="Just paid in the island" checked={switchOn} onCheckedChange={setSwitchOn} />
-        </ItemGroup>
+        <GroupCard>
+          <NavRow title="Appearance" value="Changes each quarter" onOpen={() => toastDone('Opens Appearance')} />
+          <SwitchRow title="Just paid in the island" checked={switchOn} onCheckedChange={setSwitchOn} />
+        </GroupCard>
       </Section>
 
-      <Section id="detail" title="Detail page">
-        <DetailPage
-          sen={1290}
-          source="From Ryt's notification"
-          facts={[
-            { label: 'Merchant', value: 'KOPI KAWAN' },
-            { label: 'Category', value: 'Drinks & desserts' },
-            { label: 'Account', value: 'Ryt' },
-            { label: 'When', value: 'Thu, 8 Oct, 08:12' },
-          ]}
-          actions={[
-            { label: 'Mark as a transfer', onSelect: () => toastUndo('Marked as a transfer', () => undefined) },
-            {
-              label: 'Delete',
-              destructive: true,
-              onSelect: () => toastUndo('Deleted KOPI KAWAN, RM12.90', () => undefined),
-            },
-          ]}
-        />
+      <Section id="detail" title="Detail">
+        <DetailGallery />
+      </Section>
+
+      <Section id="cards" title="Cards and choices">
+        <CardsGallery />
       </Section>
 
       <Section id="forms" title="Forms">
@@ -493,9 +478,9 @@ export default function Gallery() {
       <Sheet open={sheet} onOpenChange={setSheet} title="Which category?" description="RM9.50 at ROTI BAKAR 88">
         <ItemGroup>
           {['Meals', 'Drinks & desserts', 'Groceries', 'Shopping', 'Transport'].map((c) => (
-            <SettingsRow
+            <NavRow
               key={c}
-              label={c}
+              title={c}
               onOpen={() => {
                 setSheet(false);
                 setAnswered(true);

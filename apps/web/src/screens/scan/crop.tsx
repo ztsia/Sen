@@ -1,4 +1,6 @@
+import { ScanLineIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/blocks/states';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -17,6 +19,8 @@ export default function Crop() {
     return (
       <Screen bar={<AppBar title="Adjust the photo" />}>
         <EmptyState
+          icon={ScanLineIcon}
+          title="No photo yet"
           line="Pick a photo first."
           action={{ label: 'Scan a receipt', onSelect: () => go('scan', {}, { replace: true }) }}
         />
@@ -25,20 +29,22 @@ export default function Crop() {
   return (
     <Screen bar={<AppBar title="Adjust the photo" />} className="flex flex-col pb-0">
       <div className="flex flex-1 flex-col gap-3 px-4 pt-2">
-        <div
-          className="relative mx-auto aspect-[3/4] w-full max-w-72 rounded-md bg-muted"
-          role="img"
-          aria-label="Your photo, with a handle on each corner"
-        >
-          {CORNERS.map((c) => (
-            <span
-              key={c}
-              aria-hidden="true"
-              className={`absolute ${c} m-2 size-6 rounded-full border-2 border-background bg-primary shadow`}
-            />
-          ))}
-          <span aria-hidden="true" className="absolute inset-5 rounded-sm border-2 border-dashed border-primary/60" />
-        </div>
+        <Card className="mx-auto w-full max-w-72 p-3">
+          <div
+            className="relative aspect-[3/4] w-full rounded-md bg-muted"
+            role="img"
+            aria-label="Your photo, with a handle on each corner"
+          >
+            {CORNERS.map((c) => (
+              <span
+                key={c}
+                aria-hidden="true"
+                className={`absolute ${c} m-2 size-6 rounded-full border-2 border-background bg-primary shadow`}
+              />
+            ))}
+            <span aria-hidden="true" className="absolute inset-5 rounded-sm border-2 border-dashed border-primary/60" />
+          </div>
+        </Card>
         <p className="text-center text-sm text-muted-foreground">Adjusting the corners arrives with the scanner.</p>
       </div>
       <div className="sticky bottom-0 flex flex-col gap-2 bg-background px-4 py-3">

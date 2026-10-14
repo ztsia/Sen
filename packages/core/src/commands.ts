@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { Amount, Id, Instant, Sen } from './schema';
+import { Amount, Day, Id, Instant, Sen } from './schema';
+
+/** The currencies a subscription can be declared in by hand (D134): each has two decimals. */
+export const SUB_CURRENCIES = ['MYR', 'USD', 'SGD', 'EUR', 'GBP'] as const;
 
 /**
  * Every write the app makes, as data (B03). The screens send these through one write interface, which
@@ -87,6 +90,26 @@ export const Command = z.discriminatedUnion('type', [
   z.object({ type: z.literal('review.answer'), itemId: z.string(), answer: z.string() }),
   /** A budget for a category, per cycle (D29); amount 0 removes it. */
   z.object({ type: z.literal('budget.set'), categoryId: Id, amount: Amount }),
+  /** A subscription declared by hand (D134): its amount in its own currency's smallest unit, a forecast (§11). */
+  z.object({
+    type: z.literal('subscription.add'),
+    id: Id,
+    name: z.string().trim().min(1).max(60),
+    amount: Amount.min(1),
+    currency: z.enum(SUB_CURRENCIES),
+    cadence: z.enum(['monthly', 'yearly']),
+    nextRenewal: Day,
+  }),
+  /** A goal or yearly bucket added by hand (D134), kept in an account of its own (D133). */
+  z.object({
+    type: z.literal('goal.add'),
+    id: Id,
+    name: z.string().trim().min(1).max(60),
+    kind: z.enum(['goal', 'bucket']),
+    target: Amount.min(1),
+    by: Day.nullable(),
+    accountId: Id,
+  }),
   // --- B04 ---
   /** *Split* on a payment with none (§7): an open split, with only you in it so far, shared evenly. */
   z.object({ type: z.literal('split.start'), splitId: Id, txnId: Id }),

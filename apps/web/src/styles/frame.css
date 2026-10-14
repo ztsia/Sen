@@ -81,7 +81,7 @@
   justify-content: flex-start;
   gap: 3px;
   min-height: 56px;
-  font-size: 0.72rem;
+  font-size: 0.75rem; /* the caption floor, 12 px (patterns.md §2, D129) */
   color: var(--muted-foreground);
   position: relative;
   text-decoration: none;

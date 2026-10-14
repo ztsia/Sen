@@ -1,25 +1,30 @@
 import { useState } from 'react';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon, UsersIcon } from 'lucide-react';
 import { formatSen } from '@sen/core/money';
 import type { SettingsView } from '@sen/core/views';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
+import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { checkAmount, MoneyInput } from '@/blocks/money-input';
-import { SettingsRow } from '@/blocks/rows';
+import { GroupCard, PersonRow, SwitchRow } from '@/blocks/group';
 import { Sheet } from '@/blocks/sheet';
 import { EmptyState } from '@/blocks/states';
 import { useSettings, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
-import { Loaded, Section } from '../kit';
-import { MemberSheet, SWITCHES } from './member-sheet';
+import { Loaded, useGo } from '../kit';
+import { SWITCHES } from './member';
 
 type View = SettingsView;
 
-const STATUS = { active: 'Active', invited: 'Invited', suspended: 'Suspended' } as const;
+const STATUS = {
+  active: { label: 'Active', tone: 'accent' },
+  invited: { label: 'Invited', tone: 'outline' },
+  suspended: { label: 'Suspended', tone: 'warning' },
+} as const;
 
 /**
  * Settings → Members (screens.md; D52, D98), for the admin only: who is in, what each can use, their AI
@@ -29,13 +34,25 @@ export default function Members() {
   const q = useSettings();
   const [inviting, setInviting] = useState(false);
   return (
-    <Screen bar={<AppBar title="Members" />}>
+    <Screen
+      bar={
+        <AppBar
+          title="Members"
+          action={
+            <Button variant="ghost" size="sm" onClick={() => setInviting(true)}>
+              <PlusIcon aria-hidden="true" />
+              Invite
+            </Button>
+          }
+        />
+      }
+    >
       <Loaded q={q} what="your members">
         {(s) =>
           s.admin ? (
             <Body s={s} inviting={inviting} setInviting={setInviting} />
           ) : (
-            <EmptyState line="Only the admin sees Members." />
+            <EmptyState icon={UsersIcon} title="Admin only" line="Only the admin sees Members." />
           )
         }
       </Loaded>
@@ -44,46 +61,32 @@ export default function Members() {
 }
 
 function Body({ s, inviting, setInviting }: { s: View; inviting: boolean; setInviting: (o: boolean) => void }) {
-  const [openId, setOpenId] = useState<string | null>(null);
-  const member = s.members.find((m) => m.id === openId) ?? null;
+  const go = useGo();
   return (
-    <div className="flex flex-col pb-4">
-      <div className="px-4 pt-2">
-        <Button onClick={() => setInviting(true)}>
-          <PlusIcon aria-hidden="true" />
-          Invite
-        </Button>
-      </div>
-      <Section title="Shell seats">
-        <SettingsRow label="In use" value={`${s.seats.used} of ${s.seats.of}`} />
-      </Section>
-      <Section title="People">
+    <div className="flex flex-col gap-6 pt-2 pb-8">
+      <Card className="mx-4 gap-2 px-4 py-4" aria-label="Shell seats">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-sm text-muted-foreground">Shell seats in use</p>
+          <p className="text-base font-semibold">{`${s.seats.used} of ${s.seats.of}`}</p>
+        </div>
+        <Progress value={(s.seats.used / Math.max(1, s.seats.of)) * 100} aria-label="Shell seats in use" />
+      </Card>
+      <GroupCard label="People">
         {s.members.map((m) => (
-          <Item
+          <PersonRow
             key={m.id}
-            asChild
-            size="sm"
-            className="min-h-16 w-full flex-nowrap rounded-none text-left text-base active:bg-accent"
-          >
-            <button type="button" onClick={() => setOpenId(m.id)}>
-              <ItemContent className="min-w-0 gap-0">
-                <ItemTitle className="block w-full truncate text-base">
-                  {m.name}
-                  {m.email === s.email ? ' (you)' : ''}
-                </ItemTitle>
-                <ItemDescription className="truncate">
-                  {m.email} · {m.switches.shell ? 'Android shell' : 'Browser'}
-                </ItemDescription>
-              </ItemContent>
-              <ItemActions className="max-w-[40%] text-right text-sm text-muted-foreground">
-                {STATUS[m.status]}
-                {m.unlimited || m.email === s.email ? '' : ` · ${formatSen(m.balance)}`}
-              </ItemActions>
-            </button>
-          </Item>
+            name={`${m.name}${m.email === s.email ? ' (you)' : ''}`}
+            detail={`${m.email} · ${m.switches.shell ? 'Android shell' : 'Browser'}`}
+            state={STATUS[m.status]}
+            trailing={
+              m.unlimited || m.email === s.email ? null : (
+                <span className="text-sm text-muted-foreground">{formatSen(m.balance)}</span>
+              )
+            }
+            onOpen={() => go('settings/member', { id: m.id })}
+          />
         ))}
-      </Section>
-      <MemberSheet member={member} owner={member?.email === s.email} onClose={() => setOpenId(null)} />
+      </GroupCard>
       <InviteSheet open={inviting} onOpenChange={setInviting} seatsFull={s.seats.used >= s.seats.of} />
     </div>
   );
@@ -201,17 +204,17 @@ function InviteSheet({
                 : 'A browser has no capture: they add payments and receipts by hand.'}
           </FieldDescription>
         </Field>
-        <div className="-mx-4 flex flex-col">
+        <GroupCard className="-mx-4">
           {SWITCHES.filter((s) => s.key !== 'shell' && (s.key !== 'capture' || shell === 'shell')).map((s) => (
-            <SettingsRow
+            <SwitchRow
               key={s.key}
-              label={s.label}
+              title={s.label}
               description={s.about}
               checked={s.key !== 'shell' && on[s.key]}
               onCheckedChange={(v) => setOn((o) => ({ ...o, [s.key]: v }))}
             />
           ))}
-        </div>
+        </GroupCard>
         <MoneyInput
           label="Welcome credit"
           value={welcome}
@@ -221,14 +224,14 @@ function InviteSheet({
           }}
           error={errors.welcome}
         />
-        <div className="-mx-4">
-          <SettingsRow
-            label="Unlimited"
+        <GroupCard className="-mx-4">
+          <SwitchRow
+            title="Unlimited"
             description="No ceiling on their credit; their charges are recorded as covered."
             checked={unlimited}
             onCheckedChange={setUnlimited}
           />
-        </div>
+        </GroupCard>
         {unlimited ? null : (
           <MoneyInput
             label="Monthly allowance"

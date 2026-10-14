@@ -203,6 +203,8 @@ export const Goal = z.object({
   targetAmount: Amount,
   targetDate: Day.nullable(),
   repeatsYearly: z.boolean(),
+  /** The account or pocket its money is kept in (D133); several goals may share one. */
+  accountId: Id.nullable(),
   status: z.enum(['active', 'done', 'archived']),
 });
 export type Goal = z.infer<typeof Goal>;

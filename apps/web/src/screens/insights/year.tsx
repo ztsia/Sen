@@ -1,13 +1,15 @@
+import { CalendarRangeIcon, TagIcon } from 'lucide-react';
 import { formatSen, percent } from '@sen/core/money';
 import type { YearView } from '@sen/core/views';
+import { StatTiles } from '@/blocks/facts';
+import { GroupCard, NavRow } from '@/blocks/group';
 import { ChartCard, ChartTable, ColumnBars } from '@/blocks/charts';
-import { SettingsRow } from '@/blocks/rows';
 import { EmptyState } from '@/blocks/states';
 import { useYear } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { useUi } from '@/frame/ui-store';
-import { Loaded, Section } from '../kit';
+import { Loaded } from '../kit';
 
 /** The year (screens.md, spec §9.3): spending by month, the savings rate, and the relief tags. */
 export default function Year() {
@@ -23,15 +25,23 @@ export default function Year() {
 
 function Body({ v }: { v: YearView }) {
   const last = v.months[v.months.length - 1];
-  if (!last) return <EmptyState line="Your year shows once you've a month of payments." />;
+  // a year with no spending yet draws no chart and names no heaviest month (patterns §4)
+  if (!last || v.months.every((m) => m.spent === 0))
+    return (
+      <EmptyState
+        icon={CalendarRangeIcon}
+        title="No year yet"
+        line="Your year shows once you've a month of payments."
+      />
+    );
   const top = v.months.reduce((a, m) => (m.spent > a.spent ? m : a), last);
   return (
-    <div className="flex flex-col gap-3 pb-4">
+    <div className="flex flex-col gap-4 pt-1 pb-4">
       <div className="px-4">
         <ChartCard
           question={`How did ${v.year} go, month by month?`}
           takeaway={`${top.label} was the heaviest month at ${formatSen(top.spent)}.`}
-          onAskSen={() => useUi.getState().setSenOpen(true)}
+          onAskSen={(q) => useUi.getState().askSen(q)}
           table={
             <ChartTable
               caption={`Spent each month of ${v.year}`}
@@ -47,24 +57,33 @@ function Body({ v }: { v: YearView }) {
           />
         </ChartCard>
       </div>
-      <Section title="Savings rate">
-        <p className="px-4 text-sm" data-testid="rate">
+      <div className="flex flex-col gap-2">
+        <StatTiles
+          stats={[
+            {
+              label: 'Savings rate',
+              value: v.savingsRate === null ? 'None yet' : `${percent(v.savingsRate)}%`,
+            },
+            { label: 'Heaviest month', value: top.label },
+          ]}
+        />
+        <p className="px-4 text-sm text-muted-foreground" data-testid="rate">
           {v.savingsRate === null
             ? 'No income recorded yet, so there is no rate to work out.'
             : `You kept ${percent(v.savingsRate)}% of what came in this year.`}
         </p>
-      </Section>
-      <Section title="Relief tags">
-        {v.reliefs.length ? (
-          <div className="flex flex-col">
-            {v.reliefs.map((r) => (
-              <SettingsRow key={r.label} label={r.label} value={formatSen(r.sen)} />
-            ))}
-          </div>
-        ) : (
-          <p className="px-4 text-sm text-muted-foreground">No payments tagged for tax relief yet.</p>
-        )}
-      </Section>
+      </div>
+      {v.reliefs.length ? (
+        <GroupCard label="Relief tags">
+          {v.reliefs.map((r) => (
+            <NavRow key={r.label} title={r.label} value={formatSen(r.sen)} />
+          ))}
+        </GroupCard>
+      ) : (
+        <GroupCard label="Relief tags">
+          <EmptyState icon={TagIcon} line="No payments tagged for tax relief yet." />
+        </GroupCard>
+      )}
     </div>
   );
 }

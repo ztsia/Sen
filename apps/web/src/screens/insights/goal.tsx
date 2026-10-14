@@ -1,18 +1,22 @@
-import { CheckIcon, CircleAlertIcon } from 'lucide-react';
+import { CheckIcon, CircleAlertIcon, InboxIcon } from 'lucide-react';
+import { formatSen, percent } from '@sen/core/money';
 import type { GoalView } from '@sen/core/views';
-import { GoalMeter } from '@/blocks/charts';
+import { HeaderCard, FactGrid, type GridFact } from '@/blocks/facts';
+import { GroupCard, NavRow } from '@/blocks/group';
 import { Money } from '@/blocks/money';
 import { EmptyState } from '@/blocks/states';
+import { Card } from '@/components/ui/card';
 import { useGoal } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { longDay, momentLabel, shortDay } from '@/lib/dates';
-import { Loaded, Section, useScreenSearch } from '../kit';
+import { Loaded, useScreenSearch } from '../kit';
+import { GoalRing } from './goals';
 
 /**
- * One goal (screens.md, spec §10): its amount, what it needs each cycle, whether that's feasible
- * against the median surplus (said with the sample it comes from), when it finishes at today's pace,
- * and what's been put in.
+ * One goal (screens.md, spec §10): its ring and amount on top, what it needs each cycle, the median
+ * surplus that said whether it's feasible (with the sample it comes from), when it finishes at today's
+ * pace, and what's been put in.
  */
 export default function Goal() {
   const { id } = useScreenSearch();
@@ -34,17 +38,42 @@ function Body({ v }: { v: GoalView }) {
   const g = v.goal;
   const Icon = v.feasible ? CheckIcon : CircleAlertIcon;
   const cycles = `${v.sample} ${v.sample === 1 ? 'cycle' : 'cycles'}`;
+  const share = g.target > 0 ? percent(Math.min(1, g.saved / g.target)) : '0';
+  const facts: GridFact[] = [
+    { label: 'Needs a cycle', value: <Money sen={g.perCycle} /> },
+    { label: 'Target', value: <Money sen={g.target} /> },
+    {
+      label: 'Done by',
+      value: g.targetDate ? shortDay(g.targetDate) : 'No date set',
+      muted: !g.targetDate,
+    },
+    {
+      label: 'At this pace',
+      value: v.projectedFinish ? `About ${longDay(v.projectedFinish)}` : 'Nothing put in yet',
+      muted: !v.projectedFinish,
+    },
+    // where its money sits (D133): payday's plan moves it there
+    { label: 'Kept in', value: g.keptIn ?? 'Not set', muted: !g.keptIn, wide: true },
+    {
+      label: 'Median surplus',
+      value: v.sample === 0 ? 'Too early to say' : `${formatSen(v.medianSurplus)} over ${cycles}`,
+      muted: v.sample === 0,
+      wide: true,
+    },
+  ];
   return (
-    <div className="flex flex-col gap-4 px-4 pb-4">
-      <h2 className="text-xl font-semibold wrap-anywhere">{g.name}</h2>
-      <GoalMeter label={g.kind === 'bucket' ? 'Bucket' : 'Goal'} saved={g.saved} target={g.target} />
-      <p>
-        Needs <Money sen={g.perCycle} /> a cycle
-        {g.targetDate ? ` to be done by ${shortDay(g.targetDate)}` : ''}.
-      </p>
-      <p className="flex items-start gap-2" data-testid="feasible">
+    <div className="flex flex-col gap-4 pt-2 pb-4">
+      <HeaderCard
+        mark={<GoalRing saved={g.saved} target={g.target} size="lg" />}
+        title={g.name}
+        figure={<Money sen={g.saved} />}
+        meta={`of ${formatSen(g.target)} · ${share}% saved`}
+        source={g.kind === 'bucket' ? 'A bucket' : 'A goal'}
+      />
+      <FactGrid facts={facts} />
+      <Card className="mx-4 flex-row items-start gap-3 py-3 pr-4 pl-4 text-base">
         <Icon className="mt-0.5 size-5 shrink-0 text-icon" aria-hidden="true" />
-        <span>
+        <p data-testid="feasible">
           {v.sample === 0 ? (
             'Too early to say if it fits: there is no full cycle to compare with yet.'
           ) : (
@@ -54,29 +83,17 @@ function Body({ v }: { v: GoalView }) {
               {v.feasible ? ', which covers it.' : ', which falls short of it.'}
             </>
           )}
-        </span>
-      </p>
-      <p>
-        {v.projectedFinish ? (
-          <>At the pace so far it's done around {longDay(v.projectedFinish)}. That's an estimate.</>
-        ) : (
-          'Nothing put in yet, so there is no finish date to project.'
-        )}
-      </p>
-      <Section title="Put in so far">
+        </p>
+      </Card>
+      <GroupCard label="Put in so far">
         {v.contributions.length ? (
-          <ul className="flex flex-col">
-            {v.contributions.map((c) => (
-              <li key={c.at} className="flex min-h-12 items-center justify-between gap-3 px-4 py-2">
-                <span className="text-sm text-muted-foreground">{momentLabel(new Date(c.at))}</span>
-                <Money sen={c.sen} />
-              </li>
-            ))}
-          </ul>
+          v.contributions.map((c) => (
+            <NavRow key={c.at} title={momentLabel(new Date(c.at))} value={<Money sen={c.sen} />} />
+          ))
         ) : (
-          <p className="px-4 text-sm text-muted-foreground">Nothing yet.</p>
+          <EmptyState icon={InboxIcon} line="Nothing put in yet." />
         )}
-      </Section>
+      </GroupCard>
     </div>
   );
 }

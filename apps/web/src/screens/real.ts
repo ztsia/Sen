@@ -10,5 +10,6 @@ export const REAL: Record<string, LazyExoticComponent<ComponentType>> = {
   'settings/capture/access': lazy(() => import('./capture/access')),
   'settings/capture/running': lazy(() => import('./capture/running')),
   'settings/capture/captured': lazy(() => import('./capture/captured')),
+  'settings/member': lazy(() => import('./settings/member')),
   'settings/account': lazy(() => import('./account')),
 };

@@ -1,4 +1,4 @@
-// Sen: shadcn/ui's toggle, changed in place for the phone (CLAUDE.md, shadcn first): drawn 40 px (sm 32), a 48 px touch target through `tap` (D129); the look's --radius-btn, a pill where the look sets none; 14 px labels; the on state in the primary pair, so it reads in every look; no hover-only states.
+// Sen: shadcn/ui's toggle, changed in place for the phone (CLAUDE.md, shadcn first): drawn 40 px (sm 32), a 48 px touch target through `tap` (D129); the look's --radius-btn, a pill where the look sets none; 14 px labels; the on state in the primary pair, so it reads in every look; no hover-only states; a `segment` variant for Segmented (D130): the chosen option is a raised card on a muted track.
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,8 @@ const toggleVariants = cva(
       variant: {
         default: 'bg-transparent text-foreground',
         outline: 'border border-input bg-transparent text-foreground',
+        segment:
+          'bg-transparent text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-sm',
       },
       size: {
         default: 'min-h-10 min-w-10 px-3',

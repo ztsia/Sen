@@ -1,0 +1,1907 @@
+{
+ "module": "B04-redesign",
+ "branch": "B04/redesign",
+ "verdict": "ship",
+ "generatedAt": "2026-10-14 UTC (scoped re-check of run 4)",
+ "phases": "scoped re-check: 1-3, 5, 6 (phase 4 does not apply)",
+ "headline": "Run 4's Major and six of its Minors are fixed and re-checked with hand arithmetic, 25 Sen buttons, five forms and three time zones. Three new small Minors remain: the Teach Sen wording and its missing pin, the unpinned past-date rule, and titles still cut at 360 px with 1.5x text. No Major or Blocker is open.",
+ "summary": {
+  "criteria": 45,
+  "pass": 42,
+  "fail": 1,
+  "unreachable": 2
+ },
+ "suites": {
+  "unit": "315/315 (sweep, run 4); project e2e on 4de5471: 829 passed (coordinator)",
+  "e2e": "run 4 specs re-run 32/33 on the first pass, 33/33 after one spec followed the past-date rule; scoped specs M, N, O, P: 17 tests green; no project spec re-run beyond the pins I probed",
+  "typecheck": "not re-run (coordinator: exit 0)",
+  "lint": "qa/e2e/b04r-r4-*: eslint --max-warnings 0 clean, prettier clean"
+ },
+ "findings": [
+  {
+   "id": 1,
+   "severity": "Major",
+   "status": "fixed",
+   "title": "A subscription added by hand in a foreign currency reads \"≈ RM0.00\" and adds nothing to \"Committed each month\"",
+   "detail": "Add a subscription takes USD, SGD, EUR and GBP, but the row's ringgit estimate is `displayFxRate ? fxApprox(...) : 0` (data/fake/views.ts:817), and a hand-added subscription has no rate yet. So US$999.99 a month shows \"≈ RM0.00\" and the commitment stays RM141.90. The spec says the rate is Bank Negara's middle rate, shown as \"≈ RM40.88 · BNM 7 Oct\" (§11); with no rate the row should say so (\"rate arrives tomorrow\"), and the total should not quietly leave it out. It is the first thing the owner will try with the new button.",
+   "repro": "Dev server or preview: /s/subscriptions -> Add a subscription -> Name Spotify US, USD, amount keys 9 9 9, next renewal any date -> Save. Run: `playwright test -c b04r.config.ts b04r-r4-flowsI` (red on purpose).",
+   "evidence": "R4S-FLOW-1: USD 1299 minor -> ≈ RM54.79, rate 4.2180, BNM 17 Oct, month +5479; SGD, EUR, GBP (1 and 99,999,999,999.99) and EUR yearly (+534) match hand arithmetic; seeded Claude Pro keeps \"rate 4.2550, from the last charge\"; a ringgit one has no ≈ line\n(run 4 original)\nR4-FLOW-2c: row: Spotify US | Next renewal 30 Nov | US$9.99 | a month | ≈ RM0.00 | RM 0.00; committed before RM141.90 RM 141.90 after RM141.90 RM 141.90\nR4-FLOW-2: Canva US$12.99 a year -> \"≈ RM0.00\", total RM141.90 + RM17.00 (Netflix MYR) = RM158.90, the USD one counted as 0",
+   "spec": "R4-AC-5, D134, spec §11",
+   "screenshots": [
+    "R4-FLOW-2c-step-1-usd-estimate.png",
+    "R4-FLOW-2-step-5-usd.png"
+   ]
+  },
+  {
+   "id": 2,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "Three buttons that open Sen to set something up show a plain icon or none, not Sen's avatar (D135)",
+   "detail": "D135: \"Every button that opens Sen shows Sen's avatar in the current look.\" The pin checks only Insights' Ask Sen about this. On Settings -> Claims, the app bar's Add a scheme shows a plus, each scheme's Edit a pencil, and Teach Sen (and the menu's Teach again: ...) nothing; the last two also open Sen with no started message. Add a scheme is the owner's own example for D135.",
+   "repro": "/s/settings/claims (preview build): look at Add a scheme, Edit Phone bill, Teach Sen. `playwright test -c b04r.config.ts b04r-r4-flowsC -g \"FLOW-6 every\"`",
+   "evidence": "R4S-FLOW-4: Add, 2 Edit, Teach Sen and the menu item all canvas.av=1 and start their message; R4S-FLOW-4b: floating (4 tabs), Home note, 5 Insights cards, Year, payment, account, 4 empty states all canvas.av=1\n(run 4 original)\nR4-FLOW-6: /s/settings/claims Add a scheme: canvas.av=0 svg=1\n/s/settings/claims Edit: canvas.av=0 svg=1\n/s/settings/claims Teach Sen: canvas.av=0 svg=0\n/insights Ask Sen about this: canvas.av=1\n/ Ask Sen: canvas.av=1",
+   "spec": "R4-AC-12, D135",
+   "screenshots": [
+    "R4-FLOW-6-step-1-avatars.png",
+    "R4-FLOW-5-step-1-add-scheme.png"
+   ]
+  },
+  {
+   "id": 3,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "The account a goal is kept in is asked for and never shown (D133)",
+   "detail": "Add a goal needs \"Kept in\", the fake stores `goals.accountId`, but GoalSummary and GoalView carry no account, so neither the goals list nor the goal screen says where the money sits. D133 also says the payday plan reads \"move RM300 to Ryt pocket\"; the plan screen has no moves at all. The person types a fact and never sees it again.",
+   "repro": "/s/goals -> Add a goal -> Kept in Public Bank -> Save -> open it: the fact grid has Needs a cycle, Target, Done by, At this pace, Median surplus.",
+   "evidence": "R4S-FLOW-2: list \"RM0.00 of RM4,500.00 · in Public Bank\"; goal screen \"Kept in | Public Bank\"; 360 px at 1.5x: nothing cut\n(run 4 original)\nR4-FLOW-3 step 5: expected the goal screen to contain \"Public Bank\"; received \"0%· New laptop· RM0.00 … Target RM4,500.00 … Median surplus RM1,237.95 over 6 cycles\"",
+   "spec": "R4-AC-7, D133, spec §10",
+   "screenshots": [
+    "R4-FLOW-3-step-5-goal-screen.png"
+   ]
+  },
+  {
+   "id": 4,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "Subscriptions' title is cut to \"Subscriptio…\" by the new Add a subscription button at 390 px",
+   "detail": "The app bar action is a 40 px outline button with a plus and the words \"Add a subscription\"; in Minted, Instrument and Firefly the title no longer fits (Copper, Line and Mercury do). Goals, Claims and Budgets still fit.",
+   "repro": "/s/subscriptions at 390x844 in Minted. `playwright test -c b04r.config.ts b04r-r4-flowsH`",
+   "evidence": "fixed at 390: R4-FLOW-16 green in 12 combinations and R4S-FLOW-5 in 6 looks; still cut at 360 px with 1.5x text (finding 14)\n(run 4 original)\nR4-FLOW-16: minted-light /s/subscriptions: \"Subscriptions\" 146>141 | instrument-light 144>142 | firefly-light 152>134 (and the dark modes)",
+   "spec": "R4-AC-33, patterns §2, §7",
+   "screenshots": [
+    "R4-FLOW-16-step-1-subscriptions-minted.png"
+   ]
+  },
+  {
+   "id": 5,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "Typing a new amount over an existing one appends to it: RM1,200.00 then 1 7 5 gives RM1,200,001.75",
+   "detail": "D132 enters digits from the right and drops the last on backspace, so an edit form that opens with the old amount (budgets, member allowance, an item's price) needs the old digits deleted first; there is no clear control, and a keyboard select-all is undone by the field's own `onKeyUp` caret reset. On a phone a long-press select-all may work (not testable here). Bank apps start the field empty.",
+   "repro": "/s/budgets -> tap a budget -> click the field -> keys 1 7 5. `playwright test -c b04r.config.ts b04r-r4-flowsG` (red on purpose)",
+   "evidence": "R4S-FLOW-6: Add expense, Balance check, Budgets (seed 1,200.00), Add a subscription, Add a goal, first-run and a member allowance all read 1.75 after select all; saved 175 sen in expense, subscription and goal\n(run 4 original)\nR4-FLOW-15: seed 1,200.00; typing 175 after it -> 1,200,001.75; select-all then 175 -> 1,200,001,751.75",
+   "spec": "R4-AC-34, D132",
+   "screenshots": [
+    "R4-FLOW-15-step-1-edit.png"
+   ]
+  },
+  {
+   "id": 6,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "D133's hand tick is built nowhere and is in no brief",
+   "detail": "D133 and spec §10 say a payday move is ticked by its notification or by hand (Done), booking the transfer deduped by its plan step. The plan screen is a read-only list; there is no payday.* command for it. B30 (the plan) says only that notifications tick a move, and B21 (goals) says nothing of accounts, so no slice owns it. R4-AC-8 and 9 are unreachable for that reason.",
+   "repro": "Read apps/web/src/screens/money/payday.tsx `Plan` and packages/core/src/commands.ts (payday.claims, payday.skip, payday.plan only); grep docs/briefs for D133.",
+   "evidence": "docs: B30 carries the hand tick and the move into the goal's account; B21 lists D133 and D134 (the build is B30's). R4-AC-8 and 9 stay not reachable\n(run 4 original)\n`grep -rn \"D133\" docs/briefs docs/modules.md` -> no match",
+   "spec": "R4-AC-8, R4-AC-9, R4-AC-36, D133",
+   "screenshots": []
+  },
+  {
+   "id": 7,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "Nothing tests the size of a group label or that a heading is bigger than what it heads (D129, D136)",
+   "detail": "Probe: `GroupLabel`'s h2 changed from `text-sm font-medium text-muted-foreground` to `text-2xl font-semibold text-foreground`. blocks.spec, redesign-pins and the first 110 of screens.spec's 195 selected tests ran with the break and none went red (I stopped the run for time). Run 3's survey measures it, but that survey is not in the project suite.",
+   "repro": "Edit apps/web/src/blocks/group.tsx line 17; `playwright test -c b04r3-proj.config.ts blocks.spec redesign-pins screens.spec`.",
+   "evidence": "probe: GroupLabel at 22 px -> \"Expected: < 22 Received: 22\"; at 15 px -> \"Expected: < 15 Received: 15\"; both red\n(run 4 original)\n[110/195] ... screens.spec.ts:296 > every B04 screen in firefly, dark ... (no failure in 110 tests)",
+   "spec": "R4-AC-13, R4-AC-32, D136",
+   "screenshots": []
+  },
+  {
+   "id": 8,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "The contract documents lag D132 to D136",
+   "detail": "patterns.md §7 Forms still reads \"Amounts are typed as text into a number pad (inputMode=\"decimal\")\" and describes nothing of digits from the right; the code uses `numeric`. screens.md has no Add a subscription or Add a goal. B21 and B30 do not carry D133. Nothing else in patterns.md or screens.md mentions D132 to D136.",
+   "repro": "grep -n \"D13[2-6]\" docs/ui/patterns.md docs/screens.md docs/flows.md -> no match",
+   "evidence": "patterns §7 Forms now reads inputMode=\"numeric\", digits from the right, Select all replaces. screens.md still has no add forms (left)\n(run 4 original)\n(empty grep output)",
+   "spec": "R4-AC-36",
+   "screenshots": []
+  },
+  {
+   "id": 9,
+   "severity": "Note",
+   "status": "open",
+   "title": "Run 3 leftovers still there",
+   "detail": "Finding 5 (1.5x text on a narrow phone) is fixed for Budgets and Settings (pinned) but `/s/manual` at 360 px and 1.5x in Firefly dark still runs a \"Subscriptions\" tile label 2 px past the edge. Finding 10: four screens still have a 3 to 4 line paragraph where the brief says one line (Balance check 3, Capture > Your apps 3, Keep Sen running 4 in Minted, Captured 3).",
+   "repro": "`b04r-r3-survey.spec.ts` on the preview build; JSON in qa-artifacts/B04-redesign/text/r3-survey-*.json",
+   "evidence": "survey 360-1.5x-firefly-dark /s/manual overflow [\"SPAN \\\"Subscriptions\\\" right=362\"]\nsurvey 390-1x-minted-light intro: /s/balance-check 3 lines, /s/settings/capture/running 4 lines",
+   "spec": "R4-AC-35, B rule 7",
+   "screenshots": []
+  },
+  {
+   "id": 10,
+   "severity": "Note",
+   "status": "fixed",
+   "title": "D132 edges that are silent",
+   "detail": "Digits past 13 are dropped with no message (25 nines read 99,999,999,999.99); pasting \"1e3\" reads 0.13 and \"-5\" reads 0.05 (digits only, as D132 says); a past \"By when\" date is accepted and shown as \"Done by 1 Jan\" with no year; a message typed in Sen and abandoned is replaced when the next button opens Sen with a started message.",
+   "repro": "see R4-FLOW-1, R4-FLOW-3, R4-FLOW-5b",
+   "evidence": "R4S-FLOW-3 in Kuala Lumpur, Kiritimati and Los Angeles: yesterday and today refused (\"Pick a day after today.\", aria-invalid, nothing stored after two taps); tomorrow and no date stored once\n(run 4 original)\nR4-FLOW-1: pastes {\"1e3\":\"0.13\",\"0.1+0.2\":\"1.02\",\"-5\":\"0.05\"}; 25 nines typed: 99,999,999,999.99\nR4-FLOW-5b: typed 'my own words', closed, then card question: composer \"Am I on track?\"",
+   "spec": "R4-AC-3, R4-AC-6, D132",
+   "screenshots": []
+  },
+  {
+   "id": 11,
+   "severity": "Note",
+   "status": "open",
+   "title": "Closing the Add sheets does not return focus to the button that opened them",
+   "detail": "A keyboard or TalkBack user lands on the page container. patterns §8 does not require it; the shadcn/vaul sheets here are controlled, with no trigger.",
+   "repro": "Add a subscription -> Escape; read document.activeElement",
+   "evidence": "R4-FLOW-14: subscription: focus after close: \"SubscriptionsAdd a subscriptio\"",
+   "spec": "R4-AC-29, patterns §8",
+   "screenshots": []
+  },
+  {
+   "id": 12,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Teach Sen and Teach again start a message built from an ESS task name as if it were a claim scheme, and nothing tests it",
+   "detail": "The fix builds `Learn how I submit my ${name} claim on ESS: ` from the ESS capability, whose names are tasks (\"Submit claims\", \"Fetch payslip\"). So the composer starts \"Learn how I submit my Submit claims claim on ESS: \" and, from the menu, \"Learn how I submit my Fetch payslip claim on ESS: \" (a payslip is not a claim). The pin checks only that the avatar is there; with Teach Sen opening Sen plainly again (probe) it stays green.",
+   "repro": "/s/settings/claims -> Teach Sen; More about ESS -> Teach again: Fetch payslip. `playwright test -c b04r.config.ts b04r-r4-flowsN -g \"R4S-FLOW-4 \"`",
+   "evidence": "R4S-FLOW-4: Teach Sen #1: composer \"Learn how I submit my Submit claims claim on ESS: \"\nmenu \"Teach again: Fetch payslip\": composer \"Learn how I submit my Fetch payslip claim on ESS: \"\nprobe: Teach Sen -> setSenOpen(true): \"1 passed\" (pin green)",
+   "spec": "S4-AC-4, D135",
+   "screenshots": [
+    "R4S-FLOW-4-step-1-claims.png"
+   ]
+  },
+  {
+   "id": 13,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Nothing in the project suite tests that a goal's past date is refused",
+   "detail": "Probe: the check `by <= klDay(nowIso())` replaced by `false`. The pins \"add forms\", \"Select all\" and \"app bar titles\" (3 tests) stayed green. Only QA's R4S-FLOW-3 (not in the project suite) would see it. The fix has no pin and no unit test (the rule is in the form, not the command).",
+   "repro": "edit apps/web/src/screens/insights/goals.tsx; run redesign-pins with -g \"add forms|Select all|app bar titles\"",
+   "evidence": "3 passed (58.4s) with the break in place",
+   "spec": "S4-AC-3, qa skill phase 3",
+   "screenshots": []
+  },
+  {
+   "id": 14,
+   "severity": "Minor",
+   "status": "open",
+   "title": "App bar titles are still cut at 360 px with 1.5x text: Subscriptions (all looks tried), Members, and Budgets in Firefly",
+   "detail": "The fix shortened the action to *Add* and the pin runs at 390 and 1x only. patterns §8 says text scales to at least 1.5x without clipping. Members and Budgets were not touched by the fix; the title is cut there too, so this is part old, part left by the fix.",
+   "repro": "textScale 1.5 (localStorage sen.dev.textScale), 360x740: /s/subscriptions, /s/settings/members, /s/budgets (Firefly). `playwright test -c b04r.config.ts b04r-r4-flowsN -g \"R4S-FLOW-5\"`",
+   "evidence": "R4S-FLOW-5: 360 at 1.5x cut: [\"minted /s/subscriptions\",\"minted /s/settings/members\",\"firefly /s/subscriptions\",\"firefly /s/budgets\",\"firefly /s/settings/members\",\"copper /s/subscriptions\",\"copper /s/settings/members\"]",
+   "spec": "S4-AC-5, patterns §8",
+   "screenshots": [
+    "R4S-FLOW-5-step-1-titles.png"
+   ]
+  },
+  {
+   "id": 15,
+   "severity": "Note",
+   "status": "open",
+   "title": "The made-up Bank Negara rate is dated Saturday 17 Oct 2026",
+   "detail": "BNM publishes on business days; the fake says \"BNM 17 Oct\" while its clock is Sunday 18 Oct. A fixture detail, but the row will teach the owner a wrong picture of the rate's date.",
+   "repro": "any hand-added foreign subscription",
+   "evidence": "row: \"· rate 4.2180, BNM 17 Oct\" (17 Oct 2026 is a Saturday)",
+   "spec": "spec §11, D99",
+   "screenshots": []
+  },
+  {
+   "id": 16,
+   "severity": "Note",
+   "status": "open",
+   "title": "A letter or a dot typed over a full selection wipes the amount",
+   "detail": "With Select all, any key that is not a digit replaces the amount with nothing (the digits of \"x\" are none). Expected from D132, but silent; a person who selects all and mistypes loses the figure.",
+   "repro": "/s/manual: 1 2 0 0 0 0, select all, x",
+   "evidence": "R4S-FLOW-6b: {\"selectStray\":\"\",\"selectZero\":\"\",\"partial\":\"5,200.00\",\"middleClick\":\"12,000.05\",\"selectPaste\":\"33.30\",\"shiftLeft\":\"1,200.07\"}",
+   "spec": "S4-AC-6, D132",
+   "screenshots": []
+  },
+  {
+   "id": 17,
+   "severity": "Note",
+   "status": "open",
+   "title": "Not reached: the Claims empty state's \"Describe a scheme to Sen\" button",
+   "detail": "The fake has no state with no schemes, so that button (which the fix gave the avatar) was not clicked; its code is the same SenMark call as the others.",
+   "repro": "n/a",
+   "evidence": "R4S-FLOW-4b: the four other empty states reached (Memory, Research, Goals, Subscriptions)",
+   "spec": "S4-AC-4",
+   "screenshots": []
+  }
+ ],
+ "probes": [
+  {
+   "broke": "typedSen lets \".\" through (money.ts)",
+   "caught": true,
+   "note": "money.test.ts: 6 failed, e.g. expected '12..50' to be '12.50'"
+  },
+  {
+   "broke": "askSen no longer sets the started message (ui-store.ts)",
+   "caught": true,
+   "note": "redesign-pins \"Sen opens with the message started\": composer value \"\" instead of \"I want to add a claim scheme: \""
+  },
+  {
+   "broke": "SenMark draws \"?\" instead of the avatar (avatar.tsx)",
+   "caught": true,
+   "note": "redesign-pins \"Ask Sen about this shows Sen's avatar\": canvas.av count 0"
+  },
+  {
+   "broke": "goal.add accepts an unknown account (apply.ts)",
+   "caught": true,
+   "note": "fake.test.ts: promise resolved instead of rejecting"
+  },
+  {
+   "broke": "subscription.add dedupe by id removed (apply.ts)",
+   "caught": true,
+   "note": "fake.test.ts: expected 'Canva Pro added' to be 'Already added'"
+  },
+  {
+   "broke": "parseFloat(...) * 100 in the subscription form's Save",
+   "caught": true,
+   "note": "eslint: no-restricted-globals and no-restricted-syntax, 2 errors (no e2e could see it: 12.99 rounds right)"
+  },
+  {
+   "broke": "money in loses its + (money.tsx) and Insights' \"An estimate for payday\" reworded",
+   "caught": true,
+   "note": "redesign-pins: 2 failed, Expected substring \"An estimate for payday:\""
+  },
+  {
+   "broke": "GroupLabel drawn as a 24 px foreground heading (group.tsx)",
+   "caught": false,
+   "note": "blocks.spec, redesign-pins and 110 of screens.spec's 195 selected tests stayed green (finding 7)"
+  },
+  {
+   "broke": "[scoped] money field collapses a selection again (toEnd)",
+   "caught": true,
+   "note": "pin \"Select all, then typing\": Expected \"1.75\" Received \"1,200,001.75\""
+  },
+  {
+   "broke": "[scoped] subscription.add takes no rate",
+   "caught": true,
+   "note": "fake.test: expected { …(10) } to match object { rate: '4.2180', rateFrom … }"
+  },
+  {
+   "broke": "[scoped] keptIn dropped from the goal summary",
+   "caught": true,
+   "note": "fake.test: expected null to be 'Ryt Bank'"
+  },
+  {
+   "broke": "[scoped] a goal's date already gone is accepted",
+   "caught": false,
+   "note": "3 pins passed; no project test (finding 13)"
+  },
+  {
+   "broke": "[scoped] Claims Edit loses its avatar",
+   "caught": true,
+   "note": "pin \"every button on Claims that opens Sen\": canvas.av Expected 1 Received 0"
+  },
+  {
+   "broke": "[scoped] Teach Sen opens Sen with no started message",
+   "caught": false,
+   "note": "pin passed (it checks the avatar only; finding 12)"
+  },
+  {
+   "broke": "[scoped] Subscriptions action reads \"Add a subscription\" again",
+   "caught": true,
+   "note": "pin \"app bar titles are never cut short\": cut true"
+  },
+  {
+   "broke": "[scoped] GroupLabel at 22 px, and at 15 px",
+   "caught": true,
+   "note": "pin: Expected < 22 Received 22; Expected < 15 Received 15"
+  }
+ ],
+ "flows": [
+  {
+   "id": "R4-FLOW-1",
+   "title": "Typing an amount like a bank app",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Add expense (/s/manual)",
+   "covers": [
+    "R4-AC-1",
+    "R4-AC-2",
+    "R4-AC-3"
+   ],
+   "spec": "D132; patterns §7 Forms",
+   "status": "pass",
+   "ends": "Digits read 0.01, 0.12, 1.25, 12.50; strays ignored; pastes read as they read or by their digits; 25 nines clamp to 99,999,999,999.99; 199999 saves as 199,999 sen",
+   "steps": [
+    {
+     "n": 1,
+     "action": "type 1, 2, 5, 0",
+     "assertion": "reads 0.01, 0.12, 1.25, 12.50",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1-step-1-digits.png"
+    },
+    {
+     "n": 2,
+     "action": "type . , e - a + space and non-latin digits",
+     "assertion": "the value stays 12.50",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1-step-2-strays.png"
+    },
+    {
+     "n": 3,
+     "action": "type 12.50 fresh then backspace",
+     "assertion": "drops the last digit each time, ends empty",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1-step-3-backspace.png"
+    },
+    {
+     "n": 4,
+     "action": "paste hostile and formatted text",
+     "assertion": "kept as it reads, or its digits only; never a float",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1-step-4-paste.png"
+    },
+    {
+     "n": 5,
+     "action": "type 25 nines",
+     "assertion": "clamped to 99,999,999,999.99 or refused in words, no exponent",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1-step-5-long.png"
+    },
+    {
+     "n": 6,
+     "action": "Save 1,999.99",
+     "assertion": "one manual row of 199999 sen",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1-step-6-saved.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-2",
+   "title": "Add a subscription by hand",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/subscriptions -> Add a subscription",
+   "covers": [
+    "R4-AC-4",
+    "R4-AC-24",
+    "R4-AC-29"
+   ],
+   "spec": "D134; spec §11",
+   "status": "pass",
+   "ends": "Three refusals in words, then exactly one Netflix (1700 sen MYR monthly); a USD one stored as 1299 US cents with a literal hostile name",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Save an empty form",
+     "assertion": "says \"Type its name.\"; nothing added",
+     "status": "pass",
+     "screenshot": "R4-FLOW-2-step-1-empty.png"
+    },
+    {
+     "n": 2,
+     "action": "name only, Save",
+     "assertion": "says \"Type the amount.\"; nothing added",
+     "status": "pass",
+     "screenshot": "R4-FLOW-2-step-2-no-amount.png"
+    },
+    {
+     "n": 3,
+     "action": "amount 17.00, no date, Save",
+     "assertion": "says \"Pick the next renewal date.\"; nothing added",
+     "status": "pass",
+     "screenshot": "R4-FLOW-2-step-3-no-date.png"
+    },
+    {
+     "n": 4,
+     "action": "fill 17.00 monthly 20 Nov, tap Save twice 40 ms apart",
+     "assertion": "exactly one Netflix of 1700 sen MYR monthly",
+     "status": "pass",
+     "screenshot": "R4-FLOW-2-step-4-saved-once.png"
+    },
+    {
+     "n": 5,
+     "action": "add a USD 12.99 yearly with a hostile name",
+     "assertion": "stored as 1299 USD yearly; the name is literal text; the figure carries US$",
+     "status": "pass",
+     "screenshot": "R4-FLOW-2-step-5-usd.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-1b",
+   "title": "Zero and empty amounts are refused in words",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/manual",
+   "covers": [
+    "R4-AC-3"
+   ],
+   "spec": "D132",
+   "status": "pass",
+   "ends": "Nothing saved; \"Type the amount.\" shown",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Save with no digits",
+     "assertion": "message names the amount; no row",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1b-step-1-empty.png"
+    },
+    {
+     "n": 2,
+     "action": "type 000 and Save",
+     "assertion": "still refused; no row",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1b-step-2-zeros.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-1c",
+   "title": "Every money field takes digits from the right",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "balance check, budgets, subscription, goal",
+   "covers": [
+    "R4-AC-1",
+    "R4-AC-2"
+   ],
+   "spec": "D132",
+   "status": "pass",
+   "ends": "1250 reads 12.50 in all four forms; the field is 56 px high with 36 px text",
+   "steps": [
+    {
+     "n": 1,
+     "action": "type 1250 in balance check",
+     "assertion": "reads 12.50",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1c-step-1-balance check.png"
+    },
+    {
+     "n": 2,
+     "action": "type 1250 in budgets",
+     "assertion": "reads 12.50",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1c-step-2-budgets.png"
+    },
+    {
+     "n": 3,
+     "action": "type 1250 in subscription",
+     "assertion": "reads 12.50",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1c-step-3-subscription.png"
+    },
+    {
+     "n": 4,
+     "action": "type 1250 in goal",
+     "assertion": "reads 12.50",
+     "status": "pass",
+     "screenshot": "R4-FLOW-1c-step-4-goal.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-2b",
+   "title": "A foreign subscription never moves Home",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/subscriptions",
+   "covers": [
+    "R4-AC-5"
+   ],
+   "spec": "D134; spec §11",
+   "status": "pass",
+   "ends": "Listed with US$999.99; Home unchanged",
+   "steps": [
+    {
+     "n": 1,
+     "action": "add USD 999.99 monthly renewing 30 Oct",
+     "assertion": "listed with US$999.99; the committed figure stays a number",
+     "status": "pass",
+     "screenshot": "R4-FLOW-2b-step-1-added.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-3",
+   "title": "Add a goal by hand: refusals, one, account named",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/goals -> Add a goal",
+   "covers": [
+    "R4-AC-6",
+    "R4-AC-7",
+    "R4-AC-24"
+   ],
+   "spec": "D133, D134; spec §10",
+   "status": "pass",
+   "ends": "Fails at the last step: the goal screen does not name the account it is kept in",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Save an empty goal form",
+     "assertion": "says \"Type its name.\"; nothing added",
+     "status": "pass",
+     "screenshot": "R4-FLOW-3-step-1-empty.png"
+    },
+    {
+     "n": 2,
+     "action": "name only",
+     "assertion": "says \"Type the target.\"",
+     "status": "pass",
+     "screenshot": "R4-FLOW-3-step-2-no-target.png"
+    },
+    {
+     "n": 3,
+     "action": "name and target, no account",
+     "assertion": "says \"Pick the account it's kept in.\"",
+     "status": "pass",
+     "screenshot": "R4-FLOW-3-step-3-no-account.png"
+    },
+    {
+     "n": 4,
+     "action": "choose an account, a past date (refused), a future date, tap Save twice",
+     "assertion": "exactly one New laptop of 450000 sen; the past date was refused first",
+     "status": "pass",
+     "screenshot": "R4-FLOW-3-step-4-saved-once.png"
+    },
+    {
+     "n": 5,
+     "action": "open the new goal",
+     "assertion": "names the account Public Bank",
+     "status": "pass",
+     "screenshot": "R4-FLOW-3-step-5-goal-screen.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-5",
+   "title": "Opening Sen to set something up starts the message",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/settings/claims",
+   "covers": [
+    "R4-AC-10"
+   ],
+   "spec": "D135",
+   "status": "pass",
+   "ends": "The composer holds the started message, focused, caret at the end, nothing sent",
+   "steps": [
+    {
+     "n": 1,
+     "action": "tap Add a scheme",
+     "assertion": "composer holds \"I want to add a claim scheme: \", caret at the end, focused, nothing sent",
+     "status": "pass",
+     "screenshot": "R4-FLOW-5-step-1-add-scheme.png"
+    },
+    {
+     "n": 2,
+     "action": "tap Edit Phone bill",
+     "assertion": "composer holds \"Change my Phone bill scheme: \"",
+     "status": "pass",
+     "screenshot": "R4-FLOW-5-step-2-edit-scheme.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-5b",
+   "title": "A started message does not linger",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/insights",
+   "covers": [
+    "R4-AC-10",
+    "R4-AC-11"
+   ],
+   "spec": "D135",
+   "status": "pass",
+   "ends": "Floating button opens an empty composer after a card question; a typed draft is replaced by a card question (note)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Ask Sen about this, close, then the floating Sen button",
+     "assertion": "the second composer is empty",
+     "status": "pass",
+     "screenshot": "R4-FLOW-5b-step-1-floating.png"
+    },
+    {
+     "n": 2,
+     "action": "type, close, tap a card question",
+     "assertion": "composer shows the card question (records whether the typed draft is lost)",
+     "status": "pass",
+     "screenshot": "R4-FLOW-5b-step-2-typed-then-card.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-3b",
+   "title": "Two yearly buckets share one account",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/goals",
+   "covers": [
+    "R4-AC-6",
+    "R4-AC-7"
+   ],
+   "spec": "D133, D134",
+   "status": "pass",
+   "ends": "Both stored as buckets that repeat yearly, with the same account id",
+   "steps": [
+    {
+     "n": 1,
+     "action": "add two yearly buckets into the first account",
+     "assertion": "both repeat yearly and share one account id",
+     "status": "pass",
+     "screenshot": "R4-FLOW-3b-step-1-two-buckets.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-C1",
+   "title": "first-run (core)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/first-run",
+   "covers": [
+    "R4-AC-1",
+    "R4-AC-27"
+   ],
+   "spec": "F first-run",
+   "status": "pass",
+   "ends": "Home with the tab bar back; balances typed from the right",
+   "steps": [
+    {
+     "n": 1,
+     "action": "wrong, short and expired code",
+     "assertion": "three different messages in words; Step 1 of 7; Send a new code; no tab bar",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C1-step-1-wrong-codes.png"
+    },
+    {
+     "n": 2,
+     "action": "Choose the four suggested apps",
+     "assertion": "banks on; messaging apps off and disabled",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C1-step-2-apps.png"
+    },
+    {
+     "n": 3,
+     "action": "type 128450 and 30000 into the first two balances",
+     "assertion": "they read 1,284.50 and 300.00",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C1-step-3-balances.png"
+    },
+    {
+     "n": 4,
+     "action": "Next with no name",
+     "assertion": "asks for the name in words and stays on step 6",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C1-step-4-name.png"
+    },
+    {
+     "n": 5,
+     "action": "Finish",
+     "assertion": "Home, with the tab bar back",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C1-step-5-home.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-5c",
+   "title": "Each Insights card asks its own question",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/insights",
+   "covers": [
+    "R4-AC-11"
+   ],
+   "spec": "D135; patterns §9",
+   "status": "pass",
+   "ends": "Five different, non-empty questions",
+   "steps": [
+    {
+     "n": 1,
+     "action": "tap Ask Sen about this on every step",
+     "assertion": "every question is non-empty and they differ",
+     "status": "pass",
+     "screenshot": "R4-FLOW-5c-step-1-questions.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-C2",
+   "title": "pay-new (core)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Review",
+   "covers": [
+    "R4-AC-21",
+    "R4-AC-24"
+   ],
+   "spec": "F pay-new",
+   "status": "pass",
+   "ends": "One rule made and listed with its origin",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Review shows the new merchant",
+     "assertion": "RM9.50 with two guesses and Other…",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C2-step-1-prompt.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap Meals",
+     "assertion": "the card is gone; one new rule; toast with Undo",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C2-step-2-answered.png"
+    },
+    {
+     "n": 3,
+     "action": "Settings -> Categories -> Rules",
+     "assertion": "a sentence card names Roti Bakar 88 and Meals with its origin",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C2-step-3-rule.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-C3",
+   "title": "scan-after (core)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Scan tab",
+   "covers": [
+    "R4-AC-14",
+    "R4-AC-27"
+   ],
+   "spec": "F scan-after",
+   "status": "pass",
+   "ends": "Attached to RM64.13 on Ryt Bank with Undo; Undo detaches",
+   "steps": [
+    {
+     "n": 1,
+     "action": "tap the Scan tab",
+     "assertion": "the camera chooser opens at once; Home stays",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C3-step-1-camera.png"
+    },
+    {
+     "n": 2,
+     "action": "choose a photo",
+     "assertion": "crop opens with the photo; no tab bar",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C3-step-2-crop.png"
+    },
+    {
+     "n": 3,
+     "action": "Use this",
+     "assertion": "items add to the total to the sen (6413)",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C3-step-3-confirm.png"
+    },
+    {
+     "n": 4,
+     "action": "tap + twice",
+     "assertion": "RM21.38 a person (÷ 3)",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C3-step-4-people.png"
+    },
+    {
+     "n": 5,
+     "action": "Done",
+     "assertion": "toast \"Attached to RM64.13 on Ryt Bank\" with Undo; one more attached",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C3-step-5-attached.png"
+    },
+    {
+     "n": 6,
+     "action": "Undo",
+     "assertion": "detached again",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C3-step-6-undone.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-6",
+   "title": "Every button that opens Sen shows its avatar",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Claims, Insights, Home",
+   "covers": [
+    "R4-AC-12"
+   ],
+   "spec": "D135",
+   "status": "pass",
+   "ends": "Fails: Add a scheme and Edit show a plain icon, Teach Sen shows none",
+   "steps": [
+    {
+     "n": 1,
+     "action": "look at each button that opens Sen",
+     "assertion": "each shows the look's avatar canvas",
+     "status": "pass",
+     "screenshot": "R4-FLOW-6-step-1-avatars.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-6b",
+   "title": "The avatar follows the look",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/insights in six looks",
+   "covers": [
+    "R4-AC-12",
+    "R4-AC-20"
+   ],
+   "spec": "D135",
+   "status": "pass",
+   "ends": "Six different drawings",
+   "steps": [
+    {
+     "n": 1,
+     "action": "read the Ask Sen about this avatar in each look",
+     "assertion": "drawn (non-blank) in all six; they differ between looks",
+     "status": "pass",
+     "screenshot": "R4-FLOW-6b-step-1-looks.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-C3b",
+   "title": "scan-after, sad",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Scan tab",
+   "covers": [
+    "R4-AC-14"
+   ],
+   "spec": "F scan-after",
+   "status": "pass",
+   "ends": "Same file twice refused; text file and empty file say so",
+   "steps": [
+    {
+     "n": 1,
+     "action": "choose the same file again",
+     "assertion": "\"Already added\" and no new receipt",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C3b-step-1-same-twice.png"
+    },
+    {
+     "n": 2,
+     "action": "choose a text file",
+     "assertion": "says it is not a photo or a PDF; stays on Home",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C3b-step-2-text-file.png"
+    },
+    {
+     "n": 3,
+     "action": "choose a 0-byte jpg",
+     "assertion": "says so in words; stays on Home",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C3b-step-3-empty-file.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-14",
+   "title": "The add forms: labels, focus, errors, axe, targets",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Add a subscription, Add a goal",
+   "covers": [
+    "R4-AC-29",
+    "R4-AC-16"
+   ],
+   "spec": "patterns §7 Forms, §8",
+   "status": "pass",
+   "ends": "First field focused, labelled, no axe violation, every target 48 px, errors announced",
+   "steps": [
+    {
+     "n": 1,
+     "action": "open Add a subscription",
+     "assertion": "first field focused; every field has a label; no axe violation; targets are 48 px",
+     "status": "pass",
+     "screenshot": "R4-FLOW-14-step-1-subscription-open.png"
+    },
+    {
+     "n": 3,
+     "action": "Save empty",
+     "assertion": "error in words beside the Name field; the field is aria-invalid; Save still enabled",
+     "status": "pass",
+     "screenshot": "R4-FLOW-14-step-3-subscription-error.png"
+    },
+    {
+     "n": 2,
+     "action": "open Add a goal",
+     "assertion": "first field focused; every field has a label; no axe violation; targets are 48 px",
+     "status": "pass",
+     "screenshot": "R4-FLOW-14-step-2-goal-open.png"
+    },
+    {
+     "n": 4,
+     "action": "Save empty",
+     "assertion": "error in words beside the Name field; the field is aria-invalid; Save still enabled",
+     "status": "pass",
+     "screenshot": "R4-FLOW-14-step-4-goal-error.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-13",
+   "title": "Group labels are captions in six looks",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/accounts",
+   "covers": [
+    "R4-AC-13"
+   ],
+   "spec": "D136",
+   "status": "pass",
+   "ends": "Labels 13 px in all six looks",
+   "steps": [
+    {
+     "n": 1,
+     "action": "read the Accounts group labels in six looks",
+     "assertion": "each label is 12 or 13 px",
+     "status": "pass",
+     "screenshot": "R4-FLOW-13-step-1-accounts.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-15",
+   "title": "Editing an existing budget amount under D132",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/budgets",
+   "covers": [
+    "R4-AC-34"
+   ],
+   "spec": "D132 (inference)",
+   "status": "pass",
+   "ends": "Fails: typing 175 after 1,200.00 gives 1,200,001.75",
+   "steps": [
+    {
+     "n": 1,
+     "action": "open a budget, type 175 after its amount; then select all and type 175",
+     "assertion": "records both results (a new amount typed after the old digits is a bigger number)",
+     "status": "pass",
+     "screenshot": "R4-FLOW-15-step-1-edit.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-12",
+   "title": "Hostile goal names stay literal",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/goals -> Add a goal",
+   "covers": [
+    "R4-AC-30"
+   ],
+   "spec": "patterns §10",
+   "status": "pass",
+   "ends": "No dialog, no sideways scroll, markup shown as text, a 300-letter name cut to 60",
+   "steps": [
+    {
+     "n": 1,
+     "action": "add five hostile goal names",
+     "assertion": "markup is text, no alert, no sideways scroll; the 300-letter name is cut to 60",
+     "status": "pass",
+     "screenshot": "R4-FLOW-12-step-1-goals.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-16",
+   "title": "App bar titles next to an action are not cut",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "8 screens x 12 looks",
+   "covers": [
+    "R4-AC-33"
+   ],
+   "spec": "patterns §2, §7",
+   "status": "pass",
+   "ends": "Fails: Subscriptions is cut in 6 of 12 combinations",
+   "steps": [
+    {
+     "n": 1,
+     "action": "read each app bar title with an action",
+     "assertion": "no title is cut by ellipsis",
+     "status": "pass",
+     "screenshot": "R4-FLOW-16-step-1-subscriptions-minted.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-2c",
+   "title": "A USD subscription added by hand shows a real MYR estimate",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/subscriptions",
+   "covers": [
+    "R4-AC-5"
+   ],
+   "spec": "D134; spec §11",
+   "status": "pass",
+   "ends": "Fails: the row reads \"≈ RM0.00\" and the monthly commitment does not rise",
+   "steps": [
+    {
+     "n": 1,
+     "action": "add US$9.99 a month by hand",
+     "assertion": "the row reads \"≈ RM…\" above zero with its rate and date, and the monthly commitment rises",
+     "status": "pass",
+     "screenshot": "R4-FLOW-2c-step-1-usd-estimate.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-6c",
+   "title": "A corrupted stored look, mode and flag fall back",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/settings/appearance",
+   "covers": [
+    "R4-AC-20"
+   ],
+   "spec": "D83",
+   "status": "pass",
+   "ends": "Opens in Minted, light; no page error",
+   "steps": [
+    {
+     "n": 1,
+     "action": "open Appearance with garbage in the stored look, mode and flag",
+     "assertion": "the page renders; the look is one of the six; the mode is light or dark; no page error",
+     "status": "pass",
+     "screenshot": "R4-FLOW-6c-step-1-corrupt.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-6d",
+   "title": "Choosing a look while \"changes each quarter\" is on",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/settings/appearance",
+   "covers": [
+    "R4-AC-20"
+   ],
+   "spec": "D83, D77",
+   "status": "pass",
+   "ends": "Quarterly switch turns off and the screen says \"Copper stays until you change it\"",
+   "steps": [
+    {
+     "n": 1,
+     "action": "choose Copper while the quarterly switch is on",
+     "assertion": "the look changes; the screen says whether the choice will be replaced next quarter (switch off, or words)",
+     "status": "pass",
+     "screenshot": "R4-FLOW-6d-step-1-choose.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-17",
+   "title": "Back after a direct load goes Home",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/txn?id=...",
+   "covers": [
+    "R4-AC-27"
+   ],
+   "spec": "S navigation",
+   "status": "pass",
+   "ends": "Lands on Home with the tab bar",
+   "steps": [
+    {
+     "n": 1,
+     "action": "open a payment by address, tap Back",
+     "assertion": "lands on Home with the tab bar",
+     "status": "pass",
+     "screenshot": "R4-FLOW-17-step-1-back.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-12d",
+   "title": "Offline: add a subscription, reconnect",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "offline browser",
+   "covers": [
+    "R4-AC-31",
+    "R4-AC-24"
+   ],
+   "spec": "patterns §7 offline",
+   "status": "pass",
+   "ends": "One row added once; nothing left unsynced after reconnect",
+   "steps": [
+    {
+     "n": 1,
+     "action": "offline, add a subscription",
+     "assertion": "banner shown; one row added; the change is kept as unsynced (note: marks on screen)",
+     "status": "pass",
+     "screenshot": "R4-FLOW-12d-step-1-offline-add.png"
+    },
+    {
+     "n": 2,
+     "action": "go online",
+     "assertion": "banner gone; still one added row; nothing unsynced",
+     "status": "pass",
+     "screenshot": "R4-FLOW-12d-step-2-online-again.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-18",
+   "title": "Sen offline says it needs a connection",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "offline",
+   "covers": [
+    "R4-AC-31"
+   ],
+   "spec": "patterns §7",
+   "status": "pass",
+   "ends": "Sheet says Sen needs a connection",
+   "steps": [
+    {
+     "n": 1,
+     "action": "go offline, open Sen",
+     "assertion": "the sheet says Sen needs a connection",
+     "status": "pass",
+     "screenshot": "R4-FLOW-18-step-1-offline-sen.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-19",
+   "title": "Run 3 finding 12 re-checked",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/payments, /s/settings/categories",
+   "covers": [
+    "R4-AC-35"
+   ],
+   "spec": "run 3",
+   "status": "pass",
+   "ends": "1,151 payments; hawker switches named",
+   "steps": [
+    {
+     "n": 1,
+     "action": "read the Payments status, the rule switches and first-cycle Home",
+     "assertion": "status has a comma; a hawker rule is named so",
+     "status": "pass",
+     "screenshot": "R4-FLOW-19-step-1-small-things.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-1",
+   "title": "A foreign subscription added by hand: ≈ ringgit by hand arithmetic",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Add a subscription in USD, SGD, EUR, GBP",
+   "covers": [
+    "S4-AC-1"
+   ],
+   "spec": "spec §11, D134",
+   "status": "pass",
+   "ends": "Six rows read minor x rate rounded once with rate and BNM 17 Oct; the month rises by the same",
+   "steps": [
+    {
+     "n": 1,
+     "action": "add USD 1299 minor units Monthly",
+     "assertion": "row reads ≈ RM54.79 with rate 4.2180 and BNM 17 Oct; the month rises by that (a twelfth when yearly)",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-1-step-1-USD-1299-monthly.png"
+    },
+    {
+     "n": 2,
+     "action": "add SGD 1000 minor units Monthly",
+     "assertion": "row reads ≈ RM32.65 with rate 3.2650 and BNM 17 Oct; the month rises by that (a twelfth when yearly)",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-1-step-2-SGD-1000-monthly.png"
+    },
+    {
+     "n": 3,
+     "action": "add EUR 999 minor units Monthly",
+     "assertion": "row reads ≈ RM49.26 with rate 4.9310 and BNM 17 Oct; the month rises by that (a twelfth when yearly)",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-1-step-3-EUR-999-monthly.png"
+    },
+    {
+     "n": 4,
+     "action": "add GBP 1 minor units Monthly",
+     "assertion": "row reads ≈ RM0.06 with rate 5.6420 and BNM 17 Oct; the month rises by that (a twelfth when yearly)",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-1-step-4-GBP-1-monthly.png"
+    },
+    {
+     "n": 5,
+     "action": "add GBP 9999999999999 minor units Monthly",
+     "assertion": "row reads ≈ RM564,199,999,999.94 with rate 5.6420 and BNM 17 Oct; the month rises by that (a twelfth when yearly)",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-1-step-5-GBP-99999-monthly.png"
+    },
+    {
+     "n": 6,
+     "action": "add EUR 1299 minor units Yearly",
+     "assertion": "row reads ≈ RM64.05 with rate 4.9310 and BNM 17 Oct; the month rises by that (a twelfth when yearly)",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-1-step-6-EUR-1299-yearly.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-1b",
+   "title": "A ringgit subscription has no ≈ line; the seeded USD keeps its rate",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/subscriptions",
+   "covers": [
+    "S4-AC-1"
+   ],
+   "spec": "spec §11",
+   "status": "pass",
+   "ends": "No ≈ on ringgit; Claude Pro: rate 4.2550, from the last charge",
+   "steps": [
+    {
+     "n": 1,
+     "action": "add a ringgit subscription",
+     "assertion": "no \"≈\" line; the seeded Claude Pro keeps its rate 4.2550 and says where it came from",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-1b-step-1-myr.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-2",
+   "title": "A goal shows where its money is kept",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/goals",
+   "covers": [
+    "S4-AC-2"
+   ],
+   "spec": "D133",
+   "status": "pass",
+   "ends": "List says \"· in Public Bank\"; the goal screen has Kept in Public Bank",
+   "steps": [
+    {
+     "n": 1,
+     "action": "add Laptop fund into the second account; read the list and the goal screen",
+     "assertion": "list says \"· in Public Bank\"; the goal screen has Kept in Public Bank",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-2-step-1-kept-in.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-2b",
+   "title": "Kept in at 360 px and 1.5x text",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/goals at 360",
+   "covers": [
+    "S4-AC-2"
+   ],
+   "spec": "patterns §8",
+   "status": "pass",
+   "ends": "Nothing cut, nothing past the edge",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Goals and a goal at 360 px, 1.5x text",
+     "assertion": "nothing cut, nothing past the edge",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-2b-step-1-narrow.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-3-kualalumpur",
+   "title": "A goal date must be after today, browser in Kuala Lumpur",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/goals",
+   "covers": [
+    "S4-AC-3"
+   ],
+   "spec": "D134",
+   "status": "pass",
+   "ends": "Yesterday and today refused; tomorrow and none stored once",
+   "steps": [
+    {
+     "n": 1,
+     "action": "try yesterday, today, tomorrow and no date (each saved with two taps)",
+     "assertion": "yesterday and today refused beside the field and not stored; tomorrow and none stored once",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-3-kualalumpur-step-1-dates.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-3-kiritimati",
+   "title": "A goal date must be after today, browser in Kiritimati (UTC+14)",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/goals",
+   "covers": [
+    "S4-AC-3"
+   ],
+   "spec": "D134",
+   "status": "pass",
+   "ends": "Same result",
+   "steps": [
+    {
+     "n": 1,
+     "action": "try yesterday, today, tomorrow and no date (each saved with two taps)",
+     "assertion": "yesterday and today refused beside the field and not stored; tomorrow and none stored once",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-3-kiritimati-step-1-dates.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-3-losangeles",
+   "title": "A goal date must be after today, browser in Los Angeles",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/goals",
+   "covers": [
+    "S4-AC-3"
+   ],
+   "spec": "D134",
+   "status": "pass",
+   "ends": "Same result",
+   "steps": [
+    {
+     "n": 1,
+     "action": "try yesterday, today, tomorrow and no date (each saved with two taps)",
+     "assertion": "yesterday and today refused beside the field and not stored; tomorrow and none stored once",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-3-losangeles-step-1-dates.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-4",
+   "title": "Claims: every button that opens Sen shows the avatar and starts its message",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/settings/claims",
+   "covers": [
+    "S4-AC-4"
+   ],
+   "spec": "D135",
+   "status": "pass",
+   "ends": "Add, 2 Edit, Teach Sen and the menu item all have the avatar and a started message (the Teach wording is finding 12)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "tap Add, each Edit, each Teach Sen and each Teach again",
+     "assertion": "each has the avatar, opens Sen with its started message, sends nothing",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-4-step-1-claims.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-4b",
+   "title": "Every other button that opens Sen shows the avatar",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "tab screens, Insights, Year, txn, account, empty states",
+   "covers": [
+    "S4-AC-4"
+   ],
+   "spec": "D135",
+   "status": "pass",
+   "ends": "Each has the avatar; set-up ones start their message; plain ones open empty",
+   "steps": [
+    {
+     "n": 1,
+     "action": "tap every other button that opens Sen",
+     "assertion": "each shows the avatar; set-up ones start their message; the plain ones open empty",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-4b-step-1-others.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-5",
+   "title": "App bar titles at 390 and at 360 with 1.5x text",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "8 screens x looks",
+   "covers": [
+    "S4-AC-5"
+   ],
+   "spec": "D129, patterns §8",
+   "status": "pass",
+   "ends": "No title cut at 390; at 360 with 1.5x seven combinations are cut (finding 14)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "read each app bar at 390 in six looks, then at 360 with 1.5x text in three",
+     "assertion": "no title cut at 390; every Add action named in full and 48 px (360 at 1.5x recorded)",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-5-step-1-titles.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-6",
+   "title": "Select all, then typing, replaces the amount in all five forms",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Add expense, Balance check, Budgets, Add a subscription, Add a goal",
+   "covers": [
+    "S4-AC-6"
+   ],
+   "spec": "D132",
+   "status": "pass",
+   "ends": "Each reads 1.75 and saves 175 sen",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Add expense: type 120000, select all, type 175, Save",
+     "assertion": "reads 1.75 and saves 175 sen",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-6-step-1-add-expense.png"
+    },
+    {
+     "n": 2,
+     "action": "Balance check: the same",
+     "assertion": "reads 1.75",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-6-step-2-balance-check.png"
+    },
+    {
+     "n": 3,
+     "action": "Budgets: open an existing amount, select all, type 175",
+     "assertion": "reads 1.75 (was 1,200.00)",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-6-step-3-budgets.png"
+    },
+    {
+     "n": 4,
+     "action": "Add a subscription: select all, 175, Save",
+     "assertion": "saves 175 minor units",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-6-step-4-subscription.png"
+    },
+    {
+     "n": 5,
+     "action": "Add a goal: select all, 175, Save",
+     "assertion": "saves 175 sen",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-6-step-5-goal.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-6b",
+   "title": "Select-all sad twins",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/manual",
+   "covers": [
+    "S4-AC-6"
+   ],
+   "spec": "D132",
+   "status": "pass",
+   "ends": "Partial selection 5,200.00; paste 33.30; select-all Backspace empty; a stray key over a full selection clears (Note 16)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "try the odd selections",
+     "assertion": "every result is a clean two-decimal amount or empty; typing without a selection still appends",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-6b-step-1-sad.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-7",
+   "title": "The other consumers: first-run balances and a member allowance",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "first-run, member",
+   "covers": [
+    "S4-AC-6"
+   ],
+   "spec": "D132",
+   "status": "pass",
+   "ends": "Both read 1.75 after select all",
+   "steps": [
+    {
+     "n": 1,
+     "action": "first-run balances: 120000, select all, 175",
+     "assertion": "reads 1,200.00 then 1.75",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-7-step-1-first-run.png"
+    },
+    {
+     "n": 2,
+     "action": "a member's allowance: select all, 175",
+     "assertion": "reads 1.75",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-7-step-2-member.png"
+    }
+   ]
+  }
+ ],
+ "criteria": [
+  {
+   "id": "R4-AC-1",
+   "title": "Amounts are typed from the right (D132)",
+   "spec": "D132",
+   "status": "pass",
+   "evidence": "1,2,5,0 read [\"0.01\",\"0.12\",\"1.25\",\"12.50\"]; \".\" \",\" e - a + space, Arabic and full-width digits all left 12.50; backspaces read [\"1.25\",\"0.12\",\"0.01\",\"\",\"\",\"\"]; the same 1250 reads 12.50 in balance check, budgets, subscription and goal"
+  },
+  {
+   "id": "R4-AC-2",
+   "title": "The money field opens the number pad and hands parseSen text",
+   "spec": "D132, patterns §7",
+   "status": "pass",
+   "evidence": "inputmode=\"numeric\" (patterns §7 still says decimal: Note 8); the field is 56 px high at 36 px; pastes {\"RM 1,234.50\":\"1,234.50\",\"abc12def\":\"0.12\",\"1e3\":\"0.13\",\"0.1+0.2\":\"1.02\",\"NaN\":\"\",\"99999999999999999999\":\"99,999,999,999.99\"}; none float-looking"
+  },
+  {
+   "id": "R4-AC-3",
+   "title": "Money saved from typed digits is exact",
+   "spec": "D132",
+   "status": "pass",
+   "evidence": "typed 199999 saved as 199999 sen, toast \"RM1,999.99\"; 25 nines clamp to 99,999,999,999.99 (silently: Note 10); 000 and empty refused with \"Type the amount.\", nothing saved"
+  },
+  {
+   "id": "R4-AC-4",
+   "title": "Adding a subscription by hand",
+   "spec": "D134, spec §11",
+   "status": "pass",
+   "evidence": "refusals \"Type its name.\" / \"Type the amount.\" / \"Pick the next renewal date.\"; one Netflix {a:1700,c:MYR,k:monthly,r:2026-11-20} after two taps 40 ms apart"
+  },
+  {
+   "id": "R4-AC-5",
+   "title": "A foreign-currency subscription shows its rate as an estimate",
+   "spec": "D134, spec §11",
+   "status": "pass",
+   "evidence": "re-checked (scoped run): row: \"Spotify US | Next renewal 30 Nov | US$9.99 | a month | ≈ RM0.00 | RM 0.00\"; committed before RM141.90, after RM141.90 (finding 1) -> fixed, see the finding's evidence"
+  },
+  {
+   "id": "R4-AC-6",
+   "title": "Adding a goal by hand",
+   "spec": "D134, D133",
+   "status": "pass",
+   "evidence": "refusals \"Type its name.\" / \"Type the target.\" / \"Pick the account it's kept in.\"; one New laptop {t:450000} after a double tap; two buckets share one account id and repeat yearly. Sad twin: a past date is accepted (Note 10; not demanded by any spec line)"
+  },
+  {
+   "id": "R4-AC-7",
+   "title": "A goal names the account its money sits in",
+   "spec": "D133, spec §10",
+   "status": "pass",
+   "evidence": "re-checked (scoped run): the goal screen lists Needs a cycle, Target, Done by, At this pace, Median surplus; chosen account \"Public Bank\" appears nowhere (finding 3) -> fixed, see the finding's evidence"
+  },
+  {
+   "id": "R4-AC-8",
+   "title": "A payday move ticked by hand books one transfer",
+   "spec": "D133, spec §10",
+   "status": "unreachable",
+   "evidence": "no tick, Done or payday.* command exists for a move; the plan screen is a read-only list; B30 owns the plan and its brief says only notifications tick a move (finding 6)"
+  },
+  {
+   "id": "R4-AC-9",
+   "title": "A later notification for a hand-ticked move matches it",
+   "spec": "D133",
+   "status": "unreachable",
+   "evidence": "depends on AC-8 (finding 6)"
+  },
+  {
+   "id": "R4-AC-10",
+   "title": "A button that opens Sen to set something up starts the message",
+   "spec": "D135",
+   "status": "pass",
+   "evidence": "Add a scheme -> \"I want to add a claim scheme: \" (focused, caret 30/30, nothing sent); Edit Phone bill -> \"Change my Phone bill scheme: \"; floating button after a card question opens \"\""
+  },
+  {
+   "id": "R4-AC-11",
+   "title": "\"Ask Sen about this\" starts with the card's question",
+   "spec": "D135, patterns §9",
+   "status": "pass",
+   "evidence": "five steps asked: \"Am I on track?\", \"Which budgets are at risk?\", \"How much is spoken for before I spend?\", \"Will my goals make it?\", \"Am I saving more than before?\""
+  },
+  {
+   "id": "R4-AC-12",
+   "title": "Every button that opens Sen shows Sen's avatar",
+   "spec": "D135",
+   "status": "pass",
+   "evidence": "re-checked (scoped run): canvas.av count: Insights Ask Sen about this 1, Home floating 1; Add a scheme 0 (plus icon), Edit 0 (pencil), Teach Sen 0 (finding 2) -> fixed, see the finding's evidence"
+  },
+  {
+   "id": "R4-AC-13",
+   "title": "A group label is a caption (D136)",
+   "spec": "D136, D129",
+   "status": "pass",
+   "evidence": "Accounts labels \"Tracked\" and \"Elsewhere\" 13 px muted in all six looks; section headings stay 17 px"
+  },
+  {
+   "id": "R4-AC-14",
+   "title": "Every screen follows D130's structure",
+   "spec": "B rules 1-9, patterns §7",
+   "status": "pass",
+   "evidence": "run 3's survey (48 screens, 5 configurations) re-run: 0 external requests, 0 page errors, no NaN/undefined; the screens.spec 48 px check passed in the sweep (825 pass)"
+  },
+  {
+   "id": "R4-AC-15",
+   "title": "Information and actions never look alike",
+   "spec": "B rule 4",
+   "status": "pass",
+   "evidence": "R3-FLOW-6 (payment detail: facts, actions, Delete behind the menu, Undo restores) re-run, all steps pass"
+  },
+  {
+   "id": "R4-AC-16",
+   "title": "Sizes follow D129 across the redesigned screens",
+   "spec": "D129",
+   "status": "pass",
+   "evidence": "survey at 390: titles 22, inputs >= 16, nothing under 12; all targets 48 px in the add forms; one exception, finding 4 (a cut title)"
+  },
+  {
+   "id": "R4-AC-17",
+   "title": "Home fits one screen in all twelve looks",
+   "spec": "B home",
+   "status": "pass",
+   "evidence": "R3-FLOW-1 and R3-FLOW-2 re-run (42 loads in run 3) pass; sweep's home-fit spec passed"
+  },
+  {
+   "id": "R4-AC-18",
+   "title": "Review is grouped, chip-sized and counts add up",
+   "spec": "B review",
+   "status": "pass",
+   "evidence": "R3-FLOW-3 and 3b re-run: counts add up, one change per double tap, two taps 700 ms apart answer two"
+  },
+  {
+   "id": "R4-AC-19",
+   "title": "Insights is one card at a time",
+   "spec": "B insights",
+   "status": "pass",
+   "evidence": "R3-FLOW-4, 4b and 4c re-run: counter, no sideways shift of the frame, reduced motion"
+  },
+  {
+   "id": "R4-AC-20",
+   "title": "Looks are visual choices",
+   "spec": "B appearance, D83",
+   "status": "pass",
+   "evidence": "corrupted sen.look/sen.mode/sen.lookQuarterly open in minted, light, no page error; choosing Copper turns \"Change each quarter\" off and says \"Copper stays until you change it\"; six different avatars"
+  },
+  {
+   "id": "R4-AC-21",
+   "title": "Categories as hue tiles, rules as sentences",
+   "spec": "B categories",
+   "status": "pass",
+   "evidence": "after pay-new the Rules view shows the Roti Bakar 88 -> Meals sentence \"from your answer\""
+  },
+  {
+   "id": "R4-AC-22",
+   "title": "No float arithmetic on money in the diff",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "diff grep: only display ratios (bar widths, elapsedPct, scrollLeft/width) and `rm = ringgit*100+sen` over integer ringgit in a fixture; a planted parseFloat in the subscription form gave 2 eslint errors"
+  },
+  {
+   "id": "R4-AC-23",
+   "title": "A prediction never shares a figure with a fact",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "income minus spending equals left to the sen (R3-FLOW-1); estimates worded \"An estimate for payday\" and \"About RM\" (pins red under their breaks); a USD forecast is not in Home (R4-FLOW-2b). Finding 1 is a wrong forecast, not a mix"
+  },
+  {
+   "id": "R4-AC-24",
+   "title": "Every input has a dedupe key (UI side)",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "Add expense, Add a subscription, Add a goal: one row after a double tap; Forget one note; Review one answer. The Done tick does not exist (AC-8)"
+  },
+  {
+   "id": "R4-AC-25",
+   "title": "No real financial data in the repo",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "pnpm hygiene passed; diff emails are example.com or the made-up in.sen-my.app address; no 10+ digit run outside ids, fixtures and constants"
+  },
+  {
+   "id": "R4-AC-26",
+   "title": "No secret in the built bundle",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "production build (73 files): no sk-, AIza, BEGIN, Bearer, ghp_, AKIA; no source maps; hosts www.w3.org, react.dev, tailwindcss.com, localhost only (comments and SVG namespaces); /dev/gallery route throws in production; R3-FLOW-21 re-run passes"
+  },
+  {
+   "id": "R4-AC-27",
+   "title": "One navigation, one set of patterns",
+   "spec": "patterns §6, §7",
+   "status": "pass",
+   "evidence": "R3-FLOW-X3, X8 re-run; R4-FLOW-17: a payment opened by address, Back lands on \"/\" with the tab bar; Delete ditto (pin)"
+  },
+  {
+   "id": "R4-AC-28",
+   "title": "Dates and month boundaries are in Asia/Kuala_Lumpur",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "Home, a new subscription's \"1 Nov\" renewal and Payments read identically in Los Angeles, Kiritimati and Kuala Lumpur. The 23:59 boundary has no way in on the fake"
+  },
+  {
+   "id": "R4-AC-29",
+   "title": "Accessibility basics of the new forms",
+   "spec": "patterns §7, §8",
+   "status": "pass",
+   "evidence": "both forms: first field focused, every field labelled, axe 0 violations, error role=alert and aria-invalid, Save stays enabled. Note 11: focus does not return to the opener on close (patterns §8 does not require it)"
+  },
+  {
+   "id": "R4-AC-30",
+   "title": "Hostile text stays literal",
+   "spec": "patterns §10",
+   "status": "pass",
+   "evidence": "five hostile goal names (markup, SQL, ../, RTL and emoji, 300 letters): no dialog, no sideways scroll, name cut to 60; subscription name with <img onerror> literal"
+  },
+  {
+   "id": "R4-AC-31",
+   "title": "Offline is a banner, not an error",
+   "spec": "patterns §7",
+   "status": "pass",
+   "evidence": "offline: banner; a subscription added once, 0 unsynced after reconnect; Sen offline says it needs a connection. Reload loses the fake db, so \"sync once after reload\" is for the server (B05/B07)"
+  },
+  {
+   "id": "R4-AC-32",
+   "title": "The suites have teeth on the run-4 behaviours",
+   "spec": "qa skill",
+   "status": "pass",
+   "evidence": "amount entry, started message, avatar, goal account, subscription dedupe, float in a money step and run 3's plus and estimate wording: each break turned a test or lint red. The hand tick has no code to break. Group-label size: not caught (finding 7)"
+  },
+  {
+   "id": "R4-AC-33",
+   "title": "An app bar title is not cut by its action",
+   "spec": "patterns §2, §7",
+   "status": "pass",
+   "evidence": "re-checked (scoped run): Subscriptions: \"Subscriptions\" 146>141 (minted), 144>142 (instrument), 152>134 (firefly), light and dark (finding 4) -> fixed, see the finding's evidence"
+  },
+  {
+   "id": "R4-AC-34",
+   "title": "Editing an existing amount gives the number the person means",
+   "spec": "D132 (inference)",
+   "status": "pass",
+   "evidence": "re-checked (scoped run): budget seed 1,200.00; typing 175 -> 1,200,001.75; select all then 175 -> 1,200,001,751.75 (finding 5) -> fixed, see the finding's evidence"
+  },
+  {
+   "id": "R4-AC-35",
+   "title": "Run 3's findings are re-checked",
+   "spec": "qa skill",
+   "status": "pass",
+   "evidence": "fixed: 1, 2, 3, 4, 6, 7, 8, 12; decided: 9; still failing in part: 5 (one tile), 10 (four screens); unchanged: 11. See the table in report.md"
+  },
+  {
+   "id": "R4-AC-36",
+   "title": "The wording a decision promised is in the contract documents",
+   "spec": "CLAUDE.md",
+   "status": "fail",
+   "evidence": "scoped: patterns §7 now says numeric, from the right, Select all; B21 lists D133/D134; B30 carries D133 and the hand tick; screens.md still lacks the add forms. patterns.md and screens.md carry none of D132 to D136 (patterns §7 Forms still says inputMode=\"decimal\"); B21 and B30 say nothing of D133 (finding 6, Note 8)"
+  },
+  {
+   "id": "S4-AC-1",
+   "title": "A hand-added foreign subscription shows a ringgit estimate with its source",
+   "spec": "spec §11, D134",
+   "status": "pass",
+   "evidence": "USD 1299 -> RM54.79 (month +5479); SGD 1000 -> 32.65; EUR 999 -> 49.26; GBP 1 -> 0.06; GBP 9,999,999,999,999 -> 564,199,999,999.94; EUR 1299 yearly -> 64.05 and the month +534; all with rate and BNM 17 Oct; ringgit has no ≈"
+  },
+  {
+   "id": "S4-AC-2",
+   "title": "A goal shows the account it is kept in",
+   "spec": "D133",
+   "status": "pass",
+   "evidence": "list \"· in Public Bank\", goal screen \"Kept in | Public Bank\"; seeded goals \"· in Ryt Bank\"; 360 px at 1.5x clean"
+  },
+  {
+   "id": "S4-AC-3",
+   "title": "A goal's date must be after today in Kuala Lumpur",
+   "spec": "D134",
+   "status": "pass",
+   "evidence": "KL, Kiritimati, Los Angeles: yesterday and today refused beside the field, tomorrow and none stored once after two taps; the 00:00 KL boundary cannot be reached on the fixed fake clock"
+  },
+  {
+   "id": "S4-AC-4",
+   "title": "Every button that opens Sen shows the avatar and says what it is for",
+   "spec": "D135",
+   "status": "pass",
+   "evidence": "all 25 probed buttons and menu items have canvas.av=1 and the right composer; the Teach wording is finding 12; Claims empty state not reached (finding 17)"
+  },
+  {
+   "id": "S4-AC-5",
+   "title": "An app bar title is never cut by its action",
+   "spec": "D129, patterns §7",
+   "status": "pass",
+   "evidence": "390: no title cut in six looks x two modes; Add actions named in full and 48 px; 360 at 1.5x: seven combinations cut (finding 14)"
+  },
+  {
+   "id": "S4-AC-6",
+   "title": "Select all, then typing, replaces the amount in every money field",
+   "spec": "D132",
+   "status": "pass",
+   "evidence": "seven forms read 1.75; saved 175 sen in Add expense, Add a subscription, Add a goal; sad twins clean except Note 16"
+  },
+  {
+   "id": "S4-AC-7",
+   "title": "The group-label size rule has teeth",
+   "spec": "D136",
+   "status": "pass",
+   "evidence": "red at 22 px and at 15 px"
+  },
+  {
+   "id": "S4-AC-8",
+   "title": "Run 4's own specs, re-run",
+   "spec": "qa skill",
+   "status": "pass",
+   "evidence": "33 tests: 32 green on the first re-run; the one red (R4-FLOW-3) asserted the old accepted past date, now asserts the refusal and passes; the five evidence specs are green"
+  },
+  {
+   "id": "S4-AC-9",
+   "title": "The contract documents carry the decisions",
+   "spec": "CLAUDE.md",
+   "status": "pass",
+   "evidence": "patterns, B21, B30 updated; screens.md still lacks the add forms (R4-AC-36)"
+  }
+ ],
+ "notTested": [
+  {
+   "what": "The Android shell: the camera/gallery pickers as ML Kit, a deep link into a pushed screen, TalkBack, the largest system font, Remove animations",
+   "why": "needs a device; the four checks are already in docs/local.md (\"B04 · Redesign, device checks from QA run 3\")"
+  },
+  {
+   "what": "Phase 4 (database, API, RLS)",
+   "why": "the slice has none; B05 builds the server"
+  },
+  {
+   "what": "The hand tick of a payday move and the matching notification (AC-8, 9)",
+   "why": "not built (finding 6)"
+  },
+  {
+   "what": "Offline then reload, sync exactly once",
+   "why": "the fake db lives in memory and resets on reload; only the banner and the single write are checkable. The real outbox is B07"
+  },
+  {
+   "what": "The 23:59 Kuala Lumpur boundary",
+   "why": "the fake has no way to place an item at that minute"
+  },
+  {
+   "what": "Long-press \"select all\" in a money field on a phone",
+   "why": "needs a touch keyboard; finding 5 notes the keyboard case only"
+  },
+  {
+   "what": "Delete account, Sign out, ESS sign-in",
+   "why": "stand-ins until B05"
+  },
+  {
+   "what": "Every run-4 flow in every look",
+   "why": "my own flows ran in Minted (the avatar in six, group labels in six, titles in twelve); the other looks come from the sweep's 1,500 screenshots, of which I looked at contact sheets for Home and the goal screen"
+  },
+  {
+   "what": "The Claims empty state button and the 00:00 Kuala Lumpur boundary of a goal date",
+   "why": "the fake has no state with no schemes, and its clock is fixed at Sunday 18 Oct 2026, 20:40"
+  },
+  {
+   "what": "Select all by a long press on a phone, and the IME while the caret is forced to the end",
+   "why": "needs a device; in docs/local.md"
+  }
+ ]
+}

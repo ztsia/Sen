@@ -95,19 +95,22 @@ export function SenSheet({ from }: { from: string }) {
   );
 }
 
-/** Scan's long-press: Scan · From gallery · Add manually (D69). Stand-ins until B15 and B08. */
-export function ScanMoreSheet() {
+/** Scan's long-press: Scan · From gallery · Add manually (D69). The pickers live in the shell, not the sheet, which closes. */
+export function ScanMoreSheet({ onCamera, onGallery }: { onCamera: () => void; onGallery: () => void }) {
   const { scanMoreOpen, setScanMoreOpen } = useUi();
   const navigate = useNavigate();
   const go = (id: string) => {
+    // a picker opens inside the tap itself, before the sheet closes, or the browser refuses it
+    if (id === 'camera') onCamera();
+    else if (id === 'gallery') onGallery();
     setScanMoreOpen(false);
     // replace the sheet's history step, so back from the next screen returns here, not to the sheet
-    void navigate({ to: id === 'scan' ? '/scan' : '/s/$', params: { _splat: id }, replace: true });
+    if (id === 'manual') void navigate({ to: '/s/$', params: { _splat: id }, replace: true });
   };
   const rows = [
-    { id: 'scan', label: 'Scan', icon: CameraIcon },
-    // Scan's own screen has the gallery picker in a browser (B15 opens ML Kit's import in the shell)
-    { id: 'scan', label: 'From gallery', icon: ImageIcon },
+    { id: 'camera', label: 'Scan', icon: CameraIcon },
+    // B15 opens ML Kit's own import in the shell
+    { id: 'gallery', label: 'From gallery', icon: ImageIcon },
     { id: 'manual', label: 'Add manually', icon: PencilLineIcon },
   ];
   return (

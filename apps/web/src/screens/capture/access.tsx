@@ -1,6 +1,7 @@
 import { BellIcon, BellOffIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ListSkeleton } from '@/blocks/states';
+import { Steps } from '@/blocks/steps';
 import { StatusCard } from '@/blocks/status';
 import { toastDone } from '@/blocks/toast';
 import { SenCapture } from '@/shell/bridge';
@@ -37,22 +38,21 @@ export default function CaptureAccess() {
           </div>
           {s.restrictedSettings && !s.access ? (
             <Section title="If Sen's switch is greyed out">
-              <ol className="flex list-decimal flex-col gap-2 pr-4 pl-9 text-base">
-                <li>Open Sen's app info.</li>
-                <li>
-                  Tap <span aria-label="the menu">⋮</span> at the top right, then{' '}
-                  <strong>Allow restricted settings</strong>, and confirm.
-                </li>
-                <li>Come back and tap Open settings again.</li>
-              </ol>
-              <p className="px-4 pt-2 text-sm text-muted-foreground">
+              <Steps
+                steps={[
+                  {
+                    title: "Open Sen's app info.",
+                    action: { label: "Open Sen's app info", onSelect: () => open(() => SenCapture.openAppInfo()) },
+                  },
+                  {
+                    title: 'Tap the menu (⋮) at the top right, then Allow restricted settings, and confirm.',
+                  },
+                  { title: 'Come back and tap Open settings again.' },
+                ]}
+              />
+              <p className="px-5 pt-2 text-sm text-muted-foreground">
                 Android asks this of apps installed from outside Play. It changes nothing else.
               </p>
-              <div className="px-4 pt-3">
-                <Button variant="outline" size="sm" onClick={() => open(() => SenCapture.openAppInfo())}>
-                  Open Sen's app info
-                </Button>
-              </div>
             </Section>
           ) : null}
           <BottomAction>

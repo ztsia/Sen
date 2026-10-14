@@ -4,6 +4,7 @@ import { momentLabel } from '@/lib/dates';
 import { rm } from './scenario';
 import type { Backend } from '../backend';
 import type { Db } from './db';
+import type { ReceiptDraft } from '@sen/core/views';
 import { apply, matchesFor, spread } from './apply';
 import { buildScenario, withOffline, type ScenarioId } from './variants';
 import * as v from './views';
@@ -250,7 +251,7 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
       return draftFor(file, forTxnId, false, hash);
     },
     byHand: (forTxnId) => Promise.resolve(draftFor(null, forTxnId, true, null)),
-    draft: (id) => read((d) => structuredClone(d.drafts.find((x) => x.id === id) ?? null)),
+    draft: (id) => read((d) => structuredClone(d.drafts.find((x) => x.id === id) ?? failedRead(d, id))),
     matches: (total, at) => read((d) => matchesFor(d, total, at)),
     nearDuplicate: (amount, at) =>
       read((d) => {
@@ -288,5 +289,30 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
       sync();
     },
     db: () => db,
+  };
+}
+
+/**
+ * A receipt Sen couldn't read (Review's *A receipt Sen couldn't read*) opens Add expense as a failed
+ * draft, so it shows the photo and says so (flows.md scan-after, *Reading fails*; QA B04 redesign run 2, 11).
+ */
+function failedRead(db: Db, id: string): ReceiptDraft | null {
+  const r = db.receipts.find((x) => x.id === id && x.status === 'failed');
+  if (!r) return null;
+  return {
+    id: r.id,
+    status: 'failed',
+    byHand: false,
+    merchant: r.merchantRaw ?? '',
+    occurredAt: r.occurredAt ?? r.createdAt,
+    items: [],
+    subtotal: 0,
+    tax: 0,
+    service: 0,
+    total: r.total,
+    pax: r.pax,
+    note: r.note,
+    forTxnId: r.transactionId,
+    contentHash: r.contentHash,
   };
 }

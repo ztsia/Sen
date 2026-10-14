@@ -24,7 +24,7 @@ Skip it for a docs-only change. If `git diff --stat main...HEAD` shows nothing o
    slice adds those commands.
 2. **The sweep, on Haiku, first (owner, 11 Oct).** A subagent can't start subagents (measured
    11 Oct: it gets no Agent tool), so the reviewer can't hand its mechanical work down itself. The
-   main session does it before the review: spawn `implementer` with `model: "haiku"` at low effort to
+   main session does it before the review: spawn `implementer` (Haiku at high effort, its default) to
    run the mechanical part and gather the raw results in `qa-artifacts/<branch>/sweep/`:
    - `pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm e2e`, each with its exit code and, for a
      failure, the test's name, file and first error lines;
@@ -90,6 +90,25 @@ in one large self-contained file instead.
 If you disagree with a finding, argue it from the spec, not from what you meant. If the spec is
 genuinely ambiguous, that's a spec bug: fix the spec, because the next slice will misread it the
 same way.
+
+## Who makes each fix
+
+The tiers below decide how a fix is re-checked; this decides who makes it. Sort each fix the way the
+`brief` skill sorts any work:
+
+- **The main session, itself (the usual case):** a fix under about 100 lines, one with a design
+  call in it, or one touching a non-negotiable. Most findings are these: small, spread across
+  files, each with a decision in it. Briefing and reviewing them would cost more than doing them.
+- **A new `implementer` (Haiku, `high`):** a fix already decided but long or repetitive, such as
+  tests written to stated assertions, each proven against a deliberate break, or one change
+  across many screens.
+- **The agent that just did the part, resumed:** when it finished recently and the new work builds
+  on what it holds (its file, its helpers, its method), so the brief can be short. Don't resume a
+  builder from hours ago: it reloads its whole conversation at full price, and a fresh agent with a
+  tight brief costs less.
+
+A test that guards a fix must fail on the code before the fix: either red first (tier 1), or shown
+failing under the exact break QA used.
 
 ## Fixing the findings: three tiers
 

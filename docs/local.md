@@ -289,3 +289,27 @@ Each slice that needs one of these lists it under *Needs from you first* in its 
       the real WebView; hold a widget stand-in against your launcher's real widget picker and say whether the
       sizes match what Android will draw; and, with *Capture off* from the simulator, check that every
       widget stand-in reads the same figure as Home.
+
+- [ ] **B04 · Redesign on the real phone** (QA B04 redesign, run 2). A browser can't show what the owner's
+      thumb and TalkBack do, so on the debug shell: (1) Home at 390 px should not scroll in your look,
+      light and dark, and Sen's button should not cover *Total balance*; (2) turn on TalkBack and walk
+      Review: each answer chip should read its label (and *Sen suggests this*), and Insights' step row
+      should read *1 of 5*; the cards you've swiped past should not be reachable; (3) set Android's font
+      size to the largest, then open Payments, Review and Settings and say whether any amount is cut off
+      or any chip row wraps; (4) turn on *Remove animations* (Android's reduced motion) and tap *Year* on
+      Insights: it should jump, not slide (a browser slides: QA B04 redesign run 2); (5) type an amount on
+      *Add expense* and in Search payments and say whether the keyboard zooms or covers the Save button.
+- [ ] **B04 · Redesign, device checks from QA run 3.** On the debug shell: (1) Insights: tap *Goals*, then
+      *Year*, and say whether the whole screen (cards, tab bar) slides sideways by a few dozen pixels;
+      a browser does at every width from 360 to 430 px; (2) open a payment from a notification or
+      widget (not from Payments), then tap ⋯ → *Delete* and the app bar's Back, and say where you land;
+      (3) on Payday, tap *Skip*, then *Next* at once, and say whether the first tap is lost to the
+      toast; (4) on a narrow phone (360 dp) with the largest font, open Budgets and Settings and say
+      whether *RM0.00 of RM150.00* or *~RM3.80 this month* is cut off.
+- [ ] **B04 · Redesign, device checks from QA run 4.** On the debug shell: (1) on *Budgets*, tap a budget and
+      then the amount, and try to change RM1,200.00 to RM1,500.00 by typing: say whether you can replace
+      it (long-press → *Select all*, then type) or have to backspace through it (digits are added after the
+      old ones; a browser can't select all by keyboard here); (2) on *Add a subscription* and *Add a goal*,
+      say whether the number pad shows only digits, and whether the date field opens Android's own picker;
+      (3) tap the Scan tab and say whether the camera opens at once, and long-press it and choose *From
+      gallery*; (4) with TalkBack, close *Add a subscription* with Back and say where focus lands.

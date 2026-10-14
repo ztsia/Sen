@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Avatar } from '@/components/look/avatar';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -23,7 +24,7 @@ export default function SignIn() {
   return (
     <Screen bar={<AppBar title="Sign in" home />}>
       {online ? null : <OfflineBanner>You’re offline. Signing in needs a connection.</OfflineBanner>}
-      <div className="flex flex-col gap-6 px-4 pt-6">
+      <div className="flex flex-col items-center gap-6 px-4 pt-8">
         {expired ? <ExpiredInvitation /> : <SignInFlow onDone={() => go('home', {}, { replace: true })} />}
       </div>
     </Screen>
@@ -33,7 +34,8 @@ export default function SignIn() {
 /** An invitation's link past its time: it says who to ask, and sends nothing (D52). */
 function ExpiredInvitation() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex w-full flex-col items-center gap-4 text-center">
+      <Avatar state="resting" size={96} />
       <h2 className="text-2xl font-semibold text-balance">This invitation has expired</h2>
       <p className="text-base text-pretty">An invitation works for a few days. This one is past that.</p>
       <Button onClick={() => toastDone(EXPIRED_ASK)}>Ask for a new invitation</Button>
@@ -46,10 +48,15 @@ export function SignInFlow({ onDone }: { onDone: () => void }) {
   const online = useOnline();
   const [email, setEmail] = useState(() => inviteEmail(window.location.search));
   const [sentTo, setSentTo] = useState<string | null>(null);
-  return sentTo ? (
-    <CodeStep email={sentTo} online={online} onChangeEmail={() => setSentTo(null)} onDone={onDone} />
-  ) : (
-    <EmailStep email={email} setEmail={setEmail} online={online} onSent={setSentTo} />
+  return (
+    <div className="flex w-full flex-col items-center gap-6">
+      <Avatar state="resting" size={96} />
+      {sentTo ? (
+        <CodeStep email={sentTo} online={online} onChangeEmail={() => setSentTo(null)} onDone={onDone} />
+      ) : (
+        <EmailStep email={email} setEmail={setEmail} online={online} onSent={setSentTo} />
+      )}
+    </div>
   );
 }
 
@@ -72,14 +79,14 @@ function EmailStep({
   };
   return (
     <form
-      className="flex flex-col gap-4"
+      className="flex w-full flex-col gap-4"
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
         submit();
       }}
     >
-      <h2 className="text-2xl font-semibold text-balance">Sign in to Sen</h2>
+      <h2 className="text-center text-2xl font-semibold text-balance">Sign in to Sen</h2>
       <Field data-invalid={error ? true : undefined}>
         <FieldLabel htmlFor="email">Your email</FieldLabel>
         <Input
@@ -153,15 +160,15 @@ function CodeStep({
           : undefined;
   return (
     <form
-      className="flex flex-col gap-4"
+      className="flex w-full flex-col gap-4"
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
         submit();
       }}
     >
-      <h2 className="text-2xl font-semibold text-balance">Type the code</h2>
-      <p className="text-base text-pretty">
+      <h2 className="text-center text-2xl font-semibold text-balance">Type the code</h2>
+      <p className="text-center text-base text-pretty">
         Sen sent a 6-digit code to <span className="font-semibold wrap-anywhere">{email}</span>.
       </p>
       <Field data-invalid={message ? true : undefined}>

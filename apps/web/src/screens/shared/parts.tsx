@@ -1,8 +1,11 @@
 import { readableName } from '@/lib/names';
 import { useId, type FormEvent, type ReactNode } from 'react';
-import { CheckIcon, CircleDashedIcon, TriangleAlertIcon } from 'lucide-react';
+import { SplitIcon, TriangleAlertIcon } from 'lucide-react';
 import { formatSen } from '@sen/core/money';
+import { HeaderCard } from '@/blocks/facts';
+import { GroupCard, PersonAvatar, PersonRow } from '@/blocks/group';
 import { Money } from '@/blocks/money';
+import { IconTile } from '@/blocks/tile';
 import { toastDone } from '@/blocks/toast';
 import { Sheet } from '@/blocks/sheet';
 import { Button } from '@/components/ui/button';
@@ -27,40 +30,48 @@ export interface PartItem {
   myPart: number | null;
 }
 
-/** The merchant, the total and who paid. */
-export function BillHeader({ merchant, total, line }: { merchant: string; total: number; line: string }) {
+/** The merchant, the total and who paid, in a header card with the payer's avatar (or the split mark). */
+export function BillHeader({
+  merchant,
+  total,
+  line,
+  payer,
+}: {
+  merchant: string;
+  total: number;
+  line: string;
+  /** The payer's name, for the avatar; without it the split's own mark. */
+  payer?: string;
+}) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <h2 className="text-xl font-semibold wrap-anywhere">{readableName(merchant)}</h2>
-      <div className="flex flex-wrap items-baseline gap-x-3">
-        <Money sen={total} className="text-3xl font-semibold" />
-        <p className="text-sm text-muted-foreground">{line}</p>
-      </div>
-    </div>
+    <HeaderCard
+      mark={payer ? <PersonAvatar name={payer} size="xl" /> : <IconTile size="lg" icon={SplitIcon} tone="accent" />}
+      title={readableName(merchant)}
+      figure={<Money sen={total} />}
+      meta={line}
+    />
   );
 }
 
-/** Who is done: a tick, or *Still ticking*; with a share when the viewer may see it. */
-export function Roster({ people }: { people: { name: string; done: boolean; share?: number }[] }) {
+/** Who is done, as people in one card: a state badge, and a share when the viewer may see it. */
+export function Roster({
+  label,
+  people,
+}: {
+  label: string;
+  people: { name: string; done: boolean; share?: number }[];
+}) {
   return (
-    <ul className="flex flex-col">
+    <GroupCard label={label}>
       {people.map((p) => (
-        <li key={p.name} className="flex min-h-12 items-center gap-3 border-b border-border px-4 py-2">
-          <span className="min-w-0 flex-1 wrap-anywhere">{p.name}</span>
-          {p.share !== undefined ? <Money sen={p.share} /> : null}
-          <span
-            className={`inline-flex w-28 shrink-0 items-center justify-end gap-1.5 text-sm ${p.done ? '' : 'text-muted-foreground'}`}
-          >
-            {p.done ? (
-              <CheckIcon className="size-4" aria-hidden="true" />
-            ) : (
-              <CircleDashedIcon className="size-4" aria-hidden="true" />
-            )}
-            {p.done ? 'Done' : 'Still ticking'}
-          </span>
-        </li>
+        <PersonRow
+          key={p.name}
+          name={p.name}
+          state={p.done ? { label: 'Done', tone: 'accent' } : { label: 'Still ticking', tone: 'muted' }}
+          sen={p.share}
+        />
       ))}
-    </ul>
+    </GroupCard>
   );
 }
 
@@ -104,14 +115,14 @@ export function ItemRows({
   extra?: (item: PartItem) => ReactNode;
 }) {
   return (
-    <div className="flex flex-col">
+    <>
       {items.map((item) => (
-        <div key={item.id} className="border-b border-border">
+        <div key={item.id}>
           <ItemRow item={item} locked={locked} onTick={onTick} />
           {extra?.(item)}
         </div>
       ))}
-    </div>
+    </>
   );
 }
 
@@ -146,23 +157,6 @@ function ItemRow({
         </ItemActions>
       </label>
     </Item>
-  );
-}
-
-/** Label and value rows, as a detail page lays its facts out. */
-export function Facts({ rows }: { rows: { label: string; value: ReactNode }[] }) {
-  return (
-    <dl className="flex flex-col">
-      {rows.map((r) => (
-        <div
-          key={r.label}
-          className="flex min-h-12 items-baseline justify-between gap-4 border-b border-border px-4 py-3"
-        >
-          <dt className="text-muted-foreground">{r.label}</dt>
-          <dd className="text-right wrap-anywhere">{r.value}</dd>
-        </div>
-      ))}
-    </dl>
   );
 }
 

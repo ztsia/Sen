@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { CheckIcon } from 'lucide-react';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { CalendarSyncIcon, MonitorSmartphoneIcon, MoonIcon, SunIcon } from 'lucide-react';
+import { ChoiceCards, Segmented, type Segment } from '@/blocks/choice';
+import { GroupCard, GroupLabel, SwitchRow } from '@/blocks/group';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { now } from '@/lib/clock';
 import { longDay } from '@/lib/dates';
 import { LOOK_IDS, LOOK_NAMES, type LookId } from '@/looks/ids';
-import { useTheme, type ModePref } from '@/theme/store';
-import { Section } from '../kit';
+import { useMode, useTheme, type ModePref } from '@/theme/store';
+import { LookPreview } from './look-preview';
 
-const MODES: { value: ModePref; label: string }[] = [
-  { value: 'system', label: 'System' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
+const MODES: Segment<ModePref>[] = [
+  { value: 'system', label: 'System', icon: MonitorSmartphoneIcon },
+  { value: 'light', label: 'Light', icon: SunIcon },
+  { value: 'dark', label: 'Dark', icon: MoonIcon },
 ];
 
 /** The first day of the next quarter in Kuala Lumpur, as *1 Jan 2027* (D77): 1 Jan, 1 Apr, 1 Jul, 1 Oct. */
@@ -26,75 +26,59 @@ export function nextQuarterStart(at: Date): string {
 }
 
 /**
- * Settings → Appearance (D44, D77, D78): System, Light or Dark, and the look, either changing each
- * quarter or one of the six pinned. The theme is kept on this phone, so it isn't a setting.set write.
- * The store has no "changes each quarter" flag yet, so that choice is local state here.
+ * Settings → Appearance (D44, D77, D78, D130): the mode with its icons, whether the look changes each
+ * quarter, and the six looks, each shown as a mini Home drawn in it. The theme is kept on this phone,
+ * so it isn't a setting.set write. Whether it changes each quarter is kept with it, in the theme store
+ * (QA B04 redesign run 2, 6).
  */
 export default function Appearance() {
   const look = useTheme((t) => t.look);
   const modePref = useTheme((t) => t.modePref);
   const setLook = useTheme((t) => t.setLook);
   const setModePref = useTheme((t) => t.setModePref);
-  const [quarterly, setQuarterly] = useState(true);
-  const pick = (id: LookId) => {
-    setQuarterly(false);
-    setLook(id);
-  };
+  const mode = useMode();
+  const quarterly = useTheme((t) => t.quarterly);
+  const setQuarterly = useTheme((t) => t.setQuarterly);
   return (
     <Screen bar={<AppBar title="Appearance" />}>
-      <Section title="Mode">
-        <div className="px-4 pt-1 pb-2">
-          <ToggleGroup
-            type="single"
-            variant="outline"
-            spacing={2}
-            aria-label="Mode"
-            className="w-full"
-            value={modePref}
-            onValueChange={(v) => {
-              if (v) setModePref(v as ModePref);
-            }}
-          >
-            {MODES.map((m) => (
-              <ToggleGroupItem key={m.value} value={m.value} className="min-h-12 flex-1">
-                {m.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
-      </Section>
-      <Section title="Look">
-        <p className="px-4 pt-1 pb-2 text-sm text-muted-foreground">
-          {quarterly
-            ? `Today's look is ${LOOK_NAMES[look]}. The next change is on ${nextQuarterStart(now())}.`
-            : `${LOOK_NAMES[look]} stays until you change it here.`}
-        </p>
-        <div role="radiogroup" aria-label="Look" className="flex flex-col">
-          <div>
-            <Choice checked={quarterly} label="Changes each quarter" onSelect={() => setQuarterly(true)} />
+      <div className="flex flex-col gap-6 pt-2 pb-8">
+        <div className="flex flex-col gap-2">
+          <div className="px-4">
+            <GroupLabel>Mode</GroupLabel>
           </div>
-          {LOOK_IDS.map((id) => (
-            <div key={id}>
-              <Choice checked={!quarterly && look === id} label={LOOK_NAMES[id]} onSelect={() => pick(id)} />
-            </div>
-          ))}
+          <Segmented label="Mode" options={MODES} value={modePref} onChange={setModePref} />
         </div>
-      </Section>
-    </Screen>
-  );
-}
 
-function Choice({ checked, label, onSelect }: { checked: boolean; label: string; onSelect: () => void }) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={checked}
-      onClick={onSelect}
-      className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left text-base active:bg-accent"
-    >
-      <span>{label}</span>
-      {checked ? <CheckIcon className="size-5 shrink-0 text-primary" aria-hidden="true" /> : null}
-    </button>
+        <GroupCard label="Look">
+          <SwitchRow
+            icon={CalendarSyncIcon}
+            tone="accent"
+            title="Change each quarter"
+            description={
+              quarterly
+                ? `${LOOK_NAMES[look]} until ${nextQuarterStart(now())}`
+                : `${LOOK_NAMES[look]} stays until you change it`
+            }
+            checked={quarterly}
+            onCheckedChange={setQuarterly}
+          />
+        </GroupCard>
+
+        <ChoiceCards
+          label="Look"
+          value={quarterly ? null : look}
+          onChange={(id: LookId) => {
+            setQuarterly(false);
+            setLook(id);
+          }}
+          options={LOOK_IDS.map((id) => ({
+            value: id,
+            label: LOOK_NAMES[id],
+            description: quarterly && id === look ? 'This quarter' : undefined,
+            preview: <LookPreview look={id} mode={mode} />,
+          }))}
+        />
+      </div>
+    </Screen>
   );
 }

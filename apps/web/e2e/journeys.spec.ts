@@ -37,7 +37,8 @@ async function standIn(page: Page, id: string) {
 
 /** The scanned receipt, from /scan to its confirm screen (the made-up SATE KAJANG HJ SAMURI, RM64.13). */
 async function scanToConfirm(page: Page) {
-  await page.getByTestId('scan-camera').setInputFiles(SCAN_FILE);
+  // the scanner screen's own camera input: the app shell has one too, outside the screen
+  await page.locator('main').getByTestId('scan-camera').setInputFiles(SCAN_FILE);
   await page.getByRole('button', { name: 'Use this' }).click();
   await expect(page).toHaveURL(/\/s\/confirm/, { timeout: 10_000 });
   await expect(page.getByText('SATE KAJANG HJ SAMURI')).toBeVisible();
@@ -222,6 +223,7 @@ export const JOURNEYS: Record<string, Journey> = {
   budget: async (page, shot, go) => {
     await go('/insights');
     await settled(page);
+    await page.getByRole('tab', { name: 'Budgets' }).click();
     await page.getByRole('button', { name: /Open budgets/ }).click();
     await expect(page).toHaveURL(/\/s\/budgets/);
     await shot('budgets');
@@ -229,7 +231,8 @@ export const JOURNEYS: Record<string, Journey> = {
       .getByRole('button', { name: /Shopping/ })
       .first()
       .click();
-    await page.getByLabel('Budget each cycle').fill('400');
+    // the amount is typed as digits from the right: 400.00 is what reads as RM400.00 (D132)
+    await page.getByLabel('Budget each cycle').fill('400.00');
     await shot('new amount');
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('RM320.30 of RM400.00')).toBeVisible();
@@ -252,6 +255,7 @@ export const JOURNEYS: Record<string, Journey> = {
   subscription: async (page, shot, go) => {
     await go('/insights');
     await settled(page);
+    await page.getByRole('tab', { name: 'Subscriptions' }).click();
     await page.getByRole('button', { name: /Open subscriptions/ }).click();
     await settled(page);
     await expect(page.getByText('Claude Pro')).toBeVisible();
@@ -262,12 +266,12 @@ export const JOURNEYS: Record<string, Journey> = {
   // scan-after (core): Scan reads the receipt, you check it, and Done attaches it to its payment
   'scan-after': async (page, shot, go) => {
     await go('/');
-    await tabs(page).getByRole('button', { name: 'Scan a receipt' }).click();
-    await expect(page).toHaveURL(/\/scan/);
-    await shot('scan');
-    await page
-      .getByTestId('scan-camera')
-      .setInputFiles({ name: 'receipt.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
+    // a tap on Scan opens the camera's chooser straight away, from Home (no scanner screen first)
+    const [camera] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      tabs(page).getByRole('button', { name: 'Scan a receipt' }).click(),
+    ]);
+    await camera.setFiles({ name: 'receipt.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
     await expect(page.getByRole('button', { name: 'Use this' })).toBeVisible();
     await shot('crop');
     await page.getByRole('button', { name: 'Use this' }).click();
@@ -291,6 +295,7 @@ export const JOURNEYS: Record<string, Journey> = {
   'receipt-first': async (page, shot, go) => {
     await go('/scan');
     await page
+      .locator('main')
       .getByTestId('scan-camera')
       .setInputFiles({ name: 'receipt-nomatch.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake') });
     await page.getByRole('button', { name: 'Use this' }).click();
@@ -347,10 +352,9 @@ export const JOURNEYS: Record<string, Journey> = {
     await shot('keep Sen running');
     await page.getByRole('button', { name: 'Skip for now' }).click();
     await expect(page.getByText('Step 5 of 7')).toBeVisible();
-    // an amount typed as text is checked before it moves on
+    // an amount is typed as digits only (D132): the dot and the second one are ignored, so 12.3.4 reads 12.34
     await page.getByLabel('Ryt Bank').fill('12.3.4');
-    await page.getByRole('button', { name: 'Next' }).click();
-    await expect(page.getByText('Step 5 of 7')).toBeVisible();
+    await expect(page.getByLabel('Ryt Bank')).toHaveValue('12.34');
     await page.getByLabel('Ryt Bank').fill('1,200.50');
     await shot('your accounts');
     await page.getByRole('button', { name: 'Next' }).click();
@@ -416,9 +420,12 @@ export const JOURNEYS: Record<string, Journey> = {
     await expect(page).toHaveURL(/\/s\/split\?id=/);
     await expect(page.getByText('Still changing')).toBeVisible();
     await expect(page.getByText('Paid by You')).toBeVisible();
+    await page.getByRole('button', { name: 'Share', exact: true }).click();
     await expect(page.getByRole('img', { name: 'QR code for the table' })).toBeVisible();
-    await expect(page.getByText('Nobody has ticked this')).toHaveCount(5);
     await shot('still changing, with a QR for the table');
+    await page.keyboard.press('Escape');
+    await expect(dialog(page, 'Share this bill')).toBeHidden();
+    await expect(page.getByText('Nobody has ticked this')).toHaveCount(5);
     await page.getByText('Sate ayam (20)', { exact: true }).click();
     await page.getByText('Teh o ais (3)', { exact: true }).click();
     await expect(page.getByText('Your share so far').locator('..')).toContainText('RM39.32');
@@ -462,7 +469,9 @@ export const JOURNEYS: Record<string, Journey> = {
     await page.getByText('Shared bills', { exact: true }).click();
     await settled(page);
     await shot('shared bills');
-    await page.getByRole('button', { name: /^BBQ PLACE/i }).click();
+    // the bill is settled now, so it sits under the Settled segment (its name is the avatar, then Bbq Place)
+    await page.getByRole('radio', { name: /^Settled/ }).click();
+    await page.getByRole('button', { name: /Bbq Place/i }).click();
     await settled(page);
     await expect(page.getByText('Final', { exact: true })).toBeVisible();
     const back = page.getByRole('region', { name: 'Who has paid you back' });
@@ -601,7 +610,7 @@ export const JOURNEYS: Record<string, Journey> = {
     await expect(page.getByText('Step 4 of 4')).toBeVisible();
     await shot('the plan');
     await page.getByRole('button', { name: 'Use this plan' }).click();
-    await expect(page.getByText(/moves done/)).toBeVisible();
+    await expect(page.getByTestId('payday-strip')).toContainText('Payday plan · 0 of 5');
     await expect(page.getByRole('button', { name: 'Start' })).toHaveCount(0);
     await shot('home, the plan in progress');
     await tabs(page)
@@ -730,13 +739,11 @@ export const JOURNEYS: Record<string, Journey> = {
     await sen.getByRole('button', { name: 'More about Sen' }).click();
     await page.getByRole('menuitem', { name: 'Research' }).click();
     await expect(page).toHaveURL(/\/s\/agent\/research/);
-    const brief = page
-      .getByText('Cashback cards for groceries in Malaysia')
-      .locator('xpath=ancestor::*[@data-slot="item"][1]');
+    const brief = page.locator('[data-slot="card"]', { hasText: 'Cashback cards for groceries in Malaysia' });
     await expect(brief).toContainText('Confirmed');
-    await expect(
-      page.getByText('Savings accounts with daily interest').locator('xpath=ancestor::*[@data-slot="item"][1]'),
-    ).toContainText('Draft');
+    await expect(page.locator('[data-slot="card"]', { hasText: 'Savings accounts with daily interest' })).toContainText(
+      'Draft',
+    );
     await shot('research');
   },
 
@@ -846,13 +853,17 @@ export const JOURNEYS: Record<string, Journey> = {
   // calendar: Settings → Sen → Connect; Google's sign-in is a stand-in here (D41)
   calendar: async (page, shot, go) => {
     await go('/s/settings/sen');
-    await expect(page.getByText('Not connected')).toBeVisible();
+    await expect(
+      page.getByText('Not connected. Without it, Review and pushes still remind you.', { exact: true }),
+    ).toBeVisible();
     await shot('not connected');
     await page.getByRole('button', { name: 'Connect' }).click();
     await expect(dialog(page, 'Connect Google Calendar')).toBeVisible();
     await shot("Google's sign-in");
     await page.getByRole('button', { name: 'Continue to Google' }).click();
-    await expect(page.getByText('Connected', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('Connected. Sen puts claim deadlines and bills on your calendar.', { exact: true }),
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Disconnect' })).toBeVisible();
     await shot('connected');
   },
@@ -954,16 +965,15 @@ test.describe('D128', () => {
     await expect(page.getByRole('button', { name: /^Free/ })).toBeVisible();
 
     await page.getByRole('button', { name: /^Farid/ }).click();
-    const farid = dialog(page, 'Farid');
-    await farid.getByRole('button', { name: 'Resend' }).click();
+    await page.getByRole('button', { name: 'Resend', exact: true }).click();
     await expect(toast(page)).toContainText('Invitation sent again');
-    await farid.getByRole('button', { name: 'Revoke' }).click();
+    await page.getByRole('button', { name: 'Revoke', exact: true }).click();
     await expect(page.getByRole('button', { name: /^Farid/ })).toHaveCount(0);
     await toast(page).getByRole('button', { name: 'Undo' }).click();
     await expect(page.getByRole('button', { name: /^Farid/ })).toBeVisible();
 
     await page.getByRole('button', { name: /^Hui Min/ }).click();
-    await dialog(page, 'Hui Min').getByRole('button', { name: 'Remove' }).click();
+    await page.getByRole('button', { name: 'Remove', exact: true }).click();
     await dialog(page, 'Remove Hui Min?').getByRole('button', { name: 'Export their data first' }).click();
     await expect(toast(page)).toContainText('export goes to');
     await expect(page.getByRole('button', { name: /^Hui Min/ })).toHaveCount(0);

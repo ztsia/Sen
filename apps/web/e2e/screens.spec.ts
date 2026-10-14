@@ -179,7 +179,8 @@ test('a screen opens at its top, not at the last screen’s scroll', async ({ pa
 // QA B03 run 3: the fixes that a screen shows, in the repo's own suite
 test('money out is never offered as a refund or income (28)', async ({ page }) => {
   await open(page, `/s/txn?id=${NK}`);
-  await page.getByRole('button', { name: 'Mark as…' }).click();
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Mark as…' }).click();
   await expect(page.getByRole('button', { name: 'Transfer' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Refund of…' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Income' })).toHaveCount(0);

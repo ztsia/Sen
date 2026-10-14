@@ -61,39 +61,15 @@ safety net.
 
 ## Where the build is
 
-**Nothing is built, deliberately.** The design track comes first. The owner's previous project
-built module by module, and every feature worked but the app didn't hang together
-(`docs/decisions.md` D7). The track has three steps:
+**Design came first, deliberately** (D7: the owner's previous app worked feature by feature but
+didn't hang together). The design track is done: the spec grilled and decided (`S1`), journeys,
+screens, patterns and six looks (`S2`, D75–D84), and the slice map, forty slices in nine stages with
+a brief each (`S3`, D111). The spec's later revisions are D85–D110.
 
-1. **`S1`** (done, 5 Oct): grill `spec_v2.md` with the owner, section by section, and log the decisions.
-2. **`S2`** (done, 7 Oct): user journeys, screen map and shared UI patterns. Journeys, screens and the wireframe are approved (6 Oct). The identity is settled (D75).
-   Six looks, each a theme, an icon and Sen's avatar (D76), make a pool: four play each year, one a
-   quarter (D77, D78). All six are built in `docs/ui/directions/`: Minted, Instrument, Firefly, Line,
-   Mercury and Copper. Each draws its own tab bar on shared outlines (D80), and everything a look
-   draws is saved in `docs/ui/directions/assets/`. Each look has its chart palette (one set of hues,
-   tuned per look by `palette.mjs`) and icon tokens (D81), and `docs/ui/patterns.md` is written,
-   with the reveal's shared frame (§9). Screens weren't mocked up: the walking skeleton is the
-   mockup, in all six looks, and each look's reveal is built in code (D84).
-   On 7 Oct the owner refined the spec once more (2.8, D85–D102): open source, capture from apps each
-   person chooses, templates that start from nothing, Sen's structure, claims with Sen and a printable
-   claim pack, ESS filed from the phone, AI credit, realtime, and the island.
-   On 8 Oct, spec 2.9 (D103–D110): ESS becomes an adapter run from recipes, which signs in from the
-   phone and fetches the payslip on payday; Sen's figures are traceable rather than clipped, skills
-   run on Sen's model, and its chat takes files.
-3. **`S3`** (done, 8 Oct): the slice map in `docs/modules.md`, with one brief per slice in
-   `docs/briefs/` (D111). Forty slices in nine stages, built one at a time: the design system and
-   looks, the shell and listener, the walking skeleton with the owner's review, then the server, and
-   capture to ledger, after which daily use starts (B13). Claims by hand come before Sen; the ESS
-   adapter after it.
-
-**No app code until `S3`'s slice map is merged, and Sen is published** (`docs/local.md`). Then B01
-starts in `ztsia/Sen`. The next slice waits only for the owner's merge.
-
-**Built so far:** B01, the design system and the six looks (the workspace, money, the frame, the
-building blocks, the dev panel and the gallery); B02, the shell and the listener (merged 9 Oct; its
-week on the owner's phone is still to run). Vercel is linked and the shell's release is signed
-(10 Oct, D122). B03, the five tabs' skeleton on made-up data, with the data layer every later slice
-plugs into (merged 11 Oct). ESS's API was captured on the owner's laptop (10 Oct, D110). Next: B04.
+**Built:** B01 (design system and the six looks), B02 (the shell and the listener; its week on the
+owner's phone is still to run), B03 (the five tabs on made-up data, with the data layer), B04 (the
+walking skeleton and its review). **In progress:** the B04 redesign (D130), then B05. Each slice
+waits only for the owner's merge; `docs/handoff.md` says where things stand now.
 
 ## Non-negotiables
 
@@ -218,50 +194,34 @@ Works from a phone through cloud sessions, rarely at a laptop.
 
 ### Models and subagents
 
-**This is the owner's standing request to use subagents (D125)**, so a session spawns them without
-being asked each time; it overrides any default that says to spawn only on request. The main session
-(Opus) decides, talks with the owner, works on the non-negotiables, and reviews what comes back. The
-agents are in `.claude/agents/`:
+**Opus is the brain; subagents are its hands (D125, D131).** The main session (Opus) talks with the
+owner, makes every decision, works on the non-negotiables, writes the briefs, and reviews what comes
+back. Subagents carry out work that is decided but too long or too repetitive to be worth Opus's
+price. This is the owner's standing request, so a session spawns them without being asked.
 
-| Agent | Use it when | Don't, when |
-|---|---|---|
-| `implementer` (Sonnet) | A slice's build splits into **batches already decided**, each worth a brief: a group of screens from `patterns.md`, tests from given criteria, a port, boilerplate across files. Each batch owns its own files, so several run **in parallel, in the background** | The change is under about 100 lines, needs a design decision, or touches a non-negotiable's logic (money, RLS, dedupe, the listener's filters): do it yourself |
-| `implementer` on **Haiku** (`model: haiku` on the Agent call, low effort) | A **mechanical** batch: copying a finished example to more files, test boilerplate from given criteria, lint and format fixes, doc syncs to a decision, reading logs, screenshot sweeps. About a twentieth of Sonnet's price | The batch needs judgment (layout choices, a tricky state, anything a reviewer would argue about): Sonnet |
-| `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill: a full run when a slice is finished, then the tiers | |
-| `scout` (Haiku) | Something too big to read: a long CI log, a large unfamiliar area | A lookup one `grep` or a filtered log answers; its cold start costs more than it saves |
+**A brief that leaves thinking to the subagent is the main session's failure, not the model's.** The
+`brief` skill holds how: choosing the model (Haiku at `high` for whatever a brief can fully specify,
+Sonnet for what can't be written down in advance, Opus itself for small changes, design calls and
+the non-negotiables' logic), the brief's template and checks, and what to do when work comes back
+wrong. Measurements are in `docs/usage.md`.
 
-**Why, measured on B03:** the main session's context is re-read every turn, so code it writes costs
-again on every later turn; an implementer's code costs the main session only its report and the
-diffs it checks. Sonnet is about half Opus's price, and four batches ran at once (about 150–190k
-tokens each). The cost is a cold start per agent, so:
-- **Build the shared ground first, yourself** (types, data layer, one screen in the house style),
-  then brief the batches against it.
-- **Keep briefs lean:** the exact files and sections to read, the files it owns, the checks to run,
-  a port of its own for a dev server, and *don't commit*. Point at a finished example rather than
-  restating rules.
-- **Review every report and diff yourself**, fix what's off, then commit. No per-task review loops:
-  QA checks the slice.
-- **Haiku, measured on B04 (D125):** about 13× cheaper than Sonnet on a comparable batch ($0.08
-  against $1.07), but it slipped on unstated contracts (it accepted only its own settings keys and ran
-  a repo-wide formatter) and twice reported an hour-long test run as done while it was running. Keep
-  it for mechanical work, with the contract spelled out, *only your files*, and *wait for long runs
-  to end*.
-- **Subagents can't start subagents** (tested twice). Anything an agent would delegate, the main
-  session starts itself: the `qa` skill's Haiku sweep runs before the reviewer, not inside it.
-- **Two end-to-end runs never overlap**: they share ports 4173/4174 and the build folders. Queue them.
-- **Measure, then tune.** `node scripts/usage.mjs` shows what each agent and model cost this session,
-  read from the transcripts; `--log <slice>` keeps a row in `docs/usage.md`, before every handoff
-  and PR (the transcripts go with the VM). B03's first row: the main session was 73% of the cost,
-  and most of that was re-reading its own long context each turn, so keep the main session's own
-  reading and writing small, and hand off before its context grows long.
-- Subagents spend the same quota as the main session. When one stops at a usage limit, resume it
-  (`SendMessage`), never restart it.
+| Agent | What it's for |
+|---|---|
+| `implementer` | A batch already decided, owning its own files; several run in parallel, in the background |
+| `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill |
+| `scout` (Haiku) | Something too big to read, such as a long log; not what one `grep` answers |
+
+- **Two end-to-end runs never overlap** (shared ports 4173/4174 and build folders).
+- **Measure:** `node scripts/usage.mjs` (run it from the session's starting directory);
+  `--log <slice>` keeps a row in `docs/usage.md` before every handoff and PR. The main session's
+  own context is the largest cost, so keep its reading and writing small and hand off early.
 
 ## Skills
 
 | Skill | Use it when |
 |---|---|
 | `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent and **sets the three tiers for fixing what QA finds**: small fixes self-verified, scoped ones re-checked by resuming the last run's reviewer, and a fresh full run only when a fix reaches the whole flow (D117, D121) |
+| `brief` | Before every Agent call that does work, and when a subagent's work comes back short: the model, the brief, and what to do about a miss (D131) |
 | `uiux` | Choosing shadcn components for a screen, building one, or checking one before it's done. Ported from GCO_events (D43): it reads its component index first, then only the docs it shortlists |
 | `dataviz` | Any chart, stat tile or chart colour. It comes from the owner's claude.ai account, not the repo |
 | `frontend-design` | Narrowed when `S2` closed (D57, D84): only for a look's own drawing (its figure, strip, avatar, tab bar and reveal) or a new look for the pool. Every screen follows `docs/ui/patterns.md` and `uiux` instead. Installed with `npx skills add` |

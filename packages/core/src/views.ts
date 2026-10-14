@@ -163,7 +163,14 @@ export const ReviewItem = z.discriminatedUnion('kind', [
     accounts: z.array(Choice),
   }),
   z.object({ ...reviewBase, kind: z.literal('balance-check'), lastOn: Day.nullable() }),
-  z.object({ ...reviewBase, kind: z.literal('claim-due'), name: z.string(), amount: Amount, deadline: Day }),
+  z.object({
+    ...reviewBase,
+    kind: z.literal('claim-due'),
+    claimId: Id,
+    name: z.string(),
+    amount: Amount,
+    deadline: Day,
+  }),
   z.object({ ...reviewBase, kind: z.literal('payday-step'), step: z.string() }),
   z.object({ ...reviewBase, kind: z.literal('proposal'), title: z.string(), detail: z.string() }),
 ]);
@@ -364,6 +371,8 @@ export const SubscriptionsView = z.object({
       /** ≈ in ringgit, for display only, from the rate shown (D99). */
       approx: Amount,
       rate: z.string().nullable(),
+      /** Where the rate came from (§11): Bank Negara's (or the ECB's) on a day, or the last charge. */
+      rateFrom: z.object({ source: z.enum(['bnm', 'ecb', 'charge']), on: Day }).nullable(),
       next: Day,
       history: z.array(
         z.object({
@@ -387,6 +396,8 @@ export const GoalSummary = z.object({
   targetDate: Day.nullable(),
   /** What it needs each cycle to make its date. */
   perCycle: Amount,
+  /** The account or pocket its money is kept in (D133); none for a goal set before D133. */
+  keptIn: z.string().nullable(),
 });
 export type GoalSummary = z.infer<typeof GoalSummary>;
 
@@ -739,7 +750,16 @@ export const SettingsView = z.object({
     qr: z.boolean(),
   }),
   categories: z.array(z.object({ id: Id, name: z.string(), kind: z.enum(['spend', 'income']), rules: z.int() })),
-  rules: z.array(z.object({ id: Id, merchant: z.string(), category: z.string(), hawker: z.boolean() })),
+  rules: z.array(
+    z.object({
+      id: Id,
+      merchant: z.string(),
+      category: z.string(),
+      hawker: z.boolean(),
+      /** Where the rule came from (merchant_rules.set_by): your answer, or Sen's suggestion you confirmed. */
+      setBy: z.enum(['user', 'agent']),
+    }),
+  ),
   receiptsByEmail: z.object({ address: z.string(), code: z.string().nullable(), received: z.int() }),
   claims: z.object({
     schemes: z.array(

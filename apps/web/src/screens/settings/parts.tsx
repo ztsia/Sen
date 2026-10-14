@@ -5,7 +5,7 @@ import { checkAmount, MoneyInput } from '@/blocks/money-input';
 
 /**
  * A row that is information with something to do under it (patterns.md §7): a title and a line, then
- * its buttons. Not a SettingsRow, which is one control.
+ * its buttons. Not a NavRow, which is one control.
  */
 export function ActionRow({
   title,

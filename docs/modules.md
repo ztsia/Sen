@@ -474,6 +474,7 @@ questions over at least a month of your data (§12.6).
   - The AI credit check before every call.
   - The `sen` sheet made real, with UI tools and avatar states. The `answers` and `memory` skills,
     *Ask Sen about this*, and the island's *Sen working*.
+  - Suggestions when Sen opens that fit the screen it was opened from (D135).
 - **Done when:** 20 real questions are answered correctly against SQL truth, and the main model is
   chosen (decision recorded).
 

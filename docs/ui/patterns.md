@@ -225,6 +225,53 @@ them in its *Charts* section.
 
 ## 7. Building blocks
 
+### Calm, card-based screens (D130)
+
+D129 sets sizes; this sets structure. Every screen follows these, and `/dev/gallery` shows each block in
+every look.
+
+1. **Say what's primary.** Each screen has one thing to look at first (a figure, a status, a
+   question) and at most one main action drawn at 48 px. Everything else steps down by §2's levels.
+2. **Cards, not hairline lists.** Rows sit in a `GroupCard`: a rounded card (`--radius-card`) with
+   a small label above it in secondary text. No full-bleed dividers. The long lists (payments, a
+   day's rows) stay rows, since they virtualise.
+3. **Icons on everything you go to or do.** A destination or an action leads with an `IconTile`: a
+   lucide icon (16 px) on a 32 px tinted square. Information never gets one.
+4. **Information and actions never look alike.** Facts go in a `FactGrid` (label above value, two
+   columns; a tappable value has a chevron). Actions go in an `ActionBar` (round icon buttons with a
+   caption under each) or one button. Rare and destructive actions go behind its ⋯ (*More*), a
+   `DropdownMenu`, and still offer *Undo*.
+5. **A row says its state.** A `NavRow` shows a short current value on the right: *4 apps ·
+   listening*, *2 schemes*, *Minted*.
+6. **Show visual choices visually.** Looks are previews (`ChoiceCards`), modes have icons
+   (`Segmented`), categories are icon tiles.
+7. **Explain once, briefly.** At most one line of intro per screen. A how-to is `Steps`, or sits
+   behind *How it works*.
+8. **Long things get a screen, not a sheet.** A sheet holds a choice or a short form.
+9. **Empty and missing states use `EmptyState`** with an icon, a title, one line and one button.
+10. **Categories have a tint.** A category's tile takes one of §4's three hues by its place in the
+    list (`categoryTone`), so neighbours differ. The tint helps scanning only: the icon and the name
+    carry the meaning, and charts still name categories in words.
+
+| Block (`blocks/`) | What it is | For |
+|---|---|---|
+| `IconTile` (`tile.tsx`) | An icon on a tinted square; tones `neutral`, `accent`, `warn`, `hue1`–`hue3`; `lg` is 48 | Leading destinations and actions; a detail's mark |
+| `GroupCard`, `GroupLabel` (`group.tsx`) | A card of rows with a label above, an optional action and a footer line | Every list of rows outside the long lists |
+| `NavRow` | Tile, title, an optional line, the state on the right, a chevron when it opens something | Settings, More, hubs, a sheet's choices |
+| `SwitchRow` | Tile or an app's icon, title, a line, a switch; the whole row flips it | On and off settings |
+| `PersonRow`, `PersonAvatar` | Initials in a tinted disc, the name, a state badge, an amount | Splits, members |
+| `HeaderCard` (`facts.tsx`) | Mark, title, the figure (with *Copy*), one meta line, where it came from | Top of a detail |
+| `FactGrid` | Two columns of label above value | A detail's facts |
+| `ActionBar` | Up to four round icon buttons with captions, then ⋯ | A detail's actions |
+| `StatTiles` | Two or three figures side by side, one emphasised | Usage, the cycle, the year |
+| `Segmented` (`choice.tsx`) | One row of options with icons; the chosen one raised | Mode, Open and Settled, Categories and Rules |
+| `ChoiceCards` | Selectable cards with an optional preview, a ring and ✓ | Looks, the payday rule |
+| `Steps` (`steps.tsx`) | Numbered steps in a card; done ones ticked; the next one's button is the main one | Capture's setup, Gmail, ESS |
+| `StepPager` | Named steps on top, *2 of 5*, one full-width card at a time that snaps | Insights |
+
+Badges (`muted`, `accent`, `warning`, `outline`) state a row's status in words; `Progress` draws a bar
+in the chart accent, or the warning colour on a budget at risk.
+
 ### Screens
 
 - **App bar:** the wordmark on Home; on any other screen, back, the screen's title, and at most one
@@ -233,6 +280,8 @@ them in its *Charts* section.
   screen, with its own *Close* or *Skip*.
 - **Health warnings** (spec §18) sit at the top of `home` until fixed: a `warn-bg` bar with what's wrong,
   in words, and one button that fixes it.
+- **Spacing:** a screen's blocks are 16 px from the edges, with 16 px between a detail's cards and
+  24 px between groups.
 
 ### Rows
 
@@ -243,13 +292,13 @@ them in its *Charts* section.
   more, a stable height, so long lists virtualise.
 - **Day header:** the date in Kuala Lumpur time, and the day's spending, sticky while its rows
   scroll.
-- **Review row:** the question on one line (*RM9.50 · ROTI BAKAR 88*), what Sen knows on the next,
-  then its buttons, at most three plus *Other…*. Answering clears it with *Undo*. A suggestion from
-  Sen is marked on the button it suggests.
-- **Settings row:** a label, its current value or a switch on the right, and a chevron when it opens
-  a screen. A row that opens nothing is information, not a control (the heartbeat's checks); a
-  version row may hold a long-press (B02's hidden tests). A switch row may lead with an app's icon and
-  carry a line under its label, which, on a disabled switch, says why it can't be turned on.
+- **Review row:** a card per question, grouped by kind under an icon header (*Categories · 8*). The
+  amount and payee semibold (*RM9.50 · Roti Bakar 88*), what Sen knows as one muted line, then the
+  answers as `chip`-sized buttons in one row that scrolls sideways, at most three plus *Other…*. Sen's
+  pick has a sparkle and an accent outline. Answering clears it with *Undo*.
+- **Settings row:** a `NavRow` or a `SwitchRow` in a `GroupCard` (above). A row that opens nothing
+  is information and has no tile (the heartbeat's checks); a version row may hold a long-press (B02's
+  hidden tests). On a disabled switch, the line under its label says why it can't be turned on.
 - **Raw notification row** (B02's *Captured on this phone* only, until B07 replaces it): the app and
   the time on one line, then the title and the text as the app wrote them, selectable, line breaks
   kept, with every digit outside an amount masked as stored (D121); the screen's intro says so once. One that might hold
@@ -258,16 +307,19 @@ them in its *Charts* section.
 
 ### Detail page
 
-The amount large at the top, then the facts as label and value rows, then actions as rows at the
-foot: *Mark as…*, *Delete*. *Delete* is in `destructive` and still has *Undo*. Where the data came
-from is always said: *From Ryt's notification*, *Added by you*.
+A `HeaderCard` (the mark, what it is, the amount large, when and where, and where the data came from:
+*From Ryt Bank's notification*, *Added by you*), then an `ActionBar`, then a `FactGrid`, then what's
+linked to it (a receipt, a split) as `NavRow`s in a card. *Delete* is behind ⋯ in `destructive`, and
+still has *Undo*. `screens/more/txn.tsx` is the reference.
 
 ### Forms
 
 - A `Field` around every input, with its label above and its message below. The first field to fill
   is focused. `inputMode` and `enterKeyHint` match the input.
-- **Amounts** are typed as text into a number pad (`inputMode="decimal"`) and parsed straight into
-  sen, never through a float. The amount shows large as it's typed.
+- **Amounts** are typed as a bank app takes them (D132): digits only, into a number pad
+  (`inputMode="numeric"`), each entering from the right, always two decimals, so the dot and letters
+  never land. *Select all* then typing replaces the amount. The text is parsed straight into sen,
+  never through a float. The amount shows large as it's typed.
 - Validate on blur and on submit; the submit button stays enabled and says what's missing.
 - Never lose what was typed: a form kept open by a sheet or the back gesture keeps its draft.
 
@@ -300,7 +352,8 @@ plan's *2 of 3 moves done*) states it in words first, with an icon, then what it
 
 ### Empty, loading, error, offline
 
-- **Empty:** one line saying what will appear here, and the action that fills it. No illustrations.
+- **Empty:** an icon in a tile, a title, one line saying what will appear here, and the action that
+  fills it (`EmptyState`). No illustrations.
   A card in Insights with no data isn't shown at all.
 - **Loading:** a skeleton shaped like the content, in `muted`, never a spinner over the whole screen.
   There's no pull to refresh: screens update by themselves (spec §5.1, D100).

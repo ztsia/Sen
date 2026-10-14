@@ -5,6 +5,7 @@
 //   node scripts/usage.mjs                 the newest session in this project: a table on stdout
 //   node scripts/usage.mjs --log B03       and upsert its row in docs/usage.md, tagged with the slice
 //   node scripts/usage.mjs --session <id>  a given session
+//   node scripts/usage.mjs --from <dir>    the session started in <dir>, not the repo (a cloud session started in its parent)
 //
 // Transcripts live in ~/.claude/projects/<project>/, one .jsonl per session and one per subagent
 // under <session>/subagents/, with a .meta.json naming its type. They go when the cloud VM does,
@@ -32,7 +33,8 @@ const flag = (name) => {
 };
 
 const repo = process.cwd();
-const dir = join(homedir(), '.claude', 'projects', repo.replace(/[^A-Za-z0-9]/g, '-'));
+// --from <dir>: the directory the session started in, when it isn't the repo (a cloud session started in its parent)
+const dir = join(homedir(), '.claude', 'projects', (flag('--from') ?? repo).replace(/[^A-Za-z0-9]/g, '-'));
 if (!existsSync(dir)) {
   console.error(`No transcripts at ${dir}`);
   process.exit(1);

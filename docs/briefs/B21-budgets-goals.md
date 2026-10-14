@@ -17,7 +17,8 @@ real surplus. Every figure is computed by code.
   - §12.1: *Buckets for lumpy costs* (the data now; Sen's proposals in B28)
   - §12.3: what `get_budget_status`, `get_goals` and `find_yearly_costs` will need
   - §15: `budgets`, `goals` and `goal_contributions`, and the budget status view
-- Decisions: D29, D31.
+- Decisions: D29, D31, D133 (a goal's money is kept in an account of its own), D134 (subscriptions
+  and goals added by hand).
 - `docs/screens.md`: `budgets`, `goals` and `goal`.
 - `docs/flows.md`: `budget` and `goal`.
 - Skills: `dataviz` and `database`.

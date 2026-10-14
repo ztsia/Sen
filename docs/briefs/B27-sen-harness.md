@@ -96,6 +96,10 @@ the owner's money.
   helpers, answering, paused, done.
 - ***Ask Sen about this*** on Insights cards, `txn`, `split` and `budgets` opens Sen with the
   question ready. Opening a screen never calls a model.
+- **Suggestions that fit the screen (D135):** when Sen opens, its suggestion pills come from the screen
+  it was opened from (`from`): on `txn`, *Why is this here?*, *Split this*; on Budgets, *Where can I cut?*;
+  on Claims, *What's missing this month?*. The UI already prefills a message when a button opens Sen
+  to set something up (`useUi().askSen(draft)`); keep that path.
 - **The island's *Sen working*:** Sen's state, then *Answer ready*.
 - **Skills:** `answers` and `memory`. `agent/memory` lists and forgets.
 

@@ -5,7 +5,7 @@ import { apportion, formatSen } from '@sen/core/money';
 import type { Transaction } from '@sen/core/schema';
 import type { ReviewItem } from '@sen/core/views';
 import type { Db } from './db';
-import { merchantKey } from './scenario';
+import { BNM_RATES, BNM_RATES_ON, merchantKey } from './scenario';
 
 // The fake's write side: each command changes the rows the way B05's route will, and says what
 // happened in words (patterns.md §7). Undo is the backend's own business: here, a snapshot.
@@ -306,6 +306,43 @@ export function apply(db: Db, cmd: Exclude<Command, { type: 'undo' }>): Applied 
         said: cmd.amount ? `${catName(db, cmd.categoryId)}: ${formatSen(cmd.amount)} a cycle` : 'Budget removed',
         touched: [],
       };
+    }
+    case 'subscription.add': {
+      // the same id again is a no-op (every input has a dedupe key)
+      if (db.subscriptions.some((x) => x.id === cmd.id)) return { said: 'Already added', touched: [] };
+      // another currency is shown in ringgit at Bank Negara's latest rate (§11), never as RM0.00 (QA B04 redesign run 4, 1)
+      const rate = cmd.currency === 'MYR' ? null : (BNM_RATES[cmd.currency] ?? null);
+      db.subscriptions.push({
+        id: cmd.id,
+        userId: db.userId,
+        name: cmd.name,
+        merchantKey: null,
+        amount: cmd.amount,
+        currency: cmd.currency,
+        cadence: cmd.cadence,
+        nextRenewalDate: cmd.nextRenewal,
+        status: 'active',
+        displayFxRate: rate,
+        displayFxOn: rate ? BNM_RATES_ON : null,
+        displayFxSource: rate ? 'bnm' : null,
+      });
+      return { said: `${cmd.name} added`, touched: [] };
+    }
+    case 'goal.add': {
+      if (db.goals.some((x) => x.id === cmd.id)) return { said: 'Already added', touched: [] };
+      if (!db.accounts.some((a) => a.id === cmd.accountId)) throw new Error('Choose the account it sits in.');
+      db.goals.push({
+        id: cmd.id,
+        userId: db.userId,
+        name: cmd.name,
+        kind: cmd.kind,
+        targetAmount: cmd.target,
+        targetDate: cmd.by,
+        repeatsYearly: cmd.kind === 'bucket',
+        accountId: cmd.accountId,
+        status: 'active',
+      });
+      return { said: `${cmd.name} added`, touched: [] };
     }
     default:
       // B04's commands belong to their areas (areas/index.ts), which run first

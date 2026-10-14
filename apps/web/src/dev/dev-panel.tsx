@@ -6,7 +6,7 @@ import { Avatar } from '@/components/look/avatar';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Sheet } from '@/blocks/sheet';
-import { SettingsRow } from '@/blocks/rows';
+import { SwitchRow } from '@/blocks/group';
 import { DEV_STATES, useUi, type DevState } from '@/frame/ui-store';
 import { LOOK_IDS, LOOK_NAMES, isLookId } from '@/looks/ids';
 import { useTheme, type ModePref } from '@/theme/store';
@@ -111,8 +111,8 @@ export default function DevPanel() {
           </ToggleGroup>
         </Group>
         <div className="-mx-4">
-          <SettingsRow
-            label="Reduced motion"
+          <SwitchRow
+            title="Reduced motion"
             checked={theme.forceReducedMotion}
             onCheckedChange={theme.setForceReducedMotion}
           />

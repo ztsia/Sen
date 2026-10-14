@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react';
-import { SearchIcon, SparklesIcon } from 'lucide-react';
+import { ChevronDownIcon, LandmarkIcon, SearchIcon, SparklesIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { SettingsRow } from '@/blocks/rows';
+import { GroupCard, SwitchRow } from '@/blocks/group';
 import { EmptyState, ListSkeleton } from '@/blocks/states';
 import { StatusCard } from '@/blocks/status';
 import { toastDone } from '@/blocks/toast';
 import { lightTick } from '@/lib/haptics';
 import { SenCapture, type BlockReason, type CaptureApp } from '@/shell/bridge';
 import { useBridge } from '@/shell/use-bridge';
-import { AppIcon, BridgeError, CaptureScreen, Section } from './common';
+import { AppIcon, BridgeError, CaptureScreen } from './common';
 
 /** Why an app can't be chosen, in words (D86). */
 export const BLOCKED: Record<BlockReason, string> = {
@@ -68,9 +68,9 @@ export default function CaptureApps() {
   };
 
   const row = (a: CaptureApp) => (
-    <SettingsRow
+    <SwitchRow
       key={a.package}
-      label={a.label}
+      title={a.label}
       media={<AppIcon icon={a.icon} label={a.label} />}
       description={a.blocked ? BLOCKED[a.blocked] : undefined}
       disabled={!!a.blocked}
@@ -82,11 +82,19 @@ export default function CaptureApps() {
   return (
     <CaptureScreen title="Your apps">
       {error ? <BridgeError onRetry={reload} /> : null}
-      <p className="px-4 pt-2 text-base text-pretty">
-        Sen reads notifications only from the apps you choose here, and stores what they say. When an app's wording is
-        new to Sen, that one notification goes to Google once, with long numbers masked, so Sen can learn to read it.
-        Other apps' notifications are ignored and never stored.
-      </p>
+      <div className="flex flex-col gap-1 px-4 pt-2">
+        <p className="text-base text-pretty">Sen reads notifications only from the apps you choose here.</p>
+        <details className="group text-sm text-muted-foreground">
+          <summary className="relative tap inline-flex cursor-pointer list-none items-center gap-1 font-medium text-primary [&::-webkit-details-marker]:hidden">
+            How it works
+            <ChevronDownIcon className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <p className="pt-1 text-pretty">
+            Sen keeps what they say. Wording new to Sen goes to Google once, long numbers masked, so Sen learns to read
+            it. Other apps are ignored and never stored.
+          </p>
+        </details>
+      </div>
       {!list && !error ? <ListSkeleton rows={4} /> : null}
       {list ? (
         <>
@@ -103,15 +111,19 @@ export default function CaptureApps() {
               </StatusCard>
             </div>
           ) : null}
-          <Section title="Banks and e-wallets">
-            {curated.length ? (
-              curated.map(row)
-            ) : (
-              <EmptyState line="None of the Malaysian banks and e-wallets Sen knows is installed. Find yours under More." />
-            )}
-          </Section>
-          <Section title="More">
-            <div className="px-4 pb-2">
+          {curated.length ? (
+            <GroupCard label="Banks and e-wallets" className="pt-5">
+              {curated.map(row)}
+            </GroupCard>
+          ) : (
+            <EmptyState
+              icon={LandmarkIcon}
+              title="No banks found"
+              line="None of the Malaysian banks and e-wallets Sen knows is installed. Find yours under More."
+            />
+          )}
+          <div className="flex flex-col gap-2 pt-5">
+            <div className="px-4 pb-1">
               <Field>
                 <FieldLabel htmlFor="app-search">Search every app</FieldLabel>
                 <div className="relative">
@@ -133,11 +145,17 @@ export default function CaptureApps() {
               </Field>
             </div>
             {others.length ? (
-              others.map(row)
+              <GroupCard label="More" className="pb-8">
+                {others.map(row)}
+              </GroupCard>
             ) : (
-              <EmptyState line={q ? `No app matches “${query.trim()}”.` : 'No other apps.'} />
+              <EmptyState
+                icon={SearchIcon}
+                title="No other apps"
+                line={q ? `No app matches “${query.trim()}”.` : 'No other apps.'}
+              />
             )}
-          </Section>
+          </div>
         </>
       ) : null}
     </CaptureScreen>

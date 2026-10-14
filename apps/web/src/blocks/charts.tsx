@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { MessageCircleIcon, TriangleAlertIcon } from 'lucide-react';
+import { TriangleAlertIcon } from 'lucide-react';
+import { SenMark } from '@/components/look/avatar';
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts';
 import { formatSen, percent } from '@sen/core/money';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,8 @@ export function ChartCard({
   takeaway: string;
   children: ReactNode;
   table: ReactNode;
-  onAskSen?: () => void;
+  /** Opens Sen with this card's question started in its message box (§9, D135). */
+  onAskSen?: (question: string) => void;
 }) {
   return (
     <Card className="gap-3">
@@ -39,8 +41,8 @@ export function ChartCard({
       <CardFooter className="flex-col items-start gap-1">
         <p className="text-sm text-muted-foreground">{takeaway}</p>
         {onAskSen ? (
-          <Button variant="ghost" size="sm" className="-ml-3" onClick={onAskSen}>
-            <MessageCircleIcon aria-hidden="true" />
+          <Button variant="ghost" size="sm" className="-ml-3" onClick={() => onAskSen(question)}>
+            <SenMark />
             Ask Sen about this
           </Button>
         ) : null}
@@ -142,7 +144,7 @@ export function PaceChart({
                   x={t.x}
                   y={(typeof t.y === 'number' ? t.y : 0) + 12}
                   textAnchor={anchor}
-                  fontSize={11}
+                  fontSize={12}
                   fill="var(--muted-foreground)"
                 >
                   {d === today ? 'Today' : d === days ? 'Payday' : `Day ${d}`}
@@ -159,7 +161,7 @@ export function PaceChart({
                 value: `Income ${formatSen(income)}`,
                 position: 'insideTopLeft',
                 fill: 'var(--muted-foreground)',
-                fontSize: 11,
+                fontSize: 12,
               }}
             />
           ) : null}
@@ -379,7 +381,7 @@ export function SpendCalendar({ spent, days, label }: { spent: (number | undefin
                 fill={fill}
                 stroke={v === undefined ? 'var(--border)' : 'none'}
               />
-              <text x={x + 5} y={y + 13} fontSize={10} fill={step >= 3 ? 'var(--card)' : 'var(--muted-foreground)'}>
+              <text x={x + 5} y={y + 15} fontSize={12} fill={step >= 3 ? 'var(--card)' : 'var(--muted-foreground)'}>
                 {i + 1}
               </text>
             </g>
@@ -416,9 +418,10 @@ export function BudgetMeter({
   const risk = share > cycleShare + 0.1;
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex justify-between gap-3 text-base">
-        <span>{label}</span>
-        <span className="num text-right text-muted-foreground">
+      {/* the figures drop under the label when both don't fit, as with large text (QA B04 redesign run 3, 5) */}
+      <div className="flex flex-wrap justify-between gap-x-3 text-base">
+        <span className="min-w-0 wrap-anywhere">{label}</span>
+        <span className="num ml-auto text-right text-muted-foreground">
           {formatSen(sen)} of {formatSen(cap)}
         </span>
       </div>
@@ -547,7 +550,7 @@ export function ColumnBars({
           tickLine={false}
           axisLine={{ stroke: 'var(--border)' }}
           interval={0}
-          tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+          tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
         />
         <YAxis hide domain={[low, high]} />
         {reference ? (
@@ -560,7 +563,7 @@ export function ColumnBars({
               position: 'insideTopLeft',
               dy: -14,
               fill: 'var(--muted-foreground)',
-              fontSize: 11,
+              fontSize: 12,
             }}
           />
         ) : null}
@@ -669,9 +672,9 @@ export function GoalMeter({ label, saved, target }: { label: string; saved: numb
   const share = target > 0 ? Math.min(1, saved / target) : 0;
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex justify-between gap-3 text-base">
+      <div className="flex flex-wrap justify-between gap-x-3 text-base">
         <span className="min-w-0 wrap-anywhere">{label}</span>
-        <span className="num text-right text-muted-foreground">
+        <span className="num ml-auto text-right text-muted-foreground">
           {formatSen(saved)} of {formatSen(target)}
         </span>
       </div>

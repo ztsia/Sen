@@ -2,10 +2,11 @@ import { readableName } from '@/lib/names';
 import { newId } from '@/lib/uid';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ChevronRightIcon,
   ImageIcon,
+  ListPlusIcon,
   MinusIcon,
   PlusIcon,
+  ScanLineIcon,
   StickyNoteIcon,
   TagIcon,
   TriangleAlertIcon,
@@ -13,6 +14,8 @@ import {
 import { scaleSen } from '@sen/core/money';
 import type { ReceiptDraft } from '@sen/core/views';
 import { CategorySheet } from '@/blocks/category-sheet';
+import { FactGrid } from '@/blocks/facts';
+import { GroupCard, GroupLabel, NavRow } from '@/blocks/group';
 import { Money } from '@/blocks/money';
 import { checkAmount, MoneyInput } from '@/blocks/money-input';
 import { NoteSheet } from '@/blocks/note-sheet';
@@ -21,22 +24,14 @@ import { EmptyState } from '@/blocks/states';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemSeparator,
-  ItemTitle,
-} from '@/components/ui/item';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCategories, useDraft, useMatches, useMe, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { momentLabel } from '@/lib/dates';
-import { Loaded, Section, useGo, useScreenSearch } from '../kit';
+import { categoryIcon, categoryTone } from '../icons';
+import { Loaded, useGo, useScreenSearch } from '../kit';
 import { ItemSheet } from './item-sheet';
 import { optionalSen, priceItems, sharedCategory, type DraftItem } from './receipt-math';
 import { MatchSheet, SplitSheet, type PaidBy } from './split-sheets';
@@ -56,6 +51,8 @@ export default function Confirm() {
   const draft = q.data ?? last.current;
   const unknown = (
     <EmptyState
+      icon={ScanLineIcon}
+      title="No receipt here"
       line="Sen can't find this receipt."
       action={{ label: 'Go Home', onSelect: () => go('home', {}, { replace: true }) }}
     />
@@ -72,6 +69,8 @@ export default function Confirm() {
               unknown
             ) : draft.status !== 'read' ? (
               <EmptyState
+                icon={ScanLineIcon}
+                title="Still reading"
                 line="Sen is still reading this receipt."
                 action={{ label: 'See it', onSelect: () => go('reading', { id: draft.id }, { replace: true }) }}
               />
@@ -215,9 +214,16 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-1 px-4 pt-1 pb-4">
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1">
+      <div className="flex flex-1 flex-col gap-5 pt-2 pb-4">
+        <Card className="mx-4 flex-row items-center gap-3 p-4">
+          <div
+            className="flex h-20 w-14 shrink-0 items-center justify-center rounded-md bg-muted"
+            role="img"
+            aria-label="Your receipt photo"
+          >
+            <ImageIcon className="size-6 text-icon" aria-hidden="true" />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
             {d.byHand && !d.forTxnId ? (
               <Field>
                 <FieldLabel htmlFor="merchant">Where was it?</FieldLabel>
@@ -236,71 +242,55 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
                 <p className="text-sm text-muted-foreground">{momentLabel(new Date(d.occurredAt))}</p>
               </>
             )}
+            {d.byHand ? null : (
+              <Button variant="secondary" size="sm" className="mt-1 self-start" onClick={() => setSheet('photo')}>
+                <ImageIcon aria-hidden="true" />
+                View photo
+              </Button>
+            )}
           </div>
-          {d.byHand ? null : (
-            <Button variant="secondary" size="sm" onClick={() => setSheet('photo')}>
-              <ImageIcon aria-hidden="true" />
-              View photo
-            </Button>
-          )}
-        </div>
+        </Card>
 
-        <Section title="Category">
-          <ItemGroup>
-            <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
-              <button type="button" onClick={() => setSheet('category')} disabled={items.length === 0}>
-                <ItemMedia variant="icon" className="size-8 rounded-full border-0 bg-muted text-icon">
-                  <TagIcon className="size-4" />
-                </ItemMedia>
-                <ItemContent>
-                  <ItemTitle className="text-base font-normal">
-                    {items.length === 0 ? 'Add items first' : shared ? label(shared) : 'Mixed'}
-                  </ItemTitle>
-                  {!shared && items.length ? (
-                    <ItemDescription className="text-pretty">{mixedLine}</ItemDescription>
-                  ) : null}
-                </ItemContent>
-                <ItemActions>
-                  <ChevronRightIcon className="size-5 text-icon" aria-hidden="true" />
-                </ItemActions>
-              </button>
-            </Item>
-          </ItemGroup>
-        </Section>
+        <GroupCard label="Category">
+          <NavRow
+            icon={items.length === 0 ? TagIcon : categoryIcon(shared ? label(shared) : null)}
+            tone={shared ? categoryTone(label(shared)) : 'neutral'}
+            title={items.length === 0 ? 'Add items first' : shared ? label(shared) : 'Mixed'}
+            description={!shared && items.length ? mixedLine : undefined}
+            onOpen={items.length === 0 ? undefined : () => setSheet('category')}
+          />
+        </GroupCard>
 
-        <Section title="Items">
+        <div className="flex flex-col gap-3">
           {items.length === 0 ? (
-            <p className="px-4 py-2 text-muted-foreground">No items yet. Add what you bought below.</p>
+            <section className="flex flex-col gap-2 px-4" aria-label="Items">
+              <GroupLabel>Items</GroupLabel>
+              <EmptyState icon={ListPlusIcon} title="No items yet" line="Add what you bought below." />
+            </section>
           ) : (
-            <ItemGroup>
-              {items.map((i, n) => (
-                <div key={i.id}>
-                  {n ? <ItemSeparator /> : null}
-                  <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditing(i.id);
-                        setSheet('item');
-                      }}
-                    >
-                      <ItemContent>
-                        <ItemTitle className="text-base font-normal text-pretty">{i.description}</ItemTitle>
-                        {i.doubtful && !fixed.has(i.id) ? (
-                          <ItemDescription className="inline-flex items-center gap-1 text-foreground">
-                            <TriangleAlertIcon className="size-4 text-icon" aria-hidden="true" />
-                            Check this price
-                          </ItemDescription>
-                        ) : null}
-                      </ItemContent>
-                      <ItemActions>
-                        <Money sen={i.price} className="font-normal text-foreground" />
-                      </ItemActions>
-                    </button>
-                  </Item>
-                </div>
+            <GroupCard label="Items">
+              {items.map((i) => (
+                <NavRow
+                  key={i.id}
+                  icon={categoryIcon(label(i.categoryId))}
+                  tone={categoryTone(label(i.categoryId))}
+                  title={<span className="text-pretty">{i.description}</span>}
+                  description={
+                    i.doubtful && !fixed.has(i.id) ? (
+                      <span className="inline-flex items-center gap-1 text-foreground">
+                        <TriangleAlertIcon className="size-4 text-icon" aria-hidden="true" />
+                        Check this price
+                      </span>
+                    ) : undefined
+                  }
+                  trailing={<Money sen={i.price} className="font-normal text-foreground" />}
+                  onOpen={() => {
+                    setEditing(i.id);
+                    setSheet('item');
+                  }}
+                />
               ))}
-            </ItemGroup>
+            </GroupCard>
           )}
           {d.byHand ? (
             <AddItem
@@ -320,45 +310,47 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
               }
             />
           ) : null}
-        </Section>
-
-        {d.byHand ? (
-          <Section title="Tax and service (optional)">
-            <div className="flex flex-col gap-4 px-4 pt-1">
-              <MoneyInput label="Service charge" value={serviceText} onChange={setServiceText} />
-              <MoneyInput label="Tax" value={taxText} onChange={setTaxText} />
-            </div>
-          </Section>
-        ) : null}
-
-        <div className="mt-2 flex flex-col gap-1 px-4">
-          {!d.byHand && (service > 0 || tax > 0) ? (
-            <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-              {service > 0 ? (
-                <Line label="Service charge, spread into the prices">
-                  <Money sen={service} className="font-normal text-muted-foreground" />
-                </Line>
-              ) : null}
-              {tax > 0 ? (
-                <Line label="Tax, spread into the prices">
-                  <Money sen={tax} className="font-normal text-muted-foreground" />
-                </Line>
-              ) : null}
-            </div>
-          ) : null}
-          <Line label="Total" strong>
-            <Money sen={total} className="text-lg font-semibold text-foreground" />
-          </Line>
-          <Check byHand={d.byHand} hasPayment={hasPayment} difference={difference} empty={raw.length === 0} />
-          {overshoot && overTried ? (
-            <div ref={overRef} role="alert">
-              <FieldError>The items can't come to more than the payment. Fix a price, or remove an item.</FieldError>
-            </div>
-          ) : null}
         </div>
 
-        <Section title="How many people ate?">
-          <div className="flex flex-col gap-2 px-4">
+        {d.byHand ? (
+          <section className="flex flex-col gap-2 px-4" aria-label="Tax and service (optional)">
+            <GroupLabel>Tax and service (optional)</GroupLabel>
+            <Card className="gap-4 p-4">
+              <MoneyInput label="Service charge" value={serviceText} onChange={setServiceText} />
+              <MoneyInput label="Tax" value={taxText} onChange={setTaxText} />
+            </Card>
+          </section>
+        ) : null}
+
+        <div className="flex flex-col gap-2">
+          <FactGrid
+            facts={[
+              ...(!d.byHand && service > 0
+                ? [{ label: 'Service charge, spread in', value: <Money sen={service} className="font-normal" /> }]
+                : []),
+              ...(!d.byHand && tax > 0
+                ? [{ label: 'Tax, spread in', value: <Money sen={tax} className="font-normal" /> }]
+                : []),
+              {
+                label: 'Total',
+                value: <Money sen={total} className="text-lg font-semibold text-foreground" />,
+                wide: true,
+              },
+            ]}
+          />
+          <div className="px-5">
+            <Check byHand={d.byHand} hasPayment={hasPayment} difference={difference} empty={raw.length === 0} />
+            {overshoot && overTried ? (
+              <div ref={overRef} role="alert">
+                <FieldError>The items can't come to more than the payment. Fix a price, or remove an item.</FieldError>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <section className="flex flex-col gap-2 px-4" aria-label="How many people ate?">
+          <GroupLabel>How many people ate?</GroupLabel>
+          <Card className="gap-2 p-4">
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
@@ -381,23 +373,12 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
               <Money sen={scaleSen(total, 1, pax)} className="text-foreground" /> a person
             </p>
             <p className="text-sm text-muted-foreground">Without a split, the whole bill is your spending.</p>
-          </div>
-        </Section>
+          </Card>
+        </section>
 
-        <ItemGroup className="mt-2">
-          <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
-            <button type="button" onClick={() => setSheet('note')}>
-              <ItemMedia variant="icon" className="size-8 rounded-full border-0 bg-transparent text-icon">
-                <StickyNoteIcon className="size-4" />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle className={note ? 'text-base font-normal' : 'text-base font-normal text-muted-foreground'}>
-                  {note ?? 'Add a note'}
-                </ItemTitle>
-              </ItemContent>
-            </button>
-          </Item>
-        </ItemGroup>
+        <GroupCard>
+          <NavRow icon={StickyNoteIcon} title={note ?? 'Add a note'} onOpen={() => setSheet('note')} />
+        </GroupCard>
       </div>
 
       <div className="sticky bottom-0 flex flex-col gap-2 border-t border-border bg-background px-4 pt-3 pb-4">
@@ -466,15 +447,6 @@ function ConfirmBody({ d }: { d: ReceiptDraft }) {
   );
 }
 
-function Line({ label, strong, children }: { label: string; strong?: boolean; children: React.ReactNode }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3">
-      <span className={strong ? 'font-medium' : undefined}>{label}</span>
-      {children}
-    </div>
-  );
-}
-
 /** The check that the items add up (D66), in words: a tick, or the difference. */
 function Check({
   byHand,
@@ -525,33 +497,35 @@ function AddItem({ onAdd }: { onAdd: (description: string, amount: number) => vo
     setAmount('');
   };
   return (
-    <form
-      className="mx-4 mt-3 flex flex-col gap-4 rounded-lg border border-border p-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        submit();
-      }}
-    >
-      <Field data-invalid={errors.description ? true : undefined}>
-        <FieldLabel htmlFor="add-description">Add an item</FieldLabel>
-        <Input
-          id="add-description"
-          value={description}
-          placeholder="What it is"
-          enterKeyHint="next"
-          autoComplete="off"
-          aria-invalid={errors.description ? true : undefined}
-          onChange={(e) => {
-            setErrors((x) => ({ ...x, description: undefined }));
-            setDescription(e.target.value);
-          }}
-        />
-        {errors.description ? <FieldError>{errors.description}</FieldError> : null}
-      </Field>
-      <MoneyInput label="Price" value={amount} error={errors.amount} onChange={setAmount} />
-      <Button type="submit" size="sm" variant="secondary" className="self-start">
-        Add item
-      </Button>
-    </form>
+    <Card className="mx-4 p-4">
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
+        <Field data-invalid={errors.description ? true : undefined}>
+          <FieldLabel htmlFor="add-description">Add an item</FieldLabel>
+          <Input
+            id="add-description"
+            value={description}
+            placeholder="What it is"
+            enterKeyHint="next"
+            autoComplete="off"
+            aria-invalid={errors.description ? true : undefined}
+            onChange={(e) => {
+              setErrors((x) => ({ ...x, description: undefined }));
+              setDescription(e.target.value);
+            }}
+          />
+          {errors.description ? <FieldError>{errors.description}</FieldError> : null}
+        </Field>
+        <MoneyInput label="Price" value={amount} error={errors.amount} onChange={setAmount} />
+        <Button type="submit" size="sm" variant="secondary" className="self-start">
+          Add item
+        </Button>
+      </form>
+    </Card>
   );
 }

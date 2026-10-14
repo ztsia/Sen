@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDownIcon } from 'lucide-react';
+import { ChevronDownIcon, ReceiptIcon, SearchIcon, SearchXIcon } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { PaymentFilters, PaymentRow } from '@sen/core/views';
 import { DayHeader, ListRow } from '@/blocks/rows';
-import { EmptyState, ListSkeleton } from '@/blocks/states';
+import { EmptyState, ErrorState, ListSkeleton } from '@/blocks/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,7 @@ import { useAccounts, useCategories, useInsights, useMe, usePayments } from '@/d
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { dayOfInstant } from '@/lib/dates';
-import { categoryIcon } from '../icons';
+import { categoryIcon, categoryTone } from '../icons';
 import { useGo, useScreenSearch } from '../kit';
 import { FilterSheet } from './filter-sheet';
 
@@ -113,16 +113,23 @@ function PaymentsBody() {
             <Label htmlFor="payments-search" className="sr-only">
               Search payments
             </Label>
-            <Input
-              id="payments-search"
-              type="search"
-              inputMode="search"
-              enterKeyHint="search"
-              autoComplete="off"
-              placeholder="Search, such as Grab or char kuey teow"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-            />
+            <div className="relative">
+              <SearchIcon
+                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-icon"
+                aria-hidden="true"
+              />
+              <Input
+                className="pl-9"
+                id="payments-search"
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                autoComplete="off"
+                placeholder="Search, such as Grab or char kuey teow"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+            </div>
           </div>
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none]">
             <Chip on={!!cycle} onClick={() => setPicking('cycle')}>
@@ -152,7 +159,7 @@ function PaymentsBody() {
           </div>
           <p role="status" className="text-sm text-muted-foreground">
             {data
-              ? `${data.rows.length} ${data.rows.length === 1 ? 'payment' : 'payments'}${active ? ' match' : ''}`
+              ? `${String(data.rows.length).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} ${data.rows.length === 1 ? 'payment' : 'payments'}${active ? ' match' : ''}`
               : 'Loading'}
           </p>
           <FilterSheet
@@ -271,14 +278,27 @@ function PaymentsList({
     <div ref={anchor}>
       <div ref={controlsRef}>{controls}</div>
       {failed ? (
-        <EmptyState line="Couldn't load your payments." action={{ label: 'Try again', onSelect: retry }} />
+        <div className="p-4">
+          <ErrorState
+            title="Couldn't load your payments"
+            detail="Check your connection and try again."
+            action="Try again"
+            onAction={retry}
+          />
+        </div>
       ) : rows === null ? (
         <ListSkeleton rows={8} />
       ) : rows.length === 0 ? (
-        <EmptyState
-          line={active ? 'No payments match.' : 'No payments yet.'}
-          action={active ? { label: 'Clear the filters', onSelect: clear } : undefined}
-        />
+        active ? (
+          <EmptyState
+            icon={SearchXIcon}
+            title="No payments match"
+            line="Try other words, or clear the filters."
+            action={{ label: 'Clear the filters', onSelect: clear }}
+          />
+        ) : (
+          <EmptyState icon={ReceiptIcon} title="No payments yet" line="Payments show here as Sen captures them." />
+        )
       ) : (
         <div className="relative w-full" style={{ height: v.getTotalSize() }}>
           {sticky ? (
@@ -303,6 +323,7 @@ function PaymentsList({
                 ) : (
                   <ListRow
                     icon={categoryIcon(f.row.category)}
+                    tone={categoryTone(f.row.category)}
                     title={f.row.title}
                     secondary={[f.row.category, f.row.account, f.row.note].filter(Boolean).join(' · ')}
                     sen={f.row.amount}

@@ -1,6 +1,6 @@
 ---
 name: uiux
-description: How to build any screen in this app, a phone-first web app shown inside an Android shell, with shadcn/ui. Use when choosing components and layout for a screen, building one, or checking one before it's done. Read the shared patterns, then the component index and only the docs it shortlists; keep every screen inside the app's shared patterns; and hold it to a phone checklist covering thumb reach, touch targets, sheets, undo, the back gesture, offline, accessibility, how money is shown, and working in all six looks.
+description: How to build any screen in this app, a phone-first web app shown inside an Android shell, with shadcn/ui. Use when choosing components and layout for a screen, building one, or checking one before it's done. Read the shared patterns, then the component index and only the docs it shortlists; name what's primary and sort every element into a fact, destination, action, choice or how-to, each with its own card-based block (D130); keep every screen inside the app's shared patterns; and hold it to a phone checklist covering thumb reach, touch targets, sheets, undo, the back gesture, offline, accessibility, how money is shown, and working in all six looks.
 ---
 
 # UI/UX: shadcn/ui, phone first, one set of patterns
@@ -56,14 +56,30 @@ own design.
 
 1. List every UI element the screen needs or implies. `docs/screens.md` gives its contents, and
    `docs/flows.md` what happens around it, including when things go wrong.
-2. Map each element to a pattern in `docs/ui/patterns.md`, then to components. Read
+2. **Say what's primary before you build** (D130): one line, *Primary: what's left until payday;
+   main action: none*. One thing to look at first, at most one main action drawn at 48 px. If you
+   can't name it, the screen isn't designed yet.
+3. **Sort every element into what it is**, because each kind has one block (`patterns.md` §7):
+   - a **fact** → `FactGrid` (label above value), or the figure in a `HeaderCard`
+   - a **destination** → `NavRow` with an `IconTile`, showing its state on the right
+   - an **action** → one button, or an `ActionBar`; rare and destructive ones behind ⋯
+   - a **visual choice** (a look, a mode, a category) → shown as itself: `ChoiceCards` with a
+     preview, `Segmented` with icons, a grid of tiles
+   - a **how-to** → `Steps`, never paragraphs
+   - a **person** → `PersonRow`
+   Facts and actions must never look alike: a screen where they do reads as a list of text.
+4. Map each element to components. Read
    `components-index.md` in full and shortlist with its *When to use* column and disambiguation
    notes, then read each shortlisted doc in full: variants, props, examples and sub-components.
-3. Compose existing components before building anything custom. A need that no pattern covers goes
+5. Compose existing components before building anything custom. A need that no pattern covers goes
    into `docs/ui/patterns.md` first, as a composition of shadcn primitives, and works in all six looks
    before it ships.
-4. Build it, then hold every element to the phone checklist and the rules below. Where there's room,
+6. Build it, then hold every element to the phone checklist and the rules below. Where there's room,
    push past correct towards polished, but never outside the shared patterns.
+7. **Look at it before calling it done:** `node apps/web/scripts/shots.mjs` at 390×844 in at least
+   Minted light, Copper dark and Line light (Line's cards are rules, not boxes, so anything that
+   leans on a card's fill shows up there). `screens/more/txn.tsx` and `screens/settings/settings.tsx`
+   are the references to hold it against.
 
 ## What drift looks like
 
@@ -76,6 +92,14 @@ Check every element of a screen, new or existing, for these, and fix them before
 - **Flat or upside-down hierarchy:** a heading the same size as, or smaller than, what it heads;
   every element at one size; every button drawn as big as the main action. The screen then reads as
   dense and overwhelming even with a few lines on it (the owner's review of B04, D129).
+- **A list of text** (the owner's review of B04, D130): label-and-value rows with no icons, no
+  grouping and nothing primary, so the screen looks like a form from 2005 whatever its data. Signs:
+  facts drawn as rows with chevrons, actions drawn as rows under them, a destination that doesn't say
+  its state, a visual choice (a look, a mode) offered as words, paragraphs explaining a setup, a long
+  record squeezed into a sheet.
+- **A look's material where it doesn't belong:** a preview of one look inside another, or a tinted
+  tile, given the `card` class, which the current look repaints (Line turns it into a rule). Keep
+  `card` for real cards.
 
 ## Phone checklist
 

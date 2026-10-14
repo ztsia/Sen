@@ -672,13 +672,17 @@ As in v0.16 §7.13, counted in pay cycles (D14):
 
 **Buckets** are goals that come back every year, for lumpy costs such as road tax or the trip home at CNY. Each is filled by a set-aside every cycle, which the agent proposes (§12.1).
 
+**Where the money sits (D133).** Each goal and bucket names the account or pocket its money is kept in; several may share one. Sen can't move money: the payday plan says *move RM300 to Ryt pocket*, you do it in your bank app, and the move is ticked by its transfer's notification or by hand. A hand tick books the transfer between the two accounts at the plan's amount (changeable), deduped by its plan step, and counts it as a contribution; a later notification for the same move matches it instead of booking it twice.
+
+**Adding one (D134):** from Sen, or by hand on the goals screen: name, target, by when, goal or yearly bucket, and its account.
+
 No investment-return assumptions.
 
 ---
 
 ## 11. Subscriptions and AI costs
 
-- **Subscriptions are declared:** name, amount, currency, cadence, next renewal. The amount is in its billing currency's smallest unit, such as US cents, and it's a forecast. The MYR charge that matches it is the fact. The exchange rate is kept as `NUMERIC` for display only and never used to compute money.
+- **Subscriptions are declared** (by hand on the subscriptions screen, D134, or from Sen's proposal): name, amount, currency, cadence, next renewal. The amount is in its billing currency's smallest unit, such as US cents, and it's a forecast. The MYR charge that matches it is the fact. The exchange rate is kept as `NUMERIC` for display only and never used to compute money.
   - **Where the rate comes from (D99):** before the first real charge, Bank Negara's 17:00 middle rate, fetched once a day by the morning job (the ECB as fallback), rounded to 4 decimal places as text and shown as *≈ RM40.88 · BNM 7 Oct*. After the first charge, that charge's own rate (the MYR charged ÷ the declared amount), which includes the card's markup. It's kept on the person's `subscriptions` row, never in a shared table. The agent's web search never fetches it.
   - Expected charges are **forecasts in `subscription_charges`, never transactions**.
   - A real charge is matched by subscription, amount tolerance and date window. No match by the end of the window means *missed* (v0.16 §7.11.2).
@@ -1077,7 +1081,7 @@ transfer_rules       id, user_id, from_account_id, to_account_id, merchant_key, 
 budgets              id, user_id, category_id, amount, effective_from,
                      effective_to (nullable)                   -- standing, per cycle (D29)
 goals                id, user_id, name, kind (goal|bucket), target_amount,
-                     target_date, repeats_yearly, status        -- buckets: §10
+                     target_date, repeats_yearly, account_id, status   -- buckets, account: §10 (D133)
 goal_contributions   id, user_id, goal_id, amount, occurred_at
 payday_plans         id, user_id, cycle_start, status (proposed|active|done), created_at
                      UNIQUE (user_id, cycle_start)

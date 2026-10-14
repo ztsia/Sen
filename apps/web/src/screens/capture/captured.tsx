@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { HeartPulseIcon } from 'lucide-react';
+import { HeartPulseIcon, InboxIcon } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
-import { SettingsRow } from '@/blocks/rows';
+import { NavRow } from '@/blocks/group';
 import { Sheet } from '@/blocks/sheet';
 import { EmptyState, ListSkeleton } from '@/blocks/states';
 import { toastDone } from '@/blocks/toast';
@@ -82,11 +83,13 @@ export default function CapturedOnPhone() {
       {first.data ? (
         <div className="flex min-h-full flex-col">
           <p className="px-4 pt-2 pb-2 text-sm text-muted-foreground">
-            {total === 1 ? '1 notification' : `${total} notifications`}, newest first, as the apps wrote them, with
-            their numbers hidden. They stay on this phone.
+            {total === 1 ? '1 notification' : `${total} notifications`}, newest first, numbers hidden. They stay on this
+            phone.
           </p>
           {events.length === 0 ? (
             <EmptyState
+              icon={InboxIcon}
+              title="Nothing captured yet"
               line="Notifications from your chosen apps appear here as they arrive."
               action={
                 status?.chosen.length
@@ -98,25 +101,27 @@ export default function CapturedOnPhone() {
               }
             />
           ) : (
-            <ul className="flex flex-col">
-              {events.map((e) => (
-                <EventRow
-                  key={e.id}
-                  e={e}
-                  app={label.get(e.package) ?? e.package}
-                  picking={picking}
-                  picked={picked.has(e.id)}
-                  onPick={(on) =>
-                    setPicked((p) => {
-                      const n = new Set(p);
-                      if (on) n.add(e.id);
-                      else n.delete(e.id);
-                      return n;
-                    })
-                  }
-                />
-              ))}
-            </ul>
+            <Card className="mx-4 gap-0 overflow-hidden py-0">
+              <ul className="flex flex-col divide-y divide-border">
+                {events.map((e) => (
+                  <EventRow
+                    key={e.id}
+                    e={e}
+                    app={label.get(e.package) ?? e.package}
+                    picking={picking}
+                    picked={picked.has(e.id)}
+                    onPick={(on) =>
+                      setPicked((p) => {
+                        const n = new Set(p);
+                        if (on) n.add(e.id);
+                        else n.delete(e.id);
+                        return n;
+                      })
+                    }
+                  />
+                ))}
+              </ul>
+            </Card>
           )}
           {events.length < total ? (
             <div className="px-4 pt-2">
@@ -155,9 +160,9 @@ export default function CapturedOnPhone() {
       >
         <div className="-mx-4 flex flex-col">
           {(beats ?? []).map((b, i) => (
-            <SettingsRow
+            <NavRow
               key={`${b.at}-${i}`}
-              label={
+              title={
                 (b.kind === 'otp' || b.kind === 'unread') && b.package
                   ? `${BEATS[b.kind]} from ${label.get(b.package) ?? b.package}`
                   : BEATS[b.kind]

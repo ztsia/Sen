@@ -5,7 +5,8 @@ import type { HomeView } from '@sen/core/views';
 import { PaceSpark } from '@/blocks/charts';
 import { HeroFigure } from '@/blocks/hero';
 import { Money } from '@/blocks/money';
-import { HealthBar, StatusCard } from '@/blocks/status';
+import { HealthBar } from '@/blocks/status';
+import { IconTile } from '@/blocks/tile';
 import { Avatar } from '@/components/look/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ import { HomeMaterial } from './material';
 export default function Home() {
   const q = useHome();
   return (
-    <Screen bar={<AppBar title="Home" home />} senRoom>
+    <Screen bar={<AppBar title="Home" home />} senRoom className="pb-20">
       <h2 className="sr-only">Home</h2>
       <Loaded q={q} what="Home" skeleton={<HomeSkeleton />}>
         {(h) => <HomeBody h={h} />}
@@ -52,10 +53,12 @@ function HomeBody({ h }: { h: HomeView }) {
   const label = f.over ? 'Over by' : FIGURE_LABEL[f.kind];
   const sub = `${f.daysToGo} ${f.daysToGo === 1 ? 'day' : 'days'} to go${month ? ' this month' : ''}`;
   const unit = month ? 'month' : 'cycle';
+  // Home fits one screen (D130): when something asks you to act, Sen's note gives way; Sen's button still opens it.
+  const act = h.health.length > 0 || h.payday?.stage === 'card';
 
   return (
     <HomeMaterial payday={h.payday?.stage === 'card'} patina={f.income > 0 ? f.spent / f.income : 0}>
-      <div className="flex flex-col gap-4 px-4 pt-1">
+      <div className="flex flex-col gap-3 px-4 pt-1">
         {h.health.map((w) => (
           <HealthBar
             key={w.key}
@@ -81,15 +84,19 @@ function HomeBody({ h }: { h: HomeView }) {
             </CardContent>
           </Card>
         ) : h.payday?.stage === 'progress' ? (
-          <button type="button" className="text-left" onClick={() => go('payday')}>
-            <StatusCard
-              icon={CalendarCheckIcon}
-              state={`${h.payday.done} of ${h.payday.of} moves done`}
-              status="waiting"
-              title={`${h.cycle.label}'s payday plan`}
-              waiting="Each move ticks itself when its notification lands."
-            />
-          </button>
+          <Item asChild size="sm" variant="outline" className="w-full flex-nowrap gap-3 text-left active:bg-accent">
+            <button type="button" onClick={() => go('payday')} data-testid="payday-strip">
+              <IconTile icon={CalendarCheckIcon} tone="accent" />
+              <ItemContent className="min-w-0 gap-0">
+                <ItemTitle className="text-base font-normal">
+                  Payday plan · {h.payday.done} of {h.payday.of}
+                </ItemTitle>
+              </ItemContent>
+              <ItemActions>
+                <ChevronRightIcon className="size-5 text-icon" aria-hidden="true" />
+              </ItemActions>
+            </button>
+          </Item>
         ) : null}
 
         <button
@@ -109,7 +116,11 @@ function HomeBody({ h }: { h: HomeView }) {
           />
         </button>
 
-        <Item asChild variant="outline" className="w-full flex-col items-stretch gap-2 p-4 text-left active:bg-accent">
+        <Item
+          asChild
+          variant="outline"
+          className="w-full flex-col items-stretch gap-1.5 p-3 text-left active:bg-accent"
+        >
           <button type="button" onClick={() => go('payments', { cycle: h.cycle.id })} data-testid="pace">
             <div className="flex items-center gap-2">
               <p className="min-w-0 flex-1 text-sm text-muted-foreground">
@@ -117,7 +128,10 @@ function HomeBody({ h }: { h: HomeView }) {
               </p>
               <ChevronRightIcon className="size-4 shrink-0 text-icon" aria-hidden="true" />
             </div>
-            <PaceSpark thisCycle={h.pace.thisCycle} lastCycle={h.pace.lastCycle} days={f.days} />
+            {/* PaceSpark has no height prop: held to 64 px here (the brief), so it letterboxes a little (block gap) */}
+            <div className="h-16 [&>svg]:h-full [&>svg]:w-full">
+              <PaceSpark thisCycle={h.pace.thisCycle} lastCycle={h.pace.lastCycle} days={f.days} />
+            </div>
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <ItemDescription className="text-sm">
                 {h.pace.delta === null
@@ -149,19 +163,7 @@ function HomeBody({ h }: { h: HomeView }) {
           </Badge>
         ) : null}
 
-        {h.note ? (
-          <Item asChild size="sm" variant="muted" className="w-full flex-nowrap items-start text-left active:bg-accent">
-            <button type="button" onClick={() => setSenOpen(true)} data-testid="sen-note">
-              <ItemMedia className="shrink-0">
-                <Avatar state="note" size={36} />
-              </ItemMedia>
-              <ItemContent className="min-w-0 gap-1">
-                <ItemDescription className="text-xs">Sen · {momentLabel(new Date(h.note.at))}</ItemDescription>
-                <p className="selectable text-base text-pretty">{h.note.text}</p>
-              </ItemContent>
-            </button>
-          </Item>
-        ) : null}
+        {h.note && !act ? <SenNote at={h.note.at} text={h.note.text} onOpen={() => setSenOpen(true)} /> : null}
 
         {h.quiet ? (
           <Item asChild size="sm" variant="outline" className="w-full flex-nowrap text-left active:bg-accent">
@@ -190,6 +192,24 @@ function HomeBody({ h }: { h: HomeView }) {
       </div>
       <CycleSheet open={cycleOpen} onOpenChange={setCycleOpen} />
     </HomeMaterial>
+  );
+}
+
+/** Sen's note, clamped to two lines; *More* opens Sen, where the whole note is. */
+function SenNote({ at, text, onOpen }: { at: string; text: string; onOpen: () => void }) {
+  return (
+    <Item asChild size="sm" variant="muted" className="w-full flex-nowrap items-start gap-3 text-left active:bg-accent">
+      <button type="button" onClick={onOpen} data-testid="sen-note">
+        <ItemMedia className="shrink-0">
+          <Avatar state="note" size={32} />
+        </ItemMedia>
+        <ItemContent className="min-w-0 gap-0.5">
+          <ItemDescription className="text-xs">Sen · {momentLabel(new Date(at))}</ItemDescription>
+          <p className="selectable line-clamp-2 text-base text-pretty">{text}</p>
+          <span className="text-sm font-medium text-primary">More</span>
+        </ItemContent>
+      </button>
+    </Item>
   );
 }
 

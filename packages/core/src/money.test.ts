@@ -8,8 +8,11 @@ import {
   medianSen,
   moneyParts,
   parseSen,
+  pastedSen,
   percent,
   scaleSen,
+  senText,
+  typedSen,
   spokenSen,
 } from './money';
 
@@ -204,5 +207,56 @@ describe('scaleSen, medianSen and fxApprox', () => {
     expect(fxApprox(2000, '4.2550')).toBe(8510);
     expect(fxApprox(999, '4.2')).toBe(4196);
     expect(() => fxApprox(100, '4.25501')).toThrow();
+  });
+});
+
+describe('typedSen: amounts typed as a bank app takes them (D132)', () => {
+  // each keystroke, as the field holds it after the browser adds the key
+  const typeKeys = (keys: string) => [...keys].reduce((shown, k) => typedSen(shown + k), '');
+
+  it('enters each digit from the right, always with two decimals', () => {
+    expect(typeKeys('1')).toBe('0.01');
+    expect(typeKeys('12')).toBe('0.12');
+    expect(typeKeys('125')).toBe('1.25');
+    expect(typeKeys('1250')).toBe('12.50');
+    expect(typeKeys('128450')).toBe('1,284.50');
+  });
+
+  it('ignores the dot, letters, signs and digits from other scripts', () => {
+    expect(typeKeys('12.50')).toBe('12.50');
+    expect(typeKeys('1a2-5+0e')).toBe('12.50');
+    expect(typeKeys('１２')).toBe('');
+    expect(typeKeys('٣')).toBe('');
+  });
+
+  it('takes no leading zeros, and gives nothing for no digits', () => {
+    expect(typeKeys('0007')).toBe('0.07');
+    expect(typedSen('')).toBe('');
+    expect(typedSen('0.00')).toBe('');
+  });
+
+  it('drops the last digit on backspace', () => {
+    // the field showed 12.50; backspace removes its last character
+    expect(typedSen('12.5')).toBe('1.25');
+    expect(typedSen('0.0')).toBe('');
+  });
+
+  it('stops at the most an amount can hold, and every result parses back to the same sen', () => {
+    expect(typeKeys('9'.repeat(20))).toBe('99,999,999,999.99');
+    const r = parseSen(typeKeys('9'.repeat(20)));
+    expect(r).toEqual({ ok: true, sen: MAX_SEN });
+    fc.assert(
+      fc.property(fc.stringMatching(/^[1-9][0-9]{0,12}$/), (digits) => {
+        const r = parseSen(typedSen(digits));
+        return r.ok && senText(r.sen) === typedSen(digits);
+      }),
+    );
+  });
+
+  it('keeps a pasted amount as it reads, and otherwise its digits', () => {
+    expect(pastedSen('12.5')).toBe('12.50');
+    expect(pastedSen('RM 1,284.50')).toBe('1,284.50');
+    expect(pastedSen('Total: 12.50 paid')).toBe('12.50');
+    expect(pastedSen('0')).toBe('');
   });
 });

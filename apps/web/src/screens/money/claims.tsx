@@ -1,27 +1,48 @@
-import { ChevronRightIcon, DownloadIcon, HandCoinsIcon, SendIcon } from 'lucide-react';
+import { DownloadIcon, HandCoinsIcon, SendIcon } from 'lucide-react';
 import type { ClaimRow, ClaimsView } from '@sen/core/views';
+import { percent } from '@sen/core/money';
+import { GroupCard, NavRow } from '@/blocks/group';
 import { Money } from '@/blocks/money';
-import { ListRow } from '@/blocks/rows';
 import { EmptyState } from '@/blocks/states';
-import { StatusCard } from '@/blocks/status';
 import { toastDone } from '@/blocks/toast';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { useClaims, useMe, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
-import { Loaded, Section, useGo } from '../kit';
-import { claimDue, claimState } from './claim-status';
-import { essHere, EssStandIn } from './ess';
+import { Loaded, useGo } from '../kit';
+import { claimDue, claimState, claimTone } from './claim-status';
+import { essHere } from './ess';
 
 /**
- * Claims (screens.md, spec §13): this period's claim per scheme with its amount, status, deadline and
- * evidence, *Download claim pack* (one PDF to print, D97), and in the shell *Send to ESS* from the claim
- * (D96). Earlier periods follow, as plain rows.
+ * Claims (screens.md, spec §13, D130): this period as one summary card holding its claims with their
+ * status, *Send to ESS* as the one main action (D96), *Download claim pack* in the app bar (one PDF to
+ * print, D97). Earlier periods follow in a card.
  */
 export default function Claims() {
   const q = useClaims();
   return (
-    <Screen bar={<AppBar title="Claims" />}>
+    <Screen
+      bar={
+        <AppBar
+          title="Claims"
+          action={
+            q.data?.claims.length ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Download claim pack"
+                // a stand-in: the printable PDF is built with claims (B25, D97)
+                onClick={() => toastDone('The claim pack PDF arrives with claims. Nothing to print yet.')}
+              >
+                <DownloadIcon />
+              </Button>
+            ) : undefined
+          }
+        />
+      }
+    >
       <Loaded q={q} what="your claims">
         {(v) => <Body v={v} />}
       </Loaded>
@@ -36,11 +57,16 @@ function Body({ v }: { v: ClaimsView }) {
   if (!v.claims.length)
     return (
       <EmptyState
+        icon={HandCoinsIcon}
+        title="No claims yet"
         line={
           // a link to Claims can reach someone whose claims are off (D52): no scheme to add (QA B04 run 2, 22)
           me.data && !me.data.claims
             ? 'Claims are off for you. Whoever invited you to Sen can switch them on.'
-            : "Each scheme's claim drafts itself on the 1st. Add a scheme in Settings → Claims."
+            : "Each scheme's claim drafts itself on the 1st."
+        }
+        action={
+          me.data && !me.data.claims ? undefined : { label: 'Add a scheme', onSelect: () => go('settings/claims') }
         }
       />
     );
@@ -48,98 +74,96 @@ function Body({ v }: { v: ClaimsView }) {
   const earlier = v.claims.filter((c) => c.period !== v.period);
   const toSubmit = now.filter((c) => c.status === 'to_submit');
   const ready = toSubmit.filter((c) => !c.missing.length);
+  const send = v.ess && essHere() && toSubmit.length > 0;
   return (
-    <div className="flex flex-col pb-4">
-      <Section title={v.period}>
-        <ul className="flex flex-col gap-3 px-4">
-          {now.map((c) => (
-            <li key={c.id}>
-              <ClaimCard c={c} onOpen={() => go('claim', { id: c.id })} />
-            </li>
-          ))}
-        </ul>
-        <div className="flex flex-col gap-2 px-4 pt-4">
+    <div className="flex flex-col gap-4 pt-2 pb-8">
+      <PeriodCard period={v.period} claims={now} onOpen={(c) => go('claim', { id: c.id })} />
+      {send ? (
+        <div className="flex flex-col gap-2 px-4">
           <Button
-            variant="outline"
-            size={v.ess && essHere() && toSubmit.length ? 'sm' : 'default'}
-            // a stand-in: the printable PDF is built with claims (B25, D97)
-            onClick={() => toastDone('The claim pack PDF arrives with claims. Nothing to print yet.')}
+            disabled={!ready.length}
+            onClick={() => {
+              // each claim goes on its own; a claim missing evidence waits (D96)
+              void Promise.all(
+                ready.map((c) => write({ type: 'claim.submitted', id: c.id, essRef: 'send' }, { quiet: true })),
+              ).then(() => toastDone(`Sending ${ready.length} ${ready.length === 1 ? 'claim' : 'claims'} to ESS…`));
+            }}
           >
-            <DownloadIcon /> Download claim pack
+            <SendIcon /> Send to ESS
           </Button>
-          {v.ess && essHere() && toSubmit.length ? (
-            <>
-              <Button
-                disabled={!ready.length}
-                onClick={() => {
-                  // each claim goes on its own; a claim missing evidence waits (D96)
-                  void Promise.all(
-                    ready.map((c) => write({ type: 'claim.submitted', id: c.id, essRef: 'send' }, { quiet: true })),
-                  ).then(() => toastDone(`Sending ${ready.length} ${ready.length === 1 ? 'claim' : 'claims'} to ESS…`));
-                }}
-              >
-                <SendIcon /> Send to ESS
-              </Button>
-              <EssStandIn />
-              {toSubmit.length > ready.length ? (
-                <p className="text-sm text-muted-foreground">
-                  A claim with evidence missing waits until you've added it.
-                </p>
-              ) : null}
-            </>
+          {toSubmit.length > ready.length ? (
+            <p className="px-1 text-sm text-muted-foreground">
+              A claim with evidence missing waits until you've added it.
+            </p>
           ) : null}
         </div>
-      </Section>
+      ) : null}
       {earlier.length ? (
-        <Section title="Earlier">
-          <ul className="flex flex-col">
-            {earlier.map((c) => (
-              <li key={c.id}>
-                <ListRow
-                  icon={HandCoinsIcon}
-                  title={`${c.scheme} · ${c.period}`}
-                  secondary={claimState(c).state}
-                  sen={c.status === 'approved' || c.status === 'paid' ? (c.approvedAmount ?? c.amount) : c.amount}
-                  kind={c.status === 'approved' || c.status === 'paid' ? 'in' : 'out'}
-                  onOpen={() => go('claim', { id: c.id })}
-                />
-              </li>
-            ))}
-          </ul>
-        </Section>
+        <GroupCard label="Earlier">
+          {earlier.map((c) => {
+            const paid = c.status === 'approved' || c.status === 'paid';
+            return (
+              <NavRow
+                key={c.id}
+                icon={HandCoinsIcon}
+                tone={claimTone(c)}
+                title={`${c.scheme} · ${c.period}`}
+                description={claimState(c).state}
+                trailing={<Money sen={paid ? (c.approvedAmount ?? c.amount) : c.amount} kind={paid ? 'in' : 'out'} />}
+                onOpen={() => go('claim', { id: c.id })}
+              />
+            );
+          })}
+        </GroupCard>
       ) : null}
     </div>
   );
 }
 
-function ClaimCard({ c, onOpen }: { c: ClaimRow; onOpen: () => void }) {
-  const s = claimState(c);
+/** The month at a glance: how many wait, what they add up to against the caps, then each claim. */
+function PeriodCard({ period, claims, onOpen }: { period: string; claims: ClaimRow[]; onOpen: (c: ClaimRow) => void }) {
+  const waiting = claims.filter((c) => c.status === 'to_submit').length;
+  const amount = claims.reduce((a, c) => a + c.amount, 0);
+  const cap = claims.reduce((a, c) => a + c.cap, 0);
+  const missing = claims.some((c) => c.status === 'to_submit' && c.missing.length);
   return (
-    <button type="button" className="w-full text-left active:opacity-80" onClick={onOpen}>
-      <StatusCard
-        icon={s.icon}
-        state={s.state}
-        status={s.tone}
-        title={
-          <span className="flex items-baseline justify-between gap-3">
-            <span>{c.scheme}</span>
-            <Money sen={c.amount} />
-          </span>
-        }
-        waiting={
-          <>
-            {claimDue(c)}
-            {claimDue(c) ? ' · ' : ''}
-            {c.evidence} {c.evidence === 1 ? 'file' : 'files'} · capped at{' '}
-            <Money sen={c.cap} className="font-normal" whole />
-          </>
-        }
-      >
-        {c.missing.length ? <p className="text-sm">{c.missing.join('. ')}</p> : null}
-        <span className="flex items-center gap-1 text-sm text-muted-foreground">
-          Open the claim <ChevronRightIcon className="size-4" aria-hidden="true" />
-        </span>
-      </StatusCard>
-    </button>
+    <section className="flex flex-col gap-2 px-4" aria-label={period}>
+      <Card className="gap-0 overflow-hidden py-0">
+        <div className="flex flex-col gap-2 px-4 pt-4 pb-3">
+          <h2 className="text-lg font-semibold">{period}</h2>
+          <p className="text-sm text-muted-foreground">
+            {waiting ? `${waiting} to submit` : 'Nothing to submit'} ·{' '}
+            <Money sen={amount} whole className="font-normal" /> of <Money sen={cap} whole className="font-normal" />
+          </p>
+          <Progress
+            value={cap > 0 ? Math.min(100, percent(amount / cap)) : 0}
+            tone={missing ? 'warning' : 'accent'}
+            aria-label={`${period}: claimed against caps`}
+          />
+        </div>
+        <div className="divide-y divide-border border-t border-border">
+          {claims.map((c) => {
+            const s = claimState(c);
+            return (
+              <NavRow
+                key={c.id}
+                icon={s.icon}
+                tone={claimTone(c)}
+                title={c.scheme}
+                description={
+                  <>
+                    {s.state}
+                    {claimDue(c) ? <span className="block">{claimDue(c)}</span> : null}
+                    {c.missing.length ? <span className="block text-foreground">{c.missing.join('. ')}</span> : null}
+                  </>
+                }
+                trailing={<Money sen={c.amount} />}
+                onOpen={() => onOpen(c)}
+              />
+            );
+          })}
+        </div>
+      </Card>
+    </section>
   );
 }
