@@ -178,7 +178,7 @@ describe('writes, with Undo (§6.7)', () => {
     expect(fake.db().subscriptions.filter((x) => x.id === id)).toHaveLength(1);
     // in another currency it's shown at Bank Negara's rate, never as RM0.00 (QA B04 redesign run 4, 1)
     const row = (await fake.subscriptions()).rows.find((r) => r.id === id)!;
-    expect(row).toMatchObject({ rate: '4.2180', rateFrom: { source: 'bnm', on: '2026-10-17' } });
+    expect(row).toMatchObject({ rate: '4.2180', rateFrom: { source: 'bnm', on: '2026-10-16' } });
     expect(row.approx).toBe(5479);
   });
 

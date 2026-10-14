@@ -44,12 +44,22 @@ export function AppBar({
       </header>
     );
   return (
-    <header className="flex h-14 shrink-0 items-center gap-1 px-2">
+    <header className="@container/bar flex h-14 shrink-0 items-center gap-1 px-2">
       <Button variant="ghost" size="icon" aria-label="Back" onClick={onBack ?? (() => goBack(router))}>
         <ArrowLeftIcon />
       </Button>
-      <h1 className="min-w-0 flex-1 truncate text-2xl font-semibold">{title}</h1>
-      {action}
+      {/*
+        Large text (QA B04 redesign run 4, 14): the title grows less than body text, as Android 14 scales large
+        fonts (to 1.2× at most), and on a bar narrower than 20rem the action shows its icon only, named in full for screen readers.
+      */}
+      <h1 className="min-w-0 flex-1 truncate text-[calc(var(--text-2xl)*min(var(--text-scale,1),1.2)/var(--text-scale,1))] leading-tight font-semibold">
+        {title}
+      </h1>
+      {action ? (
+        <div className="flex shrink-0 items-center @max-[20rem]/bar:[&_[data-slot=button]]:gap-0 @max-[20rem]/bar:[&_[data-slot=button]]:px-2 @max-[20rem]/bar:[&_[data-slot=button]]:text-[0px]">
+          {action}
+        </div>
+      ) : null}
     </header>
   );
 }

@@ -78,7 +78,8 @@ const ordinal = (n: number) => {
 /** What Sen's message box starts with, for you to finish in your own words (D95, D135). */
 const ADD_SCHEME = 'I want to add a claim scheme: ';
 const editScheme = (name: string) => `Change my ${name} scheme: `;
-const teachSteps = (name: string) => `Learn how I submit my ${name} claim on ESS: `;
+// an ESS task (*Fetch payslip*), not a scheme: *Learn the steps to fetch payslip on ESS: * (QA B04 redesign run 4, 12)
+const teachSteps = (task: string) => `Learn the steps to ${task.charAt(0).toLowerCase()}${task.slice(1)} on ESS: `;
 
 function Body({ claims }: { claims: Claims }) {
   const askSen = useUi((s) => s.askSen);

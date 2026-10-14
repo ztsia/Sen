@@ -761,4 +761,52 @@ test.describe("QA run 3 and the owner's list (13 Oct)", () => {
     await amount.pressSequentially('175');
     await expect(amount).toHaveValue('1.75');
   });
+
+  test('Teach Sen starts its message from the ESS task, not as a claim scheme (QA B04 redesign run 4, 12)', async ({
+    page,
+  }) => {
+    await open(page, '/s/settings/claims');
+    await settled(page);
+    await page.getByRole('button', { name: 'Teach Sen' }).first().click();
+    await expect(page.getByRole('textbox', { name: 'Message to Sen' })).toHaveValue(
+      /^Learn the steps to [a-z][^:]* on ESS: $/,
+    );
+  });
+
+  test("a goal's date must be after today (QA B04 redesign run 4, 10)", async ({ page }) => {
+    await open(page, '/s/goals');
+    await settled(page);
+    await page.getByRole('button', { name: 'Add a goal' }).click();
+    await page.getByRole('textbox', { name: 'Name' }).fill('Old trip');
+    await page.getByRole('textbox', { name: /Target/ }).pressSequentially('100000');
+    await page.getByLabel('By when (optional)').fill('2026-10-18');
+    await page.getByRole('group', { name: 'Kept in' }).getByRole('button', { name: 'Ryt Bank' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Pick a day after today.')).toBeVisible();
+  });
+
+  test('large text on a 360 px phone: no app bar title is cut', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.addInitScript(() => localStorage.setItem('sen.dev.textScale', '1.5'));
+    for (const look of LOOKS)
+      for (const path of ['/s/subscriptions', '/s/settings/members', '/s/budgets', '/s/goals', '/s/settings/claims']) {
+        await open(page, path, look);
+        await settled(page);
+        const cut = await page
+          .locator('h1')
+          .first()
+          .evaluate((el) => el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1);
+        expect(cut, `${look} ${path}: the title is cut`).toBe(false);
+      }
+  });
+
+  test('a letter typed over a selected amount is ignored, not a wipe (QA B04 redesign run 4, 16)', async ({ page }) => {
+    await open(page, '/s/manual');
+    await settled(page);
+    const amount = page.getByRole('textbox', { name: /Amount/ });
+    await amount.pressSequentially('120000');
+    await amount.press('ControlOrMeta+a');
+    await amount.press('x');
+    await expect(amount).toHaveValue('1,200.00');
+  });
 });

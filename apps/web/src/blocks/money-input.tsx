@@ -85,6 +85,9 @@ export function MoneyInput({
           aria-invalid={message ? true : undefined}
           aria-describedby={`${id}-msg`}
           onChange={(e) => {
+            // a letter or a dot typed over a selection is ignored like any other, not a wipe (QA B04 redesign run 4, 16)
+            const kind = (e.nativeEvent as InputEvent).inputType ?? '';
+            if (!/[0-9]/.test(e.target.value) && e.target.value !== '' && !kind.startsWith('delete')) return;
             setBlurError(undefined);
             onChange(typedSen(e.target.value));
             const el = e.target;

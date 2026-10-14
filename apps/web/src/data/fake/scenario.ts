@@ -36,7 +36,8 @@ export const BNM_RATES: Readonly<Record<string, string>> = {
   EUR: '4.9310',
   GBP: '5.6420',
 };
-export const BNM_RATES_ON = '2026-10-17';
+// Friday: Bank Negara publishes on working days (QA B04 redesign run 4, 15)
+export const BNM_RATES_ON = '2026-10-16';
 
 export const merchantKey = (raw: string) =>
   raw
