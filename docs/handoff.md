@@ -21,14 +21,16 @@ decisions D132–D136, spec §10/§11/§15, B27's note, and the ledger's "Run 3"
 https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa. The e2e suite follows the deliberate changes and
 has 14 new pins, each shown failing under its break (e71bd6d; full e2e 825 passed).
 
-**Running: run 4's Haiku sweep** into `qa-artifacts/B04-redesign/sweep/` (about an hour; it writes
-`sweep/e2e.exit` when done). If the session restarted mid-run, check that file before re-running.
+**QA run 4 said *fix first*** (1 Major, 6 Minor, 4 Notes, no Blocker): `qa/B04-redesign/report.md`,
+published at the same URL (version 4). Its fixes are in 4de5471, with the ledger's "Run 4" section:
+tier 2, scoped to money entry, subscriptions and goals added by hand, and the buttons that open Sen.
 
 ### What to do next
-1. When the sweep reports: a **new** `qa-reviewer`, thin prompt (run 4, tier 3): branch, label,
-   brief `docs/briefs/B04-redesign.md`, D129/D130/D132–D136, `patterns.md` §7, the sweep's path.
-2. Its record, committed, then republished to the same URL. The artifact allows 512 files: null run
-   1 and 2's old screenshots (`FLOW-*`, `R2-*`) when publishing. Then fix by tiers.
+1. The full `pnpm e2e` on 4de5471 is running (log in the scratchpad); it must pass before step 2.
+2. **Resume run 4's reviewer** (agent `a55f117fed5c8972e`, if this session still has it; otherwise a
+   fresh `qa-reviewer` in scoped mode reading the committed `acceptance.md`, `flows.md`,
+   `results.json`) with the three areas, findings 1–5, 7, 10 and the range
+   0110260..4de5471. Nothing about how they were fixed.
 3. Clean → `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign`, PR *B04 · Redesign*.
 4. **Then, before B05: D137's QA tooling** (diff-driven QA: aria snapshots of every screen on the
    golden scenario, behaviour in one look, pixel diff against `main` in all 12, the reviewer gets
