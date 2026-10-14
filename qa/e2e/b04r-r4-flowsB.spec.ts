@@ -191,13 +191,17 @@ test('R4-FLOW-3 add a goal by hand: refusals, one (double tap), account named on
       expect(await goals(page)).toHaveLength(start.length);
     },
   );
-  // a past date is accepted? record it
+  // run 4's fix of Note 10: a day already gone is refused in words
   await page.getByLabel('By when (optional)', { exact: true }).fill('2020-01-01');
   const chips = page.locator('[role="group"][aria-labelledby="goal-account"] button');
   const names = await chips.allInnerTexts();
   note(F, `account choices: ${JSON.stringify(names)}`);
   await chips.nth(1).click();
   const chosen = names[1];
+  await save(page).click();
+  await expect(page.getByText('Pick a day after today.')).toBeVisible();
+  expect((await goals(page)).filter((g) => g.n === 'New laptop')).toHaveLength(0);
+  await page.getByLabel('By when (optional)', { exact: true }).fill('2027-03-01');
   const b = (await save(page).boundingBox())!;
   await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
   await page.waitForTimeout(40);
@@ -211,8 +215,8 @@ test('R4-FLOW-3 add a goal by hand: refusals, one (double tap), account named on
     F,
     n,
     'saved-once',
-    'choose an account, a past date, tap Save twice',
-    'exactly one New laptop of 450000 sen; the past date is (note) accepted',
+    'choose an account, a past date (refused), a future date, tap Save twice',
+    'exactly one New laptop of 450000 sen; the past date was refused first',
     async () => {
       const g = after.filter((x) => x.n === 'New laptop');
       expect(g).toHaveLength(1);

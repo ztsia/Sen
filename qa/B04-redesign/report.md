@@ -135,3 +135,63 @@ R4-FLOW-15: seed 1,200.00; typing 175 after it -> 1,200,001.75; select-all then 
 ## Running the specs
 
 From `qa/e2e`: `./node_modules/.bin/playwright test -c b04r.config.ts <name>`. Flows A, B, D and E need a dev server on :5291 (they read the fake db as a module); C and F to L a preview build on :5292.
+
+---
+
+# Run 4, scoped re-check of the fixes (tier 2): ship
+
+```
+VERDICT   ship (scoped, tier 2; fixes 0110260..4de5471)
+          criteria: 45 (36 from run 4 + 9 new S4-AC), 42 pass, 1 fail (R4-AC-36), 2 not reachable
+          flows: 41 re-run on the fixed code, 87 steps, all pass; probes: 8, 2 not caught
+          No Blocker or Major open.
+```
+
+Areas: money entry wherever an amount is typed; subscriptions and goals added by hand; every button
+that opens Sen. Also the shared money field on first-run balances and a member's allowance. Run 3's
+specs and the project e2e weren't re-run (the main session's 829 passed stands). Dev, preview and
+production builds on :5291–:5293; every probe reverted.
+
+## Run 4's findings, re-checked
+
+| # | Was | Now | Evidence |
+|---|---|---|---|
+| 1 | Major: USD subscription read `≈ RM0.00` | fixed | Six cases match by hand: US$12.99 → RM54.79, S$10.00 → 32.65, €9.99 → 49.26, £0.01 → 0.06, £99,999,999,999.99 → 564,199,999,999.94, €12.99 a year → 64.05 (the month rises by 534). Rows show `rate 4.2180, BNM 17 Oct`; Claude Pro keeps `rate 4.2550, from the last charge`; a ringgit one has no ≈ line |
+| 2 | Minor: Sen buttons without the avatar | fixed | Claims' Add, both Edits, Teach Sen and Teach again show it and start their message; 18 more buttons across the app show it (see 12) |
+| 3 | Minor: a goal's account never shown | fixed | `RM0.00 of RM4,500.00 · in Public Bank`; goal screen `Kept in \| Public Bank`; clean at 360 px, 1.5× |
+| 4 | Minor: Subscriptions title cut | fixed at 390 | No cut in 6 looks × 2 modes; action named in full, 48 px. At 360 px with 1.5× text: 14 |
+| 5 | Minor: a new amount appends | fixed | Select all then 1 7 5 reads 1.75 in Add expense, Balance check, Budgets, Add a subscription, Add a goal, first-run and a member allowance; 175 sen saved |
+| 6 | Minor: hand tick in no brief | fixed (docs) | B30 carries D133's move and the hand tick; B21 lists D133, D134. R4-AC-8, 9 stay not reachable (B30 builds it) |
+| 7 | Minor: group-label size unpinned | fixed | Pin red at 22 px and at 15 px |
+| 8 | Note: docs lag | fixed in part | patterns §7 follows D132; `screens.md` has no add forms (left) |
+| 9 | Note: run 3 leftovers | open (left) | |
+| 10 | Note: past *By when* | fixed | Yesterday and today refused in KL, Kiritimati and Los Angeles (`Pick a day after today.`, nothing stored after two taps); tomorrow and no date store once |
+| 11 | Note: focus not returned | open (left) | |
+
+## New findings
+
+| # | Severity | What breaks | Repro | AC / spec |
+|---|---|---|---|---|
+| 12 | Minor | Teach Sen and Teach again build their started message from an ESS task name as if it were a claim scheme (*Learn how I submit my Submit claims claim on ESS:*), and no test checks it | `/s/settings/claims`: Teach Sen; More about ESS → Teach again: Fetch payslip | S4-AC-4, D135 |
+| 13 | Minor | Nothing in the project suite tests that a goal's past date is refused (probe: check replaced by `false`, 3 pins green) | | S4-AC-3 |
+| 14 | Minor | App bar titles are still cut at 360 px with 1.5× text: Subscriptions (Minted, Firefly, Copper), Members (Minted, Firefly, Copper), Budgets (Firefly) | textScale 1.5, 360×740 | S4-AC-5, patterns §8 |
+| 15 | Note | The made-up Bank Negara rate is dated Saturday 17 Oct 2026 | any hand-added foreign subscription | §11, D99 |
+| 16 | Note | A letter or a dot typed over a full selection wipes the amount | `/s/manual`: 1 2 0 0 0 0, select all, `x` | S4-AC-6, D132 |
+| 17 | Note | The Claims empty state's *Describe a scheme to Sen* wasn't reached: the fake has no state without schemes | | S4-AC-4 |
+
+## Probes
+
+| Broke | Caught |
+|---|---|
+| Money field collapses a selection again | yes: pin, `Expected "1.75" Received "1,200,001.75"` |
+| `subscription.add` takes no rate | yes: `fake.test` |
+| `keptIn` dropped from the goal summary | yes: `fake.test`, `expected null to be 'Ryt Bank'` |
+| Goal's past-date check replaced by `false` | **no** (13) |
+| Claims Edit loses its avatar | yes |
+| Teach Sen opens Sen with no started message | **no** (12) |
+| Subscriptions action reads *Add a subscription* again | yes: title cut |
+| `GroupLabel` at 22 px, and at 15 px | yes, both |
+
+Specs: run 4's 33 re-run, 32 green unchanged; R4-FLOW-3 now asserts the refusal. New scoped specs
+`b04r-r4-flows{M,N,O,P}.spec.ts`, 17 tests, green. Not reached: long-press Select all on a phone (in
+`docs/local.md`), the 00:00 KL boundary for a goal's date (the fake's clock is fixed), finding 17.

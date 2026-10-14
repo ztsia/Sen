@@ -1476,3 +1476,83 @@ R4-AC-36 The wording a decision promised is in the contract documents
 
 Note on R4-AC-6's sad twin: "a date in the past is refused" is the reviewer's inference; no spec line demands it. It is
 recorded as a Note, not a failure of the criterion's core.
+
+---
+
+# Run 4, scoped re-check (tier 2): fixes in 4de5471 (resumed reviewer)
+
+Area: (1) money entry wherever an amount is typed (D132: Add expense, Balance check, Budgets, Add a subscription, Add a goal);
+(2) subscriptions and goals added by hand (D133, D134, spec §10, §11); (3) the buttons that open Sen (D135). Fixed findings 1, 2, 3, 4, 5,
+7 and 10 (the past *By when*) are re-checked; 6, 8, 9 and 11 were answered in docs or left, as the ledger's "Run 4" section says.
+Written after reading the fix commits (the ordering rule's cost: these criteria know what the fixes changed). Ids are `S4-AC-n`.
+
+S4-AC-1  A hand-added foreign subscription shows a ringgit estimate with its source (finding 1)
+         Given  Add a subscription in USD, SGD, EUR or GBP
+         When   it is saved
+         Then   its row reads "≈ RM…" above zero, with the rate and where it came from ("rate 4.2180, BNM 17 Oct"), and the amount is
+                the declared minor-unit amount times the rate, rounded once, worked out by hand (US$12.99 x 4.2180 = 5479.18 -> RM54.79)
+         Sad    a yearly one counts a twelfth in "Committed each month" (rounded once); a ringgit one has no "≈" line; the "≈" figure is
+                in no total of real spending; an unknown/odd amount (1 cent, 99,999,999,999.99) never reads NaN or RM0.00
+         Spec   spec §11, D134, D99
+
+S4-AC-2  A goal shows the account it is kept in (finding 3)
+         Given  a goal added by hand into account X, and the seeded goals
+         When   the goals list and the goal screen are read
+         Then   the list says "· in X" and the goal screen has a "Kept in" cell naming X; two goals share one account; a long name wraps
+         Sad    at 360 px and 1.5x text nothing is cut off or past the edge
+         Spec   D133, spec §10
+
+S4-AC-3  A goal's date must be after today in Kuala Lumpur (finding 10)
+         Given  Add a goal with a "By when"
+         When   the date is yesterday, today, tomorrow (KL days, with the browser in Kiritimati and in Los Angeles too), or empty
+         Then   yesterday and today say "Pick a day after today." beside the field (aria-invalid) and add nothing; tomorrow and empty add one goal
+         Sad    the check uses the app's clock in KL, never the browser's zone; a double tap on a refused form adds nothing
+         Spec   D134 (the owner's fix), CLAUDE.md "Dates ... Asia/Kuala_Lumpur"
+
+S4-AC-4  Every button that opens Sen shows Sen's avatar and says what it is for (finding 2, D135)
+         Given  every screen with a button or menu item that opens Sen: Claims (Add, Edit, Teach Sen, Teach again), Insights and Year (Ask Sen
+                about this), txn and account (Ask Sen), the empty states of Memory, Research, Goals, Subscriptions, Claims, Home's Sen note
+                and the floating button
+         When   each is read and tapped
+         Then   each has a canvas avatar (not a plain icon) and an accessible name; set-up buttons start their message (Learn how I submit my
+                Phone bill claim on ESS: ), nothing is sent; the target stays 48 px
+         Sad    a menu item inside a dropdown draws the avatar too; the avatar follows the look; closing and opening the plain button gives an
+                empty composer
+         Spec   D135
+
+S4-AC-5  An app bar title is never cut by its action (finding 4)
+         Given  Subscriptions, Goals, Claims, Budgets, Members, Accounts, Payments, in six looks and two modes at 390x844, and at 360 with 1.5x text
+         When   each h1's scrollWidth is read
+         Then   no title is cut at 390; the action's accessible name is still the full phrase ("Add a subscription") while it reads "Add"
+         Sad    at 360 and 1.5x any cut title is recorded; the action stays 48 px and keyboard-reachable
+         Spec   D129, patterns §7 Screens, WCAG label-in-name
+
+S4-AC-6  Select all, then typing, replaces the amount in every money field (finding 5)
+         Given  Add expense, Balance check, Budgets (an existing amount), Add a subscription, Add a goal
+         When   an amount is typed, selected all and 1, 7, 5 typed
+         Then   the field reads 1.75 and the saved amount is 175 sen; typing without a selection still appends (12.50 -> 125.00 after a 0)
+         Sad    a partial selection typed over becomes the digits left plus the new one, never NaN; a click in the middle puts the caret at the end;
+                select-all then Backspace empties; paste still replaces
+         Spec   D132, patterns §7 Forms (as amended)
+
+S4-AC-7  The group-label size rule has teeth (finding 7)
+         Given  the new pin
+         When   GroupLabel is drawn as a 22 px foreground heading
+         Then   the pin is red; and a break to a different size (12 px is fine, 16 px is not) behaves as the rule says
+         Sad    a label equal to the row title (15 px) is red too
+         Spec   D136, qa skill phase 3
+
+S4-AC-8  Run 4's own specs, re-run
+         Given  qa/e2e/b04r-r4-flows{A..L}
+         When   run on the fixed code
+         Then   the five evidence specs (B goal screen, C avatars, G edit, H title, I USD estimate) are green or their assertion is obsolete with a reason;
+                every other spec is unchanged
+         Sad    a spec that went green only because it asserts less is a finding
+         Spec   qa skill, scoped re-check
+
+S4-AC-9  The contract documents carry the decisions (findings 6, 8)
+         Given  patterns §7 Forms, B21 and B30
+         When   read
+         Then   patterns says numeric, digits from the right, Select all replaces; B30 carries D133's move into the goal's account and the hand tick; B21 lists D133/D134
+         Sad    screens.md still lacks the add forms (left; recorded)
+         Spec   CLAUDE.md "decisions are settled"

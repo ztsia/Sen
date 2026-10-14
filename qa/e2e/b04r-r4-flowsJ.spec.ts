@@ -19,12 +19,20 @@ test('R4-FLOW-6c a corrupted stored look, mode and quarterly flag fall back; the
   const look = await page.locator('html').getAttribute('data-look');
   const mode = await page.locator('html').getAttribute('data-mode');
   note(F, `look ${look} mode ${mode} errors ${JSON.stringify(errors)}`);
-  await step(page, F, 1, 'corrupt', 'open Appearance with garbage in the stored look, mode and flag', 'the page renders; the look is one of the six; the mode is light or dark; no page error', async () => {
-    expect(['minted', 'instrument', 'firefly', 'line', 'mercury', 'copper']).toContain(look);
-    expect(['light', 'dark']).toContain(mode);
-    await expect(page.getByRole('heading', { name: /Look|Appearance/ }).first()).toBeVisible();
-    expect(errors).toEqual([]);
-  });
+  await step(
+    page,
+    F,
+    1,
+    'corrupt',
+    'open Appearance with garbage in the stored look, mode and flag',
+    'the page renders; the look is one of the six; the mode is light or dark; no page error',
+    async () => {
+      expect(['minted', 'instrument', 'firefly', 'line', 'mercury', 'copper']).toContain(look);
+      expect(['light', 'dark']).toContain(mode);
+      await expect(page.getByRole('heading', { name: /Look|Appearance/ }).first()).toBeVisible();
+      expect(errors).toEqual([]);
+    },
+  );
 });
 
 test('R4-FLOW-6d choosing a look while "changes each quarter" is on: what the screen says', async ({ page }) => {
@@ -43,11 +51,19 @@ test('R4-FLOW-6d choosing a look while "changes each quarter" is on: what the sc
   const txt = (await page.locator('main').innerText()).replace(/\n+/g, ' | ');
   const look = await page.locator('html').getAttribute('data-look');
   note(F, `after choosing Copper: look ${look}, switch ${after}; text ${txt.slice(0, 500)}`);
-  await step(page, F, 1, 'choose', 'choose Copper while the quarterly switch is on', 'the look changes; the screen says whether the choice will be replaced next quarter (switch off, or words)', async () => {
-    expect(look).toBe('copper');
-    const says = after === 'false' || /replace|next quarter|until|kept|pinned|stay/i.test(txt);
-    expect(says, txt.slice(0, 300)).toBe(true);
-  });
+  await step(
+    page,
+    F,
+    1,
+    'choose',
+    'choose Copper while the quarterly switch is on',
+    'the look changes; the screen says whether the choice will be replaced next quarter (switch off, or words)',
+    async () => {
+      expect(look).toBe('copper');
+      const says = after === 'false' || /replace|next quarter|until|kept|pinned|stay/i.test(txt);
+      expect(says, txt.slice(0, 300)).toBe(true);
+    },
+  );
   await page.reload();
   await settled(page);
   const kept = await page.locator('html').getAttribute('data-look');

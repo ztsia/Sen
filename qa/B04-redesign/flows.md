@@ -703,3 +703,31 @@ and the screen survey (R4-FLOW-13 in the first list) are run through run 3's spe
 commit (45 of 51 green; the six red follow D132 and the Scan tab change on purpose and are replaced by R4-FLOW-1 and R4-FLOW-C1 to C3b).
 Run 4's specs: `qa/e2e/b04r-r4-flows{A..L}.spec.ts`; run with `b04r.config.ts` against a dev server on :5291 (A, B, D, E; the
 fake db is read as a module) and a preview build on :5292 (C, F to L), the production build on :5293 for the bundle checks.
+
+---
+
+# Run 4, scoped re-check (tier 2): flows (resumed reviewer; fix commits read first)
+
+Area: money entry, subscriptions and goals added by hand, the buttons that open Sen. Ids `R4S-FLOW-n`; run 4's own R4-FLOW-n specs
+were re-run unchanged except R4-FLOW-3 (its past date is now refused, so it asserts the refusal, then a future date).
+
+R4S-FLOW-1   A foreign subscription added by hand: ≈ ringgit by hand arithmetic, source shown, counted in the month   (happy + sad)
+             Entry  /s/subscriptions -> Add a subscription (USD 12.99, SGD 10.00, EUR 9.99, GBP 0.01, GBP 99,999,999,999.99, EUR 12.99 yearly)
+             Ends   each row reads ≈ RM… = minor x rate rounded once (54.79, 32.65, 49.26, 0.06, 564,199,999,999.94, 64.05) with the rate and BNM 17 Oct;
+                    the month rises by the same (a twelfth when yearly)           Covers S4-AC-1
+R4S-FLOW-1b  A ringgit subscription has no ≈ line; the seeded USD one keeps its own rate "from the last charge"        (sad)  Covers S4-AC-1
+R4S-FLOW-2   A goal shows where its money is kept, in the list and on its screen                                      (happy)  Covers S4-AC-2
+R4S-FLOW-2b  Kept in at 360 px and 1.5x text: nothing cut or past the edge                                            (sad)  Covers S4-AC-2
+R4S-FLOW-3   A goal's date must be after today in KL days, with the browser in Kuala Lumpur, Kiritimati and Los Angeles (sad) Covers S4-AC-3
+             Steps yesterday, today (refused, aria-invalid, nothing stored after two taps), tomorrow, none (stored once)
+R4S-FLOW-4   Claims: Add, every Edit, every Teach Sen and the menu's Teach again show the avatar and start their message  (happy) Covers S4-AC-4
+R4S-FLOW-4b  Every other button that opens Sen: floating (4 tabs), Home's note, five Insights cards, Year, a payment, an account,
+             four empty states                                                                                         (happy) Covers S4-AC-4
+R4S-FLOW-5   App bar titles in six looks at 390 and in three at 360 with 1.5x text; the action reads Add, is named in full, is 48 px (sad) Covers S4-AC-5
+R4S-FLOW-6   Select all, then typing, replaces the amount in Add expense, Balance check, Budgets, Add a subscription, Add a goal
+             and the saved amount is 175 sen                                                                           (happy) Covers S4-AC-6
+R4S-FLOW-6b  Sad twins: a partial selection, a click at the far left, select-all then Backspace, paste, a stray key, Shift+Left, ArrowLeft (sad) Covers S4-AC-6
+R4S-FLOW-7   The other consumers of the field: first-run balances and a member's allowance                              (happy) Covers S4-AC-6
+
+Specs: `qa/e2e/b04r-r4-flows{M,N,O,P}.spec.ts` (M and O against the dev server on :5291, N and P against the preview build on :5292).
+Probes (phase 3) are in the results; each was reverted with `git checkout`.

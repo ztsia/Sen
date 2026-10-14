@@ -6,7 +6,9 @@ import { note, step } from './b04r-r4-lib';
 // Run 4 flows K: Back after a direct load, and Sen offline. Preview build (5292).
 test.use({ baseURL: process.env.B04R_BASE ?? 'http://127.0.0.1:5292' });
 
-test('R4-FLOW-17 a payment opened by its address: the app bar Back goes Home, not to a blank page', async ({ page }) => {
+test('R4-FLOW-17 a payment opened by its address: the app bar Back goes Home, not to a blank page', async ({
+  page,
+}) => {
   const F = 'R4-FLOW-17';
   await open(page, `/s/txn?id=${uid('txn:roti-bakar')}`);
   await settled(page);
