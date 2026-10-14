@@ -124,3 +124,31 @@ its buttons show its avatar (pins 10, 14).
 - **Note 11, first-cycle's payday strip**, as run 1 left it: the person set up on payday morning and
   the salary landed after, so that cycle's plan is real.
 - **Note 9's labels**: the owner chose captions (D136); nothing on screen changes.
+
+# Run 4
+
+Fresh full run (tier 3) on 0110260: *fix first*, 1 Major, 6 Minor, 4 Notes, no Blocker
+(`report.md`). Fixes in 4de5471.
+
+**Tier: 2, scoped,** resuming run 4's reviewer on three areas: money entry wherever an amount is
+typed (D132: Add expense, Balance check, Budgets, Add a subscription, Add a goal); subscriptions and
+goals added by hand (D133, D134, §10, §11); and the buttons that open Sen (D135). Why not 3: the
+money field is a shared block, but its fix narrows one caret rule (a selection is left alone), and
+the field's whole reach is the five forms named, all in the scoped area. Nothing touches navigation,
+the theme, a store, the schema or the money module.
+
+| # | Severity | Fix | Evidence |
+|---|---|---|---|
+| 1 | Major | A subscription added in another currency takes Bank Negara's latest rate (the fake's `BNM_RATES`), so its row reads ≈ ringgit and counts in the month; the row says where the rate came from (*rate 4.2180, BNM 17 Oct*, or *from the last charge*), as §11 asks | `fake.test.ts` "adds a subscription by hand": red on the old `apply.ts` (`expected … to match object { rate: '4.2180', … }`), green now; approx 5,479 sen |
+| 2 | Minor | Claims' Add, Edit, Teach Sen and *Teach again* show Sen's avatar and start their message (*Learn how I submit my Phone bill claim on ESS: *) | New pin "every button on Claims that opens Sen shows its avatar"; QA's R4-FLOW-6 was red on the old code |
+| 3 | Minor | A goal shows *Kept in* on its screen and *· in Ryt Bank* in the list (`GoalSummary.keptIn`) | `fake.test.ts` "adds a goal by hand": `keptIn` is *Ryt Bank* |
+| 4 | Minor | App bar actions read *Add* (named *Add a subscription* etc. for screen readers), so no title is cut | New pin "app bar titles are never cut short", 4 screens × 6 looks × 2 modes; QA's R4-FLOW-16 was red on the old code |
+| 5 | Minor | A money field leaves a selection alone, so *Select all* then typing replaces the amount | New pin "Select all, then typing, replaces the amount" (1,200.00 → 1.75); QA's R4-FLOW-15 was red on the old code |
+| 6 | Minor | D133's plan moves into a goal's account and the hand tick are in B30's brief (deduped by plan step, a later notification matched to it); B21 lists D133 and D134. Built in B30, not here | Docs |
+| 7 | Minor | Pin: a group label is smaller than the title and its rows, in all six looks | Under the break (`text-2xl` foreground): `minted: label 22px vs title 22px`, red; undone: green |
+| 8 | Note | `patterns.md` §7's amounts follow D132 (`inputMode="numeric"`, from the right, Select all replaces) | Docs |
+| 9 | Note | Left: the 2 px at 360 px with 1.5× text on Add expense in Firefly dark, and four 3–4 line paragraphs | Not worth a change now; the D137 eyes pass will judge paragraph length |
+| 10 | Note | A goal's date must be after today (*Pick a day after today.*). Left: digits past 13 dropped (an amount can't be larger), `1e3` pastes as its digits (D132), an abandoned Sen draft is replaced by a new one (a new button is a new question) | |
+| 11 | Note | Left: the Add sheets don't return focus to their button on close. Queued with the device checks (TalkBack) in `docs/local.md` | |
+
+Checks on 4de5471: typecheck, lint, unit tests exit 0; the pins file 37 passed; the full e2e runs next.
