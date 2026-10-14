@@ -32,7 +32,9 @@ has 14 new pins, each shown failing under its break (e71bd6d; full e2e 825 passe
 3. Clean → `cd /home/user && node Sen/scripts/usage.mjs --log B04-redesign`, PR *B04 · Redesign*.
 4. **Then, before B05: D137's QA tooling** (diff-driven QA: aria snapshots of every screen on the
    golden scenario, behaviour in one look, pixel diff against `main` in all 12, the reviewer gets
-   only the changed screens). Its own small branch and brief; update the `qa` skill to match.
+   only the changed screens), plus its quality half: the eyes pass, `qa/escapes.md`, scripted visual
+   checks, and the reviewer spawning its own helpers (add `Agent` to its tools). Own branch and brief;
+   update the `qa` skill to match.
 
 ### Decided with the owner (13 Oct; all recommended options taken)
 - **Home fits one screen** at 390×844 by compressing: the payday plan becomes a one-line strip, the
