@@ -13,29 +13,59 @@ fs.mkdirSync(new URL('../../qa-artifacts/B04-redesign/text/', import.meta.url).p
 
 const NK = uid('txn:nasi-kandar');
 const PATHS: [string, string][] = [
-  ['home', '/'], ['review', '/review'], ['insights', '/insights'], ['more', '/more'],
-  ['skipped', '/s/skipped'], ['manual', '/s/manual'], ['scan', '/scan'],
-  ['budgets', '/s/budgets'], ['subscriptions', '/s/subscriptions'], ['goals', '/s/goals'],
-  ['goal', `/s/goal?id=${uid('goal:japan')}`], ['year', '/s/insights/year'],
-  ['payments', '/s/payments'], ['txn', `/s/txn?id=${NK}`], ['receipt', `/s/receipt?id=${uid('receipt:nasi-kandar')}`],
+  ['home', '/'],
+  ['review', '/review'],
+  ['insights', '/insights'],
+  ['more', '/more'],
+  ['skipped', '/s/skipped'],
+  ['manual', '/s/manual'],
+  ['scan', '/scan'],
+  ['budgets', '/s/budgets'],
+  ['subscriptions', '/s/subscriptions'],
+  ['goals', '/s/goals'],
+  ['goal', `/s/goal?id=${uid('goal:japan')}`],
+  ['year', '/s/insights/year'],
+  ['payments', '/s/payments'],
+  ['txn', `/s/txn?id=${NK}`],
+  ['receipt', `/s/receipt?id=${uid('receipt:nasi-kandar')}`],
   ['shared', '/s/shared'],
-  ['split-nk', `/s/split?id=${uid('split:nk')}`], ['split-bbq', `/s/split?id=${uid('split:bbq')}`],
+  ['split-nk', `/s/split?id=${uid('split:nk')}`],
+  ['split-bbq', `/s/split?id=${uid('split:bbq')}`],
   ['split-hdl', `/s/split?id=${uid('split:haidilao')}`],
-  ['pub-new', '/s/split-public?id=demo-new'], ['pub', '/s/split-public?id=demo'], ['pub-final', '/s/split-public?id=demo-final'],
+  ['pub-new', '/s/split-public?id=demo-new'],
+  ['pub', '/s/split-public?id=demo'],
+  ['pub-final', '/s/split-public?id=demo-final'],
   ['pub-closed', '/s/split-public?id=demo-closed'],
-  ['memory', '/s/agent/memory'], ['research', '/s/agent/research'], ['usage', '/s/agent/usage'],
-  ['accounts', '/s/accounts'], ['account', `/s/account?id=${acctId('ryt')}`], ['balance-check', '/s/balance-check'],
+  ['memory', '/s/agent/memory'],
+  ['research', '/s/agent/research'],
+  ['usage', '/s/agent/usage'],
+  ['accounts', '/s/accounts'],
+  ['account', `/s/account?id=${acctId('ryt')}`],
+  ['balance-check', '/s/balance-check'],
   ['payday', '/s/payday?scenario=payday'],
-  ['claims', '/s/claims'], ['claim', `/s/claim?id=${uid('claim:phone:2026-09')}`],
+  ['claims', '/s/claims'],
+  ['claim', `/s/claim?id=${uid('claim:phone:2026-09')}`],
   ['claim-missing', `/s/claim?id=${uid('claim:parking:2026-09')}`],
-  ['settings', '/s/settings'], ['appearance', '/s/settings/appearance'], ['capture', '/s/settings/capture'],
-  ['cap-apps', '/s/settings/capture/apps'], ['cap-access', '/s/settings/capture/access'],
-  ['cap-running', '/s/settings/capture/running'], ['cap-captured', '/s/settings/capture/captured'],
-  ['you', '/s/settings/you'], ['categories', '/s/settings/categories'], ['email', '/s/settings/email'],
-  ['set-claims', '/s/settings/claims'], ['set-sen', '/s/settings/sen'], ['members', '/s/settings/members'],
-  ['data', '/s/settings/data'], ['set-account', '/s/settings/account'],
-  ['sign-in', '/s/sign-in'], ['first-run', '/s/first-run?scenario=before-salary'], ['new-look', '/s/new-look'],
-  ['home-capture-off', '/?scenario=capture-off'], ['home-payday', '/?scenario=payday'],
+  ['settings', '/s/settings'],
+  ['appearance', '/s/settings/appearance'],
+  ['capture', '/s/settings/capture'],
+  ['cap-apps', '/s/settings/capture/apps'],
+  ['cap-access', '/s/settings/capture/access'],
+  ['cap-running', '/s/settings/capture/running'],
+  ['cap-captured', '/s/settings/capture/captured'],
+  ['you', '/s/settings/you'],
+  ['categories', '/s/settings/categories'],
+  ['email', '/s/settings/email'],
+  ['set-claims', '/s/settings/claims'],
+  ['set-sen', '/s/settings/sen'],
+  ['members', '/s/settings/members'],
+  ['data', '/s/settings/data'],
+  ['set-account', '/s/settings/account'],
+  ['sign-in', '/s/sign-in'],
+  ['first-run', '/s/first-run?scenario=before-salary'],
+  ['new-look', '/s/new-look'],
+  ['home-capture-off', '/?scenario=capture-off'],
+  ['home-payday', '/?scenario=payday'],
 ];
 const LOOKS = ['minted', 'instrument', 'firefly', 'line', 'mercury', 'copper'];
 const SEL =
@@ -48,9 +78,16 @@ async function measure(page: import('@playwright/test').Page) {
     const visible = (el: Element) => {
       const r = el.getBoundingClientRect();
       const cs = getComputedStyle(el);
-      return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && !el.closest('.sr-only,[aria-hidden="true"],[data-dev-handle]');
+      return (
+        r.width > 0 &&
+        r.height > 0 &&
+        cs.visibility !== 'hidden' &&
+        cs.display !== 'none' &&
+        !el.closest('.sr-only,[aria-hidden="true"],[data-dev-handle]')
+      );
     };
-    const desc = (el: Element) => `${el.tagName.toLowerCase()}${el.getAttribute('aria-label') ? `[${el.getAttribute('aria-label')}]` : ''} "${(el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 28)}"`;
+    const desc = (el: Element) =>
+      `${el.tagName.toLowerCase()}${el.getAttribute('aria-label') ? `[${el.getAttribute('aria-label')}]` : ''} "${(el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 28)}"`;
     const out: Record<string, unknown> = {};
     const se = document.scrollingElement!;
     out.pageOverflowX = se.scrollWidth - se.clientWidth;
@@ -74,7 +111,8 @@ async function measure(page: import('@playwright/test').Page) {
     const inHScroll = (el: Element) => {
       for (let p = el.parentElement; p; p = p.parentElement) {
         const cs = getComputedStyle(p);
-        if (/(auto|scroll|hidden|clip)/.test(cs.overflowX) && p !== document.body && p !== document.documentElement) return true;
+        if (/(auto|scroll|hidden|clip)/.test(cs.overflowX) && p !== document.body && p !== document.documentElement)
+          return true;
       }
       return false;
     };
@@ -82,7 +120,8 @@ async function measure(page: import('@playwright/test').Page) {
     for (const el of document.querySelectorAll('main *')) {
       if (!visible(el)) continue;
       const r = el.getBoundingClientRect();
-      if ((r.right > vw + 1 || r.left < -1) && !inHScroll(el)) spill.push(`${desc(el)} ${Math.round(r.left)}..${Math.round(r.right)}`);
+      if ((r.right > vw + 1 || r.left < -1) && !inHScroll(el))
+        spill.push(`${desc(el)} ${Math.round(r.left)}..${Math.round(r.right)}`);
     }
     out.spill = spill.slice(0, 6);
     // hit-testing of controls, over up to 4 screenfuls
@@ -121,7 +160,9 @@ async function measure(page: import('@playwright/test').Page) {
           // a label or wrapper that owns this control
           if (hit.contains(el) && hit.tagName === 'LABEL') continue;
           if (hit.closest('label') && hit.closest('label')?.contains(el)) continue;
-          covered.push(`${desc(el)} (${Math.round(r.width)}x${Math.round(r.height)}) hit by ${desc(hit)} at ${Math.round(x)},${Math.round(y)}`);
+          covered.push(
+            `${desc(el)} (${Math.round(r.width)}x${Math.round(r.height)}) hit by ${desc(hit)} at ${Math.round(x)},${Math.round(y)}`,
+          );
           break;
         }
       }
@@ -148,7 +189,11 @@ for (const look of LOOKS)
       for (const [name, path] of PATHS) {
         const sep = path.includes('?') ? '&' : '?';
         await page.goto(`${path}${sep}look=${look}&mode=${mode}`);
-        await page.waitForFunction(() => document.querySelectorAll('svg').length > 0 || (document.querySelector('main')?.textContent?.length ?? 0) > 10);
+        await page.waitForFunction(
+          () =>
+            document.querySelectorAll('svg').length > 0 ||
+            (document.querySelector('main')?.textContent?.length ?? 0) > 10,
+        );
         await page.waitForTimeout(250);
         const m = await measure(page);
         fs.appendFileSync(OUT, JSON.stringify({ name, look, mode, ...m }) + '\n');

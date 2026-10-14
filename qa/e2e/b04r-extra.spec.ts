@@ -8,7 +8,14 @@ test('EXTRA progress bars expose a value', async ({ page }) => {
   for (const p of ['/s/claims', '/s/budgets', '/s/settings/members', '/s/goals', '/s/payday', '/s/insights']) {
     await open(page, p);
     await page.waitForTimeout(300);
-    const v = await page.getByRole('progressbar').evaluateAll((bs) => bs.map((b) => `${b.getAttribute('aria-label')}=${b.getAttribute('aria-valuenow')}/${b.getAttribute('aria-valuemax')}`));
+    const v = await page
+      .getByRole('progressbar')
+      .evaluateAll((bs) =>
+        bs.map(
+          (b) =>
+            `${b.getAttribute('aria-label')}=${b.getAttribute('aria-valuenow')}/${b.getAttribute('aria-valuemax')}`,
+        ),
+      );
     out.push(`${p}: ${v.join(' ; ')}`);
   }
   console.log(out.join('\n'));

@@ -28,7 +28,10 @@ export async function step(
   }
   await page.waitForTimeout(450);
   await shot(page, file);
-  fs.appendFileSync(STEPS, JSON.stringify({ flow, n, action, assertion, status, screenshot: `${file}.png`, err }) + '\n');
+  fs.appendFileSync(
+    STEPS,
+    JSON.stringify({ flow, n, action, assertion, status, screenshot: `${file}.png`, err }) + '\n',
+  );
   if (status === 'fail') throw new Error(`${flow} step ${n} (${action}): ${err}`);
 }
 
