@@ -151,4 +151,22 @@ the theme, a store, the schema or the money module.
 | 10 | Note | A goal's date must be after today (*Pick a day after today.*). Left: digits past 13 dropped (an amount can't be larger), `1e3` pastes as its digits (D132), an abandoned Sen draft is replaced by a new one (a new button is a new question) | |
 | 11 | Note | Left: the Add sheets don't return focus to their button on close. Queued with the device checks (TalkBack) in `docs/local.md` | |
 
-Checks on 4de5471: typecheck, lint, unit tests exit 0; the pins file 37 passed; the full e2e runs next.
+Checks on 4de5471: typecheck, lint, unit tests exit 0; the pins file 37 passed; full e2e 829 passed.
+
+## Run 4, scoped re-check: ship
+
+Run 4's reviewer, resumed on the three areas: findings 1–5, 7 and 10 fixed, no Blocker or Major
+open. Its five new findings, fixed in d6023d2:
+
+| # | Severity | Tier | Fix | Evidence |
+|---|---|---|---|---|
+| 12 | Minor | 1: one file and its pin | Teach Sen and *Teach again* start from the ESS task: *Learn the steps to fetch payslip on ESS: * | New pin, red first (composer read *Learn how I submit my Submit claims claim on ESS:*), green now |
+| 13 | Minor | 1: a test | Pin: a goal dated today is refused (*Pick a day after today.*) | QA's probe (the check replaced by `false`) left the suite green; the pin is new, green on the fix |
+| 14 | Minor | 1: a style, in the app bar | At large text the bar's action shows its icon only (a container query on the bar, under 20rem; named in full for screen readers) and the title grows to 1.2× at most, as Android 14 scales large fonts. A wrapped title was tried first: it broke words mid-word with no hyphen, worse than the cut | New pin, 5 screens × 6 looks at 360 px, 1.5×: red first (`minted /s/subscriptions: the title is cut`), green now; screenshots at 390 px (unchanged) and 360 px 1.5× (Minted, Firefly, Copper) looked at |
+| 15 | Note | 1: a word | The made-up Bank Negara rate is dated Friday 16 Oct, a working day | `fake.test.ts` |
+| 16 | Note | 1: one file and its pin | A letter or dot typed over a selected amount is ignored, like any other stray key (D132) | New pin, red first (`Received ""`), green now |
+| 17 | Note | — | Left: the Claims empty state's *Describe a scheme to Sen* can't be reached in the fake | |
+
+Why 14 is tier 1 though the app bar is shared: it changes only how the title and action are drawn
+when they wouldn't fit, behaviour is untouched, and the pins measure every look at both sizes; the
+full e2e on d6023d2 checks the rest.
