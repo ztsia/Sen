@@ -316,8 +316,10 @@ still has *Undo*. `screens/more/txn.tsx` is the reference.
 
 - A `Field` around every input, with its label above and its message below. The first field to fill
   is focused. `inputMode` and `enterKeyHint` match the input.
-- **Amounts** are typed as text into a number pad (`inputMode="decimal"`) and parsed straight into
-  sen, never through a float. The amount shows large as it's typed.
+- **Amounts** are typed as a bank app takes them (D132): digits only, into a number pad
+  (`inputMode="numeric"`), each entering from the right, always two decimals, so the dot and letters
+  never land. *Select all* then typing replaces the amount. The text is parsed straight into sen,
+  never through a float. The amount shows large as it's typed.
 - Validate on blur and on submit; the submit button stays enabled and says what's missing.
 - Never lose what was typed: a form kept open by a sheet or the back gesture keeps its draft.
 

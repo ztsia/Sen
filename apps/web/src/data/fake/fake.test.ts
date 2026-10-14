@@ -176,7 +176,10 @@ describe('writes, with Undo (§6.7)', () => {
     expect((await fake.run(cmd)).said).toBe('Canva Pro added');
     expect((await fake.run(cmd)).said).toBe('Already added');
     expect(fake.db().subscriptions.filter((x) => x.id === id)).toHaveLength(1);
-    expect(JSON.stringify(await fake.subscriptions())).toContain('Canva Pro');
+    // in another currency it's shown at Bank Negara's rate, never as RM0.00 (QA B04 redesign run 4, 1)
+    const row = (await fake.subscriptions()).rows.find((r) => r.id === id)!;
+    expect(row).toMatchObject({ rate: '4.2180', rateFrom: { source: 'bnm', on: '2026-10-17' } });
+    expect(row.approx).toBe(5479);
   });
 
   it('adds a goal by hand in the account it sits in, and refuses an unknown account (D133, D134)', async () => {
@@ -186,7 +189,8 @@ describe('writes, with Undo (§6.7)', () => {
     await expect(fake.run(Command.parse({ ...goal, accountId: uid('account:none') }))).rejects.toThrow(/account/);
     expect((await fake.run(Command.parse({ ...goal, accountId: acctId('ryt') }))).said).toBe('New laptop added');
     expect(fake.db().goals.find((g) => g.id === id)).toMatchObject({ accountId: acctId('ryt'), targetAmount: 450000 });
-    expect((await fake.goals()).goals.map((g) => g.name)).toContain('New laptop');
+    // the account it's kept in is shown, by name (QA B04 redesign run 4, 3)
+    expect((await fake.goals()).goals.find((g) => g.id === id)?.keptIn).toBe('Ryt Bank');
   });
 
   it('opens a receipt Sen could not read as a failed draft, so Add expense says so', async () => {

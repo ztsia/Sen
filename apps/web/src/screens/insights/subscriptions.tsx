@@ -46,9 +46,9 @@ export default function Subscriptions() {
         <AppBar
           title="Subscriptions"
           action={
-            <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
+            <Button variant="outline" size="sm" aria-label="Add a subscription" onClick={() => setAdding(true)}>
               <PlusIcon aria-hidden="true" />
-              Add a subscription
+              Add
             </Button>
           }
         />
@@ -280,6 +280,11 @@ function Body({ v }: { v: SubscriptionsView }) {
               <p className="px-4 pl-[60px] text-sm text-muted-foreground">
                 ≈ <Money sen={r.approx} className="font-normal" />
                 {r.rate ? ` · rate ${r.rate}` : ''}
+                {r.rateFrom
+                  ? r.rateFrom.source === 'charge'
+                    ? ', from the last charge'
+                    : `, ${r.rateFrom.source.toUpperCase()} ${shortDay(r.rateFrom.on)}`
+                  : ''}
               </p>
             ) : null}
             {r.history.length ? <HistoryList name={r.name} history={r.history} /> : null}

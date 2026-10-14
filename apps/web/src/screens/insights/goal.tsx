@@ -52,6 +52,8 @@ function Body({ v }: { v: GoalView }) {
       value: v.projectedFinish ? `About ${longDay(v.projectedFinish)}` : 'Nothing put in yet',
       muted: !v.projectedFinish,
     },
+    // where its money sits (D133): payday's plan moves it there
+    { label: 'Kept in', value: g.keptIn ?? 'Not set', muted: !g.keptIn, wide: true },
     {
       label: 'Median surplus',
       value: v.sample === 0 ? 'Too early to say' : `${formatSen(v.medianSurplus)} over ${cycles}`,

@@ -1,14 +1,5 @@
 import { useState } from 'react';
-import {
-  EllipsisIcon,
-  HandCoinsIcon,
-  LogInIcon,
-  MailIcon,
-  PencilIcon,
-  PlusIcon,
-  ReceiptTextIcon,
-  UserCheckIcon,
-} from 'lucide-react';
+import { EllipsisIcon, HandCoinsIcon, LogInIcon, MailIcon, ReceiptTextIcon, UserCheckIcon } from 'lucide-react';
 import type { SettingsView } from '@sen/core/views';
 import { formatSen } from '@sen/core/money';
 import { Badge } from '@/components/ui/badge';
@@ -52,9 +43,14 @@ export default function ClaimsSettings() {
         <AppBar
           title="Claims"
           action={
-            <Button variant="outline" size="sm" onClick={() => useUi.getState().askSen(ADD_SCHEME)}>
-              <PlusIcon aria-hidden="true" />
-              Add a scheme
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label="Add a scheme"
+              onClick={() => useUi.getState().askSen(ADD_SCHEME)}
+            >
+              <SenMark />
+              Add
             </Button>
           }
         />
@@ -82,6 +78,7 @@ const ordinal = (n: number) => {
 /** What Sen's message box starts with, for you to finish in your own words (D95, D135). */
 const ADD_SCHEME = 'I want to add a claim scheme: ';
 const editScheme = (name: string) => `Change my ${name} scheme: `;
+const teachSteps = (name: string) => `Learn how I submit my ${name} claim on ESS: `;
 
 function Body({ claims }: { claims: Claims }) {
   const askSen = useUi((s) => s.askSen);
@@ -104,11 +101,12 @@ function Body({ claims }: { claims: Claims }) {
               trailing={
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   aria-label={`Edit ${c.name}`}
                   onClick={() => askSen(editScheme(c.name))}
                 >
-                  <PencilIcon />
+                  <SenMark />
+                  Edit
                 </Button>
               }
             />
@@ -134,7 +132,7 @@ function Body({ claims }: { claims: Claims }) {
  */
 function EssCard({ claims, showEss }: { claims: Claims; showEss: boolean }) {
   const write = useWrite();
-  const { setSenOpen } = useUi();
+  const askSen = useUi((s) => s.askSen);
   const { ess, essSender: sender } = claims;
   const [signIn, setSignIn] = useState(false);
   const [forget, setForget] = useState(false);
@@ -161,7 +159,8 @@ function EssCard({ claims, showEss }: { claims: Claims; showEss: boolean }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-48">
           {recorded.map((c) => (
-            <DropdownMenuItem key={c.name} onSelect={() => setSenOpen(true)}>
+            <DropdownMenuItem key={c.name} onSelect={() => askSen(teachSteps(c.name))}>
+              <SenMark />
               Teach again: {c.name}
             </DropdownMenuItem>
           ))}
@@ -210,7 +209,8 @@ function EssCard({ claims, showEss }: { claims: Claims; showEss: boolean }) {
               />
               {c.recorded ? null : (
                 <div className="flex flex-wrap gap-2 px-4 pb-3 pl-15">
-                  <Button variant="secondary" size="sm" onClick={() => setSenOpen(true)}>
+                  <Button variant="secondary" size="sm" onClick={() => askSen(teachSteps(c.name))}>
+                    <SenMark />
                     Teach Sen
                   </Button>
                   <Button

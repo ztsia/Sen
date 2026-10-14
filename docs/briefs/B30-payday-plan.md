@@ -23,7 +23,7 @@ new:
   - §10: buckets' set-asides
   - §15: `payday_plans` and `payday_plan_items`
   - §16: `/match` (payday plan items)
-- Decisions: D14, D60, D101 (*Payday moves*).
+- Decisions: D14, D60, D101 (*Payday moves*), D133 (goal money in its own account; a move ticked by hand).
 - `docs/screens.md`: `payday`, `home` (plan progress), and *Defaults to confirm* item 2, as settled
   in B04.
 - `docs/flows.md`: `payday`.
@@ -40,6 +40,12 @@ new:
   accounts.
 - **`/match` ticks a move** when its transfer's notification lands (`done_transaction_id`). A move
   into a goal adds a `goal_contributions` row.
+- **A move into a goal goes to the account its money is kept in** (D133, `goals.account_id`), and
+  the plan says so (*Move RM400 to Ryt Bank · Laptop pocket*).
+- **A move can be ticked by hand** (D133), because some moves send no notification (a bank's own
+  main-account-to-pocket move). The hand tick books the transfer between the two accounts and its
+  goal contribution, deduped by the plan step, so a notification that lands later for the same move
+  is matched to it rather than booked twice. Undo unticks it.
 - **Home shows the progress** (*2 of 3 moves done*) until every move is ticked or hidden.
 - **The island's *Payday moves*:** a segmented bar, one segment per move.
 

@@ -32,10 +32,13 @@ interface MoneyInputProps {
   prefix?: string;
 }
 
-/** The caret stays after the last digit, where the next one enters (D132). */
+/**
+ * The caret stays after the last digit, where the next one enters (D132). A selection is left alone, so
+ * *Select all* then typing replaces the amount rather than adding to it (QA B04 redesign run 4, 5).
+ */
 const toEnd = (el: HTMLInputElement) => {
   const n = el.value.length;
-  if (el.selectionStart !== n || el.selectionEnd !== n) el.setSelectionRange(n, n);
+  if (el.selectionStart === el.selectionEnd && el.selectionStart !== n) el.setSelectionRange(n, n);
 };
 
 /**

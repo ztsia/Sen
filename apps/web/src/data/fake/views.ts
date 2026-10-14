@@ -834,6 +834,7 @@ export function subscriptions(db: Db): SubscriptionsView {
         currency: s.currency,
         approx,
         rate: s.displayFxRate,
+        rateFrom: s.displayFxSource && s.displayFxOn ? { source: s.displayFxSource, on: s.displayFxOn } : null,
         next: s.nextRenewalDate,
         history,
       };
@@ -861,6 +862,7 @@ function summary(db: Db, g: Db['goals'][number]): GoalSummary {
     target: g.targetAmount,
     targetDate: g.targetDate,
     perCycle: scaleSen(left, 1, cyclesLeft),
+    keptIn: acctName(db, g.accountId),
   };
 }
 

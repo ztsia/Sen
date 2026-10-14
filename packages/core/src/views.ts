@@ -371,6 +371,8 @@ export const SubscriptionsView = z.object({
       /** ≈ in ringgit, for display only, from the rate shown (D99). */
       approx: Amount,
       rate: z.string().nullable(),
+      /** Where the rate came from (§11): Bank Negara's (or the ECB's) on a day, or the last charge. */
+      rateFrom: z.object({ source: z.enum(['bnm', 'ecb', 'charge']), on: Day }).nullable(),
       next: Day,
       history: z.array(
         z.object({
@@ -394,6 +396,8 @@ export const GoalSummary = z.object({
   targetDate: Day.nullable(),
   /** What it needs each cycle to make its date. */
   perCycle: Amount,
+  /** The account or pocket its money is kept in (D133); none for a goal set before D133. */
+  keptIn: z.string().nullable(),
 });
 export type GoalSummary = z.infer<typeof GoalSummary>;
 

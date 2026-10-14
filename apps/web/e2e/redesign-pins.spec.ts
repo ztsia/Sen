@@ -701,4 +701,64 @@ test.describe("QA run 3 and the owner's list (13 Oct)", () => {
     await expect(ask.locator('canvas.av')).toHaveCount(1);
     expect(errors).toEqual([]);
   });
+
+  test('every button on Claims that opens Sen shows its avatar: Add, Edit, Teach Sen (D135)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '/s/settings/claims');
+    await settled(page);
+    const buttons = [
+      page.getByRole('button', { name: 'Add a scheme' }),
+      page.getByRole('button', { name: /^Edit / }).first(),
+      page.getByRole('button', { name: 'Teach Sen' }).first(),
+    ];
+    for (const b of buttons) {
+      await expect(b).toBeVisible();
+      await expect(b.locator('canvas.av')).toHaveCount(1);
+    }
+    expect(errors).toEqual([]);
+  });
+
+  test("a group's label is a caption: smaller than the title and than the rows it heads, in every look (D136)", async ({
+    page,
+  }) => {
+    for (const look of LOOKS) {
+      await open(page, '/s/settings', look);
+      await settled(page);
+      const sizes = await page.evaluate(() => {
+        const px = (el: Element | null) => (el ? parseFloat(getComputedStyle(el).fontSize) : NaN);
+        const label = document.querySelector('section[aria-label] h2');
+        const row = label?.closest('section')?.querySelector('[data-slot="item-title"]') ?? null;
+        return { label: px(label), title: px(document.querySelector('h1')), row: px(row) };
+      });
+      expect(sizes.label, `${look}: a group label was measured`).toBeGreaterThan(0);
+      expect(sizes.label, `${look}: label ${sizes.label}px vs title ${sizes.title}px`).toBeLessThan(sizes.title);
+      expect(sizes.label, `${look}: label ${sizes.label}px vs row ${sizes.row}px`).toBeLessThan(sizes.row);
+    }
+  });
+
+  test('app bar titles are never cut short by their action, in every look and mode', async ({ page }) => {
+    for (const look of LOOKS)
+      for (const mode of ['light', 'dark'] as const)
+        for (const path of ['/s/subscriptions', '/s/goals', '/s/budgets', '/s/settings/claims']) {
+          await open(page, path, look, mode);
+          await settled(page);
+          const cut = await page
+            .locator('h1')
+            .first()
+            .evaluate((el) => el.scrollWidth > el.clientWidth);
+          expect(cut, `${look} ${mode} ${path}: the title is cut`).toBe(false);
+        }
+  });
+
+  test('a money field: Select all, then typing, replaces the amount (QA B04 redesign run 4, 5)', async ({ page }) => {
+    await open(page, '/s/subscriptions');
+    await settled(page);
+    await page.getByRole('button', { name: 'Add a subscription' }).click();
+    const amount = page.getByRole('textbox', { name: /Amount/ });
+    await amount.pressSequentially('120000');
+    await expect(amount).toHaveValue('1,200.00');
+    await amount.press('ControlOrMeta+a');
+    await amount.pressSequentially('175');
+    await expect(amount).toHaveValue('1.75');
+  });
 });

@@ -16,6 +16,8 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useAccountList, useGoals, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
+import { klDay } from '@sen/core/cycles';
+import { nowIso } from '@/lib/clock';
 import { shortDay } from '@/lib/dates';
 import { newId } from '@/lib/uid';
 import { cn } from '@/lib/utils';
@@ -37,9 +39,15 @@ export default function Goals() {
         <AppBar
           title="Goals"
           action={
-            <Button variant="outline" size="sm" disabled={!kept.length} onClick={() => setAdding(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!kept.length}
+              aria-label="Add a goal"
+              onClick={() => setAdding(true)}
+            >
               <PlusIcon aria-hidden="true" />
-              Add a goal
+              Add
             </Button>
           }
         />
@@ -57,7 +65,7 @@ export default function Goals() {
 }
 
 /** Which field an error is about: one message at a time (Budgets). */
-type Where = 'name' | 'target' | 'account';
+type Where = 'name' | 'target' | 'by' | 'account';
 
 /** Adds a goal or a yearly bucket by hand (D134): its name, what it's for, its target, when, and the account it's kept in. */
 function GoalForm({ accounts, onClose }: { accounts: { id: string; name: string }[]; onClose: () => void }) {
@@ -74,6 +82,8 @@ function GoalForm({ accounts, onClose }: { accounts: { id: string; name: string 
     if (r.error !== undefined && target !== '') return setError({ at: 'target', message: r.error });
     const sen = r.sen;
     if (sen === undefined || sen === 0) return setError({ at: 'target', message: 'Type the target.' });
+    // a date already gone can't be saved for (QA B04 redesign run 4, 10)
+    if (by !== '' && by <= klDay(nowIso())) return setError({ at: 'by', message: 'Pick a day after today.' });
     if (accountId === null) return setError({ at: 'account', message: "Pick the account it's kept in." });
     onClose();
     await write({
@@ -130,12 +140,13 @@ function GoalForm({ accounts, onClose }: { accounts: { id: string; name: string 
         error={error?.at === 'target' ? error.message : undefined}
         onEnter={() => void save()}
       />
-      <Field>
+      <Field data-invalid={error?.at === 'by' ? true : undefined}>
         <FieldLabel htmlFor="goal-by">By when (optional)</FieldLabel>
         <Input
           id="goal-by"
           type="date"
           value={by}
+          aria-invalid={error?.at === 'by' ? true : undefined}
           onChange={(e) => {
             setError(undefined);
             setBy(e.target.value);
@@ -144,6 +155,7 @@ function GoalForm({ accounts, onClose }: { accounts: { id: string; name: string 
             if (e.key === 'Enter') void save();
           }}
         />
+        {error?.at === 'by' ? <FieldError>{error.message}</FieldError> : null}
       </Field>
       <Field data-invalid={error?.at === 'account' ? true : undefined}>
         <FieldLabel id="goal-account">Kept in</FieldLabel>
@@ -254,6 +266,7 @@ function Body({ v }: { v: GoalsView }) {
                   <span className="truncate text-base font-medium">{g.name}</span>
                   <span className="num text-sm text-muted-foreground">
                     {formatSen(g.saved)} of {formatSen(g.target)}
+                    {g.keptIn ? ` · in ${g.keptIn}` : ''}
                   </span>
                   <span className="text-sm text-muted-foreground">
                     Needs <Money sen={g.perCycle} className="font-normal text-foreground" /> a cycle

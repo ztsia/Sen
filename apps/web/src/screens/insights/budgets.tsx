@@ -35,10 +35,11 @@ export default function Budgets() {
               variant="outline"
               size="sm"
               disabled={!others.length}
+              aria-label="Add a budget"
               onClick={() => setEditing({ categoryId: null, label: '', cap: null })}
             >
               <PlusIcon aria-hidden="true" />
-              Add a budget
+              Add
             </Button>
           }
         />

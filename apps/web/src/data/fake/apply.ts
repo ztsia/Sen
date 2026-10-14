@@ -5,7 +5,7 @@ import { apportion, formatSen } from '@sen/core/money';
 import type { Transaction } from '@sen/core/schema';
 import type { ReviewItem } from '@sen/core/views';
 import type { Db } from './db';
-import { merchantKey } from './scenario';
+import { BNM_RATES, BNM_RATES_ON, merchantKey } from './scenario';
 
 // The fake's write side: each command changes the rows the way B05's route will, and says what
 // happened in words (patterns.md §7). Undo is the backend's own business: here, a snapshot.
@@ -310,6 +310,8 @@ export function apply(db: Db, cmd: Exclude<Command, { type: 'undo' }>): Applied 
     case 'subscription.add': {
       // the same id again is a no-op (every input has a dedupe key)
       if (db.subscriptions.some((x) => x.id === cmd.id)) return { said: 'Already added', touched: [] };
+      // another currency is shown in ringgit at Bank Negara's latest rate (§11), never as RM0.00 (QA B04 redesign run 4, 1)
+      const rate = cmd.currency === 'MYR' ? null : (BNM_RATES[cmd.currency] ?? null);
       db.subscriptions.push({
         id: cmd.id,
         userId: db.userId,
@@ -320,9 +322,9 @@ export function apply(db: Db, cmd: Exclude<Command, { type: 'undo' }>): Applied 
         cadence: cmd.cadence,
         nextRenewalDate: cmd.nextRenewal,
         status: 'active',
-        displayFxRate: null,
-        displayFxOn: null,
-        displayFxSource: null,
+        displayFxRate: rate,
+        displayFxOn: rate ? BNM_RATES_ON : null,
+        displayFxSource: rate ? 'bnm' : null,
       });
       return { said: `${cmd.name} added`, touched: [] };
     }
