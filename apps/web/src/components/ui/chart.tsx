@@ -1,4 +1,4 @@
-// Sen: shadcn/ui's chart, changed in place for the phone (CLAUDE.md, shadcn first): dark themes key on [data-mode='dark'], Sen's own mode attribute, not .dark; tooltip values go through valueFormatter, which defaults to formatSen, since a chart's values are integer sen.
+// Sen: shadcn/ui's chart, changed in place for the phone (CLAUDE.md, shadcn first): dark themes key on [data-mode='dark'], Sen's own mode attribute, not .dark; tooltip values go through valueFormatter, which defaults to formatSen, since a chart's values are integer sen; the chart's svg keeps the app's focus ring (recharts makes it focusable), where shadcn hid it.
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import * as RechartsPrimitive from 'recharts';
@@ -59,7 +59,7 @@ function ChartContainer({
         data-slot="chart"
         data-chart={chartId}
         className={cn(
-          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
+          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent",
           className,
         )}
         {...props}
