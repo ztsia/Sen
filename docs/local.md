@@ -306,3 +306,10 @@ Each slice that needs one of these lists it under *Needs from you first* in its 
       (3) on Payday, tap *Skip*, then *Next* at once, and say whether the first tap is lost to the
       toast; (4) on a narrow phone (360 dp) with the largest font, open Budgets and Settings and say
       whether *RM0.00 of RM150.00* or *~RM3.80 this month* is cut off.
+- [ ] **B04 · Redesign, device checks from QA run 4.** On the debug shell: (1) on *Budgets*, tap a budget and
+      then the amount, and try to change RM1,200.00 to RM1,500.00 by typing: say whether you can replace
+      it (long-press → *Select all*, then type) or have to backspace through it (digits are added after the
+      old ones; a browser can't select all by keyboard here); (2) on *Add a subscription* and *Add a goal*,
+      say whether the number pad shows only digits, and whether the date field opens Android's own picker;
+      (3) tap the Scan tab and say whether the camera opens at once, and long-press it and choose *From
+      gallery*; (4) with TalkBack, close *Add a subscription* with Back and say where focus lands.

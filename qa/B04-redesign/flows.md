@@ -553,3 +553,153 @@ Not walked in this run (covered only by re-running the project's and runs 1 and 
 (capture simulator end to end) and R3-FLOW-17 (every screen's empty state). Specs: `qa/e2e/b04r-r3-*.spec.ts`;
 run them with `qa/e2e/b04r.config.ts`, against a dev server on :5291 (flows C, D, F), a preview build on :5292
 (A, B, E, survey) and a production build on :5293 (R3-FLOW-21).
+
+---
+
+# Run 4 flows (fresh reviewer; written from the docs before any source was read)
+
+Actor is the owner (Wei Ming, admin) unless named. Viewport 390x844 unless named. The app runs on the in-browser fake on a
+preview build; native parts go through the dev panel. Each step is asserted, then screenshotted. Ids are `R4-FLOW-n`.
+
+R4-FLOW-1  Typing an amount like a bank app                               (happy + sad)
+           Entry  Add expense (More -> Add by hand, or the Scan tab's "Add by hand")
+           Steps  1. focus the amount; type 1,2,5,0 and read each value  2. type ".", "e", "-" and a letter
+                  3. backspace to 0.00  4. paste "RM 1,234.50" and then "abc12def"  5. type 17+ digits
+                  6. type 1,9,9,9,9,9 + a payee + pick a category + Save
+           Ends   0.01, 0.12, 1.25, 12.50; stray keys ignored; the pastes read 1234.50 and 0.12; no exponent; the new row reads
+                  RM1,999.99 in Payments
+           Covers R4-AC-1, R4-AC-2, R4-AC-3
+
+R4-FLOW-2  Add a subscription by hand                                     (happy + sad)
+           Entry  More -> Subscriptions -> Add a subscription
+           Steps  1. save empty  2. amount 0.00 only  3. name Netflix, amount 17.00 MYR, monthly, a renewal date; double-tap Save
+                  4. add a second in USD  5. reload
+           Ends   exactly one Netflix and one USD subscription with forecast wording; the "≈" figure appears nowhere in real totals;
+                  both survive nothing more than the session (the fake resets on reload, noted)
+           Covers R4-AC-4, R4-AC-5, R4-AC-24, R4-AC-29
+
+R4-FLOW-3  Add a goal by hand                                             (happy + sad)
+           Entry  More -> Goals -> Add a goal
+           Steps  1. save empty  2. name + target but no account  3. a past date  4. a full valid goal into a pocket; double-tap
+                  5. open the new goal  6. add a yearly bucket in the same account
+           Ends   one goal each; the goal screen names its account; both share the account label
+           Covers R4-AC-6, R4-AC-7, R4-AC-24
+
+R4-FLOW-4  Payday plan: a hand tick                                       (happy + sad)
+           Entry  Home's payday strip -> payday
+           Steps  1. read the move "RM… to <account>"  2. tap Done twice quickly  3. Undo  4. Done again with the amount changed
+                  5. simulate the matching transfer notification in the dev panel  6. open the goal's contributions
+           Ends   one transfer, one contribution; Undo removes both; the changed amount books as changed; the notification does
+                  not double-book
+           Covers R4-AC-8, R4-AC-9
+
+R4-FLOW-5  Opening Sen to set something up                                (happy + sad)
+           Entry  Settings -> Claims
+           Steps  1. tap "Add a claim scheme"  2. read the composer; close  3. tap the Phone bill edit icon  4. close
+                  5. open Sen from the floating button  6. Insights -> Ask Sen about this on two different cards
+           Ends   composer started with each message, nothing sent; the floating button opens a clean composer; the card
+                  question differs per card; the avatar is Sen's in every button
+           Covers R4-AC-10, R4-AC-11, R4-AC-12
+
+R4-FLOW-6  Every look, avatar and labels                                  (happy)
+           Entry  Settings -> Appearance
+           Steps  1. choose each look in turn  2. open Sen  3. read the avatar and a GroupCard label's size
+           Ends   the avatar follows the look; labels are captions
+           Covers R4-AC-12, R4-AC-13, R4-AC-20
+
+R4-FLOW-7  Home fits, and the payday strip                                (happy + sad)
+           Entry  `/` for each look x mode
+           Steps  1. measure scroll  2. tap the strip  3. a scenario with a health bar  4. a long note
+           Ends   no scroll in the 12 combinations; nothing clipped
+           Covers R4-AC-17
+
+R4-FLOW-8  Review: answer, undo, double tap, apply all                    (happy + sad)
+           Entry  Review tab
+           Steps  1. read headers and badge  2. answer; Undo  3. double-tap an answer  4. Apply all; undo one
+           Ends   counts add up; one change per double tap
+           Covers R4-AC-18, R4-AC-24
+
+R4-FLOW-9  Insights pager                                                 (happy + sad)
+           Entry  Insights tab
+           Steps  1. read steps and "1 of N"  2. tap a step  3. swipe  4. keyboard arrows  5. the empty scenario
+           Ends   one card at a time; counter right; EmptyState for no data
+           Covers R4-AC-19, R4-AC-11
+
+R4-FLOW-10 Detail screens: facts, actions, destructive behind a menu      (happy + sad)
+           Entry  Payments -> a payment; Accounts -> an account; Claims -> a claim; Goals -> a goal; Shared -> a split
+           Steps  1. read the header, the fact grid, the action bar  2. open the ⋯ menu  3. Delete; Undo
+           Ends   facts and actions look different; Undo restores the row
+           Covers R4-AC-14, R4-AC-15
+
+R4-FLOW-11 Categories and rules                                           (happy)
+           Entry  Settings -> Categories
+           Steps  1. read tiles  2. Rules  3. (after pay-new) the new rule appears
+           Ends   a sentence per rule, with its origin
+           Covers R4-AC-21
+
+R4-FLOW-12 Hostile text, timezone and offline                             (sad)
+           Entry  Add expense note, search box, subscription and goal names; the browser at Los Angeles and Kiritimati time; offline
+           Steps  1. type the hostile strings  2. read totals and dates in both timezones  3. go offline, add an expense, reload,
+                  go online
+           Ends   literal text; unchanged dates and totals; offline banner, change applied once
+           Covers R4-AC-28, R4-AC-30, R4-AC-31
+
+R4-FLOW-13 Screen survey: every screen of the brief's table                (happy)
+           Entry  each route
+           Steps  1. open  2. assert title, main action count, no hairline dividers, tiles on destinations, states on rows
+                  3. measure computed sizes and touch targets
+           Ends   all conform
+           Covers R4-AC-14, R4-AC-16, R4-AC-27
+
+## Core journeys (D124)
+
+R4-FLOW-C1 first-run (core)
+           Entry  fresh storage, the first-run scenario
+           Steps  1. sign in with email and code (a wrong code first)  2. apps  3. access  4. keep running  5. accounts (typed
+                  amounts, D132)  6. your name  7. payday  8. Home reads "Spent since you started"
+           Ends   Home with no tab bar during the steps; wrong code -> error and "Send a new code"
+           Covers R4-AC-1, R4-AC-27
+
+R4-FLOW-C2 pay-new (core)
+           Entry  dev panel: simulate a payment at a new merchant "12.90 · ROTI BAKAR 88"
+           Steps  1. the category prompt stand-in appears  2. tap a category  3. simulate a second from the same merchant
+           Ends   first categorised; second categorised with no prompt; one rule exists (Settings -> Categories -> Rules)
+           Sad    swipe the prompt away -> it waits in Review
+           Covers R4-AC-21, R4-AC-24
+
+R4-FLOW-C3 scan-after (core)
+           Entry  Scan tab -> scan -> reading -> confirm
+           Steps  1. take a (fake) photo  2. adjust crop  3. confirm: items add up  4. people stepper + twice  5. Done
+           Ends   "Attached to RM… on …" with Undo; Undo detaches
+           Sad    reading fails -> manual with the image; the same file twice -> "Already added"
+           Covers R4-AC-14, R4-AC-27
+
+## Run 4: flows added while walking (after the code was open)
+
+R4-FLOW-1b   Zero and empty amounts are refused in words                                  (sad)
+R4-FLOW-1c   Every money field takes digits from the right (balance check, budgets, subscription, goal)  (happy)
+R4-FLOW-2b   A foreign subscription never moves Home                                      (sad)
+R4-FLOW-2c   A USD subscription added by hand shows a real MYR estimate                   (sad) fails: finding 1
+R4-FLOW-3b   Two yearly buckets share one account                                         (happy)
+R4-FLOW-5b   A started message does not linger; typed text vs a card question             (sad)
+R4-FLOW-5c   Each Insights card asks its own question                                    (happy)
+R4-FLOW-6    Every button that opens Sen shows its avatar                                 (happy) fails: finding 2
+R4-FLOW-6b   The avatar follows the look                                                  (happy)
+R4-FLOW-6c   A corrupted stored look, mode and flag fall back                             (sad)
+R4-FLOW-6d   Choosing a look while "changes each quarter" is on                           (sad)
+R4-FLOW-12   Hostile goal names stay literal                                              (sad)
+R4-FLOW-12b  Time zones Los Angeles, Kiritimati and Kuala Lumpur agree                    (sad; no screenshot, a text comparison)
+R4-FLOW-12d  Offline: add a subscription, reconnect                                       (sad)
+R4-FLOW-13   Group labels are captions in six looks (D136)                                (happy)
+R4-FLOW-14   The add forms: labels, focus, errors, axe, 48 px targets                     (happy + sad)
+R4-FLOW-15   Editing an existing budget amount under D132                                 (sad) fails: finding 7
+R4-FLOW-16   App bar titles next to an action are not cut                                 (sad) fails: finding 4
+R4-FLOW-17   Back after a direct load goes Home                                           (sad)
+R4-FLOW-18   Sen offline says it needs a connection                                       (sad)
+R4-FLOW-19   Run 3's finding 12 re-checked                                                (happy)
+
+Mapping of the docs-first flows to specs: R4-FLOW-7 (Home fit), 8 (Review), 9 (Insights), 10 (details), 11 (categories)
+and the screen survey (R4-FLOW-13 in the first list) are run through run 3's specs `b04r-r3-*` re-run on this
+commit (45 of 51 green; the six red follow D132 and the Scan tab change on purpose and are replaced by R4-FLOW-1 and R4-FLOW-C1 to C3b).
+Run 4's specs: `qa/e2e/b04r-r4-flows{A..L}.spec.ts`; run with `b04r.config.ts` against a dev server on :5291 (A, B, D, E; the
+fake db is read as a module) and a preview build on :5292 (C, F to L), the production build on :5293 for the bundle checks.
