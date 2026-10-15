@@ -27,15 +27,16 @@ export function readEnv(e: NodeJS.ProcessEnv = process.env): ApiEnv {
   const gmail = e.GMAIL_USER && e.GMAIL_APP_PASSWORD ? { user: e.GMAIL_USER, password: e.GMAIL_APP_PASSWORD } : null;
   if (target === 'local') {
     const base = e.SEN_LOCAL_DATABASE ?? 'postgres://127.0.0.1:5432/sen_dev';
-    return {
-      target,
-      secret: e.BETTER_AUTH_SECRET ?? LOCAL_SECRET,
-      urls: {
-        app_user: e.APP_DATABASE_URL ?? roleUrl(base, 'app_user', null),
-        sen_auth: e.AUTH_DATABASE_URL ?? roleUrl(base, 'sen_auth', null),
-      },
-      gmail,
+    const urls = {
+      app_user: e.APP_DATABASE_URL ?? roleUrl(base, 'app_user', null),
+      sen_auth: e.AUTH_DATABASE_URL ?? roleUrl(base, 'sen_auth', null),
     };
+    // a local server signs in with the fixed preview code: it must never reach a real database
+    // (docs/cloud.md §3), so anything but a local one is refused
+    for (const u of Object.values(urls))
+      if (!['127.0.0.1', 'localhost'].includes(new URL(u).hostname))
+        throw new Error('A local API connects only to the local Postgres (scripts/local-db.sh)');
+    return { target, secret: e.BETTER_AUTH_SECRET ?? LOCAL_SECRET, urls, gmail };
   }
   const secret = e.BETTER_AUTH_SECRET;
   const pooled = e.DATABASE_URL;
