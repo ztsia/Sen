@@ -5,34 +5,42 @@
 **B05 · Server, database and sign-in is in progress** on branch `B05/server`, brief
 `docs/briefs/B05-server.md`. B04 and its QA tooling are merged (#13, #14).
 
-**Done so far:**
-- `review` had sat two days behind `main` (an early redesign snapshot); moved to `main` with the
-  owner's yes. `.github/workflows/review.yml` now fast-forwards `review` to `main` after every merge
-  when `review` is already merged; tip for a stale page in `docs/local.md`.
-- `scripts/local-db.sh start|stop|reset|url`: Postgres 16 from Ubuntu's packages, run as `postgres`
-  in `/var/lib/sen-pg`, trust auth on 127.0.0.1:5432, databases `sen_dev` and `sen_test`, owner role
-  `sen_owner`. pgTAP 1.3 and `pg_prove` from apt, after an `apt-get update` (a fresh VM's index lacks
-  them). Starts in about 1.5 s.
-- The deploy shape (probe): `apps/web/scripts/vercel-output.mjs` writes Vercel's Build Output v3
-  after `vite build`: the web app as static files and the API (`apps/api`, Hono) bundled by esbuild
-  into one Node function at `/api`. vercel.json stays the source of headers and rewrites, translated
-  into routes. `X-Robots-Tag: noindex` added there (D127).
+**Built and verified:**
+- `review` follows `main` after each merge (`.github/workflows/review.yml`, fast-forward only).
+- Local Postgres: `scripts/local-db.sh` (docs/cloud.md §5). `pnpm test:db`: fresh `sen_test`,
+  migrations, pgTAP (98: RLS for two people over every table, the catalogue check, the admin's
+  function), then the API's 18 tests on it. CI job `db`.
+- `packages/db` (README there): Drizzle schema, migrations 0000–0004 (roles, B05's tables, grants,
+  Better Auth's ids and rate limits, `admin_members()`), `ownRows` policy helper, the deploy step.
+- Deploy: Vercel's Build Output from `apps/web/scripts/vercel-output.mjs`: static app + the API as
+  one Node function at `/api`. `apps/web/scripts/db-deploy.ts` runs first in the build. **Proved on
+  real previews:** migrations on Neon, roles' passwords set, Wei Ming seeded (`/db-deploy.txt`), and
+  sign-in by code over curl (`weiming@example.com`, `123456`).
+- `apps/api` (README there): Better Auth (email OTP, `sen_auth`), per-request transaction as
+  `app_user`, `{code,message,field}` errors, `/me`, `/settings`, `/commands` (You's names and
+  payday, with audit and undo; `member.*` 403 for members), `/admin/members`, the resource pattern.
+- Web shared ground: `src/data/api/` (client, backend: server for what it holds, the fake around it
+  in previews), `src/data/auth.ts`, `__SEN_BACKEND__` (api on Vercel; fake/none for local e2e), the
+  signed-out gate in `router.tsx`.
+
+**In progress (a Sonnet implementer's brief, may need finishing):** sign-in and Account screens
+wired to `auth`, trees re-recorded, `e2e/server.spec.ts` (journey against the local API) in CI.
 
 **Decided in the build (owner to see, not to answer):**
-- The API lives at `/api/*` on the web app's own domain (§16's paths, under `/api`).
-- `app_user` and `sen_auth` are created by the first migration without passwords; the deploy step
-  sets each one's password from an HMAC of `BETTER_AUTH_SECRET`, so the owner adds no variable.
-- The owner's account comes from `SEN_OWNER_EMAIL` (Vercel, Production), created by the deploy
-  step when no admin exists: one variable instead of a seed command.
-- Previews have no Gmail: there, sign-in codes are fixed and shown by the dev panel. Production
-  always sends real mail and refuses to start without it.
+- The API is under `/api` (spec §16 notes it). Migrations run in Vercel's build (D122's
+  recommendation), so `sen_ops` needs no database URL for B05.
+- Roles' passwords derive from `BETTER_AUTH_SECRET`; Neon takes them only in plain text, sent only
+  when the role can't log in. The owner's account comes from `SEN_OWNER_EMAIL` (docs/local.md).
+- Previews have no Gmail: their code is always `123456`. Production refuses to start without Gmail.
+- Sessions last 90 days from last use; codes 10 minutes, 3 tries; 3 codes a minute per address.
+- The owner's seed makes them *Unlimited* (D98: their usage is their own bill).
 
 ### What to do next
-1. Check the probe's preview: `/api/health` answers and the web app's headers survive.
-2. `packages/db`: Drizzle schema (auth_*, user_access, invitations, user_settings, audit_log),
-   roles and grants, policies, the deploy step, seeds. pgTAP harness and catalogue check in CI.
-3. `apps/api`: Better Auth (email OTP), per-request transaction as `app_user`, errors, resource
-   routes, audit writer, admin guard. Then the web app: auth-aware, sign-in and Account real.
+1. Review the implementer's work; commit; check the preview in a browser (sign-in, Account).
+2. The full QA run (`qa` skill), then the PR *B05 · Server, database and sign-in*.
+
+### Open with the owner
+- docs/local.md *Now*: `SEN_OWNER_EMAIL` before the merge, then first sign-in, Q14, sign out everywhere.
 
 ## Don't argue again
 - D129–D137 (owner's calls). Deploys only by merge (D122); the review build follows `review` (D115).
