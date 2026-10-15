@@ -32,7 +32,9 @@ export async function deploy(env: DeployEnv, log: (s: string) => void = console.
       // Neon takes only a plain password, which its control plane hashes (measured 15 Oct, B05), so
       // it's sent only when the role can't already log in with it: after the first deploy, or a new
       // BETTER_AUTH_SECRET
-      await client.query(`alter role ${client.escapeIdentifier(role)} with login password ${client.escapeLiteral(password)}`);
+      await client.query(
+        `alter role ${client.escapeIdentifier(role)} with login password ${client.escapeLiteral(password)}`,
+      );
       log(`db: ${role}'s password set`);
     }
     log('db: app_user and sen_auth can log in');

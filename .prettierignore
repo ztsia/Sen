@@ -4,6 +4,7 @@ docs/
 *.md
 spec_v2.md
 **/dist/
+**/.vercel/
 coverage/
 playwright-report/
 test-results/
@@ -21,3 +22,4 @@ apps/shell/core/.gradle/
 apps/shell/data/keep-running.json
 # Playwright writes the accessibility trees (e2e/trees/); they are compared, not styled
 apps/web/e2e/trees/
+packages/db/migrations/meta/

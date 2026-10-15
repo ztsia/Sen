@@ -43,7 +43,12 @@ export function resource<S extends z.ZodObject>(o: ResourceOptions<S>) {
 
   r.get('/:id', async (c) => {
     const id = parse(Id, c.req.param('id'));
-    const [row] = await c.var.db((db) => db.select().from(t).where(live(eq(t.id, id))));
+    const [row] = await c.var.db((db) =>
+      db
+        .select()
+        .from(t)
+        .where(live(eq(t.id, id))),
+    );
     if (!row) throw notFound();
     return c.json(row);
   });
@@ -60,7 +65,15 @@ export function resource<S extends z.ZodObject>(o: ResourceOptions<S>) {
         .values(values as never)
         .onConflictDoUpdate({ target: t.id, set: values as never })
         .returning();
-      await audit(db, { userId: person, entity: o.name, entityId: id, action: before ? 'update' : 'create', before, after, actor: 'user' });
+      await audit(db, {
+        userId: person,
+        entity: o.name,
+        entityId: id,
+        action: before ? 'update' : 'create',
+        before,
+        after,
+        actor: 'user',
+      });
       return after;
     });
     return c.json(row);
@@ -71,7 +84,10 @@ export function resource<S extends z.ZodObject>(o: ResourceOptions<S>) {
     const fields = parse(o.fields.partial().strict(), await c.req.json());
     const person = c.var.person.id;
     const row = await c.var.db(async (db) => {
-      const [before] = await db.select().from(t).where(live(eq(t.id, id)));
+      const [before] = await db
+        .select()
+        .from(t)
+        .where(live(eq(t.id, id)));
       if (!before) throw notFound();
       const [after] = await db
         .update(t)
@@ -88,9 +104,16 @@ export function resource<S extends z.ZodObject>(o: ResourceOptions<S>) {
     const id = parse(Id, c.req.param('id'));
     const person = c.var.person.id;
     await c.var.db(async (db) => {
-      const [before] = await db.select().from(t).where(live(eq(t.id, id)));
+      const [before] = await db
+        .select()
+        .from(t)
+        .where(live(eq(t.id, id)));
       if (!before) throw notFound();
-      if (t.deletedAt) await db.update(t).set({ deletedAt: new Date() } as never).where(eq(t.id, id));
+      if (t.deletedAt)
+        await db
+          .update(t)
+          .set({ deletedAt: new Date() } as never)
+          .where(eq(t.id, id));
       else await db.delete(t).where(eq(t.id, id));
       await audit(db, { userId: person, entity: o.name, entityId: id, action: 'delete', before, actor: 'user' });
     });

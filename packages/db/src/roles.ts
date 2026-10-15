@@ -23,4 +23,3 @@ export function roleUrl(ownerUrl: string, role: LoginRole, password: string | nu
   u.password = password ?? '';
   return u.toString();
 }
-

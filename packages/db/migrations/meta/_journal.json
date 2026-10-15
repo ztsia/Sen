@@ -29,6 +29,13 @@
       "when": 1792081326324,
       "tag": "0003_auth_ids_rate_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792081491894,
+      "tag": "0004_admin_members",
+      "breakpoints": true
     }
   ]
 }
