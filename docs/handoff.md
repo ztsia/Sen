@@ -35,7 +35,8 @@ adapt, with a README).
 ### Known, left on purpose
 - `/s/new-look` under `?look=` sits in a view transition about 4 s (`arrive()` waits for a store
   change the override blocks). The checks wait it out; the reveal is B14's.
-- One `keyboard` finding on balance-check, Copper light, appeared once and never again: watch it.
+- The `keyboard` check's intermittent balance-check finding (locally once, then CI) was the measure racing
+  the resize; it now re-measures before reporting. Watch for it coming back.
 
 ### Open with the owner
 - Merge *B04 · QA tooling* when its PR is up; open or ask for claude_skills' `workflow/qa-diff` PR.

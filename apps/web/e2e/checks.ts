@@ -582,8 +582,16 @@ async function keyboard(page: Page): Promise<Finding[]> {
     for (let i = 0; i < n; i++) {
       await page.evaluate(probe, args('focusField', i));
       await frames(page);
+      // the column takes the smaller height a moment after the resize, and on a slow runner the first
+      // measure can come before it (CI, balance-check): what's truly out of reach stays so, so measure
+      // again before saying it
+      let reach = await lines(page, 'reach', i);
+      for (let tries = 0; reach.length && tries < 3; tries++) {
+        await page.waitForTimeout(250);
+        reach = await lines(page, 'reach', i);
+      }
       // each field of one form reaches the same button: say it once
-      for (const detail of await lines(page, 'reach', i))
+      for (const detail of reach)
         if (!found.some((f) => f.detail === detail)) found.push({ check: 'keyboard', detail });
     }
   } finally {
