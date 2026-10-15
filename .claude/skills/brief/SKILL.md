@@ -97,6 +97,10 @@ wrong. When a miss came from the brief, carry that line into the next brief too.
 - **Subagents start subagents only when `Agent` is in their tools** (up to three layers, D137).
   Only `qa-reviewer` has it, for its sweep and eyes pass; for everything else, what an agent would
   delegate, the main session starts.
+- **Waiting costs.** An agent re-reads its whole conversation each time it wakes, and a wait longer
+  than a few minutes lets the prompt cache expire, so the next turn writes it all again (QA tooling,
+  15 Oct: one agent, 185 turns, mostly waits). Brief one until-loop per long run, and no repeat of a
+  long run whose point an earlier run already proved.
 - **An agent stopped at a usage limit is resumed** (SendMessage), never restarted.
 - **Commit an agent's files only after reviewing its report**, staging explicit paths, never `-a`,
   while other agents are still editing.

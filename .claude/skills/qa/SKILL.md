@@ -73,6 +73,10 @@ The diff report is qa-artifacts/<branch>/diff/index.md, its screenshots beside i
 changed and new entry it lists, as your instructions say, and write qa/<slice>/eyes.md.
 ```
 
+**Waiting costs.** Every time an agent wakes, it re-reads its whole conversation, and a wait of more
+than a few minutes lets the prompt cache expire. One until-loop per long run; never a check every
+minute; never a repeat of a long run whose point an earlier run already proved.
+
 The reviewer turns each `wrong` verdict into a finding (Minor at least; Major when a person would be
 misled about their money or can't finish a journey) and weighs each `look again` itself.
 
