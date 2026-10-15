@@ -8,7 +8,7 @@ import { SKELETON } from './screens/skeleton';
 import { ListSkeleton } from './blocks/states';
 import { Screen } from './frame/screen';
 import { screenById } from './screens/registry';
-import { auth, forgetSession } from './data/auth';
+import { auth, forgetSession, noteSignedOutBecause } from './data/auth';
 import { onSignedOut } from './data/api/client';
 
 // The routes: the four tab screens, Scan's task screen, every other screen by its id from
@@ -36,7 +36,7 @@ const rootRoute = createRootRoute({
   // is always signed in.
   beforeLoad: async ({ location }) => {
     if (__SEN_BACKEND__ !== 'api' || OPEN.has(location.pathname)) return;
-    if (!(await auth.session())) throw redirect({ to: '/s/$', params: { _splat: 'sign-in' }, replace: true });
+    if (await auth.signedOut()) throw redirect({ to: '/s/$', params: { _splat: 'sign-in' }, replace: true });
   },
   component: AppShell,
   notFoundComponent: () => <Lost kind="missing" />,
@@ -156,8 +156,17 @@ export const router = createRouter({
   defaultErrorComponent: () => <Lost kind="broken" />,
 });
 
-// the session ended elsewhere (signed out everywhere, or it expired): the next screen is sign-in
-onSignedOut(() => {
-  forgetSession();
-  void router.navigate({ to: '/s/$', params: { _splat: 'sign-in' }, replace: true });
+// the session ended elsewhere (signed out everywhere, or it expired), or access was paused: sign-in
+onSignedOut((code) => {
+  // paused access (QA B05 run 1, 10): end this session too, and sign-in says why
+  if (code === 'suspended') noteSignedOutBecause('paused');
+  const out = code === 'suspended' ? auth.signOut().catch(() => undefined) : Promise.resolve();
+  void out.then(() => {
+    forgetSession();
+    void router.navigate({
+      to: '/s/$',
+      params: { _splat: 'sign-in' },
+      replace: true,
+    });
+  });
 });

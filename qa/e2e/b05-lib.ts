@@ -14,7 +14,8 @@ export const shot = (page: Page, name: string) =>
     .catch((e) => console.log('SHOT FAILED', name, String(e).slice(0, 80)));
 
 /** Before an action: the screen as it is, named for the step it precedes. */
-export const before = (page: Page, flow: string, n: number, slug: string) => shot(page, `${flow}-step-${n}-${slug}-before`);
+export const before = (page: Page, flow: string, n: number, slug: string) =>
+  shot(page, `${flow}-step-${n}-${slug}-before`);
 
 /**
  * One flow step: assertions first, then the screenshot named for the flow and step, then the row for
@@ -40,7 +41,10 @@ export async function step(
   }
   await page.waitForTimeout(250);
   await shot(page, file);
-  fs.appendFileSync(STEPS, JSON.stringify({ flow, n, action, assertion, status, screenshot: `${file}.png`, err }) + '\n');
+  fs.appendFileSync(
+    STEPS,
+    JSON.stringify({ flow, n, action, assertion, status, screenshot: `${file}.png`, err }) + '\n',
+  );
   if (status === 'fail') throw new Error(`${flow} step ${n} (${action}): ${err}`);
 }
 

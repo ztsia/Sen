@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { auth, type SendResult } from '@/data/auth';
+import { auth, takeSignedOutReason, type SendResult } from '@/data/auth';
 import { queryClient } from '@/data';
 import { Avatar } from '@/components/look/avatar';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { OfflineBanner } from '@/blocks/states';
 import { toastDone } from '@/blocks/toast';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -16,7 +15,9 @@ import { EMAIL_MESSAGES, EXPIRED_ASK, checkEmail, inviteEmail, signInState } fro
 
 const OFFLINE = 'Sen can’t reach its server. Check the connection.';
 const FAILED = 'Something went wrong on Sen’s side. Try again.';
-const TOO_MANY_SENT = 'Too many codes asked for. Wait a minute, then try again.';
+const TOO_MANY_SENT = 'Too many codes asked for. Wait a few minutes, then try again.';
+const WAIT = 'Too many tries in a minute. Wait a minute, then try again.';
+const PAUSED = 'Your access to Sen is paused. Ask the person who invited you.';
 const PREVIEW_CODE = '123456';
 
 /**
@@ -26,11 +27,9 @@ const PREVIEW_CODE = '123456';
  */
 export default function SignIn() {
   const go = useGo();
-  const online = useOnline();
   const [expired] = useState(() => signInState(window.location.search, DEV_TOOLS) === 'expired');
   return (
     <Screen bar={<AppBar title="Sign in" home />}>
-      {online ? null : <OfflineBanner>You’re offline. Signing in needs a connection.</OfflineBanner>}
       <div className="flex flex-col items-center gap-6 px-4 pt-8">
         {expired ? <ExpiredInvitation /> : <SignInFlow onDone={() => go('home', {}, { replace: true })} />}
       </div>
@@ -78,11 +77,16 @@ function EmailStep({
   online: boolean;
   onSent: (email: string) => void;
 }) {
-  const [error, setError] = useState<string>();
+  // sent here because access was paused: say so once (QA B05 run 1, 10)
+  const [error, setError] = useState<string | undefined>(() =>
+    takeSignedOutReason() === 'paused' ? PAUSED : undefined,
+  );
   const [waiting, setWaiting] = useState(false);
   const submit = async () => {
     const r = checkEmail(email);
     if (!r.ok) return setError(EMAIL_MESSAGES[r.reason]);
+    // enabled offline, saying what's missing (patterns §7, QA B05 run 1, 9)
+    if (!online) return setError(OFFLINE);
     setWaiting(true);
     const sent = await auth.send(r.email);
     setWaiting(false);
@@ -126,7 +130,7 @@ function EmailStep({
           )}
         </div>
       </Field>
-      <Button type="submit" disabled={!online || waiting}>
+      <Button type="submit" disabled={waiting}>
         Send the code
       </Button>
     </form>
@@ -136,14 +140,16 @@ function EmailStep({
 function sendMessage(r: Exclude<SendResult, 'sent'>) {
   return r === 'not-invited'
     ? EMAIL_MESSAGES['invitation-only']
-    : r === 'too-many'
-      ? TOO_MANY_SENT
-      : r === 'offline'
-        ? OFFLINE
-        : FAILED;
+    : r === 'suspended'
+      ? PAUSED
+      : r === 'too-many'
+        ? TOO_MANY_SENT
+        : r === 'offline'
+          ? OFFLINE
+          : FAILED;
 }
 
-type Problem = 'wrong' | 'expired' | 'incomplete' | 'too-many' | 'offline' | 'failed' | 'send';
+type Problem = 'wrong' | 'expired' | 'incomplete' | 'too-many' | 'wait' | 'offline' | 'failed' | 'send';
 
 function CodeStep({
   email,
@@ -165,6 +171,7 @@ function CodeStep({
   const submit = async () => {
     input.current?.focus();
     if (!/^\d{6}$/.test(code)) return setProblem('incomplete');
+    if (!online) return setProblem('offline');
     setWaiting(true);
     const r = await auth.verify(email, code);
     if (r === 'ok') {
@@ -197,15 +204,17 @@ function CodeStep({
         ? 'That’s not the right code. Check the email and try again.'
         : problem === 'incomplete'
           ? 'The code is 6 digits.'
-          : problem === 'too-many'
-            ? 'That code has had too many tries. Send a new code.'
-            : problem === 'offline'
-              ? OFFLINE
-              : problem === 'failed'
-                ? FAILED
-                : problem === 'send'
-                  ? sendProblem
-                  : undefined;
+          : problem === 'wait'
+            ? WAIT
+            : problem === 'too-many'
+              ? 'That code has had too many tries. Send a new code.'
+              : problem === 'offline'
+                ? OFFLINE
+                : problem === 'failed'
+                  ? FAILED
+                  : problem === 'send'
+                    ? sendProblem
+                    : undefined;
   return (
     <form
       className="flex w-full flex-col gap-4"
@@ -248,7 +257,7 @@ function CodeStep({
           ) : null}
         </div>
       </Field>
-      <Button type="submit" disabled={!online || waiting}>
+      <Button type="submit" disabled={waiting}>
         Sign in
       </Button>
       <div className="flex flex-col gap-1">

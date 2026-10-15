@@ -73,6 +73,7 @@ export default function AccountSettings() {
         title="Sign out everywhere?"
         description="Every phone and browser signed in to Sen is signed out, this one too. You’ll sign in again with a code."
         action="Sign out everywhere"
+        cancel="Stay signed in"
         onConfirm={() => leave(() => auth.signOutEverywhere())}
       />
       <Sheet

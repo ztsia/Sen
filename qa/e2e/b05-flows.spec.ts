@@ -20,23 +20,39 @@ test('FLOW-1 the owner signs in by code', async ({ page }) => {
   await page.getByLabel('Your email').fill(PEOPLE.admin.email);
   await before(page, F, 2, 'send');
   await page.getByRole('button', { name: 'Send the code' }).click();
-  await step(page, F, 2, 'code-step', 'Send the code', 'the code step names the email; the code field is focused', async () => {
-    await expect(page.getByRole('heading', { name: 'Type the code' })).toBeVisible();
-    await expect(page.locator('main')).toContainText(PEOPLE.admin.email);
-    await expect(page.getByLabel('6-digit code')).toBeFocused();
-    const attrs = await page
-      .getByLabel('6-digit code')
-      .evaluate((i) => [i.getAttribute('inputmode'), i.getAttribute('autocomplete')].join(','));
-    expect(attrs).toBe('numeric,one-time-code');
-  });
+  await step(
+    page,
+    F,
+    2,
+    'code-step',
+    'Send the code',
+    'the code step names the email; the code field is focused',
+    async () => {
+      await expect(page.getByRole('heading', { name: 'Type the code' })).toBeVisible();
+      await expect(page.locator('main')).toContainText(PEOPLE.admin.email);
+      await expect(page.getByLabel('6-digit code')).toBeFocused();
+      const attrs = await page
+        .getByLabel('6-digit code')
+        .evaluate((i) => [i.getAttribute('inputmode'), i.getAttribute('autocomplete')].join(','));
+      expect(attrs).toBe('numeric,one-time-code');
+    },
+  );
   await page.getByLabel('6-digit code').fill('123456');
   await before(page, F, 3, 'sign-in');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await step(page, F, 3, 'home', 'Sign in with the right code', 'home with the tab bar; one session row for the owner', async () => {
-    await expect(page).not.toHaveURL(/sign-in/);
-    await expect(tabs(page)).toBeVisible();
-    expect(sessions(PEOPLE.admin.id)).toBe(1);
-  });
+  await step(
+    page,
+    F,
+    3,
+    'home',
+    'Sign in with the right code',
+    'home with the tab bar; one session row for the owner',
+    async () => {
+      await expect(page).not.toHaveURL(/sign-in/);
+      await expect(tabs(page)).toBeVisible();
+      expect(sessions(PEOPLE.admin.id)).toBe(1);
+    },
+  );
   await page.goto('/s/settings/account');
   await step(page, F, 4, 'account', 'Settings → Account', 'the email shows', async () => {
     await expect(page.locator('main')).toContainText(PEOPLE.admin.email);
@@ -52,11 +68,19 @@ test('FLOW-2 a wrong code, then the right one', async ({ page }) => {
   await page.getByLabel('6-digit code').fill('000000');
   await before(page, F, 1, 'wrong');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await step(page, F, 1, 'wrong', 'type 000000', 'the wrong-code message; still on the code step; no session', async () => {
-    await expect(page.getByText('That’s not the right code')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Type the code' })).toBeVisible();
-    expect(sessions(PEOPLE.ben.id)).toBe(0);
-  });
+  await step(
+    page,
+    F,
+    1,
+    'wrong',
+    'type 000000',
+    'the wrong-code message; still on the code step; no session',
+    async () => {
+      await expect(page.getByText('That’s not the right code')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Type the code' })).toBeVisible();
+      expect(sessions(PEOPLE.ben.id)).toBe(0);
+    },
+  );
   await page.getByLabel('6-digit code').fill('12345');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await step(page, F, 2, 'short', 'type five digits', 'says the code is 6 digits', async () => {
@@ -76,11 +100,19 @@ test('FLOW-3 an email nobody invited', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Your email').fill('Stranger@Example.com');
   await page.getByRole('button', { name: 'Send the code' }).click();
-  await step(page, F, 1, 'invitation-only', 'send a code to stranger@example.com', '*Sen is invitation-only*; no new user', async () => {
-    await expect(page.getByText(/Sen is invitation-only/)).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Sign in to Sen' })).toBeVisible();
-    expect(users()).toBe(u0);
-  });
+  await step(
+    page,
+    F,
+    1,
+    'invitation-only',
+    'send a code to stranger@example.com',
+    '*Sen is invitation-only*; no new user',
+    async () => {
+      await expect(page.getByText(/Sen is invitation-only/)).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Sign in to Sen' })).toBeVisible();
+      expect(users()).toBe(u0);
+    },
+  );
   await page.getByLabel('Your email').fill('not an email');
   await page.getByRole('button', { name: 'Send the code' }).click();
   await step(page, F, 2, 'malformed', 'send to "not an email"', 'a message under the field', async () => {
@@ -107,11 +139,19 @@ test('FLOW-4 too many tries, then Send a new code at once', async ({ page }) => 
   }
   await page.getByLabel('6-digit code').fill('123456');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await step(page, F, 1, 'too-many', 'three wrong codes, then the right one', 'refused: too many tries; Send a new code', async () => {
-    await expect(page.getByText(/too many tries/i)).toBeVisible();
-    await expect(page).toHaveURL(/sign-in/);
-    expect(sessions(PEOPLE.chong.id)).toBe(0);
-  });
+  await step(
+    page,
+    F,
+    1,
+    'too-many',
+    'three wrong codes, then the right one',
+    'refused: too many tries; Send a new code',
+    async () => {
+      await expect(page.getByText(/too many tries/i)).toBeVisible();
+      await expect(page).toHaveURL(/sign-in/);
+      expect(sessions(PEOPLE.chong.id)).toBe(0);
+    },
+  );
   await page.getByRole('button', { name: 'Send a new code' }).click();
   await step(page, F, 2, 'resent', 'Send a new code', 'a toast says a new code is on its way', async () => {
     await expect(toast(page)).toContainText('A new code is on its way');
@@ -119,7 +159,8 @@ test('FLOW-4 too many tries, then Send a new code at once', async ({ page }) => 
   await page.getByLabel('6-digit code').fill('123456');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForTimeout(800);
-  const said = (await page.locator('#code-msg').innerText()).trim();
+  // signed in, the code step (and its message) is gone (fixed after QA B05 run 1, 4)
+  const said = (await page.locator('#code-msg').count()) ? (await page.locator('#code-msg').innerText()).trim() : '';
   note(F, `the NEW code, typed at once, says: "${said}"; url ${page.url()}; sessions ${sessions(PEOPLE.chong.id)}`);
   await step(page, F, 3, 'new-code', 'type the new code at once', 'signed in with the new code (AC-42)', async () => {
     await expect(page).not.toHaveURL(/sign-in/);
@@ -135,10 +176,18 @@ test('FLOW-4b an expired code, then Send a new code', async ({ page }) => {
   sql(`update auth_verification set expires_at = now() - interval '1 second'`);
   await page.getByLabel('6-digit code').fill('123456');
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await step(page, F, 1, 'expired', 'the code expires (in the database), then type it', 'That code has expired; Send a new code is the main button', async () => {
-    await expect(page.getByText('That code has expired.')).toBeVisible();
-    expect(sessions(PEOPLE.chong.id)).toBe(0);
-  });
+  await step(
+    page,
+    F,
+    1,
+    'expired',
+    'the code expires (in the database), then type it',
+    'That code has expired; Send a new code is the main button',
+    async () => {
+      await expect(page.getByText('That code has expired.')).toBeVisible();
+      expect(sessions(PEOPLE.chong.id)).toBe(0);
+    },
+  );
   await page.getByRole('button', { name: 'Send a new code' }).click();
   await expect(toast(page)).toContainText('A new code is on its way');
   await page.getByLabel('6-digit code').fill('123456');
@@ -183,9 +232,17 @@ test('FLOW-6 sign out ends this session only', async ({ browser }) => {
     await expect(one).toHaveURL(/\/s\/sign-in/);
   });
   await two.goto('/s/settings/account');
-  await step(two, F, 3, 'other-browser', 'the other browser opens Account', 'still signed in, with the email', async () => {
-    await expect(two.locator('main')).toContainText(PEOPLE.ben.email);
-  });
+  await step(
+    two,
+    F,
+    3,
+    'other-browser',
+    'the other browser opens Account',
+    'still signed in, with the email',
+    async () => {
+      await expect(two.locator('main')).toContainText(PEOPLE.ben.email);
+    },
+  );
 });
 
 test('FLOW-7 sign out everywhere from another browser', async ({ browser }) => {
@@ -213,12 +270,23 @@ test('FLOW-7 sign out everywhere from another browser', async ({ browser }) => {
     expect(sessions(PEOPLE.ben.id)).toBe(benBefore);
   });
   // the other browser, already on a screen, acts
-  await two.getByRole('radio', { name: /Not set/ }).click().catch(() => undefined);
+  await two
+    .getByRole('radio', { name: /Not set/ })
+    .click()
+    .catch(() => undefined);
   await two.waitForTimeout(800);
-  await step(two, F, 3, 'other-acts', 'the other browser, on You, sets the payday to Not set', 'it ends on sign-in', async () => {
-    note(F, `other browser after acting: ${two.url()}`);
-    await expect(two).toHaveURL(/\/s\/sign-in/, { timeout: 5000 });
-  });
+  await step(
+    two,
+    F,
+    3,
+    'other-acts',
+    'the other browser, on You, sets the payday to Not set',
+    'it ends on sign-in',
+    async () => {
+      note(F, `other browser after acting: ${two.url()}`);
+      await expect(two).toHaveURL(/\/s\/sign-in/, { timeout: 5000 });
+    },
+  );
   await two.goto('/');
   await step(two, F, 4, 'other-reload', 'the other browser opens /', 'sign-in', async () => {
     await expect(two).toHaveURL(/\/s\/sign-in/);
@@ -230,11 +298,22 @@ test('FLOW-8 sign out everywhere, cancelled', async ({ page }) => {
   await signIn(page, PEOPLE.admin.email);
   await page.goto('/s/settings/account');
   await page.getByRole('button', { name: 'Sign out everywhere' }).click();
-  await page.getByRole('alertdialog').getByRole('button', { name: /Cancel|Keep/ }).click();
-  await step(page, F, 1, 'cancelled', 'Sign out everywhere, then Cancel', 'still on Account, still one session', async () => {
-    await expect(page).toHaveURL(/settings\/account/);
-    expect(sessions(PEOPLE.admin.id)).toBe(1);
-  });
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: /Cancel|Keep|Stay signed in/ })
+    .click();
+  await step(
+    page,
+    F,
+    1,
+    'cancelled',
+    'Sign out everywhere, then Cancel',
+    'still on Account, still one session',
+    async () => {
+      await expect(page).toHaveURL(/settings\/account/);
+      expect(sessions(PEOPLE.admin.id)).toBe(1);
+    },
+  );
 });
 
 test('FLOW-9 a member is refused the admin’s routes, and its screens follow the server', async ({ page }) => {
@@ -251,17 +330,36 @@ test('FLOW-9 a member is refused the admin’s routes, and its screens follow th
   });
   note(F, `member: ${JSON.stringify(api)}`);
   await page.goto('/s/settings');
-  await step(page, F, 1, 'settings', 'a member opens Settings; the API refuses /admin/members and member.*', '403 both; no Admin badge, no Members row', async () => {
-    expect(api[0]).toBe(403);
-    expect(api[2]).toBe(403);
-    await expect(page.locator('main')).not.toContainText('Admin');
-    await expect(page.getByRole('button', { name: /^Members/ })).toHaveCount(0);
-  });
+  await step(
+    page,
+    F,
+    1,
+    'settings',
+    'a member opens Settings; the API refuses /admin/members and member.*',
+    '403 both; no Admin badge, no Members row',
+    async () => {
+      expect(api[0]).toBe(403);
+      expect(api[2]).toBe(403);
+      await expect(page.locator('main')).not.toContainText('Admin');
+      await expect(page.getByRole('button', { name: /^Members/ })).toHaveCount(0);
+    },
+  );
   await page.goto('/s/settings/members');
-  await step(page, F, 2, 'members', 'a member opens /s/settings/members by its address', 'Admin only; no member listed', async () => {
-    await expect(page.locator('main')).toContainText('Admin only');
-    note(F, `members screen as Ben: ${(await page.locator('main').innerText()).replace(/\n+/g, ' | ').slice(0, 300)}`);
-  });
+  await step(
+    page,
+    F,
+    2,
+    'members',
+    'a member opens /s/settings/members by its address',
+    'Admin only; no member listed',
+    async () => {
+      await expect(page.locator('main')).toContainText('Admin only');
+      note(
+        F,
+        `members screen as Ben: ${(await page.locator('main').innerText()).replace(/\n+/g, ' | ').slice(0, 300)}`,
+      );
+    },
+  );
 });
 
 test('FLOW-10 offline on the sign-in screen', async ({ page, context }) => {
@@ -319,11 +417,21 @@ test('FLOW-12 You is saved on the server, with its audit entry', async ({ page }
   await day.fill('25');
   await day.blur();
   await page.waitForTimeout(800);
-  await step(page, F, 1, 'payday', 'set the payday to day 25', 'user_settings says 25; one audit row by the user', async () => {
-    expect(sql(`select expected_payday from user_settings where user_id = '${PEOPLE.ben.id}'`)).toBe('25');
-    expect(Number(sql(`select count(*) from audit_log where user_id = '${PEOPLE.ben.id}'`))).toBe(audit0 + 1);
-    expect(sql(`select actor from audit_log where user_id = '${PEOPLE.ben.id}' order by created_at desc limit 1`)).toBe('user');
-  });
+  await step(
+    page,
+    F,
+    1,
+    'payday',
+    'set the payday to day 25',
+    'user_settings says 25; one audit row by the user',
+    async () => {
+      expect(sql(`select expected_payday from user_settings where user_id = '${PEOPLE.ben.id}'`)).toBe('25');
+      expect(Number(sql(`select count(*) from audit_log where user_id = '${PEOPLE.ben.id}'`))).toBe(audit0 + 1);
+      expect(
+        sql(`select actor from audit_log where user_id = '${PEOPLE.ben.id}' order by created_at desc limit 1`),
+      ).toBe('user');
+    },
+  );
   await page.reload();
   await step(page, F, 2, 'reload', 'reload You', 'day 25 is still chosen', async () => {
     await expect(page.getByLabel('Day of the month')).toHaveValue('25');

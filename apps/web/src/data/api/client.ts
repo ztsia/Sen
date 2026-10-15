@@ -10,10 +10,10 @@ export class ApiFailure extends Error {
   }
 }
 
-const signedOutListeners = new Set<() => void>();
+const signedOutListeners = new Set<(code: 'signed_out' | 'suspended') => void>();
 
-/** Called whenever the API says the session is gone (401), so the app can go to sign-in. */
-export function onSignedOut(fn: () => void): () => void {
+/** Called whenever the API says the session is gone (401) or access is paused (403 suspended). */
+export function onSignedOut(fn: (code: 'signed_out' | 'suspended') => void): () => void {
   signedOutListeners.add(fn);
   return () => signedOutListeners.delete(fn);
 }
@@ -38,7 +38,9 @@ export async function apiCall<T>(path: string, init: { method?: string; body?: u
   const body = text ? (JSON.parse(text) as unknown) : null;
   if (!res.ok) {
     const e = (body ?? {}) as { code?: string; message?: string; field?: string };
-    if (res.status === 401 && e.code === 'signed_out') for (const fn of signedOutListeners) fn();
+    // the session is gone, or the person's access is paused: either way, back to sign-in
+    if ((res.status === 401 && e.code === 'signed_out') || (res.status === 403 && e.code === 'suspended'))
+      for (const fn of signedOutListeners) fn(e.code);
     throw new ApiFailure(res.status, e.code ?? 'http', e.message ?? res.statusText, e.field);
   }
   return body as T;

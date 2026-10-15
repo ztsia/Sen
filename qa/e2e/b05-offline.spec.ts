@@ -13,16 +13,36 @@ test('FLOW-10c signed in, then opened offline with the service worker', async ({
   await page.goto('/review');
   await expect(tabs(page)).toBeVisible();
   // let the worker install and take control
-  await page.waitForFunction(() => navigator.serviceWorker?.controller != null, null, { timeout: 20_000 }).catch(() => undefined);
+  await page
+    .waitForFunction(() => navigator.serviceWorker?.controller != null, null, { timeout: 20_000 })
+    .catch(() => undefined);
   await page.reload();
   const controlled = await page.evaluate(() => navigator.serviceWorker?.controller != null);
   note(F, `controlled by the service worker before going offline: ${controlled}`);
   await context.setOffline(true);
   await page.goto('/review').catch((e) => note(F, `offline goto failed: ${String(e).slice(0, 120)}`));
   await page.waitForTimeout(2500);
-  note(F, `offline open lands on: ${page.url()} | ${(await page.locator('body').innerText().catch(() => '')).replace(/\n+/g, ' | ').slice(0, 200)}`);
-  await step(page, F, 1, 'offline-open', 'signed in, offline, open /review', 'Review opens (not sign-in), as §5.1 and flows.md offline say', async () => {
-    await expect(page).not.toHaveURL(/sign-in/);
-  });
+  note(
+    F,
+    `offline open lands on: ${page.url()} | ${(
+      await page
+        .locator('body')
+        .innerText()
+        .catch(() => '')
+    )
+      .replace(/\n+/g, ' | ')
+      .slice(0, 200)}`,
+  );
+  await step(
+    page,
+    F,
+    1,
+    'offline-open',
+    'signed in, offline, open /review',
+    'Review opens (not sign-in), as §5.1 and flows.md offline say',
+    async () => {
+      await expect(page).not.toHaveURL(/sign-in/);
+    },
+  );
   await context.setOffline(false);
 });

@@ -20,10 +20,18 @@ test('CORE-1 first-run: sign-in by code is real; the rest is B08', async ({ page
   });
   await page.goto('/s/first-run');
   await page.waitForTimeout(800);
-  await step(page, F, 3, 'first-run', 'open first-run signed in', 'the first-run screen opens (note what step 1 asks)', async () => {
-    note(F, `first-run signed in: ${(await page.locator('body').innerText()).replace(/\n+/g, ' | ').slice(0, 300)}`);
-    await expect(page).toHaveURL(/first-run/);
-  });
+  await step(
+    page,
+    F,
+    3,
+    'first-run',
+    'open first-run signed in',
+    'the first-run screen opens (note what step 1 asks)',
+    async () => {
+      note(F, `first-run signed in: ${(await page.locator('body').innerText()).replace(/\n+/g, ' | ').slice(0, 300)}`);
+      await expect(page).toHaveURL(/first-run/);
+    },
+  );
 });
 
 test('CORE-2 pay-new: answering a new merchant files it and makes a rule', async ({ page }) => {
@@ -37,10 +45,18 @@ test('CORE-2 pay-new: answering a new merchant files it and makes a rule', async
     await expect(row).toContainText('RM9.50');
   });
   await row.getByRole('button', { name: 'Meals' }).click();
-  await step(page, F, 2, 'answered', 'tap Meals', 'the card goes; a toast says it is Meals from now on, with Undo', async () => {
-    await expect(toast(page)).toContainText(/Roti Bakar 88 is Meals from now on/i);
-    await expect(row).toHaveCount(0);
-  });
+  await step(
+    page,
+    F,
+    2,
+    'answered',
+    'tap Meals',
+    'the card goes; a toast says it is Meals from now on, with Undo',
+    async () => {
+      await expect(toast(page)).toContainText(/Roti Bakar 88 is Meals from now on/i);
+      await expect(row).toHaveCount(0);
+    },
+  );
   note(F, `console errors: ${JSON.stringify(errors)}`);
 });
 
