@@ -70,7 +70,11 @@ follow on a phone, and commit.
                folder. GitHub never shows a secret again, so this is the only other copy.
       2. **The two addresses: done (10 Oct),** in `apps/shell/sites.json`. Production above; the
          review alias is `https://sen-review.vercel.app`, which follows the Git branch `review`. A
-         session points it at the branch under review by pushing that branch to `review`.
+         session points it at the branch under review by pushing that branch to `review`. After a
+         merge, the *Review follows main* workflow moves `review` up to `main` by itself (B05; on 15
+         Oct it had sat two days behind). **Still showing the old version?** Close the page or *Sen
+         review* fully and reopen it, once or twice: its offline copy (D114) switches only after it
+         notices the new one.
          - [x] **The review alias opens without a login** (11 Oct): you turned Vercel
                Authentication off for the project, and `review` was moved up to `main`, so the
                review build shows B03's tabs on made-up data. Every preview is now open to anyone

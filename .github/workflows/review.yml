@@ -1,0 +1,32 @@
+# The review alias (sen-review.vercel.app, and the Sen review app) follows the branch `review`
+# (docs/local.md). A session points it at a branch under review; once that branch is merged, `review`
+# is an ancestor of main, and this moves it up to main, so the review app shows what's merged.
+# A fast-forward only: a `review` pointing at a branch not yet merged is left where it is.
+name: Review follows main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: review-follows-main
+
+jobs:
+  follow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Fast-forward review to main when review is already merged
+        run: |
+          git fetch -q origin review || { echo "no review branch"; exit 0; }
+          if git merge-base --is-ancestor origin/review origin/main; then
+            git push origin origin/main:refs/heads/review
+          else
+            echo "review holds a branch not yet merged ($(git log -1 --format=%h origin/review)); left as it is"
+          fi
