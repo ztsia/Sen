@@ -39,9 +39,12 @@
 - The owner's seed makes them *Unlimited* (D98: their usage is their own bill).
 
 ### What to do next
-1. QA run 1 (full, Opus) started 15 Oct; its reviewer is agent `a45544901d2c03b3b` (resume it for a
-   tier-2 re-check while this session lives). Then the PR *B05 · Server, database and sign-in*. CI's `db` job
-   runs for the first time on the PR (ci.yml runs on PRs and main only).
+1. QA run 1 (full, Opus): fix first, 5 Major. All fixed (qa/B05/ledger.md, tier 3); report
+   https://claude.ai/artifact/AzAyheGoaGbcR68PSDJWdz. After the fixes: `pnpm e2e` 1387/1387,
+   test:db (pgTAP 103, API 28), e2e:server, QA's b05 specs 23/23.
+2. QA run 2 (fresh full, Opus) started; its reviewer is agent `a12e3b69df3758b14`. When it reports:
+   commit its record, publish its report (to run 1's artifact URL), fix by tier, then the PR
+   *B05 · Server, database and sign-in*. CI's `db` job first runs on the PR.
 
 ### Open with the owner
 - docs/local.md *Now*: `SEN_OWNER_EMAIL` before the merge, then first sign-in, Q14, sign out everywhere.
