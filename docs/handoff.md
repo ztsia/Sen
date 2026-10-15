@@ -24,13 +24,12 @@ Then B05.
   skill's templates; `qa/escapes.md` (E1, density); `brief` and `qa` say waiting costs.
 
 **claude_skills** (owner asked, 14 Oct): branch `workflow/qa-diff` pushed with the generic `qa`
-skill, `qa-reviewer`, `qa-eyes`, CLAUDE.md template rows and `examples/qa/escapes.md`. Still to add:
-Sen's tooling files as `examples/qa/` (checks.ts, catalogue.spec.ts, qa-diff.mjs, diff.config.ts),
-then the owner opens or asks for its PR.
+skill, `qa-reviewer`, `qa-eyes`, CLAUDE.md template rows, and `examples/qa/` (Sen's tooling to
+adapt, with a README).
 
 ### What to do next
 1. Six-look `pnpm e2e` green on f25f5bd: 1387 passed in 40 min. PR *B04 · QA tooling* is open.
-2. Copy the tooling into claude_skills' `examples/qa/`, push.
+2. Done: claude_skills `workflow/qa-diff` has `examples/qa/` too; the owner opens or asks for its PR.
 3. B05 (`docs/briefs/B05-server.md`), QA'd the new way.
 
 ### Known, left on purpose
