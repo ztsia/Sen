@@ -1,6 +1,6 @@
 import pg from 'pg';
 import { runMigrations } from './migrate';
-import { rolePassword, scramVerifier, type LoginRole } from './roles';
+import { rolePassword, roleUrl, type LoginRole } from './roles';
 import { seedOwner, seedPreview, type PreviewPerson } from './seed';
 
 export interface DeployEnv {
@@ -27,8 +27,13 @@ export async function deploy(env: DeployEnv, log: (s: string) => void = console.
   await client.connect();
   try {
     for (const role of ['app_user', 'sen_auth'] satisfies LoginRole[]) {
-      const pw = client.escapeLiteral(scramVerifier(rolePassword(env.secret, role)));
-      await client.query(`alter role ${client.escapeIdentifier(role)} with login password ${pw}`);
+      const password = rolePassword(env.secret, role);
+      if (await canLogIn(roleUrl(env.ownerUrl, role, password))) continue;
+      // Neon takes only a plain password, which its control plane hashes (measured 15 Oct, B05), so
+      // it's sent only when the role can't already log in with it: after the first deploy, or a new
+      // BETTER_AUTH_SECRET
+      await client.query(`alter role ${client.escapeIdentifier(role)} with login password ${client.escapeLiteral(password)}`);
+      log(`db: ${role}'s password set`);
     }
     log('db: app_user and sen_auth can log in');
     if (env.target === 'production') {
@@ -41,5 +46,17 @@ export async function deploy(env: DeployEnv, log: (s: string) => void = console.
     }
   } finally {
     await client.end();
+  }
+}
+
+async function canLogIn(url: string): Promise<boolean> {
+  const c = new pg.Client({ connectionString: url, connectionTimeoutMillis: 10_000 });
+  try {
+    await c.connect();
+    return true;
+  } catch {
+    return false;
+  } finally {
+    await c.end().catch(() => undefined);
   }
 }

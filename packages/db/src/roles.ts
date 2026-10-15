@@ -1,4 +1,4 @@
-import { createHash, createHmac, pbkdf2Sync, randomBytes } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 
 /** The two roles that log in besides the owner (spec §17). */
 export type LoginRole = 'app_user' | 'sen_auth';
@@ -24,14 +24,3 @@ export function roleUrl(ownerUrl: string, role: LoginRole, password: string | nu
   return u.toString();
 }
 
-/**
- * The password as Postgres stores it (SCRAM-SHA-256, RFC 5803), so `ALTER ROLE` never carries it in
- * plain text where a statement log could keep it.
- */
-export function scramVerifier(password: string, salt = randomBytes(16), iterations = 4096): string {
-  const salted = pbkdf2Sync(password.normalize('NFKC'), salt, iterations, 32, 'sha256');
-  const clientKey = createHmac('sha256', salted).update('Client Key').digest();
-  const storedKey = createHash('sha256').update(clientKey).digest();
-  const serverKey = createHmac('sha256', salted).update('Server Key').digest();
-  return `SCRAM-SHA-256$${iterations}:${salt.toString('base64')}$${storedKey.toString('base64')}:${serverKey.toString('base64')}`;
-}
