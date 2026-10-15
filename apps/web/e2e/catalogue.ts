@@ -15,6 +15,8 @@ export interface Entry {
   path: string;
   /** Taps after the page has loaded and settled: a sheet's opening, or a step of a walk-through. */
   open?: (page: Page) => Promise<void>;
+  /** The screen moves to another look itself (the quarterly reveal), so it isn't held to the one it opened in. */
+  ownLook?: boolean;
 }
 
 const NK = uid('txn:nasi-kandar');
@@ -57,17 +59,27 @@ const senSheet = async (page: Page) => {
   await still(sheet);
 };
 
-/** Scan's long-press (500 ms, frame.spec.ts): the tab bar's button opens the sheet of other ways in. */
+/**
+ * Scan's long-press (500 ms, frame.spec.ts): the tab bar's button opens the sheet of other ways in. A
+ * press that a busy machine let through as a tap is tried again.
+ */
 const scanMoreSheet = async (page: Page) => {
   const scan = page.getByRole('navigation', { name: 'Tabs' }).getByRole('button', { name: 'Scan a receipt' });
-  const box = (await scan.boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await page.waitForTimeout(650);
-  await page.mouse.up();
   const sheet = page.getByRole('dialog', { name: 'Add a payment' });
-  await expect(sheet).toBeVisible();
+  await expect(async () => {
+    const box = (await scan.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(650);
+    await page.mouse.up();
+    await expect(sheet).toBeVisible({ timeout: 1500 });
+  }).toPass({ timeout: 15_000 });
   await still(sheet);
+};
+
+/** The reveal has arrived when the new look is on and Keep it has the focus (new-look.tsx). */
+const newLookArrived = async (page: Page) => {
+  await expect(page.getByRole('button', { name: 'Keep it' })).toBeFocused({ timeout: 10_000 });
 };
 
 /** Confirm needs a draft, which only the scanner makes: a photo chosen on Scan, read by the made-up reader. */
@@ -160,7 +172,7 @@ export const CATALOGUE: Entry[] = [
   // outside the tabs
   entry('sign-in', '/s/sign-in'),
   entry('first-run', '/s/first-run'),
-  entry('new-look', '/s/new-look'),
+  { ...entry('new-look', '/s/new-look', newLookArrived), ownLook: true },
 
   // ---- states (screens.spec.ts's STATES; loading animates, so it is not recorded) ----
   entry('home@empty', '/?state=empty'),

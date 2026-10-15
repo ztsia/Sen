@@ -43,9 +43,7 @@ const arg = (name, fallback) => {
   const i = argv.indexOf(name);
   return i >= 0 ? argv[i + 1] : fallback;
 };
-const unknown = argv.filter(
-  (a, i) => a.startsWith('--') && !['--base', '--looks', '--out'].includes(a) && argv[i - 1] !== a,
-);
+const unknown = argv.filter((a) => a.startsWith('--') && !['--base', '--looks', '--out', '--help'].includes(a));
 if (unknown.length || argv.includes('--help')) {
   console.error('usage: node scripts/qa-diff.mjs [--base <ref>] [--looks all|<list>] [--out <dir>]');
   process.exit(argv.includes('--help') ? 0 : 2);
@@ -107,7 +105,8 @@ function run(project) {
   };
   delete env.CI;
   const args = ['exec', 'playwright', 'test', '-c', 'e2e/diff.config.ts', '--project', project];
-  // every tree in the folder is rewritten in place, so `git diff` below shows what the branch changed
+  // every tree in the folder is rewritten in place, so comparing it with the base commit's shows what
+  // the branch changed
   if (!base) args.push('--update-snapshots=all');
   console.log(`running the catalogue on ${project} (${looks.join(', ')}) ...`);
   const t0 = Date.now();
@@ -149,7 +148,10 @@ const requireWeb = createRequire(join(web, 'package.json'));
 const { default: pixelmatch } = await import(pathToFileURL(requireWeb.resolve('pixelmatch')).href);
 const { PNG } = requireWeb('pngjs');
 
-const catalogue = JSON.parse(readFileSync(join(out, 'head/catalogue.json'), 'utf8'));
+// head's run writes the catalogue; if it died before that, base's (the same specs) stands in
+const listed = ['head', 'base'].map((side) => join(out, side, 'catalogue.json')).find((f) => existsSync(f));
+if (!listed) throw new Error(`neither run wrote catalogue.json; see ${join(out, 'logs')}`);
+const catalogue = JSON.parse(readFileSync(listed, 'utf8'));
 const entries = catalogue.entries;
 const pngName = (e, look, mode) => `${e.file}--${look}-${mode}.png`;
 const shotDir = (side) => join(out, side, 'catalogue');
@@ -213,7 +215,7 @@ const headScreens = registryIds(join(web, 'src/screens/registry.ts'));
 /* ---------- trees ----------------------------------------------------------------- */
 
 const treesRecorded = looks.includes('minted');
-const treeFile = (e) => `${TREES}/${e.file}.aria.yml`;
+const treeFile = (e) => `${TREES}/${e.tree}.aria.yml`;
 const gitSafe = (args) => {
   try {
     return git(args);
@@ -376,8 +378,27 @@ const pairTable = (r) => {
   md.push('');
 };
 
-const changedEntries = report.filter((r) => r.status === 'changed');
+// a tree recorded for the first time on a screen whose pixels match main's (main had no trees yet) is
+// news only in bulk: those are listed, not shown, unless there are few
+const firstTreeOnly = (r) => r.status === 'changed' && r.tree === 'new' && r.pairs.every((p) => p.state === 'same');
+const changedEntries = report.filter((r) => r.status === 'changed' && !firstTreeOnly(r));
+const firstTrees = report.filter(firstTreeOnly);
 const newEntries = report.filter((r) => r.status === 'new');
+/** A section of entries: each in full when there are few, else one line each. */
+const section = (title, list, many) => {
+  if (!list.length) return;
+  md.push(`## ${title}`, '');
+  const full = list.length <= NEW_TREES_SHOWN;
+  if (!full) md.push(many(list.length), '');
+  for (const r of list) {
+    if (full) {
+      md.push(`### ${r.id}`, '', `\`${r.path}\`; tree ${r.tree}.`, '');
+      if (r.treeDiff) showTree(r);
+      pairTable(r);
+    } else md.push(`- ${r.id} (\`${r.path}\`): tree ${r.tree}`);
+  }
+  md.push('');
+};
 if (changedEntries.length) {
   md.push('## Changed', '');
   for (const r of changedEntries) {
@@ -386,19 +407,16 @@ if (changedEntries.length) {
     pairTable(r);
   }
 }
-if (newEntries.length) {
-  md.push('## New', '');
-  const full = newEntries.length <= NEW_TREES_SHOWN;
-  if (!full)
-    md.push(`${newEntries.length} entries are new, so their trees are listed, not shown (they are in ${TREES}/).`, '');
-  for (const r of newEntries) {
-    if (full) {
-      md.push(`### ${r.id}`, '', `\`${r.path}\`; tree ${r.tree}.`, '');
-      if (r.treeDiff) showTree(r);
-    } else md.push(`- ${r.id} (\`${r.path}\`): tree ${r.tree}`);
-  }
-  md.push('');
-}
+section(
+  'New',
+  newEntries,
+  (n) => `${n} entries are new, so their trees are listed, not shown (they are in ${TREES}/).`,
+);
+section(
+  'Trees recorded for the first time',
+  firstTrees,
+  (n) => `${n} screens look as they do on ${baseRef} and have their first tree, in ${TREES}/.`,
+);
 if (goneScreens.length || goneTrees.length) {
   md.push('## Removed', '');
   for (const id of goneScreens) md.push(`- screen \`${id}\` is gone from the registry`);

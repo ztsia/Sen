@@ -20,6 +20,8 @@ const MAX_HEIGHT = 4000;
 test.use({ contextOptions: { reducedMotion: 'reduce' } });
 
 const safeId = (id: string) => id.replace(/[/@]/g, '_');
+// Playwright turns every punctuation mark in a snapshot's name, `_` too, into `-`, so say it first
+const treeId = (id: string) => id.replace(/[/@]/g, '-');
 const only = process.env.E2E_CATALOGUE;
 const shots = process.env.E2E_SHOTS;
 
@@ -40,10 +42,19 @@ test('every registry screen is in the catalogue or unexplored, and nothing else 
   ).toEqual([]);
   const entryIds = CATALOGUE.map((e) => e.id);
   expect(entryIds.filter((id, i) => entryIds.indexOf(id) !== i)).toEqual([]);
+  // two ids that differ only by `/`, `@` or `-` would write one tree
+  const names = entryIds.map(treeId);
+  expect(names.filter((n, i) => names.indexOf(n) !== i)).toEqual([]);
   // qa-diff.mjs reads the catalogue from here: it is TypeScript, and the script is not
   if (shots) {
     mkdirSync(shots, { recursive: true });
-    const entries = CATALOGUE.map((e) => ({ id: e.id, screen: e.screen, path: e.path, file: safeId(e.id) }));
+    const entries = CATALOGUE.map((e) => ({
+      id: e.id,
+      screen: e.screen,
+      path: e.path,
+      file: safeId(e.id),
+      tree: treeId(e.id),
+    }));
     writeFileSync(join(shots, 'catalogue.json'), JSON.stringify({ entries, unexplored: UNEXPLORED }, null, 2));
   }
 });
@@ -73,9 +84,9 @@ const quiet = (page: Page) =>
       }),
   );
 
-/** The viewport grown to show the whole screen, photographed, and put back. */
-async function wholeScreen(page: Page, file: string) {
-  const hidden = await page.evaluate(() => {
+/** What the app's scroll column hides below the viewport, in CSS px. */
+const hiddenHeight = (page: Page) =>
+  page.evaluate(() => {
     let most = 0;
     for (const el of document.querySelectorAll<HTMLElement>('body *')) {
       if (!/auto|scroll/.test(getComputedStyle(el).overflowY) || el.closest('[role="dialog"]')) continue;
@@ -83,11 +94,56 @@ async function wholeScreen(page: Page, file: string) {
     }
     return most;
   });
+
+/**
+ * Reads until two readings, a moment apart, agree: a step sliding in or a list laying out has not
+ * finished until they do. A reading that never settles is taken after 3 s, as it is.
+ */
+async function settledValue<T>(read: () => Promise<T>) {
+  const until = Date.now() + 3000;
+  let last = JSON.stringify(await read());
+  while (Date.now() < until) {
+    await new Promise((r) => setTimeout(r, 150));
+    const now = JSON.stringify(await read());
+    if (now === last) break;
+    last = now;
+  }
+  return JSON.parse(last) as T;
+}
+
+/** What every canvas shows (the avatar, a look's marks): drawn once, they should stop changing. */
+const canvases = (page: Page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll('canvas')].map((c) => {
+      const url = c.toDataURL();
+      let h = 0;
+      for (let i = 0; i < url.length; i += 7) h = (Math.imul(h, 31) + url.charCodeAt(i)) | 0;
+      return h;
+    }),
+  );
+
+const frames = (page: Page) =>
+  page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+
+/** The viewport grown to show the whole screen, photographed, and put back. */
+async function wholeScreen(page: Page, file: string) {
+  // Under reduced motion each avatar is drawn once. Copper strikes its coin's SEN on a canvas, and if
+  // Archivo arrived after that first frame the coin keeps the fallback face on one run and not the next.
+  // Once every face is in, the viewport is shut for a moment: each avatar leaves the screen and comes
+  // back, and the avatar loop redraws whatever comes back into view (avatar-loop.ts).
+  await page.evaluate(() => document.fonts.ready);
+  await page.setViewportSize({ width: PHONE.width, height: 1 });
+  // the observer reports at a rendering step, and the loop draws at most every 32 ms
+  await page.waitForTimeout(100);
+  await page.setViewportSize(PHONE);
+  await frames(page);
+  const hidden = await settledValue(() => hiddenHeight(page));
   await page.setViewportSize({ width: PHONE.width, height: Math.min(PHONE.height + hidden, MAX_HEIGHT) });
   // two frames for the layout to settle at the new height, then whatever it sets off: a virtual list
   // measures and draws its rows again
-  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  await frames(page);
   await quiet(page);
+  await settledValue(() => canvases(page));
   mkdirSync(join(file, '..'), { recursive: true });
   await page.screenshot({ path: file, animations: 'disabled' });
   await page.setViewportSize(PHONE);
@@ -100,16 +156,27 @@ for (const e of CATALOGUE)
         // the clock is fixed before the page loads, so "today" and every relative date are the scenario's
         await page.clock.setFixedTime(new Date(NOW));
         const errors = watchErrors(page);
-        await open(page, e.path, look, mode);
+        // Every face the page declares starts loading as soon as its stylesheet is in, so text drawn on a
+        // canvas (Copper's coin strikes SEN in Archivo, and under reduced motion draws it once) never
+        // catches the fallback face on one run and the real one on the next.
+        await page.addInitScript(() =>
+          document.addEventListener('DOMContentLoaded', () =>
+            document.fonts.forEach((f) => void f.load().catch(() => {})),
+          ),
+        );
+        if (e.ownLook) await page.goto(`${e.path}${e.path.includes('?') ? '&' : '?'}look=${look}&mode=${mode}`);
+        else await open(page, e.path, look, mode);
         await settled(page);
         await quiet(page);
         await e.open?.(page);
+        // a step reached by taps can load its own list (first run's apps)
+        await settled(page);
         await quiet(page);
         await page.evaluate(() => document.fonts.ready);
 
         // the tree is the same in every look; one look records it
         if (only !== 'shots' && look === 'minted' && mode === 'light')
-          await expect(page.locator('body')).toMatchAriaSnapshot({ name: `${safeId(e.id)}.aria.yml` });
+          await expect(page.locator('body')).toMatchAriaSnapshot({ name: `${treeId(e.id)}.aria.yml` });
 
         if (shots) await wholeScreen(page, join(shots, 'catalogue', `${safeId(e.id)}--${look}-${mode}.png`));
 

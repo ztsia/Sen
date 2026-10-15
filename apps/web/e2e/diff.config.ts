@@ -29,6 +29,8 @@ export default defineConfig({
   testMatch: /catalogue\.spec/,
   timeout: 60_000,
   fullyParallel: true,
+  // nothing else runs beside it, so all four cores
+  workers: 4,
   retries: 0,
   reporter: [['list'], ['json']],
   outputDir: process.env.QA_RESULTS ?? join('..', 'test-results-diff'),
