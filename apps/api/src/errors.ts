@@ -48,8 +48,9 @@ export function onError(err: Error, c: Context) {
   }
   if (err instanceof HTTPException) return c.json({ code: 'http', message: err.message }, err.status);
   // RLS refusing a write reaches here as SQLSTATE 42501: to the client, it's simply not theirs
-  if ((err as { code?: string }).code === '42501')
-    return c.json({ code: 'forbidden', message: 'That isn’t yours.' }, 403);
+  // (drizzle wraps Postgres' error in its own, with the original as `cause`)
+  const pgCode = (err as { code?: string }).code ?? (err.cause as { code?: string } | undefined)?.code;
+  if (pgCode === '42501') return c.json({ code: 'forbidden', message: 'That isn’t yours.' }, 403);
   console.error(err);
   return c.json({ code: 'server', message: 'Something went wrong on Sen’s side.' }, 500);
 }
