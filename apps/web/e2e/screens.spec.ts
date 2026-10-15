@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { uid } from '../src/data/fake/ids';
 import { acctId } from '../src/data/fake/scenario';
 import { JOURNEYS } from '../src/dev/journeys';
-import { LOOKS, MODES, open, settled, smallTargets, watchErrors } from './helpers';
+import { BEHAVIOUR, MODES, open, settled, smallTargets, watchErrors } from './helpers';
 
 // B03 done-when 2 and 3: each screen's varying states (empty, loading, error, offline, without capture, and the scenario's edge states)
 // can be reached from the dev panel's switches, which ?state= and ?scenario= set on load.
@@ -241,7 +241,9 @@ async function clean(page: Page, name: string) {
   expect(small, `${name}:\n${small.join('\n')}`).toEqual([]);
 }
 
-for (const look of LOOKS)
+// Every B04 screen's states, Sen's sheet and the stand-ins, in one look, light and dark: the looks share
+// these blocks, and the catalogue checks how each look draws its screens in all twelve pairs (D137)
+for (const look of [BEHAVIOUR.look])
   for (const mode of MODES) {
     for (const state of ['empty', 'loading', 'error', 'offline'] as const)
       test(`every B04 screen, ${state}, in ${look}, ${mode}: axe finds nothing, targets are 48 px, nothing throws`, async ({

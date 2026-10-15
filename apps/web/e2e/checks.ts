@@ -317,6 +317,9 @@ const probe = (a: Probe): string[] | number => {
       // a disabled control takes no taps (pointer-events: none), so nothing covers it
       if (getComputedStyle(el).pointerEvents === 'none') continue;
       const over = covering(el);
+      // a "Simulated: …" toast stands in, in previews, for what Android itself would do; a phone never
+      // shows it
+      if (over?.closest('[data-sonner-toast]')?.textContent?.trim().startsWith('Simulated:')) continue;
       if (over) out.push(`${label(el)} under ${cover(over)}`);
     }
     for (const [e, x, y] of saved[2]) {

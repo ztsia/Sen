@@ -81,3 +81,7 @@ export function dirtyAll() {
   for (const c of set) c._dirty = true;
   if (!raf && set.size) raf = requestAnimationFrame(loop);
 }
+
+// an avatar can draw its letters before its look's typeface has loaded, and under reduced motion it
+// wouldn't draw again: Copper's coin kept its fallback face (QA tooling, D137)
+if (typeof document !== 'undefined') document.fonts?.addEventListener('loadingdone', dirtyAll);
