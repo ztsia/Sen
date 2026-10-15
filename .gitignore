@@ -53,3 +53,4 @@ qa/**/.gradle/
 # subagents' isolated worktrees (Claude Code)
 .claude/worktrees/
 .vercel/
+apps/web/public/db-deploy.txt

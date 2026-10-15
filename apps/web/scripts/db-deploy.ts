@@ -1,6 +1,7 @@
 // The database's part of a Vercel build (B05, D122): migrations, the roles' passwords, and the seed,
 // before the web app is built, so a failed migration fails the deploy. Skipped off Vercel: locally
 // and in CI the database is scripts/local-db.sh's. Runs with tsx, for the web app's `@/` paths.
+import { writeFileSync } from 'node:fs';
 import { deploy } from '@sen/db';
 import type { PreviewPerson } from '@sen/db';
 import { weiMing } from '../src/data/fake/scenario';
@@ -42,10 +43,28 @@ function previewPeople(): PreviewPerson[] {
   ];
 }
 
-await deploy({
-  target,
-  ownerUrl,
-  secret,
-  ownerEmail: target === 'production' ? process.env.SEN_OWNER_EMAIL : undefined,
-  preview: target === 'preview' ? previewPeople : undefined,
-});
+const lines: string[] = [];
+const log = (line: string) => {
+  console.log(line);
+  lines.push(line);
+};
+try {
+  await deploy(
+    {
+      target,
+      ownerUrl,
+      secret,
+      ownerEmail: target === 'production' ? process.env.SEN_OWNER_EMAIL : undefined,
+      preview: target === 'preview' ? previewPeople : undefined,
+    },
+    log,
+  );
+} catch (e) {
+  // Production fails the deploy, so new code never runs on an old schema (D122). A preview builds
+  // anyway and says why at /db-deploy.txt: a cloud session can't read Vercel's build logs, but can
+  // fetch a preview (docs/cloud.md §5). Credentials never appear: pg's messages don't carry the URL,
+  // and anything URL-shaped is cut.
+  if (target === 'production') throw e;
+  log(`db: FAILED: ${String(e instanceof Error ? (e.stack ?? e.message) : e).replace(/\w+:\/\/\S+/g, '<url>')}`);
+}
+if (target === 'preview') writeFileSync(new URL('../public/db-deploy.txt', import.meta.url), `${lines.join('\n')}\n`);
