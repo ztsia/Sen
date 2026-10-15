@@ -1,7 +1,7 @@
 // The database's part of a Vercel build (B05, D122): migrations, the roles' passwords, and the seed,
 // before the web app is built, so a failed migration fails the deploy. Skipped off Vercel: locally
 // and in CI the database is scripts/local-db.sh's. Runs with tsx, for the web app's `@/` paths.
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { deploy } from '@sen/db';
 import type { PreviewPerson } from '@sen/db';
 import { weiMing } from '../src/data/fake/scenario';
@@ -67,4 +67,8 @@ try {
   if (target === 'production') throw e;
   log(`db: FAILED: ${String(e instanceof Error ? (e.stack ?? e.message) : e).replace(/\w+:\/\/\S+/g, '<url>')}`);
 }
-if (target === 'preview') writeFileSync(new URL('../public/db-deploy.txt', import.meta.url), `${lines.join('\n')}\n`);
+if (target === 'preview') {
+  const pub = new URL('../public/', import.meta.url);
+  mkdirSync(pub, { recursive: true });
+  writeFileSync(new URL('db-deploy.txt', pub), `${lines.join('\n')}\n`);
+}

@@ -22,6 +22,13 @@
       "when": 1792080855738,
       "tag": "0002_b05_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792081326324,
+      "tag": "0003_auth_ids_rate_limit",
+      "breakpoints": true
     }
   ]
 }
