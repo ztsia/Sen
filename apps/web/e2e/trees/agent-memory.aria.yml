@@ -1,0 +1,35 @@
+- banner:
+  - button "Back"
+  - heading "What Sen remembers" [level=1]
+- main:
+  - paragraph: Notes Sen keeps to help you. It never keeps an amount, and forgetting one takes it away.
+  - list:
+    - listitem:
+      - paragraph: Saturday dinners are usually split with Mei.
+      - paragraph: /Noted \d+ Oct/
+      - 'button "Forget: Saturday dinners are usually split with Mei."'
+    - listitem:
+      - paragraph: You're saving for a trip in December. Keep that in mind before suggesting cuts.
+      - paragraph: Noted 9 Oct
+      - 'button "Forget: You''re saving for a trip in December. Keep that in mind before suggesting cuts."'
+    - listitem:
+      - paragraph: Lunch at the hawker stall near work is meals, not groceries.
+      - paragraph: Noted 2 Oct
+      - 'button "Forget: Lunch at the hawker stall near work is meals, not groceries."'
+    - listitem:
+      - paragraph: You are paid on the last working day of the month.
+      - paragraph: /Noted \d+ Sept/
+      - 'button "Forget: You are paid on the last working day of the month."'
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

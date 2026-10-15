@@ -1,52 +1,49 @@
 # Handoff
 
-## Where things stand (14 Oct)
+## Where things stand (15 Oct)
 
-**The B04 redesign (D130) is done; its PR *B04 · Redesign* waits for the owner's merge.** Branch
-`B04/redesign`. Calm, card-based screens throughout, plus the owner's list from QA run 3: bank-style
-amounts (D132), a goal's money in its own account (D133), subscriptions and goals added by hand
-(D134), buttons that open Sen start the message and show its avatar (D135), group labels as captions
-(D136); the Scan tab opens the camera, its long-press the menu.
+*B04 · Redesign* is merged (#13). **D137's QA tooling is built**, branch `B04/qa-tooling`, brief
+`docs/briefs/B04-qa-tooling.md`. Its PR *B04 · QA tooling* comes once the six-look e2e run is green.
+Then B05.
 
-**QA:** four full runs and a scoped re-check. Run 4 (fresh, tier 3) said *fix first* (1 Major, 6
-Minor); its fixes went back to the same reviewer, scoped (tier 2), which said **ship**; its five
-small findings were fixed by the main session (tier 1). Record: `qa/B04-redesign/` (`report.md` is
-run 4 and its re-check; `ledger.md` has every tier decision and its evidence), published at
-https://claude.ai/artifact/X8ErKKAZAXTpBt97iEpxYa. Last checks on d6023d2: typecheck, lint, unit
-tests, full e2e 833 passed. Usage logged (`docs/usage.md`; `scripts/usage.mjs --from /home/user`
-when the session started outside the repo).
+**Built and reviewed:**
+- `apps/web/e2e/catalogue.ts`: 87 entries (every registry screen, its states and the scenario
+  variants); `reading` is unexplored (it shows only while the made-up reader works).
+- `apps/web/e2e/trees/`: 87 committed accessibility trees (Minted light). Playwright writes `_` as
+  `-` in their names, and digits as `\d+`, so a changed amount shows in the pixels, not the tree.
+- `scripts/qa-diff.mjs` with `e2e/diff.config.ts`: main's build in a worktree against the branch's,
+  every entry in all twelve pairs, about 31 min (5 min with `--looks minted`). Twice against itself:
+  nothing changed. Against main: 87 trees new, 0 pixel pairs changed.
+- `apps/web/e2e/checks.ts` (+ `checks.spec.ts`, 32 fixtures, `checks.config.ts`): axe, targets,
+  clipped, overlap, covered, keyboard, focus, each proven to fire; narrowings commented.
+- Journeys once in Minted light; screens.spec's per-look loops moved to Minted, light and dark.
+- What the checks found, fixed: charts' hidden focus ring; the Undo toast over Ask Sen (sonner's
+  phone rule ignored the right offset); a needless toast over Add expense after Sen's gap ask;
+  Copper's coin keeping its fallback face under reduced motion (avatars redraw when fonts load).
+- Docs: `qa-reviewer` has `Agent` and spawns its sweep (Haiku) and `qa-eyes` (Opus) from the `qa`
+  skill's templates; `qa/escapes.md` (E1, density); `brief` and `qa` say waiting costs.
 
-**Device checks for the owner** are queued in `docs/local.md` (QA runs 3 and 4): Select all in a
-money field, the number pad, the Scan tab's camera, TalkBack's focus after a sheet.
+**claude_skills** (owner asked, 14 Oct): branch `workflow/qa-diff` pushed with the generic `qa`
+skill, `qa-reviewer`, `qa-eyes`, CLAUDE.md template rows, and `examples/qa/` (Sen's tooling to
+adapt, with a README).
 
 ### What to do next
-1. **When the PR is merged: D137's QA tooling, before B05**, on its own branch with a brief:
-   - diff-driven QA: each screen's accessibility tree (`toMatchAriaSnapshot`) on the golden scenario,
-     behaviour in one look, pixels against `main` in all twelve look-and-mode pairs, and the reviewer
-     gets only the screens that changed, with each diff;
-   - its quality half: a human-eyes pass on Opus over each changed screen at full size, answering
-     fixed questions in writing; `qa/escapes.md` (the owner's hand-found bugs, each a pin and a
-     question; the redesign's density is the first entry); scripted visual checks (clipped text,
-     overlaps, a button under a toast or keyboard, invisible focus, contrast);
-   - the reviewer spawns its own helpers (add `Agent` to `qa-reviewer`'s tools; subagents may nest to
-     three levels), from templates in the `qa` skill that fix each helper's model and prompt.
-   Update the `qa` skill and `CLAUDE.md`'s QA lines to match.
-2. Then **B05** (`docs/briefs/B05-server.md`).
+1. Six-look `pnpm e2e` green on f25f5bd: 1387 passed in 40 min. PR *B04 · QA tooling* is open.
+2. Done: claude_skills `workflow/qa-diff` has `examples/qa/` too; the owner opens or asks for its PR.
+3. B05 (`docs/briefs/B05-server.md`), QA'd the new way.
 
-### Left on purpose (in the ledger)
-- The hand tick for a payday move and the plan's moves into a goal's account are B30's (its brief
-  has them, D133). The Add sheets don't hand focus back on close (queued for TalkBack). Four
-  paragraphs run 3–4 lines; the D137 eyes pass will judge them.
+### Known, left on purpose
+- `/s/new-look` under `?look=` sits in a view transition about 4 s (`arrive()` waits for a store
+  change the override blocks). The checks wait it out; the reveal is B14's.
+- The `keyboard` check's intermittent balance-check finding (locally once, then CI) was the measure racing
+  the resize; it now re-measures before reporting. Watch for it coming back.
 
 ### Open with the owner
-- Merge *B04 · Redesign*.
-- `claude_skills` branch `workflow/brain-and-cards` (D130's uiux rules, D131's model principle, the
-  implementer on Haiku at high, the `brief` skill) is pushed; the owner opens or asks for its PR.
-  D137 will change its `qa` skill too.
+- Merge *B04 · QA tooling* when its PR is up; open or ask for claude_skills' `workflow/qa-diff` PR.
 
 ## Don't argue again
-- D129's levels and the 48 px target rule; D130's card-based structure; D131, Opus decides and briefs
-  completely, Haiku at high by default; D132–D137 (owner's calls).
-- Home fits one screen at 390×844; Insights is one card at a time; the new-look reveal's animation is
-  B14's.
+- D129–D137 (owner's calls). D137: trees committed and diffed, behaviour in one look, pixels
+  against `main` in all twelve pairs, the eyes pass on Opus, the escape log, the reviewer spawning
+  its helpers. E2E_LOOKS (two on a PR, six nightly) now limits only the catalogue.
+- Home fits one screen at 390×844; Insights is one card at a time.
 - Deploys only by merge (D122); the review build follows the `review` branch (D115).

@@ -1,0 +1,37 @@
+- banner:
+  - button "Back"
+  - heading "Goal" [level=1]
+- main:
+  - paragraph: Japan in spring
+  - text: /RM \d+,\d+\.\d+/
+  - paragraph: /of RM6,\d+\.\d+ · \d+% saved/
+  - paragraph: A goal
+  - term: Needs a cycle
+  - definition: /RM \d+\.\d+/
+  - term: Target
+  - definition: /RM \d+,\d+\.\d+/
+  - term: Done by
+  - definition: /\d+ Mar/
+  - term: At this pace
+  - definition: /About Sun, \d+ May \d+/
+  - term: Kept in
+  - definition: Ryt Bank
+  - term: Median surplus
+  - definition: /RM1,\d+\.\d+ over 6 cycles/
+  - paragraph: "/Within reach: your median surplus is RM \\d+,\\d+\\.\\d+ over 6 cycles, which covers it\\./"
+  - region "Put in so far":
+    - heading "Put in so far" [level=2]
+    - text: /Wed, \d+ Sept, \d+:\d+ RM \d+\.\d+ Mon, \d+ Aug, \d+:\d+ RM \d+\.\d+ Fri, \d+ Jul, \d+:\d+ RM \d+\.\d+ Tue, \d+ Jun, \d+:\d+ RM \d+\.\d+ Fri, \d+ May, \d+:\d+ RM \d+\.\d+ Thu, \d+ Apr, \d+:\d+ RM \d+\.\d+/
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

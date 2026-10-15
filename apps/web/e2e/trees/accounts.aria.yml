@@ -1,0 +1,38 @@
+- banner:
+  - button "Back"
+  - heading "Accounts" [level=1]
+- main:
+  - paragraph: In 5 accounts
+  - text: /RM \d+,\d+\.\d+/
+  - paragraph: /The last check found RM \d+\.\d+ that left without a notification, booked as Unaccounted\./
+  - button "Check balances"
+  - region "Tracked":
+    - heading "Tracked" [level=2]
+    - button /Ryt Bank Checked 1 Oct RM \d+,\d+\.\d+/:
+      - paragraph: Checked 1 Oct
+    - button /Public Bank Not checked MyPB RM \d+,\d+\.\d+/:
+      - paragraph: Not checked MyPB
+    - button /TNG eWallet Not checked RM \d+\.\d+/:
+      - paragraph: Not checked
+    - button /GO\+ Not checked TNG eWallet RM \d+,\d+\.\d+/:
+      - paragraph: Not checked TNG eWallet
+    - button /GrabPay Wallet Not checked Grab RM \d+\.\d+/:
+      - paragraph: Not checked Grab
+  - region "Elsewhere":
+    - heading "Elsewhere" [level=2]
+    - paragraph: Kept elsewhere, so Sen shows no balance for them.
+    - list:
+      - listitem: Maybank No balance
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

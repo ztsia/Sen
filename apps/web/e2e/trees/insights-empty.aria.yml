@@ -1,0 +1,20 @@
+- banner:
+  - button "Back"
+  - heading "Insights" [level=1]
+- main:
+  - heading "Insights" [level=2]
+  - button /October \(this cycle\) \d+ Oct – \d+ Oct/
+  - text: No insights yet Your first insights show once you've a few payments.
+- button "Ask Sen"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link "Review":
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+- region "Notifications alt+T"
+- button "Dev panel"

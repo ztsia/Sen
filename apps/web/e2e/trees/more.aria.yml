@@ -1,0 +1,29 @@
+- banner:
+  - button "Back"
+  - heading "More" [level=1]
+- main:
+  - heading "More" [level=2]
+  - link /Payments \d+,\d+/:
+    - /url: /s/payments
+  - link "Shared bills 3 open":
+    - /url: /s/shared
+  - link "Accounts 5":
+    - /url: /s/accounts
+  - link "Claims 2 to submit":
+    - /url: /s/claims
+  - link "Settings":
+    - /url: /s/settings
+- button "Ask Sen"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

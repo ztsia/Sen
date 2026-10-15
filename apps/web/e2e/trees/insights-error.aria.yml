@@ -1,0 +1,21 @@
+- banner:
+  - button "Back"
+  - heading "Insights" [level=1]
+- main:
+  - heading "Insights" [level=2]
+  - alert:
+    - text: Couldn't load Insights Check your connection, then try again. Nothing you've added is lost.
+    - button "Try again"
+- button "Ask Sen"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link "Review":
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+- region "Notifications alt+T"
+- button "Dev panel"

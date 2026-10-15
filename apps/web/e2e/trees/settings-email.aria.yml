@@ -1,0 +1,40 @@
+- banner:
+  - button "Back"
+  - heading "Receipts by email" [level=1]
+- main:
+  - region "Your address":
+    - heading "Your address" [level=2]
+    - paragraph: weiming.7f3k@in.sen-my.app
+    - button "Copy address"
+  - region "Set up Gmail":
+    - heading "Set up Gmail" [level=2]
+    - list:
+      - listitem:
+        - paragraph: Copy the address above.
+      - listitem:
+        - paragraph: In Gmail, open Settings, then Forwarding and POP/IMAP, and add it as a forwarding address.
+      - listitem:
+        - paragraph: Gmail sends a confirmation code to Sen. It shows below once it arrives.
+      - listitem:
+        - paragraph: Make a filter for your receipts, such as from their senders, to forward them to this address.
+  - region "Confirmation":
+    - heading "Confirmation" [level=2]
+    - paragraph: Gmail’s code. Type it into Gmail to confirm.
+    - paragraph: /\d+/
+    - button "Copy code"
+  - region "Received":
+    - heading "Received" [level=2]
+    - text: Received by email 3
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

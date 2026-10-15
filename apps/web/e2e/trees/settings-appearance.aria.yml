@@ -1,0 +1,34 @@
+- banner:
+  - button "Back"
+  - heading "Appearance" [level=1]
+- main:
+  - heading "Mode" [level=2]
+  - radiogroup "Mode":
+    - radio "System"
+    - radio "Light" [checked]
+    - radio "Dark"
+  - region "Look":
+    - heading "Look" [level=2]
+    - text: Change each quarter
+    - paragraph: /Minted until Fri, 1 Jan \d+/
+    - switch "Change each quarter" [checked]
+  - radiogroup "Look":
+    - radio "Minted This quarter"
+    - radio "Instrument"
+    - radio "Firefly"
+    - radio "Line"
+    - radio "Mercury"
+    - radio "Copper"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

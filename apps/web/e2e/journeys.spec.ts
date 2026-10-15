@@ -1,14 +1,16 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { LOOKS, MODES, open, settled, watchErrors, type LookId, type ModeId } from './helpers';
+import { BEHAVIOUR, open, settled, watchErrors, type LookId, type ModeId } from './helpers';
+import { coveredTargets } from './checks';
 import { SETTLE_MS } from '../src/lib/tap-guard';
 import { uid } from '../src/data/fake/ids';
 import { JOURNEYS as GUIDED } from '../src/dev/journeys';
 
 // B03 done-when 1: each journey the five tabs carry (docs/flows.md) clicks through on the made-up
-// data, at 390×844, in all six looks, light and dark, with a screenshot per step. Each journey starts
-// from a fresh load, so the scenario is Wei Ming's month as scenario.ts writes it.
+// data, at 390×844, with a screenshot per step. Each is walked once, in Minted, light (helpers.ts's
+// BEHAVIOUR): the looks share the screens, and the catalogue covers them. Each journey starts from a
+// fresh load, so the scenario is Wei Ming's month as scenario.ts writes it.
 
 type Journey = (
   page: Page,
@@ -890,6 +892,8 @@ export async function walk(page: Page, info: TestInfo, look: LookId, mode: ModeI
     n += 1;
     await page.waitForTimeout(150);
     const name_ = `${String(n).padStart(2, '0')} ${step}`;
+    // a toast or a bar over a button is caught where toasts happen: at each step
+    expect.soft(await coveredTargets(page), `${name} step ${n}, ${step}`).toEqual([]);
     const body = await page.screenshot();
     await info.attach(name_, { body, contentType: 'image/png' });
     // E2E_SHOTS=<dir> also writes each one as a file, for QA's sweep: the list reporter keeps no
@@ -906,11 +910,9 @@ export async function walk(page: Page, info: TestInfo, look: LookId, mode: ModeI
 }
 
 for (const name of Object.keys(JOURNEYS))
-  for (const look of LOOKS)
-    for (const mode of MODES)
-      test(`${name} in ${look}, ${mode}`, async ({ page }, info) => {
-        await walk(page, info, look, mode, name);
-      });
+  test(name, async ({ page }, info) => {
+    await walk(page, info, BEHAVIOUR.look, BEHAVIOUR.mode, name);
+  });
 
 // Every journey in docs/flows.md (dev/journeys.ts holds all 37) is walked above, by the id the guided
 // list uses; a journey added to the list without a walk fails here.

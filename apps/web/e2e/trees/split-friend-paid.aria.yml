@@ -1,0 +1,68 @@
+- banner:
+  - button "Back"
+  - heading "Shared bill" [level=1]
+- main:
+  - paragraph: Haidilao
+  - text: /RM \d+\.\d+/
+  - paragraph: /Paid by Mei · Wed, \d+ Oct, \d+:\d+/
+  - paragraph: Final
+  - paragraph: Everyone is done and every item is claimed.
+  - paragraph: To change a tick, ask Mei.
+  - region "Shares":
+    - heading "Shares" [level=2]
+    - text: /You Done RM \d+\.\d+ Mei Done RM \d+\.\d+ Ali Done RM \d+\.\d+/
+  - region "Items":
+    - heading "Items" [level=2]
+    - 'checkbox /Mala soup base \(to share\) Shared ÷3: You, Mei, Ali · your part RM \d+\.\d+ RM \d+\.\d+/ [checked] [disabled]'
+    - text: Mala soup base (to share)
+    - paragraph: "/Shared ÷3: You, Mei, Ali · your part RM \\d+\\.\\d+/"
+    - text: /RM \d+\.\d+/
+    - checkbox /Beef platter You RM \d+\.\d+/ [checked] [disabled]
+    - text: Beef platter
+    - paragraph: You
+    - text: /RM \d+\.\d+/
+    - checkbox /Lamb platter Ali RM \d+\.\d+/ [disabled]
+    - text: Lamb platter
+    - paragraph: Ali
+    - text: /RM \d+\.\d+/
+    - checkbox /Prawn paste Mei RM \d+\.\d+/ [disabled]
+    - text: Prawn paste
+    - paragraph: Mei
+    - text: /RM \d+\.\d+/
+    - checkbox /Seafood platter Mei RM \d+\.\d+/ [disabled]
+    - text: Seafood platter
+    - paragraph: Mei
+    - text: /RM \d+\.\d+/
+  - paragraph: You owe
+  - paragraph: /RM \d+\.\d+ to Mei/
+  - paragraph: Sen sees your payment if you send it from an app it reads. Paid another way? Say so here.
+  - button "I've paid"
+  - figure "Stand-in · Mei's DuitNow QR":
+    - img "Mei's DuitNow QR"
+  - group "Pay from this phone":
+    - button "Pay with TNG"
+    - button "Other app…"
+    - button "Save QR"
+  - region "Mei's tick list":
+    - heading "Mei's tick list" [level=2]
+    - paragraph: Not paid yet
+    - paragraph: Paid the bill
+    - paragraph: Not paid yet
+  - term: Your share
+  - definition: /RM \d+\.\d+/
+  - term: Your spending
+  - definition: /RM \d+\.\d+/
+  - paragraph: The link stays open until the last payment is ticked, then closes a day later.
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

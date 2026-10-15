@@ -1,0 +1,30 @@
+- banner:
+  - button "Back"
+  - heading "Shared bills" [level=1]
+- main:
+  - radiogroup "Which bills":
+    - radio "Open · 3" [checked]
+    - radio "Settled · 0"
+  - list:
+    - listitem:
+      - button /Nasi Kandar Abc \d+ Oct RM \d+\.\d+ You paid · still changing Open/:
+        - paragraph: You paid · still changing
+    - listitem:
+      - button /Haidilao \d+ Oct RM \d+\.\d+ Mei paid · you owe RM24\.\d+ Open/:
+        - paragraph: /Mei paid · you owe RM24\.\d+/
+    - listitem:
+      - button /Bbq Place \d+ Oct RM \d+\.\d+ You paid · 1 of 2 paid you back Open/:
+        - paragraph: You paid · 1 of 2 paid you back
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

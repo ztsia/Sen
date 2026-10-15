@@ -1,0 +1,21 @@
+- banner:
+  - button "Back"
+  - heading "Captured on this phone" [level=1]
+  - button "Heartbeat"
+- main:
+  - paragraph: 0 notifications, newest first, numbers hidden. They stay on this phone.
+  - text: Nothing captured yet Notifications from your chosen apps appear here as they arrive.
+  - button "Choose your apps"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

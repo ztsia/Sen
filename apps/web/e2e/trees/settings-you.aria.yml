@@ -1,0 +1,35 @@
+- banner:
+  - button "Back"
+  - heading "You" [level=1]
+- main:
+  - region "Names":
+    - heading "Names" [level=2]
+    - group:
+      - text: Your names as banks print them
+      - textbox "Your names as banks print them"
+      - paragraph: One to a line. Sen matches a notification’s name against these.
+  - region "Payday":
+    - heading "Payday" [level=2]
+    - radiogroup "Expected payday":
+      - radio "Last working day" [checked]
+      - radio "A day"
+      - radio "Not set"
+    - paragraph: Sen counts each cycle from it.
+  - region "Sharing":
+    - heading "Sharing" [level=2]
+    - text: DuitNow QR
+    - paragraph: Friends who owe you a split see it once you’ve paid.
+    - switch "DuitNow QR" [checked]
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

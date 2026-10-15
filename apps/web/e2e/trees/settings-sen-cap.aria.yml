@@ -1,0 +1,27 @@
+- banner:
+  - button "Back"
+  - heading "Sen" [level=1]
+- main:
+  - text: Google Calendar
+  - paragraph: Not connected. Without it, Review and pushes still remind you.
+  - button "Connect"
+  - region "Memory":
+    - heading "Memory" [level=2]
+    - button "What Sen remembers 4 notes"
+  - region "AI credit":
+    - heading "AI credit" [level=2]
+    - button /This month's cost An estimate from the tokens used About RM3\.\d+/:
+      - paragraph: An estimate from the tokens used
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

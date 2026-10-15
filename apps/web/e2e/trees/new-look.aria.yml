@@ -1,0 +1,14 @@
+- banner:
+  - button "Back"
+  - heading "A new look" [level=1]
+- main:
+  - status: "Sen has a new look: Instrument"
+  - paragraph: Sen has a new look for this quarter
+  - heading "Instrument" [level=2]
+  - text: Change each quarter A new look every quarter.
+  - switch "Change each quarter A new look every quarter." [checked]
+  - button "Keep it"
+  - button "Go back"
+  - paragraph: You can change this any time in Settings → Appearance
+- region "Notifications alt+T"
+- button "Dev panel"

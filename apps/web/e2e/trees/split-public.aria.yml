@@ -1,0 +1,39 @@
+- banner:
+  - heading "Sen" [level=1]
+- main:
+  - paragraph: Kedai Mee Abc
+  - text: /RM \d+\.\d+/
+  - paragraph: /Paid by Wei Ming · Yesterday, \d+:\d+/
+  - paragraph: Hi Mei. Sen remembers this browser.
+  - paragraph: Still changing
+  - paragraph: Shares move until everyone is done and every item is claimed.
+  - paragraph: Waiting for You
+  - region "Items":
+    - heading "Items" [level=2]
+    - checkbox /Mee goreng Wei Ming RM \d+\.\d+/
+    - text: Mee goreng
+    - paragraph: Wei Ming
+    - text: /RM \d+\.\d+/
+    - checkbox /Mee hoon sup Ali RM \d+\.\d+/
+    - text: Mee hoon sup
+    - paragraph: Ali
+    - text: /RM \d+\.\d+/
+    - checkbox /Kuey teow goreng You RM \d+\.\d+/ [checked]
+    - text: Kuey teow goreng
+    - paragraph: You
+    - text: /RM \d+\.\d+/
+    - 'checkbox /Ayam goreng \(to share\) Shared ÷2: Wei Ming, Ali RM \d+\.\d+/'
+    - text: Ayam goreng (to share)
+    - paragraph: "Shared ÷2: Wei Ming, Ali"
+    - text: /RM \d+\.\d+/
+    - 'checkbox /Teh ais \(3\) Shared ÷2: Wei Ming, Ali RM \d+\.\d+/'
+    - text: Teh ais (3)
+    - paragraph: "Shared ÷2: Wei Ming, Ali"
+    - text: /RM \d+\.\d+/
+  - region "Who's done":
+    - heading "Who's done" [level=2]
+    - text: Wei Ming Done Ali Done You Still ticking
+  - term: Your share so far
+  - definition: /RM \d+\.\d+/
+  - button "I've ticked everything I had"
+- region "Notifications alt+T"

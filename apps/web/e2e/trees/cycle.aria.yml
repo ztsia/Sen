@@ -1,0 +1,9 @@
+- navigation "Tabs": /, \d+ to review/
+- region "Notifications alt+T"
+- dialog "This cycle":
+  - heading "This cycle" [level=2]
+  - button "Close"
+  - paragraph: This cycle
+  - paragraph: "/October: \\d+ Sept to \\d+ Oct\\. Payday expected Fri, \\d+ Oct/"
+  - text: /Income received plus RM \d+,\d+\.\d+ Spending RM \d+,\d+\.\d+ Left until payday RM \d+,\d+\.\d+/
+  - paragraph: "/An estimate: at this pace, about RM \\d+\\.\\d+ left on payday\\. It assumes you keep spending as you have so far\\./"

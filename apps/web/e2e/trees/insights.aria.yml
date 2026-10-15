@@ -1,0 +1,279 @@
+- banner:
+  - button "Back"
+  - heading "Insights" [level=1]
+- main:
+  - heading "Insights" [level=2]
+  - button /October \(this cycle\) \d+ Sept – \d+ Oct/
+  - tablist "Insights":
+    - tab "On track" [selected]
+    - tab "Budgets"
+    - tab "Subscriptions"
+    - tab "Goals"
+    - tab "Year"
+  - text: 1 of 5
+  - tabpanel "On track":
+    - text: Am I on track?
+    - application: /Day 1 Today Payday Income RM5,\d+\.\d+/
+    - list:
+      - listitem: This cycle
+      - listitem: Last cycle
+    - table "Spent by each day, this cycle and last":
+      - caption: Spent by each day, this cycle and last
+      - rowgroup:
+        - row "Day This cycle Last cycle":
+          - columnheader "Day"
+          - columnheader "This cycle"
+          - columnheader "Last cycle"
+      - rowgroup:
+        - row /1 RM18\.\d+ RM17\.\d+/:
+          - cell "1"
+          - cell /RM18\.\d+/
+          - cell /RM17\.\d+/
+        - row /2 RM1,\d+\.\d+ RM1,\d+\.\d+/:
+          - cell "2"
+          - cell /RM1,\d+\.\d+/
+          - cell /RM1,\d+\.\d+/
+        - row /3 RM1,\d+\.\d+ RM1,\d+\.\d+/:
+          - cell "3"
+          - cell /RM1,\d+\.\d+/
+          - cell /RM1,\d+\.\d+/
+        - row /4 RM2,\d+\.\d+ RM1,\d+\.\d+/:
+          - cell "4"
+          - cell /RM2,\d+\.\d+/
+          - cell /RM1,\d+\.\d+/
+        - row /5 RM2,\d+\.\d+ RM2,\d+\.\d+/:
+          - cell "5"
+          - cell /RM2,\d+\.\d+/
+          - cell /RM2,\d+\.\d+/
+        - row /6 RM2,\d+\.\d+ RM2,\d+\.\d+/:
+          - cell "6"
+          - cell /RM2,\d+\.\d+/
+          - cell /RM2,\d+\.\d+/
+        - row /7 RM2,\d+\.\d+ RM2,\d+\.\d+/:
+          - cell "7"
+          - cell /RM2,\d+\.\d+/
+          - cell /RM2,\d+\.\d+/
+        - row /8 RM2,\d+\.\d+ RM2,\d+\.\d+/:
+          - cell "8"
+          - cell /RM2,\d+\.\d+/
+          - cell /RM2,\d+\.\d+/
+        - row /9 RM2,\d+\.\d+ RM2,\d+\.\d+/:
+          - cell "9"
+          - cell /RM2,\d+\.\d+/
+          - cell /RM2,\d+\.\d+/
+        - row /\d+ RM2,\d+\.\d+ RM2,\d+\.\d+/:
+          - cell /\d+/
+          - cell /RM2,\d+\.\d+/
+          - cell /RM2,\d+\.\d+/
+        - row /\d+ RM3,\d+\.\d+ RM2,\d+\.\d+/:
+          - cell /\d+/
+          - cell /RM3,\d+\.\d+/
+          - cell /RM2,\d+\.\d+/
+        - row /\d+ RM3,\d+\.\d+ RM2,\d+\.\d+/:
+          - cell /\d+/
+          - cell /RM3,\d+\.\d+/
+          - cell /RM2,\d+\.\d+/
+        - row /\d+ RM3,\d+\.\d+ RM2,\d+\.\d+/:
+          - cell /\d+/
+          - cell /RM3,\d+\.\d+/
+          - cell /RM2,\d+\.\d+/
+        - row /\d+ RM3,\d+\.\d+ RM3,\d+\.\d+/:
+          - cell /\d+/
+          - cell /RM3,\d+\.\d+/
+          - cell /RM3,\d+\.\d+/
+        - row /\d+ RM3,\d+\.\d+ RM3,\d+\.\d+/:
+          - cell /\d+/
+          - cell /RM3,\d+\.\d+/
+          - cell /RM3,\d+\.\d+/
+        - row /\d+ RM3,\d+\.\d+ RM3,\d+\.\d+/:
+          - cell /\d+/
+          - cell /RM3,\d+\.\d+/
+          - cell /RM3,\d+\.\d+/
+        - row /\d+ RM3,\d+\.\d+ RM3,\d+\.\d+/:
+          - cell /\d+/
+          - cell /RM3,\d+\.\d+/
+          - cell /RM3,\d+\.\d+/
+        - row /\d+ RM3,\d+\.\d+ RM3,\d+\.\d+/:
+          - cell /\d+/
+          - cell /RM3,\d+\.\d+/
+          - cell /RM3,\d+\.\d+/
+        - row /\d+ RM3,\d+\.\d+ RM3,\d+\.\d+/:
+          - cell /\d+/
+          - cell /RM3,\d+\.\d+/
+          - cell /RM3,\d+\.\d+/
+    - paragraph: "/You've spent RM3,\\d+\\.\\d+ so far, RM273\\.\\d+ more than last cycle by this day\\. An estimate for payday: RM5,\\d+\\.\\d+\\./"
+    - button "Ask Sen about this"
+    - text: Where did it go, and what changed?
+    - application: /RM1,\d+\.\d+ RM932\.\d+ RM500\.\d+ RM320\.\d+ RM243\.\d+ RM180\.\d+ RM100\.\d+ RM88\.\d+ Home & bills Meals Family Shopping Groceries Car Cash Phone &internet/
+    - paragraph: The bar is this cycle; the line is the usual level by this day.
+    - group "See the payments in a category":
+      - button "Home & bills"
+      - button "Meals"
+      - button "Family"
+      - button "Shopping"
+      - button "Groceries"
+      - button "Car"
+      - button "Cash"
+      - button "Phone & internet"
+    - table "Spent in each category, against its usual":
+      - caption: Spent in each category, against its usual
+      - rowgroup:
+        - row "Category This cycle Usual by this day":
+          - columnheader "Category"
+          - columnheader "This cycle"
+          - columnheader "Usual by this day"
+      - rowgroup:
+        - row /Home & bills RM1,\d+\.\d+ RM1,\d+\.\d+/:
+          - cell "Home & bills"
+          - cell /RM1,\d+\.\d+/
+          - cell /RM1,\d+\.\d+/
+        - row /Meals RM932\.\d+ RM710\.\d+/:
+          - cell "Meals"
+          - cell /RM932\.\d+/
+          - cell /RM710\.\d+/
+        - row /Family RM500\.\d+ RM500\.\d+/:
+          - cell "Family"
+          - cell /RM500\.\d+/
+          - cell /RM500\.\d+/
+        - row /Shopping RM320\.\d+ RM170\.\d+/:
+          - cell "Shopping"
+          - cell /RM320\.\d+/
+          - cell /RM170\.\d+/
+        - row /Groceries RM243\.\d+ RM368\.\d+/:
+          - cell "Groceries"
+          - cell /RM243\.\d+/
+          - cell /RM368\.\d+/
+        - row /Car RM180\.\d+ RM171\.\d+/:
+          - cell "Car"
+          - cell /RM180\.\d+/
+          - cell /RM171\.\d+/
+        - row /Cash RM100\.\d+ RM100\.\d+/:
+          - cell "Cash"
+          - cell /RM100\.\d+/
+          - cell /RM100\.\d+/
+        - row /Phone & internet RM88\.\d+ RM88\.\d+/:
+          - cell "Phone & internet"
+          - cell /RM88\.\d+/
+          - cell /RM88\.\d+/
+    - paragraph: /Meals is RM222\.\d+ above its usual level by this day\./
+    - button "Ask Sen about this"
+    - text: When does the money leak?
+    - img "Each day of the cycle, shaded by treats and extras spent": /1 2 3 4 5 6 7 8 9 \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+/
+    - table "Treats and extras spent each day":
+      - caption: Treats and extras spent each day
+      - rowgroup:
+        - row "Day Spent":
+          - columnheader "Day"
+          - columnheader "Spent"
+      - rowgroup:
+        - row /1 RM0\.\d+/:
+          - cell "1"
+          - cell /RM0\.\d+/
+        - row /2 RM15\.\d+/:
+          - cell "2"
+          - cell /RM15\.\d+/
+        - row /3 RM11\.\d+/:
+          - cell "3"
+          - cell /RM11\.\d+/
+        - row /4 RM171\.\d+/:
+          - cell "4"
+          - cell /RM171\.\d+/
+        - row /5 RM90\.\d+/:
+          - cell "5"
+          - cell /RM90\.\d+/
+        - row /6 RM0\.\d+/:
+          - cell "6"
+          - cell /RM0\.\d+/
+        - row /7 RM15\.\d+/:
+          - cell "7"
+          - cell /RM15\.\d+/
+        - row /8 RM59\.\d+/:
+          - cell "8"
+          - cell /RM59\.\d+/
+        - row /9 RM0\.\d+/:
+          - cell "9"
+          - cell /RM0\.\d+/
+        - row /\d+ RM0\.\d+/:
+          - cell /\d+/
+          - cell /RM0\.\d+/
+        - row /\d+ RM0\.\d+/:
+          - cell /\d+/
+          - cell /RM0\.\d+/
+        - row /\d+ RM0\.\d+/:
+          - cell /\d+/
+          - cell /RM0\.\d+/
+        - row /\d+ RM0\.\d+/:
+          - cell /\d+/
+          - cell /RM0\.\d+/
+        - row /\d+ RM14\.\d+/:
+          - cell /\d+/
+          - cell /RM14\.\d+/
+        - row /\d+ RM15\.\d+/:
+          - cell /\d+/
+          - cell /RM15\.\d+/
+        - row /\d+ RM0\.\d+/:
+          - cell /\d+/
+          - cell /RM0\.\d+/
+        - row /\d+ RM0\.\d+/:
+          - cell /\d+/
+          - cell /RM0\.\d+/
+        - row /\d+ RM0\.\d+/:
+          - cell /\d+/
+          - cell /RM0\.\d+/
+        - row /\d+ RM0\.\d+/:
+          - cell /\d+/
+          - cell /RM0\.\d+/
+        - row /\d+ not yet/:
+          - cell /\d+/
+          - cell "not yet"
+        - row /\d+ not yet/:
+          - cell /\d+/
+          - cell "not yet"
+        - row /\d+ not yet/:
+          - cell /\d+/
+          - cell "not yet"
+        - row /\d+ not yet/:
+          - cell /\d+/
+          - cell "not yet"
+        - row /\d+ not yet/:
+          - cell /\d+/
+          - cell "not yet"
+        - row /\d+ not yet/:
+          - cell /\d+/
+          - cell "not yet"
+        - row /\d+ not yet/:
+          - cell /\d+/
+          - cell "not yet"
+        - row /\d+ not yet/:
+          - cell /\d+/
+          - cell "not yet"
+        - row /\d+ not yet/:
+          - cell /\d+/
+          - cell "not yet"
+        - row /\d+ not yet/:
+          - cell /\d+/
+          - cell "not yet"
+        - row /\d+ not yet/:
+          - cell /\d+/
+          - cell "not yet"
+    - paragraph: "/Most of your treats and extras land on Saturdays: RM171\\.\\d+ this cycle\\./"
+    - button "Ask Sen about this"
+    - text: Do the small things add up?
+    - paragraph: /RM \d+\.\d+/
+    - paragraph: /\d+ payments under RM15\.\d+, about RM8\.\d+ each\./
+    - button "Ask Sen about this"
+  - button /The year \d+/
+- button "Ask Sen"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

@@ -1,0 +1,70 @@
+- banner:
+  - button "Back"
+  - heading "Claim" [level=1]
+- main:
+  - paragraph: /Parking · September \d+/
+  - paragraph: /Submit by \d+ Oct/
+  - text: To submit · evidence missing
+  - list "Claim progress":
+    - listitem: Draft
+    - listitem: Ready
+    - listitem: Sent
+    - listitem: Approved
+    - listitem: Paid
+  - term: Amount
+  - definition: /RM \d+\.\d+/
+  - term: Capped at
+  - definition: /RM \d+\.\d+/
+  - term: Submit by
+  - definition: /\d+ Oct/
+  - term: Evidence
+  - definition: 4 files
+  - region "Still missing":
+    - heading "Still missing" [level=2]
+    - text: /Receipt for \d+ Sep not added yet/
+    - paragraph: Scan the receipt, or share its photo to Sen and keep it as evidence only.
+  - region "Copy into ESS":
+    - heading "Copy into ESS" [level=2]
+    - paragraph: Claim type
+    - button "Copy Claim type"
+    - paragraph: Claim month
+    - text: /September \d+/
+    - button "Copy Claim month"
+    - paragraph: Amount (RM)
+    - button "Copy Amount (RM)"
+    - paragraph: Remarks
+    - text: /Parking, September \d+/
+    - button "Copy Remarks"
+  - region "Files to attach":
+    - heading "Files to attach" [level=2]
+    - list:
+      - listitem:
+        - button "Open parking-receipt-1.jpg"
+        - button "Share parking-receipt-1.jpg"
+      - listitem:
+        - button "Open parking-receipt-2.jpg"
+        - button "Share parking-receipt-2.jpg"
+      - listitem:
+        - button "Open parking-receipt-3.jpg"
+        - button "Share parking-receipt-3.jpg"
+      - listitem:
+        - button "Open parking-receipt-4.jpg"
+        - button "Share parking-receipt-4.jpg"
+  - button "Send to ESS" [disabled]
+  - paragraph: "A stand-in here: in the app, Sen sends it from your phone."
+  - paragraph: Add what's missing first, then Sen can send it.
+  - button "Submitted"
+  - paragraph: Tap Submitted once you've sent it in ESS yourself.
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

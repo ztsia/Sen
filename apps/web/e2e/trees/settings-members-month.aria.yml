@@ -1,0 +1,18 @@
+- banner:
+  - button "Back"
+  - heading "Members" [level=1]
+  - button "Invite"
+- main: Admin only Only the admin sees Members.
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link "Review , 4 to review":
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: ", 4 to review"
+- region "Notifications alt+T"
+- button "Dev panel"

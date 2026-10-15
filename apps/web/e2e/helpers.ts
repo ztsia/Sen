@@ -11,6 +11,11 @@ const only = want && want !== 'all' ? want.split(',').map((s) => s.trim()) : und
 export const LOOKS: readonly LookId[] = only ? ALL_LOOKS.filter((l) => only.includes(l)) : ALL_LOOKS;
 export const MODES = ['light', 'dark'] as const;
 export type ModeId = (typeof MODES)[number];
+/**
+ * Where behaviour runs: the journeys, once each, in this pair. The looks share the screens, so the
+ * catalogue's pixels and checks (catalogue.spec.ts) cover them, and E2E_LOOKS limits only the catalogue (D137).
+ */
+export const BEHAVIOUR = { look: 'minted', mode: 'light' } as const;
 
 /** Opens a page in a look and mode (the dev tools read ?look= and ?mode=), and waits for the look to load. */
 export async function open(page: Page, path: string, look: LookId = 'minted', mode: ModeId = 'light') {
@@ -41,35 +46,8 @@ export function watchErrors(page: Page) {
   return errors;
 }
 
-/** Every visible interactive element under 48 px on either side, as "tag "name" w×h" (patterns.md §8). */
-export const smallTargets = (page: Page) =>
-  page.evaluate(() => {
-    const sel =
-      'a[href], button, input, select, textarea, [role="switch"], [role="radio"], [role="button"], [role="link"], [tabindex]:not([tabindex="-1"])';
-    return [...document.querySelectorAll<HTMLElement>(sel)]
-      .filter((el) => {
-        const r = el.getBoundingClientRect();
-        const cs = getComputedStyle(el);
-        if (r.width === 0 || r.height === 0 || cs.visibility === 'hidden') return false;
-        if (el.closest('.sr-only, [aria-hidden="true"]')) return false;
-        // the dev panel's handle: previews only, a strip in the side gutter
-        if (el.hasAttribute('data-dev-handle')) return false;
-        // a toggle group's own box holds its toggles, each a target of its own
-        if (el.matches('[data-slot="toggle-group"]')) return false;
-        // a checkbox in a row's <label> is tapped by the whole row (split's items, patterns.md §7): the
-        // label's box is the target, as it is for a finger
-        const box = el.closest('label')?.getBoundingClientRect() ?? r;
-        // a control drawn smaller keeps a 48 px target through `tap`'s invisible extension (D129)
-        const tap = getComputedStyle(el, '::after');
-        const w = Math.max(box.width, tap.content !== 'none' ? parseFloat(tap.width) || 0 : 0);
-        const h = Math.max(box.height, tap.content !== 'none' ? parseFloat(tap.height) || 0 : 0);
-        return w < 47.5 || h < 47.5;
-      })
-      .map(
-        (el) =>
-          `${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30)}" ${Math.round(el.getBoundingClientRect().width)}×${Math.round(el.getBoundingClientRect().height)}`,
-      );
-  });
+// moved to checks.ts with the other scripted checks (D137); the specs still import it from here
+export { smallTargets } from './checks';
 
 /** Waits until the screen has its data: no skeleton saying Loading is left. */
 export async function settled(page: Page) {

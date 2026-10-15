@@ -1,0 +1,53 @@
+- banner:
+  - button "Back"
+  - heading "Shared bill" [level=1]
+  - button "Share"
+- main:
+  - paragraph: Nasi Kandar Abc
+  - text: /RM \d+\.\d+/
+  - paragraph: /Paid by You · Fri, \d+ Oct, \d+:\d+/
+  - paragraph: Still changing
+  - paragraph: Shares move until everyone is done and every item is claimed.
+  - paragraph: Waiting for You, Kah Hoe · 1 item nobody has ticked
+  - region "Who's done":
+    - heading "Who's done" [level=2]
+    - text: /You Still ticking RM \d+\.\d+ Ali Done RM \d+\.\d+ Kah Hoe Still ticking RM \d+\.\d+/
+  - region "Items":
+    - heading "Items" [level=2]
+    - checkbox /Nasi kandar ayam You RM \d+\.\d+/ [checked]
+    - text: Nasi kandar ayam
+    - paragraph: You
+    - text: /RM \d+\.\d+/
+    - checkbox /Nasi kandar ikan Ali RM \d+\.\d+/
+    - text: Nasi kandar ikan
+    - paragraph: Ali
+    - text: /RM \d+\.\d+/
+    - checkbox /Telur dadar Nobody has ticked this RM \d+\.\d+/
+    - text: Telur dadar
+    - paragraph: Nobody has ticked this
+    - text: /RM \d+\.\d+/
+    - button "Everyone"
+    - button "Someone else…"
+    - 'checkbox /Teh o ais \(3\) Shared ÷3: You, Ali, Kah Hoe · your part RM \d+\.\d+ RM \d+\.\d+/ [checked]'
+    - text: Teh o ais (3)
+    - paragraph: "/Shared ÷3: You, Ali, Kah Hoe · your part RM \\d+\\.\\d+/"
+    - text: /RM \d+\.\d+/
+  - term: Your share so far
+  - definition: /RM \d+\.\d+/
+  - term: Your spending so far
+  - definition: /RM \d+\.\d+/
+  - button "I've ticked everything I had"
+  - paragraph: The link is open. It closes a day after the last payment is ticked.
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

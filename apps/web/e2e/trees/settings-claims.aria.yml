@@ -1,0 +1,40 @@
+- banner:
+  - button "Back"
+  - heading "Claims" [level=1]
+  - button "Add a scheme"
+- main:
+  - region "Schemes":
+    - heading "Schemes" [level=2]
+    - text: Phone bill
+    - paragraph: /Up to RM100\.\d+ a month, submit by the 25th, from spending you tag/
+    - button "Edit Phone bill"
+    - text: Parking
+    - paragraph: /Up to RM100\.\d+ a month, submit by the 20th, from receipts kept as evidence/
+    - button "Edit Parking"
+    - paragraph: Describe a scheme to Sen in your own words, and it sets it up for you to confirm.
+  - region "ESS":
+    - heading "ESS" [level=2]
+    - text: Signed in to ESS Signed in
+    - button "More about ESS"
+    - text: Fetch payslip
+    - paragraph: Sen knows these steps.
+    - text: Recorded Submit claims
+    - paragraph: Show Sen the steps once, or import a recipe someone made.
+    - text: Not recorded
+    - button "Teach Sen"
+    - button "Import recipe"
+    - text: /Last payslip fetched Wed, \d+ Sept/
+    - button "ESS email address ess-noreply@example.com"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

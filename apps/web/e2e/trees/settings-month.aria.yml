@@ -1,0 +1,30 @@
+- banner:
+  - button "Back"
+  - heading "Settings" [level=1]
+- main:
+  - button "Account, huimin@example.com"
+  - button "Appearance Minted"
+  - region "Setup":
+    - heading "Setup" [level=2]
+    - button "You Last working day"
+    - button "Categories and rules 4 rules"
+    - button "Receipts by email Not confirmed"
+  - region "Features":
+    - heading "Features" [level=2]
+    - button /Sen RM1\.\d+ left/
+  - region "Data":
+    - heading "Data" [level=2]
+    - button /Export and backups Backed up Sat, \d+ Oct/
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link "Review , 4 to review":
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: ", 4 to review"
+- region "Notifications alt+T"
+- button "Dev panel"

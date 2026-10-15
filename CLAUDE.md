@@ -18,6 +18,7 @@ It's called **Sen** (D48). It's for the owner, and by invitation a few friends a
 | `docs/modules.md`, `docs/briefs/` | The slice map: forty slices in nine stages, built one at a time, and one brief per slice. Written by `S3` (D111) | Your branch's boundary. A build session starts from its brief |
 | `docs/notifications.md` | What each bank app's notifications look like, anonymised | The parsers' source. Add to it whenever a new format turns up |
 | `docs/cloud.md` | What a cloud session has, can reach, and must never hold | Measured facts. Update it when you measure something new |
+| `qa/escapes.md` | Every bug the owner found by hand that QA had passed, why it was missed, its pin and the question it added (D137) | Add an entry before fixing one |
 | `docs/local.md` | What only the owner, or a machine with a device, can do | A queue. Add to it instead of attempting these |
 | `docs/handoff.md` | The one handoff, from the last session to you | Read it first. Rewrite it before you end |
 
@@ -169,9 +170,11 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | `pnpm dev` | The web app at `localhost:5173`, with the dev panel; `/dev/gallery` shows every building block; `?scenario=` and `?state=` pick the made-up scenario and a screen state on load |
   | `pnpm build` | The web app's production build, as Vercel runs it. A build is production, without dev tools, unless `SEN_ENV=preview` or Vercel's `VERCEL_ENV=preview` says otherwise |
   | `pnpm test` | Unit tests: money, the looks' ports, the hygiene check, the no-float rule, the web app's pure parts |
-  | `pnpm e2e` | Playwright on a preview build and a production build, at a phone viewport, under the real CSP |
+  | `pnpm e2e` | Playwright on a preview build and a production build, at a phone viewport, under the real CSP: journeys once in Minted light, and every screen in the catalogue (`e2e/catalogue.ts`) in the looks `E2E_LOOKS` names, with its tree and the scripted checks |
   | `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |
   | `pnpm looks` | Regenerates `apps/web/src/styles/looks.gen.css` from `docs/ui/directions/assets/`; CI fails if it's stale |
+  | `pnpm --filter @sen/web e2e:trees` | Re-records each screen's accessibility tree in `apps/web/e2e/trees/` after a screen changes; CI fails on a stale one |
+  | `node scripts/qa-diff.mjs` | QA's diff against `main` (D137): trees, pixels in all twelve look-and-mode pairs, and the scripted checks, into `qa-artifacts/<branch>/diff/index.md` |
   | `node scripts/usage.mjs` | What this session cost, by agent and model; `--log <slice>` keeps its row in `docs/usage.md` |
   | `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
   | `gradle -p apps/shell/core test` | The capture core's Kotlin tests; needs no Android SDK |
@@ -208,7 +211,8 @@ wrong. Measurements are in `docs/usage.md`.
 | Agent | What it's for |
 |---|---|
 | `implementer` | A batch already decided, owning its own files; several run in parallel, in the background |
-| `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill |
+| `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill. It spawns its own helpers from the skill's templates: the sweep (`implementer` on Haiku) and the eyes pass (D137) |
+| `qa-eyes` (Opus) | Spawned by `qa-reviewer` only: each changed screen at full size, answering fixed questions in writing |
 | `scout` (Haiku) | Something too big to read, such as a long log; not what one `grep` answers |
 
 - **Two end-to-end runs never overlap** (shared ports 4173/4174 and build folders).
@@ -220,7 +224,7 @@ wrong. Measurements are in `docs/usage.md`.
 
 | Skill | Use it when |
 |---|---|
-| `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent and **sets the three tiers for fixing what QA finds**: small fixes self-verified, scoped ones re-checked by resuming the last run's reviewer, and a fresh full run only when a fix reaches the whole flow (D117, D121) |
+| `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent, which diffs every screen's tree and pixels against `main`, runs the scripted visual checks, and looks hard only at what changed (D137); it **sets the three tiers for fixing what QA finds**: small fixes self-verified, scoped ones re-checked by resuming the last run's reviewer, and a fresh full run only when a fix reaches the whole flow (D117, D121) |
 | `brief` | Before every Agent call that does work, and when a subagent's work comes back short: the model, the brief, and what to do about a miss (D131) |
 | `uiux` | Choosing shadcn components for a screen, building one, or checking one before it's done. Ported from GCO_events (D43): it reads its component index first, then only the docs it shortlists |
 | `dataviz` | Any chart, stat tile or chart colour. It comes from the owner's claude.ai account, not the repo |

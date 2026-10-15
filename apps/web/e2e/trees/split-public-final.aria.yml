@@ -1,0 +1,45 @@
+- banner:
+  - heading "Sen" [level=1]
+- main:
+  - paragraph: Kedai Mee Abc
+  - text: /RM \d+\.\d+/
+  - paragraph: /Paid by Wei Ming · Yesterday, \d+:\d+/
+  - paragraph: Hi Mei. Sen remembers this browser.
+  - paragraph: Final
+  - paragraph: Everyone is done and every item is claimed.
+  - paragraph: To change a tick, ask Wei Ming.
+  - region "Items":
+    - heading "Items" [level=2]
+    - checkbox /Mee goreng Wei Ming RM \d+\.\d+/ [disabled]
+    - text: Mee goreng
+    - paragraph: Wei Ming
+    - text: /RM \d+\.\d+/
+    - checkbox /Mee hoon sup Ali RM \d+\.\d+/ [disabled]
+    - text: Mee hoon sup
+    - paragraph: Ali
+    - text: /RM \d+\.\d+/
+    - checkbox /Kuey teow goreng You RM \d+\.\d+/ [checked] [disabled]
+    - text: Kuey teow goreng
+    - paragraph: You
+    - text: /RM \d+\.\d+/
+    - 'checkbox /Ayam goreng \(to share\) Shared ÷3: Wei Ming, Ali, You · your part RM \d+\.\d+ RM \d+\.\d+/ [checked] [disabled]'
+    - text: Ayam goreng (to share)
+    - paragraph: "/Shared ÷3: Wei Ming, Ali, You · your part RM \\d+\\.\\d+/"
+    - text: /RM \d+\.\d+/
+    - 'checkbox /Teh ais \(3\) Shared ÷3: Wei Ming, Ali, You · your part RM \d+\.\d+ RM \d+\.\d+/ [checked] [disabled]'
+    - text: Teh ais (3)
+    - paragraph: "/Shared ÷3: Wei Ming, Ali, You · your part RM \\d+\\.\\d+/"
+    - text: /RM \d+\.\d+/
+  - region "Everyone":
+    - heading "Everyone" [level=2]
+    - text: Wei Ming Done Ali Done You Done
+  - term: Your share
+  - definition: /RM \d+\.\d+/
+  - region "Pay":
+    - paragraph: /Pay RM \d+\.\d+/
+    - figure "Stand-in · Wei Ming's DuitNow QR":
+      - img "Wei Ming's DuitNow QR"
+    - group "Pay from this phone":
+      - button "Pay with an app"
+      - button "Save QR"
+- region "Notifications alt+T"

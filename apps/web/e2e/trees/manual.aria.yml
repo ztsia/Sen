@@ -1,0 +1,34 @@
+- banner:
+  - button "Back"
+  - heading "Add expense" [level=1]
+- main:
+  - group:
+    - text: Amount
+    - textbox "Amount":
+      - /placeholder: "0.00"
+  - group:
+    - text: Category
+    - radiogroup "Category":
+      - radio "Meals"
+      - radio "Car"
+      - radio "Drinks & desserts"
+      - radio "Subscriptions"
+      - radio "Groceries"
+      - radio "Shopping"
+      - radio "Transport"
+      - radio "Personal care"
+      - radio "Phone & internet"
+      - radio "Home & bills"
+      - radio "Entertainment"
+      - radio "Health"
+      - radio "Family"
+      - radio "Cash"
+      - radio "Gifts & treats"
+      - radio "Travel"
+      - radio "Fees & charges"
+  - button "Paid from Ryt Bank"
+  - text: When Now
+  - button "More details"
+  - button "Save"
+- region "Notifications alt+T"
+- button "Dev panel"

@@ -1,0 +1,43 @@
+- banner:
+  - button "Back"
+  - heading "Choose your apps" [level=1]
+  - text: Step 2 of 7
+- main:
+  - paragraph: Sen reads notifications only from the apps you choose here.
+  - group: How it works
+  - paragraph: Suggested
+  - paragraph: Sen found 4 banks and e-wallets on this phone.
+  - button "Choose these 4"
+  - region "Banks and e-wallets":
+    - heading "Banks and e-wallets" [level=2]
+    - text: Touch 'n Go eWallet
+    - switch "Touch 'n Go eWallet"
+    - switch "Ryt Bank"
+    - text: MyPB by Public Bank
+    - switch "MyPB by Public Bank"
+    - switch "Grab"
+    - switch "Google Wallet"
+  - group:
+    - text: Search every app
+    - searchbox "Search every app"
+  - region "More":
+    - heading "More" [level=2]
+    - text: A shopping app
+    - switch "A shopping app"
+    - text: A coffee app
+    - switch "A coffee app"
+    - text: Messages
+    - paragraph: "Your SMS app can't be chosen: it carries TACs"
+    - switch "Messages" [disabled]
+    - text: WhatsApp
+    - paragraph: A messaging app can't be chosen
+    - switch "WhatsApp" [disabled]
+    - text: Gmail
+    - paragraph: An email app can't be chosen
+    - switch "Gmail" [disabled]
+    - text: Instagram
+    - paragraph: A social app can't be chosen
+    - switch "Instagram" [disabled]
+  - button "Next"
+- region "Notifications alt+T"
+- button "Dev panel"

@@ -19,3 +19,5 @@ qa/*/core-probe/build/
 qa/*/core-probe/.gradle/
 apps/shell/core/.gradle/
 apps/shell/data/keep-running.json
+# Playwright writes the accessibility trees (e2e/trees/); they are compared, not styled
+apps/web/e2e/trees/

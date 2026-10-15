@@ -21,11 +21,19 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  // A tree that is missing or has changed fails CI; the commit must carry the new one (pnpm e2e:trees)
+  updateSnapshots: process.env.CI ? 'none' : 'missing',
+  expect: { toMatchAriaSnapshot: { pathTemplate: '{testDir}/trees/{arg}{ext}' } },
   // The service worker caches every file; the journeys run without it, so each sees the network as it
   // is. production.spec's offline test turns it on.
   use: { ...phone, trace: 'retain-on-failure', serviceWorkers: 'block' },
   projects: [
-    { name: 'preview', testIgnore: /production\.spec/, use: { baseURL: 'http://localhost:4173' } },
+    {
+      name: 'preview',
+      // checks.spec.ts proves each check on a page built to break it; checks.config.ts runs it
+      testIgnore: [/production\.spec/, /checks\.spec/],
+      use: { baseURL: 'http://localhost:4173' },
+    },
     { name: 'production', testMatch: /production\.spec/, use: { baseURL: 'http://localhost:4174' } },
   ],
   webServer: [

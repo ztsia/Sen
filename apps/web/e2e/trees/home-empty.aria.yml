@@ -1,0 +1,24 @@
+- banner:
+  - heading "Sen" [level=1]
+- main:
+  - heading "Home" [level=2]
+  - button /Spent since you started, RM \d+\.\d+, \d+ days to go\. How it's worked out/:
+    - group /Spent since you started, RM \d+\.\d+, \d+ days to go/
+  - 'button /Spent RM \d+\.\d+ this cycle Your first cycle: nothing to compare with yet/':
+    - paragraph: /Spent RM \d+\.\d+ this cycle/
+    - paragraph: "Your first cycle: nothing to compare with yet"
+  - button /Total balance RM \d+,\d+\.\d+/:
+    - paragraph: Total balance
+- button "Ask Sen"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link "Review":
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+- region "Notifications alt+T"
+- button "Dev panel"

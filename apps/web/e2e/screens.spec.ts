@@ -3,11 +3,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { uid } from '../src/data/fake/ids';
 import { acctId } from '../src/data/fake/scenario';
 import { JOURNEYS } from '../src/dev/journeys';
-import { LOOKS, MODES, open, settled, smallTargets, watchErrors } from './helpers';
+import { BEHAVIOUR, MODES, open, settled, smallTargets, watchErrors } from './helpers';
 
-// B03 done-when 2 and 3: every screen under the five tabs, on the made-up data, passes axe in all six
-// looks, light and dark, with every target at least 48 px and nothing thrown; and each screen's
-// varying states (empty, loading, error, offline, without capture, and the scenario's edge states)
+// B03 done-when 2 and 3: each screen's varying states (empty, loading, error, offline, without capture, and the scenario's edge states)
 // can be reached from the dev panel's switches, which ?state= and ?scenario= set on load.
 
 const NK = uid('txn:nasi-kandar');
@@ -33,24 +31,6 @@ async function axe(page: Page) {
   const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
   return r.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
 }
-
-for (const look of LOOKS)
-  for (const mode of MODES)
-    test(`every B03 screen in ${look}, ${mode}: axe finds nothing, targets are 48 px, nothing throws`, async ({
-      page,
-    }) => {
-      test.setTimeout(180_000);
-      const errors = watchErrors(page);
-      for (const [name, path] of SCREENS) {
-        await open(page, path, look, mode);
-        await settled(page);
-        const report = await axe(page);
-        expect(report, `${name}:\n${report.join('\n')}`).toEqual([]);
-        const small = await smallTargets(page);
-        expect(small, `${name}:\n${small.join('\n')}`).toEqual([]);
-      }
-      expect(errors).toEqual([]);
-    });
 
 const STATES: [state: string, screen: string, path: string, expectText: RegExp][] = [
   ['empty', 'home', '/?state=empty', /Spent since you started|Left until payday/],
@@ -203,7 +183,8 @@ test('before the first salary, the cycle sheet says spent since you started, nev
   await expect(sheet).not.toContainText('over on payday');
 });
 
-// ---- B04 done-when 2: every screen B04 built, in all six looks, light and dark ----
+// ---- B04 done-when 2: the screens B04 built, in their states and sheets, in all six looks ----
+// (every screen in each look, with axe and the 48 px targets, is the catalogue's: catalogue.spec.ts)
 
 const BBQ = uid('split:bbq');
 export const B04_SCREENS: [name: string, path: string][] = [
@@ -253,37 +234,6 @@ export const B04_SCREENS: [name: string, path: string][] = [
   ['new-look', '/s/new-look'],
 ];
 
-/** The made-up scenarios that change a B04 screen (the brief: month and cap, and what they hide or pause). */
-export const B04_SCENARIOS: [name: string, path: string][] = [
-  ['shared, month', '/s/shared?scenario=month'],
-  ['accounts, month', '/s/accounts?scenario=month'],
-  ['claims, month', '/s/claims?scenario=month'],
-  ['settings, month', '/s/settings?scenario=month'],
-  ['settings/sen, cap', '/s/settings/sen?scenario=cap'],
-  ['agent/usage, cap', '/s/agent/usage?scenario=cap'],
-  ['settings/members, month', '/s/settings/members?scenario=month'],
-  ['payday, before-salary', '/s/payday?scenario=before-salary'],
-  ['payday, month', '/s/payday?scenario=month'],
-  ['settings/capture/access, capture-off', '/s/settings/capture/access?scenario=capture-off'],
-  ['accounts, capture-off', '/s/accounts?scenario=capture-off'],
-];
-
-/** A page's own steps: first-run's seven, reached with taps, since the step isn't in the address. */
-async function firstRunSteps(page: Page, check: (name: string) => Promise<void>) {
-  await page.getByLabel('Your email').fill('wei.ming@example.com');
-  await page.getByRole('button', { name: 'Send the code' }).click();
-  await check('first-run, the code');
-  await page.getByLabel('6-digit code').fill('123456');
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  for (const step of ['apps', 'access', 'running', 'accounts', 'name', 'payday']) {
-    await expect(page.getByText(/^Step \d of 7$/)).toBeVisible();
-    await page.waitForTimeout(200);
-    await check(`first-run, ${step}`);
-    if (step === 'name') await page.getByLabel('Your name').fill('wei ming');
-    await page.getByRole('button', { name: step === 'payday' ? 'Finish' : /^Next$/ }).click();
-  }
-}
-
 async function clean(page: Page, name: string) {
   const report = await axe(page);
   expect(report, `${name}:\n${report.join('\n')}`).toEqual([]);
@@ -291,24 +241,10 @@ async function clean(page: Page, name: string) {
   expect(small, `${name}:\n${small.join('\n')}`).toEqual([]);
 }
 
-for (const look of LOOKS)
+// Every B04 screen's states, Sen's sheet and the stand-ins, in one look, light and dark: the looks share
+// these blocks, and the catalogue checks how each look draws its screens in all twelve pairs (D137)
+for (const look of [BEHAVIOUR.look])
   for (const mode of MODES) {
-    test(`every B04 screen in ${look}, ${mode}: axe finds nothing, targets are 48 px, nothing throws`, async ({
-      page,
-    }) => {
-      test.setTimeout(300_000);
-      const errors = watchErrors(page);
-      for (const [name, path] of [...B04_SCREENS, ...B04_SCENARIOS]) {
-        await open(page, path, look, mode);
-        await settled(page);
-        await clean(page, name);
-      }
-      // first run's steps are only reached by walking it
-      await open(page, '/s/first-run?scenario=before-salary', look, mode);
-      await firstRunSteps(page, (name) => clean(page, name));
-      expect(errors).toEqual([]);
-    });
-
     for (const state of ['empty', 'loading', 'error', 'offline'] as const)
       test(`every B04 screen, ${state}, in ${look}, ${mode}: axe finds nothing, targets are 48 px, nothing throws`, async ({
         page,

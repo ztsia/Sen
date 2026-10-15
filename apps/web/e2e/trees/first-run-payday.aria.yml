@@ -1,0 +1,12 @@
+- banner:
+  - button "Back"
+  - heading "Expected payday" [level=1]
+  - text: Step 7 of 7
+- main:
+  - paragraph: "When does your salary usually arrive? Sen uses it only for estimates, such as days to payday. If it comes early, nothing needs changing: your cycle starts when the money lands."
+  - radiogroup "Expected payday":
+    - radio "Last working day" [checked]
+    - radio "A day number"
+  - button "Finish"
+- region "Notifications alt+T"
+- button "Dev panel"

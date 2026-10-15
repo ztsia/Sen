@@ -183,6 +183,9 @@ function Ask({ part, message }: { part: Extract<SenPart, { type: 'ask' }>; messa
             if (r && part.id === 'ask:gap' && gapDay && o.recommended) {
               setSenOpen(false);
               go('manual', { day: gapDay }, { replace: true });
+              // Add expense on that day is the answer, on screen: no toast over its fields (patterns.md
+              // §7, a toast only when the change isn't visible; the cover check, D137)
+              return null;
             }
             return r ? { said: r.said, undo: r.undo } : null;
           },

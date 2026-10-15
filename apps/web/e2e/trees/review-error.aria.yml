@@ -1,0 +1,20 @@
+- banner:
+  - button "Back"
+  - heading "Review" [level=1]
+- main:
+  - alert:
+    - text: Couldn't load Review Check your connection, then try again. Nothing you've added is lost.
+    - button "Try again"
+- button "Ask Sen"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link "Review":
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+- region "Notifications alt+T"
+- button "Dev panel"

@@ -1,0 +1,74 @@
+- banner:
+  - button "Back"
+  - heading "Member" [level=1]
+- main:
+  - paragraph: Hui Min
+  - paragraph: huimin@example.com
+  - text: Active
+  - region "Can use":
+    - heading "Can use" [level=2]
+    - text: Android shell
+    - paragraph: Uses one of the shell seats.
+    - switch "Android shell" [checked]
+    - text: Capture
+    - paragraph: Reads the payment notifications of the apps they choose.
+    - switch "Capture" [checked]
+    - paragraph: The assistant, with AI credit.
+    - switch "Sen" [checked]
+    - text: Shared bills
+    - paragraph: Splits with friends.
+    - switch "Shared bills" [checked]
+    - text: Receipts by email
+    - paragraph: Their forwarding address.
+    - switch "Receipts by email" [checked]
+    - text: Calendar
+    - paragraph: Google Calendar reminders.
+    - switch "Calendar"
+    - paragraph: Work claims and the ESS adapter.
+    - switch "Claims"
+  - region "Phone":
+    - heading "Phone" [level=2]
+    - text: Shell version 0.2.7 Capture connected Yes
+  - region "AI credit":
+    - heading "AI credit" [level=2]
+    - term: Balance
+    - definition: /RM3\.\d+/
+    - term: Allowance left this month
+    - definition: /RM1\.\d+ of RM2\.\d+/
+  - region "Credit settings":
+    - heading "Credit settings" [level=2]
+    - paragraph: No ceiling on their credit.
+    - switch "Unlimited"
+    - group:
+      - text: Grant or refund
+      - textbox "Grant or refund":
+        - /placeholder: "0.00"
+      - paragraph: Grant adds to their balance; Refund takes it back.
+    - button "Grant"
+    - button "Refund"
+    - group:
+      - text: Monthly allowance
+      - textbox "Monthly allowance":
+        - /placeholder: "0.00"
+    - button "Save allowance"
+    - group:
+      - text: Daily ceiling
+      - textbox "Daily ceiling":
+        - /placeholder: "0.00"
+      - paragraph: The most Sen spends for them in a day.
+    - button "Save ceiling"
+  - button "Suspend"
+  - button "Remove"
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link /Review , \d+ to review/:
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+  - text: /, \d+ to review/
+- region "Notifications alt+T"
+- button "Dev panel"

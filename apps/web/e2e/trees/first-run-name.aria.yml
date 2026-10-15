@@ -1,0 +1,14 @@
+- banner:
+  - button "Back"
+  - heading "Your name" [level=1]
+  - text: Step 6 of 7
+- main:
+  - paragraph: Banks print your name in capitals on a transfer. Sen uses it to tell a move between your own accounts from a payment to someone else.
+  - group:
+    - text: Your name
+    - textbox "Your name":
+      - /placeholder: TAN WEI MING
+    - paragraph: You can add other spellings later in Settings.
+  - button "Next"
+- region "Notifications alt+T"
+- button "Dev panel"

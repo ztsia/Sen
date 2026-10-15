@@ -1,0 +1,24 @@
+- banner:
+  - button "Back"
+  - heading "Payments" [level=1]
+- main:
+  - text: Search payments
+  - searchbox "Search payments"
+  - button "All cycles"
+  - button "Any account"
+  - button "Any category"
+  - button "Shared"
+  - status: 0 payments
+  - text: No payments yet Payments show here as Sen captures them.
+- navigation "Tabs":
+  - link "Home":
+    - /url: /
+  - link "Review":
+    - /url: /review
+  - button "Scan a receipt"
+  - link "Insights":
+    - /url: /insights
+  - link "More":
+    - /url: /more
+- region "Notifications alt+T"
+- button "Dev panel"
