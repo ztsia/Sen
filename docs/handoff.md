@@ -29,7 +29,7 @@ Sen's tooling files as `examples/qa/` (checks.ts, catalogue.spec.ts, qa-diff.mjs
 then the owner opens or asks for its PR.
 
 ### What to do next
-1. The six-look `pnpm e2e` on f25f5bd: green → log usage, open PR *B04 · QA tooling*.
+1. Six-look `pnpm e2e` green on f25f5bd: 1387 passed in 40 min. PR *B04 · QA tooling* is open.
 2. Copy the tooling into claude_skills' `examples/qa/`, push.
 3. B05 (`docs/briefs/B05-server.md`), QA'd the new way.
 
