@@ -177,12 +177,17 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | `node scripts/qa-diff.mjs` | QA's diff against `main` (D137): trees, pixels in all twelve look-and-mode pairs, and the scripted checks, into `qa-artifacts/<branch>/diff/index.md` |
   | `node scripts/usage.mjs` | What this session cost, by agent and model; `--log <slice>` keeps its row in `docs/usage.md` |
   | `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
+  | `scripts/local-db.sh start\|stop\|reset` | The local Postgres 16 with pgTAP (started by the session hook): `sen_dev` and `sen_test`, never Neon (`docs/cloud.md` §5) |
+  | `pnpm test:db` | A fresh `sen_test`, every migration, pgTAP (RLS for two people over every table, the catalogue check), then the API's tests on it |
+  | `pnpm --filter @sen/api dev` | The API on Node at `127.0.0.1:8787/api`, on `sen_dev`; `SEN_BACKEND=api pnpm dev` runs the web app against it (sign in as `weiming@example.com`, code `123456`) |
+  | `pnpm --filter @sen/web e2e:server` | The sign-in journey in Chromium against the local API and `sen_test` (after `pnpm test:db`) |
   | `gradle -p apps/shell/core test` | The capture core's Kotlin tests; needs no Android SDK |
   | `bash scripts/android-sdk.sh` | Installs the Android SDK in a cloud session (about 2 minutes), to build the shell's APKs there: then `pnpm --filter @sen/shell sync` and `gradle assembleDebug` in `apps/shell/android` |
   | `node apps/shell/scripts/icons.mjs` | Renders the launcher and notification icons from the looks' SVGs into the Android resources |
   | `node apps/web/scripts/frame-times.mjs` | Each look's frame times at 390×844 with the CPU slowed 4×, against a running `vite preview` |
 
-  The QA database arrives with the server (B05).
+  QA's database is the local Postgres: `pnpm test:db` migrates `sen_test`; a preview's is Neon's
+  `sen-preview`, seeded with Wei Ming (`docs/local.md`).
 - **Layout** (B01):
 
   | Path | What it holds |
@@ -190,7 +195,8 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | `apps/web/` | The web app: Vite, React, TanStack Router, Tailwind v4 and shadcn/ui. `src/components/ui/` is shadcn's, customised in place; `src/blocks/` the building blocks of `patterns.md` §7; `src/frame/` the tab bar, Sen's button and the shell of every screen; `src/screens/registry.ts` every screen id, `skeleton` or `real`, and `src/screens/skeleton.ts` the walking skeleton's screens, shown in previews only; `src/data/` the one backend interface (`backend.ts`), a query hook per screen (`hooks.ts`) and the skeleton's fake, with Wei Ming's month (`fake/scenario.ts`) and its edge states (`fake/variants.ts`); `src/dev/` the dev panel and gallery; `e2e/` Playwright |
   | `packages/core/` | Pure TypeScript shared by the app, the API and the worker: the money module, pay cycles and KL days (`cycles.ts`), and the shared types with zod: §15's rows (`schema.ts`), each screen's read shape (`views.ts`) and every write (`commands.ts`). The template engine later |
   | `packages/looks/` | The six looks as `DIR` modules, ported from `docs/ui/directions/src/`, each loaded only when shown |
-  | `apps/api/` | The Hono API (B05) |
+  | `apps/api/` | The Hono API (B05), at `/api` on the web app's origin, bundled into Vercel's Build Output by `apps/web/scripts/vercel-output.mjs` |
+  | `packages/db/` | Drizzle's schema, migrations, RLS and grants, the deploy step and the pgTAP tests (its README) |
   | `apps/shell/` | The Capacitor shell for Android (B02): application id **`io.github.ztsia.sen`**, name **Sen** (`.debug`, *Sen review*, for the review build). `android/` is the app, with our Kotlin in `app/src/main/java/io/github/ztsia/sen/` (the listener, the outbox, the bridge's two plugins `SenShell` and `SenCapture`) and its emulator tests in `app/src/androidTest/`; `core/` the pure Kotlin capture core (no Android SDK); `data/` the curated apps and the brands' steps; `sites.json` the one address each build loads; `www/` the page shown when the site can't load |
   | `apps/worker/` | The Cloudflare Worker: schedules and the realtime relay (B06) |
   | `scripts/` | The session hooks, the hygiene check and the QA report |
