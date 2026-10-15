@@ -1,5 +1,7 @@
 # B05 · Server, database and sign-in: QA report (run 1, full, tier 3, Opus)
 
+Published: https://claude.ai/artifact/AzAyheGoaGbcR68PSDJWdz (screenshots for FLOW-4, 8 and 15 were retaken after the fixes, when QA's specs re-ran)
+
 ```
 VERDICT   fix first
           78 criteria, 69 pass, 9 fail, 0 not reachable
