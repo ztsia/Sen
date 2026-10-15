@@ -26,7 +26,11 @@ type Op = 'select' | 'insert' | 'update' | 'delete';
  * someone else. Grants still decide which operations exist at all (migrations' grants.sql): a table
  * a person may only read gets `['select']`.
  */
-export function ownRows(table: string, column: AnyPgColumn | SQL, ops: Op[] = ['select', 'insert', 'update', 'delete']) {
+export function ownRows(
+  table: string,
+  column: AnyPgColumn | SQL,
+  ops: Op[] = ['select', 'insert', 'update', 'delete'],
+) {
   const mine = sql`${column} = ${currentUser}`;
   return ops.map((op) =>
     pgPolicy(`${table}_own_${op}`, {
@@ -40,5 +44,7 @@ export function ownRows(table: string, column: AnyPgColumn | SQL, ops: Op[] = ['
 
 /** Better Auth's tables: RLS is on like every table, and only its own role passes. */
 export function authOnly(table: string) {
-  return [pgPolicy(`${table}_auth`, { as: 'permissive', to: senAuth, for: 'all', using: sql`true`, withCheck: sql`true` })];
+  return [
+    pgPolicy(`${table}_auth`, { as: 'permissive', to: senAuth, for: 'all', using: sql`true`, withCheck: sql`true` }),
+  ];
 }

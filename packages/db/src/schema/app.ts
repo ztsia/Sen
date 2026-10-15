@@ -27,7 +27,10 @@ export const userAccess = pgTable(
   {
     userId: person().primaryKey(),
     isAdmin: boolean('is_admin').notNull().default(false),
-    features: jsonb('features').$type<MemberSwitches>().notNull().default(sql`'{}'::jsonb`),
+    features: jsonb('features')
+      .$type<MemberSwitches>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     /** The free monthly allowance (D98): RM2 unless the admin sets another. */
     aiFreeMonthly: sen('ai_free_monthly').notNull().default(200),
     aiUnlimited: boolean('ai_unlimited').notNull().default(false),
@@ -59,7 +62,10 @@ export const invitations = pgTable(
       .references(() => authUser.id, { onDelete: 'cascade' }),
     email: text('email').notNull(),
     tokenHash: text('token_hash').notNull().unique(),
-    features: jsonb('features').$type<MemberSwitches>().notNull().default(sql`'{}'::jsonb`),
+    features: jsonb('features')
+      .$type<MemberSwitches>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     /** RM10 to start (D98). */
     aiWelcomeCredit: sen('ai_welcome_credit').notNull().default(1000),
     aiFreeMonthly: sen('ai_free_monthly').notNull().default(200),
@@ -69,7 +75,9 @@ export const invitations = pgTable(
     createdAt: at('created_at').notNull().defaultNow(),
   },
   (t) => [
-    uniqueIndex('invitations_open_email_key').on(t.email).where(sql`${t.acceptedAt} is null`),
+    uniqueIndex('invitations_open_email_key')
+      .on(t.email)
+      .where(sql`${t.acceptedAt} is null`),
     index('invitations_invited_by_idx').on(t.invitedBy),
     check('invitations_ai_check', sql`${t.aiWelcomeCredit} >= 0 and ${t.aiFreeMonthly} >= 0`),
     ...ownRows('invitations', t.invitedBy, ['select']),
@@ -85,7 +93,10 @@ export const userSettings = pgTable(
   {
     userId: person().primaryKey(),
     /** Your name as banks print it (D17). */
-    ownNames: text('own_names').array().notNull().default(sql`'{}'::text[]`),
+    ownNames: text('own_names')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     expectedPayday: text('expected_payday'),
     updatedAt: at('updated_at').notNull().defaultNow(),
   },

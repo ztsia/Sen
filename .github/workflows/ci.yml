@@ -58,6 +58,26 @@ jobs:
       - run: pnpm format:check
       - run: pnpm test
 
+  # The database (B05): every migration on a fresh Postgres, the pgTAP tests (RLS for two people, the
+  # catalogue check), then the API's tests against it. A local Postgres in the runner, never Neon.
+  db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Postgres 16 with pgTAP
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q postgresql-16 postgresql-16-pgtap libtap-parser-sourcehandler-pgtap-perl
+          sudo systemctl stop postgresql || true
+          sudo scripts/local-db.sh start
+      - run: pnpm test:db
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 90

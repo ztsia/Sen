@@ -110,13 +110,9 @@
         "auth_account_user_id_auth_user_id_fk": {
           "name": "auth_account_user_id_auth_user_id_fk",
           "tableFrom": "auth_account",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "auth_user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -128,9 +124,7 @@
           "name": "auth_account_auth",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "sen_auth"
-          ],
+          "to": ["sen_auth"],
           "using": "true",
           "withCheck": "true"
         }
@@ -214,13 +208,9 @@
         "auth_session_user_id_auth_user_id_fk": {
           "name": "auth_session_user_id_auth_user_id_fk",
           "tableFrom": "auth_session",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "auth_user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -229,9 +219,7 @@
       "uniqueConstraints": {
         "auth_session_token_unique": {
           "name": "auth_session_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "nullsNotDistinct": false
         }
       },
@@ -240,9 +228,7 @@
           "name": "auth_session_auth",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "sen_auth"
-          ],
+          "to": ["sen_auth"],
           "using": "true",
           "withCheck": "true"
         }
@@ -306,9 +292,7 @@
       "uniqueConstraints": {
         "auth_user_email_unique": {
           "name": "auth_user_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "nullsNotDistinct": false
         }
       },
@@ -317,9 +301,7 @@
           "name": "auth_user_auth",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "sen_auth"
-          ],
+          "to": ["sen_auth"],
           "using": "true",
           "withCheck": "true"
         }
@@ -395,9 +377,7 @@
           "name": "auth_verification_auth",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "sen_auth"
-          ],
+          "to": ["sen_auth"],
           "using": "true",
           "withCheck": "true"
         }
@@ -505,13 +485,9 @@
         "audit_log_user_id_auth_user_id_fk": {
           "name": "audit_log_user_id_auth_user_id_fk",
           "tableFrom": "audit_log",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "auth_user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -523,18 +499,14 @@
           "name": "audit_log_own_select",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "app_user"
-          ],
+          "to": ["app_user"],
           "using": "\"audit_log\".\"user_id\" = (select nullif(current_setting('app.user_id', true), '')::uuid)"
         },
         "audit_log_own_insert": {
           "name": "audit_log_own_insert",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "app_user"
-          ],
+          "to": ["app_user"],
           "withCheck": "\"audit_log\".\"user_id\" = (select nullif(current_setting('app.user_id', true), '')::uuid)"
         }
       },
@@ -659,13 +631,9 @@
         "invitations_invited_by_auth_user_id_fk": {
           "name": "invitations_invited_by_auth_user_id_fk",
           "tableFrom": "invitations",
-          "columnsFrom": [
-            "invited_by"
-          ],
+          "columnsFrom": ["invited_by"],
           "tableTo": "auth_user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -674,9 +642,7 @@
       "uniqueConstraints": {
         "invitations_token_hash_unique": {
           "name": "invitations_token_hash_unique",
-          "columns": [
-            "token_hash"
-          ],
+          "columns": ["token_hash"],
           "nullsNotDistinct": false
         }
       },
@@ -685,9 +651,7 @@
           "name": "invitations_own_select",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "app_user"
-          ],
+          "to": ["app_user"],
           "using": "\"invitations\".\"invited_by\" = (select nullif(current_setting('app.user_id', true), '')::uuid)"
         }
       },
@@ -784,26 +748,18 @@
         "user_access_user_id_auth_user_id_fk": {
           "name": "user_access_user_id_auth_user_id_fk",
           "tableFrom": "user_access",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "auth_user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "user_access_updated_by_auth_user_id_fk": {
           "name": "user_access_updated_by_auth_user_id_fk",
           "tableFrom": "user_access",
-          "columnsFrom": [
-            "updated_by"
-          ],
+          "columnsFrom": ["updated_by"],
           "tableTo": "auth_user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -815,9 +771,7 @@
           "name": "user_access_own_select",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "app_user"
-          ],
+          "to": ["app_user"],
           "using": "\"user_access\".\"user_id\" = (select nullif(current_setting('app.user_id', true), '')::uuid)"
         }
       },
@@ -869,13 +823,9 @@
         "user_settings_user_id_auth_user_id_fk": {
           "name": "user_settings_user_id_auth_user_id_fk",
           "tableFrom": "user_settings",
-          "columnsFrom": [
-            "user_id"
-          ],
+          "columnsFrom": ["user_id"],
           "tableTo": "auth_user",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -887,27 +837,21 @@
           "name": "user_settings_own_select",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "app_user"
-          ],
+          "to": ["app_user"],
           "using": "\"user_settings\".\"user_id\" = (select nullif(current_setting('app.user_id', true), '')::uuid)"
         },
         "user_settings_own_insert": {
           "name": "user_settings_own_insert",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "app_user"
-          ],
+          "to": ["app_user"],
           "withCheck": "\"user_settings\".\"user_id\" = (select nullif(current_setting('app.user_id', true), '')::uuid)"
         },
         "user_settings_own_update": {
           "name": "user_settings_own_update",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "app_user"
-          ],
+          "to": ["app_user"],
           "using": "\"user_settings\".\"user_id\" = (select nullif(current_setting('app.user_id', true), '')::uuid)",
           "withCheck": "\"user_settings\".\"user_id\" = (select nullif(current_setting('app.user_id', true), '')::uuid)"
         }
