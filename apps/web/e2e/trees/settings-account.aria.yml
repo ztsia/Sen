@@ -7,7 +7,9 @@
     - button "Version simulated · sim"
   - region "Account":
     - heading "Account" [level=2]
+    - text: Email weiming@example.com
     - button "Sign out"
+    - button "Sign out everywhere"
     - button "Delete account"
 - navigation "Tabs":
   - link "Home":

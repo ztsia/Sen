@@ -9,8 +9,8 @@ describe('sign-in', () => {
     expect(checkCode('654321')).toBe('wrong');
     expect(checkCode('123')).toBe('incomplete');
   });
-  it('turns away an uninvited email and a malformed one', () => {
-    expect(checkEmail('stranger@example.com')).toEqual({ ok: false, reason: 'invitation-only' });
+  it('turns away a malformed email, and leaves who was invited to the server', () => {
+    expect(checkEmail('stranger@example.com')).toEqual({ ok: true, email: 'stranger@example.com' });
     expect(checkEmail('nope')).toEqual({ ok: false, reason: 'format' });
     expect(checkEmail('  ')).toEqual({ ok: false, reason: 'empty' });
     expect(checkEmail(' Wei.Ming@Example.com ')).toEqual({ ok: true, email: 'wei.ming@example.com' });

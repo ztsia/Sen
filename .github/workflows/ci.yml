@@ -77,6 +77,8 @@ jobs:
           sudo systemctl stop postgresql || true
           sudo scripts/local-db.sh start
       - run: pnpm test:db
+      - run: pnpm --filter @sen/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @sen/web e2e:server
 
   e2e:
     runs-on: ubuntu-latest

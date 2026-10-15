@@ -6,6 +6,7 @@ node_modules/
 # capture plugin lives there, and Capacitor adds its own .gitignore for android/'s build output.
 dist/
 dist-production/
+dist-server/
 *.jks
 *.keystore
 *.p8

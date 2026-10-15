@@ -84,6 +84,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/.vercel/**',
       '**/dist-production/**',
+      '**/dist-server/**',
       'apps/web/dist-*/**',
       'docs/ui/directions/**',
       '.claude/**',
