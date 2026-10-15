@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { DoorOpenIcon, InfoIcon, LogOutIcon, MailIcon, Trash2Icon } from 'lucide-react';
+import { DoorOpenIcon, InfoIcon, LogOutIcon, Trash2Icon } from 'lucide-react';
 import { queryClient } from '@/data';
 import { auth } from '@/data/auth';
 import { ApiFailure } from '@/data/api/client';
@@ -51,7 +51,8 @@ export default function AccountSettings() {
           <NavRow icon={InfoIcon} title="Version" value={version} press={shell ? press : undefined} />
         </GroupCard>
         <GroupCard label="Account">
-          <NavRow icon={MailIcon} title="Email" value={session.data?.email} />
+          {/* information, so no tile (patterns §7, settings row; QA B05 run 1, 9) */}
+          <NavRow title="Email" value={session.data?.email} />
           <NavRow icon={LogOutIcon} title="Sign out" onOpen={() => leave(() => auth.signOut())} />
           <NavRow
             icon={DoorOpenIcon}
