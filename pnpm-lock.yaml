@@ -176,6 +176,9 @@ importers:
       '@playwright/test':
         specifier: 1.56.1
         version: 1.56.1
+      '@sen/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.3.3(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
@@ -209,6 +212,9 @@ importers:
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0

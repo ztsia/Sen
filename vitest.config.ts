@@ -12,7 +12,13 @@ export default defineConfig({
       { test: { name: 'core', include: ['packages/core/src/**/*.test.ts'], environment: 'node' } },
       { test: { name: 'looks', include: ['packages/looks/src/**/*.test.ts'], environment: 'node' } },
       { test: { name: 'repo', include: ['scripts/**/*.test.{ts,mjs}'], environment: 'node' } },
-      { test: { name: 'api', include: ['apps/api/src/**/*.test.ts'], environment: 'node' } },
+      {
+        test: {
+          name: 'api',
+          include: ['apps/api/src/**/*.test.ts', 'packages/db/src/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
       './apps/web/vitest.config.ts',
       ...(process.env.SEN_DB_TESTS ? [db] : []),
     ],
