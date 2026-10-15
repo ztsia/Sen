@@ -52,3 +52,4 @@ qa/**/.gradle/
 
 # subagents' isolated worktrees (Claude Code)
 .claude/worktrees/
+.vercel/
