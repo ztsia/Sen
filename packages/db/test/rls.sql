@@ -25,8 +25,10 @@ BEGIN
       IN ('rows:0', 'denied'), format('%s: can''t update the other''s rows', r.t));
     RETURN NEXT ok(tap_sen.attempt('app_user', me, format('DELETE FROM %s WHERE %I = %L', r.t, r.col, other))
       IN ('rows:0', 'denied'), format('%s: can''t delete the other''s rows', r.t));
-    -- given to the third person, who has no rows: a unique key can't hide a weak WITH CHECK
-    RETURN NEXT is(tap_sen.attempt('app_user', me, format('UPDATE %s SET %I = %L WHERE %I = %L', r.t, r.col, nobody, r.col, me)),
+    -- given to the third person, who has no rows, so no unique key can hide a weak WITH CHECK; and
+    -- with no WHERE on a column, so the SELECT policy isn't applied to the new row and can't hide it
+    -- either (QA B05 run 1, 2). RLS limits it to my own rows.
+    RETURN NEXT is(tap_sen.attempt('app_user', me, format('UPDATE %s SET %I = %L', r.t, r.col, nobody)),
       'denied', format('%s: can''t give its own row to someone else', r.t));
     -- a copy of my own row, made out to someone else (with a fresh id, where there is one)
     copy := format(

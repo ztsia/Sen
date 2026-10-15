@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Id } from '@sen/core/schema';
 import { audit } from './audit';
 import type { Env } from './context';
-import { notFound, parse } from './errors';
+import { ApiError, notFound, parse, readJson } from './errors';
 
 /** A table the pattern serves: an id the client made, its person, and maybe a tombstone. */
 type Columns = { id: PgColumn; userId: PgColumn; updatedAt?: PgColumn; deletedAt?: PgColumn };
@@ -55,10 +55,18 @@ export function resource<S extends z.ZodObject>(o: ResourceOptions<S>) {
 
   r.put('/:id', async (c) => {
     const id = parse(Id, c.req.param('id'));
-    const fields = parse(o.fields.strict(), await c.req.json());
+    const fields = parse(o.fields.strict(), await readJson(c));
     const person = c.var.person.id;
     const row = await c.var.db(async (db) => {
       const [before] = await db.select().from(t).where(eq(t.id, id));
+      // the same row again (a retried sync) is a no-op: no write, no audit entry (QA B05 run 1, 7)
+      if (
+        before &&
+        Object.entries(fields).every(
+          ([k, v]) => JSON.stringify((before as Record<string, unknown>)[k]) === JSON.stringify(v),
+        )
+      )
+        return before;
       const values = { ...fields, id, userId: person, ...(t.updatedAt ? { updatedAt: new Date() } : {}) };
       const [after] = await db
         .insert(t)
@@ -81,7 +89,8 @@ export function resource<S extends z.ZodObject>(o: ResourceOptions<S>) {
 
   r.patch('/:id', async (c) => {
     const id = parse(Id, c.req.param('id'));
-    const fields = parse(o.fields.partial().strict(), await c.req.json());
+    const fields = parse(o.fields.partial().strict(), await readJson(c));
+    if (!Object.keys(fields).length) throw new ApiError(400, 'invalid', 'Nothing to change.');
     const person = c.var.person.id;
     const row = await c.var.db(async (db) => {
       const [before] = await db

@@ -5,8 +5,8 @@ import { Command, type WriteResult } from '@sen/core/commands';
 import { MemberRow, type MeView, type SettingsCore } from '@sen/core/views';
 import { schema } from '@sen/db';
 import { audit } from './audit';
-import type { Env } from './context';
-import { ApiError, forbidden, notBuilt, parse } from './errors';
+import { NO_SWITCHES, type Env } from './context';
+import { ApiError, forbidden, notBuilt, parse, readJson } from './errors';
 
 const Payday = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('last-working') }),
@@ -66,7 +66,7 @@ export function personRoutes() {
    * until their slice.
    */
   r.post('/commands', async (c) => {
-    const cmd = parse(Command, await c.req.json());
+    const cmd = parse(Command, await readJson(c));
     if (cmd.type.startsWith('member.')) {
       if (!c.var.access.isAdmin) throw forbidden();
       throw notBuilt('B38');
@@ -95,6 +95,15 @@ async function setYou(v: Env['Variables'], key: string, value: unknown): Promise
 
   return v.db(async (db) => {
     const [before] = await db.select().from(t).where(eq(t.userId, person));
+    const undoValue =
+      key === 'you.bankNames' ? (before?.ownNames ?? []).join('\n') : toPayday(before?.expectedPayday ?? null);
+    const undo: Command = { type: 'setting.set', key, value: undoValue };
+    // the same value again (a retry, a double tap) changes nothing and logs nothing (QA B05 run 1, 7)
+    const same =
+      'ownNames' in patch
+        ? JSON.stringify(patch.ownNames) === JSON.stringify(before?.ownNames ?? [])
+        : patch.expectedPayday === (before?.expectedPayday ?? null);
+    if (same) return { said, undo };
     const [after] = await db
       .insert(t)
       .values({ userId: person, ...patch })
@@ -110,9 +119,7 @@ async function setYou(v: Env['Variables'], key: string, value: unknown): Promise
       after,
       actor: 'user',
     });
-    const undoValue =
-      key === 'you.bankNames' ? (before?.ownNames ?? []).join('\n') : toPayday(before?.expectedPayday ?? null);
-    return { said, undo: { type: 'setting.set', key, value: undoValue } };
+    return { said, undo };
   });
 }
 
@@ -144,7 +151,8 @@ export function adminRoutes() {
       email: m.email,
       admin: m.is_admin,
       status: m.suspended_at ? 'suspended' : 'active',
-      switches: m.features,
+      // all seven, as /settings has them: a switch never set is off (QA B05 run 1, 8)
+      switches: { ...NO_SWITCHES, ...m.features },
     }));
     return c.json(members);
   });

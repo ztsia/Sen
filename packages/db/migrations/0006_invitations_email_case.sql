@@ -1,0 +1,2 @@
+DROP INDEX "invitations_open_email_key";--> statement-breakpoint
+CREATE UNIQUE INDEX "invitations_open_email_key" ON "invitations" USING btree (lower("email")) WHERE "invitations"."accepted_at" is null;

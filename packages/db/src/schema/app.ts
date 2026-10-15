@@ -75,8 +75,9 @@ export const invitations = pgTable(
     createdAt: at('created_at').notNull().defaultNow(),
   },
   (t) => [
+    // one open invitation per address, whatever its case (QA B05 run 1, 15)
     uniqueIndex('invitations_open_email_key')
-      .on(t.email)
+      .on(sql`lower(${t.email})`)
       .where(sql`${t.acceptedAt} is null`),
     index('invitations_invited_by_idx').on(t.invitedBy),
     check('invitations_ai_check', sql`${t.aiWelcomeCredit} >= 0 and ${t.aiFreeMonthly} >= 0`),

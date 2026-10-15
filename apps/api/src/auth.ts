@@ -37,7 +37,17 @@ export function createAuth(opts: { pool: pg.Pool; secret: string; target: Target
     session: { modelName: 'auth_session', expiresIn: 60 * 60 * 24 * 90, updateAge: 60 * 60 * 24 },
     account: { modelName: 'auth_account' },
     verification: { modelName: 'auth_verification' },
-    rateLimit: { enabled: true, storage: 'database', modelName: 'auth_rate_limit' },
+    rateLimit: {
+      enabled: true,
+      storage: 'database',
+      modelName: 'auth_rate_limit',
+      // A code allows 3 tries itself; this limit only stops guessing across codes, so it's looser
+      // than 3, or a new code after 3 wrong tries would be refused for a minute (QA B05 run 1, 4)
+      customRules: {
+        '/sign-in/email-otp': { window: 60, max: 10 },
+        '/email-otp/send-verification-otp': { window: 60, max: 5 },
+      },
+    },
     emailAndPassword: { enabled: false },
     advanced: {
       database: { generateId: 'uuid' },

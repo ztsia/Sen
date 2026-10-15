@@ -24,6 +24,8 @@ export class ApiError extends Error {
 export const signedOut = () => new ApiError(401, 'signed_out', 'Sign in to Sen.');
 export const forbidden = () => new ApiError(403, 'forbidden', 'Only the admin can do that.');
 export const notFound = () => new ApiError(404, 'not_found', 'That isn’t here.');
+export const suspended = () =>
+  new ApiError(403, 'suspended', 'Your access to Sen is paused. Ask the person who invited you.');
 export const notBuilt = (slice: string) => new ApiError(501, 'not_built', `That arrives with ${slice}.`);
 
 /** zod's first problem, as the field it's about. */
@@ -38,6 +40,15 @@ export function parse<T extends z.ZodType>(schema: T, data: unknown): z.output<T
   const r = schema.safeParse(data);
   if (!r.success) throw invalid(r.error);
   return r.data;
+}
+
+/** The request's JSON body, or a 400 when it isn't JSON (QA B05 run 1, 5). */
+export async function readJson(c: Context): Promise<unknown> {
+  try {
+    return await c.req.json();
+  } catch {
+    throw new ApiError(400, 'invalid', 'That isn’t valid JSON.');
+  }
 }
 
 /** Hono's onError: known errors keep their shape; anything else is a 500 that says nothing of why. */

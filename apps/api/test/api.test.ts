@@ -4,6 +4,7 @@ import pg from 'pg';
 import { bigint, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 import { createApp, type Deps } from '../src/app';
+import { LIMITS } from '../src/limits';
 import { asPerson } from '../src/db';
 import type { Env } from '../src/context';
 import { onError } from '../src/errors';
@@ -81,6 +82,8 @@ async function signIn(email: string): Promise<string> {
 }
 
 beforeAll(async () => {
+  // most tests sign in often; the per-email limit has its own test below
+  LIMITS.codesPerEmail.max = 1000;
   for (const [p, isAdmin] of [
     [admin, true],
     [member, false],
@@ -205,17 +208,114 @@ describe('sign-in by emailed code (D13, D52)', () => {
   });
 });
 
-describe('rate limits', () => {
-  it('stops a fourth code within a minute from one address', async () => {
-    const send = () =>
-      api.request(`${ORIGIN}/api/auth/email-otp/send-verification-otp`, {
-        method: 'POST',
-        headers: { origin: ORIGIN, 'content-type': 'application/json', 'x-forwarded-for': '10.9.9.9' },
-        body: JSON.stringify({ email: member.email, type: 'sign-in' }),
-      });
+describe('rate limits (QA B05 run 1, 4 and 6)', () => {
+  const send = (email: string, ip: string) =>
+    api.request(`${ORIGIN}/api/auth/email-otp/send-verification-otp`, {
+      method: 'POST',
+      headers: { origin: ORIGIN, 'content-type': 'application/json', 'x-forwarded-for': ip },
+      body: JSON.stringify({ email, type: 'sign-in' }),
+    });
+
+  it('stops a sixth code within a minute from one address', async () => {
     const statuses = [];
-    for (let i = 0; i < 4; i++) statuses.push((await send()).status);
-    expect(statuses).toEqual([200, 200, 200, 429]);
+    for (let i = 0; i < 6; i++) statuses.push((await send(member.email, '10.9.9.9')).status);
+    expect(statuses).toEqual([200, 200, 200, 200, 200, 429]);
+  });
+
+  it('gives one email 5 codes in 10 minutes, from any address, and says why', async () => {
+    const email = `limited-${randomUUID()}@example.com`;
+    const id = randomUUID();
+    await owner.query('insert into auth_user (id, name, email, email_verified) values ($1, $2, $3, true)', [
+      id,
+      'L',
+      email,
+    ]);
+    const max = LIMITS.codesPerEmail.max;
+    LIMITS.codesPerEmail.max = 5;
+    try {
+      const statuses = [];
+      for (let i = 0; i < 6; i++) statuses.push((await send(email, nextIp())).status);
+      expect(statuses).toEqual([200, 200, 200, 200, 200, 429]);
+      const last = await send(email, nextIp());
+      expect(await last.json()).toMatchObject({ code: 'too_many' });
+    } finally {
+      LIMITS.codesPerEmail.max = max;
+      await owner.query('delete from auth_user where id = $1', [id]);
+    }
+  });
+
+  it('limits lookups of uninvited emails from one address', async () => {
+    const statuses = [];
+    for (let i = 0; i < LIMITS.lookupsPerIp.max + 1; i++)
+      statuses.push((await send(`nobody${i}@example.com`, '10.8.8.8')).status);
+    expect(statuses.slice(0, -1).every((s) => s === 403)).toBe(true);
+    expect(statuses.at(-1)).toBe(429);
+  });
+
+  it('takes a new code after three wrong ones (the code ends, not the person)', async () => {
+    const ip = '10.7.7.7';
+    const verify = (otp: string) =>
+      api.request(`${ORIGIN}/api/auth/sign-in/email-otp`, {
+        method: 'POST',
+        headers: { origin: ORIGIN, 'content-type': 'application/json', 'x-forwarded-for': ip },
+        body: JSON.stringify({ email: member.email, otp }),
+      });
+    await send(member.email, ip);
+    const wrong = codes.get(member.email) === '000000' ? '111111' : '000000';
+    for (let i = 0; i < 3; i++) await verify(wrong);
+    expect((await (await verify(codes.get(member.email)!)).json()) as object).toMatchObject({
+      code: 'TOO_MANY_ATTEMPTS',
+    });
+    await send(member.email, ip);
+    expect((await verify(codes.get(member.email)!)).status).toBe(200);
+  });
+});
+
+describe('codes', () => {
+  it('sends a random code in production, never the previews’ fixed one (QA B05 run 1, 1)', async () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 3; i++) {
+      await call('/api/auth/email-otp/send-verification-otp', { body: { email: admin.email, type: 'sign-in' } });
+      seen.add(codes.get(admin.email)!);
+    }
+    expect(seen.has('123456')).toBe(false);
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
+  it('refuses the previews’ fixed code in production', async () => {
+    await call('/api/auth/email-otp/send-verification-otp', { body: { email: admin.email, type: 'sign-in' } });
+    const r = await call('/api/auth/sign-in/email-otp', { body: { email: admin.email, otp: '123456' } });
+    expect(r.status).toBe(400);
+  });
+
+  it('uses the fixed code on a preview, which has no mail', async () => {
+    const sent: string[] = [];
+    const p = createApp({
+      ...deps,
+      env: { ...deps.env, target: 'preview' },
+      mailer: { sendCode: async (_t, c) => void sent.push(c) },
+    }).api;
+    await p.request(`${ORIGIN}/api/auth/email-otp/send-verification-otp`, {
+      method: 'POST',
+      headers: { origin: ORIGIN, 'content-type': 'application/json', 'x-forwarded-for': nextIp() },
+      body: JSON.stringify({ email: admin.email, type: 'sign-in' }),
+    });
+    expect(sent).toEqual(['123456']);
+  });
+
+  it('tells a suspended person, and sends nothing (QA B05 run 1, 10)', async () => {
+    await owner.query('update user_access set suspended_at = now() where user_id = $1', [member.id]);
+    codes.delete(member.email);
+    try {
+      const r = await call('/api/auth/email-otp/send-verification-otp', {
+        body: { email: member.email, type: 'sign-in' },
+      });
+      expect(r.status).toBe(403);
+      expect(r.body).toMatchObject({ code: 'suspended' });
+      expect(codes.has(member.email)).toBe(false);
+    } finally {
+      await owner.query('update user_access set suspended_at = null where user_id = $1', [member.id]);
+    }
   });
 });
 
@@ -246,6 +346,35 @@ describe('writes', () => {
     ]);
   });
 
+  it('answers 400, not 500, to a body that isn’t JSON (QA B05 run 1, 5)', async () => {
+    const cookie = await signIn(member.email);
+    for (const body of ['not json', '']) {
+      const res = await api.request(`${ORIGIN}/api/commands`, {
+        method: 'POST',
+        headers: { origin: ORIGIN, cookie, 'content-type': 'application/json', 'x-forwarded-for': nextIp() },
+        body,
+      });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toMatchObject({ code: 'invalid' });
+    }
+  });
+
+  it('makes a retried write a no-op: no second audit entry (QA B05 run 1, 7)', async () => {
+    const cookie = await signIn(member.email);
+    const cmd = { type: 'setting.set', key: 'you.payday', value: { kind: 'day', day: 15 } };
+    await call('/api/commands', { cookie, body: cmd });
+    const count = async () =>
+      (await owner.query('select count(*)::int n from audit_log where user_id = $1', [member.id])).rows[0].n as number;
+    const stamp = async () =>
+      (await owner.query('select updated_at from user_settings where user_id = $1', [member.id])).rows[0]
+        .updated_at as Date;
+    const [n, t] = [await count(), await stamp()];
+    const again = await call('/api/commands', { cookie, body: cmd });
+    expect(again.body).toMatchObject({ said: 'Payday saved' });
+    expect(await count()).toBe(n);
+    expect(await stamp()).toEqual(t);
+  });
+
   it('checks every input with zod, and names the field', async () => {
     const cookie = await signIn(member.email);
     const r = await call('/api/commands', {
@@ -274,6 +403,19 @@ describe('the admin’s routes refuse everyone else (D52)', () => {
     const rows = r.body as unknown as { email: string }[];
     expect(rows.map((m) => m.email)).toEqual(expect.arrayContaining([admin.email, member.email]));
     for (const m of rows) expect(Object.keys(m).sort()).toEqual(['admin', 'email', 'id', 'name', 'status', 'switches']);
+    // all seven switches, as /settings has them (QA B05 run 1, 8)
+    const mine = (r.body as unknown as { email: string; switches: Record<string, boolean> }[]).find(
+      (m) => m.email === member.email,
+    )!;
+    expect(mine.switches).toEqual({
+      shell: false,
+      capture: false,
+      agent: true,
+      splits: false,
+      email: false,
+      calendar: false,
+      claims: false,
+    });
   });
 });
 
@@ -359,6 +501,17 @@ describe('the generic resource routes', () => {
     expect((await as(member.id, `/w/${id}`, 'DELETE')).status).toBe(404);
     const row = await owner.query('select name, amount, deleted_at from test_widgets where id = $1', [id]);
     expect(row.rows[0]).toEqual({ name: 'Admin’s', amount: '100', deleted_at: null });
+  });
+
+  it('refuses an empty patch with a 400, and makes a repeated PUT a no-op', async () => {
+    const id = randomUUID();
+    await as(member.id, `/w/${id}`, 'PUT', { name: 'Teh', amount: 300 });
+    expect((await as(member.id, `/w/${id}`, 'PATCH', {})).status).toBe(400);
+    const audits = async () =>
+      (await owner.query('select count(*)::int n from audit_log where entity_id = $1', [id])).rows[0].n as number;
+    const n = await audits();
+    await as(member.id, `/w/${id}`, 'PUT', { name: 'Teh', amount: 300 });
+    expect(await audits()).toBe(n);
   });
 
   it('refuses a field it doesn’t know, and money that isn’t whole sen', async () => {

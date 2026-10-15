@@ -8,7 +8,8 @@ import { createAuth, type Auth } from './auth';
 import { NO_SWITCHES, type Env } from './context';
 import { asPerson, pools } from './db';
 import { readEnv, type ApiEnv } from './env';
-import { ApiError, onError, signedOut } from './errors';
+import { ApiError, onError, signedOut, suspended } from './errors';
+import { clientIp, LIMITS, tooMany, withinLimit } from './limits';
 import { gmailMailer, noMail, type Mailer } from './mail';
 import { adminRoutes, personRoutes } from './routes';
 
@@ -51,19 +52,33 @@ export function createApp(deps: Deps) {
   api.get('/health', (c) => c.json({ ok: true }));
 
   // Sen is invitation-only (D52). Better Auth answers success for an unknown email and sends nothing,
-  // so the screen couldn't tell; this says so before a code is asked for. It reveals whether an email
-  // has an account, which an invitation-only app of friends accepts.
+  // so the screen couldn't tell; this says so before a code is asked for, and says when someone's
+  // access is paused. It reveals whether an email has an account, which an invitation-only app of
+  // friends accepts, behind a limit on lookups per address and on codes per email.
   api.post('/auth/email-otp/send-verification-otp', async (c, next) => {
     const body = await c.req.raw
       .clone()
       .json()
       .catch(() => null);
-    const email = z.object({ email: z.string().max(254) }).safeParse(body);
-    if (email.success) {
-      const known = await deps.auth.query('select 1 from auth_user where email = $1', [
-        email.data.email.trim().toLowerCase(),
-      ]);
-      if (!known.rowCount) throw new ApiError(403, 'not_invited', 'Sen is invitation-only.', 'email');
+    const parsed = z.object({ email: z.string().max(254) }).safeParse(body);
+    if (parsed.success) {
+      const email = parsed.data.email.trim().toLowerCase();
+      const { lookupsPerIp, codesPerEmail } = LIMITS;
+      if (
+        !(await withinLimit(
+          deps.auth,
+          `lookup:${clientIp(c.req.raw.headers)}`,
+          lookupsPerIp.max,
+          lookupsPerIp.windowMs,
+        ))
+      )
+        throw tooMany('Too many tries. Wait a minute, then try again.');
+      const r = await deps.auth.query<{ check: string }>('select auth_sign_in_check($1) as check', [email]);
+      const check = r.rows[0]?.check;
+      if (check === 'not_invited') throw new ApiError(403, 'not_invited', 'Sen is invitation-only.', 'email');
+      if (check === 'suspended') throw suspended();
+      if (!(await withinLimit(deps.auth, `codes:${email}`, codesPerEmail.max, codesPerEmail.windowMs)))
+        throw tooMany('Too many codes asked for. Wait a few minutes, then try again.');
     }
     await next();
   });
@@ -79,8 +94,7 @@ export function createApp(deps: Deps) {
       const [a] = await tx.select().from(schema.userAccess).where(eq(schema.userAccess.userId, person.id));
       return a;
     });
-    if (row?.suspendedAt)
-      throw new ApiError(403, 'suspended', 'Your access to Sen is paused. Ask the person who invited you.');
+    if (row?.suspendedAt) throw suspended();
     c.set('person', person);
     c.set('access', {
       isAdmin: row?.isAdmin ?? false,
