@@ -23,8 +23,11 @@
   in previews), `src/data/auth.ts`, `__SEN_BACKEND__` (api on Vercel; fake/none for local e2e), the
   signed-out gate in `router.tsx`.
 
-**In progress (a Sonnet implementer's brief, may need finishing):** sign-in and Account screens
-wired to `auth`, trees re-recorded, `e2e/server.spec.ts` (journey against the local API) in CI.
+- Screens: sign-in and Settings → Account on the server (sign out, sign out everywhere with a
+  confirm), `e2e/server.spec.ts` (the journey against the local API, in CI's `db` job). `pnpm e2e`
+  1386/1387 then its one failure fixed (production.spec's B04 list). **Walked on a live preview in
+  Chromium at 390×844:** invitation-only, sign-in with 123456, Account's email, and sign out
+  everywhere sending a second browser back to sign-in.
 
 **Decided in the build (owner to see, not to answer):**
 - The API is under `/api` (spec §16 notes it). Migrations run in Vercel's build (D122's
@@ -36,8 +39,8 @@ wired to `auth`, trees re-recorded, `e2e/server.spec.ts` (journey against the lo
 - The owner's seed makes them *Unlimited* (D98: their usage is their own bill).
 
 ### What to do next
-1. Review the implementer's work; commit; check the preview in a browser (sign-in, Account).
-2. The full QA run (`qa` skill), then the PR *B05 · Server, database and sign-in*.
+1. The full QA run (`qa` skill), then the PR *B05 · Server, database and sign-in*. CI's `db` job
+   runs for the first time on the PR (ci.yml runs on PRs and main only).
 
 ### Open with the owner
 - docs/local.md *Now*: `SEN_OWNER_EMAIL` before the merge, then first sign-in, Q14, sign out everywhere.
