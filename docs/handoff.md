@@ -39,7 +39,8 @@
 - The owner's seed makes them *Unlimited* (D98: their usage is their own bill).
 
 ### What to do next
-1. The full QA run (`qa` skill), then the PR *B05 · Server, database and sign-in*. CI's `db` job
+1. QA run 1 (full, Opus) started 15 Oct; its reviewer is agent `a45544901d2c03b3b` (resume it for a
+   tier-2 re-check while this session lives). Then the PR *B05 · Server, database and sign-in*. CI's `db` job
    runs for the first time on the PR (ci.yml runs on PRs and main only).
 
 ### Open with the owner
