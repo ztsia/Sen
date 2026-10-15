@@ -30,15 +30,36 @@ function senEnv(command: 'serve' | 'build'): (typeof ENVS)[number] {
   return process.env.VERCEL_ENV === 'preview' || process.env.VERCEL_ENV === 'development' ? 'preview' : 'production';
 }
 
+// Which backend the build reads through (data/index.ts, B05). Vercel's builds have the server; a local
+// build or dev server has none unless SEN_BACKEND=api, with `pnpm --filter @sen/api dev` running.
+const BACKENDS = ['api', 'fake', 'none'] as const;
+function senBackend(env: (typeof ENVS)[number]): (typeof BACKENDS)[number] {
+  const asked = process.env.SEN_BACKEND;
+  if (asked !== undefined) {
+    const known = BACKENDS.find((b) => b === asked);
+    if (!known) throw new Error(`SEN_BACKEND must be one of ${BACKENDS.join(', ')}, not "${asked}"`);
+    return known;
+  }
+  if (process.env.VERCEL) return 'api';
+  return env === 'production' ? 'none' : 'fake';
+}
+
+/** The local API (apps/api/src/local.ts), behind the dev server and `vite preview` as /api. */
+const apiProxy = { '/api': { target: `http://127.0.0.1:${process.env.SEN_API_PORT ?? 8787}`, changeOrigin: false } };
+
 export default defineConfig(({ command }) => {
   const env = senEnv(command);
+  const backend = senBackend(env);
   return {
-    define: { __SEN_ENV__: JSON.stringify(env) },
+    define: { __SEN_ENV__: JSON.stringify(env), __SEN_BACKEND__: JSON.stringify(backend) },
     plugins: [react(), tailwindcss(), serviceWorker()],
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
     // The fonts are self-hosted from docs/ui/directions/assets/fonts/, the one copy (spec §17).
-    server: { fs: { allow: [fileURLToPath(new URL('../..', import.meta.url))] } },
-    preview: { headers: siteHeaders },
+    server: {
+      fs: { allow: [fileURLToPath(new URL('../..', import.meta.url))] },
+      ...(backend === 'api' ? { proxy: apiProxy } : {}),
+    },
+    preview: { headers: siteHeaders, ...(backend === 'api' ? { proxy: apiProxy } : {}) },
     // Source maps in previews, to debug there; production ships none. The source is public anyway (AGPL),
     // so this is size and tidiness, not secrecy (QA B01 run 2, note 16).
     build: { target: 'es2022', sourcemap: env !== 'production' },
