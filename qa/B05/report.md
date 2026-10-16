@@ -1,5 +1,7 @@
 # B05 · Server, database and sign-in: QA report (run 3, scoped, tier 2)
 
+Published: https://claude.ai/artifact/AzAyheGoaGbcR68PSDJWdz (version 3; runs 1 and 2 are versions 1 and 2)
+
 ```
 VERDICT   fix first
           26 criteria in the area, 19 pass, 6 fail, 1 not reachable
