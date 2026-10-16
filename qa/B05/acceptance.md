@@ -339,3 +339,25 @@ AC-87s Once someone else signs in on that tab, sign-in no longer says *paused*
 AC-88  Settings → You shows what the server holds after an Undo, and never loses what's being typed
        Spec   §6.7, patterns §7 Forms (*Never lose what was typed*)
 AC-88s A refetch while the names field has an unsaved edit leaves the edit in place
+
+## Run 4 (scoped, tier 2, 16 Oct): what run 3's fixes call for
+
+Area: signing in and out, including what a session's end leaves on the device (§17 *Login*, §16
+`/auth/*`), and the API's handling of input (§16 *Validation*, *Errors*). Written after reading
+2e6802c, as scoped mode says.
+
+AC-90  Every POST under /api/auth refuses a NUL in its body with a 400
+       Spec   §16 Errors
+AC-90s A body of any depth or shape gets a 4xx, never a 500 (here and on /api/commands)
+
+AC-91  The send route checks its own body: an email of 1–254 characters, `type: sign-in`, Sen's origin
+       Spec   §5.1, §17 Login
+AC-91s A too-long, blank or non-sign-in request → 400; a foreign or `null` Origin → 403
+
+AC-92  A mail server that doesn't answer is a failed send within seconds
+       Spec   patterns §7 Error
+AC-92s The failed send leaves no code
+
+AC-93  The offline copy goes with the session, however it ends (401 included)
+       Spec   §17 Login, flows `lost-phone`
+AC-93s A revoked browser opened offline shows nothing of the person

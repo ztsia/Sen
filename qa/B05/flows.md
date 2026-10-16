@@ -165,3 +165,8 @@ FLOW-31 Sign out everywhere from another browser, then this one offline     (sad
 FLOW-32 Paused, then another person signs in on the same tab                (sad)   Covers AC-87
 FLOW-33 Typing a name while You refetches                                    (sad)   Covers AC-88
 ```
+
+## Run 4 (scoped, tier 2, 16 Oct)
+
+QA's specs `qa/e2e/b05-*` (FLOW-1 to FLOW-33 and the core journeys) walked again; FLOW-31 is the
+lost-phone journey this run's area turns on. The rest were checked by curl against a local API.
