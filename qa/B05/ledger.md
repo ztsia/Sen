@@ -67,3 +67,22 @@ its sign-out handler only.
 
 **Checks after the batch:** typecheck, lint, format clean; unit 335/335; `pnpm test:db` pgTAP
 103/103 and API 33/33; `e2e:server` 3/3; QA's `qa/e2e/b05-*` 30/30.
+
+## After run 3 (scoped re-check, 16 Oct): fix first, 2 Major, 2 Minor, 3 Note
+
+All twelve of run 2's fixes held. **Tier: 2**, the same reviewer resumed on signing in and out and
+the API's input handling. Finding 30's fix is one line in `forgetSession()` (sign-out), not the
+offline store's design; later slices that keep money offline inherit the forgetting from it.
+
+| # | Severity | Fix | Evidence |
+|---|---|---|---|
+| 30 | Major | `forgetSession()`, which every way a session ends passes through (401, 403 suspended, sign-out), forgets the kept reads too | `auth.test.ts` *are forgotten whenever the session is*; QA's FLOW-31 passes |
+| 32 | Major | The API's test pools are 10 wide and the test sends 20 writes at once | Without `FOR UPDATE`: *two identical writes sent at once* fails on a fresh `pnpm test:db`; with it, 37/37 |
+| 31 | Minor | A NUL anywhere in a body to `/api/auth/*` is a 400, before Better Auth | `api.test.ts` *(31)* |
+| 33 | Minor | A `null` or malformed Origin on a write is a 403 | `api.test.ts` *(33)* |
+| 34 | Note | Only a real NUL is refused (`hasNul` on the parsed body), not the text `\u0000` | `api.test.ts` *(34)* |
+| 35 | Note | Gmail's connection, greeting and socket time out in 10, 10 and 20 seconds | `mail.ts` |
+| 36 | Note | The send route parses its own body (a bad one is a 400) and checks Origin | `api.test.ts` *(36)* |
+
+**Checks after the batch:** typecheck, lint, format clean; unit 336/336; `pnpm test:db` pgTAP
+103/103 and API 37/37; `e2e:server` 3/3; QA's `qa/e2e/b05-*` 33/33.
