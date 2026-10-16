@@ -15,7 +15,7 @@ Each was found by a tool this slice adds, on its first run, before any QA run: t
 ## Done-when: the metrics catch E2 and E3 without being told their causes
 
 - **E2, the function in the wrong region.** A throwaway branch with the region pin removed
-  (`B05/qa-tooling-iad1-probe`, deleted after) deployed a preview; the `live-metrics` workflow on its
+  (`B05/qa-tooling-iad1-probe`; a session can't delete a branch, so the owner does, `docs/local.md`) deployed a preview; the `live-metrics` workflow on its
   deploy flagged, with no Claude involved: `GET /api/me` 1,318 ms server time (1,313 ms of it
   database, 6 queries), `GET /api/settings` 2,194 ms (10 queries), the code send 447 ms, each over the
   300 ms limit. The same routes on this branch's own preview, in `sin1`: 18 ms, 23 ms, 9 ms, no flag.

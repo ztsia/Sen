@@ -8,6 +8,10 @@ follow on a phone, and commit.
 
 ## Now
 
+- [ ] **Delete the branch `B05/qa-tooling-iad1-probe` (B05 · QA tooling).** A throwaway that proved
+      the live metrics flag a slow server (its preview ran in Washington). A cloud session can't
+      delete branches. github.com/ztsia/Sen → *Branches* → the bin icon beside it. Its preview goes
+      with it.
 - [ ] **Sign in to Sen for the first time (B05).** Sign-up is off, so your account comes from one
       variable. Before merging *B05 · Server, database and sign-in*:
       1. vercel.com → project **sen** → *Settings* → *Environment Variables* → *Add*: name
