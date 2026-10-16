@@ -39,13 +39,12 @@
 - The owner's seed makes them *Unlimited* (D98: their usage is their own bill).
 
 ### What to do next
-1. QA run 1 (full): 5 Major, all fixed. QA run 2 (fresh full): 2 Major (a failed code email reported
-   as sent; the web fixes unpinned in CI) and 7 Minor, all fixed but 27 (qa/B05/ledger.md, tier 2).
-   Report (both runs): https://claude.ai/artifact/AzAyheGoaGbcR68PSDJWdz. After the fixes: unit
-   335, pgTAP 103, API 33, e2e:server 3, QA's b05 specs 30/30.
-2. Tier-2 re-check running: run 2's reviewer, agent `a12e3b69df3758b14`, resumed on sign-in/out, the
-   API's input handling and Settings → You. When it reports: commit its record, fix by tier, then the
-   PR *B05 · Server, database and sign-in*. CI's `db` job first runs on the PR.
+1. QA: run 1 (full) 5 Major, run 2 (fresh full) 2 Major, run 3 (scoped) 2 Major; all fixed but 27
+   (qa/B05/ledger.md). Report, all runs: https://claude.ai/artifact/AzAyheGoaGbcR68PSDJWdz. After
+   the fixes: unit 336, pgTAP 103, API 37, e2e:server 3, QA's b05 specs 33/33.
+2. Run 4 (scoped re-check of run 3's fixes) running: agent `a12e3b69df3758b14`. When it reports:
+   commit its record, fix by tier, then the PR *B05 · Server, database and sign-in*. CI's `db` job
+   first runs on the PR.
 
 ### Open with the owner
 - docs/local.md *Now*: `SEN_OWNER_EMAIL` before the merge, then first sign-in, Q14, sign out everywhere.
