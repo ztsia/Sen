@@ -109,3 +109,43 @@ FLOW-15 A suspended person signs in                                         (sad
 FLOW-16 Signed in, the `sign-in` address                                    (note)
 FLOW-17 *Sign out* while offline                                            (sad)   Covers AC-63s
 ```
+
+## Run 2 (full, tier 3, 15 Oct)
+
+Docs only, before any source in this run. Run 1's flows (FLOW-1 to FLOW-17 and the core journeys)
+are walked again through QA's committed specs `qa/e2e/b05-*.spec.ts`; these are added.
+
+```
+FLOW-20 A mixed-case email signs in to the same person                     (sad)
+        Entry  `sign-in`, signed out
+        Steps  1. type WeiMing@Example.COM, continue  2. the code step  3. the right code
+        Ends   `home`; auth_user count unchanged; Account shows the one email
+        Covers AC-71
+
+FLOW-21 A suspended person with a live session                              (sad)
+        Actor  member B, signed in; then suspended in the database
+        Steps  1. B reloads `home`  2. B is told their access is paused  3. B asks for a code again
+        Ends   no screen of B's data; sign-in says paused; no new session row
+        Covers AC-72   Spec  §9.6
+
+FLOW-22 Undo a change in Settings → You                                     (happy)
+        Steps  1. change the payday  2. the toast's *Undo*
+        Ends   the payday as before, in the database; two audit rows (the change, the undo)
+        Covers AC-74   Spec  §6.7
+
+FLOW-23 Signed in, offline, then online                                      (sad)
+        Steps  1. signed in at `home`  2. offline, reload  3. home or the offline shell, not sign-in
+               4. online, Settings → Account still shows the email
+        Covers AC-77
+```
+
+### Added during run 2's phase 5
+
+```
+FLOW-24 A browser offline on Settings → You                                 (sad)   Covers AC-77
+        Ends   the loaded payday still shows, read-only (flows.md offline: in a browser, offline is read-only)
+FLOW-25 The sign-in form, as patterns.md §7 Forms says                       (sad)   Covers AC-47
+        Ends   the email field is focused on open
+FLOW-26 A long email on Settings → Account                                   (sad)   Covers AC-80
+        Ends   the whole 70-character address readable inside the card
+```

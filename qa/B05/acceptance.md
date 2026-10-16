@@ -220,3 +220,79 @@ AC-64s Offline is never read as signed out: no `sign-in` screen for someone whos
 AC-65  A suspended person is told, in words, that their access is paused
        Spec  §9.6 *Suspend*, D52, D98 (the API refuses them from B05)
 AC-65s Their screens never show data the server refused, as if nothing were wrong
+
+## Run 2 (full, tier 3, 15 Oct)
+
+Written from the same docs (`spec_v2.md` §5, §5.1, §9.6, §15, §16, §17; D13, D52, D54, D98, D122,
+D127; the brief; `screens.md`; `flows.md`; `patterns.md` §7) **before any B05 source was opened in
+this run**. Run 1's criteria, report and `ledger.md` were read first, so this run isn't blind to what
+run 1 found; the ledger names some implementation (a function, a migration, a limit), which is the
+one thing this run knew of the code before phase 3. Run 2 keeps every run-1 criterion (AC-1 to AC-65,
+re-checked) and adds the ones below, each from the docs.
+
+## J. The narrow functions and the second person (spec §5, §9.6, §17)
+
+AC-70  A function that lets Better Auth's role see past `auth_*` reaches exactly one fact for one email
+       Given  the role that signs people in needs to know whether a person is suspended
+       Then   it's a `SECURITY DEFINER` function that takes the one email and returns only a status
+       Spec   §5 *Requests with no signed-in person … one narrow SECURITY DEFINER function per job,
+              which … touches only the rows that token names*
+AC-70s `app_user` (any user id) can't call it (42501); it reveals nothing for an unknown email beyond
+       "no such person"; `sen_auth` still can't `select` from `user_access` directly
+
+AC-71  An email's case never makes a second person or a second invitation
+       When   `WeiMing@Example.COM` asks for a code
+       Then   the code reaches the same account as `weiming@example.com`; `auth_user` count unchanged
+       Spec   §5.1 (an account only by invitation), §15 invitations UNIQUE (email) pending
+AC-71s A second pending invitation for `PEND@x` beside `pend@x` is refused
+
+AC-72  A suspended person reaches nothing
+       Given  `user_access.suspended_at` set for B, B holding a session made before
+       Then   every API route B calls answers 403 `{code:"suspended", message}`, never data; signing
+              in again is refused with words saying their access is paused
+       Spec   §9.6 *Suspend*, D52, D98
+AC-72s Clearing `suspended_at` lets B sign in again by code
+
+AC-73  A write and its retry, sent at the same moment, still land once
+       When   the same `/commands` body (same client id) is posted twice concurrently
+       Then   one audit row, the setting changed once
+       Spec   CLAUDE.md *Every input has a dedupe key*; §5 *a retry is an upsert*
+AC-73s Two different ids with different values both apply, in order, two audit rows
+
+AC-74  Undo of a settings change restores the value before it, and is itself audited
+       Spec   §6.7 (every change at once, with *Undo*; every change in audit_log)
+AC-74s Undo of something already undone, or of another person's audit id, changes nothing
+
+AC-75  Hostile input never reaches a 500 or a stack
+       When   a 1 MB body, a 10 000-character name, `'; drop table user_settings;--`, `../../etc/passwd`
+              in a path, `\u0000` in a string, a JSON array where an object belongs
+       Then   4xx `{code, message, field?}`; the database unchanged except a valid name stored as text
+       Spec   §16 Validation, Errors
+AC-75s A `Content-Type` that isn't JSON on a write → 4xx, not 500
+
+AC-76  The session cookie is first-party and guarded
+       Then   `Set-Cookie` on sign-in is `HttpOnly`, `SameSite=Lax` or stricter, `Path=/`, `Secure` in
+              production; the API is under `/api` on the web app's origin
+       Spec   §16 (first-party cookie under `/api`), §17 (the app holds only your session)
+AC-76s A cross-site `POST /api/commands` with the cookie but a foreign `Origin` is refused
+
+AC-77  Sign-in offline says it needs a connection, and a signed-in person opening Sen offline isn't
+       signed out
+       Spec   flows.md `offline` (*signing in need a connection, and say so*), §5.1 (opens offline)
+AC-77s Back online, the same screen works without a reload loop or a second banner
+
+AC-78  The preview seed is Wei Ming's made-up scenario, as §15's rows
+       Then   on a preview build with the API, Settings → You shows the scenario's names and payday
+              from the database, not the fake
+       Spec   brief *Previews*
+AC-78s The seed run twice leaves the same row counts
+
+AC-79  `Referrer-Policy: no-referrer` and `X-Robots-Tag: noindex` on the production API's responses
+       Spec   §17 *Links leave the app*, D127
+AC-79s An error response (401, 404) carries both too
+
+### Added during run 2's phase 5 (after the code was read: weaker evidence)
+
+AC-80  Settings → Account shows the whole email, whatever its length
+       Spec   screens.md Account (*your email*), patterns §7 Rows (values never clipped)
+AC-80s A 70-character address still reads in full inside its card
