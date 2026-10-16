@@ -4,6 +4,7 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { BEHAVIOUR, open, settled, watchErrors, type LookId, type ModeId } from './helpers';
 import { coveredTargets } from './checks';
 import { SETTLE_MS } from '../src/lib/tap-guard';
+import { stepMetrics } from './metrics';
 import { uid } from '../src/data/fake/ids';
 import { JOURNEYS as GUIDED } from '../src/dev/journeys';
 
@@ -53,6 +54,9 @@ async function signIn(page: Page, email?: string) {
   await page.getByLabel('6-digit code').fill('123456');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 }
+
+// QA_METRICS (qa-diff.mjs, D139): every tap in a journey is timed under the slow phone; without it, nothing
+stepMetrics(test);
 
 export const JOURNEYS: Record<string, Journey> = {
   // the daily glance: Home's figure opens the cycle sheet; pace opens this cycle's payments

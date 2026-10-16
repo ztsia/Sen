@@ -3,7 +3,7 @@
  * Diff-driven QA's machinery (D137): shoots the catalogue (apps/web/e2e/catalogue.ts) from main's build
  * and from this checkout's, in every look and mode, and writes what changed.
  *
- *   node scripts/qa-diff.mjs [--base <ref>] [--looks all|<list>] [--out <dir>]
+ *   node scripts/qa-diff.mjs [--base <ref>] [--looks all|<list>] [--out <dir>] [--metrics-only]
  *
  * Defaults: base origin/main, every look, out qa-artifacts/<branch, / as _>/diff. Output:
  *   index.md, index.json   what a reviewer reads first: trees changed, pixels changed, what's new or gone,
@@ -13,17 +13,41 @@
  *   checks.jsonl           the checks' findings, one per line
  *   logs/                  Playwright's output for each run
  *
+ * It then measures what each screen, each journey tap, each API route and the build cost a person and a
+ * phone (D139), on main and on this branch, side by side. Nothing there names a cause: qa/limits.ts judges
+ * the numbers against human limits and against main, and only the flagged ones reach the reviewer.
+ *   ../metrics/index.json  { base, head, flags, standing, ok }: every metric, and how each was judged
+ *   ../metrics/<side>/     what each run wrote: screens.jsonl, steps.jsonl, api.jsonl
+ *   ../metrics/film/       a PNG per journey tap (this branch's): the frames from the tap to a second after
+ *   ../metrics/logs/       the metrics runs' output
+ *   index.md               gains a `## Metrics` section: the flags, then the standing ones, then a count
+ * A flag never changes the exit code, because timings vary. --metrics-only skips the catalogue runs and does
+ * only this, and swaps the Metrics section into an index.md that is already there.
+ *
  * Main's build is made in a git worktree under the temp folder, kept for the next run. The specs are this
  * checkout's in both runs (e2e/diff.config.ts): only the app differs. A failing test never stops the
  * script; it still writes the report, and exits 1 at the end if a test failed.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import {
+  closeSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { stripVTControlCharacters } from 'node:util';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { apiMetrics, judgeAll, METRICS } from '../qa/limits.ts';
+import { buildMetrics } from './build-metrics.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const web = join(root, 'apps/web');
@@ -43,15 +67,19 @@ const arg = (name, fallback) => {
   const i = argv.indexOf(name);
   return i >= 0 ? argv[i + 1] : fallback;
 };
-const unknown = argv.filter((a) => a.startsWith('--') && !['--base', '--looks', '--out', '--help'].includes(a));
+const unknown = argv.filter(
+  (a) => a.startsWith('--') && !['--base', '--looks', '--out', '--metrics-only', '--help'].includes(a),
+);
 if (unknown.length || argv.includes('--help')) {
-  console.error('usage: node scripts/qa-diff.mjs [--base <ref>] [--looks all|<list>] [--out <dir>]');
+  console.error('usage: node scripts/qa-diff.mjs [--base <ref>] [--looks all|<list>] [--out <dir>] [--metrics-only]');
   process.exit(argv.includes('--help') ? 0 : 2);
 }
 const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']);
 const baseRef = arg('--base', 'origin/main');
 const looksArg = arg('--looks', 'all');
+const metricsOnly = argv.includes('--metrics-only');
 const out = resolve(arg('--out', join(root, 'qa-artifacts', branch.replace(/\//g, '_'), 'diff')));
+const metricsDir = resolve(out, '..', 'metrics');
 const ALL_LOOKS = ['minted', 'instrument', 'firefly', 'line', 'mercury', 'copper'];
 const looks = looksArg === 'all' ? ALL_LOOKS : looksArg.split(',').map((s) => s.trim());
 for (const l of looks) if (!ALL_LOOKS.includes(l)) throw new Error(`unknown look "${l}"`);
@@ -85,7 +113,8 @@ build(web);
 
 /* ---------- the two runs --------------------------------------------------------- */
 
-rmSync(out, { recursive: true, force: true });
+// --metrics-only keeps the report that is there
+if (!metricsOnly) rmSync(out, { recursive: true, force: true });
 for (const d of ['base', 'head', 'diff', 'logs']) mkdirSync(join(out, d), { recursive: true });
 
 function run(project) {
@@ -139,8 +168,224 @@ function readTests(file) {
   return tests;
 }
 
-const baseTests = run('base');
-const headTests = run('head');
+const baseTests = metricsOnly ? [] : run('base');
+const headTests = metricsOnly ? [] : run('head');
+
+/* ---------- metrics (D139) ---------------------------------------------------------- */
+
+const MS = (t0) => Math.round((Date.now() - t0) / 1000);
+const metricsLogs = join(metricsDir, 'logs');
+const metricsNotes = [];
+const metricsRuns = {};
+
+const readJsonl = (file) =>
+  existsSync(file)
+    ? readFileSync(file, 'utf8')
+        .split('\n')
+        .filter(Boolean)
+        .flatMap((l) => {
+          try {
+            return [JSON.parse(l)];
+          } catch {
+            return [];
+          }
+        })
+    : [];
+
+/** One Playwright run of the metrics specs on one side's build, one worker so the timings don't fight. */
+function metricsPlaywright(side, name, files, extraEnv = {}) {
+  const log = openSync(join(metricsLogs, `${name}.log`), 'w');
+  const env = {
+    ...process.env,
+    QA_SERVE: side,
+    QA_BASE_WEB: baseWeb,
+    QA_RESULTS: join(metricsLogs, `${name}-results`),
+    QA_METRICS: join(metricsDir, side),
+    PLAYWRIGHT_JSON_OUTPUT_NAME: join(metricsLogs, `${name}.json`),
+    ...extraEnv,
+  };
+  delete env.CI;
+  const args = [
+    'exec',
+    'playwright',
+    'test',
+    '-c',
+    'e2e/diff.config.ts',
+    '--project',
+    `metrics-${side}`,
+    '--workers',
+    '1',
+  ];
+  console.log(`measuring ${name} (${files.join(', ')}) ...`);
+  const t0 = Date.now();
+  const r = spawnSync('pnpm', [...args, ...files], { cwd: web, env, stdio: ['ignore', log, log] });
+  closeSync(log);
+  const tests = readTests(join(metricsLogs, `${name}.json`));
+  const failed = tests.filter((t) => !t.ok).length;
+  metricsRuns[name] = { exit: r.status, seconds: MS(t0), tests: tests.length, failed };
+  console.log(
+    `  ${name}: exit ${r.status}, ${MS(t0)} s, ${tests.length} tests (${failed} failed), log ${relative(root, join(metricsLogs, `${name}.log`))}`,
+  );
+}
+
+/** The API's tests on the local Postgres, each request recorded (apps/api/test/metrics.setup.ts). */
+function metricsApi(side, cwd) {
+  if (!existsSync(join(cwd, 'apps/api/test/metrics.setup.ts'))) {
+    metricsNotes.push(
+      `${side === 'base' ? baseRef : 'head'} has no QA_METRICS setup in its API tests, so it has no API numbers.`,
+    );
+    return;
+  }
+  if (spawnSync('pg_isready', ['-h', '127.0.0.1'], { stdio: 'ignore' }).status !== 0)
+    spawnSync('bash', [join(root, 'scripts/local-db.sh'), 'start'], { stdio: 'inherit' });
+  const name = `api-${side}`;
+  const log = openSync(join(metricsLogs, `${name}.log`), 'w');
+  console.log(`measuring ${name} (pnpm test:db) ...`);
+  const t0 = Date.now();
+  const r = spawnSync('pnpm', ['test:db'], {
+    cwd,
+    env: { ...process.env, QA_METRICS: join(metricsDir, side) },
+    stdio: ['ignore', log, log],
+  });
+  closeSync(log);
+  metricsRuns[name] = { exit: r.status, seconds: MS(t0) };
+  console.log(`  ${name}: exit ${r.status}, ${MS(t0)} s, log ${relative(root, join(metricsLogs, `${name}.log`))}`);
+}
+
+const sideMetrics = (side, distDir) => [
+  ...readJsonl(join(metricsDir, side, 'screens.jsonl')),
+  ...readJsonl(join(metricsDir, side, 'steps.jsonl')),
+  ...apiMetrics(readJsonl(join(metricsDir, side, 'api.jsonl'))),
+  ...buildMetrics(distDir),
+];
+
+const SLUG = (title) => title.replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '');
+const unitOf = (metric) => METRICS[metric].unit;
+const fmt = (metric, v) => {
+  switch (unitOf(metric)) {
+    case 'ms':
+      return `${Math.round(v)} ms`;
+    case 'bytes':
+      return v >= 1e6 ? `${(v / 1e6).toFixed(2)} MB` : v >= 1e3 ? `${(v / 1e3).toFixed(1)} kB` : `${Math.round(v)} B`;
+    case 'score':
+      return v.toFixed(3);
+    default:
+      return String(Math.round(v * 10) / 10);
+  }
+};
+
+/** The `## Metrics` section: flags, then standing, then a count of the rest. */
+function metricsSection(m) {
+  const L = ['## Metrics', ''];
+  L.push(
+    `${m.head.length} numbers on this branch, ${m.base.length} on ${baseRef}: ${m.flags.length} flagged, ` +
+      `${m.standing.length} standing. A flag is a number past a human limit that ${baseRef} keeps, or worse than ` +
+      `${baseRef}'s by more than 25% and a floor (qa/limits.ts). The reviewer explains each flag in the ledger. ` +
+      `Screens and taps are measured with the CPU 4× slower on a mobile network.`,
+    '',
+  );
+  for (const n of metricsNotes) L.push(`- ${n}`);
+  for (const [name, r] of Object.entries(metricsRuns))
+    if (r.exit !== 0)
+      L.push(
+        `- ${name} exited ${r.exit}${r.failed ? ` with ${r.failed} of ${r.tests} tests failed` : ''}: see ${relative(out, join(metricsLogs, `${name}.log`))}`,
+      );
+  if (metricsNotes.length || Object.values(metricsRuns).some((r) => r.exit !== 0)) L.push('');
+  const keyCell = (j) => {
+    const step = j.key.match(/^step:(.*)\/(\d+)$/);
+    const film = step && join(metricsDir, 'film', SLUG(step[1]), `${step[2]}.png`);
+    const text = `\`${j.key.replace(/\|/g, '\\|')}\``;
+    return film && existsSync(film) ? `[${text}](${relative(out, film)})` : text;
+  };
+  const verdict = (j) =>
+    j.verdict.kind === 'over'
+      ? `over ${fmt(j.metric, j.verdict.limit)}${j.base === undefined ? ` (${baseRef} has no number)` : ''}`
+      : j.verdict.kind === 'worse'
+        ? `worse than ${baseRef} by ${Math.round((j.value / j.verdict.base - 1) * 100)}%`
+        : `over ${fmt(j.metric, j.verdict.limit)}, as on ${baseRef}`;
+  const table = (list) => {
+    L.push('| Key | Metric | What it says | Head | Main | Verdict |', '|---|---|---|---|---|---|');
+    for (const j of list)
+      L.push(
+        `| ${keyCell(j)} | ${j.metric} | ${METRICS[j.metric].says} | ${fmt(j.metric, j.value)} | ` +
+          `${j.base === undefined ? 'none' : fmt(j.metric, j.base)} | ${verdict(j)} |`,
+      );
+    L.push('');
+  };
+  L.push('### Flags', '');
+  if (m.flags.length) table(m.flags);
+  else L.push('None.', '');
+  L.push('### Standing', '');
+  if (m.standing.length) {
+    L.push(`Over a human limit on ${baseRef} too: listed, not flagged.`, '');
+    table(m.standing);
+  } else L.push('None.', '');
+  const onBase = new Set(m.base.map((x) => `${x.key}|${x.metric}`));
+  const noBase = m.head.filter((x) => !onBase.has(`${x.key}|${x.metric}`)).length;
+  L.push(
+    `${m.ok} other numbers are within the limits and within noise of ${baseRef}'s` +
+      `${noBase ? ` (${noBase} of the numbers above, and these, have none on ${baseRef}: only human limits apply)` : ''}.`,
+    '',
+  );
+  return L;
+}
+
+function metricsPass() {
+  rmSync(metricsDir, { recursive: true, force: true });
+  for (const d of ['base', 'head', 'film', 'logs']) mkdirSync(join(metricsDir, d), { recursive: true });
+  const t0 = Date.now();
+  // each side's screens and journeys, then the film of this branch's journeys: it records video and
+  // frames, which would slow the very taps being timed, so it is a run of its own
+  metricsPlaywright('base', 'metrics-base', ['metrics.spec', 'journeys.spec']);
+  metricsPlaywright('head', 'metrics-head', ['metrics.spec', 'journeys.spec']);
+  metricsPlaywright('head', 'film-head', ['journeys.spec'], {
+    QA_FILMSTRIP: join(metricsDir, 'film'),
+    QA_METRICS: join(metricsDir, 'film-scratch'),
+  });
+  rmSync(join(metricsDir, 'film-scratch'), { recursive: true, force: true });
+  // the videos Playwright kept, beside the filmstrips
+  const vids = join(metricsLogs, 'film-head-results');
+  if (existsSync(vids))
+    for (const d of readdirSync(vids)) {
+      const v = join(vids, d, 'video.webm');
+      if (existsSync(v)) copyFileSync(v, join(metricsDir, 'film', `${d}.webm`));
+    }
+  metricsApi('base', worktree);
+  metricsApi('head', root);
+  const base = sideMetrics('base', join(baseWeb, 'dist-qa'));
+  const head = sideMetrics('head', join(web, 'dist-qa'));
+  const judged = judgeAll(head, base);
+  const result = {
+    base,
+    head,
+    flags: judged.flags,
+    standing: judged.standing,
+    ok: judged.ok,
+    notes: metricsNotes,
+    runs: metricsRuns,
+  };
+  writeFileSync(join(metricsDir, 'index.json'), JSON.stringify(result, null, 2));
+  const section = metricsSection(result);
+  console.log(
+    `metrics: ${MS(t0)} s; ${head.length} head numbers, ${base.length} on ${baseRef}; ` +
+      `${judged.flags.length} flags, ${judged.standing.length} standing, ${judged.ok} ok -> ${join(metricsDir, 'index.json')}`,
+  );
+  return section;
+}
+
+const metricsMd = metricsPass();
+
+if (metricsOnly) {
+  // the section goes into the report that is there, in place of the last one; without a report, into a new one
+  const file = join(out, 'index.md');
+  const had = existsSync(file) ? readFileSync(file, 'utf8') : `# QA metrics: ${branch} against ${baseRef}\n\n`;
+  const at = had.indexOf('## Metrics');
+  const next = at < 0 ? -1 : had.indexOf('\n## ', at + 1);
+  const kept = at < 0 ? had.trimEnd() + '\n\n' : had.slice(0, at) + (next < 0 ? '' : had.slice(next + 1));
+  writeFileSync(file, kept.trimEnd() + '\n\n' + metricsMd.join('\n'));
+  console.log(`report: ${file}`);
+  process.exit(0);
+}
 
 /* ---------- pixels --------------------------------------------------------------- */
 
@@ -447,6 +692,8 @@ else {
     }
   }
 }
+
+md.push(...metricsMd);
 
 writeFileSync(join(out, 'index.md'), md.join('\n'));
 
