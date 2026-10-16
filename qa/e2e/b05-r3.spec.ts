@@ -17,11 +17,19 @@ test('FLOW-31 sign out everywhere from another browser, then this one offline', 
   await signIn(pa, PEOPLE.ben.email);
   await pa.goto('/s/settings/you');
   await pa.waitForTimeout(1500);
-  await step(pa, F, 1, 'kept', 'browser A opens Settings → You', 'the device keeps the last answer for offline', async () => {
-    const kept = await pa.evaluate((k) => localStorage.getItem(k), KEPT);
-    note(F, `kept after You: ${kept?.slice(0, 160)}`);
-    expect(kept).toContain(PEOPLE.ben.email);
-  });
+  await step(
+    pa,
+    F,
+    1,
+    'kept',
+    'browser A opens Settings → You',
+    'the device keeps the last answer for offline',
+    async () => {
+      const kept = await pa.evaluate((k) => localStorage.getItem(k), KEPT);
+      note(F, `kept after You: ${kept?.slice(0, 160)}`);
+      expect(kept).toContain(PEOPLE.ben.email);
+    },
+  );
   await signIn(pb, PEOPLE.ben.email);
   await pb.goto('/s/settings/account');
   await pb.getByRole('button', { name: 'Sign out everywhere' }).click();
@@ -38,12 +46,23 @@ test('FLOW-31 sign out everywhere from another browser, then this one offline', 
   await a.setOffline(true);
   await pa.goto('/s/settings/you').catch(() => undefined);
   await pa.waitForTimeout(2500);
-  await step(pa, F, 3, 'offline', 'browser A, offline, opens Settings → You', 'nothing of Ben is kept or shown', async () => {
-    const text = await pa.locator('body').innerText().catch(() => '');
-    note(F, `offline open after revocation: ${pa.url()} | ${text.replace(/\n+/g, ' | ').slice(0, 300)}`);
-    expect(text).not.toContain('Last working day');
-    expect(await pa.evaluate((k) => localStorage.getItem(k), KEPT)).toBeNull();
-  });
+  await step(
+    pa,
+    F,
+    3,
+    'offline',
+    'browser A, offline, opens Settings → You',
+    'nothing of Ben is kept or shown',
+    async () => {
+      const text = await pa
+        .locator('body')
+        .innerText()
+        .catch(() => '');
+      note(F, `offline open after revocation: ${pa.url()} | ${text.replace(/\n+/g, ' | ').slice(0, 300)}`);
+      expect(text).not.toContain('Last working day');
+      expect(await pa.evaluate((k) => localStorage.getItem(k), KEPT)).toBeNull();
+    },
+  );
   await a.close();
   await b.close();
 });
@@ -68,9 +87,17 @@ test('FLOW-32 paused, then another person signs in on the same tab', async ({ pa
     await page.goto('/s/settings/account');
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();
     await expect(page).toHaveURL(/sign-in/);
-    await step(page, F, 2, 'next-person', 'the admin signs in on that tab, then signs out', 'sign-in no longer says paused', async () => {
-      await expect(page.locator('body')).not.toContainText(/paused/i);
-    });
+    await step(
+      page,
+      F,
+      2,
+      'next-person',
+      'the admin signs in on that tab, then signs out',
+      'sign-in no longer says paused',
+      async () => {
+        await expect(page.locator('body')).not.toContainText(/paused/i);
+      },
+    );
   } finally {
     sql(`update user_access set suspended_at = null where user_id = '${PEOPLE.ben.id}'`);
   }
@@ -89,11 +116,28 @@ test('FLOW-33 typing a name while You refetches', async ({ page }) => {
   // another device changes the payday; the screen hears of it (the app refetches on focus / a change)
   sql(`update user_settings set expected_payday = '9' where user_id = '${PEOPLE.admin.id}'`);
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-  await page.evaluate(() => { document.dispatchEvent(new Event('visibilitychange')); window.dispatchEvent(new Event('visibilitychange')); });
-  await page.waitForTimeout(2000);
-  await step(page, F, 1, 'draft', 'type a second name, while the saved payday changes elsewhere', 'the typed name is still in the field', async () => {
-    const v = await names.inputValue();
-    note(F, `names field: ${JSON.stringify(v)}; day field: ${await page.getByLabel('Day of the month').inputValue({ timeout: 1000 }).catch(() => 'not shown: no refetch happened')}`);
-    expect(v).toContain('BEN BIN ABU');
+  await page.evaluate(() => {
+    document.dispatchEvent(new Event('visibilitychange'));
+    window.dispatchEvent(new Event('visibilitychange'));
   });
+  await page.waitForTimeout(2000);
+  await step(
+    page,
+    F,
+    1,
+    'draft',
+    'type a second name, while the saved payday changes elsewhere',
+    'the typed name is still in the field',
+    async () => {
+      const v = await names.inputValue();
+      note(
+        F,
+        `names field: ${JSON.stringify(v)}; day field: ${await page
+          .getByLabel('Day of the month')
+          .inputValue({ timeout: 1000 })
+          .catch(() => 'not shown: no refetch happened')}`,
+      );
+      expect(v).toContain('BEN BIN ABU');
+    },
+  );
 });

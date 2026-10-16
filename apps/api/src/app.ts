@@ -8,7 +8,7 @@ import { createAuth, type Auth } from './auth';
 import { NO_SWITCHES, type Env } from './context';
 import { asPerson, pools } from './db';
 import { readEnv, type ApiEnv } from './env';
-import { ApiError, onError, signedOut, suspended } from './errors';
+import { ApiError, hasNul, nulRefused, onError, readJson, sameOrigin, signedOut, suspended } from './errors';
 import { clientIp, LIMITS, tooMany, withinLimit } from './limits';
 import { gmailMailer, noMail, type Mailer } from './mail';
 import { adminRoutes, personRoutes } from './routes';
@@ -55,9 +55,7 @@ export function createApp(deps: Deps) {
   // script can't post here, whatever the cookie's SameSite does. Better Auth checks its own routes.
   api.use('*', async (c, next) => {
     if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && !c.req.path.startsWith('/api/auth/')) {
-      const origin = c.req.header('origin');
-      if (origin && new URL(origin).host !== new URL(c.req.url).host)
-        throw new ApiError(403, 'forbidden', 'That came from another site.');
+      if (!sameOrigin(c)) throw new ApiError(403, 'forbidden', 'That came from another site.');
       if (
         c.req.header('content-length') !== '0' &&
         !c.req.header('content-type')?.startsWith('application/json') &&
@@ -72,49 +70,50 @@ export function createApp(deps: Deps) {
   // so the screen couldn't tell; this says so before a code is asked for, and says when someone's
   // access is paused. It reveals whether an email has an account, which an invitation-only app of
   // friends accepts, behind a limit on lookups per address and on codes per email.
-  api.post('/auth/email-otp/send-verification-otp', async (c, next) => {
+  // Better Auth's routes get no NUL either: it answers one with an empty 500 (QA B05 run 3, 31)
+  api.post('/auth/*', async (c, next) => {
     const body = await c.req.raw
       .clone()
       .json()
       .catch(() => null);
-    const parsed = z.object({ email: z.string().max(254) }).safeParse(body);
-    if (parsed.success) {
-      const email = parsed.data.email.trim().toLowerCase();
-      const { lookupsPerIp, codesPerIp, codesPerEmail } = LIMITS;
-      if (
-        !(await withinLimit(
-          deps.auth,
-          `lookup:${clientIp(c.req.raw.headers)}`,
-          lookupsPerIp.max,
-          lookupsPerIp.windowMs,
-        ))
-      )
-        throw tooMany('Too many tries. Wait a minute, then try again.');
-      const r = await deps.auth.query<{ check: string }>('select auth_sign_in_check($1) as check', [email]);
-      const check = r.rows[0]?.check;
-      if (check === 'not_invited') throw new ApiError(403, 'not_invited', 'Sen is invitation-only.', 'email');
-      if (check === 'suspended') throw suspended();
-      if (
-        !(await withinLimit(deps.auth, `codes-ip:${clientIp(c.req.raw.headers)}`, codesPerIp.max, codesPerIp.windowMs))
-      )
-        throw tooMany('Too many codes asked for. Wait a minute, then try again.');
-      if (!(await withinLimit(deps.auth, `codes:${email}`, codesPerEmail.max, codesPerEmail.windowMs)))
-        throw tooMany('Too many codes asked for. Wait a few minutes, then try again.');
-      // The code is made by Better Auth and sent here, awaited: its own route sends in the background
-      // and answers success even when Gmail fails, so a code never sent would look like one in spam
-      // (QA B05 run 2, 18). The previous code for this address is replaced, as its route would.
-      await deps.auth.query('delete from auth_verification where identifier = $1', [`sign-in-otp-${email}`]);
-      const otp = await auth.api.createVerificationOTP({ body: { email, type: 'sign-in' } });
-      try {
-        await deps.mailer.sendCode(email, otp);
-      } catch (e) {
-        console.error('sign-in code not sent', e);
-        await deps.auth.query('delete from auth_verification where identifier = $1', [`sign-in-otp-${email}`]);
-        throw new ApiError(502, 'mail_failed', 'Sen couldn’t send the email. Try again in a minute.');
-      }
-      return c.json({ success: true });
-    }
+    if (hasNul(body)) throw nulRefused();
     await next();
+  });
+
+  api.post('/auth/email-otp/send-verification-otp', async (c) => {
+    // this route is Sen's now, so it checks what Better Auth would have (run 3, 36)
+    if (!sameOrigin(c)) throw new ApiError(403, 'forbidden', 'That came from another site.');
+    const parsed = z
+      .object({ email: z.string().trim().min(1).max(254), type: z.literal('sign-in') })
+      .safeParse(await readJson(c));
+    if (!parsed.success) throw new ApiError(400, 'invalid', 'Type your email.', 'email');
+    const email = parsed.data.email.trim().toLowerCase();
+    const { lookupsPerIp, codesPerIp, codesPerEmail } = LIMITS;
+    if (
+      !(await withinLimit(deps.auth, `lookup:${clientIp(c.req.raw.headers)}`, lookupsPerIp.max, lookupsPerIp.windowMs))
+    )
+      throw tooMany('Too many tries. Wait a minute, then try again.');
+    const r = await deps.auth.query<{ check: string }>('select auth_sign_in_check($1) as check', [email]);
+    const check = r.rows[0]?.check;
+    if (check === 'not_invited') throw new ApiError(403, 'not_invited', 'Sen is invitation-only.', 'email');
+    if (check === 'suspended') throw suspended();
+    if (!(await withinLimit(deps.auth, `codes-ip:${clientIp(c.req.raw.headers)}`, codesPerIp.max, codesPerIp.windowMs)))
+      throw tooMany('Too many codes asked for. Wait a minute, then try again.');
+    if (!(await withinLimit(deps.auth, `codes:${email}`, codesPerEmail.max, codesPerEmail.windowMs)))
+      throw tooMany('Too many codes asked for. Wait a few minutes, then try again.');
+    // The code is made by Better Auth and sent here, awaited: its own route sends in the background
+    // and answers success even when Gmail fails, so a code never sent would look like one in spam
+    // (QA B05 run 2, 18). The previous code for this address is replaced, as its route would.
+    await deps.auth.query('delete from auth_verification where identifier = $1', [`sign-in-otp-${email}`]);
+    const otp = await auth.api.createVerificationOTP({ body: { email, type: 'sign-in' } });
+    try {
+      await deps.mailer.sendCode(email, otp);
+    } catch (e) {
+      console.error('sign-in code not sent', e);
+      await deps.auth.query('delete from auth_verification where identifier = $1', [`sign-in-otp-${email}`]);
+      throw new ApiError(502, 'mail_failed', 'Sen couldn’t send the email. Try again in a minute.');
+    }
+    return c.json({ success: true });
   });
   api.on(['GET', 'POST'], '/auth/*', async (c) => {
     const res = await auth.handler(c.req.raw);

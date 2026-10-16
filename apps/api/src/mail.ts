@@ -15,6 +15,10 @@ export function gmailMailer(gmail: { user: string; password: string }): Mailer {
     port: 465,
     secure: true,
     auth: { user: gmail.user, pass: gmail.password },
+    // a mail server that doesn't answer is a failed send in seconds, not minutes (QA B05 run 3, 35)
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
   return {
     async sendCode(to, code) {

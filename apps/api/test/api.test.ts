@@ -16,8 +16,11 @@ import { Hono } from 'hono';
 const HOST = process.env.PGHOST ?? '127.0.0.1';
 const url = (role: string) => `postgres://${role}@${HOST}:5432/sen_test`;
 const owner = new pg.Pool({ connectionString: url('sen_owner'), max: 2 });
+// one connection, for the identity tests: every transaction shares it
 const app = new pg.Pool({ connectionString: url('app_user'), max: 1 });
-const authPool = new pg.Pool({ connectionString: url('sen_auth'), max: 2 });
+// the API's own: wide enough that writes sent together really run together (QA B05 run 3, 32)
+const apiPool = new pg.Pool({ connectionString: url('app_user'), max: 10 });
+const authPool = new pg.Pool({ connectionString: url('sen_auth'), max: 10 });
 
 const codes = new Map<string, string>();
 const deps: Deps = {
@@ -28,7 +31,7 @@ const deps: Deps = {
     urls: { app_user: url('app_user'), sen_auth: url('sen_auth') },
     gmail: null,
   },
-  app,
+  app: apiPool,
   auth: authPool,
   mailer: { sendCode: async (to, code) => void codes.set(to, code) },
 };
@@ -103,7 +106,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await owner.query('delete from auth_user where id = any($1)', [[admin.id, member.id]]);
-  await Promise.all([owner.end(), app.end(), authPool.end()]);
+  await Promise.all([owner.end(), app.end(), apiPool.end(), authPool.end()]);
 });
 
 describe('every request runs as its person', () => {
@@ -422,7 +425,7 @@ describe('QA B05 run 2', () => {
       (await owner.query('select count(*)::int n from audit_log where user_id = $1', [member.id])).rows[0].n as number;
     const before = await count();
     const cmd = { type: 'setting.set', key: 'you.bankNames', value: `SAME ${randomUUID()}` };
-    const results = await Promise.all(Array.from({ length: 5 }, () => call('/api/commands', { cookie, body: cmd })));
+    const results = await Promise.all(Array.from({ length: 20 }, () => call('/api/commands', { cookie, body: cmd })));
     expect(results.every((r) => r.status === 200)).toBe(true);
     expect(await count()).toBe(before + 1);
   });
@@ -444,6 +447,54 @@ describe('QA B05 run 2', () => {
     expect((await post({ origin: 'https://evil.example', 'content-type': 'application/json' })).status).toBe(403);
     expect((await post({ origin: ORIGIN, 'content-type': 'text/plain' })).status).toBe(415);
     expect((await post({ origin: ORIGIN, 'content-type': 'application/json' })).status).toBe(200);
+  });
+});
+
+describe('QA B05 run 3', () => {
+  const raw = (path: string, body: string, headers: Record<string, string> = {}) =>
+    api.request(`${ORIGIN}${path}`, {
+      method: 'POST',
+      headers: { origin: ORIGIN, 'content-type': 'application/json', 'x-forwarded-for': nextIp(), ...headers },
+      body,
+    });
+
+  it('refuses a NUL in an email on the sign-in routes with a 400 (31)', async () => {
+    const email = JSON.stringify(`${member.email}\u0000`);
+    expect((await raw('/api/auth/email-otp/send-verification-otp', `{"email":${email},"type":"sign-in"}`)).status).toBe(
+      400,
+    );
+    expect((await raw('/api/auth/sign-in/email-otp', `{"email":${email},"otp":"123456"}`)).status).toBe(400);
+  });
+
+  it('refuses a write with a null or malformed Origin with a 403, not a 500 (33)', async () => {
+    const cookie = await signIn(member.email);
+    const body = JSON.stringify({ type: 'setting.set', key: 'you.payday', value: { kind: 'none' } });
+    for (const origin of ['null', 'not a url'])
+      expect((await raw('/api/commands', body, { origin, cookie })).status).toBe(403);
+  });
+
+  it('keeps the text \\u0000, which isn’t a NUL (34)', async () => {
+    const cookie = await signIn(member.email);
+    const r = await raw('/api/commands', '{"type":"setting.set","key":"you.bankNames","value":"TAN\\\\u0000 BIN"}', {
+      cookie,
+    });
+    expect(r.status).toBe(200);
+  });
+
+  it('checks the send route’s body and Origin itself (36)', async () => {
+    const long = `${'a'.repeat(10_000)}@example.com`;
+    expect(
+      (await raw('/api/auth/email-otp/send-verification-otp', JSON.stringify({ email: long, type: 'sign-in' }))).status,
+    ).toBe(400);
+    expect((await raw('/api/auth/email-otp/send-verification-otp', 'not json')).status).toBe(400);
+    const foreign = await raw(
+      '/api/auth/email-otp/send-verification-otp',
+      JSON.stringify({ email: member.email, type: 'sign-in' }),
+      {
+        origin: 'https://evil.example',
+      },
+    );
+    expect(foreign.status).toBe(403);
   });
 });
 

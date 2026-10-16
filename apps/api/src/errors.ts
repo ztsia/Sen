@@ -50,12 +50,36 @@ export async function readJson(c: Context): Promise<unknown> {
   } catch {
     throw new ApiError(400, 'invalid', 'That isn’t valid JSON.');
   }
-  // Postgres keeps no NUL character, in text or JSON (QA B05 run 2, 20)
-  if (/\\u0000/i.test(text)) throw new ApiError(400, 'invalid', 'That has a character Sen can’t keep.');
+  let value: unknown;
   try {
-    return JSON.parse(text) as unknown;
+    value = JSON.parse(text) as unknown;
   } catch {
     throw new ApiError(400, 'invalid', 'That isn’t valid JSON.');
+  }
+  if (hasNul(value)) throw nulRefused();
+  return value;
+}
+
+/**
+ * Postgres keeps no NUL character, in text or JSON (QA B05 run 2, 20): one anywhere in a body is a
+ * 400. Only a real NUL counts, not the text `\u0000` (run 3, 34).
+ */
+export function hasNul(value: unknown): boolean {
+  if (typeof value === 'string') return value.includes('\0');
+  if (Array.isArray(value)) return value.some(hasNul);
+  if (value && typeof value === 'object') return Object.entries(value).some(([k, v]) => k.includes('\0') || hasNul(v));
+  return false;
+}
+export const nulRefused = () => new ApiError(400, 'invalid', 'That has a character Sen can’t keep.');
+
+/** A request from Sen's own pages, or with no Origin at all; a malformed or `null` Origin isn't (run 3, 33). */
+export function sameOrigin(c: Context): boolean {
+  const origin = c.req.header('origin');
+  if (origin === undefined) return true;
+  try {
+    return new URL(origin).host === new URL(c.req.url).host;
+  } catch {
+    return false;
   }
 }
 

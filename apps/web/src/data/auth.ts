@@ -118,6 +118,8 @@ export const auth: Auth = __SEN_BACKEND__ === 'api' ? apiAuth : fakeAuth;
 /** Forgets the cached session, after the API said it's gone. */
 export function forgetSession() {
   sessionP = Promise.resolve(null);
+  // the reads kept for offline go with the session, however it ended (QA B05 run 3, 30)
+  forgetKept();
 }
 
 let reason: 'paused' | null = null;

@@ -70,3 +70,14 @@ describe('the signed-out gate', () => {
     expect(await fresh.signedOut()).toBe(false);
   });
 });
+
+describe('the kept reads', () => {
+  // a revoked session's offline copy of `me` and Settings goes with it (QA B05 run 3, 30)
+  it('are forgotten whenever the session is', async () => {
+    vi.resetModules();
+    const { forgetSession } = await import('./auth');
+    localStorage.setItem('sen.api.kept', JSON.stringify({ me: { capture: true } }));
+    forgetSession();
+    expect(localStorage.getItem('sen.api.kept')).toBeNull();
+  });
+});
