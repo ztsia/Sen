@@ -1,6 +1,6 @@
 ---
 name: qa
-description: Independent QA pass on the current branch before its PR, plus the rules for fixing what it finds. Spawns a clean-context reviewer that writes acceptance criteria and flows from the spec, runs its own helpers (a Haiku sweep that diffs every screen's accessibility tree and pixels against main and runs the scripted visual checks, and an Opus eyes pass over each changed screen), checks the tests actually catch breakage, exercises the database, row-level security and routes, and walks the journeys at a phone viewport. Every finished slice gets a full run. Fixes then go by three tiers. Small: the main session fixes and verifies itself. Scoped: the last run's reviewer is resumed on the area the fixes touched. Full: a fresh full run, only when a fix reaches the whole flow. Bugs the owner finds by hand go in qa/escapes.md. Use when a slice is finished, before a PR, when a non-negotiable was touched, or when asked to verify, QA or review work.
+description: Independent QA pass on the current branch before its PR, plus the rules for fixing what it finds. Spawns a clean-context reviewer that writes acceptance criteria and flows from the spec, runs its own helpers (a Haiku sweep that runs the suites, the route sweep, the breakage checks and the lived-in journeys, diffs every screen's accessibility tree, pixels and metrics against main, and runs the scripted visual checks; and an Opus eyes pass over each changed screen and each tap's filmstrip), explains every metrics flag, checks the tests actually catch breakage, exercises the database, row-level security and routes, and walks the journeys at a phone viewport. Every finished slice gets a full run. Fixes then go by three tiers. Small: the main session fixes and verifies itself. Scoped: the last run's reviewer is resumed on the area the fixes touched. Full: a fresh full run, only when a fix reaches the whole flow. Bugs the owner finds by hand go in qa/escapes.md. Use when a slice is finished, before a PR, when a non-negotiable was touched, or when asked to verify, QA or review work.
 ---
 
 # QA pass
@@ -24,6 +24,19 @@ QA is diff-driven (D137): it records what every screen *is* (its accessibility t
 `apps/web/e2e/trees/`), compares the branch's pixels with `main`'s in all twelve look-and-mode
 pairs, measures by script what a person shouldn't have to spot, and looks hard only at what changed.
 Behaviour runs once, in Minted light.
+
+It also **measures, never guesses causes (D139).** The same runs record what each screen, tap, route
+and build costs a person (time) and a phone (bytes, CPU, memory), on the branch and on `main`, and
+`qa/limits.ts` flags only what breaks a human limit or got worse than `main`. No check names a cause
+("the function is in sin1", "file X under N KB"); the reviewer finds the cause of each flag.
+
+**The order is mechanical first, then judgement on what the machines raised.** The sweep gathers:
+the suites, the route sweep (`apps/api/test/sweep.test.ts`, every route in `routes.table.ts` hit
+with the same bad requests), the breakage checks (`node scripts/mutants.mjs`: a surviving mutant is
+a guard no test holds), the lived-in journeys (`e2e:lived`: across a deploy, resume, offline, slow
+network, 200% text, 360×640, a year of data), the metrics flags and the diff. The reviewer then
+spends its judgement on those flags, survivors and changed screens, and on the criteria it writes
+from the spec, not on re-deriving input edge cases route by route (B05 took four runs that way).
 
 1. Start the QA database and the web app as `CLAUDE.md` § Commands describes, once B05 adds them.
 2. Spawn `qa-reviewer` with the Agent tool, `subagent_type: "qa-reviewer"`. It runs on Sonnet by
@@ -56,12 +69,19 @@ Goal: QA's raw results for branch <branch>, gathered in qa-artifacts/<branch>/sw
 no fixes, no reading of source beyond a failure's first lines.
 Run, from /home/user/Sen, one at a time, each to its end, keeping each exit code:
   pnpm typecheck; pnpm lint; pnpm test
+  pnpm test:db
   E2E_SHOTS=$PWD/qa-artifacts/<branch>/sweep/screens pnpm e2e
+  pnpm --filter @sen/web e2e:lived
+  pnpm --filter @sen/web e2e:server
+  node scripts/mutants.mjs
   node scripts/qa-diff.mjs --out qa-artifacts/<branch>/diff
+Never two at once: they share ports and the local sen_test database.
 For a run over ten minutes, start it in the background writing a log and an exit-code file, and
 wait with ONE until-loop on that file; never report a run still going.
 Write qa-artifacts/<branch>/sweep/index.md: each command, its exit code and duration; each failing
-test's name, file and first error lines; the diff report's summary line, pasted.
+test's name, file and first error lines; every surviving or stale mutant (mutants/index.md); every
+metrics flag and standing item (the diff report's Metrics section), pasted; the diff report's
+summary line, pasted.
 Don't commit. Report: index.md's contents.
 ```
 
@@ -70,8 +90,15 @@ when it lists any changed or new entry:
 
 ```
 The diff report is qa-artifacts/<branch>/diff/index.md, its screenshots beside it. Look at every
-changed and new entry it lists, as your instructions say, and write qa/<slice>/eyes.md.
+changed and new entry it lists, and the filmstrip of every journey step it links (each tap, a frame
+every 50 ms for a second), as your instructions say, and write qa/<slice>/eyes.md.
 ```
+
+**Every metrics flag gets an answer in the ledger.** The reviewer finds why (a request it can see in
+the run's network log, a query count in `Server-Timing`, a chunk in the build metrics), then it's
+fixed, or accepted with a reason the owner would accept. A flag never fails CI, because timings vary;
+an unexplained one is a finding. A *standing* item (a human limit `main` breaks too) is explained once,
+in the slice that first lists it, with a follow-up named.
 
 **Waiting costs.** Every time an agent wakes, it re-reads its whole conversation, and a wait of more
 than a few minutes lets the prompt cache expire. One until-loop per long run; never a check every
@@ -83,9 +110,23 @@ misled about their money or can't finish a journey) and weighs each `look again`
 ## Escapes
 
 When the owner finds a bug by hand that QA passed, the main session adds it to `qa/escapes.md`
-before fixing it: what the owner saw, why QA missed it, the pin that now catches it, and the
-question (**Ask**) the eyes pass will put to every changed screen from then on. The pin is a test
-that fails on the code before the fix.
+before fixing it: what the owner saw, why QA missed it, the pin that now catches it, the question
+(**Ask**) the eyes pass will put to every changed screen from then on, **which run could have caught
+it**, and **what changed in the tooling** so the kind is caught next time. The pin is a test that
+fails on the code before the fix. An escape is closed only when a tool, skill or agent changed, not
+by a pin alone: a pin catches that bug, a tool catches its kind (D139).
+
+## The retro, and the owner's claude_skills
+
+Each slice ends with a retro at the bottom of `qa/<slice>/ledger.md`, before its PR:
+- what QA found late, or round after round, and why it wasn't found in the first run
+- what cost the most (`node scripts/usage.mjs`, `docs/usage.md`)
+- which skill, agent, script or check changed because of it (a change, not an intention)
+
+The lessons that hold beyond Sen (how to brief, how to run QA, what to measure) go to the owner's
+`claude_skills` repository as a PR at the slice's end: attach it with `add_repo`, change the general
+skill there, and link the PR in the retro. If access is refused, it's an owner step in
+`docs/local.md`.
 
 ## Reading the result
 
