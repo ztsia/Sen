@@ -38,3 +38,32 @@ reaches the whole flow.
 
 **Checks after the batch:** typecheck, lint, format clean; unit 320/320; `pnpm test:db` pgTAP
 103/103 and API 28/28; `e2e:server` 1/1; QA's `qa/e2e/b05-*` 23/23.
+
+## After run 2 (full, Opus, 16 Oct): fix first, 2 Major, 7 Minor, 4 Note
+
+**Tier: 2, the run-2 reviewer resumed on the areas the fixes touched**: signing in and out (spec §17
+*Login*, §16 `/auth/*`), the API's handling of a request's input (§16 *Validation*, *Errors*), and
+Settings → You. No migration, no schema, RLS, view or function change; no navigation structure,
+`components/ui/` part, pattern, shared store, money or theme change. The router's edit is inside
+its sign-out handler only.
+
+| # | Severity | Fix | Evidence |
+|---|---|---|---|
+| 18 | Major | Sen sends the code itself and waits for Gmail: a failure is `502 mail_failed`, says *Sen couldn't send the email*, and keeps no code. The per-address limit on sends moved with it (5 a minute) | `api.test.ts` *says so when the code's email couldn't be sent*; *stops a sixth code* (it caught the moved limit) |
+| 19 | Major | `apps/web/e2e/server.spec.ts` (CI's `db` job): opening offline while signed in, and paused access at both steps. `src/data/auth.test.ts`: every server answer's screen result, and the gate | Reverting `signedOut()` turns 2 unit tests red; QA's specs 30/30 |
+| 10 | Minor | One sign-out at a time when several requests come back 403 together; the *paused* reason is kept until the next sign-in | `server.spec.ts` *a suspended person is told*, via Settings → You (two reads at once) |
+| 20 | Minor | A body holding `\u0000` is a 400 | `api.test.ts` *refuses a NUL character* |
+| 21 | Minor | Settings → You resyncs when the saved values change | QA's FLOW-22 |
+| 22 | Minor | The row is made and locked (`FOR UPDATE`) before comparing; the resource PUT locks too | `api.test.ts` *two identical writes sent at once*: 5 parallel, one audit entry |
+| 23 | Minor | `me` and Settings' core keep their last answer on the device for offline; forgotten at sign-out | QA's FLOW-24 |
+| 24 | Minor | The email field is focused when sign-in opens | QA's FLOW-25 |
+| 29 | Minor | A long email wraps in Account | QA's FLOW-26 |
+| 25 | Note | An unknown `/api/auth` path answers the error shape | `api.test.ts` *(25)* |
+| 26 | Note | A write from another origin is a 403, and anything but JSON a 415 (Better Auth guards its own routes) | `api.test.ts` *(26)* |
+| 28 | Note | The Q14 SQL in docs/local.md lower-cases the address | docs/local.md |
+
+**Left:** 27 (a code sent just before a suspension still makes a session): every route then answers
+403 and the app signs out and says *paused*, so nothing is reachable.
+
+**Checks after the batch:** typecheck, lint, format clean; unit 335/335; `pnpm test:db` pgTAP
+103/103 and API 33/33; `e2e:server` 3/3; QA's `qa/e2e/b05-*` 30/30.
