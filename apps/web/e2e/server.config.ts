@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// The server journey (B05): the built web app on :4175, proxying /api to the local API on :8788, which
+// The server journey (B05): the built web app on :4179, proxying /api to the local API on :8788, which
 // uses the migrated sen_test database (`pnpm test:db` recreates and migrates it). Not part of `pnpm e2e`.
 const phone = {
   ...devices['Pixel 7'],
@@ -20,7 +20,7 @@ export default defineConfig({
   retries: 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   globalSetup: './server.setup.ts',
-  use: { ...phone, baseURL: 'http://localhost:4175', trace: 'retain-on-failure', serviceWorkers: 'block' },
+  use: { ...phone, baseURL: 'http://localhost:4179', trace: 'retain-on-failure', serviceWorkers: 'block' },
   projects: [{ name: 'server' }],
   webServer: [
     {
@@ -34,8 +34,8 @@ export default defineConfig({
     {
       cwd: '..',
       command:
-        'SEN_ENV=preview SEN_BACKEND=api SEN_API_PORT=8788 pnpm exec vite build --outDir dist-server && SEN_BACKEND=api SEN_API_PORT=8788 pnpm exec vite preview --outDir dist-server --port 4175 --strictPort',
-      url: 'http://localhost:4175',
+        'SEN_ENV=preview SEN_BACKEND=api SEN_API_PORT=8788 pnpm exec vite build --outDir dist-server && SEN_BACKEND=api SEN_API_PORT=8788 pnpm exec vite preview --outDir dist-server --port 4179 --strictPort',
+      url: 'http://localhost:4179',
       reuseExistingServer: false,
       timeout: 180_000,
     },

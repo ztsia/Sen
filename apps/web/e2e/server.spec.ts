@@ -83,3 +83,30 @@ test('a suspended person is told their access is paused', async ({ page }) => {
     await ownerSql(`update user_access set suspended_at = null where user_id = ${WEI_MING}`);
   }
 });
+
+// QA tooling (D139): a session that ends while Sen is open (it expired, or was ended elsewhere) must
+// leave the person at sign-in, not on a broken screen or a spinner that never ends.
+test('a session that ends while Sen is open leaves the person at sign-in, not on a broken screen', async ({ page }) => {
+  await signIn(page);
+  await expect(page.getByRole('navigation', { name: 'Tabs' })).toBeVisible();
+  // the server forgets this person's session: its row goes, as an expiry would remove it
+  await ownerSql(
+    `delete from auth_session where user_id = (select id from auth_user where email = 'weiming@example.com')`,
+  );
+  // the next thing the person does that needs the server: open Settings, which reads from it
+  await page.getByRole('navigation', { name: 'Tabs' }).getByRole('link', { name: /^More/ }).click();
+  await page.getByRole('link', { name: /^Settings/ }).click();
+  await expect(page).toHaveURL(/\/s\/sign-in/);
+  await expect(page.getByLabel('Your email')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send the code' })).toBeVisible();
+  // nothing left spinning, nothing broken
+  await expect(page.locator('[role="status"]:has-text("Loading")')).toHaveCount(0);
+  await expect(page.getByText(/something went wrong|couldn.t load/i)).toHaveCount(0);
+  // and signing in again works
+  await page.getByLabel('Your email').fill('weiming@example.com');
+  await page.getByRole('button', { name: 'Send the code' }).click();
+  await page.getByLabel('6-digit code').fill('123456');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).not.toHaveURL(/sign-in/);
+  await expect(page.getByRole('navigation', { name: 'Tabs' })).toBeVisible();
+});

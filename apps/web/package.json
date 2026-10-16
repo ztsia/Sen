@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "e2e": "playwright test",
     "e2e:server": "playwright test -c e2e/server.config.ts",
+    "e2e:lived": "playwright test -c e2e/lived.config.ts",
     "e2e:trees": "playwright test e2e/catalogue.spec.ts --project preview -g 'in minted, light' --update-snapshots",
     "looks": "node scripts/looks-css.mjs"
   },
