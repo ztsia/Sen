@@ -16,21 +16,18 @@
   with no form or sheet, takes over at once, otherwise a toast offers *Update*. An update downloads
   only changed files (it used to re-download all 3.7 MB). Checked in Chromium across two builds.
 
-**Next slice: B06** (`docs/briefs/B06-jobs-realtime-backups.md`), from `main` once the fix PR is merged.
+**Next: two slices before B06 (D139, the owner's call, 16 Oct), each from `main`:**
+1. **B05 · QA tooling**, `docs/briefs/B05-qa-tooling.md`, branch `B05/qa-tooling`, once ztsia/Sen#16
+   is merged. QA measures time, data, CPU and memory in the runs it already does, judges them
+   against human limits and `main`, and the reviewer explains every flag. No check names a cause.
+   It also adds lived-in journeys, a filmstrip for feel, the route sweep and the breakage script,
+   and the learning loop: each escape changes a tool, and each slice's lessons go to the owner's
+   `claude_skills` repo.
+2. **B05 · Feel**, `docs/briefs/B05-feel.md`, branch `B05/feel`: transitions, press feedback, motion
+   and haptics (a new APK). It starts with a motion demo the owner picks from on the phone.
+3. Then B06 (`docs/briefs/B06-jobs-realtime-backups.md`).
 
-### What to do first in B06
-Build the backend QA tools the owner agreed to, before B06's routes, so they apply to every route
-from then on (B05's QA took four runs finding input edge cases one at a time):
-1. **A route sweep**: every API route, each declaring what it allows, hit with the same bad requests
-   (signed out, another person's id, foreign or missing Origin, not JSON, NUL, deep nesting,
-   oversized, wrong method), plus a **query count per request** (catches N+1 and extra round trips).
-2. **Breakage checks as a script**: a fixed list of dangerous edits (drop `FOR UPDATE`, weaken a
-   `WITH CHECK`, a fixed code in production), each applied, the suite expected red, then restored.
-   Never with `git checkout`.
-3. **A bundle-size budget** on the build. Speed checks by timing were dropped (the owner's call:
-   flaky, and the region is now one line of code). EXPLAIN on the main queries comes with the first
-   money table at real volume.
-A captured-mail check comes with B38's HTML emails.
+The owner asked to compact before starting, so nothing of either slice is built yet.
 
 ### Open with the owner
 - docs/local.md *Now*: `SEN_OWNER_EMAIL` in Vercel Production (if it wasn't set before the merge,
