@@ -157,16 +157,19 @@ export const router = createRouter({
 });
 
 // the session ended elsewhere (signed out everywhere, or it expired), or access was paused: sign-in
+// two requests can come back 403 at once: the first one leads, the rest wait for it (QA B05 run 2, 10)
+let leaving: Promise<void> | null = null;
 onSignedOut((code) => {
+  if (leaving) return;
   // paused access (QA B05 run 1, 10): end this session too, and sign-in says why
   if (code === 'suspended') noteSignedOutBecause('paused');
   const out = code === 'suspended' ? auth.signOut().catch(() => undefined) : Promise.resolve();
-  void out.then(() => {
-    forgetSession();
-    void router.navigate({
-      to: '/s/$',
-      params: { _splat: 'sign-in' },
-      replace: true,
+  leaving = out
+    .then(() => {
+      forgetSession();
+      return router.navigate({ to: '/s/$', params: { _splat: 'sign-in' }, replace: true });
+    })
+    .finally(() => {
+      leaving = null;
     });
-  });
 });

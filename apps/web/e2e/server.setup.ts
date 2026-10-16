@@ -44,3 +44,21 @@ export default async function setup() {
     await client.end();
   }
 }
+
+/** One statement on sen_test as the owner, for a journey that changes a person's access. */
+export async function ownerSql(text: string, params: unknown[] = []): Promise<void> {
+  const pg = createRequire(createRequire(import.meta.url).resolve('@sen/db'))('pg') as {
+    Client: new (o: { connectionString: string }) => {
+      connect(): Promise<void>;
+      end(): Promise<void>;
+      query(sql: string, params: unknown[]): Promise<unknown>;
+    };
+  };
+  const client = new pg.Client({ connectionString: 'postgres://sen_owner@127.0.0.1:5432/sen_test' });
+  await client.connect();
+  try {
+    await client.query(text, params);
+  } finally {
+    await client.end();
+  }
+}

@@ -44,8 +44,16 @@ export function parse<T extends z.ZodType>(schema: T, data: unknown): z.output<T
 
 /** The request's JSON body, or a 400 when it isn't JSON (QA B05 run 1, 5). */
 export async function readJson(c: Context): Promise<unknown> {
+  let text: string;
   try {
-    return await c.req.json();
+    text = await c.req.text();
+  } catch {
+    throw new ApiError(400, 'invalid', 'That isn’t valid JSON.');
+  }
+  // Postgres keeps no NUL character, in text or JSON (QA B05 run 2, 20)
+  if (/\\u0000/i.test(text)) throw new ApiError(400, 'invalid', 'That has a character Sen can’t keep.');
+  try {
+    return JSON.parse(text) as unknown;
   } catch {
     throw new ApiError(400, 'invalid', 'That isn’t valid JSON.');
   }

@@ -58,7 +58,7 @@ export function resource<S extends z.ZodObject>(o: ResourceOptions<S>) {
     const fields = parse(o.fields.strict(), await readJson(c));
     const person = c.var.person.id;
     const row = await c.var.db(async (db) => {
-      const [before] = await db.select().from(t).where(eq(t.id, id));
+      const [before] = await db.select().from(t).where(eq(t.id, id)).for('update');
       // the same row again (a retried sync) is a no-op: no write, no audit entry (QA B05 run 1, 7)
       if (
         before &&

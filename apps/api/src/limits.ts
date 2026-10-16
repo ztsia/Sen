@@ -26,11 +26,13 @@ export function clientIp(headers: Headers): string {
 
 /**
  * Asking for a code (QA B05 run 1, 6): each one is a Gmail send, so besides Better Auth's limit per
- * address (5 a minute), an email gets 5 codes in 10 minutes, and an address may look up 20 emails a
+ * address (5 a minute, here), an email gets 5 codes in 10 minutes, and an address may look up 20 emails a
  * minute, whether invited or not.
  */
 export const LIMITS = {
   lookupsPerIp: { max: 20, windowMs: 60_000 },
+  // Better Auth's own limit on its send route, kept now that Sen sends the code itself (QA B05 run 2, 18)
+  codesPerIp: { max: 5, windowMs: 60_000 },
   codesPerEmail: { max: 5, windowMs: 10 * 60_000 },
 };
 

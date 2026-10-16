@@ -52,6 +52,16 @@ function Body({
   const [kind, setKind] = useState<PaydayKind>(payday.kind);
   const [day, setDay] = useState(payday.kind === 'day' ? String(payday.day) : '');
   const [dayError, setDayError] = useState<string | undefined>();
+  // the saved values changed underneath (an Undo, another device): show them (QA B05 run 2, 21)
+  const saved = JSON.stringify({ names, payday });
+  const [seen, setSeen] = useState(saved);
+  if (seen !== saved) {
+    setSeen(saved);
+    setText(names.join('\n'));
+    setKind(payday.kind);
+    setDay(payday.kind === 'day' ? String(payday.day) : '');
+    setDayError(undefined);
+  }
 
   const saveNames = () => {
     if (

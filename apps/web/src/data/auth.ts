@@ -1,4 +1,5 @@
 import { ApiFailure, apiCall } from './api/client';
+import { forgetKept } from './api/backend';
 import { CODE_EXPIRED, CODE_OK } from '@/screens/outside/logic';
 
 /** Who is signed in: Better Auth's session, as the screens need it. */
@@ -7,7 +8,7 @@ export interface Session {
   name: string;
 }
 
-export type SendResult = 'sent' | 'not-invited' | 'suspended' | 'too-many' | 'offline' | 'failed';
+export type SendResult = 'sent' | 'not-invited' | 'suspended' | 'too-many' | 'mail-failed' | 'offline' | 'failed';
 /** `too-many`: three wrong tries ended this code, so a new one is needed. `wait`: too many tries in a minute. */
 export type VerifyResult = 'ok' | 'wrong' | 'expired' | 'too-many' | 'wait' | 'offline' | 'failed';
 
@@ -47,7 +48,8 @@ function load(): Promise<Session | null | 'unknown'> {
   return sessionP;
 }
 
-const apiAuth: Auth = {
+/** The server's sign-in, exported for its tests; screens use `auth`. */
+export const apiAuth: Auth = {
   async session() {
     const s = await load();
     return s === 'unknown' ? null : s;
@@ -65,17 +67,20 @@ const apiAuth: Auth = {
         ? 'not-invited'
         : f.code === 'suspended'
           ? 'suspended'
-          : f.status === 429
-            ? 'too-many'
-            : f.status === 0
-              ? 'offline'
-              : 'failed';
+          : f.code === 'mail_failed'
+            ? 'mail-failed'
+            : f.status === 429
+              ? 'too-many'
+              : f.status === 0
+                ? 'offline'
+                : 'failed';
     }
   },
   async verify(email, code) {
     try {
       await apiCall('/auth/sign-in/email-otp', { body: { email, otp: code } });
       sessionP = null;
+      reason = null;
       return 'ok';
     } catch (e) {
       const f = failure(e);
@@ -87,10 +92,12 @@ const apiAuth: Auth = {
     }
   },
   async signOut() {
+    forgetKept();
     await apiCall('/auth/sign-out', { body: {} });
     sessionP = Promise.resolve(null);
   },
   async signOutEverywhere() {
+    forgetKept();
     await apiCall('/auth/revoke-sessions', { body: {} });
     sessionP = Promise.resolve(null);
   },
@@ -115,12 +122,10 @@ export function forgetSession() {
 
 let reason: 'paused' | null = null;
 
-/** Why the app last sent someone to sign-in, for sign-in to say once (QA B05 run 1, 10). */
+/** Why the app last sent someone to sign-in (QA B05 run 1, 10): kept until they sign in again. */
 export function noteSignedOutBecause(r: 'paused') {
   reason = r;
 }
-export function takeSignedOutReason(): 'paused' | null {
-  const r = reason;
-  reason = null;
-  return r;
+export function signedOutReason(): 'paused' | null {
+  return reason;
 }

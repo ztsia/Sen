@@ -51,6 +51,23 @@ export function createApp(deps: Deps) {
 
   api.get('/health', (c) => c.json({ ok: true }));
 
+  // A write comes only from Sen's own pages, as JSON (QA B05 run 2, 26): another site's form or
+  // script can't post here, whatever the cookie's SameSite does. Better Auth checks its own routes.
+  api.use('*', async (c, next) => {
+    if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && !c.req.path.startsWith('/api/auth/')) {
+      const origin = c.req.header('origin');
+      if (origin && new URL(origin).host !== new URL(c.req.url).host)
+        throw new ApiError(403, 'forbidden', 'That came from another site.');
+      if (
+        c.req.header('content-length') !== '0' &&
+        !c.req.header('content-type')?.startsWith('application/json') &&
+        c.req.method !== 'DELETE'
+      )
+        throw new ApiError(415, 'invalid', 'Sen takes JSON.');
+    }
+    await next();
+  });
+
   // Sen is invitation-only (D52). Better Auth answers success for an unknown email and sends nothing,
   // so the screen couldn't tell; this says so before a code is asked for, and says when someone's
   // access is paused. It reveals whether an email has an account, which an invitation-only app of
@@ -63,7 +80,7 @@ export function createApp(deps: Deps) {
     const parsed = z.object({ email: z.string().max(254) }).safeParse(body);
     if (parsed.success) {
       const email = parsed.data.email.trim().toLowerCase();
-      const { lookupsPerIp, codesPerEmail } = LIMITS;
+      const { lookupsPerIp, codesPerIp, codesPerEmail } = LIMITS;
       if (
         !(await withinLimit(
           deps.auth,
@@ -77,12 +94,35 @@ export function createApp(deps: Deps) {
       const check = r.rows[0]?.check;
       if (check === 'not_invited') throw new ApiError(403, 'not_invited', 'Sen is invitation-only.', 'email');
       if (check === 'suspended') throw suspended();
+      if (
+        !(await withinLimit(deps.auth, `codes-ip:${clientIp(c.req.raw.headers)}`, codesPerIp.max, codesPerIp.windowMs))
+      )
+        throw tooMany('Too many codes asked for. Wait a minute, then try again.');
       if (!(await withinLimit(deps.auth, `codes:${email}`, codesPerEmail.max, codesPerEmail.windowMs)))
         throw tooMany('Too many codes asked for. Wait a few minutes, then try again.');
+      // The code is made by Better Auth and sent here, awaited: its own route sends in the background
+      // and answers success even when Gmail fails, so a code never sent would look like one in spam
+      // (QA B05 run 2, 18). The previous code for this address is replaced, as its route would.
+      await deps.auth.query('delete from auth_verification where identifier = $1', [`sign-in-otp-${email}`]);
+      const otp = await auth.api.createVerificationOTP({ body: { email, type: 'sign-in' } });
+      try {
+        await deps.mailer.sendCode(email, otp);
+      } catch (e) {
+        console.error('sign-in code not sent', e);
+        await deps.auth.query('delete from auth_verification where identifier = $1', [`sign-in-otp-${email}`]);
+        throw new ApiError(502, 'mail_failed', 'Sen couldn’t send the email. Try again in a minute.');
+      }
+      return c.json({ success: true });
     }
     await next();
   });
-  api.on(['GET', 'POST'], '/auth/*', (c) => auth.handler(c.req.raw));
+  api.on(['GET', 'POST'], '/auth/*', async (c) => {
+    const res = await auth.handler(c.req.raw);
+    // an unknown path under /auth: the error shape, as everywhere else (QA B05 run 2, 25)
+    if (res.status === 404 && !res.headers.get('content-length') && !(await res.clone().text()))
+      return c.json({ code: 'not_found', message: 'No such route.' }, 404);
+    return res;
+  });
 
   // everything else needs a session, and runs as its person
   api.use('*', async (c, next) => {

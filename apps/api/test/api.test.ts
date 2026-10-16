@@ -388,6 +388,65 @@ describe('writes', () => {
   });
 });
 
+describe('QA B05 run 2', () => {
+  it('says so when the code’s email couldn’t be sent, and keeps no code (18)', async () => {
+    const failing = createApp({
+      ...deps,
+      mailer: { sendCode: async () => Promise.reject(new Error('ETIMEDOUT')) },
+    }).api;
+    const res = await failing.request(`${ORIGIN}/api/auth/email-otp/send-verification-otp`, {
+      method: 'POST',
+      headers: { origin: ORIGIN, 'content-type': 'application/json', 'x-forwarded-for': nextIp() },
+      body: JSON.stringify({ email: admin.email, type: 'sign-in' }),
+    });
+    expect(res.status).toBe(502);
+    expect(await res.json()).toMatchObject({ code: 'mail_failed' });
+    const left = await owner.query('select 1 from auth_verification where identifier = $1', [
+      `sign-in-otp-${admin.email}`,
+    ]);
+    expect(left.rowCount).toBe(0);
+  });
+
+  it('refuses a NUL character with a 400, not a 500 (20)', async () => {
+    const cookie = await signIn(member.email);
+    const r = await call('/api/commands', {
+      cookie,
+      body: { type: 'setting.set', key: 'you.bankNames', value: 'BEN\u0000 B' },
+    });
+    expect(r.status).toBe(400);
+  });
+
+  it('makes two identical writes sent at once one change and one audit entry (22)', async () => {
+    const cookie = await signIn(member.email);
+    const count = async () =>
+      (await owner.query('select count(*)::int n from audit_log where user_id = $1', [member.id])).rows[0].n as number;
+    const before = await count();
+    const cmd = { type: 'setting.set', key: 'you.bankNames', value: `SAME ${randomUUID()}` };
+    const results = await Promise.all(Array.from({ length: 5 }, () => call('/api/commands', { cookie, body: cmd })));
+    expect(results.every((r) => r.status === 200)).toBe(true);
+    expect(await count()).toBe(before + 1);
+  });
+
+  it('answers an unknown /api/auth path with the error shape (25)', async () => {
+    const r = await call('/api/auth/nope');
+    expect(r.status).toBe(404);
+    expect(r.body).toMatchObject({ code: 'not_found' });
+  });
+
+  it('takes writes only from Sen’s own origin, and only as JSON (26)', async () => {
+    const cookie = await signIn(member.email);
+    const post = (headers: Record<string, string>) =>
+      api.request(`${ORIGIN}/api/commands`, {
+        method: 'POST',
+        headers: { cookie, 'x-forwarded-for': nextIp(), ...headers },
+        body: JSON.stringify({ type: 'setting.set', key: 'you.payday', value: { kind: 'none' } }),
+      });
+    expect((await post({ origin: 'https://evil.example', 'content-type': 'application/json' })).status).toBe(403);
+    expect((await post({ origin: ORIGIN, 'content-type': 'text/plain' })).status).toBe(415);
+    expect((await post({ origin: ORIGIN, 'content-type': 'application/json' })).status).toBe(200);
+  });
+});
+
 describe('the admin’s routes refuse everyone else (D52)', () => {
   it('gives a member 403 on /admin/* and member.* commands', async () => {
     const cookie = await signIn(member.email);

@@ -94,7 +94,10 @@ async function setYou(v: Env['Variables'], key: string, value: unknown): Promise
   } else throw notBuilt('a later slice');
 
   return v.db(async (db) => {
-    const [before] = await db.select().from(t).where(eq(t.userId, person));
+    // the row exists and is locked before the comparison, so two identical writes sent at once
+    // are one change and one audit entry (QA B05 run 2, 22)
+    await db.insert(t).values({ userId: person }).onConflictDoNothing();
+    const [before] = await db.select().from(t).where(eq(t.userId, person)).for('update');
     const undoValue =
       key === 'you.bankNames' ? (before?.ownNames ?? []).join('\n') : toPayday(before?.expectedPayday ?? null);
     const undo: Command = { type: 'setting.set', key, value: undoValue };

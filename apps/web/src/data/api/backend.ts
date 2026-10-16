@@ -1,7 +1,38 @@
 import type { Command, WriteResult } from '@sen/core/commands';
 import type { MeView, SettingsCore, SettingsView } from '@sen/core/views';
 import type { Backend } from '../backend';
-import { apiCall } from './client';
+import { readStored, writeStored } from '@/lib/storage';
+import { ApiFailure, apiCall } from './client';
+
+const KEPT = 'sen.api.kept';
+
+/**
+ * The last answer each read had, kept on this device, for when the server can't be reached: Sen
+ * opens offline (QA B05 run 2, 23). Only your own reads, and forgotten at sign-out (auth.ts).
+ */
+async function kept<T>(key: string, load: () => Promise<T>): Promise<T> {
+  const all = (): Record<string, unknown> => {
+    try {
+      return JSON.parse(readStored(KEPT) ?? '{}') as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  };
+  try {
+    const value = await load();
+    writeStored(KEPT, JSON.stringify({ ...all(), [key]: value }));
+    return value;
+  } catch (e) {
+    const last = all()[key];
+    if (e instanceof ApiFailure && e.status === 0 && last !== undefined) return last as T;
+    throw e;
+  }
+}
+
+/** Forgets every kept answer: at sign-out, so the next person on this device sees nothing of them. */
+export function forgetKept() {
+  writeStored(KEPT, null);
+}
 
 /** What a screen whose server isn't built yet gets: production shows *Not built yet* instead. */
 const notYet = (): never => {
@@ -23,9 +54,9 @@ export function createApiBackend(rest: Backend | null): Backend {
   const changed = () => listeners.forEach((fn) => fn());
   return {
     ...bind(fallback),
-    me: () => apiCall<MeView>('/me'),
+    me: () => kept('me', () => apiCall<MeView>('/me')),
     async settings(): Promise<SettingsView> {
-      const core = await apiCall<SettingsCore>('/settings');
+      const core = await kept('settings', () => apiCall<SettingsCore>('/settings'));
       if (!rest) return core as SettingsView;
       return { ...(await rest.settings()), ...core };
     },

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { auth, takeSignedOutReason, type SendResult } from '@/data/auth';
+import { auth, signedOutReason, type SendResult } from '@/data/auth';
 import { queryClient } from '@/data';
 import { Avatar } from '@/components/look/avatar';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ const FAILED = 'Something went wrong on Sen’s side. Try again.';
 const TOO_MANY_SENT = 'Too many codes asked for. Wait a few minutes, then try again.';
 const WAIT = 'Too many tries in a minute. Wait a minute, then try again.';
 const PAUSED = 'Your access to Sen is paused. Ask the person who invited you.';
+const MAIL_FAILED = 'Sen couldn’t send the email. Try again in a minute.';
 const PREVIEW_CODE = '123456';
 
 /**
@@ -77,10 +78,11 @@ function EmailStep({
   online: boolean;
   onSent: (email: string) => void;
 }) {
-  // sent here because access was paused: say so once (QA B05 run 1, 10)
-  const [error, setError] = useState<string | undefined>(() =>
-    takeSignedOutReason() === 'paused' ? PAUSED : undefined,
-  );
+  // the one field is ready to type in (patterns §7 Forms; QA B05 run 2, 24)
+  const field = useRef<HTMLInputElement>(null);
+  useEffect(() => field.current?.focus(), []);
+  // sent here because access was paused: say so (QA B05 run 1, 10)
+  const [error, setError] = useState<string | undefined>(() => (signedOutReason() === 'paused' ? PAUSED : undefined));
   const [waiting, setWaiting] = useState(false);
   const submit = async () => {
     const r = checkEmail(email);
@@ -106,6 +108,7 @@ function EmailStep({
       <Field data-invalid={error ? true : undefined}>
         <FieldLabel htmlFor="email">Your email</FieldLabel>
         <Input
+          ref={field}
           id="email"
           type="email"
           inputMode="email"
@@ -137,16 +140,16 @@ function EmailStep({
   );
 }
 
-function sendMessage(r: Exclude<SendResult, 'sent'>) {
-  return r === 'not-invited'
-    ? EMAIL_MESSAGES['invitation-only']
-    : r === 'suspended'
-      ? PAUSED
-      : r === 'too-many'
-        ? TOO_MANY_SENT
-        : r === 'offline'
-          ? OFFLINE
-          : FAILED;
+function sendMessage(r: Exclude<SendResult, 'sent'>): string {
+  const said: Record<Exclude<SendResult, 'sent'>, string> = {
+    'not-invited': EMAIL_MESSAGES['invitation-only'],
+    suspended: PAUSED,
+    'too-many': TOO_MANY_SENT,
+    'mail-failed': MAIL_FAILED,
+    offline: OFFLINE,
+    failed: FAILED,
+  };
+  return said[r];
 }
 
 type Problem = 'wrong' | 'expired' | 'incomplete' | 'too-many' | 'wait' | 'offline' | 'failed' | 'send';

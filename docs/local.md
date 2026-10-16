@@ -22,10 +22,10 @@ follow on a phone, and commit.
             project **sen** → *SQL Editor*) can add a test account, since invitations come with
             B38. Replace the address, run, sign in with it on the phone, then run the last line:
             ```
-            insert into auth_user (name, email, email_verified) values ('Test', 'you@outlook.com', true);
-            insert into user_access (user_id) select id from auth_user where email = 'you@outlook.com';
+            insert into auth_user (name, email, email_verified) values ('Test', lower('you@outlook.com'), true);
+            insert into user_access (user_id) select id from auth_user where email = lower('you@outlook.com');
             -- after the test:
-            delete from auth_user where email = 'you@outlook.com';
+            delete from auth_user where email = lower('you@outlook.com');
             ```
             Tell the next session what each one did.
       - [ ] **Sign out everywhere (B05, done-when 5):** signed in on the phone and in a second

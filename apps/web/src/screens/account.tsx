@@ -52,7 +52,7 @@ export default function AccountSettings() {
         </GroupCard>
         <GroupCard label="Account">
           {/* information, so no tile (patterns §7, settings row; QA B05 run 1, 9) */}
-          <NavRow title="Email" value={session.data?.email} />
+          <NavRow title="Email" value={<span className="wrap-anywhere">{session.data?.email}</span>} />
           <NavRow icon={LogOutIcon} title="Sign out" onOpen={() => leave(() => auth.signOut())} />
           <NavRow
             icon={DoorOpenIcon}
