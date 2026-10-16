@@ -21,3 +21,25 @@ screens.md (Account: *your email, Sign out, Sign out everywhere*) call for both.
 | Verdict | **wrong** (Minor): the pattern drift above. The change itself is right |
 
 Not looked at: a long email in the value slot (whether it truncates or wraps), and the eight other pairs.
+
+# Run 2 (full, 15–16 Oct)
+
+The `qa-eyes` helper couldn't be spawned again: this reviewer had no Agent tool. The reviewer looked at
+the one changed entry itself, this time in **all twelve** look-and-mode pairs (head images as two
+contact sheets, plus Minted light at full size from QA's own walk).
+
+Diff report: 87 entries; 1 tree changed (`settings/account`), 0 new, 0 removed; 1 entry with pixels
+changed (12 pairs); 1 unexplored (`reading`, unchanged since B04); 0 check findings.
+
+## settings/account
+
+Tree change: `+ text: Email weiming@example.com`, `+ button "Sign out everywhere"`, as the brief and
+screens.md (Account: *your email, Sign out, Sign out everywhere*) ask.
+
+| Question | Answer |
+|---|---|
+| Is every change one the brief calls for? | Yes: the email row and *Sign out everywhere* |
+| Did run 1's drift get fixed? | Yes for the Email row: information, now without a tile, value on the right. The chevron action rows were kept on purpose (ledger, like B04's approved *Delete account*) |
+| Anything unreadable, clipped or overlapping in the twelve pairs? | No, with Wei Ming's short address. The destructive tint and its tile read in every look, Copper dark and Line dark included |
+| A long email? | **Clipped** (QA's FLOW-26, finding 29): a 70-character address runs past the card's edge and its middle is lost. The catalogue's fixture is short, so the scripted clip check can't see it |
+| Verdict | **right** for what the diff shows; **look again** at long values in the Email row (finding 29, Minor) |
