@@ -310,6 +310,20 @@ describe('the generic resource routes, swept', () => {
     },
   );
 
+  it('makes identical upserts sent at once one change and one audit entry, creating or updating', async () => {
+    const audits = async (id: string) =>
+      (await owner.query('select action from audit_log where entity_id = $1 order by created_at', [id])).rows.map(
+        (r: { action: string }) => r.action,
+      );
+    const id = randomUUID();
+    const twice = async (body: unknown) =>
+      (await Promise.all([1, 2, 3].map(() => as(admin.id, 'PUT', `/g/${id}`, body)))).map((r) => r.status);
+    expect(await twice({ name: 'New', amount: 5 })).toEqual([200, 200, 200]);
+    expect(await audits(id)).toEqual(['create']);
+    expect(await twice({ name: 'Renamed', amount: 5 })).toEqual([200, 200, 200]);
+    expect(await audits(id)).toEqual(['create', 'update']);
+  });
+
   it.each(RESOURCE_ROUTES)('$method $path refuses a bad id and bad bodies with a 400', async ({ method, path }) => {
     if (path === '/:id') {
       const res = await as(

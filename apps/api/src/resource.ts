@@ -58,6 +58,26 @@ export function resource<S extends z.ZodObject>(o: ResourceOptions<S>) {
     const fields = parse(o.fields.strict(), await readJson(c));
     const person = c.var.person.id;
     const row = await c.var.db(async (db) => {
+      const values = { ...fields, id, userId: person, ...(t.updatedAt ? { updatedAt: new Date() } : {}) };
+      // a new row is created here or by a request already holding it: two identical creates sent at
+      // once are one row and one audit entry, as two identical updates are below (breakage check
+      // for-update-resource)
+      const [created] = await db
+        .insert(t)
+        .values(values as never)
+        .onConflictDoNothing({ target: t.id })
+        .returning();
+      if (created) {
+        await audit(db, {
+          userId: person,
+          entity: o.name,
+          entityId: id,
+          action: 'create',
+          after: created,
+          actor: 'user',
+        });
+        return created;
+      }
       const [before] = await db.select().from(t).where(eq(t.id, id)).for('update');
       // the same row again (a retried sync) is a no-op: no write, no audit entry (QA B05 run 1, 7)
       if (
@@ -67,21 +87,13 @@ export function resource<S extends z.ZodObject>(o: ResourceOptions<S>) {
         )
       )
         return before;
-      const values = { ...fields, id, userId: person, ...(t.updatedAt ? { updatedAt: new Date() } : {}) };
+      // someone else's id: invisible here, so the update below reaches nothing and RLS's check refuses
       const [after] = await db
         .insert(t)
         .values(values as never)
         .onConflictDoUpdate({ target: t.id, set: values as never })
         .returning();
-      await audit(db, {
-        userId: person,
-        entity: o.name,
-        entityId: id,
-        action: before ? 'update' : 'create',
-        before,
-        after,
-        actor: 'user',
-      });
+      await audit(db, { userId: person, entity: o.name, entityId: id, action: 'update', before, after, actor: 'user' });
       return after;
     });
     return c.json(row);
