@@ -355,9 +355,10 @@ test.describe('at 200% text', () => {
     await settled(page);
   };
 
-  // Real findings, left as expected failures so this stays green until each is fixed (then the test
-  // says so, and the mark goes): at 200% a row's title and its value are drawn over each other.
-  const OVERLAPS_AT_200 = new Set<string>(['/review', '/insights', '/more']);
+  // A screen found drawing text over text here is listed while its fix is pending, as an expected
+  // failure, so this stays green and says so when it's fixed. The first three (Review, Insights, More)
+  // were fixed in the slice that found them.
+  const OVERLAPS_AT_200 = new Set<string>([]);
   for (const screen of FIVE) {
     test(`${screen === '/' ? 'Home' : screen.slice(1)} reads at twice the text size without clipping or sideways scroll`, async ({
       page,

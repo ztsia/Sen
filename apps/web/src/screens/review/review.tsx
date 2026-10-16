@@ -81,14 +81,15 @@ function ReviewBody({ r }: { r: ReviewView }) {
     <>
       {suggested.length ? (
         <div
-          className="mx-4 mt-2 flex items-center gap-3 rounded-[var(--radius-card,16px)] bg-primary/10 py-2 pr-2 pl-3"
+          className="mx-4 mt-2 flex flex-wrap items-center gap-3 rounded-[var(--radius-card,16px)] bg-primary/10 py-2 pr-2 pl-3"
           role="status"
         >
           <SparklesIcon className="size-4 shrink-0 text-primary" aria-hidden="true" />
-          <p className="min-w-0 flex-1 text-sm">
+          {/* 10rem of words first: at large text the button wraps below instead of over them (lived-in, 200%) */}
+          <p className="min-w-0 flex-1 basis-40 text-sm">
             Sen suggested {suggested.length === 1 ? 'an answer' : `${suggested.length} answers`}, marked below.
           </p>
-          <Button size="sm" aria-disabled={applying || undefined} onClick={() => void applyAll()}>
+          <Button size="sm" className="ml-auto" aria-disabled={applying || undefined} onClick={() => void applyAll()}>
             Apply all
           </Button>
         </div>

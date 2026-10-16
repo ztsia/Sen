@@ -19,6 +19,7 @@ const FAILED = 'Something went wrong on Sen’s side. Try again.';
 const TOO_MANY_SENT = 'Too many codes asked for. Wait a few minutes, then try again.';
 const WAIT = 'Too many tries in a minute. Wait a minute, then try again.';
 const PAUSED = 'Your access to Sen is paused. Ask the person who invited you.';
+const ENDED = 'You were signed out. Sign in again to carry on.';
 const MAIL_FAILED = 'Sen couldn’t send the email. Try again in a minute.';
 const PREVIEW_CODE = '123456';
 // A preview's one person, made up and seeded by db-deploy.ts: the review app opens on sign-in, so the
@@ -87,8 +88,10 @@ function EmailStep({
   // the one field is ready to type in (patterns §7 Forms; QA B05 run 2, 24)
   const field = useRef<HTMLInputElement>(null);
   useEffect(() => field.current?.focus(), []);
-  // sent here because access was paused: say so (QA B05 run 1, 10)
-  const [error, setError] = useState<string | undefined>(() => (signedOutReason() === 'paused' ? PAUSED : undefined));
+  // sent here because access was paused, or the session ended: say so (QA B05 run 1, 10; lived-in)
+  const [error, setError] = useState<string | undefined>(() =>
+    signedOutReason() === 'paused' ? PAUSED : signedOutReason() === 'ended' ? ENDED : undefined,
+  );
   const [waiting, setWaiting] = useState(false);
   const submit = async () => {
     const r = checkEmail(email);

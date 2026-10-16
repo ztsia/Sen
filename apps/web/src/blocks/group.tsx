@@ -86,12 +86,14 @@ export function NavRow({
   const inner = (
     <>
       {icon ? <IconTile icon={icon} tone={tone ?? (destructive ? 'warn' : 'neutral')} /> : null}
-      <ItemContent className="min-w-0 gap-0.5">
+      {/* at least 6rem of words before the value: at large text (Android's font size) that's wider than
+          the row has, so the value wraps under the title instead of drawn over it (lived-in, 200%) */}
+      <ItemContent className="min-w-0 basis-24 gap-0.5">
         <ItemTitle className={cn('text-base font-normal', destructive && 'text-destructive')}>{title}</ItemTitle>
         {description ? <ItemDescription className="text-sm">{description}</ItemDescription> : null}
       </ItemContent>
       {value || trailing || onOpen ? (
-        <ItemActions className="max-w-[48%] shrink-0 gap-2 text-right text-sm text-muted-foreground">
+        <ItemActions className="ml-auto max-w-[48%] shrink-0 gap-2 text-right text-sm text-muted-foreground">
           {/* a value wraps between words rather than cutting off, so an amount is never hidden (QA B04 redesign run 3, 5) */}
           {value ? <span className="min-w-0 text-pretty">{value}</span> : null}
           {trailing}
@@ -100,7 +102,7 @@ export function NavRow({
       ) : null}
     </>
   );
-  const cls = 'min-h-14 w-full flex-nowrap gap-3 rounded-none py-2.5 text-left text-base';
+  const cls = 'min-h-14 w-full flex-wrap gap-3 rounded-none py-2.5 text-left text-base';
   if (!onOpen && !press)
     return (
       <Item size="sm" className={cls}>
@@ -246,7 +248,7 @@ export function PersonRow({
       ) : null}
     </>
   );
-  const cls = 'min-h-14 w-full flex-nowrap gap-3 rounded-none py-2.5 text-left text-base';
+  const cls = 'min-h-14 w-full flex-wrap gap-3 rounded-none py-2.5 text-left text-base';
   if (!onOpen)
     return (
       <Item size="sm" className={cls}>

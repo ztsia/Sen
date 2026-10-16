@@ -83,14 +83,15 @@ function LinkRow({
     <Item
       asChild
       size="sm"
-      className="min-h-14 w-full flex-nowrap gap-3 rounded-none py-2.5 text-left text-base active:bg-accent"
+      className="min-h-14 w-full flex-wrap gap-3 rounded-none py-2.5 text-left text-base active:bg-accent"
     >
       <Link to="/s/$" params={{ _splat: id }}>
         <IconTile icon={icon} />
-        <ItemContent className="min-w-0">
+        {/* as NavRow: the value wraps under the label at large text, never over it (lived-in, 200%) */}
+        <ItemContent className="min-w-0 basis-24">
           <ItemTitle className="text-base font-normal">{label}</ItemTitle>
         </ItemContent>
-        <ItemActions className="shrink-0 gap-2 text-sm text-muted-foreground">
+        <ItemActions className="ml-auto shrink-0 gap-2 text-sm text-muted-foreground">
           {value ? <span className="truncate">{value}</span> : null}
           <ChevronRightIcon className="size-5 shrink-0 text-icon" aria-hidden="true" />
         </ItemActions>

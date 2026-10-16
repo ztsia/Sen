@@ -99,6 +99,8 @@ test('a session that ends while Sen is open leaves the person at sign-in, not on
   await expect(page).toHaveURL(/\/s\/sign-in/);
   await expect(page.getByLabel('Your email')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send the code' })).toBeVisible();
+  // and says why it's there
+  await expect(page.getByText('You were signed out. Sign in again to carry on.')).toBeVisible();
   // nothing left spinning, nothing broken
   await expect(page.locator('[role="status"]:has-text("Loading")')).toHaveCount(0);
   await expect(page.getByText(/something went wrong|couldn.t load/i)).toHaveCount(0);
