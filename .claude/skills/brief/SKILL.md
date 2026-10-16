@@ -66,6 +66,9 @@ Each line below is a miss that happened because a brief left it unsaid:
   run while it was still going.) For a run over ten minutes, say how to wait: one wait that ends
   when the run does (an until-loop on its exit file), not a check every minute. Each time the agent
   stops to wait, the main session is woken for a turn; an hour of minute checks was sixty turns.
+- **What it shares with agents running at once.** Its own ports and build folders, and who holds
+  the test database (`pnpm test:db` drops `sen_test`). (QA tooling, 16 Oct: two configs used port
+  4175; a run could drop the database under another's.)
 - **Its environment.** The absolute working directory, a port of its own, *don't commit*. A worktree
   may start at `main`: tell it which commit to check out. (One worked in the main checkout instead
   of its worktree, was blocked, and was judged a failure of the model; the same model succeeded
