@@ -36,6 +36,10 @@ The tables were designed in at B05; this slice builds the flows.
   - their switches
   - welcome credit, and an allowance or *Unlimited*
 - **The invitation email** carries a link, its token stored hashed, with an expiry.
+  It's designed HTML, and the sign-in code's email gets the same design (owner, 16 Oct): being
+  invited should feel like a privilege. Inline styles, no remote images (spam scores, tracking), and
+  a plain-text part; Sen's Gmail still sends it (D54). Tests capture the mail instead of sending it,
+  and check its subject, code or link, and that nothing loads from elsewhere.
 - ***Resend*** and ***Revoke***.
 - **Accepting goes through one narrow `SECURITY DEFINER` function,** which creates the account (sign-up
   stays off).

@@ -19,6 +19,8 @@ phases are still the risks to retire, and the table at the end shows where each 
 | B04 | Skeleton: everything else, and your review | [B04](briefs/B04-skeleton-rest.md) |
 | | **2 · Ground** | |
 | B05 | Server, database and sign-in | [B05](briefs/B05-server.md) |
+| B05 | QA tooling: measure everything, learn from every escape (D139) | [B05](briefs/B05-qa-tooling.md) |
+| B05 | Feel: motion, feedback and haptics (D139) | [B05](briefs/B05-feel.md) |
 | B06 | Jobs, realtime, push and backups | [B06](briefs/B06-jobs-realtime-backups.md) |
 | | **3 · Capture to ledger** | |
 | B07 | Sync and the outbox | [B07](briefs/B07-sync.md) |

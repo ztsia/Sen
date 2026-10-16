@@ -43,6 +43,18 @@ export function toastDone(message: string) {
 }
 
 /**
+ * A new version of Sen is ready (D138). It stays until tapped or swiped, apart from the one-at-a-time
+ * change toasts, so a change's Undo never pushes it away; showing it again updates it in place.
+ */
+export function toastUpdate(onUpdate: () => void) {
+  toast('A new version of Sen is ready.', {
+    id: 'sen-update',
+    duration: Infinity,
+    action: { label: 'Update', onClick: onUpdate },
+  });
+}
+
+/**
  * Take the last toast down if it only said something: a refusal about a file shouldn't follow the next
  * one onto its screen. A toast with Undo stays its six seconds (QA B04 run 3, 27).
  */

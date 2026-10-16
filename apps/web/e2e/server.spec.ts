@@ -8,6 +8,8 @@ test('signs in with a code, shows the email, and signs out everywhere', async ({
   await expect(page).toHaveURL(/\/s\/sign-in/);
 
   const email = page.getByLabel('Your email');
+  // A preview fills in its made-up person, so the review app needs only the code.
+  await expect(email).toHaveValue('weiming@example.com');
   await email.fill('stranger@example.com');
   await page.getByRole('button', { name: 'Send the code' }).click();
   await expect(page.getByText('Sen is invitation-only')).toBeVisible();
