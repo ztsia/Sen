@@ -5,6 +5,7 @@ import { Avatar } from '@/components/look/avatar';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { toastDone } from '@/blocks/toast';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -133,8 +134,10 @@ function EmailStep({
           )}
         </div>
       </Field>
-      <Button type="submit" disabled={waiting}>
-        Send the code
+      <Button type="submit" disabled={waiting} aria-busy={waiting || undefined}>
+        <Pending on={waiting} label="Sending the code…">
+          Send the code
+        </Pending>
       </Button>
     </form>
   );
@@ -168,22 +171,24 @@ function CodeStep({
   const [code, setCode] = useState('');
   const [problem, setProblem] = useState<Problem>();
   const [sendProblem, setSendProblem] = useState<string>();
-  const [waiting, setWaiting] = useState(false);
+  // Which request is on its way: the buttons wait for both, and the one that sent it says so.
+  const [busy, setBusy] = useState<'verify' | 'send'>();
+  const waiting = busy !== undefined;
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => input.current?.focus(), []);
   const submit = async () => {
     input.current?.focus();
     if (!/^\d{6}$/.test(code)) return setProblem('incomplete');
     if (!online) return setProblem('offline');
-    setWaiting(true);
+    setBusy('verify');
     const r = await auth.verify(email, code);
     if (r === 'ok') {
       await queryClient.resetQueries();
-      setWaiting(false);
+      setBusy(undefined);
       onDone();
       return;
     }
-    setWaiting(false);
+    setBusy(undefined);
     setProblem(r);
   };
   const resend = async () => {
@@ -191,9 +196,9 @@ function CodeStep({
     setProblem(undefined);
     setSendProblem(undefined);
     input.current?.focus();
-    setWaiting(true);
+    setBusy('send');
     const r = await auth.send(email);
-    setWaiting(false);
+    setBusy(undefined);
     if (r === 'sent') toastDone(`A new code is on its way to ${email}.`);
     else {
       setSendProblem(sendMessage(r));
@@ -260,8 +265,10 @@ function CodeStep({
           ) : null}
         </div>
       </Field>
-      <Button type="submit" disabled={waiting}>
-        Sign in
+      <Button type="submit" disabled={waiting} aria-busy={busy === 'verify' || undefined}>
+        <Pending on={busy === 'verify'} label="Signing in…">
+          Sign in
+        </Pending>
       </Button>
       <div className="flex flex-col gap-1">
         <Button
@@ -269,14 +276,31 @@ function CodeStep({
           size="sm"
           variant={problem === 'expired' || problem === 'too-many' ? 'default' : 'outline'}
           disabled={waiting}
+          aria-busy={busy === 'send' || undefined}
           onClick={() => void resend()}
         >
-          Send a new code
+          <Pending on={busy === 'send'} label="Sending…">
+            Send a new code
+          </Pending>
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={onChangeEmail}>
           Use a different email
         </Button>
       </div>
     </form>
+  );
+}
+
+/**
+ * A button's label while its request is on its way: a spinner and words saying what's happening, so a
+ * slow server never looks like a tap that did nothing (qa/escapes.md E2).
+ */
+function Pending({ on, label, children }: { on: boolean; label: string; children: React.ReactNode }) {
+  if (!on) return children;
+  return (
+    <>
+      <Spinner aria-hidden />
+      {label}
+    </>
   );
 }

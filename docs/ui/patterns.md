@@ -338,6 +338,9 @@ transfer, linking a repayment. The toast says what happened, in words (*Attached
 Ryt*), sits above the tab bar, stays 6 seconds or until the next change, and never covers Sen's
 button. A toast appears only when the change isn't visible on screen.
 
+**One toast isn't a change: *A new version of Sen is ready · Update*** (D138). It stays until tapped or
+swiped, apart from the change toasts, so a change's *Undo* never pushes it away.
+
 **One change per double tap.** After a tap that changes something, a second tap within half a second
 is ignored, wherever it lands: when a Review row clears, the next row slides into its place under the
 finger, and a double tap must not answer it too (QA B03 run 2). A row also takes one answer at a
@@ -356,6 +359,8 @@ plan's *2 of 3 moves done*) states it in words first, with an icon, then what it
   fills it (`EmptyState`). No illustrations.
   A card in Insights with no data isn't shown at all.
 - **Loading:** a skeleton shaped like the content, in `muted`, never a spinner over the whole screen.
+- **Waiting on the server:** a button whose request is on its way shows a `Spinner` and says what's
+  happening (*Sending the code…*, *Signing in…*), and takes no second tap (qa/escapes.md E2).
   There's no pull to refresh: screens update by themselves (spec §5.1, D100).
 - **Live updates (D100):** your own actions show at once. What the server decides (matching, a
   split's lock, a receipt being read, Sen) shows its status in words until it arrives. While the

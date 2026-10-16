@@ -17,9 +17,17 @@ await rm(out, { recursive: true, force: true });
 await mkdir(fn, { recursive: true });
 await cp(`${web}dist`, `${out}/static`, { recursive: true });
 await bundle(`${fn}/index.mjs`);
+// In Singapore (sin1), beside the Neon databases: Vercel's default, Washington, put a Pacific crossing
+// in every query, and signing in took seconds (qa/escapes.md E2).
 await writeFile(
   `${fn}/.vc-config.json`,
-  JSON.stringify({ runtime: 'nodejs22.x', handler: 'index.mjs', launcherType: 'Nodejs', maxDuration: 300 }),
+  JSON.stringify({
+    runtime: 'nodejs22.x',
+    handler: 'index.mjs',
+    launcherType: 'Nodejs',
+    maxDuration: 300,
+    regions: ['sin1'],
+  }),
 );
 await writeFile(`${fn}/package.json`, JSON.stringify({ type: 'module' }));
 
