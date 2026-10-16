@@ -174,12 +174,15 @@ Works from a phone through cloud sessions, rarely at a laptop.
   | `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |
   | `pnpm looks` | Regenerates `apps/web/src/styles/looks.gen.css` from `docs/ui/directions/assets/`; CI fails if it's stale |
   | `pnpm --filter @sen/web e2e:trees` | Re-records each screen's accessibility tree in `apps/web/e2e/trees/` after a screen changes; CI fails on a stale one |
-  | `node scripts/qa-diff.mjs` | QA's diff against `main` (D137): trees, pixels in all twelve look-and-mode pairs, and the scripted checks, into `qa-artifacts/<branch>/diff/index.md` |
+  | `node scripts/qa-diff.mjs` | QA's diff against `main` (D137): trees, pixels in all twelve look-and-mode pairs, and the scripted checks, into `qa-artifacts/<branch>/diff/index.md`; then the metrics (D139): each screen, journey tap, API route and the build, on the branch and on `main`, judged by `qa/limits.ts` (`--metrics-only` for just those) |
+  | `node scripts/mutants.mjs` | The breakage checks in `qa/mutants.ts`, each made in a worktree of HEAD; a mutant its suite doesn't catch is a finding (D139) |
+  | `pnpm --filter @sen/web e2e:lived` | The lived-in journeys: across a deploy, resume, offline, a slow network, 200% text, 360×640, a year of data (`?scenario=year`) |
+  | `node scripts/live-metrics.mjs --url <origin>` | A deployed preview's server timings (the `live-metrics` workflow runs it on every preview); production gets only the signed-out part |
   | `node scripts/usage.mjs` | What this session cost, by agent and model; `--log <slice>` keeps its row in `docs/usage.md` |
   | `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
   | `scripts/local-db.sh start\|stop\|reset` | The local Postgres 16 with pgTAP (started by the session hook): `sen_dev` and `sen_test`, never Neon (`docs/cloud.md` §5) |
-  | `pnpm test:db` | A fresh `sen_test`, every migration, pgTAP (RLS for two people over every table, the catalogue check), then the API's tests on it |
-  | `pnpm --filter @sen/api dev` | The API on Node at `127.0.0.1:8787/api`, on `sen_dev`; `SEN_BACKEND=api pnpm dev` runs the web app against it (sign in as `weiming@example.com`, code `123456`) |
+  | `pnpm test:db` | A fresh `sen_test`, every migration, pgTAP (RLS for two people over every table, the catalogue check), then the API's tests on it, and the route sweep: every route in `apps/api/src/routes.table.ts` given the same bad requests. With `QA_METRICS=<dir>`, each request's `Server-Timing` is recorded. One at a time: it drops `sen_test` |
+  | `pnpm --filter @sen/api dev` | The API on Node at `127.0.0.1:8787/api`, on `sen_dev`; `SEN_BACKEND=api pnpm dev` runs the web app against it (sign in as `weiming@example.com`, code `123456`). If `sen_dev` isn't migrated and seeded, run the preview's deploy step on it from `apps/web`: `VERCEL=1 VERCEL_ENV=preview DATABASE_URL_UNPOOLED=postgres://sen_owner@127.0.0.1:5432/sen_dev BETTER_AUTH_SECRET=<48 characters> pnpm exec tsx scripts/db-deploy.ts`, then delete `public/db-deploy.txt` |
   | `pnpm --filter @sen/web e2e:server` | The sign-in journey in Chromium against the local API and `sen_test` (after `pnpm test:db`) |
   | `gradle -p apps/shell/core test` | The capture core's Kotlin tests; needs no Android SDK |
   | `bash scripts/android-sdk.sh` | Installs the Android SDK in a cloud session (about 2 minutes), to build the shell's APKs there: then `pnpm --filter @sen/shell sync` and `gradle assembleDebug` in `apps/shell/android` |
@@ -221,7 +224,10 @@ wrong. Measurements are in `docs/usage.md`.
 | `qa-eyes` (Opus) | Spawned by `qa-reviewer` only: each changed screen at full size, answering fixed questions in writing |
 | `scout` (Haiku) | Something too big to read, such as a long log; not what one `grep` answers |
 
-- **Two end-to-end runs never overlap** (shared ports 4173/4174 and build folders).
+- **Two end-to-end runs never overlap** (shared ports 4173/4174 and build folders), and nor do two
+  `pnpm test:db` (each drops `sen_test`). A brief for agents running in parallel gives each its own
+  ports (main e2e 4173/4174, `qa-diff` 4175/4176, `e2e:lived` 4177/4178, `e2e:server` 4179 with the
+  API on 8788, the dev API 8787) and says who holds the database.
 - **Measure:** `node scripts/usage.mjs` (run it from the session's starting directory);
   `--log <slice>` keeps a row in `docs/usage.md` before every handoff and PR. The main session's
   own context is the largest cost, so keep its reading and writing small and hand off early.
@@ -230,7 +236,7 @@ wrong. Measurements are in `docs/usage.md`.
 
 | Skill | Use it when |
 |---|---|
-| `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent, which diffs every screen's tree and pixels against `main`, runs the scripted visual checks, and looks hard only at what changed (D137); it **sets the three tiers for fixing what QA finds**: small fixes self-verified, scoped ones re-checked by resuming the last run's reviewer, and a fresh full run only when a fix reaches the whole flow (D117, D121) |
+| `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent, which diffs every screen's tree, pixels and metrics against `main`, runs the scripted visual checks, the route sweep, the breakage checks and the lived-in journeys, and looks hard only at what changed and what the metrics flag (D137, D139); it **sets the three tiers for fixing what QA finds**: small fixes self-verified, scoped ones re-checked by resuming the last run's reviewer, and a fresh full run only when a fix reaches the whole flow (D117, D121) |
 | `brief` | Before every Agent call that does work, and when a subagent's work comes back short: the model, the brief, and what to do about a miss (D131) |
 | `uiux` | Choosing shadcn components for a screen, building one, or checking one before it's done. Ported from GCO_events (D43): it reads its component index first, then only the docs it shortlists |
 | `dataviz` | Any chart, stat tile or chart colour. It comes from the owner's claude.ai account, not the repo |

@@ -142,6 +142,13 @@ Check every element of a screen, new or existing, for these, and fix them before
   when the result isn't visible on screen.
 - **Loading:** `Skeleton` shaped like the content, never a full-screen spinner. Pull-to-refresh
   wherever data syncs.
+- **Waiting on the server:** a button whose request is on its way shows a `Spinner` and says what's
+  happening (*Sending the code…*), at once, never only greyed out. Assume a slow network: a local
+  request is instant, a phone's isn't (escape E2).
+- **Felt within 100 ms:** a tap's first visible change (a press, a pending state, the change itself)
+  lands within 100 ms, under the CPU 4× slower; what changes looks caused by the tap, and nothing
+  jumps or stalls on the way. QA measures the first change and films the second after each tap
+  (D139); *B05 · Feel* sets the motion.
 - **Empty:** one line saying what will appear here, plus the action that fills it (`Empty`). No
   illustrations.
 - **Errors:** what happened and what to do next, in plain words. Never lose the user's input. Being
