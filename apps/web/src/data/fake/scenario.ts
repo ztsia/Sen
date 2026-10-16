@@ -304,23 +304,23 @@ function receiptFor(t: Transaction, cat: string, r: () => number, pax = 1) {
   return { receipt, items };
 }
 
-interface Gen {
+export interface Gen {
   txns: Transaction[];
   receipts: Receipt[];
   items: ReceiptItem[];
 }
 
 /** One cycle's ordinary money, from its first day to the day before `until`, stopping at `cutoff`. */
-function genCycle(
+export function genCycle(
   start: string,
   until: string,
   cutoff: string,
   seed: number,
   out: Gen,
-  opts: { salary: boolean; ownTransfers: boolean },
+  opts: { salary: boolean; ownTransfers: boolean; tag?: string },
 ) {
   const r = seeded(seed);
-  const k = (s: string) => `${start}:${s}`;
+  const k = (s: string) => `${start}${opts.tag ?? ''}:${s}`;
   const push = (t: Transaction) => {
     if (t.occurredAt <= cutoff) out.txns.push(t);
     return t;
@@ -675,13 +675,14 @@ function paydays(first: string, today: string): string[] {
 }
 
 /** The base scenario: twelve months of an ordinary life, and this cycle's special cases on top. */
-export function weiMing(): Db {
+export function weiMing(dense?: (cycle: { start: string; until: string; i: number }, gen: Gen) => void): Db {
   const gen: Gen = { txns: [], receipts: [], items: [] };
   const salaries = paydays(OPENING_DAY, TODAY);
   const r = seeded(7);
   salaries.forEach((s, i) => {
     const until = salaries[i + 1] ?? addDays(lastWorkingDay(nextMonthStart(s)), 0);
     genCycle(s, until, NOW, 1000 + i, gen, { salary: true, ownTransfers: true });
+    dense?.({ start: s, until, i }, gen);
     // each payday's balance check found a gap, shrinking as capture settled in
     if (i > 0) gen.txns.push(gapAt(addDays(s, 1), s, rm('10.00') + (12 - i) * 900 - between(r, '0.00', '30.00')));
   });
