@@ -481,6 +481,26 @@ describe('QA B05 run 3', () => {
     expect(r.status).toBe(200);
   });
 
+  it('answers a deeply nested body with a 400, signed in or not (run 4, 37)', async () => {
+    const deep = '['.repeat(100_000) + ']'.repeat(100_000);
+    expect((await raw('/api/auth/email-otp/send-verification-otp', deep)).status).toBe(400);
+    expect((await raw('/api/auth/sign-in/email-otp', deep)).status).toBe(400);
+    const cookie = await signIn(member.email);
+    expect((await raw('/api/commands', '['.repeat(5_000) + ']'.repeat(5_000), { cookie })).status).toBe(400);
+  });
+
+  it('takes Better Auth’s routes only from Sen’s own origin, and the send route only as JSON (run 4, 38)', async () => {
+    expect((await raw('/api/auth/sign-out', '{}', { origin: 'null' })).status).toBe(403);
+    const text = await raw(
+      '/api/auth/email-otp/send-verification-otp',
+      JSON.stringify({ email: member.email, type: 'sign-in' }),
+      {
+        'content-type': 'text/plain',
+      },
+    );
+    expect(text.status).toBe(415);
+  });
+
   it('checks the send route’s body and Origin itself (36)', async () => {
     const long = `${'a'.repeat(10_000)}@example.com`;
     expect(

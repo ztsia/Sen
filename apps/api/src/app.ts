@@ -8,7 +8,7 @@ import { createAuth, type Auth } from './auth';
 import { NO_SWITCHES, type Env } from './context';
 import { asPerson, pools } from './db';
 import { readEnv, type ApiEnv } from './env';
-import { ApiError, hasNul, nulRefused, onError, readJson, sameOrigin, signedOut, suspended } from './errors';
+import { ApiError, checkBody, onError, readJson, sameOrigin, signedOut, suspended } from './errors';
 import { clientIp, LIMITS, tooMany, withinLimit } from './limits';
 import { gmailMailer, noMail, type Mailer } from './mail';
 import { adminRoutes, personRoutes } from './routes';
@@ -76,13 +76,16 @@ export function createApp(deps: Deps) {
       .clone()
       .json()
       .catch(() => null);
-    if (hasNul(body)) throw nulRefused();
+    checkBody(body);
+    // and only from Sen's own pages: Better Auth's own check lets `Origin: null` through (run 4, 38)
+    if (!sameOrigin(c)) throw new ApiError(403, 'forbidden', 'That came from another site.');
     await next();
   });
 
   api.post('/auth/email-otp/send-verification-otp', async (c) => {
     // this route is Sen's now, so it checks what Better Auth would have (run 3, 36)
-    if (!sameOrigin(c)) throw new ApiError(403, 'forbidden', 'That came from another site.');
+    if (!c.req.header('content-type')?.startsWith('application/json'))
+      throw new ApiError(415, 'invalid', 'Sen takes JSON.');
     const parsed = z
       .object({ email: z.string().trim().min(1).max(254), type: z.literal('sign-in') })
       .safeParse(await readJson(c));

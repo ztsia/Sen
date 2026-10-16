@@ -56,21 +56,31 @@ export async function readJson(c: Context): Promise<unknown> {
   } catch {
     throw new ApiError(400, 'invalid', 'That isn’t valid JSON.');
   }
-  if (hasNul(value)) throw nulRefused();
+  checkBody(value);
   return value;
 }
 
+/** No body Sen takes nests deeper than this; a deeper one is refused, never walked (QA B05 run 4, 37). */
+const MAX_DEPTH = 32;
+
 /**
- * Postgres keeps no NUL character, in text or JSON (QA B05 run 2, 20): one anywhere in a body is a
- * 400. Only a real NUL counts, not the text `\u0000` (run 3, 34).
+ * Checks a parsed body before anything reads it, and throws the 400 it deserves: a NUL character,
+ * which Postgres keeps in neither text nor JSON (QA B05 run 2, 20; only a real NUL, not the text
+ * `\u0000`, run 3, 34), or nesting past MAX_DEPTH. It walks with a stack of its own, so no body can
+ * overflow the call stack.
  */
-export function hasNul(value: unknown): boolean {
-  if (typeof value === 'string') return value.includes('\0');
-  if (Array.isArray(value)) return value.some(hasNul);
-  if (value && typeof value === 'object') return Object.entries(value).some(([k, v]) => k.includes('\0') || hasNul(v));
-  return false;
+export function checkBody(value: unknown): void {
+  const todo: [unknown, number][] = [[value, 0]];
+  for (let next = todo.pop(); next; next = todo.pop()) {
+    const [v, depth] = next;
+    if (typeof v === 'string') {
+      if (v.includes('\0')) throw new ApiError(400, 'invalid', 'That has a character Sen can’t keep.');
+    } else if (v && typeof v === 'object') {
+      if (depth >= MAX_DEPTH) throw new ApiError(400, 'invalid', 'That is nested too deeply.');
+      for (const [k, child] of Object.entries(v)) todo.push([k, depth + 1], [child, depth + 1]);
+    }
+  }
 }
-export const nulRefused = () => new ApiError(400, 'invalid', 'That has a character Sen can’t keep.');
 
 /** A request from Sen's own pages, or with no Origin at all; a malformed or `null` Origin isn't (run 3, 33). */
 export function sameOrigin(c: Context): boolean {

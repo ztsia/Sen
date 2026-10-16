@@ -86,3 +86,18 @@ offline store's design; later slices that keep money offline inherit the forgett
 
 **Checks after the batch:** typecheck, lint, format clean; unit 336/336; `pnpm test:db` pgTAP
 103/103 and API 37/37; `e2e:server` 3/3; QA's `qa/e2e/b05-*` 33/33.
+
+## After run 4 (scoped re-check, 16 Oct): ship, 1 Minor and 1 Note open
+
+All seven of run 3's fixes held, and every probe turned a test red, the lock's included.
+
+| # | Severity | Tier | Fix | Evidence |
+|---|---|---|---|---|
+| 37 | Minor | 1: one function (`checkBody`, errors.ts) and its test; no behaviour beyond the finding | The body is walked with a stack of its own and refused past 32 levels | Red first: *answers a deeply nested body with a 400* failed (500, `RangeError`) on 590b49e's code; green after, `pnpm test:db` 39/39 |
+| 38 | Note | 1: two checks in the auth middleware and their test | Better Auth's routes refuse a `null` or foreign Origin; the send route takes only JSON (415) | Red first: *takes Better Auth's routes only from Sen's own origin* failed (200, 200); green after |
+
+**Left:** 27 (a code sent just before a suspension still signs in; every route then answers 403 and
+the app signs out with *paused*).
+
+**Checks after the batch:** typecheck, lint, format clean; unit 336/336; `pnpm test:db` pgTAP
+103/103 and API 39/39; `e2e:server` 3/3; QA's `qa/e2e/b05-*` 33/33.
