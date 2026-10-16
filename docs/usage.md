@@ -35,4 +35,4 @@ The same pointer brief, run on both models, each in its own worktree:
 | 11 Oct | setup | `f55dd374` | $15.2 | none | $15.2 | opus 100% |
 | 14 Oct | B04-redesign | `a62b07c1` | $148.03 | 13× implementer on haiku-5-5 $1.47; 7× implementer on sonnet-5-5 $11.41; 4× qa-reviewer on sonnet-5-5 $50.39; 1× general-purpose on haiku-5-5 $0.01; 1× claude-code-guide on haiku-5-5 $0.01 | $211.32 | opus 70%, sonnet 29%, haiku 1% |
 | 15 Oct | B04 QA tooling | `c23de0d2` | $17.66 | 1× general-purpose on sonnet-5-5, opus-5-5 $48.44 | $66.1 | opus 63%, sonnet 37% |
-| 16 Oct | B05 | `012a2743` | $24.21 | 1× implementer on sonnet-5-5 $2.33 | $26.55 | opus 91%, sonnet 9% |
+| 16 Oct | B05 | `012a2743` | $63.26 | 2× qa-reviewer on opus-5-5 $61.56; 1× implementer on sonnet-5-5 $2.33 | $127.16 | opus 98%, sonnet 2% |

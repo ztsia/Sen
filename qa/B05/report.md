@@ -1,5 +1,7 @@
 # B05 · Server, database and sign-in: QA report (run 4, scoped, tier 2)
 
+Published: https://claude.ai/artifact/AzAyheGoaGbcR68PSDJWdz (version 4; runs 1 to 3 are versions 1 to 3)
+
 ```
 VERDICT   ship
           14 criteria in the area, 12 pass, 2 fail, 0 not reachable
