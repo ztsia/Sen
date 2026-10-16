@@ -296,3 +296,46 @@ AC-79s An error response (401, 404) carries both too
 AC-80  Settings → Account shows the whole email, whatever its length
        Spec   screens.md Account (*your email*), patterns §7 Rows (values never clipped)
 AC-80s A 70-character address still reads in full inside its card
+
+## Run 3 (scoped, tier 2, 16 Oct): what run 2's fixes call for
+
+Area: signing in and out (§17 *Login*, §16 `/auth/*`), the API's handling of input (§16 *Validation*,
+*Errors*), and Settings → You. Written after reading the fix commits (2c3de77..15105b8), as scoped
+mode says, so these are derived from the spec but aimed by the code.
+
+AC-81  A code email that can't be sent says so, and leaves no code behind
+       Then   502 `{code:"mail_failed"}`; sign-in says *Sen couldn't send the email*; no auth_verification row
+       Spec   §17 Login, patterns §7 Error
+AC-81s After a failed send, a working send gives a code that signs in; the failed one never existed
+
+AC-82  Asking for a code keeps every guard the route had, and a new code replaces the old one
+       Then   invitation-only, suspended, limits per address and per email; the previous code stops working
+       Spec   §5.1, §17 Login
+AC-82s A hostile email on the send route or the sign-in route (NUL, 10 000 chars, not a string) → 4xx, never 500
+
+AC-83  Writes come only from Sen's origin, as JSON
+       Then   a foreign `Origin` → 403; `text/plain` → 415; same origin and no Origin (curl, the shell) work
+       Spec   §17 (the bridge answers no other origin), §16 Errors
+AC-83s `Origin: null` or a malformed Origin → 4xx, never 500
+
+AC-84  A NUL character anywhere in a JSON body → 400 with the error shape
+       Spec   §16 Validation
+AC-84s An ordinary name containing a backslash is still saved as typed
+
+AC-85  Identical writes sent at once are one change and one audit row (You, and the resource PUT)
+       Spec   CLAUDE.md dedupe; §5
+AC-85s Different values sent at once: the row ends on one of them and the audit chain is consistent
+       (each entry's *before* is the previous entry's *after*)
+
+AC-86  What Sen keeps on the device for offline is only the signed-in person's, and is forgotten when
+       their session ends: sign out, sign out everywhere, and a session ended elsewhere (401)
+       Spec   §17 Login (*a global sign-out from another device revokes its session*), flows `lost-phone`
+AC-86s After a 401, an offline reload shows nothing of the person who was signed in
+
+AC-87  A paused person with a live session is told; the note doesn't follow the next person
+       Spec   §9.6 Suspend
+AC-87s Once someone else signs in on that tab, sign-in no longer says *paused*
+
+AC-88  Settings → You shows what the server holds after an Undo, and never loses what's being typed
+       Spec   §6.7, patterns §7 Forms (*Never lose what was typed*)
+AC-88s A refetch while the names field has an unsaved edit leaves the edit in place

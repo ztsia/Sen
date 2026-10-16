@@ -43,3 +43,13 @@ screens.md (Account: *your email, Sign out, Sign out everywhere*) ask.
 | Anything unreadable, clipped or overlapping in the twelve pairs? | No, with Wei Ming's short address. The destructive tint and its tile read in every look, Copper dark and Line dark included |
 | A long email? | **Clipped** (QA's FLOW-26, finding 29): a 70-character address runs past the card's edge and its middle is lost. The catalogue's fixture is short, so the scripted clip check can't see it |
 | Verdict | **right** for what the diff shows; **look again** at long values in the Email row (finding 29, Minor) |
+
+# Run 3 (scoped, 16 Oct)
+
+The diff run shows 5 changed entries:
+- `settings/account`: as in run 2.
+- `sign-in`, `first-run`, `sign-in@invited` and `first-run@without-capture`: pixels only, trees unchanged.
+
+The reviewer looked at sign-in in Minted light (base and head) and Copper dark, and at first-run in Line light. The change is the email field drawn focused, in each look's ring colour, as finding 24's fix (patterns §7 Forms) calls for. Nothing is clipped, overlapping or unreadable.
+
+**Verdict:** right.

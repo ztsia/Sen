@@ -149,3 +149,19 @@ FLOW-25 The sign-in form, as patterns.md §7 Forms says                       (s
 FLOW-26 A long email on Settings → Account                                   (sad)   Covers AC-80
         Ends   the whole 70-character address readable inside the card
 ```
+
+## Run 3 (scoped, tier 2, 16 Oct)
+
+QA's specs `qa/e2e/b05-*` (FLOW-1 to FLOW-26 and the core journeys) are walked again, plus:
+
+```
+FLOW-30 The code email fails, then works                                    (sad)   Covers AC-81
+        Entry  sign-in, against an API whose mailer fails, then one that sends
+        Ends   *Sen couldn't send the email*; no code row; the next send's code signs in
+FLOW-31 Sign out everywhere from another browser, then this one offline     (sad)   Covers AC-86
+        Steps  1. browser A on Settings → You (kept answers stored)  2. browser B: Sign out everywhere
+               3. A acts online: sign-in  4. A offline, reload
+        Ends   A shows nothing of the person: localStorage holds no kept answer
+FLOW-32 Paused, then another person signs in on the same tab                (sad)   Covers AC-87
+FLOW-33 Typing a name while You refetches                                    (sad)   Covers AC-88
+```
