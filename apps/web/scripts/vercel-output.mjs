@@ -26,7 +26,7 @@ await writeFile(
     handler: 'index.mjs',
     launcherType: 'Nodejs',
     maxDuration: 300,
-    regions: ['sin1'],
+    
   }),
 );
 await writeFile(`${fn}/package.json`, JSON.stringify({ type: 'module' }));
