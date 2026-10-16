@@ -21,6 +21,9 @@ const WAIT = 'Too many tries in a minute. Wait a minute, then try again.';
 const PAUSED = 'Your access to Sen is paused. Ask the person who invited you.';
 const MAIL_FAILED = 'Sen couldn’t send the email. Try again in a minute.';
 const PREVIEW_CODE = '123456';
+// A preview's one person, made up and seeded by db-deploy.ts: the review app opens on sign-in, so the
+// address is filled in for whoever reviews it (previews hold only made-up data, spec §17).
+const PREVIEW_EMAIL = 'weiming@example.com';
 
 /**
  * `sign-in` (screens.md, D13, D52): your email, then the 6-digit code it was sent. An invitation's link
@@ -54,7 +57,9 @@ function ExpiredInvitation() {
 /** The two steps of signing in, also first run's first step. */
 export function SignInFlow({ onDone }: { onDone: () => void }) {
   const online = useOnline();
-  const [email, setEmail] = useState(() => inviteEmail(window.location.search));
+  const [email, setEmail] = useState(
+    () => inviteEmail(window.location.search) || (__SEN_BACKEND__ === 'api' && DEV_TOOLS ? PREVIEW_EMAIL : ''),
+  );
   const [sentTo, setSentTo] = useState<string | null>(null);
   return (
     <div className="flex w-full flex-col items-center gap-6">
