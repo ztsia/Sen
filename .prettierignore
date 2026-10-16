@@ -4,12 +4,14 @@ docs/
 *.md
 spec_v2.md
 **/dist/
+**/.vercel/
 coverage/
 playwright-report/
 test-results/
 qa-artifacts/
 apps/web/src/styles/looks.gen.css
 **/dist-production/
+**/dist-server/
 apps/web/dist-*/
 qa/*/results*.json
 # The shell's build outputs, Gradle's and Capacitor's copies; the data files are generated
@@ -21,3 +23,4 @@ apps/shell/core/.gradle/
 apps/shell/data/keep-running.json
 # Playwright writes the accessibility trees (e2e/trees/); they are compared, not styled
 apps/web/e2e/trees/
+packages/db/migrations/meta/

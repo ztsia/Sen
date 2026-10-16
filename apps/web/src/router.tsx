@@ -8,6 +8,8 @@ import { SKELETON } from './screens/skeleton';
 import { ListSkeleton } from './blocks/states';
 import { Screen } from './frame/screen';
 import { screenById } from './screens/registry';
+import { auth, forgetSession, noteSignedOutBecause } from './data/auth';
+import { onSignedOut } from './data/api/client';
 
 // The routes: the four tab screens, Scan's task screen, every other screen by its id from
 // docs/screens.md under /s/<id>, and, in development and previews only, the gallery. TanStack Router,
@@ -26,7 +28,16 @@ declare module '@tanstack/react-router' {
 // A path that matches nothing, or a screen that throws, keeps the frame and offers a way home
 // (patterns.md §7, Error), never the router's own page. If the frame itself throws, its error shows in
 // a column of its own, below the status bar like the frame's.
+/** What a person reaches signed out: signing in, and a friend's split link (D47). */
+const OPEN = new Set(['/s/sign-in', '/s/split-public', '/dev/gallery']);
+
 const rootRoute = createRootRoute({
+  // Signed out, every route goes to sign-in (B05). Only on the server's backend: the skeleton's fake
+  // is always signed in.
+  beforeLoad: async ({ location }) => {
+    if (__SEN_BACKEND__ !== 'api' || OPEN.has(location.pathname)) return;
+    if (await auth.signedOut()) throw redirect({ to: '/s/$', params: { _splat: 'sign-in' }, replace: true });
+  },
   component: AppShell,
   notFoundComponent: () => <Lost kind="missing" />,
   errorComponent: () => (
@@ -143,4 +154,22 @@ export const router = createRouter({
   scrollRestoration: false,
   defaultNotFoundComponent: () => <Lost kind="missing" />,
   defaultErrorComponent: () => <Lost kind="broken" />,
+});
+
+// the session ended elsewhere (signed out everywhere, or it expired), or access was paused: sign-in
+// two requests can come back 403 at once: the first one leads, the rest wait for it (QA B05 run 2, 10)
+let leaving: Promise<void> | null = null;
+onSignedOut((code) => {
+  if (leaving) return;
+  // paused access (QA B05 run 1, 10): end this session too, and sign-in says why
+  if (code === 'suspended') noteSignedOutBecause('paused');
+  const out = code === 'suspended' ? auth.signOut().catch(() => undefined) : Promise.resolve();
+  leaving = out
+    .then(() => {
+      forgetSession();
+      return router.navigate({ to: '/s/$', params: { _splat: 'sign-in' }, replace: true });
+    })
+    .finally(() => {
+      leaving = null;
+    });
 });

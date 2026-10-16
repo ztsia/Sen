@@ -1,0 +1,1557 @@
+{
+  "module": "B05",
+  "branch": "B05/server",
+  "verdict": "fix first",
+  "generatedAt": "2026-10-16 05:30 UTC",
+  "phases": "scoped (tier 2): signing in and out, input handling, Settings → You",
+  "headline": "All twelve of run 2's fixed findings hold. Two new Majors: the answers kept for offline outlive a session ended on another device, so a revoked browser shows the person's settings offline (the lost-phone journey); and the test pinning the concurrent-write fix can't fail. Two Minors still answer 500 to hostile input (a NUL in an email on the sign-in routes, and an `Origin: null`).",
+  "summary": {
+    "criteria": 26,
+    "pass": 19,
+    "fail": 6,
+    "unreachable": 1
+  },
+  "suites": {
+    "unit": "335/335",
+    "db": "pgTAP 103/103, API 33/33",
+    "e2e:server": "3/3",
+    "qa specs": "qa/e2e/b05-*: 33 run, 32 pass, 1 fail (FLOW-31: finding 30)",
+    "typecheck": "clean",
+    "lint": "clean",
+    "diff": "87 entries: settings/account (tree and pixels), sign-in, first-run, sign-in@invited, first-run@without-capture (pixels: the focused email field), 0 check findings"
+  },
+  "findings": [
+    {
+      "id": 30,
+      "severity": "Major",
+      "status": "open",
+      "title": "After “Sign out everywhere” elsewhere, the revoked browser keeps the person’s data and shows it offline",
+      "detail": "Finding 23's fix keeps the last `me` and Settings answers in `localStorage` (`sen.api.kept`) and forgets them at *Sign out* and *Sign out everywhere* in that browser. When the session ends anywhere else (another device's *Sign out everywhere*, expiry), this browser gets a 401, and `router.tsx`'s handler only forgets the session in memory and navigates. It never calls `forgetKept()`. Opened offline later, the gate lets it in (it can't ask the server), and Settings → You shows the person's payday and switches from the kept answers. This is the lost-phone journey (§17 *Login*, flows `lost-phone`). Today the kept data is email, names, payday and switches, but the mechanism is what later slices will put money through. Forget the kept answers (and the query cache) on every 401, not only on this browser's own sign-out.",
+      "repro": "qa/e2e/b05-r3.spec.ts FLOW-31: browser A opens You; browser B signs out everywhere; A opens You online (→ sign-in), then offline",
+      "evidence": "FLOW-31: kept after the 401: {\"me\":{\"capture\":false,...},\"settings\":{\"email\":\"qa-ben@example.com\",...,\"you\":{...,\"payday\":{\"kind\":\"last-working\"}}}}\nFLOW-31: offline open after revocation: http://localhost:4177/s/settings/you | You're offline. ... | You | Payday | Last working day | A day | Not set | ...",
+      "spec": "AC-86, AC-86s; spec §17 Login; flows.md lost-phone",
+      "screenshots": [
+        "FLOW-31-step-1-kept.png",
+        "FLOW-31-step-2-revoked.png",
+        "FLOW-31-step-3-offline.png"
+      ]
+    },
+    {
+      "id": 32,
+      "severity": "Major",
+      "status": "open",
+      "title": "The test pinning finding 22's fix can't fail: the test pool runs one transaction at a time",
+      "detail": "`api.test.ts` *makes two identical writes sent at once one change and one audit entry (22)* fires 5 requests with `Promise.all`, but the test's `app_user` pool is `max: 1`, so the transactions run one after another and the race never happens. Probe: `.for('update')` removed from `setYou`: `pnpm test:db` stays 33/33. The same change against a live API (pool of 3) gave a round with 3 audit rows. Raise the test pool (e.g. `max: 5`) so the test can see the race.",
+      "repro": "sed -i \"s/.where(eq(t.userId, person)).for('update');/.where(eq(t.userId, person));/\" apps/api/src/routes.ts; pnpm test:db\nthen the same against a local API on :8798, 5 parallel identical setting.set, 5 rounds",
+      "evidence": "pnpm test:db:  Tests  33 passed (33)\nlive API:      probe (no FOR UPDATE) day 2: audit added 1\n               probe (no FOR UPDATE) day 3: audit added 3\n               probe (no FOR UPDATE) day 4: audit added 1",
+      "spec": "AC-85; CLAUDE.md dedupe; qa skill (a test on a critical path that catches nothing)",
+      "screenshots": []
+    },
+    {
+      "id": 31,
+      "severity": "Minor",
+      "status": "open",
+      "title": "A NUL in the email still gives a 500 on both sign-in routes",
+      "detail": "Finding 20's guard is in `readJson`, which the commands use. The send-code route reads its body itself (`c.req.raw.clone().json()`), and Better Auth's sign-in route reads its own. A `\\u0000` in `email` reaches Postgres (22021) and comes back 500. Better Auth's is a 500 with an empty body.",
+      "repro": "curl -X POST :8795/api/auth/email-otp/send-verification-otp -H 'content-type: application/json' -d '{\"email\":\"qa-ben@example.com\\u0000\"}'\ncurl -X POST :8795/api/auth/sign-in/email-otp -H 'content-type: application/json' -d '{\"email\":\"qa-ben@example.com\\u0000\",\"otp\":\"123456\"}'",
+      "evidence": "NUL email (send)      {\"code\":\"server\",\"message\":\"Something went wrong on Sen’s side.\"} [500]\nNUL email (sign-in)    [500]   (empty body)\nserver log: routine: 'report_invalid_encoding_int'",
+      "spec": "AC-82s, AC-75; spec §16 Errors",
+      "screenshots": []
+    },
+    {
+      "id": 33,
+      "severity": "Minor",
+      "status": "open",
+      "title": "An `Origin: null` or malformed Origin on a write gives a 500",
+      "detail": "The new origin guard does `new URL(origin)`, which throws on `null` (sent by browsers from sandboxed frames, `file:` pages and some redirects) and on junk, and the throw becomes a 500. It should be the 403 the guard means.",
+      "repro": "curl -b ben.jar :8795/api/commands -H 'content-type: application/json' -H 'origin: null' -d '{\"type\":\"setting.set\",\"key\":\"you.payday\",\"value\":{\"kind\":\"day\",\"day\":7}}'",
+      "evidence": "origin null      {\"code\":\"server\",\"message\":\"Something went wrong on Sen’s side.\"} [500]\norigin garbage   {\"code\":\"server\",\"message\":\"Something went wrong on Sen’s side.\"} [500]",
+      "spec": "AC-83s; spec §16 Errors",
+      "screenshots": []
+    },
+    {
+      "id": 27,
+      "severity": "Note",
+      "status": "open",
+      "title": "Run 2: A code sent just before a suspension still signs in",
+      "detail": "left on purpose (ledger): every route then 403s and the app says paused",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "left on purpose (ledger): every route then 403s and the app says paused",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": []
+    },
+    {
+      "id": 34,
+      "severity": "Note",
+      "status": "open",
+      "title": "The NUL guard also refuses the six characters \\u0000 typed as text",
+      "detail": "The guard matches the escape's text in the raw body, so a value holding a real backslash followed by u0000 (JSON `\\\\u0000`) is refused although it has no NUL. Nobody's bank name looks like that; noted for later free-text fields (notes, Sen's chat).",
+      "repro": "-d '{\"type\":\"setting.set\",\"key\":\"you.bankNames\",\"value\":\"TAN\\\\\\\\u0000 BIN\"}'",
+      "evidence": "backslash name   {\"code\":\"invalid\",\"message\":\"That has a character Sen can’t keep.\"} [400]",
+      "spec": "AC-84s",
+      "screenshots": []
+    },
+    {
+      "id": 35,
+      "severity": "Note",
+      "status": "open",
+      "title": "A send whose mail server doesn’t answer waits 2 minutes before saying so",
+      "detail": "Sen now awaits Gmail, so an unreachable SMTP host holds the request for nodemailer's 2-minute connect timeout. Sign-in's button stays disabled with no word until the 502 arrives. A wrong app password fails fast; this is only the unreachable case. A shorter `connectionTimeout` (say 15 s) would say so sooner.",
+      "repro": "production-target API with GMAIL host unreachable; time curl … send-verification-otp",
+      "evidence": "{\"code\":\"mail_failed\",...} [502]\nreal 2m0.074s",
+      "spec": "AC-81; patterns §7 Error",
+      "screenshots": []
+    },
+    {
+      "id": 36,
+      "severity": "Note",
+      "status": "open",
+      "title": "The send route falls through to Better Auth for a body it can’t read, and no longer checks Origin",
+      "detail": "When `email` isn't a string of up to 254 characters, the pre-check is skipped and Better Auth's own handler answers. For a 10 000-character address that's `200 {\"success\":true}` (Better Auth's answer for an unknown user), so the screen would say a code was sent rather than *invitation-only*. And since the route no longer reaches Better Auth for a readable body, Better Auth's Origin check no longer runs on it: a foreign Origin gets 200. Both are reachable by curl anyway; neither sends a code to anyone who wasn't invited.",
+      "repro": "curl … send-verification-otp -d '{\"email\":\"aaaa…(10 000)@x.com\"}'; curl … -H 'origin: https://evil.example' -d '{\"email\":\"qa-ben@example.com\"}'",
+      "evidence": "email 10k chars   {\"success\":true} [200]\nforeign origin    {\"success\":true} [200]",
+      "spec": "AC-82; §5.1",
+      "screenshots": []
+    },
+    {
+      "id": 18,
+      "severity": "Major",
+      "status": "fixed",
+      "title": "Run 2: A failed code email answered 200 “success”",
+      "detail": "502 mail_failed, no code row (AC-81); probe 2 caught. Waits 2 minutes when the host is unreachable: finding 35",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "502 mail_failed, no code row (AC-81); probe 2 caught. Waits 2 minutes when the host is unreachable: finding 35",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": []
+    },
+    {
+      "id": 19,
+      "severity": "Major",
+      "status": "fixed",
+      "title": "Run 2: Run 1's web fixes were pinned only in qa/e2e",
+      "detail": "Reverted signedOut(): pnpm test 2 failed (auth.test.ts), e2e:server 1 failed (*opened offline*); consumed-once paused reason: e2e:server *a suspended person is told* failed",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "Reverted signedOut(): pnpm test 2 failed (auth.test.ts), e2e:server 1 failed (*opened offline*); consumed-once paused reason: e2e:server *a suspended person is told* failed",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": []
+    },
+    {
+      "id": 10,
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "Run 2: A suspended person with a live session wasn’t told",
+      "detail": "FLOW-21 and FLOW-32 pass; CI pins it",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "FLOW-21 and FLOW-32 pass; CI pins it",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": [
+        "FLOW-21-step-2-paused.png"
+      ]
+    },
+    {
+      "id": 20,
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "Run 2: A NUL in a name gave a 500",
+      "detail": "commands → 400; probe 4 caught. The auth routes still 500: finding 31",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "commands → 400; probe 4 caught. The auth routes still 500: finding 31",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": []
+    },
+    {
+      "id": 21,
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "Run 2: Undo on You didn’t redraw",
+      "detail": "FLOW-22 passes",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "FLOW-22 passes",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": [
+        "FLOW-22-step-2-undone.png"
+      ]
+    },
+    {
+      "id": 22,
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "Run 2: Concurrent identical writes were audited twice",
+      "detail": "live API: 1 row a round; chain consistent. Its test can’t fail: finding 32",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "live API: 1 row a round; chain consistent. Its test can’t fail: finding 32",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": []
+    },
+    {
+      "id": 23,
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "Run 2: You turned into an error offline in a browser",
+      "detail": "FLOW-24 passes. The kept answers it added outlive a revoked session: finding 30",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "FLOW-24 passes. The kept answers it added outlive a revoked session: finding 30",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": [
+        "FLOW-24-step-2-offline.png"
+      ]
+    },
+    {
+      "id": 24,
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "Run 2: Sign-in’s email field wasn’t focused",
+      "detail": "FLOW-25 passes; the diff shows the focus ring on sign-in, first-run and their states in all 12 pairs",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "FLOW-25 passes; the diff shows the focus ring on sign-in, first-run and their states in all 12 pairs",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": [
+        "FLOW-25-step-1-focus.png"
+      ]
+    },
+    {
+      "id": 29,
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "Run 2: A long email on Account was clipped",
+      "detail": "FLOW-26 passes",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "FLOW-26 passes",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": [
+        "FLOW-26-step-1-account.png"
+      ]
+    },
+    {
+      "id": 25,
+      "severity": "Note",
+      "status": "fixed",
+      "title": "Run 2: Unknown /api/auth paths answered an empty 404",
+      "detail": "{\"code\":\"not_found\",\"message\":\"No such route.\"}",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "{\"code\":\"not_found\",\"message\":\"No such route.\"}",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": []
+    },
+    {
+      "id": 26,
+      "severity": "Note",
+      "status": "fixed",
+      "title": "Run 2: The API’s routes checked neither Origin nor Content-Type",
+      "detail": "403 and 415 as meant; Origin null is a 500: finding 33",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "403 and 415 as meant; Origin null is a 500: finding 33",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": []
+    },
+    {
+      "id": 28,
+      "severity": "Note",
+      "status": "fixed",
+      "title": "Run 2: docs/local.md’s Q14 SQL kept the case",
+      "detail": "now lower('you@outlook.com')",
+      "repro": "as run 2 (qa/B05/report-run2.md)",
+      "evidence": "now lower('you@outlook.com')",
+      "spec": "qa/B05/report-run2.md",
+      "screenshots": []
+    }
+  ],
+  "probes": [
+    {
+      "broke": "signedOut() reads offline as signed out (auth.ts)",
+      "caught": true,
+      "note": "pnpm test: 2 failed (auth.test.ts); e2e:server: *opened offline* failed (finding 19 fixed)"
+    },
+    {
+      "broke": "mail failure answered as success (app.ts)",
+      "caught": true,
+      "note": "api.test.ts (18) failed"
+    },
+    {
+      "broke": "FOR UPDATE removed from setYou (routes.ts)",
+      "caught": false,
+      "note": "pnpm test:db 33/33 green: the test pool has max 1 (finding 32); a live API then wrote 3 audit rows in one round"
+    },
+    {
+      "broke": "NUL check removed (errors.ts)",
+      "caught": true,
+      "note": "api.test.ts (20) failed"
+    },
+    {
+      "broke": "origin check removed (app.ts)",
+      "caught": true,
+      "note": "api.test.ts (26) failed"
+    },
+    {
+      "broke": "the old code not deleted before a new one (app.ts)",
+      "caught": false,
+      "note": "green, but two sends still leave 1 auth_verification row, so Better Auth replaces it itself: the line is redundant, not untested behaviour"
+    },
+    {
+      "broke": "the one-at-a-time sign-out lead removed (router.tsx)",
+      "caught": false,
+      "note": "green: with the paused reason now kept until the next sign-in, the race no longer loses the message, so nothing observable broke"
+    },
+    {
+      "broke": "the paused reason consumed once again (auth.ts)",
+      "caught": true,
+      "note": "e2e:server *a suspended person is told* failed"
+    }
+  ],
+  "flows": [
+    {
+      "id": "CORE-1",
+      "title": "first-run (core): sign-in by code is real",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/s/first-run signed out",
+      "covers": [
+        "AC-40"
+      ],
+      "spec": "flows.md first-run",
+      "status": "pass",
+      "ends": "home after sign-in; first-run itself is B08",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open first-run signed out",
+          "assertion": "the gate sends it to sign-in",
+          "status": "pass",
+          "screenshot": "CORE-1-step-1-gate.png"
+        },
+        {
+          "n": 2,
+          "action": "sign in by code",
+          "assertion": "home with the tab bar",
+          "status": "pass",
+          "screenshot": "CORE-1-step-2-home.png"
+        },
+        {
+          "n": 3,
+          "action": "open first-run signed in",
+          "assertion": "the first-run screen opens (note what step 1 asks)",
+          "status": "pass",
+          "screenshot": "CORE-1-step-3-first-run.png"
+        }
+      ]
+    },
+    {
+      "id": "CORE-2",
+      "title": "pay-new (core) on the preview build",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Review",
+      "covers": [],
+      "spec": "flows.md pay-new",
+      "status": "pass",
+      "ends": "Meals from now on, card gone",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Review shows the new merchant",
+          "assertion": "RM9.50 · Roti Bakar 88 with answers",
+          "status": "pass",
+          "screenshot": "CORE-2-step-1-prompt.png"
+        },
+        {
+          "n": 2,
+          "action": "tap Meals",
+          "assertion": "the card goes; a toast says it is Meals from now on, with Undo",
+          "status": "pass",
+          "screenshot": "CORE-2-step-2-answered.png"
+        }
+      ]
+    },
+    {
+      "id": "CORE-3",
+      "title": "scan-after (core) on the preview build",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Scan tab",
+      "covers": [],
+      "spec": "flows.md scan-after",
+      "status": "pass",
+      "ends": "Attached to RM64.13 on Ryt Bank",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Scan tab, choose a photo",
+          "assertion": "crop opens",
+          "status": "pass",
+          "screenshot": "CORE-3-step-1-crop.png"
+        },
+        {
+          "n": 2,
+          "action": "Use this",
+          "assertion": "confirm with the items",
+          "status": "pass",
+          "screenshot": "CORE-3-step-2-confirm.png"
+        },
+        {
+          "n": 3,
+          "action": "Done",
+          "assertion": "Attached to RM64.13 on Ryt Bank, with Undo",
+          "status": "pass",
+          "screenshot": "CORE-3-step-3-attached.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-1",
+      "title": "The owner signs in by code",
+      "kind": "happy",
+      "actor": "owner (admin)",
+      "entry": "/ signed out",
+      "covers": [
+        "AC-40",
+        "AC-43",
+        "AC-47"
+      ],
+      "spec": "screens.md sign-in, D13",
+      "status": "pass",
+      "ends": "home; one session row; Account shows the email",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open / with no session",
+          "assertion": "sign-in shows, not home; no tab bar",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-1-gate.png"
+        },
+        {
+          "n": 2,
+          "action": "Send the code",
+          "assertion": "the code step names the email; the code field is focused",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-2-code-step.png"
+        },
+        {
+          "n": 3,
+          "action": "Sign in with the right code",
+          "assertion": "home with the tab bar; one session row for the owner",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-home.png"
+        },
+        {
+          "n": 4,
+          "action": "Settings → Account",
+          "assertion": "the email shows",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-4-account.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-2",
+      "title": "A wrong code, then the right one",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "sign-in, code step",
+      "covers": [
+        "AC-40s"
+      ],
+      "spec": "flows.md first-run",
+      "status": "pass",
+      "ends": "wrong-code message, no session; then signed in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "type 000000",
+          "assertion": "the wrong-code message; still on the code step; no session",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-1-wrong.png"
+        },
+        {
+          "n": 2,
+          "action": "type five digits",
+          "assertion": "says the code is 6 digits",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-2-short.png"
+        },
+        {
+          "n": 3,
+          "action": "type the right code",
+          "assertion": "signed in; one session",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-3-signed-in.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-3",
+      "title": "An email nobody invited",
+      "kind": "sad",
+      "actor": "stranger",
+      "entry": "sign-in",
+      "covers": [
+        "AC-41",
+        "AC-47s"
+      ],
+      "spec": "flows.md invited, §5.1",
+      "status": "pass",
+      "ends": "Sen is invitation-only; auth_user unchanged",
+      "steps": [
+        {
+          "n": 1,
+          "action": "send a code to stranger@example.com",
+          "assertion": "*Sen is invitation-only*; no new user",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-1-invitation-only.png"
+        },
+        {
+          "n": 2,
+          "action": "send to \"not an email\"",
+          "assertion": "a message under the field",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-2-malformed.png"
+        },
+        {
+          "n": 3,
+          "action": "send with no email",
+          "assertion": "a message under the field",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-3-empty.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-4",
+      "title": "Too many tries, then Send a new code at once",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "sign-in, code step",
+      "covers": [
+        "AC-42",
+        "AC-42s"
+      ],
+      "spec": "screens.md sign-in",
+      "status": "pass",
+      "ends": "the new code signs in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "three wrong codes, then the right one",
+          "assertion": "refused: too many tries; Send a new code",
+          "status": "pass",
+          "screenshot": "FLOW-4-step-1-too-many.png"
+        },
+        {
+          "n": 2,
+          "action": "Send a new code",
+          "assertion": "a toast says a new code is on its way",
+          "status": "pass",
+          "screenshot": "FLOW-4-step-2-resent.png"
+        },
+        {
+          "n": 3,
+          "action": "type the new code at once",
+          "assertion": "signed in with the new code (AC-42)",
+          "status": "pass",
+          "screenshot": "FLOW-4-step-3-new-code.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-4b",
+      "title": "An expired code, then Send a new code",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "sign-in, code step",
+      "covers": [
+        "AC-42"
+      ],
+      "spec": "screens.md sign-in",
+      "status": "pass",
+      "ends": "That code has expired; the new code signs in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "the code expires (in the database), then type it",
+          "assertion": "That code has expired; Send a new code is the main button",
+          "status": "pass",
+          "screenshot": "FLOW-4b-step-1-expired.png"
+        },
+        {
+          "n": 2,
+          "action": "Send a new code, type it",
+          "assertion": "signed in",
+          "status": "pass",
+          "screenshot": "FLOW-4b-step-2-signed-in.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-5",
+      "title": "Deep links while signed out",
+      "kind": "sad",
+      "actor": "anyone",
+      "entry": "six deep links",
+      "covers": [
+        "AC-43"
+      ],
+      "spec": "brief B05",
+      "status": "pass",
+      "ends": "sign-in each time; no RM figure",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open /s/settings/account signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-1-deep-1.png"
+        },
+        {
+          "n": 2,
+          "action": "open /insights signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-2-deep-2.png"
+        },
+        {
+          "n": 3,
+          "action": "open /more signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-3-deep-3.png"
+        },
+        {
+          "n": 4,
+          "action": "open /s/txn?id=x signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-4-deep-4.png"
+        },
+        {
+          "n": 5,
+          "action": "open /s/settings/members signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-5-deep-5.png"
+        },
+        {
+          "n": 6,
+          "action": "open /review signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-6-deep-6.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-6",
+      "title": "Sign out ends this session only",
+      "kind": "happy",
+      "actor": "member, two browsers",
+      "entry": "Settings → Account",
+      "covers": [
+        "AC-44",
+        "AC-44s"
+      ],
+      "spec": "screens.md Account",
+      "status": "pass",
+      "ends": "sign-in; the other browser still signed in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Sign out",
+          "assertion": "sign-in; one session left (the other browser’s)",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-1-signed-out.png"
+        },
+        {
+          "n": 2,
+          "action": "reload",
+          "assertion": "still sign-in",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-2-reload.png"
+        },
+        {
+          "n": 3,
+          "action": "the other browser opens Account",
+          "assertion": "still signed in, with the email",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-3-other-browser.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-7",
+      "title": "Sign out everywhere from another browser",
+      "kind": "happy",
+      "actor": "owner, two browsers + a member",
+      "entry": "Settings → Account",
+      "covers": [
+        "AC-45",
+        "AC-45s",
+        "AC-46"
+      ],
+      "spec": "§17 Login, flows.md lost-phone",
+      "status": "pass",
+      "ends": "both owner browsers on sign-in; owner sessions 0; member untouched",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Sign out everywhere",
+          "assertion": "a confirm dialog that says this one too",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-1-dialog.png"
+        },
+        {
+          "n": 2,
+          "action": "confirm",
+          "assertion": "sign-in; no sessions for the owner; Ben’s untouched",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-2-signed-out.png"
+        },
+        {
+          "n": 3,
+          "action": "the other browser, on You, sets the payday to Not set",
+          "assertion": "it ends on sign-in",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-3-other-acts.png"
+        },
+        {
+          "n": 4,
+          "action": "the other browser opens /",
+          "assertion": "sign-in",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-4-other-reload.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-8",
+      "title": "Sign out everywhere, cancelled",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "Settings → Account",
+      "covers": [
+        "AC-46s"
+      ],
+      "spec": "patterns §7 Dialogs",
+      "status": "pass",
+      "ends": "still signed in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Sign out everywhere, then Cancel",
+          "assertion": "still on Account, still one session",
+          "status": "pass",
+          "screenshot": "FLOW-8-step-1-cancelled.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-9",
+      "title": "A member is refused the admin’s routes",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "API with the member’s cookie; Settings",
+      "covers": [
+        "AC-25"
+      ],
+      "spec": "§16, brief",
+      "status": "pass",
+      "ends": "403 on /admin/members and member.*; Members says Admin only",
+      "steps": [
+        {
+          "n": 1,
+          "action": "a member opens Settings; the API refuses /admin/members and member.*",
+          "assertion": "403 both; no Admin badge, no Members row",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-1-settings.png"
+        },
+        {
+          "n": 2,
+          "action": "a member opens /s/settings/members by its address",
+          "assertion": "Admin only; no member listed",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-2-members.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-10",
+      "title": "Offline on the sign-in screen",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "sign-in",
+      "covers": [
+        "AC-63"
+      ],
+      "spec": "flows.md offline",
+      "status": "pass",
+      "ends": "a banner; online again sends the code",
+      "steps": [
+        {
+          "n": 1,
+          "action": "go offline",
+          "assertion": "a banner says signing in needs a connection",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-1-offline.png"
+        },
+        {
+          "n": 2,
+          "action": "back online, Send the code",
+          "assertion": "the code step",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-2-online.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-10b",
+      "title": "A signed-in browser reloaded offline (no service worker)",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "any screen",
+      "covers": [
+        "AC-64"
+      ],
+      "spec": "flows.md offline",
+      "status": "pass",
+      "ends": "back online, still signed in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "reload offline, then online again",
+          "assertion": "Account opens, still signed in",
+          "status": "pass",
+          "screenshot": "FLOW-10b-step-1-back.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-10c",
+      "title": "Signed in, the app opened offline with the service worker",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/review offline",
+      "covers": [
+        "AC-64",
+        "AC-64s"
+      ],
+      "spec": "flows.md offline, §5.1",
+      "status": "pass",
+      "ends": "Review opens, not sign-in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "signed in, offline, open /review",
+          "assertion": "Review opens (not sign-in), as §5.1 and flows.md offline say",
+          "status": "pass",
+          "screenshot": "FLOW-10c-step-1-offline-open.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-11",
+      "title": "Another timezone (America/Los_Angeles)",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "sign-in",
+      "covers": [
+        "AC-40"
+      ],
+      "spec": "CLAUDE.md dates",
+      "status": "pass",
+      "ends": "sign-in and Account the same",
+      "steps": [
+        {
+          "n": 1,
+          "action": "sign in and open Account at UTC-7",
+          "assertion": "the email shows",
+          "status": "pass",
+          "screenshot": "FLOW-11-step-1-account.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-12",
+      "title": "Settings → You saved on the server, with its audit row",
+      "kind": "happy",
+      "actor": "member",
+      "entry": "Settings → You",
+      "covers": [
+        "AC-21",
+        "AC-24",
+        "AC-24s"
+      ],
+      "spec": "§16, §6.7",
+      "status": "pass",
+      "ends": "user_settings says 25; one audit row by user; 40 refused",
+      "steps": [
+        {
+          "n": 1,
+          "action": "set the payday to day 25",
+          "assertion": "user_settings says 25; one audit row by the user",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-1-payday.png"
+        },
+        {
+          "n": 2,
+          "action": "reload You",
+          "assertion": "day 25 is still chosen",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-2-reload.png"
+        },
+        {
+          "n": 3,
+          "action": "type 40",
+          "assertion": "a message under the field; the row still says 25",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-3-out-of-range.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-13",
+      "title": "The production build with the API",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "production build signed out",
+      "covers": [
+        "AC-40",
+        "AC-52"
+      ],
+      "spec": "brief Done-when 1",
+      "status": "pass",
+      "ends": "signed in; no preview hint; nothing made up",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open the production build signed out",
+          "assertion": "sign-in",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-1-gate.png"
+        },
+        {
+          "n": 2,
+          "action": "Send the code",
+          "assertion": "no preview hint naming the code",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-2-code.png"
+        },
+        {
+          "n": 3,
+          "action": "Sign in",
+          "assertion": "leaves sign-in; no made-up name or amount",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-3-home.png"
+        },
+        {
+          "n": 4,
+          "action": "open Account",
+          "assertion": "the email",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-4-account.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-14",
+      "title": "A session expired on the server",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "Account",
+      "covers": [
+        "AC-43s"
+      ],
+      "spec": "brief",
+      "status": "pass",
+      "ends": "sign-in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "the session expires; open Account",
+          "assertion": "sign-in, not a broken screen",
+          "status": "pass",
+          "screenshot": "FLOW-14-step-1-expired.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-15",
+      "title": "A suspended person signs in",
+      "kind": "sad",
+      "actor": "member, suspended",
+      "entry": "sign-in",
+      "covers": [
+        "AC-65"
+      ],
+      "spec": "§9.6",
+      "status": "pass",
+      "ends": "says access is paused",
+      "steps": [
+        {
+          "n": 1,
+          "action": "a suspended person asks for a code",
+          "assertion": "says access is paused, in words (§9.6 Suspend)",
+          "status": "pass",
+          "screenshot": "FLOW-15-step-1-suspended.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-16",
+      "title": "Signed in, the sign-in address",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "/s/sign-in",
+      "covers": [],
+      "spec": "(none)",
+      "status": "pass",
+      "ends": "recorded only",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open /s/sign-in while signed in",
+          "assertion": "recorded (no spec rule)",
+          "status": "pass",
+          "screenshot": "FLOW-16-step-1-sign-in-again.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-17",
+      "title": "Sign out while offline",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "Settings → Account",
+      "covers": [
+        "AC-63s"
+      ],
+      "spec": "patterns §7 Error",
+      "status": "pass",
+      "ends": "a toast says it needs the server; still signed in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "offline, tap Sign out",
+          "assertion": "says it needs a connection; still on Account; session kept",
+          "status": "pass",
+          "screenshot": "FLOW-17-step-1-offline-sign-out.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-20",
+      "title": "A mixed-case email signs in to the same person",
+      "kind": "sad",
+      "actor": "member Ben",
+      "entry": "/ signed out",
+      "covers": [
+        "AC-71"
+      ],
+      "spec": "§5.1, §15 invitations",
+      "status": "pass",
+      "ends": "signed in; auth_user count unchanged; Account shows the one email",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open Sen signed out",
+          "assertion": "sign-in shows",
+          "status": "pass",
+          "screenshot": "FLOW-20-step-1-sign-in.png"
+        },
+        {
+          "n": 2,
+          "action": "send the code to the mixed-case address",
+          "assertion": "the code step names the lower-case address",
+          "status": "pass",
+          "screenshot": "FLOW-20-step-2-code-step.png"
+        },
+        {
+          "n": 3,
+          "action": "type the right code",
+          "assertion": "signed in; no new auth_user; one session for Ben",
+          "status": "pass",
+          "screenshot": "FLOW-20-step-3-signed-in.png"
+        },
+        {
+          "n": 4,
+          "action": "open Settings → Account",
+          "assertion": "the one email shows",
+          "status": "pass",
+          "screenshot": "FLOW-20-step-4-account.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-21",
+      "title": "A suspended person with a live session",
+      "kind": "sad",
+      "actor": "member Ben, then suspended",
+      "entry": "Settings → Account, signed in",
+      "covers": [
+        "AC-65",
+        "AC-72"
+      ],
+      "spec": "§9.6 Suspend, D52, D98",
+      "status": "pass",
+      "ends": "sign-in, saying access is paused; no session; a new code refused",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Ben signed in, Account open",
+          "assertion": "his email shows",
+          "status": "pass",
+          "screenshot": "FLOW-21-step-1-signed-in.png"
+        },
+        {
+          "n": 2,
+          "action": "reload a screen that reads the server",
+          "assertion": "sign-in, saying access is paused; Ben’s session ended",
+          "status": "pass",
+          "screenshot": "FLOW-21-step-2-paused.png"
+        },
+        {
+          "n": 3,
+          "action": "ask for a code again",
+          "assertion": "refused, saying paused; still no session",
+          "status": "pass",
+          "screenshot": "FLOW-21-step-3-send-refused.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-22",
+      "title": "Undo a change in Settings → You",
+      "kind": "happy",
+      "actor": "member Ben",
+      "entry": "Settings → You",
+      "covers": [
+        "AC-74"
+      ],
+      "spec": "§6.7, patterns §7 Toasts and undo",
+      "status": "pass",
+      "ends": "the payday as before in the database and on screen; two audit rows",
+      "steps": [
+        {
+          "n": 1,
+          "action": "set the payday to day 12",
+          "assertion": "saved as 12, one audit row, a toast with Undo",
+          "status": "pass",
+          "screenshot": "FLOW-22-step-1-changed.png"
+        },
+        {
+          "n": 2,
+          "action": "tap Undo",
+          "assertion": "back to the last working day in the database; two audit rows; the screen agrees",
+          "status": "pass",
+          "screenshot": "FLOW-22-step-2-undone.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-23",
+      "title": "Signed in, offline, then online",
+      "kind": "sad",
+      "actor": "member Ben",
+      "entry": "home, service worker on",
+      "covers": [
+        "AC-64",
+        "AC-77"
+      ],
+      "spec": "§5.1, flows.md offline",
+      "status": "pass",
+      "ends": "never sign-in; one banner; Account after reconnecting",
+      "steps": [
+        {
+          "n": 1,
+          "action": "signed in at home",
+          "assertion": "not on sign-in",
+          "status": "pass",
+          "screenshot": "FLOW-23-step-1-home.png"
+        },
+        {
+          "n": 2,
+          "action": "reload offline",
+          "assertion": "still not sign-in; one offline banner",
+          "status": "pass",
+          "screenshot": "FLOW-23-step-2-offline.png"
+        },
+        {
+          "n": 3,
+          "action": "back online, open Account",
+          "assertion": "the email shows, no banner",
+          "status": "pass",
+          "screenshot": "FLOW-23-step-3-online.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-24",
+      "title": "A browser offline on Settings → You",
+      "kind": "sad",
+      "actor": "member Ben",
+      "entry": "Settings → You",
+      "covers": [
+        "AC-77"
+      ],
+      "spec": "flows.md offline (in a browser, offline is read-only), patterns §7 Offline",
+      "status": "pass",
+      "ends": "the loaded payday still shows, read-only",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open Settings → You online",
+          "assertion": "the payday shows: last working day",
+          "status": "pass",
+          "screenshot": "FLOW-24-step-1-online.png"
+        },
+        {
+          "n": 2,
+          "action": "go offline, stay on You",
+          "assertion": "a browser offline is read-only (flows.md offline): the payday still shows",
+          "status": "pass",
+          "screenshot": "FLOW-24-step-2-offline.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-25",
+      "title": "The sign-in form, as patterns.md says",
+      "kind": "sad",
+      "actor": "anyone",
+      "entry": "/s/sign-in",
+      "covers": [
+        "AC-47"
+      ],
+      "spec": "patterns §7 Forms",
+      "status": "pass",
+      "ends": "the email field is focused on open",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open sign-in",
+          "assertion": "the email field, the first to fill, is focused; inputMode email",
+          "status": "pass",
+          "screenshot": "FLOW-25-step-1-focus.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-26",
+      "title": "A long email on Account",
+      "kind": "sad",
+      "actor": "a member with a 70-character email",
+      "entry": "Settings → Account",
+      "covers": [
+        "AC-80"
+      ],
+      "spec": "screens.md Account, patterns §7 Rows",
+      "status": "pass",
+      "ends": "the whole email readable inside the card",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open Account with a 70-character email",
+          "assertion": "the whole email is readable: not clipped or overflowing the card",
+          "status": "pass",
+          "screenshot": "FLOW-26-step-1-account.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-31",
+      "title": "Sign out everywhere from another browser, then this one offline",
+      "kind": "sad",
+      "actor": "member Ben, two browsers",
+      "entry": "Settings → You in browser A",
+      "covers": [
+        "AC-86",
+        "AC-86s"
+      ],
+      "spec": "§17 Login, flows.md lost-phone",
+      "status": "fail",
+      "ends": "browser A keeps and shows nothing of Ben after its session ended",
+      "steps": [
+        {
+          "n": 1,
+          "action": "browser A opens Settings → You",
+          "assertion": "the device keeps the last answer for offline",
+          "status": "pass",
+          "screenshot": "FLOW-31-step-1-kept.png"
+        },
+        {
+          "n": 2,
+          "action": "browser A reads the server again",
+          "assertion": "it is sent to sign-in",
+          "status": "pass",
+          "screenshot": "FLOW-31-step-2-revoked.png"
+        },
+        {
+          "n": 3,
+          "action": "browser A, offline, opens Settings → You",
+          "assertion": "nothing of Ben is kept or shown",
+          "status": "fail",
+          "screenshot": "FLOW-31-step-3-offline.png",
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mnot\u001b[2m.\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: not \u001b[32m\"Last working day\"\u001b[39m\nReceived string:        \u001b[31m\"You're offline. What you add is kept and syncs when you're back.\u001b[39m\n\u001b[31mYou\u001b[39m\n\u001b[31mPay"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-32",
+      "title": "Paused, then another person signs in on the same tab",
+      "kind": "sad",
+      "actor": "Ben (suspended), then the admin",
+      "entry": "Settings → You",
+      "covers": [
+        "AC-87",
+        "AC-87s"
+      ],
+      "spec": "§9.6 Suspend",
+      "status": "pass",
+      "ends": "paused said to Ben; not said after the admin signs in and out",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Ben, suspended, opens You",
+          "assertion": "sign-in says paused",
+          "status": "pass",
+          "screenshot": "FLOW-32-step-1-paused.png"
+        },
+        {
+          "n": 2,
+          "action": "the admin signs in on that tab, then signs out",
+          "assertion": "sign-in no longer says paused",
+          "status": "pass",
+          "screenshot": "FLOW-32-step-2-next-person.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-33",
+      "title": "Typing a name while You refetches",
+      "kind": "sad",
+      "actor": "the admin",
+      "entry": "Settings → You",
+      "covers": [
+        "AC-88s"
+      ],
+      "spec": "patterns §7 Forms",
+      "status": "pass",
+      "ends": "the typed name stays in the field",
+      "steps": [
+        {
+          "n": 1,
+          "action": "type a second name, while the saved payday changes elsewhere",
+          "assertion": "the typed name is still in the field",
+          "status": "pass",
+          "screenshot": "FLOW-33-step-1-draft.png"
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "AC-81",
+      "title": "A code email that can’t be sent says so, and leaves no code",
+      "spec": "§17 Login",
+      "status": "pass",
+      "evidence": "production-target API, unreachable SMTP: {\"code\":\"mail_failed\",\"message\":\"Sen couldn’t send the email. Try again in a minute.\"} [502]; auth_verification rows: 0"
+    },
+    {
+      "id": "AC-81s",
+      "title": "After a failed send, a working send gives a code that signs in",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "api.test.ts *says so when the code’s email couldn’t be sent, and keeps no code (18)* green; probe 2 turned it red"
+    },
+    {
+      "id": "AC-82",
+      "title": "The send route keeps its guards; a new code replaces the old",
+      "spec": "§5.1, §17",
+      "status": "pass",
+      "evidence": "stranger → 403 not_invited; suspended → 403 suspended; 6th send from one address → 429; two sends → 1 auth_verification row; 3 wrong tries, new code, 123456 signs in"
+    },
+    {
+      "id": "AC-82s",
+      "title": "Hostile email on the auth routes → 4xx",
+      "spec": "§16 Errors",
+      "status": "fail",
+      "evidence": "email with \\u0000: send route → 500 {\"code\":\"server\"}; sign-in route → 500 with an empty body (finding 31)"
+    },
+    {
+      "id": "AC-83",
+      "title": "Writes only from Sen’s origin, as JSON",
+      "spec": "§17, §16",
+      "status": "pass",
+      "evidence": "foreign origin → 403 \"That came from another site.\"; other port → 403; text/plain, no type, Application/JSON → 415; same origin, no Origin, json; charset → 200"
+    },
+    {
+      "id": "AC-83s",
+      "title": "Origin null or malformed → 4xx",
+      "spec": "§16",
+      "status": "fail",
+      "evidence": "origin: null → 500; origin: :::: → 500 (finding 33)"
+    },
+    {
+      "id": "AC-84",
+      "title": "A NUL in a JSON body → 400",
+      "spec": "§16 Validation",
+      "status": "pass",
+      "evidence": "\"\\u0000\" → 400 \"That has a character Sen can’t keep.\"; raw NUL byte → 400 invalid JSON"
+    },
+    {
+      "id": "AC-84s",
+      "title": "A name with a backslash is still saved",
+      "spec": "§16",
+      "status": "fail",
+      "evidence": "the text TAN\\u0000 BIN (an escaped backslash, no NUL) → 400 (finding 34)"
+    },
+    {
+      "id": "AC-85",
+      "title": "Identical writes at once: one change, one audit row",
+      "spec": "dedupe",
+      "status": "pass",
+      "evidence": "live API, 5 parallel identical, four rounds: 1 audit row each; a person with no settings row: 1"
+    },
+    {
+      "id": "AC-85s",
+      "title": "Different values at once: a consistent chain",
+      "spec": "§5",
+      "status": "pass",
+      "evidence": "days 21–25 in parallel: 5 rows, chain 20→23→25→22→21→24, row ends 24"
+    },
+    {
+      "id": "AC-86",
+      "title": "Kept answers forgotten when the session ends, however it ends",
+      "spec": "§17 Login, lost-phone",
+      "status": "fail",
+      "evidence": "sign out and sign out everywhere forget them; a session ended elsewhere (401) does not: localStorage sen.api.kept still holds Ben’s settings (FLOW-31, finding 30)"
+    },
+    {
+      "id": "AC-86s",
+      "title": "After a 401, an offline reload shows nothing of the person",
+      "spec": "§17",
+      "status": "fail",
+      "evidence": "FLOW-31 step 3: offline, the revoked browser opens Settings → You with Ben’s payday shown"
+    },
+    {
+      "id": "AC-87",
+      "title": "A paused person with a live session is told",
+      "spec": "§9.6",
+      "status": "pass",
+      "evidence": "FLOW-21; e2e/server.spec.ts *a suspended person is told* (probe 7 red)"
+    },
+    {
+      "id": "AC-87s",
+      "title": "The paused note doesn’t follow the next person",
+      "spec": "§9.6",
+      "status": "pass",
+      "evidence": "FLOW-32 step 2"
+    },
+    {
+      "id": "AC-88",
+      "title": "You redraws after Undo",
+      "spec": "§6.7",
+      "status": "pass",
+      "evidence": "FLOW-22 passes"
+    },
+    {
+      "id": "AC-88s",
+      "title": "A refetch doesn’t overwrite an unsaved draft",
+      "spec": "patterns §7 Forms",
+      "status": "unreachable",
+      "evidence": "no refetch could be caused while a draft is open (staleTime Infinity, refetchOnWindowFocus false; any tap elsewhere saves the draft first). FLOW-33 recorded \"no refetch happened\""
+    },
+    {
+      "id": "AC-40",
+      "title": "(re-check) a known email signs in; a failed send says so",
+      "spec": "screens.md sign-in",
+      "status": "pass",
+      "evidence": "FLOW-1, FLOW-13, AC-81"
+    },
+    {
+      "id": "AC-47",
+      "title": "(re-check) the sign-in form follows patterns",
+      "spec": "patterns §7",
+      "status": "pass",
+      "evidence": "FLOW-25: email focused; diff: focus ring in all 12 pairs of sign-in and first-run"
+    },
+    {
+      "id": "AC-64",
+      "title": "(re-check) signed in, opened offline, stays in",
+      "spec": "§5.1",
+      "status": "pass",
+      "evidence": "FLOW-10c, FLOW-23, e2e/server.spec.ts *opened offline*"
+    },
+    {
+      "id": "AC-65",
+      "title": "(re-check) a suspended person is told",
+      "spec": "§9.6",
+      "status": "pass",
+      "evidence": "FLOW-15, FLOW-21"
+    },
+    {
+      "id": "AC-73",
+      "title": "(re-check) a write and its retry at once land once",
+      "spec": "dedupe",
+      "status": "pass",
+      "evidence": "AC-85 (the branch’s own test can’t tell: finding 32)"
+    },
+    {
+      "id": "AC-74",
+      "title": "(re-check) Undo restores and shows it",
+      "spec": "§6.7",
+      "status": "pass",
+      "evidence": "FLOW-22"
+    },
+    {
+      "id": "AC-75",
+      "title": "(re-check) hostile input never a 500",
+      "spec": "§16",
+      "status": "fail",
+      "evidence": "commands fixed; auth routes and Origin still 500 (findings 31, 33)"
+    },
+    {
+      "id": "AC-77",
+      "title": "(re-check) offline in a browser",
+      "spec": "flows.md offline",
+      "status": "pass",
+      "evidence": "FLOW-24: You keeps showing the last answer offline"
+    },
+    {
+      "id": "AC-80",
+      "title": "(re-check) Account shows the whole email",
+      "spec": "screens.md",
+      "status": "pass",
+      "evidence": "FLOW-26"
+    },
+    {
+      "id": "AC-22",
+      "title": "(re-check) unknown routes → error shape",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "/api/auth/nope → 404 {\"code\":\"not_found\",\"message\":\"No such route.\"}"
+    }
+  ],
+  "notTested": [
+    {
+      "what": "Sign-in in production",
+      "why": "production deploys only from main; the run-3 fixes are proved on local production- and preview-target APIs"
+    },
+    {
+      "what": "A real Gmail failure on Vercel",
+      "why": "no production credentials; an unreachable SMTP host stood in"
+    },
+    {
+      "what": "AC-88s, a refetch overwriting an unsaved draft on You",
+      "why": "no way found to cause a refetch while a draft is open (staleTime Infinity, no refetch on focus)"
+    },
+    {
+      "what": "The full pnpm e2e",
+      "why": "scoped run: the diff run re-ran the whole catalogue in all six looks against main instead; e2e:server, unit, database and QA specs ran in full"
+    },
+    {
+      "what": "The eyes pass as a separate helper",
+      "why": "no Agent tool; the reviewer looked at the diff’s changed screens itself"
+    },
+    {
+      "what": "Everything outside the three areas",
+      "why": "scoped mode"
+    }
+  ]
+}

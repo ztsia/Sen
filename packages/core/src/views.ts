@@ -801,6 +801,25 @@ export const SettingsView = z.object({
 });
 export type SettingsView = z.infer<typeof SettingsView>;
 
+/**
+ * What the server holds of Settings from B05: who you are, what you may use, and *You*. The rest of
+ * SettingsView arrives with the slices that own its tables; until then a preview fills it from the
+ * made-up scenario.
+ */
+export const SettingsCore = SettingsView.pick({ email: true, admin: true, switches: true, you: true });
+export type SettingsCore = z.infer<typeof SettingsCore>;
+
+/** `GET /api/admin/members` (B05's read; B38's screens): people and their switches, never their money (D52). */
+export const MemberRow = z.object({
+  id: Id,
+  name: z.string(),
+  email: z.string(),
+  admin: z.boolean(),
+  status: z.enum(['active', 'suspended']),
+  switches: MemberSwitches,
+});
+export type MemberRow = z.infer<typeof MemberRow>;
+
 // --- Payday (screens.md, spec §9.7, D60, D104) ---
 
 export const PaydayStep = z.enum(['claims', 'balance', 'look-back', 'plan']);

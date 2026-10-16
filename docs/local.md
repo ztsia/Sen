@@ -8,6 +8,31 @@ follow on a phone, and commit.
 
 ## Now
 
+- [ ] **Sign in to Sen for the first time (B05).** Sign-up is off, so your account comes from one
+      variable. Before merging *B05 · Server, database and sign-in*:
+      1. vercel.com → project **sen** → *Settings* → *Environment Variables* → *Add*: name
+         `SEN_OWNER_EMAIL`, value your own email, environment **Production** only. (Not secret, but
+         keep it out of the repo, which is public.)
+      2. Merge the PR. Its production deploy creates your account with the admin flag, once: later
+         deploys see an admin exists and do nothing.
+      3. Open `https://sen-my.vercel.app` → *Sign in* → your email → *Send the code*. The code comes
+         from Sen's Gmail within a minute. Type it.
+      - [ ] **Q14, where does the code land?** Note whether it reached your inbox or spam. Then the
+            same for one other provider (Outlook or Yahoo): Neon's console (console.neon.tech →
+            project **sen** → *SQL Editor*) can add a test account, since invitations come with
+            B38. Replace the address, run, sign in with it on the phone, then run the last line:
+            ```
+            insert into auth_user (name, email, email_verified) values ('Test', lower('you@outlook.com'), true);
+            insert into user_access (user_id) select id from auth_user where email = lower('you@outlook.com');
+            -- after the test:
+            delete from auth_user where email = lower('you@outlook.com');
+            ```
+            Tell the next session what each one did.
+      - [ ] **Sign out everywhere (B05, done-when 5):** signed in on the phone and in a second
+            browser, *More → Settings → Account → Sign out everywhere* on one; the other asks you to
+            sign in again at its next tap.
+- [ ] **A preview's sign-in, to try any time:** a preview's link (each PR shows Vercel's) → *Sign in*
+      → `weiming@example.com` → the code is always `123456`. Previews hold only the made-up Wei Ming.
 - [x] **Accounts and keys, on the laptop** (done 11 Oct). A session sets each thing up and never
       sees a key: it clicks *Create* without looking at the result, you click *Copy*, and a watcher
       takes the clipboard by its shape and sends it on, as a **Sensitive** variable for
@@ -34,7 +59,7 @@ follow on a phone, and commit.
 
       Done already: Vercel, the signing key, `BETTER_AUTH_SECRET`, both Neon databases. **These wait
       for their slice**, which writes the steps first: the Cloudflare Worker with its Git builds and
-      the scheduler and relay secrets (B06), the database URL in `sen_ops` (B05, B06), the monitor
+      the scheduler and relay secrets (B06), the database URL in `sen_ops` (B06; B05's migrations run in Vercel's build instead), the monitor
       (B06), making yourself the admin (B05), the calendar's OAuth client (B24), forwarding receipts
       (B19).
 
@@ -70,7 +95,11 @@ follow on a phone, and commit.
                folder. GitHub never shows a secret again, so this is the only other copy.
       2. **The two addresses: done (10 Oct),** in `apps/shell/sites.json`. Production above; the
          review alias is `https://sen-review.vercel.app`, which follows the Git branch `review`. A
-         session points it at the branch under review by pushing that branch to `review`.
+         session points it at the branch under review by pushing that branch to `review`. After a
+         merge, the *Review follows main* workflow moves `review` up to `main` by itself (B05; on 15
+         Oct it had sat two days behind). **Still showing the old version?** Close the page or *Sen
+         review* fully and reopen it, once or twice: its offline copy (D114) switches only after it
+         notices the new one.
          - [x] **The review alias opens without a login** (11 Oct): you turned Vercel
                Authentication off for the project, and `review` was moved up to `main`, so the
                review build shows B03's tabs on made-up data. Every preview is now open to anyone
@@ -226,11 +255,11 @@ values in *Production* only), never into the repo or a chat:
   Never connect `sen` to *Preview*, and never let a preview branch from production: a branch copies
   everyone's real money. The variables Vercel now holds (`DATABASE_URL`, `DATABASE_URL_UNPOOLED`,
   the `PG*` and `POSTGRES_*` sets) sign in as the database's **owner**. B05 uses them for
-  migrations only, and adds `app_user` with a variable of its own for the API.
+  migrations only. `app_user` and `sen_auth` need no variable: their passwords derive from
+  `BETTER_AUTH_SECRET`, set by the deploy itself (B05, `packages/db/README.md`).
 - **Better Auth's secret: done (10 Oct).** `BETTER_AUTH_SECRET` is in Vercel, a different random
   value in *Production* and in *Preview*, made on the laptop and never shown.
-- **make yourself the admin**, once, after the first production deploy. Sign-up is off, so the
-  foundations slice gives a one-time seed command that creates your account with the admin flag
+- **make yourself the admin**: now one variable, `SEN_OWNER_EMAIL` (B05, under *Now* above)
 - a Firebase project for push (FCM), in the same Google Cloud project
 - an R2 bucket
 - **an Anthropic API key** (D120, before B10): console.anthropic.com → *API keys* → *Create key*,

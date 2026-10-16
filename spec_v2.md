@@ -1234,7 +1234,7 @@ audit_log            id, user_id, entity, entity_id, action, before, after,
 
 ## 16. Backend routes (one Hono app on Vercel Functions)
 
-Everything goes through this one API, and every request runs as its signed-in user under RLS (§5). Plain reads and writes of your own rows use generic resource routes; the routes below are the ones with logic of their own.
+Everything goes through this one API, and every request runs as its signed-in user under RLS (§5). Plain reads and writes of your own rows use generic resource routes; the routes below are the ones with logic of their own. The API is served under `/api` on the web app's own origin, so `/sync` is `/api/sync`, and its session cookie is first-party (B05).
 
 | Route | Called by | Purpose |
 |---|---|---|

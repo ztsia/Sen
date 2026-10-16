@@ -97,7 +97,11 @@ function PersonShell({ screen }: { screen: ScreenDef | undefined }) {
           !tabs && 'safe-bottom',
         )}
       >
-        {online ? null : <OfflineBanner />}
+        {online ? null : screen?.id === 'sign-in' ? (
+          <OfflineBanner>You’re offline. Signing in needs a connection.</OfflineBanner>
+        ) : (
+          <OfflineBanner />
+        )}
         <Outlet />
         {tabs ? (
           <div className="relative z-[var(--z-index-tabbar)] shrink-0">

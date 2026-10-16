@@ -1,0 +1,1585 @@
+{
+  "module": "B05",
+  "branch": "B05/server",
+  "verdict": "fix first",
+  "generatedAt": "2026-10-15 19:18 UTC",
+  "phases": "1-6",
+  "headline": "Fix first. The database and RLS hold under every attack QA ran, and sign-in, sign out and sign out everywhere work end to end. But four Majors stand: no test pins production's random codes, pgTAP can't see a weak UPDATE WITH CHECK, a signed-in person opening Sen offline lands on sign-in, and three wrong codes lock a person into a 'send a new code' loop. Malformed JSON also gets a 500 where it should get a 400.",
+  "summary": {
+    "criteria": 78,
+    "pass": 69,
+    "fail": 9,
+    "unreachable": 0
+  },
+  "suites": {
+    "unit": "320/320 pass",
+    "db": "pgTAP 98/98, API 18/18 (pnpm test:db)",
+    "e2e": "1387 specs, 1386 pass; the 1 failure (redesign-pins tap guard) passed 5/5 alone, so it's flaky under load, not a B05 regression",
+    "e2e:server": "1/1 pass",
+    "qa specs": "23 run, 20 pass, 3 fail (findings 3, 4, 10)",
+    "typecheck": "clean",
+    "lint": "clean",
+    "diff": "1 screen changed (settings/account, as asked), 0 check findings",
+    "hygiene": "passed (DENYLIST not set)"
+  },
+  "findings": [
+    {
+      "severity": "Major",
+      "title": "Nothing tests that production refuses the fixed preview code 123456",
+      "detail": "`createAuth` fixes every code to `123456` unless `target === 'production'` (`apps/api/src/auth.ts`). The API tests run with `target: 'production'` but their mailer records whatever code is sent, so a production server that always sends `123456` passes every test. This is the one line between a public repo's documented code and the owner's real account. The code is right today (QA sent three production codes: 221323, 800570, 937721), but nothing would notice a regression.",
+      "repro": "sed -i \"s/const fixedCode = opts.target !== 'production';/const fixedCode = true;/\" apps/api/src/auth.ts && pnpm test:db; git checkout -- apps/api/src/auth.ts",
+      "evidence": "test/admin.sql ...... ok\ntest/catalogue.sql .. ok\ntest/rls.sql ........ ok\nResult: PASS\n Test Files  1 passed (1)\n      Tests  18 passed (18)",
+      "spec": "AC-52, §17 Login, brief Done-when 7",
+      "screenshots": [],
+      "id": 1,
+      "status": "open"
+    },
+    {
+      "severity": "Major",
+      "title": "pgTAP can’t see a weak WITH CHECK on UPDATE: the harness every later table relies on misses it",
+      "detail": "rls.sql's *can't give its own row to someone else* runs `UPDATE t SET user_id = C WHERE user_id = me`. Because the WHERE names a column, Postgres also applies the SELECT policy to the new row, which refuses it, so the test says `denied` even when the UPDATE policy's WITH CHECK is wrong. With `WITH CHECK (user_id is not null)` the suite stays green, while `UPDATE user_settings SET user_id = C` (no WHERE on the column) as B moves B's row into C's account. The brief makes this harness the proof for every later table, so a later table with a weak WITH CHECK would pass.",
+      "repro": "In packages/db/migrations/0001_b05_tables.sql change user_settings_own_update's WITH CHECK to (\"user_settings\".\"user_id\" is not null); pnpm test:db (stays green). Then in a database with that policy: set role app_user; select set_config('app.user_id', B, true); update user_settings set user_id = C;",
+      "evidence": "test/admin.sql ...... ok\ntest/catalogue.sql .. ok\ntest/rls.sql ........ ok\nResult: PASS\n--- the same policy in sen_qa, as B:\nupdate … where user_id = B  -> ERROR:  new row violates row-level security policy for table \"user_settings\"\nupdate user_settings set user_id = C  -> (succeeds)\nowner sees: a,c",
+      "spec": "AC-4, brief Done-when 2, *RLS policy helper*",
+      "screenshots": [],
+      "id": 2,
+      "status": "open"
+    },
+    {
+      "severity": "Major",
+      "title": "Signed in but offline, opening Sen lands on sign-in",
+      "detail": "The signed-out gate (`router.tsx` beforeLoad) asks `auth.session()`, which turns any failed `/api/auth/get-session` into `null`. Offline, with the service worker serving the app, a signed-in person opening `/review` is sent to `sign-in`, which then says signing in needs a connection. On `main` the app opened offline. flows.md *offline*: Review, manual entry and scanning still work offline; §5.1: the app opens offline. Back online, the person is still parked on `/s/sign-in` (an open route), though signed in. Two offline banners stack on that screen.",
+      "repro": "qa/e2e: ./node_modules/.bin/playwright test -c b05.config.ts b05-offline (sign in, let the service worker control the page, setOffline(true), goto /review)",
+      "evidence": "FLOW-10c: controlled by the service worker before going offline: true\nFLOW-10c: offline open lands on: http://localhost:4177/s/sign-in | You're offline. What you add is kept and syncs when you're back. | Sen | Sen | You’re offline. Signing in needs a connection. | Sign in to Sen | …",
+      "spec": "AC-64, flows.md offline, spec §5.1, §18",
+      "screenshots": [
+        "FLOW-10c-step-1-offline-open.png"
+      ],
+      "id": 3,
+      "status": "open"
+    },
+    {
+      "severity": "Major",
+      "title": "After three wrong codes, *Send a new code* sends one that is refused with the same message",
+      "detail": "Better Auth rate-limits `/sign-in/email-otp` to 3 calls a minute per client, and `auth.ts` (web) maps any 429 to `too-many`, shown as *That code has had too many tries. Send a new code.* So two typos and the right code works, but three typos lock the person out for a minute: the right code is refused, *Send a new code* sends a new one (toast), and that new code is refused with the same instruction to send a new code. Each send also spends the 3-a-minute send limit. Nothing says to wait.",
+      "repro": "Sign in as qa-chong: Send the code; type 111111, 222222, 333333, then 123456; Send a new code; type 123456 at once. (qa/e2e b05-flows FLOW-4)",
+      "evidence": "FLOW-4: the NEW code, typed at once, says: \"That code has had too many tries. Send a new code.\"; url http://localhost:4177/s/sign-in; sessions 0\ncurl, one IP: INVALID_OTP 400 ×3, then 429; send 200; sign-in with the new code: {\"message\":\"Too many requests. Please try again later.\"} 429\nauth_rate_limit: 10.44.44.44|/sign-in/email-otp|3",
+      "spec": "AC-42, screens.md sign-in, flows.md first-run (Wrong or expired code: Send a new code)",
+      "screenshots": [
+        "FLOW-4-step-1-too-many.png",
+        "FLOW-4-step-2-resent.png",
+        "FLOW-4-step-3-new-code.png"
+      ],
+      "id": 4,
+      "status": "open"
+    },
+    {
+      "severity": "Major",
+      "title": "Malformed JSON, an empty body and an empty PATCH answer 500",
+      "detail": "`c.req.json()` throws a SyntaxError that `onError` turns into a 500 `{code:'server'}` on `/api/commands` and on every resource route; `PATCH /:id` with `{}` on a table without `updated_at` reaches Drizzle's *No values to set*, also a 500. The shape holds and no stack leaks, but spec §16 and QA's rule want a 400 for bad input, never a 500, and a 500 hides the client's mistake in the server's error count.",
+      "repro": "curl -X POST localhost:8790/api/commands -H 'content-type: application/json' -b <session> --data-binary 'not json'   (and with an empty body)",
+      "evidence": "POST /commands body=not json -> 500 {\"code\":\"server\",\"message\":\"Something went wrong on Sen’s side.\"}\nPOST /commands body= -> 500 {…\"server\"…}\nserver log: SyntaxError: Unexpected token 'o', \"not json\" is not valid JSON\nPATCH /t/:id body={} -> 500 {\"code\":\"server\",…}  (log: Error: No values to set)",
+      "spec": "AC-21s, spec §16 Errors",
+      "screenshots": [],
+      "id": 5,
+      "status": "open"
+    },
+    {
+      "severity": "Minor",
+      "title": "Code sends are limited per client IP only; the 429 has no code; invitation lookups are unthrottled",
+      "detail": "The handoff's *3 codes a minute per address* is per client IP (Better Auth's rate limit), not per email: from rotating addresses QA sent 12 codes to weiming@example.com on the live preview inside a minute, all 200. In production each is a Gmail send, so anyone can spend Sen's Gmail quota and bury the owner's real code. The 429 body is `{\"message\":…}` without `code`. The invitation-only check runs before the limiter, so `not_invited` answers are unlimited (10 of 10 from one IP), an open membership oracle. Locally, behind Vite's proxy, Better Auth logs that it can't find the client IP and falls back to one shared bucket.",
+      "repro": "for i in 1..5: curl -X POST <preview>/api/auth/email-otp/send-verification-otp -d '{\"email\":\"weiming@example.com\",\"type\":\"sign-in\"}'",
+      "evidence": "preview, rotating egress IPs: 200 200 200 200 200 / 200 200 200 200 200 / 200 200\nlocal, one IP: 200 200 200 429 429; body {\"message\":\"Too many requests. Please try again later.\"}\nstranger lookups, one IP: 403 ×10\nWARN [Better Auth]: Rate limiting could not determine a client IP and is falling back to a single shared per-path bucket.",
+      "spec": "AC-28s, §17 Login, §16 Errors",
+      "screenshots": [],
+      "id": 6,
+      "status": "open"
+    },
+    {
+      "severity": "Minor",
+      "title": "A retried write adds an audit row and moves updated_at",
+      "detail": "`setting.set` and the resource `PUT` have no dedupe: the same command twice writes a second audit row with identical before and after, and bumps `updated_at`. The state is right, but the log records a change that didn't happen, and a later *Undo* reads it.",
+      "repro": "POST /api/commands {\"type\":\"setting.set\",\"key\":\"you.payday\",\"value\":{\"kind\":\"day\",\"day\":28}} twice",
+      "evidence": "audit rows before=4 after two identical commands=6; updated_at 2026-10-15 17:54:26.379967+00 -> 2026-10-15 17:54:26.485787+00",
+      "spec": "AC-23, CLAUDE.md *Every input has a dedupe key*",
+      "screenshots": [],
+      "id": 7,
+      "status": "open"
+    },
+    {
+      "severity": "Minor",
+      "title": "/api/admin/members returns the raw switches, not MemberRow’s seven",
+      "detail": "`switches: m.features` passes the jsonb through, so a person whose row holds `{\"capture\":true}` comes back with one key, where `@sen/core/views` MemberRow requires all seven booleans. `/api/settings` merges with NO_SWITCHES; this route doesn't. B38's screens will parse it.",
+      "repro": "GET /api/admin/members as the admin",
+      "evidence": "[{\"id\":\"…0a\",…,\"switches\":{\"capture\":true}},{\"id\":\"…0b\",…,\"switches\":{\"agent\":true}}]",
+      "spec": "brief *The API answers with @sen/core/views’ shapes*",
+      "screenshots": [],
+      "id": 8,
+      "status": "open"
+    },
+    {
+      "severity": "Minor",
+      "title": "Sign-in and Account drift from patterns.md",
+      "detail": "Account: the Email row is information but leads with an icon tile (patterns §7: *a row that opens nothing is information and has no tile*); *Sign out* and *Sign out everywhere* are actions drawn as NavRows with chevrons, so they look like destinations (*information and actions never look alike*). Sign-in: *Send the code* and *Sign in* are disabled offline (§7 Forms: *the submit button stays enabled and says what's missing*), and offline the screen stacks two banners that say different things. The dialog's cancel reads *Keep it*.",
+      "repro": "Open Settings → Account; go offline on sign-in.",
+      "evidence": "FLOW-10: Send enabled offline: false\nFLOW-10c screen: two banners, “You're offline. What you add is kept and syncs when you're back.” and “You’re offline. Signing in needs a connection.”",
+      "spec": "AC-63, patterns.md §7 (Calm screens 3–4, Rows, Forms)",
+      "screenshots": [
+        "FLOW-1-step-4-account.png",
+        "FLOW-7-step-1-dialog.png",
+        "FLOW-10-step-1-offline.png"
+      ],
+      "id": 9,
+      "status": "open"
+    },
+    {
+      "severity": "Minor",
+      "title": "A suspended person signs in and nothing says so",
+      "detail": "The API refuses a suspended person with 403 `suspended` on every route, but sign-in still succeeds and the app shows its screens (in a preview, Wei Ming's made-up month) without a word. §9.6: *Suspend (signs them out everywhere)*. The screens are B38's, but the API's refusal is B05's and the web app ignores it.",
+      "repro": "update user_access set suspended_at = now() where user_id = B; sign in as qa-ben",
+      "evidence": "FLOW-15: suspended, after sign-in: http://localhost:4177/ | Sen | Sen | Home | Payday plan · 2 of 3 | Left until payday | RM | 1,931.27 …",
+      "spec": "AC-65, §9.6",
+      "screenshots": [
+        "FLOW-15-step-1-suspended.png"
+      ],
+      "id": 10,
+      "status": "open"
+    },
+    {
+      "severity": "Note",
+      "title": "Audit before/after use Drizzle’s camelCase keys",
+      "detail": "The writer stores the Drizzle row (`expectedPayday`, `ownNames`, `updatedAt`), while pgTAP's fixture and SQL readers would expect column names (`expected_payday`). Settle one before the agent and Undo read audit_log.",
+      "repro": "select before from audit_log order by created_at desc limit 1",
+      "evidence": "{\"userId\": \"…0b\", \"ownNames\": [...], \"updatedAt\": \"…\", \"expectedPayday\": \"28\"}",
+      "spec": "§15 audit_log",
+      "screenshots": [],
+      "id": 11,
+      "status": "open"
+    },
+    {
+      "severity": "Note",
+      "title": "first-run, opened signed in, asks to sign in again",
+      "detail": "`/s/first-run` while signed in shows *Sign in · Step 1 of 7* with the email form. first-run is B08's; with sign-in now real, its step 1 should know the session.",
+      "repro": "Sign in, open /s/first-run",
+      "evidence": "CORE-1: first-run signed in: Sign in | Step 1 of 7 | Sign in to Sen | Your email | …",
+      "spec": "flows.md first-run, B08",
+      "screenshots": [
+        "CORE-1-step-3-first-run.png"
+      ],
+      "id": 12,
+      "status": "open"
+    },
+    {
+      "severity": "Note",
+      "title": "Every signed-out load calls /api/me and logs a 401",
+      "detail": "The sign-in screen's frame asks `/api/me`, which answers 401 and logs a console error on every signed-out visit.",
+      "repro": "Open / signed out with the console open",
+      "evidence": "[\"401 GET /api/me\",\"console: Failed to load resource: the server responded with a status of 401 (Unauthorized)\"]",
+      "spec": "—",
+      "screenshots": [],
+      "id": 13,
+      "status": "open"
+    },
+    {
+      "severity": "Note",
+      "title": "Any preview’s admin is one public email and code away",
+      "detail": "Previews seed Wei Ming as the admin with a fixed code, and both are in the public repo, so anyone can sign in to any preview as its admin and write to the shared sen-preview database. The data is made up, so it's accepted; it does mean a preview's state can't be trusted between QA runs.",
+      "repro": "POST <preview>/api/auth/sign-in/email-otp {email: weiming@example.com, otp: 123456}",
+      "evidence": "{\"email\":\"weiming@example.com\",\"admin\":true,…}",
+      "spec": "§17 Previews",
+      "screenshots": [],
+      "id": 14,
+      "status": "open"
+    },
+    {
+      "severity": "Note",
+      "title": "Emails are compared case-sensitively in the database",
+      "detail": "`invitations_open_email_key` and `auth_user_email_unique` are plain unique indexes: `PEND@example.com` was accepted as a second pending invitation beside `pend@example.com`. The API lowercases before it looks up; B38's invitation writer must too, or the indexes should be on lower(email).",
+      "repro": "insert two pending invitations differing only in case",
+      "evidence": "case-variant accepted: 2",
+      "spec": "§15 invitations",
+      "screenshots": [],
+      "id": 15,
+      "status": "open"
+    },
+    {
+      "severity": "Note",
+      "title": "The function’s runtime holds the owner role’s URL",
+      "detail": "`readEnv` derives the roles' URLs from `DATABASE_URL`, the Neon integration's owner URL, so the API function's environment holds the owner's credentials at runtime, though it never connects with them. §17 says only migrations and the backup use the owner role; a function compromise would reach it. A host-only variable would keep it out.",
+      "repro": "apps/api/src/env.ts readEnv",
+      "evidence": "const pooled = e.DATABASE_URL; … roleUrl(pooled, 'app_user', …)",
+      "spec": "§17 RLS, docs/cloud.md §3",
+      "screenshots": [],
+      "id": 16,
+      "status": "open"
+    },
+    {
+      "severity": "Note",
+      "title": "Switch names differ from the spec",
+      "detail": "`features` holds `email` where §15 says `email_receipts`, and the column has no check on its keys.",
+      "repro": "select features from user_access",
+      "evidence": "{\"agent\": true, \"email\": true, \"shell\": true, …}",
+      "spec": "§15 user_access",
+      "screenshots": [],
+      "id": 17,
+      "status": "open"
+    }
+  ],
+  "probes": [
+    {
+      "broke": "auth.ts: fixedCode = true (production signs in with 123456)",
+      "caught": false,
+      "note": "pnpm test:db: 98 pgTAP + 18 API tests all green; finding 1"
+    },
+    {
+      "broke": "user_settings update policy WITH CHECK (true)",
+      "caught": true,
+      "note": "catalogue.sql went red: policy for app_user is always true (4/4 failed)"
+    },
+    {
+      "broke": "user_settings update policy WITH CHECK (user_id is not null)",
+      "caught": false,
+      "note": "rls.sql green: the SELECT policy masks it in the test's UPDATE … WHERE; finding 2"
+    },
+    {
+      "broke": "db.ts: set_config('app.user_id', $1, false) (session-wide)",
+      "caught": true,
+      "note": "api.test.ts: 2 failed (expected '665781a5…' to be '')"
+    },
+    {
+      "broke": "user_access: GRANT UPDATE + an own-row UPDATE policy",
+      "caught": true,
+      "note": "rls.sql tests 73–75 failed (Unlimited, features, admin)"
+    },
+    {
+      "broke": "admin_members(): admin check reduced to me IS NULL",
+      "caught": true,
+      "note": "admin.sql: “a member can't list the members” failed"
+    },
+    {
+      "broke": "app.ts: invitation-only check removed (disableSignUp still on)",
+      "caught": true,
+      "note": "api.test.ts: “says Sen is invitation-only…” failed"
+    },
+    {
+      "broke": "routes.ts: member.* admin check removed",
+      "caught": true,
+      "note": "api.test.ts: “gives a member 403…” failed"
+    }
+  ],
+  "flows": [
+    {
+      "id": "FLOW-1",
+      "title": "The owner signs in by code",
+      "kind": "happy",
+      "actor": "owner (admin)",
+      "entry": "/ signed out",
+      "covers": [
+        "AC-40",
+        "AC-43",
+        "AC-47"
+      ],
+      "spec": "screens.md sign-in, D13",
+      "status": "pass",
+      "ends": "home; one session row; Account shows the email",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open / with no session",
+          "assertion": "sign-in shows, not home; no tab bar",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-1-gate.png"
+        },
+        {
+          "n": 2,
+          "action": "Send the code",
+          "assertion": "the code step names the email; the code field is focused",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-2-code-step.png"
+        },
+        {
+          "n": 3,
+          "action": "Sign in with the right code",
+          "assertion": "home with the tab bar; one session row for the owner",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-home.png"
+        },
+        {
+          "n": 4,
+          "action": "Settings → Account",
+          "assertion": "the email shows",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-4-account.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-2",
+      "title": "A wrong code, then the right one",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "sign-in, code step",
+      "covers": [
+        "AC-40s"
+      ],
+      "spec": "flows.md first-run",
+      "status": "pass",
+      "ends": "wrong-code message, no session; then signed in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "type 000000",
+          "assertion": "the wrong-code message; still on the code step; no session",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-1-wrong.png"
+        },
+        {
+          "n": 2,
+          "action": "type five digits",
+          "assertion": "says the code is 6 digits",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-2-short.png"
+        },
+        {
+          "n": 3,
+          "action": "type the right code",
+          "assertion": "signed in; one session",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-3-signed-in.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-3",
+      "title": "An email nobody invited",
+      "kind": "sad",
+      "actor": "stranger",
+      "entry": "sign-in",
+      "covers": [
+        "AC-41",
+        "AC-47s"
+      ],
+      "spec": "flows.md invited, §5.1",
+      "status": "pass",
+      "ends": "Sen is invitation-only; auth_user unchanged",
+      "steps": [
+        {
+          "n": 1,
+          "action": "send a code to stranger@example.com",
+          "assertion": "*Sen is invitation-only*; no new user",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-1-invitation-only.png"
+        },
+        {
+          "n": 2,
+          "action": "send to \"not an email\"",
+          "assertion": "a message under the field",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-2-malformed.png"
+        },
+        {
+          "n": 3,
+          "action": "send with no email",
+          "assertion": "a message under the field",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-3-empty.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-4",
+      "title": "Too many tries, then Send a new code at once",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "sign-in, code step",
+      "covers": [
+        "AC-42",
+        "AC-42s"
+      ],
+      "spec": "screens.md sign-in",
+      "status": "fail",
+      "ends": "the new code signs in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "three wrong codes, then the right one",
+          "assertion": "refused: too many tries; Send a new code",
+          "status": "pass",
+          "screenshot": "FLOW-4-step-1-too-many.png"
+        },
+        {
+          "n": 2,
+          "action": "Send a new code",
+          "assertion": "a toast says a new code is on its way",
+          "status": "pass",
+          "screenshot": "FLOW-4-step-2-resent.png"
+        },
+        {
+          "n": 3,
+          "action": "type the new code at once",
+          "assertion": "signed in with the new code (AC-42)",
+          "status": "fail",
+          "screenshot": "FLOW-4-step-3-new-code.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-4b",
+      "title": "An expired code, then Send a new code",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "sign-in, code step",
+      "covers": [
+        "AC-42"
+      ],
+      "spec": "screens.md sign-in",
+      "status": "pass",
+      "ends": "That code has expired; the new code signs in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "the code expires (in the database), then type it",
+          "assertion": "That code has expired; Send a new code is the main button",
+          "status": "pass",
+          "screenshot": "FLOW-4b-step-1-expired.png"
+        },
+        {
+          "n": 2,
+          "action": "Send a new code, type it",
+          "assertion": "signed in",
+          "status": "pass",
+          "screenshot": "FLOW-4b-step-2-signed-in.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-5",
+      "title": "Deep links while signed out",
+      "kind": "sad",
+      "actor": "anyone",
+      "entry": "six deep links",
+      "covers": [
+        "AC-43"
+      ],
+      "spec": "brief B05",
+      "status": "pass",
+      "ends": "sign-in each time; no RM figure",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open /s/settings/account signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-1-deep-1.png"
+        },
+        {
+          "n": 2,
+          "action": "open /insights signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-2-deep-2.png"
+        },
+        {
+          "n": 3,
+          "action": "open /more signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-3-deep-3.png"
+        },
+        {
+          "n": 4,
+          "action": "open /s/txn?id=x signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-4-deep-4.png"
+        },
+        {
+          "n": 5,
+          "action": "open /s/settings/members signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-5-deep-5.png"
+        },
+        {
+          "n": 6,
+          "action": "open /review signed out",
+          "assertion": "sign-in; no RM figure",
+          "status": "pass",
+          "screenshot": "FLOW-5-step-6-deep-6.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-6",
+      "title": "Sign out ends this session only",
+      "kind": "happy",
+      "actor": "member, two browsers",
+      "entry": "Settings → Account",
+      "covers": [
+        "AC-44",
+        "AC-44s"
+      ],
+      "spec": "screens.md Account",
+      "status": "pass",
+      "ends": "sign-in; the other browser still signed in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Sign out",
+          "assertion": "sign-in; one session left (the other browser’s)",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-1-signed-out.png"
+        },
+        {
+          "n": 2,
+          "action": "reload",
+          "assertion": "still sign-in",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-2-reload.png"
+        },
+        {
+          "n": 3,
+          "action": "the other browser opens Account",
+          "assertion": "still signed in, with the email",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-3-other-browser.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-7",
+      "title": "Sign out everywhere from another browser",
+      "kind": "happy",
+      "actor": "owner, two browsers + a member",
+      "entry": "Settings → Account",
+      "covers": [
+        "AC-45",
+        "AC-45s",
+        "AC-46"
+      ],
+      "spec": "§17 Login, flows.md lost-phone",
+      "status": "pass",
+      "ends": "both owner browsers on sign-in; owner sessions 0; member untouched",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Sign out everywhere",
+          "assertion": "a confirm dialog that says this one too",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-1-dialog.png"
+        },
+        {
+          "n": 2,
+          "action": "confirm",
+          "assertion": "sign-in; no sessions for the owner; Ben’s untouched",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-2-signed-out.png"
+        },
+        {
+          "n": 3,
+          "action": "the other browser, on You, sets the payday to Not set",
+          "assertion": "it ends on sign-in",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-3-other-acts.png"
+        },
+        {
+          "n": 4,
+          "action": "the other browser opens /",
+          "assertion": "sign-in",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-4-other-reload.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-8",
+      "title": "Sign out everywhere, cancelled",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "Settings → Account",
+      "covers": [
+        "AC-46s"
+      ],
+      "spec": "patterns §7 Dialogs",
+      "status": "pass",
+      "ends": "still signed in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Sign out everywhere, then Cancel",
+          "assertion": "still on Account, still one session",
+          "status": "pass",
+          "screenshot": "FLOW-8-step-1-cancelled.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-9",
+      "title": "A member is refused the admin’s routes",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "API with the member’s cookie; Settings",
+      "covers": [
+        "AC-25"
+      ],
+      "spec": "§16, brief",
+      "status": "pass",
+      "ends": "403 on /admin/members and member.*; Members says Admin only",
+      "steps": [
+        {
+          "n": 1,
+          "action": "a member opens Settings; the API refuses /admin/members and member.*",
+          "assertion": "403 both; no Admin badge, no Members row",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-1-settings.png"
+        },
+        {
+          "n": 2,
+          "action": "a member opens /s/settings/members by its address",
+          "assertion": "Admin only; no member listed",
+          "status": "pass",
+          "screenshot": "FLOW-9-step-2-members.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-10",
+      "title": "Offline on the sign-in screen",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "sign-in",
+      "covers": [
+        "AC-63"
+      ],
+      "spec": "flows.md offline",
+      "status": "pass",
+      "ends": "a banner; online again sends the code",
+      "steps": [
+        {
+          "n": 1,
+          "action": "go offline",
+          "assertion": "a banner says signing in needs a connection",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-1-offline.png"
+        },
+        {
+          "n": 2,
+          "action": "back online, Send the code",
+          "assertion": "the code step",
+          "status": "pass",
+          "screenshot": "FLOW-10-step-2-online.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-10b",
+      "title": "A signed-in browser reloaded offline (no service worker)",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "any screen",
+      "covers": [
+        "AC-64"
+      ],
+      "spec": "flows.md offline",
+      "status": "pass",
+      "ends": "back online, still signed in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "reload offline, then online again",
+          "assertion": "Account opens, still signed in",
+          "status": "pass",
+          "screenshot": "FLOW-10b-step-1-back.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-10c",
+      "title": "Signed in, the app opened offline with the service worker",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/review offline",
+      "covers": [
+        "AC-64",
+        "AC-64s"
+      ],
+      "spec": "flows.md offline, §5.1",
+      "status": "fail",
+      "ends": "Review opens, not sign-in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "signed in, offline, open /review",
+          "assertion": "Review opens (not sign-in), as §5.1 and flows.md offline say",
+          "status": "fail",
+          "screenshot": "FLOW-10c-step-1-offline-open.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-11",
+      "title": "Another timezone (America/Los_Angeles)",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "sign-in",
+      "covers": [
+        "AC-40"
+      ],
+      "spec": "CLAUDE.md dates",
+      "status": "pass",
+      "ends": "sign-in and Account the same",
+      "steps": [
+        {
+          "n": 1,
+          "action": "sign in and open Account at UTC-7",
+          "assertion": "the email shows",
+          "status": "pass",
+          "screenshot": "FLOW-11-step-1-account.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-12",
+      "title": "Settings → You saved on the server, with its audit row",
+      "kind": "happy",
+      "actor": "member",
+      "entry": "Settings → You",
+      "covers": [
+        "AC-21",
+        "AC-24",
+        "AC-24s"
+      ],
+      "spec": "§16, §6.7",
+      "status": "pass",
+      "ends": "user_settings says 25; one audit row by user; 40 refused",
+      "steps": [
+        {
+          "n": 1,
+          "action": "set the payday to day 25",
+          "assertion": "user_settings says 25; one audit row by the user",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-1-payday.png"
+        },
+        {
+          "n": 2,
+          "action": "reload You",
+          "assertion": "day 25 is still chosen",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-2-reload.png"
+        },
+        {
+          "n": 3,
+          "action": "type 40",
+          "assertion": "a message under the field; the row still says 25",
+          "status": "pass",
+          "screenshot": "FLOW-12-step-3-out-of-range.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-13",
+      "title": "The production build with the API",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "production build signed out",
+      "covers": [
+        "AC-40",
+        "AC-52"
+      ],
+      "spec": "brief Done-when 1",
+      "status": "pass",
+      "ends": "signed in; no preview hint; nothing made up",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open the production build signed out",
+          "assertion": "sign-in",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-1-gate.png"
+        },
+        {
+          "n": 2,
+          "action": "Send the code",
+          "assertion": "no preview hint naming the code",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-2-code.png"
+        },
+        {
+          "n": 3,
+          "action": "Sign in",
+          "assertion": "leaves sign-in; no made-up name or amount",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-3-home.png"
+        },
+        {
+          "n": 4,
+          "action": "open Account",
+          "assertion": "the email",
+          "status": "pass",
+          "screenshot": "FLOW-13-step-4-account.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-14",
+      "title": "A session expired on the server",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "Account",
+      "covers": [
+        "AC-43s"
+      ],
+      "spec": "brief",
+      "status": "pass",
+      "ends": "sign-in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "the session expires; open Account",
+          "assertion": "sign-in, not a broken screen",
+          "status": "pass",
+          "screenshot": "FLOW-14-step-1-expired.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-15",
+      "title": "A suspended person signs in",
+      "kind": "sad",
+      "actor": "member, suspended",
+      "entry": "sign-in",
+      "covers": [
+        "AC-65"
+      ],
+      "spec": "§9.6",
+      "status": "fail",
+      "ends": "says access is paused",
+      "steps": [
+        {
+          "n": 1,
+          "action": "a suspended person signs in and opens Account",
+          "assertion": "says access is paused, in words (§9.6 Suspend)",
+          "status": "fail",
+          "screenshot": "FLOW-15-step-1-suspended.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-16",
+      "title": "Signed in, the sign-in address",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "/s/sign-in",
+      "covers": [],
+      "spec": "(none)",
+      "status": "pass",
+      "ends": "recorded only",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open /s/sign-in while signed in",
+          "assertion": "recorded (no spec rule)",
+          "status": "pass",
+          "screenshot": "FLOW-16-step-1-sign-in-again.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-17",
+      "title": "Sign out while offline",
+      "kind": "sad",
+      "actor": "member",
+      "entry": "Settings → Account",
+      "covers": [
+        "AC-63s"
+      ],
+      "spec": "patterns §7 Error",
+      "status": "pass",
+      "ends": "a toast says it needs the server; still signed in",
+      "steps": [
+        {
+          "n": 1,
+          "action": "offline, tap Sign out",
+          "assertion": "says it needs a connection; still on Account; session kept",
+          "status": "pass",
+          "screenshot": "FLOW-17-step-1-offline-sign-out.png"
+        }
+      ]
+    },
+    {
+      "id": "CORE-1",
+      "title": "first-run (core): sign-in by code is real",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/s/first-run signed out",
+      "covers": [
+        "AC-40"
+      ],
+      "spec": "flows.md first-run",
+      "status": "pass",
+      "ends": "home after sign-in; first-run itself is B08",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open first-run signed out",
+          "assertion": "the gate sends it to sign-in",
+          "status": "pass",
+          "screenshot": "CORE-1-step-1-gate.png"
+        },
+        {
+          "n": 2,
+          "action": "sign in by code",
+          "assertion": "home with the tab bar",
+          "status": "pass",
+          "screenshot": "CORE-1-step-2-home.png"
+        },
+        {
+          "n": 3,
+          "action": "open first-run signed in",
+          "assertion": "the first-run screen opens (note what step 1 asks)",
+          "status": "pass",
+          "screenshot": "CORE-1-step-3-first-run.png"
+        }
+      ]
+    },
+    {
+      "id": "CORE-2",
+      "title": "pay-new (core) on the preview build",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Review",
+      "covers": [],
+      "spec": "flows.md pay-new",
+      "status": "pass",
+      "ends": "Meals from now on, card gone",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Review shows the new merchant",
+          "assertion": "RM9.50 · Roti Bakar 88 with answers",
+          "status": "pass",
+          "screenshot": "CORE-2-step-1-prompt.png"
+        },
+        {
+          "n": 2,
+          "action": "tap Meals",
+          "assertion": "the card goes; a toast says it is Meals from now on, with Undo",
+          "status": "pass",
+          "screenshot": "CORE-2-step-2-answered.png"
+        }
+      ]
+    },
+    {
+      "id": "CORE-3",
+      "title": "scan-after (core) on the preview build",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Scan tab",
+      "covers": [],
+      "spec": "flows.md scan-after",
+      "status": "pass",
+      "ends": "Attached to RM64.13 on Ryt Bank",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Scan tab, choose a photo",
+          "assertion": "crop opens",
+          "status": "pass",
+          "screenshot": "CORE-3-step-1-crop.png"
+        },
+        {
+          "n": 2,
+          "action": "Use this",
+          "assertion": "confirm with the items",
+          "status": "pass",
+          "screenshot": "CORE-3-step-2-confirm.png"
+        },
+        {
+          "n": 3,
+          "action": "Done",
+          "assertion": "Attached to RM64.13 on Ryt Bank, with Undo",
+          "status": "pass",
+          "screenshot": "CORE-3-step-3-attached.png"
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "AC-1",
+      "title": "Every table has RLS",
+      "spec": "§15, §17",
+      "status": "pass",
+      "evidence": "pg_class.relrowsecurity true for all 9 public tables (audit_log, auth_account, auth_rate_limit, auth_session, auth_user, auth_verification, invitations, user_access, user_settings); pgTAP catalogue.sql ok"
+    },
+    {
+      "id": "AC-1s",
+      "title": "The catalogue check fails on a planted table without RLS or view without security_invoker",
+      "spec": "brief Done-when 4",
+      "status": "pass",
+      "evidence": "catalogue.sql plants both and is green; probe: an always-true WITH CHECK turned catalogue.sql red (4/4 failed)"
+    },
+    {
+      "id": "AC-2",
+      "title": "app_user can’t bypass RLS and owns nothing",
+      "spec": "§5, §17",
+      "status": "pass",
+      "evidence": "app_user|f|f|f|f (super, bypassrls, createrole, createdb); 0 relations owned by app_user or sen_auth"
+    },
+    {
+      "id": "AC-2s",
+      "title": "row_security off, DISABLE RLS and SET ROLE refused",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "“query would be affected by row-level security policy”; “must be owner of table user_settings”; app_user -> sen_owner/sen_auth/postgres: “permission denied to set role”"
+    },
+    {
+      "id": "AC-3",
+      "title": "B reads none of A’s rows",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "matrix: as A each table shows only a; as B only b (user_access, user_settings, invitations, audit_log)"
+    },
+    {
+      "id": "AC-3s",
+      "title": "No user id: 0 rows",
+      "spec": "§5",
+      "status": "pass",
+      "evidence": "app.user_id unset: “none” in all four; a garbage id errors (invalid input syntax for type uuid), no rows"
+    },
+    {
+      "id": "AC-4",
+      "title": "B can’t write A’s rows",
+      "spec": "brief RLS helper",
+      "status": "pass",
+      "evidence": "insert as C: “new row violates row-level security policy”; update A’s settings as B: 0 rows; move own row to C: RLS violation; delete: permission denied"
+    },
+    {
+      "id": "AC-4s",
+      "title": "Own writes succeed",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "setting.set via /api/commands 200 and the row changes (FLOW-12: expected_payday 25)"
+    },
+    {
+      "id": "AC-5",
+      "title": "user_access read-only to its person: reads own",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "as B: user_access shows b only"
+    },
+    {
+      "id": "AC-5s",
+      "title": "No self-escalation",
+      "spec": "§15, D52",
+      "status": "pass",
+      "evidence": "update is_admin / insert / delete user_access as B: “permission denied for table user_access”"
+    },
+    {
+      "id": "AC-6",
+      "title": "sen_auth reaches auth_*",
+      "spec": "§5",
+      "status": "pass",
+      "evidence": "sen_auth reads auth_user a,b,c and auth_session a,b"
+    },
+    {
+      "id": "AC-6s",
+      "title": "sen_auth can’t read app tables",
+      "spec": "brief Done-when 3",
+      "status": "pass",
+      "evidence": "“permission denied for table user_access/user_settings/invitations/audit_log”"
+    },
+    {
+      "id": "AC-7",
+      "title": "audit_log insert own, actor checked",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "insert own row as B: ok"
+    },
+    {
+      "id": "AC-7s",
+      "title": "audit_log append-only; bad actor refused",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "update/delete: permission denied; actor admin: violates check constraint audit_log_actor_check; insert as A: RLS violation"
+    },
+    {
+      "id": "AC-8",
+      "title": "One pending invitation per email",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "second pending pend@example.com: duplicate key value violates unique constraint \"invitations_open_email_key\""
+    },
+    {
+      "id": "AC-8s",
+      "title": "After acceptance a new one is allowed",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "rows for pend: 2 after accept + new (note: PEND@example.com is accepted as a third pending one: finding 15)"
+    },
+    {
+      "id": "AC-9",
+      "title": "The admin never reads anyone’s money",
+      "spec": "§9.6, D52",
+      "status": "pass",
+      "evidence": "as the admin: B’s user_settings 0 rows; admin_members() returns id,name,email,is_admin,features,suspended_at"
+    },
+    {
+      "id": "AC-9s",
+      "title": "A member can’t call the admin’s function",
+      "spec": "D52",
+      "status": "pass",
+      "evidence": "“only the admin can list members” for B and for no user id"
+    },
+    {
+      "id": "AC-10",
+      "title": "A pooled connection carries no user id",
+      "spec": "§5",
+      "status": "pass",
+      "evidence": "one app_user connection: A sees a, between: [], no-txn sees 0, B sees b, after rollback: []"
+    },
+    {
+      "id": "AC-10s",
+      "title": "is_local=false would be caught",
+      "spec": "§5",
+      "status": "pass",
+      "evidence": "probe 3: api.test.ts went red (2 failed)"
+    },
+    {
+      "id": "AC-11",
+      "title": "UUID ids, auth_ prefix, no admin plugin",
+      "spec": "§5.1",
+      "status": "pass",
+      "evidence": "every id column uuid; auth_user columns id,name,email,email_verified,image,created_at,updated_at"
+    },
+    {
+      "id": "AC-11s",
+      "title": "No admin-plugin columns",
+      "spec": "§5.1",
+      "status": "pass",
+      "evidence": "no role / banned / impersonatedBy columns"
+    },
+    {
+      "id": "AC-12",
+      "title": "Migrations run on a fresh database",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "sen_qa and sen_qa2 migrated from empty; 5 rows in drizzle.__drizzle_migrations"
+    },
+    {
+      "id": "AC-12s",
+      "title": "A re-run is a no-op",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "second run rc=0, still 5 rows"
+    },
+    {
+      "id": "AC-20",
+      "title": "A request runs as its person",
+      "spec": "§5, §16",
+      "status": "pass",
+      "evidence": "/api/settings as Ben: qa-ben@example.com, bankNames [QA BEN]; as the admin: qa-admin@example.com"
+    },
+    {
+      "id": "AC-20s",
+      "title": "No session: 401 shape",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "401 {\"code\":\"signed_out\",\"message\":\"Sign in to Sen.\"}"
+    },
+    {
+      "id": "AC-21",
+      "title": "A valid write saves",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "200 {\"said\":\"Payday saved\",…}; row changed"
+    },
+    {
+      "id": "AC-21s",
+      "title": "Invalid input: 4xx {code,message,field?}, never 500",
+      "spec": "§16",
+      "status": "fail",
+      "evidence": "zod cases all 400 with field; but malformed JSON and an empty body give 500 {\"code\":\"server\"}, and PATCH {} on the resource pattern gives 500 (finding 5)"
+    },
+    {
+      "id": "AC-22",
+      "title": "Unknown route: structured 404",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "404 {\"code\":\"not_found\",\"message\":\"No such route.\"}"
+    },
+    {
+      "id": "AC-22s",
+      "title": "Traversal: 404",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "/api/%2e%2e/%2e%2e/etc/passwd: 404 structured"
+    },
+    {
+      "id": "AC-23",
+      "title": "A retried write changes nothing",
+      "spec": "CLAUDE.md dedupe",
+      "status": "fail",
+      "evidence": "the same setting.set twice: audit rows 4 -> 6, updated_at moves (finding 7)"
+    },
+    {
+      "id": "AC-23s",
+      "title": "Same id, different body: applied once, audited",
+      "spec": "§5",
+      "status": "pass",
+      "evidence": "resource PUT of a new body updates and audits; a tombstoned id stays tombstoned"
+    },
+    {
+      "id": "AC-24",
+      "title": "Every change audited, actor user, before and after",
+      "spec": "§6.7",
+      "status": "pass",
+      "evidence": "audit_log row action you.payday, actor user, before/after present"
+    },
+    {
+      "id": "AC-24s",
+      "title": "A rejected write audits nothing",
+      "spec": "§6.7",
+      "status": "pass",
+      "evidence": "eleven invalid commands left the audit count at 4"
+    },
+    {
+      "id": "AC-25",
+      "title": "The admin’s routes refuse everyone else",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "member: 403 forbidden on /admin/members and member.revoke; admin: 200"
+    },
+    {
+      "id": "AC-25s",
+      "title": "No session: 401 on /admin",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "401 signed_out"
+    },
+    {
+      "id": "AC-26",
+      "title": "X-Robots-Tag: noindex on every response",
+      "spec": "D127",
+      "status": "pass",
+      "evidence": "local API: on 200/400/401/403/404/429/500; live preview: page and /api; production’s Build Output routes put it on /(.*) with continue (inspected, not fetched)"
+    },
+    {
+      "id": "AC-26s",
+      "title": "Errors carry it too",
+      "spec": "D127",
+      "status": "pass",
+      "evidence": "401, 404, 429 and 500 all carried x-robots-tag: noindex"
+    },
+    {
+      "id": "AC-27",
+      "title": "Resource routes: list, get, upsert, patch, tombstone",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "api.test.ts resource tests; QA table: PUT 200, DELETE 204 then GET 404, list []"
+    },
+    {
+      "id": "AC-27s",
+      "title": "Someone else’s id never touched",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "api.test.ts: read 404, overwrite 403, patch/delete 404, row unchanged"
+    },
+    {
+      "id": "AC-28",
+      "title": "Code sends are rate-limited",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "same IP: 200 200 200 429 429"
+    },
+    {
+      "id": "AC-28s",
+      "title": "Over the limit: 429 in the error shape",
+      "spec": "§16",
+      "status": "fail",
+      "evidence": "429 body is {\"message\":\"Too many requests. Please try again later.\"}, no code; the limit is per client IP, not per email (finding 6)"
+    },
+    {
+      "id": "AC-40",
+      "title": "The right code signs in",
+      "spec": "screens.md sign-in",
+      "status": "pass",
+      "evidence": "FLOW-1: home, 1 auth_session row, Account shows the email"
+    },
+    {
+      "id": "AC-40s",
+      "title": "A wrong code: message, no session",
+      "spec": "screens.md sign-in",
+      "status": "pass",
+      "evidence": "FLOW-2: “That’s not the right code…”, 0 sessions"
+    },
+    {
+      "id": "AC-41",
+      "title": "Sign-up is off",
+      "spec": "§5.1",
+      "status": "pass",
+      "evidence": "stranger: 403 not_invited; auth_user 3 before and after eleven sign-up attempts"
+    },
+    {
+      "id": "AC-41s",
+      "title": "No account by any other path",
+      "spec": "§5.1",
+      "status": "pass",
+      "evidence": "sign-in/email-otp, verify-email, sign-up/email (EMAIL_PASSWORD_SIGN_UP_DISABLED), sign-in/anonymous (404): no user made"
+    },
+    {
+      "id": "AC-42",
+      "title": "Expired or used-up code, then Send a new code works",
+      "spec": "screens.md sign-in",
+      "status": "fail",
+      "evidence": "FLOW-4b passes (expired); FLOW-4 fails: after three wrong tries the new code is refused: “That code has had too many tries. Send a new code.” (finding 4)"
+    },
+    {
+      "id": "AC-42s",
+      "title": "After the allowed tries the right code is refused",
+      "spec": "screens.md sign-in",
+      "status": "pass",
+      "evidence": "403 TOO_MANY_ATTEMPTS after three INVALID_OTP"
+    },
+    {
+      "id": "AC-43",
+      "title": "Signed out, every route goes to sign-in",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "FLOW-5: six deep links, sign-in each, no RM"
+    },
+    {
+      "id": "AC-43s",
+      "title": "An expired session behaves as signed out",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "FLOW-14: sign-in"
+    },
+    {
+      "id": "AC-44",
+      "title": "Sign out ends this session",
+      "spec": "screens.md Account",
+      "status": "pass",
+      "evidence": "FLOW-6: sessions 2 -> 1; reload stays on sign-in"
+    },
+    {
+      "id": "AC-44s",
+      "title": "Other browsers stay signed in",
+      "spec": "screens.md Account",
+      "status": "pass",
+      "evidence": "FLOW-6: the other browser’s Account shows the email"
+    },
+    {
+      "id": "AC-45",
+      "title": "Sign out everywhere revokes every session",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "FLOW-7: owner sessions 0; other browser on sign-in after acting and after reload"
+    },
+    {
+      "id": "AC-45s",
+      "title": "Other people’s sessions untouched",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "FLOW-7: Ben’s session count unchanged"
+    },
+    {
+      "id": "AC-46",
+      "title": "Sign out everywhere is confirmed by a dialog",
+      "spec": "patterns §7",
+      "status": "pass",
+      "evidence": "alertdialog “Sign out everywhere?… this one too”"
+    },
+    {
+      "id": "AC-46s",
+      "title": "Cancel revokes nothing",
+      "spec": "patterns §7",
+      "status": "pass",
+      "evidence": "FLOW-8: still 1 session"
+    },
+    {
+      "id": "AC-47",
+      "title": "Sign-in form attributes",
+      "spec": "patterns §7 Forms",
+      "status": "pass",
+      "evidence": "code: inputmode numeric, autocomplete one-time-code, focused; email: inputmode email"
+    },
+    {
+      "id": "AC-47s",
+      "title": "Empty or malformed email: message under the field",
+      "spec": "patterns §7 Forms",
+      "status": "pass",
+      "evidence": "“Type your email.” / “That doesn’t look like an email. Check it and try again.”"
+    },
+    {
+      "id": "AC-50",
+      "title": "The owner’s seed: one admin, once",
+      "spec": "§5.1",
+      "status": "pass",
+      "evidence": "fresh db: created; again: exists; another email: exists; 1 user, is_admin, ai_unlimited, 1 user_settings"
+    },
+    {
+      "id": "AC-50s",
+      "title": "No owner email: no account",
+      "spec": "§5.1",
+      "status": "pass",
+      "evidence": "\"\" -> throws; deploy skips when SEN_OWNER_EMAIL is unset (code path logs it)"
+    },
+    {
+      "id": "AC-51",
+      "title": "The preview seed is made-up and idempotent",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "seedPreview twice: auth_user 2, user_access 2, user_settings 2 (owner + Wei Ming)"
+    },
+    {
+      "id": "AC-51s",
+      "title": "No duplicate rows on a re-run",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "as above"
+    },
+    {
+      "id": "AC-52",
+      "title": "Production never takes the fixed code",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "createApp target production: codes sent 221323, 800570, 937721; preview/local: 123456 ×3. (No test pins it: finding 1)"
+    },
+    {
+      "id": "AC-52s",
+      "title": "Production without Gmail refuses to start",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "env.test.ts “refuses to start in production without Sen’s Gmail” (unit suite green)"
+    },
+    {
+      "id": "AC-53",
+      "title": "A local API refuses a remote database",
+      "spec": "cloud.md §3",
+      "status": "pass",
+      "evidence": "env.test.ts: APP_DATABASE_URL/SEN_LOCAL_DATABASE pointing at Neon throws"
+    },
+    {
+      "id": "AC-53s",
+      "title": "Same, through either variable",
+      "spec": "cloud.md §3",
+      "status": "pass",
+      "evidence": "as above"
+    },
+    {
+      "id": "AC-60",
+      "title": "Money columns BIGINT; no float in the diff",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "ai_free_monthly, ai_daily_ceiling, ai_welcome_credit: bigint; grep of the diff for parseFloat/toFixed/Number(/÷100: nothing"
+    },
+    {
+      "id": "AC-60s",
+      "title": "No numeric/real money column",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "information_schema: none"
+    },
+    {
+      "id": "AC-61",
+      "title": "No secret in the built app",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "dist, dist-production, dist-qa, dist-qa-prod: no postgres://, BETTER_AUTH, GMAIL, DATABASE_URL, role names; the preview hint only in preview builds"
+    },
+    {
+      "id": "AC-61s",
+      "title": "Cookie HttpOnly, Secure, SameSite",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "preview: __Secure-better-auth.session_token … HttpOnly; Secure; SameSite=Lax"
+    },
+    {
+      "id": "AC-62",
+      "title": "Seeds and fixtures made-up",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "example.com people only; pnpm hygiene: “Hygiene check passed.”"
+    },
+    {
+      "id": "AC-62s",
+      "title": "Hygiene passes",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "as above (DENYLIST not set in the session)"
+    },
+    {
+      "id": "AC-63",
+      "title": "Sign-in and Account follow patterns.md",
+      "spec": "patterns §7",
+      "status": "fail",
+      "evidence": "Account’s Email row (information) has a tile; Sign out actions drawn as chevron NavRows; Send disabled offline; two offline banners (finding 9)"
+    },
+    {
+      "id": "AC-63s",
+      "title": "An error on Account says what happened",
+      "spec": "patterns §7 Error",
+      "status": "pass",
+      "evidence": "FLOW-17: offline Sign out → toast “Sen can’t reach its server. Check the connection.”, still on Account"
+    },
+    {
+      "id": "AC-64",
+      "title": "Signed in, opened offline, stays signed in",
+      "spec": "flows.md offline, §5.1",
+      "status": "fail",
+      "evidence": "FLOW-10c: offline open of /review lands on /s/sign-in (finding 3)"
+    },
+    {
+      "id": "AC-64s",
+      "title": "Offline is never read as signed out",
+      "spec": "flows.md offline",
+      "status": "fail",
+      "evidence": "as above"
+    },
+    {
+      "id": "AC-65",
+      "title": "A suspended person is told access is paused",
+      "spec": "§9.6",
+      "status": "fail",
+      "evidence": "FLOW-15: signs in, preview shows Wei Ming’s made-up month, nothing says paused; the API answers 403 suspended (finding 10)"
+    },
+    {
+      "id": "AC-65s",
+      "title": "No refused data shown as if fine",
+      "spec": "§9.6",
+      "status": "fail",
+      "evidence": "as above"
+    }
+  ],
+  "notTested": [
+    {
+      "what": "Sign-in in production (brief Done-when 1)",
+      "why": "production deploys only from main; no session holds production credentials. Proved on the live preview and on a local production-target API instead"
+    },
+    {
+      "what": "Q14: whether codes reach the inbox or spam, in Gmail and another provider",
+      "why": "needs the owner's mailboxes; queued in docs/local.md *Now* by the branch"
+    },
+    {
+      "what": "X-Robots-Tag on a production response",
+      "why": "production isn't deployed from this branch; the Build Output routes were inspected and a preview fetched"
+    },
+    {
+      "what": "That no preview can reach production (Done-when 7)",
+      "why": "Vercel's environment scoping isn't visible to a session; docs/local.md records separate secrets per environment"
+    },
+    {
+      "what": "Whether Vercel's x-forwarded-for can be spoofed past the per-IP limit",
+      "why": "the session's egress IP rotates per request, so the preview test can't tell spoofing from rotation"
+    },
+    {
+      "what": "The eyes pass (qa-eyes) and the Haiku sweep as helpers",
+      "why": "this reviewer had no Agent tool; the sweep ran as a background script and the changed screens were looked at here"
+    },
+    {
+      "what": "The shell's session (Keystore, bridge)",
+      "why": "B07's, per the brief"
+    }
+  ]
+}

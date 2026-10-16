@@ -5,6 +5,7 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
  * is `real` in the registry; every other one is still a skeleton (registry.ts).
  */
 export const REAL: Record<string, LazyExoticComponent<ComponentType>> = {
+  'sign-in': lazy(() => import('./outside/sign-in')),
   'settings/capture': lazy(() => import('./capture/capture')),
   'settings/capture/apps': lazy(() => import('./capture/apps')),
   'settings/capture/access': lazy(() => import('./capture/access')),

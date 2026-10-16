@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { InfoIcon, LogOutIcon, Trash2Icon } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { DoorOpenIcon, InfoIcon, LogOutIcon, Trash2Icon } from 'lucide-react';
+import { queryClient } from '@/data';
+import { auth } from '@/data/auth';
+import { ApiFailure } from '@/data/api/client';
+import { DestructiveDialog } from '@/blocks/dialog';
+import { useGo } from './kit';
 import { Button } from '@/components/ui/button';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -12,13 +18,26 @@ import { useBridge } from '@/shell/use-bridge';
 
 /**
  * Settings → Account. B02 puts the shell's version here, and behind a long-press on it the hidden
- * tests the soak needs (docs/local.md): a category prompt, the island, and the launcher icon. B05
- * adds your email and signing out.
+ * tests the soak needs (docs/local.md): a category prompt, the island, and the launcher icon. B05 added
+ * your email and signing out (on a preview; the made-up backend stays signed in).
  */
 export default function AccountSettings() {
   const shell = captureReachable();
   const info = useBridge(() => (shell ? SenShell.info() : Promise.resolve(null)));
   const [tests, setTests] = useState(false);
+  const [everywhere, setEverywhere] = useState(false);
+  const go = useGo();
+  const session = useQuery({ queryKey: ['session'], queryFn: () => auth.session() });
+  const leave = (call: () => Promise<void>) => {
+    if (__SEN_BACKEND__ !== 'api') return toastDone('Made-up data stays signed in. Signing out works on a preview.');
+    call().then(
+      () => {
+        queryClient.clear();
+        go('sign-in', {}, { replace: true });
+      },
+      (e: unknown) => toastDone(e instanceof ApiFailure ? e.message : e instanceof Error ? e.message : String(e)),
+    );
+  };
   const press = useLongPress(
     () => undefined,
     () => (shell ? setTests(true) : undefined),
@@ -32,11 +51,14 @@ export default function AccountSettings() {
           <NavRow icon={InfoIcon} title="Version" value={version} press={shell ? press : undefined} />
         </GroupCard>
         <GroupCard label="Account">
-          {/* stand-ins: accounts arrive with B05 */}
+          {/* information, so no tile (patterns §7, settings row; QA B05 run 1, 9) */}
+          <NavRow title="Email" value={<span className="wrap-anywhere">{session.data?.email}</span>} />
+          <NavRow icon={LogOutIcon} title="Sign out" onOpen={() => leave(() => auth.signOut())} />
           <NavRow
-            icon={LogOutIcon}
-            title="Sign out"
-            onOpen={() => toastDone('Signing out arrives with accounts. You’re still signed in.')}
+            icon={DoorOpenIcon}
+            destructive
+            title="Sign out everywhere"
+            onOpen={() => (__SEN_BACKEND__ === 'api' ? setEverywhere(true) : leave(() => auth.signOutEverywhere()))}
           />
           <NavRow
             icon={Trash2Icon}
@@ -46,6 +68,15 @@ export default function AccountSettings() {
           />
         </GroupCard>
       </div>
+      <DestructiveDialog
+        open={everywhere}
+        onOpenChange={setEverywhere}
+        title="Sign out everywhere?"
+        description="Every phone and browser signed in to Sen is signed out, this one too. You’ll sign in again with a code."
+        action="Sign out everywhere"
+        cancel="Stay signed in"
+        onConfirm={() => leave(() => auth.signOutEverywhere())}
+      />
       <Sheet
         open={tests}
         onOpenChange={setTests}

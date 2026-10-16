@@ -20,6 +20,7 @@ export interface ScreenDef {
 
 // The screens a slice has made real (screens/real.ts holds their components).
 const BUILT = new Set([
+  'sign-in',
   'settings/capture',
   'settings/capture/apps',
   'settings/capture/access',

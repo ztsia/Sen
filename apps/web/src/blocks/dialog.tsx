@@ -20,6 +20,7 @@ export function DestructiveDialog({
   title,
   description,
   action,
+  cancel = 'Keep it',
   onConfirm,
 }: {
   open: boolean;
@@ -27,6 +28,8 @@ export function DestructiveDialog({
   title: string;
   description: string;
   action: string;
+  /** What keeping things as they are is called: *Keep it* for something you'd delete. */
+  cancel?: string;
   onConfirm: () => void;
 }) {
   useBackClose(open, () => onOpenChange(false));
@@ -38,7 +41,7 @@ export function DestructiveDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col-reverse gap-2">
-          <AlertDialogCancel>Keep it</AlertDialogCancel>
+          <AlertDialogCancel>{cancel}</AlertDialogCancel>
           <AlertDialogAction variant="destructive" onClick={onConfirm}>
             {action}
           </AlertDialogAction>

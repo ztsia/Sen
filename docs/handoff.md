@@ -1,49 +1,46 @@
 # Handoff
 
-## Where things stand (15 Oct)
+## Where things stand (16 Oct)
 
-*B04 · Redesign* is merged (#13). **D137's QA tooling is built**, branch `B04/qa-tooling`, brief
-`docs/briefs/B04-qa-tooling.md`. Its PR *B04 · QA tooling* comes once the six-look e2e run is green.
-Then B05.
+**B05 · Server, database and sign-in is built and QA'd: its PR is open** from `B05/server` (brief
+`docs/briefs/B05-server.md`). It waits for the owner's merge, after their one step below. Next
+slice: B06 (`docs/briefs/B06-jobs-realtime-backups.md`), from `main` once B05 is merged.
 
-**Built and reviewed:**
-- `apps/web/e2e/catalogue.ts`: 87 entries (every registry screen, its states and the scenario
-  variants); `reading` is unexplored (it shows only while the made-up reader works).
-- `apps/web/e2e/trees/`: 87 committed accessibility trees (Minted light). Playwright writes `_` as
-  `-` in their names, and digits as `\d+`, so a changed amount shows in the pixels, not the tree.
-- `scripts/qa-diff.mjs` with `e2e/diff.config.ts`: main's build in a worktree against the branch's,
-  every entry in all twelve pairs, about 31 min (5 min with `--looks minted`). Twice against itself:
-  nothing changed. Against main: 87 trees new, 0 pixel pairs changed.
-- `apps/web/e2e/checks.ts` (+ `checks.spec.ts`, 32 fixtures, `checks.config.ts`): axe, targets,
-  clipped, overlap, covered, keyboard, focus, each proven to fire; narrowings commented.
-- Journeys once in Minted light; screens.spec's per-look loops moved to Minted, light and dark.
-- What the checks found, fixed: charts' hidden focus ring; the Undo toast over Ask Sen (sonner's
-  phone rule ignored the right offset); a needless toast over Add expense after Sen's gap ask;
-  Copper's coin keeping its fallback face under reduced motion (avatars redraw when fonts load).
-- Docs: `qa-reviewer` has `Agent` and spawns its sweep (Haiku) and `qa-eyes` (Opus) from the `qa`
-  skill's templates; `qa/escapes.md` (E1, density); `brief` and `qa` say waiting costs.
+**What B05 built** (READMEs in `packages/db` and `apps/api`):
+- Neon via Drizzle: migrations 0000–0006 (roles, B05's tables, grants, Better Auth's ids and rate
+  limits, `admin_members()`, `auth_sign_in_check()`, invitations unique by `lower(email)`). RLS on
+  every table through `ownRows`; `app_user` and `sen_auth` can't bypass it.
+- `pnpm test:db`: pgTAP (103: RLS for two people over every table, the catalogue check, the
+  functions) and the API's 39 tests, on the local Postgres. CI job `db`, with the browser journey
+  `e2e:server` (3). Every later table joins `tap_sen.fixture()` and is proven by `rls.sql` as is.
+- The API at `/api` in Vercel's Build Output; Better Auth by emailed code, Sen sending the code
+  itself (a failed send says so). Previews: code always `123456`, `/db-deploy.txt` reports the
+  database step. Proven on live previews against Neon.
+- Web: the `api` backend (server for what it holds, the fake around it in previews), sign-in and
+  Settings → Account real, the signed-out gate (offline lets a signed-in person in).
+- `review` follows `main` after each merge (`.github/workflows/review.yml`).
 
-**claude_skills** (owner asked, 14 Oct): branch `workflow/qa-diff` pushed with the generic `qa`
-skill, `qa-reviewer`, `qa-eyes`, CLAUDE.md template rows, and `examples/qa/` (Sen's tooling to
-adapt, with a README).
+**QA:** four runs, every finding fixed but 27 (a code sent just before a suspension still signs in;
+the app then signs out with *paused*). Ledger `qa/B05/ledger.md`; report, all runs:
+https://claude.ai/artifact/AzAyheGoaGbcR68PSDJWdz. Last: run 4 *ship*, then its Minor fixed (tier 1).
 
-### What to do next
-1. Six-look `pnpm e2e` green on f25f5bd: 1387 passed in 40 min. PR *B04 · QA tooling* is open.
-2. Done: claude_skills `workflow/qa-diff` has `examples/qa/` too; the owner opens or asks for its PR.
-3. B05 (`docs/briefs/B05-server.md`), QA'd the new way.
+**Decided in the build (owner to see, not to answer):**
+- The API under `/api`; migrations in Vercel's build (D122's recommendation), so `sen_ops` needs no
+  database URL for B05.
+- Roles' passwords derive from `BETTER_AUTH_SECRET` (Neon takes plain text only, sent only when a
+  role can't log in). The owner's account comes from `SEN_OWNER_EMAIL`.
+- Sessions 90 days from last use; codes 10 minutes, 3 tries; codes 5 a minute per address and 5 in
+  10 minutes per email. The owner's seed makes them *Unlimited* (D98).
+- Writes only from Sen's own origin, as JSON.
 
-### Known, left on purpose
-- `/s/new-look` under `?look=` sits in a view transition about 4 s (`arrive()` waits for a store
-  change the override blocks). The checks wait it out; the reveal is B14's.
-- The `keyboard` check's intermittent balance-check finding (locally once, then CI) was the measure racing
-  the resize; it now re-measures before reporting. Watch for it coming back.
+### What to do first
+1. If the PR's CI is red, fix it: the `db` job (Postgres, pgTAP, the browser journey) runs there
+   for the first time.
+2. After the merge: the owner's first sign-in (docs/local.md). Then B06.
 
 ### Open with the owner
-- Merge *B04 · QA tooling* when its PR is up; open or ask for claude_skills' `workflow/qa-diff` PR.
+- docs/local.md *Now*: `SEN_OWNER_EMAIL` in Vercel before the merge; then first sign-in, Q14 (inbox
+  or spam, Gmail and one other), and sign out everywhere.
 
 ## Don't argue again
-- D129–D137 (owner's calls). D137: trees committed and diffed, behaviour in one look, pixels
-  against `main` in all twelve pairs, the eyes pass on Opus, the escape log, the reviewer spawning
-  its helpers. E2E_LOOKS (two on a PR, six nightly) now limits only the catalogue.
-- Home fits one screen at 390×844; Insights is one card at a time.
-- Deploys only by merge (D122); the review build follows the `review` branch (D115).
+- D129–D137 (owner's calls). Deploys only by merge (D122); the review build follows `review` (D115).

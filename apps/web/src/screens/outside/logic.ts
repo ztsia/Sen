@@ -7,12 +7,11 @@ export const CODE_EXPIRED = '000000';
 
 export type EmailCheck = { ok: true; email: string } | { ok: false; reason: 'empty' | 'format' | 'invitation-only' };
 
-/** An email at `stranger@…` was never invited (D52). */
+/** Empty or badly formed; whether it was invited is the server's to say (D52). */
 export function checkEmail(text: string): EmailCheck {
   const email = text.trim().toLowerCase();
   if (!email) return { ok: false, reason: 'empty' };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, reason: 'format' };
-  if (email.startsWith('stranger@')) return { ok: false, reason: 'invitation-only' };
   return { ok: true, email };
 }
 

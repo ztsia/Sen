@@ -195,7 +195,6 @@ const B04 = [
   '/s/settings/sen',
   '/s/settings/members',
   '/s/settings/data',
-  '/s/sign-in',
   '/s/first-run',
   '/s/new-look',
 ];
