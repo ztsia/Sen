@@ -7,9 +7,11 @@ import { defineConfig, devices } from '@playwright/test';
 // (`pnpm e2e`'s), :4177 (checks.config.ts's). QA_SERVE says which build to serve, QA_BASE_WEB where
 // main's apps/web is, QA_RESULTS where Playwright keeps its traces.
 //
-// The metrics projects (D139) run metrics.spec.ts and the journeys against the same two builds, one worker
-// at a time so the timings don't fight, with QA_METRICS naming where the numbers go. The motion is left on
-// as a person sees it, and the waits are longer, because the specs run under metrics.ts's slow phone.
+// The metrics projects (D139) run metrics.spec.ts and the journeys against the same two builds, with
+// QA_METRICS naming where the numbers go (qa-diff.mjs says how many workers: the throttling is per page).
+// The service worker is allowed, because a phone has it: each spec warms it up before it measures. The
+// motion is left on as a person sees it, and the waits are longer, because the specs run under
+// metrics.ts's slow phone.
 const phone = {
   ...devices['Pixel 7'],
   viewport: { width: 390, height: 844 },
@@ -50,12 +52,20 @@ export default defineConfig({
     {
       name: 'metrics-base',
       testMatch: /(metrics|journeys)\.spec/,
-      use: { baseURL: 'http://localhost:4175', contextOptions: { reducedMotion: 'no-preference' } },
+      use: {
+        baseURL: 'http://localhost:4175',
+        contextOptions: { reducedMotion: 'no-preference' },
+        serviceWorkers: 'allow',
+      },
     },
     {
       name: 'metrics-head',
       testMatch: /(metrics|journeys)\.spec/,
-      use: { baseURL: 'http://localhost:4176', contextOptions: { reducedMotion: 'no-preference' } },
+      use: {
+        baseURL: 'http://localhost:4176',
+        contextOptions: { reducedMotion: 'no-preference' },
+        serviceWorkers: 'allow',
+      },
     },
   ],
   webServer:

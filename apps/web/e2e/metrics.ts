@@ -2,7 +2,7 @@ import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CDPSession, Page, test as baseTest } from '@playwright/test';
 import { PNG } from 'pngjs';
-import { median, type Metric, type MetricName } from '../../../qa/limits';
+import type { Metric, MetricName } from '../../../qa/limits';
 
 // What a screen and a tap cost a person and a phone (D139). Nothing here names a cause: it records
 // numbers, and qa/limits.ts judges them. It does nothing unless QA_METRICS names a folder, so `pnpm e2e`
@@ -162,6 +162,8 @@ interface Fetched {
   /** epoch ms, as this side saw the response finish */
   at: number;
   bytes: number;
+  /** went to the network: not answered by the service worker's cache, nor the browser's */
+  network: boolean;
 }
 
 /** A page under the phone's throttling, and what it did from then on. Start it before the page navigates. */
@@ -197,6 +199,12 @@ export class Probe {
     });
     // data: URLs and long-lived channels are not the network, so neither counts nor holds a screen open
     const counted = new Map<string, boolean>();
+    // a response the service worker or a cache answered cost the network nothing
+    const cached = new Set<string>();
+    cdp.on('Network.responseReceived', (e) => {
+      if (e.response.fromServiceWorker || e.response.fromDiskCache || e.response.fromPrefetchCache)
+        cached.add(e.requestId);
+    });
     cdp.on('Network.requestWillBeSent', (e) => {
       const ok = !e.request.url.startsWith('data:') && !['EventSource', 'WebSocket', 'Ping'].includes(e.type ?? '');
       counted.set(e.requestId, ok);
@@ -206,7 +214,7 @@ export class Probe {
       if (!counted.get(e.requestId)) return;
       p.inflight.delete(e.requestId);
       p.lastNetwork = Date.now();
-      p.fetched.push({ at: p.lastNetwork, bytes: e.encodedDataLength });
+      p.fetched.push({ at: p.lastNetwork, bytes: e.encodedDataLength, network: !cached.has(e.requestId) });
     });
     cdp.on('Network.loadingFailed', (e) => {
       p.inflight.delete(e.requestId);
@@ -300,8 +308,8 @@ export class Probe {
     const s = this.docs.get(doc?.state.id ?? '')?.state;
     return {
       settleMs: Math.round(Math.min(Math.max(0, last - origin), CAP_MS)),
-      requests: this.fetched.length,
-      bytes: this.fetched.reduce((n, f) => n + f.bytes, 0),
+      requests: this.fetched.filter((f) => f.network).length,
+      bytes: this.fetched.filter((f) => f.network).reduce((n, f) => n + f.bytes, 0),
       blockingMs: Math.round((s?.longTasks ?? []).reduce((n, d) => n + Math.max(0, d - 50), 0)),
       heapBytes: heap.usedSize,
       layoutShift: Math.round((s?.shifts ?? []).reduce((n, v) => n + v, 0) * 1000) / 1000,
@@ -330,12 +338,13 @@ export class Probe {
       const group = first ? own!.events.filter((e) => e.id === first.id) : [];
       const firstChange = group.length ? Math.max(...group.map((e) => e.duration)) : 16;
       const inWindow = this.fetched.filter((f) => f.at >= t.at && f.at < end);
+      const overNetwork = inWindow.filter((f) => f.network);
       const last = Math.max(t.at, mine ? originOfOwn + mine.lastMutation : t.at, ...inWindow.map((f) => f.at));
       return {
         n: i + 1,
         firstChangeMs: Math.round(firstChange),
         settleMs: Math.round(Math.min(Math.max(0, Math.min(last, end) - t.at), CAP_MS)),
-        bytes: inWindow.reduce((n, f) => n + f.bytes, 0),
+        bytes: overNetwork.reduce((n, f) => n + f.bytes, 0),
       };
     });
   }
@@ -430,13 +439,13 @@ const SCREEN_METRICS: Record<keyof ScreenSample, MetricName> = {
   console: 'screen.console',
 };
 
-/** The median of each metric over a screen's runs, as the metrics `qa/limits.ts` judges. */
-export function screenMetrics(id: string, runs: ScreenSample[]): Metric[] {
+/** One open of a screen, as the metrics `qa/limits.ts` judges; qa-diff.mjs takes the median of the opens. */
+export function screenMetrics(id: string, run: ScreenSample): Metric[] {
   return (Object.keys(SCREEN_METRICS) as (keyof ScreenSample)[]).map((k) => ({
     key: `screen:${id}`,
     metric: SCREEN_METRICS[k],
-    value: Math.round(median(runs.map((r) => r[k])) * 1000) / 1000,
-    n: runs.length,
+    value: Math.round(run[k] * 1000) / 1000,
+    n: 1,
   }));
 }
 
@@ -448,6 +457,27 @@ export function stepMetricsOf(title: string, steps: StepSample[]): Metric[] {
       { key, metric: 'step.settleMs' as const, value: s.settleMs, n: 1 },
       { key, metric: 'step.bytes' as const, value: s.bytes, n: 1 },
     ];
+  });
+}
+
+/**
+ * Sen as a phone opens it after the first time: the service worker has the whole build cached. This visits
+ * once, unthrottled and unmeasured, until the worker controls the page; what the measured visits then
+ * fetch is what a visit costs beyond the cache. A build with no worker is measured as it is.
+ */
+export async function warmUp(page: Page) {
+  await page.goto('/');
+  await page
+    .waitForFunction(() => !!navigator.serviceWorker?.controller, undefined, { timeout: 20_000 })
+    .catch(() => {});
+  // what the visit stored (the looks, the dev panel) is not the next page's
+  await page.evaluate(() => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {
+      // no storage to clear
+    }
   });
 }
 
@@ -465,6 +495,7 @@ export function stepMetrics(t: typeof baseTest) {
   t.beforeEach(async ({ page }, info) => {
     // throttled, a journey takes several times as long
     info.setTimeout(info.timeout * 3);
+    await warmUp(page);
     probes.set(page, await Probe.start(page, { film: !!FILM_DIR }));
   });
   t.afterEach(async ({ page }, info) => {
