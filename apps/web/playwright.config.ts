@@ -31,7 +31,7 @@ export default defineConfig({
     {
       name: 'preview',
       // checks.spec.ts proves each check on a page built to break it; checks.config.ts runs it
-      testIgnore: [/production\.spec/, /checks\.spec/, /server\.spec/, /metrics\.spec/],
+      testIgnore: [/production\.spec/, /checks\.spec/, /server\.spec/, /lived\.spec/, /metrics\.spec/],
       use: { baseURL: 'http://localhost:4173' },
     },
     { name: 'production', testMatch: /production\.spec/, use: { baseURL: 'http://localhost:4174' } },
