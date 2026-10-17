@@ -69,6 +69,9 @@ Each line below is a miss that happened because a brief left it unsaid:
 - **What it shares with agents running at once.** Its own ports and build folders, and who holds
   the test database (`pnpm test:db` drops `sen_test`). (QA tooling, 16 Oct: two configs used port
   4175; a run could drop the database under another's.)
+- **For a measurement, how the person meets the thing, and a time budget.** (QA tooling, 16 Oct: a
+  brief asked for cold opens, three samples each; it measured first installs, not a phone opening
+  Sen from its cache, and took 70 minutes.)
 - **Its environment.** The absolute working directory, a port of its own, *don't commit*. A worktree
   may start at `main`: tell it which commit to check out. (One worked in the main checkout instead
   of its worktree, was blocked, and was judged a failure of the model; the same model succeeded
@@ -104,6 +107,9 @@ wrong. When a miss came from the brief, carry that line into the next brief too.
   than a few minutes lets the prompt cache expire, so the next turn writes it all again (QA tooling,
   15 Oct: one agent, 185 turns, mostly waits). Brief one until-loop per long run, and no repeat of a
   long run whose point an earlier run already proved.
-- **An agent stopped at a usage limit is resumed** (SendMessage), never restarted.
+- **An agent stopped at a usage limit is resumed** (SendMessage), never restarted. Check which
+  model its next turns ran on (`node scripts/usage.mjs`): one resumed on Opus, not its Sonnet, and
+  cost three times its first run (QA tooling, 17 Oct). If it switched, stop it and brief a fresh
+  agent on the right model with the work so far.
 - **Commit an agent's files only after reviewing its report**, staging explicit paths, never `-a`,
   while other agents are still editing.
