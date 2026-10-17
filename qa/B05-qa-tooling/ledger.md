@@ -49,6 +49,14 @@ route sweep (every route), 13 of 13 breakage checks killed, the lived-in journey
 The one visual risk, the row wrap at normal text size, is the diff against `main` in all twelve pairs
 below. A full run is better spent on *B05 · Feel*, which changes screens and flows.
 
+## The diff against `main` (17 Oct)
+
+`node scripts/qa-diff.mjs`, all six looks: 87 entries, **0 trees changed, 0 pixels changed in all
+twelve pairs**, 0 check findings: the row wrap changes nothing at normal text size. Metrics: 1
+confirmed flag, `screen:split-public` blocking 666 ms against 362 ms. Re-measured five times a side:
+head 293–490 (median 306), main 332–495 (median 349). **Noise, accepted**; nothing this branch changed
+reaches the friend's split page.
+
 ## Retro
 
 - **Found late or round after round:** nothing reached a QA run; the tools found T1–T5 on their first

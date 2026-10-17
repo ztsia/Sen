@@ -359,7 +359,7 @@ function metricsSection(m) {
   L.push(
     `${m.head.length} numbers on this branch, ${m.base.length} on ${baseRef}: **${m.flags.length} flagged**, ` +
       `${m.dropped.length} more dropped as noise, ${m.standing.length} standing. A flag is a number past a human ` +
-      `limit that ${baseRef} keeps, or worse than ${baseRef}'s by more than 25% and a floor (qa/limits.ts). ` +
+      `limit that ${baseRef} keeps by a real step, or worse than ${baseRef}'s by more than a ratio (timings 50%, bytes and counts 25%) and a floor (qa/limits.ts). ` +
       `Screens open as a phone opens Sen after the first time (the build cached by the service worker), and ` +
       `screens and taps are measured with the CPU 4× slower on a mobile network. Every screen and journey ` +
       `was measured once on each side; a number that flagged was measured twice more on both, and a flag ` +
@@ -486,7 +486,7 @@ async function metricsPass() {
   // A flag that the median of three still shows is confirmed only if the samples agree with it: each of
   // head's is worse than each of main's (than the limit, where main has no number). Three samples a side
   // that overlap say the two builds are not told apart, however the medians fall; on the same code that
-  // is what noise does around a limit or a 25% line. Numbers with fewer samples than that (the API's,
+  // is what noise does around a limit or a ratio line. Numbers with fewer samples than that (the API's,
   // the build's) stand on their median.
   const headSamples = sideSamples(dirs('head', 'confirm'));
   const baseSamples = sideSamples(dirs('base', 'confirm'));
