@@ -300,8 +300,8 @@ const sideMetrics = (side, distDir, dirs) => [
 ];
 
 /**
- * Measures what flagged twice more, one worker at a time on each side. The two sides run together: two
- * workers on four cores leave each its own, and a drift in the machine reaches both alike.
+ * Measures what flagged twice more, two workers on each side. The two sides run together, so a drift in
+ * the machine reaches both alike.
  */
 async function confirmRuns(flags) {
   const screens = [...new Set(flags.filter((j) => j.key.startsWith('screen:')).map((j) => j.key.slice(7)))];
@@ -311,7 +311,7 @@ async function confirmRuns(flags) {
   const api = flags.some((j) => j.key.startsWith('api:'));
   await Promise.all(
     ['base', 'head'].map(async (side) => {
-      const o = { dir: join(metricsDir, `${side}-confirm`), workers: 1 };
+      const o = { dir: join(metricsDir, `${side}-confirm`), workers: 2 };
       if (screens.length)
         await metricsPlaywright(side, `confirm-screens-${side}`, ['metrics.spec'], {
           ...o,

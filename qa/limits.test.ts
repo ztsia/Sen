@@ -3,8 +3,10 @@ import { judge, judgeAll, median, serverTiming } from './limits';
 
 describe('judging a number (D139)', () => {
   it('flags a human limit main keeps, and one main has no number for', () => {
-    expect(judge('step.firstChangeMs', 180, 60)).toEqual({ kind: 'over', limit: 100 });
+    expect(judge('step.firstChangeMs', 220, 60)).toEqual({ kind: 'over', limit: 100 });
     expect(judge('step.firstChangeMs', 180)).toEqual({ kind: 'over', limit: 100 });
+    // over the line, but within noise of main's number: not a flag
+    expect(judge('step.firstChangeMs', 136, 96)).toEqual({ kind: 'ok' });
   });
 
   it('lists a human limit main breaks too as standing, unless it got worse still', () => {

@@ -2,7 +2,8 @@
  * How QA judges what the runs measure (D139). Every number is what a person waits or a phone pays,
  * never a cause: no check says "the function is in sin1" or "file X under N KB". A number is flagged
  * two ways:
- *   - it breaks a human limit that main keeps (`HUMAN`)
+ *   - it breaks a human limit (`METRICS`' `human`) that main keeps, by a real step worse than main
+ *     (the ratio and floor below; any rise for a limit of none), or main has no such number
  *   - it is worse than main's by more than `WORSE` and more than its unit's floor, so noise doesn't flag
  * A human limit main breaks too is *standing*: listed, never a flag, so it's explained once, not every
  * run. A flag never fails CI, because timings vary; the reviewer explains each one in the ledger.
@@ -61,7 +62,7 @@ export const WORSE = 1.25;
 export const FLOOR: Record<Unit, number> = { ms: 100, bytes: 20_000, count: 3, score: 0.05 };
 
 export type Verdict =
-  /** breaks a human limit main keeps, or main has no such number */
+  /** breaks a human limit main keeps, by a real step worse than main, or main has no such number */
   | { kind: 'over'; limit: number }
   /** worse than main beyond the ratio and floor */
   | { kind: 'worse'; base: number }
@@ -74,8 +75,12 @@ export function judge(metric: MetricName, head: number, base?: number): Verdict 
   const { unit } = METRICS[metric];
   const human = 'human' in METRICS[metric] ? (METRICS[metric] as { human: number }).human : undefined;
   if (human !== undefined && head > human) {
-    if (base !== undefined && base > human && !worse(unit, head, base)) return { kind: 'standing', limit: human, base };
-    return { kind: 'over', limit: human };
+    if (base === undefined) return { kind: 'over', limit: human };
+    // crossing a limit main keeps counts only as a real step worse than main: a tap that reads 96 ms on
+    // main and 136 ms here is the same code's noise, not a regression (the noise check, 17 Oct)
+    // a limit of none (console errors) has no noise: any more than main is a flag
+    if (human === 0 ? head > base : worse(unit, head, base)) return { kind: 'over', limit: human };
+    return base > human ? { kind: 'standing', limit: human, base } : { kind: 'ok' };
   }
   if (base !== undefined && worse(unit, head, base)) return { kind: 'worse', base };
   return { kind: 'ok' };
