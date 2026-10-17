@@ -4,7 +4,7 @@
  * two ways:
  *   - it breaks a human limit (`METRICS`' `human`) that main keeps, by a real step worse than main
  *     (the ratio and floor below; any rise for a limit of none), or main has no such number
- *   - it is worse than main's by more than `WORSE` and more than its unit's floor, so noise doesn't flag
+ *   - it is worse than main's by more than its unit's `WORSE` ratio and `FLOOR`, so noise doesn't flag
  * A human limit main breaks too is *standing*: listed, never a flag, so it's explained once, not every
  * run. A flag never fails CI, because timings vary; the reviewer explains each one in the ledger.
  *
@@ -57,8 +57,9 @@ export const METRICS = {
 
 export type MetricName = keyof typeof METRICS;
 
-/** Worse than main by more than this ratio *and* more than the unit's floor flags. */
-export const WORSE = 1.25;
+/** Worse than main by more than its unit's ratio *and* more than its floor flags. */
+// timings swing 30–60% between identical runs with the CPU slowed; bytes and counts barely move (17 Oct)
+export const WORSE: Record<Unit, number> = { ms: 1.5, bytes: 1.25, count: 1.25, score: 1.25 };
 export const FLOOR: Record<Unit, number> = { ms: 100, bytes: 20_000, count: 3, score: 0.05 };
 
 export type Verdict =
@@ -86,7 +87,7 @@ export function judge(metric: MetricName, head: number, base?: number): Verdict 
   return { kind: 'ok' };
 }
 
-const worse = (unit: Unit, head: number, base: number) => head > base * WORSE && head - base > FLOOR[unit];
+const worse = (unit: Unit, head: number, base: number) => head > base * WORSE[unit] && head - base > FLOOR[unit];
 
 /** A flagged or standing number, as the report lists it. */
 export interface Judged extends Metric {

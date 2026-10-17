@@ -22,6 +22,9 @@ describe('judging a number (D139)', () => {
     expect(judge('screen.bytes', 1_030_000, 1_000_000)).toEqual({ kind: 'ok' });
     expect(judge('api.queries', 9, 4)).toEqual({ kind: 'worse', base: 4 });
     expect(judge('api.queries', 6, 4)).toEqual({ kind: 'ok' });
+    // a timing needs a bigger step: they swing between identical runs
+    expect(judge('screen.blockingMs', 140, 100)).toEqual({ kind: 'ok' });
+    expect(judge('api.dbMs', 400, 200)).toEqual({ kind: 'worse', base: 200 });
   });
 
   it('flags any console error, and never a better number', () => {
