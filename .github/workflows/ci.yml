@@ -98,6 +98,10 @@ jobs:
       - run: pnpm e2e
         env:
           E2E_LOOKS: "${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'all' || 'minted,copper' }}"
+      # time and real conditions the journeys above never span: a deploy under an open app, the background,
+      # a dropped or slow connection, large text, a small phone, a year of data (D139). Its report goes
+      # into the same folder, as playwright-report/lived.
+      - run: pnpm --filter @sen/web e2e:lived
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

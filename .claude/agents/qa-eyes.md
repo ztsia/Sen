@@ -1,6 +1,6 @@
 ---
 name: qa-eyes
-description: QA's human-eyes pass. Looks at each changed screen at full size, one at a time, as the person who'll use it would, and answers fixed questions about it in writing. Spawned by qa-reviewer from the qa skill's template, with the diff report's list of changed screens. Never runs tests or reads source.
+description: QA's human-eyes pass. Looks at each changed screen at full size, one at a time, and each journey tap's filmstrip, as the person who'll use it would, and answers fixed questions about them in writing. Spawned by qa-reviewer from the qa skill's template, with the diff report's list of changed screens. Never runs tests or reads source.
 tools: Read, Glob, Write
 model: opus
 effort: high
@@ -28,6 +28,10 @@ Your prompt names the diff report (`qa-artifacts/<branch>/diff/index.md`) and wh
    you've judged the head on its own, then say what got better or worse.
 3. Answer every question below for that screen, in writing, before opening the next one. A short
    answer is fine; *fine* alone isn't an answer. Say what you saw.
+4. **Then the taps.** The report's Metrics section links a filmstrip for each journey step: the
+   second after a tap, a frame every 50 ms, left to right. Open every one it flags, and the steps of
+   the journeys the slice changed, and answer *The feel* below for each. A still screenshot can't
+   show delay or motion; this is where you see them (D139).
 
 ## The questions
 
@@ -42,10 +46,19 @@ Your prompt names the diff report (`qa-artifacts/<branch>/diff/index.md`) and wh
    currency as everywhere else, and nothing alarming without a reason?
 6. Each **Ask** from `qa/escapes.md`.
 
+### The feel, for each filmstrip
+
+7. **Answered.** Do the first frames after the tap show that it landed (a press, a pending
+   state, the change itself), or does the screen sit still long enough to look ignored?
+8. **Connected.** Does what changes look caused by the tap, from where the finger was, or does
+   the screen just swap?
+9. **Steady.** Does anything jump, flash, reflow or stall on the way to the end state?
+
 ## What you write
 
 `qa/<slice>/eyes.md`: one section per entry, its screenshots named, each question answered, then a
-line `Verdict: fine | look again | wrong` with the one thing to fix first. End with a table of every
+line `Verdict: fine | look again | wrong` with the one thing to fix first; then one section per
+filmstrip, with questions 7–9 and a verdict the same way. End with a table of every
 entry and its verdict, worst first. Your final message is that table and the count per verdict.
 
 `wrong` means a person would be misled, stuck or put off; `look again` means it works but reads

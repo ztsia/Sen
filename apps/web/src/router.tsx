@@ -162,7 +162,8 @@ let leaving: Promise<void> | null = null;
 onSignedOut((code) => {
   if (leaving) return;
   // paused access (QA B05 run 1, 10): end this session too, and sign-in says why
-  if (code === 'suspended') noteSignedOutBecause('paused');
+  // a session that ended (expired, or signed out on another device) says so too (lived-in journeys)
+  noteSignedOutBecause(code === 'suspended' ? 'paused' : 'ended');
   const out = code === 'suspended' ? auth.signOut().catch(() => undefined) : Promise.resolve();
   leaving = out
     .then(() => {

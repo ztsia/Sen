@@ -1,0 +1,41 @@
+# Every Vercel preview's server timings, measured from GitHub's runner as soon as the preview is live (D139).
+# Vercel reports each preview deployment as a deployment_status event; this job runs
+# scripts/live-metrics.mjs against that preview's URL. It times the health check and the sign-in routes a
+# person waits for, and writes the table to the job summary, flagging any server time over a human limit.
+# A flag never fails the job: timings vary, and the table says what is over a limit and no more. Only
+# previews run here, because the script signs in as the made-up person, which only previews hold; the
+# script itself refuses to sign in on production. No secret: the preview's own code is the fixed one
+# (docs/local.md), and the job reads the repository only.
+name: Live metrics
+
+on:
+  deployment_status:
+
+permissions:
+  contents: read
+
+jobs:
+  live-metrics:
+    # the deployment must be live, and a preview. GitHub's contains() ignores case, so 'Preview' matches
+    # however Vercel spells the environment; the event's own environment is checked too
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      (contains(github.event.deployment_status.environment, 'Preview') ||
+      contains(github.event.deployment.environment, 'Preview'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # the commit that was deployed, not the branch's latest
+          ref: ${{ github.event.deployment.sha }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          # the script has no dependencies, and setup-node shouldn't look for a package manager
+          package-manager-cache: false
+      - name: Time the preview's server routes
+        env:
+          # the preview's address from the event, passed in as an environment variable, not spliced into the script
+          LIVE_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
+        run: node scripts/live-metrics.mjs --url "$LIVE_URL" --summary

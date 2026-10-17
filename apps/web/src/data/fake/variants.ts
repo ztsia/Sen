@@ -2,13 +2,23 @@ import { klDay } from '@sen/core/cycles';
 import { uid } from './ids';
 import type { Db } from './db';
 import { at, catId, rm, TODAY, txn, weiMing } from './scenario';
+import { heavyYear } from './year';
 
 /**
  * The scenario's edge states (B03): each is Wei Ming's month, changed the one way it needs. The dev
  * panel switches between them; every *Varies* state in screens.md for the five tabs is one of these,
  * or one of the screen states (empty, loading, error, offline).
  */
-export const SCENARIOS = ['wei-ming', 'payday', 'before-salary', 'first-cycle', 'month', 'capture-off', 'cap'] as const;
+export const SCENARIOS = [
+  'wei-ming',
+  'payday',
+  'before-salary',
+  'first-cycle',
+  'month',
+  'capture-off',
+  'cap',
+  'year',
+] as const;
 export type ScenarioId = (typeof SCENARIOS)[number];
 export const SCENARIO_NAMES: Record<ScenarioId, string> = {
   'wei-ming': "Wei Ming's month",
@@ -18,6 +28,7 @@ export const SCENARIO_NAMES: Record<ScenarioId, string> = {
   month: 'Without capture (by month)',
   'capture-off': 'Capture is off',
   cap: 'AI credit used up',
+  year: 'A heavy year',
 };
 
 /** Keeps only what happened on or after the opening day, as if the app had just been set up then. */
@@ -38,7 +49,7 @@ function openedOn(db: Db, day: string): Db {
 
 export function buildScenario(id: ScenarioId, empty: boolean): Db {
   if (empty) return emptyDb();
-  const db = weiMing();
+  const db = id === 'year' ? heavyYear() : weiMing();
   switch (id) {
     case 'wei-ming':
       return db;
@@ -75,6 +86,8 @@ export function buildScenario(id: ScenarioId, empty: boolean): Db {
       return db;
     case 'cap':
       db.aiPausedUntil = '2026-11-01';
+      return db;
+    case 'year':
       return db;
   }
 }

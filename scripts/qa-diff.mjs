@@ -3,7 +3,7 @@
  * Diff-driven QA's machinery (D137): shoots the catalogue (apps/web/e2e/catalogue.ts) from main's build
  * and from this checkout's, in every look and mode, and writes what changed.
  *
- *   node scripts/qa-diff.mjs [--base <ref>] [--looks all|<list>] [--out <dir>]
+ *   node scripts/qa-diff.mjs [--base <ref>] [--looks all|<list>] [--out <dir>] [--metrics-only]
  *
  * Defaults: base origin/main, every look, out qa-artifacts/<branch, / as _>/diff. Output:
  *   index.md, index.json   what a reviewer reads first: trees changed, pixels changed, what's new or gone,
@@ -13,17 +13,45 @@
  *   checks.jsonl           the checks' findings, one per line
  *   logs/                  Playwright's output for each run
  *
+ * It then measures what each screen, each journey tap, each API route and the build cost a person and a
+ * phone (D139), on main and on this branch, side by side. Nothing there names a cause: qa/limits.ts judges
+ * the numbers against human limits and against main, and only the flagged ones reach the reviewer.
+ *   - screens and journeys open as a phone opens Sen after the first time (the service worker holds the
+ *     build), with the CPU 4x slower on a mobile network; each is measured once per side, three at a time
+ *   - what that flags is measured twice more on both sides, and a flag stays only if the median of the
+ *     three still flags; the rest are listed as dropped noise
+ *   ../metrics/index.json  { base, head, flags, dropped, standing, ok, ... }: every number, and how each was judged
+ *   ../metrics/<side>/     what each run wrote: screens.jsonl, steps.jsonl, api.jsonl (and <side>-confirm/)
+ *   ../metrics/film/       a PNG per journey tap (this branch's): the frames from the tap to a second after
+ *   ../metrics/logs/       the metrics runs' output
+ *   index.md               gains a `## Metrics` section: the flags, those dropped, the standing ones by metric
+ * A flag never changes the exit code, because timings vary. --metrics-only skips the catalogue runs and does
+ * only this, and swaps the Metrics section into an index.md that is already there.
+ *
  * Main's build is made in a git worktree under the temp folder, kept for the next run. The specs are this
  * checkout's in both runs (e2e/diff.config.ts): only the app differs. A failing test never stops the
  * script; it still writes the report, and exits 1 at the end if a test failed.
  */
-import { execFileSync, spawnSync } from 'node:child_process';
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import {
+  closeSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { stripVTControlCharacters } from 'node:util';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { apiMetrics, judgeAll, median, METRICS } from '../qa/limits.ts';
+import { buildMetrics } from './build-metrics.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const web = join(root, 'apps/web');
@@ -43,15 +71,19 @@ const arg = (name, fallback) => {
   const i = argv.indexOf(name);
   return i >= 0 ? argv[i + 1] : fallback;
 };
-const unknown = argv.filter((a) => a.startsWith('--') && !['--base', '--looks', '--out', '--help'].includes(a));
+const unknown = argv.filter(
+  (a) => a.startsWith('--') && !['--base', '--looks', '--out', '--metrics-only', '--help'].includes(a),
+);
 if (unknown.length || argv.includes('--help')) {
-  console.error('usage: node scripts/qa-diff.mjs [--base <ref>] [--looks all|<list>] [--out <dir>]');
+  console.error('usage: node scripts/qa-diff.mjs [--base <ref>] [--looks all|<list>] [--out <dir>] [--metrics-only]');
   process.exit(argv.includes('--help') ? 0 : 2);
 }
 const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']);
 const baseRef = arg('--base', 'origin/main');
 const looksArg = arg('--looks', 'all');
+const metricsOnly = argv.includes('--metrics-only');
 const out = resolve(arg('--out', join(root, 'qa-artifacts', branch.replace(/\//g, '_'), 'diff')));
+const metricsDir = resolve(out, '..', 'metrics');
 const ALL_LOOKS = ['minted', 'instrument', 'firefly', 'line', 'mercury', 'copper'];
 const looks = looksArg === 'all' ? ALL_LOOKS : looksArg.split(',').map((s) => s.trim());
 for (const l of looks) if (!ALL_LOOKS.includes(l)) throw new Error(`unknown look "${l}"`);
@@ -85,7 +117,8 @@ build(web);
 
 /* ---------- the two runs --------------------------------------------------------- */
 
-rmSync(out, { recursive: true, force: true });
+// --metrics-only keeps the report that is there
+if (!metricsOnly) rmSync(out, { recursive: true, force: true });
 for (const d of ['base', 'head', 'diff', 'logs']) mkdirSync(join(out, d), { recursive: true });
 
 function run(project) {
@@ -139,8 +172,388 @@ function readTests(file) {
   return tests;
 }
 
-const baseTests = run('base');
-const headTests = run('head');
+const baseTests = metricsOnly ? [] : run('base');
+const headTests = metricsOnly ? [] : run('head');
+
+/* ---------- metrics (D139) ---------------------------------------------------------- */
+
+// Each screen and journey is measured once per side, three at a time (the CPU throttling is per page, so
+// the runs don't slow one another). Only what that flags is measured twice more, one at a time, on both
+// sides; a flag stays if the median of the three still flags and the samples agree (see metricsPass), else it is dropped as noise.
+const WORKERS = 3;
+const CONFIRM_RUNS = 2;
+const MS = (t0) => Math.round((Date.now() - t0) / 1000);
+const metricsLogs = join(metricsDir, 'logs');
+const metricsNotes = new Set();
+const metricsRuns = {};
+const metricsPhases = [];
+
+const readJsonl = (file) =>
+  existsSync(file)
+    ? readFileSync(file, 'utf8')
+        .split('\n')
+        .filter(Boolean)
+        .flatMap((l) => {
+          try {
+            return [JSON.parse(l)];
+          } catch {
+            return [];
+          }
+        })
+    : [];
+
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * One Playwright run of the metrics specs on one side's build, writing to `dir`. Each spec warms the
+ * service worker up before it measures, as a phone has it (e2e/metrics.ts).
+ */
+async function metricsPlaywright(
+  side,
+  name,
+  files,
+  { dir = join(metricsDir, side), workers, env = {}, grep, repeat } = {},
+) {
+  const log = openSync(join(metricsLogs, `${name}.log`), 'w');
+  const runEnv = {
+    ...process.env,
+    QA_SERVE: side,
+    QA_BASE_WEB: baseWeb,
+    QA_RESULTS: join(metricsLogs, `${name}-results`),
+    QA_METRICS: dir,
+    PLAYWRIGHT_JSON_OUTPUT_NAME: join(metricsLogs, `${name}.json`),
+    ...env,
+  };
+  delete runEnv.CI;
+  const args = ['exec', 'playwright', 'test', '-c', 'e2e/diff.config.ts', '--project', `metrics-${side}`];
+  args.push('--workers', String(workers));
+  if (repeat) args.push('--repeat-each', String(repeat));
+  if (grep) args.push('-g', grep);
+  console.log(`measuring ${name} (${files.join(', ')}; ${workers} worker${workers > 1 ? 's' : ''}) ...`);
+  const t0 = Date.now();
+  const r = await new Promise((done) => {
+    const child = spawn('pnpm', [...args, ...files], { cwd: web, env: runEnv, stdio: ['ignore', log, log] });
+    child.on('close', (status) => done({ status }));
+  });
+  closeSync(log);
+  const tests = readTests(join(metricsLogs, `${name}.json`));
+  const failed = tests.filter((t) => !t.ok).length;
+  metricsRuns[name] = { exit: r.status, seconds: MS(t0), tests: tests.length, failed };
+  console.log(
+    `  ${name}: exit ${r.status}, ${MS(t0)} s, ${tests.length} tests (${failed} failed), log ${relative(root, join(metricsLogs, `${name}.log`))}`,
+  );
+}
+
+/** The API's tests on the local Postgres, each request recorded (apps/api/test/metrics.setup.ts). */
+function metricsApi(side, cwd, name, dir = join(metricsDir, side)) {
+  if (!existsSync(join(cwd, 'apps/api/test/metrics.setup.ts'))) {
+    metricsNotes.add(
+      `${side === 'base' ? baseRef : 'head'} has no QA_METRICS setup in its API tests, so it has no API numbers.`,
+    );
+    return;
+  }
+  if (spawnSync('pg_isready', ['-h', '127.0.0.1'], { stdio: 'ignore' }).status !== 0)
+    spawnSync('bash', [join(root, 'scripts/local-db.sh'), 'start'], { stdio: 'inherit' });
+  const log = openSync(join(metricsLogs, `${name}.log`), 'w');
+  console.log(`measuring ${name} (pnpm test:db) ...`);
+  const t0 = Date.now();
+  const r = spawnSync('pnpm', ['test:db'], {
+    cwd,
+    env: { ...process.env, QA_METRICS: dir },
+    stdio: ['ignore', log, log],
+  });
+  closeSync(log);
+  metricsRuns[name] = { exit: r.status, seconds: MS(t0) };
+  console.log(`  ${name}: exit ${r.status}, ${MS(t0)} s, log ${relative(root, join(metricsLogs, `${name}.log`))}`);
+}
+
+/** Samples of one key and metric become one number, their median. */
+function aggregate(lines) {
+  const by = new Map();
+  for (const m of lines) {
+    const k = `${m.key}\u0000${m.metric}`;
+    by.set(k, [...(by.get(k) ?? []), m]);
+  }
+  return [...by.values()].map((ms) => ({
+    key: ms[0].key,
+    metric: ms[0].metric,
+    value: Math.round(median(ms.map((m) => m.value)) * 1000) / 1000,
+    n: ms.length,
+  }));
+}
+
+/** Every sample of each screen and step number on a side, by key and metric: what the medians are made of. */
+function sideSamples(dirs) {
+  const by = new Map();
+  for (const m of dirs.flatMap((d) => ['screens.jsonl', 'steps.jsonl'].flatMap((f) => readJsonl(join(d, f))))) {
+    const k = `${m.key}|${m.metric}`;
+    by.set(k, [...(by.get(k) ?? []), m.value]);
+  }
+  return by;
+}
+
+/** A side's numbers from every folder its runs wrote to (the first pass, and the confirming one). */
+const sideMetrics = (side, distDir, dirs) => [
+  ...aggregate(dirs.flatMap((d) => ['screens.jsonl', 'steps.jsonl'].flatMap((f) => readJsonl(join(d, f))))),
+  ...apiMetrics(dirs.flatMap((d) => readJsonl(join(d, 'api.jsonl')))),
+  ...buildMetrics(distDir),
+];
+
+/**
+ * Measures what flagged twice more, two workers on each side. The two sides run together, so a drift in
+ * the machine reaches both alike.
+ */
+async function confirmRuns(flags) {
+  const screens = [...new Set(flags.filter((j) => j.key.startsWith('screen:')).map((j) => j.key.slice(7)))];
+  const titles = [
+    ...new Set(flags.filter((j) => j.key.startsWith('step:')).map((j) => j.key.match(/^step:(.*)\/\d+$/)[1])),
+  ];
+  const api = flags.some((j) => j.key.startsWith('api:'));
+  await Promise.all(
+    ['base', 'head'].map(async (side) => {
+      const o = { dir: join(metricsDir, `${side}-confirm`), workers: 2 };
+      if (screens.length)
+        await metricsPlaywright(side, `confirm-screens-${side}`, ['metrics.spec'], {
+          ...o,
+          env: { QA_ONLY: JSON.stringify(screens), QA_RUNS: String(CONFIRM_RUNS) },
+        });
+      if (titles.length)
+        await metricsPlaywright(side, `confirm-steps-${side}`, ['journeys.spec'], {
+          ...o,
+          repeat: CONFIRM_RUNS,
+          grep: titles.map((t) => `\\s${escapeRe(t)}$`).join('|'),
+        });
+    }),
+  );
+  // the API's tests share one database, so they take turns
+  if (api)
+    for (const side of ['base', 'head'])
+      for (let i = 1; i <= CONFIRM_RUNS; i++)
+        metricsApi(
+          side,
+          side === 'base' ? worktree : root,
+          `confirm-api-${side}-${i}`,
+          join(metricsDir, `${side}-confirm`),
+        );
+}
+
+const SLUG = (title) => title.replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '');
+const unitOf = (metric) => METRICS[metric].unit;
+const fmt = (metric, v) => {
+  switch (unitOf(metric)) {
+    case 'ms':
+      return `${Math.round(v)} ms`;
+    case 'bytes':
+      return v >= 1e6 ? `${(v / 1e6).toFixed(2)} MB` : v >= 1e3 ? `${(v / 1e3).toFixed(1)} kB` : `${Math.round(v)} B`;
+    case 'score':
+      return v.toFixed(3);
+    default:
+      return String(Math.round(v * 10) / 10);
+  }
+};
+const cell = (s) => s.replace(/\|/g, '\\|');
+
+/** The `## Metrics` section: the confirmed flags, those dropped as noise, the standing ones by metric, a count. */
+function metricsSection(m) {
+  const L = ['## Metrics', ''];
+  L.push(
+    `${m.head.length} numbers on this branch, ${m.base.length} on ${baseRef}: **${m.flags.length} flagged**, ` +
+      `${m.dropped.length} more dropped as noise, ${m.standing.length} standing. A flag is a number past a human ` +
+      `limit that ${baseRef} keeps by a real step, or worse than ${baseRef}'s by more than a ratio (timings 50%, bytes and counts 25%) and a floor (qa/limits.ts). ` +
+      `Screens open as a phone opens Sen after the first time (the build cached by the service worker), and ` +
+      `screens and taps are measured with the CPU 4× slower on a mobile network. Every screen and journey ` +
+      `was measured once on each side; a number that flagged was measured twice more on both, and a flag ` +
+      `stays only if the median of the three still flags and the three samples are all worse than main's. The reviewer explains each flag in the ledger.`,
+    '',
+  );
+  for (const n of m.notes) L.push(`- ${n}`);
+  for (const [name, r] of Object.entries(m.runs))
+    if (r.exit !== 0)
+      L.push(
+        `- ${name} exited ${r.exit}${r.failed ? ` with ${r.failed} of ${r.tests} tests failed` : ''}: see ${relative(out, join(metricsLogs, `${name}.log`))}`,
+      );
+  L.push(`- Took ${m.phases.map(([n, s]) => `${n} ${s} s`).join(', ')}.`, '');
+  const keyCell = (j) => {
+    const step = j.key.match(/^step:(.*)\/(\d+)$/);
+    const film = step && join(metricsDir, 'film', SLUG(step[1]), `${step[2]}.png`);
+    const text = `\`${cell(j.key)}\``;
+    return film && existsSync(film) ? `[${text}](${relative(out, film)})` : text;
+  };
+  const baseCell = (j) => (j.base === undefined ? 'none' : fmt(j.metric, j.base));
+  const verdict = (j) =>
+    j.verdict.kind === 'over'
+      ? `over ${fmt(j.metric, j.verdict.limit)}${j.base === undefined ? ` (${baseRef} has no number)` : ''}`
+      : `worse than ${baseRef} by ${Math.round((j.value / j.verdict.base - 1) * 100)}%`;
+  L.push('### Flags', '');
+  if (m.flags.length) {
+    L.push('| Key | Metric | What it says | Head | Main | Verdict |', '|---|---|---|---|---|---|');
+    for (const j of m.flags)
+      L.push(
+        `| ${keyCell(j)} | ${j.metric} | ${METRICS[j.metric].says} | ${fmt(j.metric, j.value)}${j.n > 1 ? ` (median of ${j.n})` : ''} | ${baseCell(j)} | ${verdict(j)} |`,
+      );
+    L.push('');
+  } else L.push('None.', '');
+  if (m.dropped.length) {
+    L.push(
+      '### Dropped as noise',
+      '',
+      `Flagged on the first measurement, then not confirmed: the median of three no longer flags, or it still does but the three samples overlap ${baseRef}'s three.`,
+      '',
+    );
+    L.push('| Key | Metric | First | Median of three | Main | Why |', '|---|---|---|---|---|---|');
+    for (const d of m.dropped)
+      L.push(
+        `| ${keyCell(d)} | ${d.metric} | ${fmt(d.metric, d.first)} | ${d.now === undefined ? 'gone' : fmt(d.metric, d.now)} | ${d.base === undefined ? 'none' : fmt(d.metric, d.base)} | ${d.why} |`,
+      );
+    L.push('');
+  }
+  L.push('### Standing', '');
+  if (m.standing.length) {
+    L.push(
+      `Over a human limit on ${baseRef} too: not flags. One row per metric, with its five worst; every one is in metrics/index.json.`,
+      '',
+    );
+    L.push('| Metric | What it says | Limit | Count | Five worst |', '|---|---|---|---|---|');
+    for (const [metric, list] of Map.groupBy(m.standing, (j) => j.metric)) {
+      const worst = [...list]
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5)
+        .map((j) => `\`${cell(j.key)}\` ${fmt(metric, j.value)}`)
+        .join('; ');
+      L.push(
+        `| ${metric} | ${METRICS[metric].says} | ${fmt(metric, list[0].verdict.limit)} | ${list.length} | ${worst} |`,
+      );
+    }
+    L.push('');
+  } else L.push('None.', '');
+  if (m.lateFlags.length)
+    L.push(
+      `${m.lateFlags.length} numbers flagged only on the median of three, not on their first measurement: not counted (see lateFlags in metrics/index.json).`,
+      '',
+    );
+  const onBase = new Set(m.base.map((x) => `${x.key}|${x.metric}`));
+  const noBase = m.head.filter((x) => !onBase.has(`${x.key}|${x.metric}`)).length;
+  L.push(
+    `${m.ok} other numbers are within the limits and within noise of ${baseRef}'s` +
+      `${noBase ? ` (${noBase} numbers have none on ${baseRef}: only human limits apply to them)` : ''}.`,
+    '',
+  );
+  return L;
+}
+
+async function metricsPass() {
+  rmSync(metricsDir, { recursive: true, force: true });
+  for (const d of ['base', 'head', 'film', 'logs']) mkdirSync(join(metricsDir, d), { recursive: true });
+  const t0 = Date.now();
+  const phase = async (name, fn) => {
+    const t = Date.now();
+    await fn();
+    metricsPhases.push([name, MS(t)]);
+  };
+  const first = { workers: WORKERS };
+  await phase('main', () => metricsPlaywright('base', 'metrics-base', ['metrics.spec', 'journeys.spec'], first));
+  await phase('head', () => metricsPlaywright('head', 'metrics-head', ['metrics.spec', 'journeys.spec'], first));
+  // the film records video and frames, which would slow the very taps being timed, so it is a run of its own
+  await phase('film', async () => {
+    await metricsPlaywright('head', 'film-head', ['journeys.spec'], {
+      ...first,
+      dir: join(metricsDir, 'film-scratch'),
+      env: { QA_FILMSTRIP: join(metricsDir, 'film') },
+    });
+    rmSync(join(metricsDir, 'film-scratch'), { recursive: true, force: true });
+    // the videos Playwright kept, beside the filmstrips
+    const vids = join(metricsLogs, 'film-head-results');
+    if (existsSync(vids))
+      for (const d of readdirSync(vids)) {
+        const v = join(vids, d, 'video.webm');
+        if (existsSync(v)) copyFileSync(v, join(metricsDir, 'film', `${d}.webm`));
+      }
+  });
+  await phase('API', () => {
+    metricsApi('base', worktree, 'api-base');
+    metricsApi('head', root, 'api-head');
+  });
+  const dirs = (side, ...more) => [join(metricsDir, side), ...more.map((s) => join(metricsDir, `${side}-${s}`))];
+  const baseDist = join(baseWeb, 'dist-qa');
+  const headDist = join(web, 'dist-qa');
+  const once = judgeAll(sideMetrics('head', headDist, dirs('head')), sideMetrics('base', baseDist, dirs('base')));
+  if (once.flags.length) await phase('confirm', () => confirmRuns(once.flags));
+  const base = sideMetrics('base', baseDist, dirs('base', 'confirm'));
+  const head = sideMetrics('head', headDist, dirs('head', 'confirm'));
+  const judged = judgeAll(head, base);
+  const id = (j) => `${j.key}|${j.metric}`;
+  const stays = new Set(judged.flags.map(id));
+  // A flag that the median of three still shows is confirmed only if the samples agree with it: each of
+  // head's is worse than each of main's (than the limit, where main has no number). Three samples a side
+  // that overlap say the two builds are not told apart, however the medians fall; on the same code that
+  // is what noise does around a limit or a ratio line. Numbers with fewer samples than that (the API's,
+  // the build's) stand on their median.
+  const headSamples = sideSamples(dirs('head', 'confirm'));
+  const baseSamples = sideSamples(dirs('base', 'confirm'));
+  const separated = (j) => {
+    const h = headSamples.get(id(j));
+    if (!h || h.length < 3) return true;
+    const b = baseSamples.get(id(j));
+    if (b && b.length >= 3) return Math.min(...h) > Math.max(...b);
+    return j.verdict.kind !== 'over' || Math.min(...h) > j.verdict.limit;
+  };
+  const flags = [];
+  const overlapping = new Set();
+  for (const j of judged.flags) {
+    if (!once.flags.some((f) => id(f) === id(j))) continue;
+    if (separated(j)) flags.push(j);
+    else overlapping.add(id(j));
+  }
+  const nowOf = new Map(head.map((x) => [id(x), x.value]));
+  const baseNow = new Map(base.map((x) => [id(x), x.value]));
+  const dropped = once.flags
+    .filter((f) => !stays.has(id(f)) || overlapping.has(id(f)))
+    .map((f) => ({
+      key: f.key,
+      metric: f.metric,
+      first: f.value,
+      now: nowOf.get(id(f)),
+      base: baseNow.get(id(f)),
+      why: overlapping.has(id(f)) ? 'samples overlap main' : 'median no longer flags',
+    }));
+  // a flag only the median showed: not counted, but not lost
+  const lateFlags = judged.flags.filter((j) => !once.flags.some((f) => id(f) === id(j)));
+  const result = {
+    base,
+    head,
+    flags,
+    dropped,
+    lateFlags,
+    standing: judged.standing,
+    ok: judged.ok,
+    firstPassFlags: once.flags.length,
+    notes: [...metricsNotes],
+    phases: metricsPhases,
+    runs: metricsRuns,
+  };
+  writeFileSync(join(metricsDir, 'index.json'), JSON.stringify(result, null, 2));
+  console.log(
+    `metrics: ${MS(t0)} s (${metricsPhases.map(([n, s]) => `${n} ${s} s`).join(', ')}); ` +
+      `${head.length} head numbers, ${base.length} on ${baseRef}; first pass ${once.flags.length} flags -> ` +
+      `${flags.length} confirmed, ${dropped.length} dropped as noise, ${judged.standing.length} standing, ` +
+      `${result.ok} ok -> ${join(metricsDir, 'index.json')}`,
+  );
+  return metricsSection(result);
+}
+
+const metricsMd = await metricsPass();
+
+if (metricsOnly) {
+  // the section goes into the report that is there, in place of the last one; without a report, into a new one
+  const file = join(out, 'index.md');
+  const had = existsSync(file) ? readFileSync(file, 'utf8') : `# QA metrics: ${branch} against ${baseRef}\n\n`;
+  const at = had.indexOf('## Metrics');
+  const next = at < 0 ? -1 : had.indexOf('\n## ', at + 1);
+  const kept = at < 0 ? had.trimEnd() + '\n\n' : had.slice(0, at) + (next < 0 ? '' : had.slice(next + 1));
+  writeFileSync(file, kept.trimEnd() + '\n\n' + metricsMd.join('\n'));
+  console.log(`report: ${file}`);
+  process.exit(0);
+}
 
 /* ---------- pixels --------------------------------------------------------------- */
 
@@ -447,6 +860,8 @@ else {
     }
   }
 }
+
+md.push(...metricsMd);
 
 writeFileSync(join(out, 'index.md'), md.join('\n'));
 

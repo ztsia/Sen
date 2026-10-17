@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import type pg from 'pg';
 import { z } from 'zod';
 import type { MemberSwitches } from '@sen/core/views';
@@ -11,7 +12,11 @@ import { readEnv, type ApiEnv } from './env';
 import { ApiError, checkBody, onError, readJson, sameOrigin, signedOut, suspended } from './errors';
 import { clientIp, LIMITS, tooMany, withinLimit } from './limits';
 import { gmailMailer, noMail, type Mailer } from './mail';
+import { countQueries, serverTiming } from './timing';
 import { adminRoutes, personRoutes } from './routes';
+
+/** The largest request body the API reads, in bytes. */
+export const MAX_BODY = 256 * 1024;
 
 export interface Deps {
   env: ApiEnv;
@@ -38,8 +43,11 @@ export function createApp(deps: Deps) {
     target: deps.env.target,
     mailer: deps.mailer,
   });
+  countQueries(deps.app);
+  countQueries(deps.auth);
   const api = new Hono<Env>().basePath('/api');
   api.onError(onError);
+  api.use('*', serverTiming);
   api.notFound((c) => c.json({ code: 'not_found', message: 'No such route.' }, 404));
 
   // nothing Sen serves is for search engines (D127); vercel.json says so on Vercel, this says it everywhere
@@ -48,6 +56,14 @@ export function createApp(deps: Deps) {
     c.header('X-Robots-Tag', 'noindex');
     c.header('Cache-Control', 'no-store');
   });
+  // no body Sen takes comes near this; a bigger one is refused before anything reads it (the sweep)
+  api.use(
+    '*',
+    bodyLimit({
+      maxSize: MAX_BODY,
+      onError: (c) => c.json({ code: 'too_large', message: 'That’s too big for Sen.' }, 413),
+    }),
+  );
 
   api.get('/health', (c) => c.json({ ok: true }));
 

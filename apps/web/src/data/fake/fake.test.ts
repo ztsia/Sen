@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { formatSen } from '@sen/core/money';
 import { describe, expect, it } from 'vitest';
 import { Command } from '@sen/core/commands';
@@ -20,7 +21,7 @@ import {
 import { createFake } from './index';
 import { claimView } from './areas/money';
 import { uid } from './ids';
-import { acctId, catId, rm, txn } from './scenario';
+import { acctId, catId, rm, txn, weiMing } from './scenario';
 import { buildScenario, SCENARIOS } from './variants';
 import * as v from './views';
 
@@ -439,5 +440,21 @@ describe('QA B03 run 3', () => {
     const back = { ...bbq, id: uid('txn:qa-back'), direction: 'in' as const, kind: 'repayment' as const };
     db.txns.push(bill, { ...back, amount: rm('40.00'), linkedTransactionId: bill.id, myShare: null });
     expect(v.spendingOf(db, bill)).toBe(rm('60.00'));
+  });
+});
+
+describe('the heavy-year scenario', () => {
+  it('leaves Wei Ming byte for byte as it was', () => {
+    const hash = createHash('sha256').update(JSON.stringify(weiMing())).digest('hex');
+    expect(hash).toBe('73571858011f4a8f226bb4403f4faf2e8920f58f5955e9ccad0c22f4882188b5');
+  });
+  it('has a year of every captured payment, built quickly', () => {
+    const t0 = performance.now();
+    const db = buildScenario('year', false);
+    const ms = performance.now() - t0;
+    expect(db.txns.length).toBeGreaterThanOrEqual(4000);
+    expect(db.receipts.length).toBeGreaterThanOrEqual(200);
+    expect(new Set(db.txns.map((t) => t.id)).size).toBe(db.txns.length);
+    expect(ms).toBeLessThan(1500);
   });
 });

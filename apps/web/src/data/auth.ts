@@ -122,12 +122,12 @@ export function forgetSession() {
   forgetKept();
 }
 
-let reason: 'paused' | null = null;
+let reason: 'paused' | 'ended' | null = null;
 
 /** Why the app last sent someone to sign-in (QA B05 run 1, 10): kept until they sign in again. */
-export function noteSignedOutBecause(r: 'paused') {
+export function noteSignedOutBecause(r: 'paused' | 'ended') {
   reason = r;
 }
-export function signedOutReason(): 'paused' | null {
+export function signedOutReason(): 'paused' | 'ended' | null {
   return reason;
 }
