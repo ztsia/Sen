@@ -1,42 +1,44 @@
 # Handoff
 
-## Where things stand (16 Oct)
+## Where things stand (17 Oct)
 
-**B05 · QA tooling is being built on `B05/qa-tooling`** (brief `docs/briefs/B05-qa-tooling.md`, D139:
-measure, never guess causes). Built and committed:
-- `qa/limits.ts`: every metric judged against a human limit and against `main`; a limit `main` breaks
-  too is *standing*, not a flag; flags never fail CI.
-- The API sends `Server-Timing` (server ms, db ms, queries, rows) on every answer; with `QA_METRICS`
-  its tests record them per route. Bodies over 256 KB get a 413.
-- The route sweep (`apps/api/src/routes.table.ts`, `apps/api/test/sweep.test.ts`): the same bad
-  requests at every route; an unlisted route fails it.
-- Breakage checks (`qa/mutants.ts`, `node scripts/mutants.mjs`): 13, all killed.
-- Lived-in journeys (`pnpm --filter @sen/web e2e:lived`, in CI): across a deploy, resume, offline,
-  slow network, back mid-sheet, 200% text, 360×640, a year of data (`?scenario=year`); an ended
-  session in `e2e:server` (now on port 4179).
-- `scripts/live-metrics.mjs` and the `live-metrics` workflow: every preview's server timings in its
-  job summary. Running on this branch's previews: `/api/me` 18 ms server, 6 queries.
-- Metrics in `qa-diff.mjs` (screens, journey taps with filmstrips, API, build): built, **being
-  reworked** to open screens as a phone does (service worker cache) and confirm only flags, so the
-  pass takes under 15 minutes instead of 70.
-- Docs: the `qa` skill, `qa-reviewer`, `qa-eyes` (filmstrips, feel questions), `brief`, `uiux`,
-  CLAUDE.md commands, `qa/escapes.md`'s two new columns. Ledger: `qa/B05-qa-tooling/ledger.md`.
-- What the tools found and the slice fixed: 200% text overlaps (More, Insights, Review), no message
-  after an ended session, a resource-upsert race no test held, a 413 missing no-store.
+**B05 · QA tooling is done; its PR is open from `B05/qa-tooling`**, waiting for the owner's merge.
+Ledger with the retro: `qa/B05-qa-tooling/ledger.md`. What it adds (D139: measure, never guess
+causes):
+- `qa/limits.ts` judges every number against a human limit and `main`. A crossing counts only as a
+  real step worse than `main`; timings need 50%, bytes and counts 25%. Flags never fail CI.
+- The API sends `Server-Timing` on every answer; its tests record it per route (`QA_METRICS`).
+  Bodies over 256 KB get a 413.
+- The route sweep (`routes.table.ts`, `sweep.test.ts`) and 13 breakage checks
+  (`node scripts/mutants.mjs`), all killed.
+- The lived-in journeys (`e2e:lived`, in CI) and an ended session in `e2e:server` (port 4179).
+- `live-metrics` on every preview: it flagged the region probe (1.3–2.2 s server time against
+  18–23 ms).
+- Metrics in `qa-diff.mjs`: screens opened from the service worker's cache, taps with filmstrips, the
+  API and the build, measured once, then three times for what flags. About 12–13 minutes. Identical
+  code still confirms 1–2 timing flags per run, so the reviewer re-measures each flag once
+  (done-when not quite met; the ledger says why).
+- The `qa` skill, `qa-reviewer`, `qa-eyes`, `brief`, `uiux`, CLAUDE.md and `qa/escapes.md` describe
+  the new run.
+- The general lessons are in [ztsia/claude_skills#4](https://github.com/ztsia/claude_skills/pull/4).
+- Fixed what the tools found: 200% text overlaps, the ended-session message, a resource-upsert race,
+  a 413 missing no-store.
 
-**In flight:** the metrics rework (noise check `--base HEAD` twice, then against main); the
-`claude_skills` PR (branch `workflow/measure-dont-guess` in `ztsia/claude_skills`, being written);
-the iad1 probe (throwaway branch `B05/qa-tooling-iad1-probe`: its preview's live metrics must flag;
-delete the branch after).
+**No full QA run** (owner, 17 Oct: not enough quota). Each change has its own test. The diff against
+`main` shows 0 trees and 0 pixels changed in all twelve pairs.
 
-**Then:** a full QA run with the new pipeline (`qa` skill), the retro in the ledger, `docs/usage.md`
-row, PR *B05 · QA tooling*.
+**Next: B05 · Feel** (`docs/briefs/B05-feel.md`, branch `B05/feel` from `main` once this PR merges).
+It starts with the motion demo the owner picks from on the phone. Then B06.
 
-**Next slices:** *B05 · Feel* (`docs/briefs/B05-feel.md`, starts with the motion demo), then B06.
+### Known
+- The `scan-after` journey fails now and then under the metrics' throttling: it waits for
+  *Reading receipt…*, which shows for a moment. Its steps are then missing on that side.
+- Agents resumed after a usage limit ran on Opus (`brief` skill: check, and brief a fresh agent if so).
 
 ### Open with the owner
-- docs/local.md *Now*: `SEN_OWNER_EMAIL` in Vercel Production; first sign-in; Q14 (inbox or spam);
-  sign out everywhere across two browsers.
+- docs/local.md *Now*: delete the branch `B05/qa-tooling-iad1-probe`; `SEN_OWNER_EMAIL` in Vercel
+  Production; first sign-in; Q14 (inbox or spam); sign out everywhere.
+- Merge [ztsia/claude_skills#4](https://github.com/ztsia/claude_skills/pull/4).
 - Email stays on Gmail (D54); Resend only if Q14 shows spam. Premium HTML emails are in B38's brief.
 
 ## Don't argue again
