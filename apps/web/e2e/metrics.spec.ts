@@ -2,7 +2,7 @@ import { devices, test, type Browser, type BrowserContext } from '@playwright/te
 import { NOW } from '../src/data/fake/scenario';
 import { CATALOGUE } from './catalogue';
 import { open } from './helpers';
-import { METRICS_DIR, Probe, record, screenMetrics, warmUp } from './metrics';
+import { METRICS_DIR, pageProbe, Probe, record, screenMetrics, warmUp } from './metrics';
 
 // What opening each screen costs a person and a phone (D139): every catalogue entry, at its path, in
 // Minted, light, the CPU 4× slower and the network a mobile one (metrics.ts). Each is opened as a phone
@@ -32,6 +32,8 @@ let warm: Promise<BrowserContext> | undefined;
 const warmContext = (browser: Browser, baseURL: string | undefined) =>
   (warm ??= (async () => {
     const context = await browser.newContext({ ...phone, baseURL });
+    // before any page fixes the clock, so the probe keeps the browser's own (metrics.ts)
+    await context.addInitScript(pageProbe);
     const page = await context.newPage();
     await warmUp(page);
     await page.close();

@@ -54,7 +54,7 @@ interface PageState {
 }
 
 /** Runs in the page before any of its scripts, on every document. Self-contained: it is serialised. */
-function pageProbe() {
+export function pageProbe() {
   type Slot = {
     id: string;
     longTasks: number[];
@@ -63,17 +63,22 @@ function pageProbe() {
     taps: PageTap[];
     lastMutation: number;
     tapIdx: number;
+    now: () => number;
     flush: () => void;
   };
   const w = window as unknown as { __qa?: Slot; __qaTap?: (id: string, start: number, now: number) => void };
   if (w.__qa) return;
+  // the browser's own clock: a fixed time (page.clock, for the catalogue's NOW) replaces performance.now with
+  // one that runs from the context's start, not the page's, so this must run before it does (metrics.spec.ts)
+  const now = performance.now.bind(performance);
   const q: Slot = {
     id: Math.random().toString(36).slice(2),
     longTasks: [],
     shifts: [],
     events: [],
     taps: [],
-    lastMutation: performance.now(),
+    lastMutation: now(),
+    now,
     tapIdx: -1,
     flush: () => {},
   };
@@ -110,9 +115,9 @@ function pageProbe() {
       }
     });
   new MutationObserver(() => {
-    const now = performance.now();
-    q.lastMutation = now;
-    if (q.tapIdx >= 0) q.taps[q.tapIdx]!.lastMutation = now;
+    const t = now();
+    q.lastMutation = t;
+    if (q.tapIdx >= 0) q.taps[q.tapIdx]!.lastMutation = t;
   }).observe(document, { subtree: true, attributes: true, childList: true, characterData: true });
   // a tap is a pointer interaction: it starts at the pointerdown, which Event Timing dates to the same instant
   document.addEventListener(
@@ -120,7 +125,7 @@ function pageProbe() {
     (e) => {
       q.taps.push({ start: e.timeStamp, lastMutation: e.timeStamp });
       q.tapIdx = q.taps.length - 1;
-      w.__qaTap?.(q.id, e.timeStamp, performance.now());
+      w.__qaTap?.(q.id, e.timeStamp, now());
     },
     true,
   );
@@ -177,6 +182,8 @@ export class Probe {
   private taps: Tap[] = [];
   private recent: Frame[] = [];
   private polling = false;
+  /** the document the last read came from */
+  private current: string | undefined;
   private timer: ReturnType<typeof setInterval> | undefined;
   private film = false;
 
@@ -260,16 +267,55 @@ export class Probe {
     if (this.polling || this.page.isClosed()) return;
     this.polling = true;
     try {
+      // only what is new since the last read of this document, so a read costs the page next to nothing
+      const last = this.current ? this.docs.get(this.current) : undefined;
+      const from = last
+        ? {
+            id: last.state.id,
+            l: last.state.longTasks.length,
+            s: last.state.shifts.length,
+            e: last.state.events.length,
+          }
+        : { id: '', l: 0, s: 0, e: 0 };
       const sent = Date.now();
-      const s = await this.page.evaluate(() => {
-        const q = (window as unknown as { __qa?: PageState & { flush: () => void } }).__qa;
+      const r = await this.page.evaluate((f) => {
+        const q = (window as unknown as { __qa?: PageState & { flush: () => void; now: () => number } }).__qa;
         if (!q) return undefined;
         q.flush();
-        const { id, longTasks, shifts, events, taps, lastMutation } = q;
-        return { state: { id, longTasks, shifts, events, taps, lastMutation }, now: performance.now() };
-      });
+        const same = q.id === f.id;
+        return {
+          id: q.id,
+          longTasks: q.longTasks.slice(same ? f.l : 0),
+          shifts: q.shifts.slice(same ? f.s : 0),
+          events: q.events.slice(same ? f.e : 0),
+          taps: q.taps,
+          lastMutation: q.lastMutation,
+          now: q.now(),
+        };
+      }, from);
+      if (!r) return;
       // the document began `now` ago, as of the middle of the round trip
-      if (s) this.docs.set(s.state.id, { state: s.state, origin: (sent + Date.now()) / 2 - s.now });
+      const origin = (sent + Date.now()) / 2 - r.now;
+      const had = this.docs.get(r.id);
+      const state: PageState = had
+        ? {
+            id: r.id,
+            longTasks: [...had.state.longTasks, ...r.longTasks],
+            shifts: [...had.state.shifts, ...r.shifts],
+            events: [...had.state.events, ...r.events],
+            taps: r.taps,
+            lastMutation: r.lastMutation,
+          }
+        : {
+            id: r.id,
+            longTasks: r.longTasks,
+            shifts: r.shifts,
+            events: r.events,
+            taps: r.taps,
+            lastMutation: r.lastMutation,
+          };
+      this.docs.set(r.id, { state, origin });
+      this.current = r.id;
     } catch {
       // the page navigated under it, or is closing
     } finally {
