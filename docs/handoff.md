@@ -2,81 +2,50 @@
 
 ## Where things stand (21 Oct)
 
-**B05 · Feel is in progress on `B05/feel`** (`docs/briefs/B05-feel.md`). The owner has paused it to
-save quota and will say when to build. B05 · QA tooling is merged (PR 17).
+**B05 · Feel is built on `B05/feel`** (`docs/briefs/B05-feel.md`), in QA before its PR. The owner
+said (21 Oct): once it's done and CI is green, merge the PR and go on to B06 in the same session.
+That merge skips the brief's phone sign-off; the owner tries it in the review app afterwards.
 
-Done:
-- **The motion demo** (`apps/web/src/dev/motion.tsx`, `/dev/gallery/motion`, from the dev panel's
-  *Try the motion demo*). Previews and development only, and none of it is the app's motion. Keep it
-  until sign-off.
-- **The owner's picks, D140:** push, 200 ms, ripple, one motion for all six looks. Written into
-  `patterns.md` §8, which is now the motion contract.
-- **Measured cost** on a preview build with the CPU slowed 4×, motion on against off:
-  - the ripple costs nothing
-  - a push adds one pause of 35–65 ms at its start (the capture)
-- `review` points at `B05/feel`.
+Built and verified in Chromium at a phone viewport:
+- **Screens** (`src/frame/motion.ts`, `src/styles/motion.css`): the router's `defaultViewTransition`
+  with a `types` callback. Forward pushes, back pops (the back gesture too), a tab crossfades (also a
+  tab tapped from a pushed screen), a sheet's own history step moves nothing, reduced motion turns
+  it all off. Only the region `screen` moves; the tab bar (`tabbar`) and Sen's button (`fab`) stay
+  above it, live.
+- **The shared amount:** `shareId` on `ListRow` (Payments, Account) and `HeaderCard` (txn).
+- **Ripple** (`src/frame/press.ts`): one pointerdown listener on everything tappable; switches,
+  checkboxes and `[data-no-press]` excluded; about 40 `active:` tints removed.
+- **Change motion:** `useChangeMotion(data)` + `rowMotion(id)`, on Review. It moves when the data
+  arrives, never around the write, so a network round trip never freezes the screen. Rows partly
+  out of view change in place. Skeletons fade into content (`Loaded`); sheets ease to a new height.
+- **Haptics:** `SenShell.haptic({kind})`, bridge 2, through `performHapticFeedback`; the web app's
+  `lib/haptics.ts` checks the bridge first. Moments: confirm (`toastUndo`), Undo, reject
+  (`FieldError` after a tap), long-press, toggles (`Switch`). `threshold` exists but nothing uses it:
+  Sen has no pull past a limit yet.
+- **Tests:** functional e2e runs with motion reduced; `e2e/motion.spec.ts` checks the motion with it
+  on; a unit test pins the direction rule; `ShellTest` calls `haptic` on the emulator.
+- **Measured** (`FRAME_TIMES=transitions node scripts/frame-times.mjs`, preview build, CPU 4×):
+  push and back hold 60 fps once moving (median 16.7 ms, 3–6% of frames over 33 ms). Each starts
+  with a pause of about 170–300 ms throttled (the new screen's render plus the capture). Tab
+  crossfades drop more (11–25% over 33 ms, against 7% for the same switches with motion off):
+  the tab screens are heavy to draw, and this machine composites in software. If the phone feels it,
+  the lever is to make tabs switch at once.
+- The motion demo is gone.
 
-**Next: build**, from the brief's *What it builds*. Nothing of the build is written yet.
+## Next
+1. QA (the `qa` skill), fixes by tier, the retro, PR *B05 · Feel*, CI green, merge (owner's go).
+2. Then B06 from its brief, on `B06/…` from `main`.
 
-### The build plan (this session's calls; follow them)
-- **Screens:** set `defaultViewTransition` on the router (it runs on popstate too, so the back gesture
-  is covered). In `router.subscribe('onBeforeNavigate')`, set `html[data-nav]`:
-  - `tab` when both paths are tabs
-  - `forward` or `back` by `__TSR_index` in each location's state
-  - none on first load, and none when the href is unchanged. `useBackClose` pushes a sheet's step
-    at the same href, and that must not slide the screen.
-  - none on a same-path replace (a filter change)
-  - none under reduced motion: return `types: false` from the callback, with CSS as the fallback
-
-  Clear `data-nav` on `onResolved`.
-- **Where the transition applies:** wrap `<Outlet />` in `app-shell.tsx` in one
-  `flex min-h-0 flex-1 flex-col` div named `screen`. That changes no trees or pixels. Set
-  `::view-transition-*(root)` to `animation: none`, so the tab bar's own `switch` plays live, and
-  give `::view-transition-group(screen)` `overflow: clip`.
-- **The shared amount:** add an optional `shareId` prop to `ListRow` (on its amount) and to
-  `HeaderCard` (on its figure), and have the payment detail pass the payment id. The motion module
-  remembers the id on tap. During that navigation only, one `<style>` gives
-  `[data-share="<id>"] [data-sen]` the name `amount`, going forward and back. A duplicate name only
-  costs that one animation.
-- **Ripple:** one delegated `pointerdown` listener in `src/frame/press.ts`. It works on
-  `[data-slot=button|item|toggle-group-item|toggle]`, the tab bar's `[data-k]` and Sen's button.
-  - It inserts a clip span (`absolute inset-0 overflow-hidden rounded-[inherit] pointer-events-none`)
-    with a circle that scales from the finger, in `currentColor` at about 12%.
-  - The host's `position: relative` goes in `@layer base`, so Tailwind's `.absolute` still wins
-    (HeaderCard's Copy button).
-  - Under reduced motion it shows as a tint, with no spread.
-  - Remove the parts' `active:bg-*` tints (about 40 of them) so they don't double up.
-- **Haptics:** one `SenShell.haptic({ kind })` method using `View.performHapticFeedback`. It follows
-  the system's touch-feedback setting by itself, which `@capacitor/haptics`' vibrator doesn't. This
-  departs from the brief's wording on purpose.
-  - The constants: CONFIRM, REJECT, LONG_PRESS, TOGGLE_ON/OFF (with fallbacks below API 30 and 34)
-    and SEGMENT_TICK.
-  - The web app checks the shell's version before calling it.
-- **Change motion** (Review clearing, rows in and out): use a document view transition with names
-  set on the rows only while it runs, as in the demo. Query-cache updates notify asynchronously, so
-  make the update callback async (await a macrotask) rather than relying on `flushSync`. Reuse
-  `settleTap` on Review.
-- Then: functional e2e under reduced motion, the feel pass with motion on, `frame-times.mjs` over
-  transitions, an emulator test of `haptic`, docs (`uiux` checklist, `qa-eyes` questions), a new
-  APK, and the owner's sign-off on the phone.
-
-### Known
-- The `scan-after` journey fails now and then under the metrics' throttling.
-- Agents resumed after a usage limit ran on Opus (`brief` skill).
-
-### Open with the owner
-- When to start the build (the owner will say).
-- docs/local.md *Now*:
-  - delete the branches `B05/qa-tooling-iad1-probe` and `B05/qa-tooling`
-  - `SEN_OWNER_EMAIL` in Vercel Production
-  - first sign-in
-  - Q14 (inbox or spam)
-  - sign out everywhere
-- Merge [ztsia/claude_skills#5](https://github.com/ztsia/claude_skills/pull/5), the motion lessons in
-  `uiux`. #4 is merged.
+## Open with the owner
+- Sign-off on the phone, after the new APK (`docs/local.md`, *Update Sen and Sen review*).
+- `docs/local.md` *Now*: delete `B05/qa-tooling-iad1-probe` and `B05/qa-tooling`; `SEN_OWNER_EMAIL`;
+  first sign-in; Q14; sign out everywhere.
+- Merge [ztsia/claude_skills#5](https://github.com/ztsia/claude_skills/pull/5).
 
 ## Don't argue again
-- D129–D140 (the owner's calls).
-- Deploys happen only by merge (D122). The review build follows `review` (D115).
+- D129–D140 (the owner's calls). Deploys happen only by merge (D122); the review build follows
+  `review` (D115).
 - Money never counts up or down in motion.
 - iOS back is an edge swipe in B39, for iOS standalone only, and never on Android (owner, 21 Oct).
+- Haptics go through `performHapticFeedback`, not `@capacitor/haptics`' vibrator, so the phone's
+  touch-feedback setting governs them.
