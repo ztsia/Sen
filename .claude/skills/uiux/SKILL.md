@@ -138,8 +138,14 @@ Check every element of a screen, new or existing, for these, and fix them before
   delete, recategorise and mark-as-transfer.
 
 **Feedback**
-- **Every action gets a response:** an optimistic update, a light haptic on commit, and a toast only
-  when the result isn't visible on screen.
+- **Every action gets a response:** an optimistic update, and a toast only when the result isn't
+  visible on screen. Press feedback is the frame's ripple (`src/frame/press.ts`), on everything
+  tappable by itself; never add an `active:` tint at a call site, and mark a control that draws its own
+  response `data-no-press`.
+- **Haptics on a few moments only** (`src/lib/haptics.ts`): a change with Undo (`confirm`, in
+  `toastUndo`), Undo, an error after a tap (`FieldError`), a long-press, a toggle (`Switch`), a pull
+  past a limit (`threshold`). They come from the parts, so a screen rarely calls `haptic` itself, and
+  never on scroll or on every tap.
 - **Loading:** `Skeleton` shaped like the content, never a full-screen spinner. Pull-to-refresh
   wherever data syncs.
 - **Waiting on the server:** a button whose request is on its way shows a `Spinner` and says what's
@@ -170,10 +176,14 @@ Check every element of a screen, new or existing, for these, and fix them before
 - Validate on blur and on submit, show the message under the field, and keep the submit button
   enabled.
 
-**Motion**
-- CSS transitions at 150–250 ms, easing out on entry; Motion only where a gesture needs it. Motion
-  explains a change; it never decorates.
-- Respect `prefers-reduced-motion`.
+**Motion** (`patterns.md` §8, D140)
+- Screens move by themselves: the router starts a view transition for every navigation, and
+  `src/frame/motion.ts` picks forward, back or a crossfade. A screen never animates its own entry.
+- A list whose rows clear or arrive shows its data through `useChangeMotion`, with `rowMotion(id)` on
+  each row. A payment row that opens its detail passes `shareId`, as the detail's `HeaderCard` does.
+- Otherwise CSS at 200 ms on `--motion-ease`; motion explains a change and never decorates.
+- Respect `prefers-reduced-motion`: the view transitions turn themselves off, and the ripple becomes a
+  tint.
 
 **Accessibility**
 - Every icon-only button has an `aria-label` that TalkBack reads out.

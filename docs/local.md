@@ -8,6 +8,11 @@ follow on a phone, and commit.
 
 ## Now
 
+- [ ] **Update Sen and Sen review on your phone once B05 · Feel merges.** Its haptics live in the
+      shell (bridge 2), so the app needs the new APK; until then everything else works and haptics
+      stay off. Obtainium → *Update all*, or *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* →
+      install `sen-0.2.N.apk` and `sen-review-0.2.N.apk`. Then turn on *Settings → Sound and
+      vibration → Touch feedback* if you want to feel them; with it off, Sen stays silent too.
 - [ ] **Delete the branch `B05/qa-tooling-iad1-probe` (B05 · QA tooling).** A throwaway that proved
       the live metrics flag a slow server (its preview ran in Washington). A cloud session can't
       delete branches. github.com/ztsia/Sen → *Branches* → the bin icon beside it. Its preview goes

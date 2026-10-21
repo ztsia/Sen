@@ -44,7 +44,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
 /**
  * The dev panel (B01): only in development and previews, never in production. The look and light or
  * dark, reduced motion and text scale, the made-up scenario and a state for the screens (B03, B04), Sen's avatar in each of
- * its eight states, and the way to the gallery and B05's motion demo.
+ * its eight states, and the way to the gallery.
  */
 export default function DevPanel() {
   const [open, setOpen] = useState(false);
@@ -187,11 +187,6 @@ export default function DevPanel() {
           <Button asChild variant="outline" className="w-full">
             <Link to="/dev/gallery" onClick={() => setOpen(false)}>
               Open the gallery
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full">
-            <Link to="/dev/gallery/motion" onClick={() => setOpen(false)}>
-              Try the motion demo
             </Link>
           </Button>
         </div>
