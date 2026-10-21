@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { flushSync } from 'react-dom';
 import { reducedMotionNow } from '@/theme/store';
 
@@ -155,3 +155,34 @@ export const rowMotion = (id: string) =>
     'data-motion-row': string;
     style: CSSProperties;
   };
+
+/**
+ * A sheet's content resizing (a step, an error under a field) eases the sheet to its new height,
+ * rather than jumping (patterns.md §8). `area` is the sheet's scroll area; the sheet is its parent.
+ */
+export function useSheetResize(area: RefObject<HTMLElement | null>, open: boolean) {
+  useEffect(() => {
+    const el = area.current;
+    const sheet = el?.parentElement;
+    if (!open || !el || !sheet || typeof ResizeObserver === 'undefined') return;
+    let last = sheet.getBoundingClientRect().height;
+    const ro = new ResizeObserver(() => {
+      const now = sheet.getBoundingClientRect().height;
+      const from = last;
+      last = now;
+      if (!from || Math.abs(now - from) < 2 || reducedMotionNow() || sheet.getAnimations().length) return;
+      sheet.animate(
+        [
+          { height: `${from}px`, overflow: 'hidden' },
+          { height: `${now}px`, overflow: 'hidden' },
+        ],
+        {
+          duration: 200,
+          easing: 'cubic-bezier(0.2, 0, 0, 1)',
+        },
+      );
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [area, open]);
+}

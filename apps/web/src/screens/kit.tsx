@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { ErrorState, ListSkeleton } from '@/blocks/states';
@@ -44,7 +44,12 @@ export function Loaded<T>({
   what: string;
   children: (data: T) => ReactNode;
 }) {
-  if (q.isPending) return <>{skeleton ?? <ListSkeleton />}</>;
+  // content that replaces a skeleton fades in over it (patterns.md §8); content already cached just shows
+  const waited = useRef(false);
+  if (q.isPending) {
+    waited.current = true;
+    return <>{skeleton ?? <ListSkeleton />}</>;
+  }
   if (q.isError)
     return (
       <div className="p-4">
@@ -56,7 +61,7 @@ export function Loaded<T>({
         />
       </div>
     );
-  return <>{children(q.data)}</>;
+  return waited.current ? <div className="fade-in-kids contents">{children(q.data)}</div> : <>{children(q.data)}</>;
 }
 
 /** A section's heading inside a screen. */

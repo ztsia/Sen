@@ -29,6 +29,8 @@ const bridgeVersion = () =>
 
 /** The moments played, in development and previews, so a journey can check them in a browser. */
 export const played: Haptic[] = [];
+if (__SEN_ENV__ !== 'production' && typeof window !== 'undefined')
+  (window as unknown as { __senHaptics: Haptic[] }).__senHaptics = played;
 
 export function haptic(kind: Haptic) {
   if (__SEN_ENV__ !== 'production') played.push(kind);

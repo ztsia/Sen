@@ -164,3 +164,8 @@ html:active-view-transition-type(change) [data-motion-row]:not([data-motion-off]
   inset: 2px 10%;
   border-radius: 9999px;
 }
+
+/* content arriving where a skeleton was fades in (screens/kit.tsx, Loaded) */
+.fade-in-kids > * {
+  animation: sen-fade-in var(--motion-ms) var(--motion-ease) both;
+}

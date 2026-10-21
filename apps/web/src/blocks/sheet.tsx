@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from '@/components/ui/drawer';
+import { useSheetResize } from '@/frame/motion';
 import { useBackClose } from '@/lib/back-close';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,8 @@ interface SheetProps {
  */
 export function Sheet({ open, onOpenChange, title, description, full, head, children }: SheetProps) {
   useBackClose(open, () => onOpenChange(false));
+  const area = useRef<HTMLDivElement>(null);
+  useSheetResize(area, open);
   return (
     // repositionInputs off: the page already resizes for the keyboard (interactive-widget=resizes-content,
     // and the shell's adjustResize), and vaul's own resize pinned a sheet at half height when its input
@@ -51,7 +54,10 @@ export function Sheet({ open, onOpenChange, title, description, full, head, chil
         <DrawerDescription className={description ? 'px-4 pt-3 text-sm text-muted-foreground' : 'sr-only'}>
           {description ?? title}
         </DrawerDescription>
-        <div className="scroll-area min-h-0 flex-1 px-4 pt-2 pb-[max(1rem,var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px)))]">
+        <div
+          ref={area}
+          className="scroll-area min-h-0 flex-1 px-4 pt-2 pb-[max(1rem,var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px)))]"
+        >
           {children}
         </div>
       </DrawerContent>
