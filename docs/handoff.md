@@ -74,12 +74,9 @@ Done:
   - sign out everywhere
 - Merge [ztsia/claude_skills#5](https://github.com/ztsia/claude_skills/pull/5), the motion lessons in
   `uiux`. #4 is merged.
-- iOS back (asked 21 Oct): an installed iOS PWA has no back gesture, though every pushed screen has a
-  back button. Recommended: a left-edge swipe for iOS standalone only, driving B05's back transition,
-  built in B39 (PWA), not B05. Android needs nothing, since the system gesture already works. Waiting
-  on the owner's yes, then one line in B39's brief.
 
 ## Don't argue again
 - D129–D140 (the owner's calls).
 - Deploys happen only by merge (D122). The review build follows `review` (D115).
 - Money never counts up or down in motion.
+- iOS back is an edge swipe in B39, for iOS standalone only, and never on Android (owner, 21 Oct).

@@ -29,10 +29,18 @@ manual entry, splits, budgets, Insights and Sen, with pushes. It works read-only
 - **Offline in a browser is read-only:** cached reads, writes disabled with a clear line.
 - **On iOS:** check the safe areas, the 16 px inputs, the camera through the file picker with B15's
   crop, and the Files app's scanned PDF uploading like any file.
+- **Back on iOS, by swiping from the left edge.** An installed iOS PWA has no system back gesture,
+  though every pushed screen keeps its back button.
+  - The swipe is for iOS standalone only (`navigator.standalone`). Android's system gesture already
+    covers back, and an in-app edge swipe would fight it.
+  - The screen follows the finger, running B05's back transition (D140).
+  - Past about a third of the width, or on a quick flick, it goes back; otherwise it springs back.
+  - Like the back gesture, it closes the top sheet first.
 
 ## Done when
 
-1. Playwright with WebKit at an iPhone viewport walks `invited`, a receipt, a split and a budget.
+1. Playwright with WebKit at an iPhone viewport walks `invited`, a receipt, a split and a budget,
+   and goes back by the edge swipe.
 2. A web push arrives on an installed PWA (Android Chrome in a test; iOS by hand).
 3. **A friend uses Sen on an iPhone for a month** (P8's bar).
 
