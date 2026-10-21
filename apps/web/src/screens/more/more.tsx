@@ -80,11 +80,7 @@ function LinkRow({
   value?: ReactNode;
 }) {
   return (
-    <Item
-      asChild
-      size="sm"
-      className="min-h-14 w-full flex-wrap gap-3 rounded-none py-2.5 text-left text-base active:bg-accent"
-    >
+    <Item asChild size="sm" className="min-h-14 w-full flex-wrap gap-3 rounded-none py-2.5 text-left text-base">
       <Link to="/s/$" params={{ _splat: id }}>
         <IconTile icon={icon} />
         {/* as NavRow: the value wraps under the label at large text, never over it (lived-in, 200%) */}

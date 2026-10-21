@@ -1,0 +1,155 @@
+/* Sen's motion (patterns.md §8, D140): one push at 200 ms on Material's standard easing, the same in
+   every look. Screens change by view transition (frame/motion.ts names each one's kind); only the
+   screen region moves, so the tab bar and each look's own `switch` play live. */
+:root {
+  --motion-ms: 200ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.screen-region {
+  view-transition-name: screen;
+}
+/* Sen's button stays above the moving screen; it fades where a screen has none */
+.fab {
+  view-transition-name: fab;
+  border-radius: 9999px;
+}
+
+/* the page itself is never animated: the tab bar and status bar stay live */
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(*) {
+  animation-duration: var(--motion-ms);
+  animation-timing-function: var(--motion-ease);
+}
+::view-transition-group(screen) {
+  overflow: clip;
+}
+
+/* forward pushes in from the right; back reverses, the old screen on top as it leaves */
+html:active-view-transition-type(forward)::view-transition-old(screen) {
+  animation: var(--motion-ms) var(--motion-ease) both sen-out-left;
+}
+html:active-view-transition-type(forward)::view-transition-new(screen) {
+  animation: var(--motion-ms) var(--motion-ease) both sen-in-right;
+}
+html:active-view-transition-type(back)::view-transition-old(screen) {
+  z-index: 1;
+  animation: var(--motion-ms) var(--motion-ease) both sen-out-right;
+}
+html:active-view-transition-type(back)::view-transition-new(screen) {
+  animation: var(--motion-ms) var(--motion-ease) both sen-in-left;
+}
+/* a tab, or a screen giving way to another, crossfades */
+html:active-view-transition-type(tab)::view-transition-old(screen) {
+  animation: var(--motion-ms) var(--motion-ease) both sen-fade-out;
+}
+html:active-view-transition-type(tab)::view-transition-new(screen) {
+  animation: var(--motion-ms) var(--motion-ease) both sen-fade-in;
+}
+/* a change within a screen: nothing moves but the rows marked for it */
+html:active-view-transition-type(change)::view-transition-old(screen),
+html:active-view-transition-type(change)::view-transition-new(screen) {
+  animation: none;
+}
+html:active-view-transition-type(change) [data-motion-row] {
+  view-transition-name: var(--row);
+  view-transition-class: row;
+}
+::view-transition-old(*.row):only-child {
+  animation: var(--motion-ms) var(--motion-ease) both sen-row-out;
+}
+::view-transition-new(*.row):only-child {
+  animation: var(--motion-ms) var(--motion-ease) both sen-row-in;
+}
+/* the shared amount (`amount`, named by frame/motion.ts) morphs from its row into the figure */
+
+@keyframes sen-in-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes sen-out-left {
+  to {
+    transform: translateX(-25%);
+    opacity: 0.6;
+  }
+}
+@keyframes sen-in-left {
+  from {
+    transform: translateX(-25%);
+    opacity: 0.6;
+  }
+}
+@keyframes sen-out-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes sen-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes sen-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sen-row-out {
+  to {
+    opacity: 0;
+    transform: translateX(-30%);
+  }
+}
+@keyframes sen-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+/* press feedback (frame/press.ts): a ripple from the finger, clipped to the pressed thing's corners */
+.press {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.press > span {
+  position: absolute;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.12;
+  transform: scale(0);
+  animation: sen-ripple 350ms var(--motion-ease) forwards;
+}
+.press[data-up] {
+  opacity: 0;
+  transition: opacity 250ms linear;
+}
+@keyframes sen-ripple {
+  to {
+    transform: scale(1);
+  }
+}
+/* reduced motion: a tint while pressed, with no spread */
+@media (prefers-reduced-motion: reduce) {
+  .press > span {
+    animation: none;
+    transform: none;
+  }
+}
+[data-reduced-motion='true'] .press > span {
+  animation: none;
+  transform: none;
+}
+/* on the tab bar, a pill under the tab rather than the whole cell */
+.tabbar .press {
+  inset: 2px 10%;
+  border-radius: 9999px;
+}

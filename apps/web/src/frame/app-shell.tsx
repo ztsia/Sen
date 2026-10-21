@@ -102,7 +102,10 @@ function PersonShell({ screen }: { screen: ScreenDef | undefined }) {
         ) : (
           <OfflineBanner />
         )}
-        <Outlet />
+        {/* the part of the frame that moves when the screen changes (motion.css) */}
+        <div className="screen-region flex min-h-0 flex-1 flex-col bg-background">
+          <Outlet />
+        </div>
         {tabs ? (
           <div className="relative z-[var(--z-index-tabbar)] shrink-0">
             {sen ? <SenButton state={senState} onOpen={() => setSenOpen(true)} /> : null}

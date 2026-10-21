@@ -85,7 +85,7 @@ function Body({ v }: { v: AccountsView }) {
             key={a.id}
             asChild
             size="sm"
-            className="min-h-14 w-full flex-nowrap gap-3 rounded-none py-2.5 text-left text-base active:bg-accent"
+            className="min-h-14 w-full flex-nowrap gap-3 rounded-none py-2.5 text-left text-base"
           >
             <button type="button" onClick={() => go('account', { id: a.id })}>
               <BankTile name={a.name} />

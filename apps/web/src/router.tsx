@@ -10,6 +10,7 @@ import { Screen } from './frame/screen';
 import { screenById } from './screens/registry';
 import { auth, forgetSession, noteSignedOutBecause } from './data/auth';
 import { onSignedOut } from './data/api/client';
+import { canTransition, routerTransition } from './frame/motion';
 
 // The routes: the four tab screens, Scan's task screen, every other screen by its id from
 // docs/screens.md under /s/<id>, and, in development and previews only, the gallery. TanStack Router,
@@ -169,6 +170,8 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   defaultPreload: false,
+  // every navigation, the back gesture included, moves by its kind (frame/motion.ts, patterns.md §8)
+  defaultViewTransition: canTransition() ? routerTransition : false,
   // off: the page itself never scrolls, and the router's restoration keyed every screen's scroll area by
   // one selector, so a screen opened at the last one's offset (QA B03 run 2, finding 18). Screen resets it.
   scrollRestoration: false,

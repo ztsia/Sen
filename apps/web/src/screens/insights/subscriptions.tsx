@@ -305,7 +305,7 @@ function HistoryList({ name, history }: { name: string; history: History }) {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="tap relative flex min-h-10 w-full items-center justify-between gap-3 text-left text-sm active:bg-accent"
+        className="tap relative flex min-h-10 w-full items-center justify-between gap-3 text-left text-sm"
       >
         <span>{tally(history)}</span>
         <ChevronDownIcon

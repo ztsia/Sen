@@ -330,6 +330,7 @@ function PaymentsList({
                     kind={f.row.direction === 'in' ? 'in' : 'out'}
                     marks={f.row.marks}
                     onOpen={() => go('txn', { id: f.row.id })}
+                    shareId={f.row.id}
                   />
                 )}
               </div>

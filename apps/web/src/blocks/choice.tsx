@@ -92,7 +92,7 @@ export function ChoiceCards<T extends string>({
             aria-checked={on}
             onClick={() => onChange(o.value)}
             className={cn(
-              'card relative flex min-h-14 flex-col gap-2 overflow-hidden rounded-[var(--radius-card,16px)] border bg-card p-2 text-left transition-shadow active:opacity-80',
+              'card relative flex min-h-14 flex-col gap-2 overflow-hidden rounded-[var(--radius-card,16px)] border bg-card p-2 text-left transition-shadow',
               on ? 'border-primary ring-2 ring-primary' : 'border-border',
               !o.preview && 'justify-center px-4 py-3',
             )}

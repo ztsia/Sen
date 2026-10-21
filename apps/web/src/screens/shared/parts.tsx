@@ -137,7 +137,7 @@ function ItemRow({
 }) {
   const id = useId();
   return (
-    <Item asChild size="sm" className={`min-h-14 flex-nowrap rounded-none ${locked ? '' : 'active:bg-accent'}`}>
+    <Item asChild size="sm" className="min-h-14 flex-nowrap rounded-none">
       <label htmlFor={id}>
         <Checkbox
           id={id}

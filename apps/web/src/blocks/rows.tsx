@@ -63,17 +63,25 @@ interface ListRowProps {
   kind?: MoneyKind;
   marks?: RowMark[];
   onOpen?: () => void;
+  /** The payment's id, when the row opens its detail: the amount carries into the detail's figure (patterns.md §8). */
+  shareId?: string;
 }
 
 /** A payment, an account or a shared bill: 56 px or more, a stable height, so long lists virtualise. */
-export function ListRow({ icon, tone, title, secondary, sen, kind = 'out', marks = [], onOpen }: ListRowProps) {
+export function ListRow({
+  icon,
+  tone,
+  title,
+  secondary,
+  sen,
+  kind = 'out',
+  marks = [],
+  onOpen,
+  shareId,
+}: ListRowProps) {
   return (
-    <Item
-      asChild
-      size="sm"
-      className="min-h-14 w-full flex-nowrap gap-3 rounded-none py-2 text-left text-base active:bg-accent"
-    >
-      <button type="button" onClick={onOpen}>
+    <Item asChild size="sm" className="min-h-14 w-full flex-nowrap gap-3 rounded-none py-2 text-left text-base">
+      <button type="button" onClick={onOpen} data-share={shareId}>
         <RowMarkIcon icon={icon} tone={tone} />
         <ItemContent className="min-w-0 gap-0">
           <ItemTitle className="block w-full truncate text-base">{readableName(title)}</ItemTitle>

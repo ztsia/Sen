@@ -84,7 +84,7 @@ function HomeBody({ h }: { h: HomeView }) {
             </CardContent>
           </Card>
         ) : h.payday?.stage === 'progress' ? (
-          <Item asChild size="sm" variant="outline" className="w-full flex-nowrap gap-3 text-left active:bg-accent">
+          <Item asChild size="sm" variant="outline" className="w-full flex-nowrap gap-3 text-left">
             <button type="button" onClick={() => go('payday')} data-testid="payday-strip">
               <IconTile icon={CalendarCheckIcon} tone="accent" />
               <ItemContent className="min-w-0 gap-0">
@@ -101,7 +101,7 @@ function HomeBody({ h }: { h: HomeView }) {
 
         <button
           type="button"
-          className="home-hero -mx-1 rounded-xl px-1 text-left active:bg-accent"
+          className="home-hero -mx-1 rounded-xl px-1 text-left"
           aria-label={`${label}, ${spokenSen(Math.abs(f.sen))}, ${sub}. How it's worked out`}
           onClick={() => setCycleOpen(true)}
           data-testid="hero"
@@ -116,11 +116,7 @@ function HomeBody({ h }: { h: HomeView }) {
           />
         </button>
 
-        <Item
-          asChild
-          variant="outline"
-          className="w-full flex-col items-stretch gap-1.5 p-3 text-left active:bg-accent"
-        >
+        <Item asChild variant="outline" className="w-full flex-col items-stretch gap-1.5 p-3 text-left">
           <button type="button" onClick={() => go('payments', { cycle: h.cycle.id })} data-testid="pace">
             <div className="flex items-center gap-2">
               <p className="min-w-0 flex-1 text-sm text-muted-foreground">
@@ -166,7 +162,7 @@ function HomeBody({ h }: { h: HomeView }) {
         {h.note && !act ? <SenNote at={h.note.at} text={h.note.text} onOpen={() => setSenOpen(true)} /> : null}
 
         {h.quiet ? (
-          <Item asChild size="sm" variant="outline" className="w-full flex-nowrap text-left active:bg-accent">
+          <Item asChild size="sm" variant="outline" className="w-full flex-nowrap text-left">
             <button type="button" onClick={() => go('accounts')} data-testid="quiet">
               <ItemContent className="min-w-0 gap-0.5">
                 <ItemDescription className="text-sm">Total balance</ItemDescription>
@@ -198,7 +194,7 @@ function HomeBody({ h }: { h: HomeView }) {
 /** Sen's note, clamped to two lines; *More* opens Sen, where the whole note is. */
 function SenNote({ at, text, onOpen }: { at: string; text: string; onOpen: () => void }) {
   return (
-    <Item asChild size="sm" variant="muted" className="w-full flex-nowrap items-start gap-3 text-left active:bg-accent">
+    <Item asChild size="sm" variant="muted" className="w-full flex-nowrap items-start gap-3 text-left">
       <button type="button" onClick={onOpen} data-testid="sen-note">
         <ItemMedia className="shrink-0">
           <Avatar state="note" size={32} />

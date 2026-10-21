@@ -74,7 +74,7 @@ function Body({ v, me }: { v: SettingsView; me: { capture: boolean; claims: bool
             type="button"
             aria-label={`Account, ${v.email}`}
             onClick={() => go('settings/account')}
-            className="flex min-h-18 w-full items-center gap-3 rounded-[var(--radius-card,16px)] px-4 py-3 text-left active:bg-accent"
+            className="flex min-h-18 w-full items-center gap-3 rounded-[var(--radius-card,16px)] px-4 py-3 text-left"
           >
             <PersonAvatar name={name} size="xl" />
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">

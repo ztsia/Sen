@@ -34,7 +34,7 @@ export function FilterSheet({
           return (
             <div key={o.id || 'all'}>
               {i ? <ItemSeparator /> : null}
-              <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
+              <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base">
                 <button
                   type="button"
                   aria-current={on ? 'true' : undefined}

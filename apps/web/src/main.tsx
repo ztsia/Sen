@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app';
 import { router } from './router';
+import { installPress } from './frame/press';
 import { initShell } from './shell/native';
 import { registerServiceWorker } from './shell/service-worker';
 import { applyTheme, useTheme } from './theme/store';
@@ -21,6 +22,7 @@ document.addEventListener('contextmenu', (e) => {
 // Inside the Android shell: back, and the system bars (B02). The service worker keeps the app working
 // offline, in the shell and in a browser alike.
 initShell(router);
+installPress();
 registerServiceWorker();
 
 const root = document.getElementById('root');

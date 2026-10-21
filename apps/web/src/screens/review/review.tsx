@@ -348,11 +348,7 @@ function answersFor(
 function OpensRow({ title, detail, onOpen }: { title: React.ReactNode; detail: string; onOpen: () => void }) {
   return (
     <Card className="p-0">
-      <Item
-        asChild
-        size="sm"
-        className="min-h-16 w-full flex-nowrap rounded-[inherit] text-left text-base active:bg-accent"
-      >
+      <Item asChild size="sm" className="min-h-16 w-full flex-nowrap rounded-[inherit] text-left text-base">
         <button type="button" onClick={onOpen}>
           <ItemContent className="min-w-0 gap-0.5">
             <ItemTitle className="text-base font-semibold text-pretty">{title}</ItemTitle>

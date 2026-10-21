@@ -84,7 +84,7 @@ function CategoryGrid({ categories, onOpen }: { categories: Cat[]; onOpen: (id: 
                     type="button"
                     onClick={() => onOpen(c.id)}
                     aria-label={`${c.name}, ${c.rules ? `${c.rules} ${c.rules === 1 ? 'rule' : 'rules'}` : 'no rules'}`}
-                    className="flex min-h-24 w-full flex-col items-center gap-2 rounded-[var(--radius-card,16px)] bg-card px-1.5 py-3 text-center active:bg-accent"
+                    className="flex min-h-24 w-full flex-col items-center gap-2 rounded-[var(--radius-card,16px)] bg-card px-1.5 py-3 text-center"
                   >
                     <IconTile icon={categoryIcon(c.name)} tone={categoryTone(c.name)} />
                     <span className="line-clamp-2 text-sm leading-tight">{c.name}</span>

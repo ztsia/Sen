@@ -105,12 +105,7 @@ function InsightsBody({ v, onPick }: { v: InsightsView; onPick: (id: string) => 
       >
         <div className="flex flex-col">
           {[...v.cycles].reverse().map((c) => (
-            <Item
-              key={c.id}
-              asChild
-              size="sm"
-              className="min-h-14 w-full flex-nowrap rounded-none text-left text-base active:bg-accent"
-            >
+            <Item key={c.id} asChild size="sm" className="min-h-14 w-full flex-nowrap rounded-none text-left text-base">
               <button
                 type="button"
                 aria-pressed={c.id === v.cycle.id}
