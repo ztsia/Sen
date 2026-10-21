@@ -59,8 +59,10 @@ test.describe('with motion on', () => {
     await recordTransitions(page);
     await open(page, '/');
     await page.locator('[data-k=more]').click();
+    await expect(page.locator('[data-k=more]')).toHaveAttribute('aria-current', 'page');
     await page.locator('[data-slot=item]').filter({ hasText: 'Payments' }).first().click();
     await expect(page).toHaveURL(/\/s\/payments/);
+    await expect(page.locator('[data-share]').first()).toBeVisible();
     // Home goes back through history to its own entry, but it's a tab tapped, not a pop
     await page.locator('[data-k=home]').click();
     await expect(page).toHaveURL(/localhost:\d+\/(\?.*)?$/);
