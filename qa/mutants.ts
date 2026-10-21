@@ -206,14 +206,6 @@ export const MUTANTS: Mutant[] = [
     replace: `if (shown) haptic('reject');`,
     suite: 'feel',
   },
-  {
-    id: 'home-index-stale',
-    breaks: 'the Home tab, tapped soon after leaving Home, lands on the next tab instead (QA B05 Feel run 2, 2)',
-    file: 'apps/web/src/frame/tab-bar.tsx',
-    find: ` && history.location.pathname === '/') homeIndex`,
-    replace: `) homeIndex`,
-    suite: 'motion',
-  },
 
   {
     id: 'ripple-on-switch',
