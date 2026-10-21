@@ -44,7 +44,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
 /**
  * The dev panel (B01): only in development and previews, never in production. The look and light or
  * dark, reduced motion and text scale, the made-up scenario and a state for the screens (B03, B04), Sen's avatar in each of
- * its eight states, and the way to the gallery.
+ * its eight states, and the way to the gallery and B05's motion demo.
  */
 export default function DevPanel() {
   const [open, setOpen] = useState(false);
@@ -183,10 +183,15 @@ export default function DevPanel() {
         </Group>
         {inShell() ? null : <CaptureSim />}
         <Simulator close={() => setOpen(false)} />
-        <div className="py-3">
+        <div className="flex flex-col gap-2 py-3">
           <Button asChild variant="outline" className="w-full">
             <Link to="/dev/gallery" onClick={() => setOpen(false)}>
               Open the gallery
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full">
+            <Link to="/dev/gallery/motion" onClick={() => setOpen(false)}>
+              Try the motion demo
             </Link>
           </Button>
         </div>

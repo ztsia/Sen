@@ -29,7 +29,7 @@ declare module '@tanstack/react-router' {
 // (patterns.md §7, Error), never the router's own page. If the frame itself throws, its error shows in
 // a column of its own, below the status bar like the frame's.
 /** What a person reaches signed out: signing in, and a friend's split link (D47). */
-const OPEN = new Set(['/s/sign-in', '/s/split-public', '/dev/gallery']);
+const OPEN = new Set(['/s/sign-in', '/s/split-public', '/dev/gallery', '/dev/gallery/motion']);
 
 const rootRoute = createRootRoute({
   // Signed out, every route goes to sign-in (B05). Only on the server's backend: the skeleton's fake
@@ -136,6 +136,25 @@ const gallery = createRoute({
     ) : null,
 });
 
+// B05 · Feel's motion demo, where the owner picks the screen change, speed and press feedback
+const Motion = __SEN_ENV__ !== 'production' ? lazy(() => import('./dev/motion')) : null;
+const motion = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dev/gallery/motion',
+  staticData: { screen: 'dev/motion' },
+  // ?v= is the payment whose detail is open, one history step, so the back gesture pops it
+  validateSearch: (s: Record<string, unknown>): { v?: string } => ({ v: str(s.v) }),
+  beforeLoad: () => {
+    if (!Motion) throw redirect({ to: '/', replace: true });
+  },
+  component: () =>
+    Motion ? (
+      <Suspense>
+        <Motion />
+      </Suspense>
+    ) : null,
+});
+
 const routeTree = rootRoute.addChildren([
   screenRoute('/', 'home'),
   screenRoute('/review', 'review'),
@@ -144,6 +163,7 @@ const routeTree = rootRoute.addChildren([
   screenRoute('/scan', 'scan'),
   anyScreen,
   gallery,
+  motion,
 ]);
 
 export const router = createRouter({
