@@ -177,7 +177,7 @@ export const MUTANTS: Mutant[] = [
     breaks: 'a sheet changing step jumps to its new height',
     file: 'apps/web/src/frame/motion.ts',
     find: `      sheet.animate(`,
-    replace: `      void (`,
+    replace: `      (() => undefined)(`,
     suite: 'motion',
   },
   {
