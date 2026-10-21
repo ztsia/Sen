@@ -1,0 +1,974 @@
+{
+ "module": "B05 \u00b7 Feel",
+ "branch": "B05/feel",
+ "verdict": "fix first",
+ "generatedAt": "2026-10-21 20:20 UTC",
+ "phases": "1-3, 4b, 5, 6 (phase 4 does not apply: no schema, SQL or route in this slice)",
+ "headline": "Motion, ripple, reduced motion and the six looks work as D140 says, and the lived-in journeys, route sweep and 13 breakage checks are green; but `pnpm typecheck` fails on the branch, sheets never ease to a new height (the hook never attaches), Home from a pushed screen slides back instead of crossfading, and nothing tests the web app's call into the shell's haptic (two probes survived). I had no Agent tool: I ran the sweep and the eyes pass myself.",
+ "summary": {
+  "criteria": 37,
+  "pass": 28,
+  "fail": 4,
+  "unreachable": 5
+ },
+ "suites": {
+  "typecheck": "FAIL: apps/web/src/lib/haptics.ts(38,31) TS2345",
+  "lint": "clean",
+  "unit (pnpm test)": "198/198 pass",
+  "test:db": "pass on a rerun with Postgres started (the sweep ran it before the DB was up: exit 2 in 1 s); pgTAP 103 ok, API 78 pass 5 skipped",
+  "e2e (pnpm e2e)": "1391 pass, 1 fail (journeys.spec own-transfer, a scripted \"covered\" check); passes 2/2 alone",
+  "e2e:lived": "24/24 pass",
+  "e2e:server": "4/4 pass on a rerun with the DB up (sweep run: exit 1, DB down)",
+  "mutants": "13/13 killed, none for this slice",
+  "qa-diff": "87 entries, 0 trees changed, 3 entries with pixels changed (<=1/255 anti-aliasing), 21 metrics flags, 0 check findings",
+  "QA specs (qa/e2e/b05feel-*)": "25 pass, 3 fail (the findings below)"
+ },
+ "findings": [
+  {
+   "id": 1,
+   "severity": "Major",
+   "status": "open",
+   "title": "`pnpm typecheck` fails on the branch, so CI is red",
+   "detail": "`apps/web/src/lib/haptics.ts` line 38: the two `return`s inside `.then((v) => {...})` have different promise types (`Promise<{performed:boolean}|undefined>` and `Promise<void|undefined>`). Vite doesn't typecheck, so the app builds and the e2e passes; the brief's Done-when says the code checks are clean.",
+   "repro": "cd /home/user/Sen && pnpm --filter @sen/web typecheck",
+   "evidence": "apps/web typecheck: src/lib/haptics.ts(38,31): error TS2345: Argument of type '(v: number) => Promise<{ performed: boolean; } | undefined> | Promise<void | undefined> | undefined' is not assignable to parameter of type '(value: number) => { performed: boolean; } | PromiseLike<{ performed: boolean; } | undefined> | undefined'.\n ... Type 'void' is not assignable to type '{ performed: boolean; } | undefined'.\nExit status 2 (twice: in the sweep and on a rerun)",
+   "spec": "brief B05-feel.md Done-when (code checks clean); AC-37",
+   "screenshots": []
+  },
+  {
+   "id": 2,
+   "severity": "Major",
+   "status": "open",
+   "title": "Sheets never ease to a new height: `useSheetResize` never attaches",
+   "detail": "The hook runs in `Sheet` on `[area, open]`, but the sheet's content is mounted by Radix's portal after the effect runs, so `area.current` is null and it returns without observing. No `ResizeObserver` is ever attached to a sheet's scroll area and `Element.animate` is never called. The category sheet going from its list (732 px) to *From now on / Just this one* (285 px) jumps; frames sampled every rAF for 500 ms saw only 732 and 285. Brief \u00a73 and patterns \u00a78 (*A sheet whose content changes eases to its new height*) are not met, and no test covers it.",
+   "repro": "qa/e2e/b05feel-sheet.spec.ts (FLOW-9b) and b05feel-sheet2.spec.ts, against a preview build: open a payment, tap its category, pick a category",
+   "evidence": "RO observed: [\"\",\"scroll-area min-h-0 flex-1 pb-6\",\"absolute top-0 left-0 w-full\", ...] animate calls: []\nheights seen [732,285]\nsheet ask-sen area class: scroll-area min-h-0 flex-1 px-4 pt-2 pb-[max(1rem,... | observed scroll-areas: []\nsheet scan-more ... observed scroll-areas: []\nError: a sheet changing step passes through in-between heights (AC-17)",
+   "spec": "AC-17, brief \u00a73, patterns.md \u00a78 Change motion",
+   "screenshots": [
+    "FLOW-9-step-3-category-sheet.png",
+    "FLOW-9-step-4-category-sheet-step2.png"
+   ]
+  },
+  {
+   "id": 3,
+   "severity": "Major",
+   "status": "open",
+   "title": "The Home tab, tapped from a pushed screen, slides back instead of crossfading",
+   "detail": "`TabBar.toHome` goes back through history (`history.go(homeIndex - here)`) when Home is behind, so the router sees a screen-to-tab pop and plays `back` (the pushed screen slides out right). patterns \u00a78: *A tab switch crossfades, a tab tapped from a pushed screen too*. The Review tab from a pushed screen does crossfade. The repo's own motion.spec misses it because it opens the pushed screen as history index 0, so `homeIndex` is unset and it takes the replace path. `motion.test.ts` pins `screenChange` only, not this path.",
+   "repro": "Home, More, Payments, then the Home tab; recorded `document.startViewTransition` types (qa/e2e/b05feel-motion.spec.ts FLOW-2)",
+   "evidence": "TABS2 tab tab tab tab tab forward back\nHOME-from-pushed: back\nREVIEW-from-pushed: tab\nError: Home tab from a pushed screen: Expected \"tab\" Received \"back\"",
+   "spec": "AC-3, D140, patterns.md \u00a78 A tab switch",
+   "screenshots": [
+    "FLOW-2-step-3-review-from-pushed.png"
+   ]
+  },
+  {
+   "id": 4,
+   "severity": "Major",
+   "status": "open",
+   "title": "Nothing tests the web app calling the shell's `haptic`; two probes on it survived",
+   "detail": "The brief wants haptics proved by an emulator test of the bridge call. `ShellTest` calls the native method, but the web side (`lib/haptics.ts`: check `info().bridge >= 2`, call `SenShell.haptic`, swallow a failure, v1 gets none) has no test: motion.spec's haptics test reads `__senHaptics`, which `haptic()` fills *before* it looks at the shell. Removing the bridge call, or calling it on a bridge-1 shell, leaves every suite green. With a stub shell (FLOW-8) the behaviour is right today: v1 makes 0 calls, v2 makes `toggle-on`/`toggle-off`, a throwing shell is swallowed.  The `FieldError` reject haptic has no test either (its focus guard survived).",
+   "repro": "Probe in a worktree: delete `if (v >= 2) return SenShell.haptic({ kind: NATIVE[kind] }).catch(() => undefined);`, then `pnpm exec vitest run` and `playwright test motion.spec`",
+   "evidence": "### haptic bridge call removed: exit 0 (SURVIVED)  5 passed\n### haptic bridge version check dropped (v>=2 -> v>=0): exit 0 (SURVIVED)  Tests 198 passed, 5 passed\n### FieldError reject haptic on typing (focus check dropped): exit 0 (SURVIVED)",
+   "spec": "AC-20, AC-22, brief \u00a74 and Done-when",
+   "screenshots": []
+  },
+  {
+   "id": 5,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Every tap now has a DOM-mutation tail, so 17 of the 21 metrics flags are the ripple, and `step.settleMs` can no longer see real settling under about 430 ms",
+   "detail": "`step.settleMs` is the last DOM mutation after the tap. The ripple adds `data-up` about 120 ms after the press and removes its node about 425-440 ms after it, on every tap that stays on its screen. Measured with a MutationObserver on a bare tap: mutations at 22 ms, 141 ms (`press`), 442 ms (`tab on active`) with motion, 425 ms with reduced motion. That matches the flagged steps (422-684 ms against main's 59-248; the ones that navigate show about 120-135 ms because the host is removed). `money-in/2` (+643) and `proposal/3` (+759) are that tail plus a 200-400 ms view transition (inferred from the sum, not separately measured). Recommendation: the metric should ignore `.press` mutations (`apps/web/e2e/metrics.ts`).",
+   "repro": "qa/e2e/b05feel-settle.spec.ts",
+   "evidence": "motion no-preference: mutations (ms after tap): [[22,\"attributes\",\"tab on active\"],[22,\"childList\",\"tab on active\"],[24,\"attributes\",\"tab on active\"],[141,\"attributes\",\"press\"],[442,\"childList\",\"tab on active\"]] last at 442\nmotion reduce: ... last at 425",
+   "spec": "AC-27, qa/limits.ts, D139",
+   "screenshots": []
+  },
+  {
+   "id": 6,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Taps are blocked for 400-1280 ms by a tab transition at 4x CPU; patterns says none is longer than 200 ms",
+   "detail": "patterns \u00a78 *Speed*: taps are blocked while a screen transition runs, so none is longer than 200 ms. At the metrics' CPU 4x, a tab switch's view transition took 403-509 ms in total (150-200 ms before it even started), and 1277 ms (912 ms to start) for a second visit to Insights. Push: the new screen reaches the DOM 128-199 ms after the tap against 66-137 ms with motion reduced. The metrics' `step.firstChangeMs` doesn't flag it because the ripple answers in the first frame; no flag exists for the screen arriving late. The handoff already names the lever (tabs switch at once). The remaining `step:ask/3` flag (2401 ms against 137 on main) is, I think, this plus the Insights screen's own 2.2-2.7 s settle, but I did not prove that.",
+   "repro": "qa/e2e/b05feel-vtlen.spec.ts and b05feel-latency.spec.ts",
+   "evidence": "home -> insights (tab) [{\"types\":\"tab\",\"readyMs\":150,\"finMs\":403}]\nhome -> insights again (tab) [{\"types\":\"tab\",\"readyMs\":912,\"finMs\":1277}]\nmotion no-preference: click -> txn figure in the DOM (ms, 4x CPU): [128,193,167,199,194,173]\nmotion reduce: [114,137,119,109,77,66]",
+   "spec": "AC-7, AC-27, patterns.md \u00a78 Speed",
+   "screenshots": []
+  },
+  {
+   "id": 7,
+   "severity": "Minor",
+   "status": "open",
+   "title": "With motion on and a slow CPU, journeys fail that pass on main (2 of 76 head journey runs, 0 of 76 on main)",
+   "detail": "`metrics-head` failed `subscription` (strict-mode: `getByText('Claude Pro')` matched three elements of the old Insights screen, so the old screen was still in the DOM after the tap returned and `settled` passed) and `film-head` failed `scan-after` (`Reading receipt\u2026` never seen in 20 s). Both fit the new screen's commit being held by the view transition's capture; I reproduced neither in isolation (scan-after passes at 4x CPU with motion on, 11 polls saw the text). The functional suite is safe because it runs reduced; the feel pass is not. `confirm-steps-head` ran 34 journeys with 0 failures.",
+   "repro": "node scripts/qa-diff.mjs; see qa-artifacts/B05_feel/metrics/logs/metrics-head.log and film-head.log",
+   "evidence": "Error: ... Locator: getByText('Claude Pro') ... strict mode violation: resolved to 3 elements: 1) <span> 'Claude Pro \u00b7 20 Oct'  2) <td>Claude Pro</td>  3) <p> 'Next: Claude Pro on 20 Oct.'\nLocator: getByText('Reading receipt\u2026') Expected: visible Timeout: 20000ms Error: element(s) not found",
+   "spec": "AC-30, AC-33, brief Done-when (tests stay reliable)",
+   "screenshots": []
+  },
+  {
+   "id": 8,
+   "severity": "Minor",
+   "status": "open",
+   "title": "No breakage check was added for this slice",
+   "detail": "`qa/mutants.ts` has 13 entries, none on motion, ripple or haptics (13/13 killed, all older). My probes found 4 survivors (above) and 8 caught. See the entries named in the report.",
+   "repro": "node scripts/mutants.mjs",
+   "evidence": "13 of 13 killed. A survivor is a finding: a guard no test holds (D139).",
+   "spec": "D139",
+   "screenshots": []
+  },
+  {
+   "id": 9,
+   "severity": "Minor",
+   "status": "open",
+   "title": "One functional e2e test failed in the full run: `own-transfer` step 2 `covered`",
+   "detail": "`journeys.spec.ts:917 own-transfer`: the scripted check says the Public Bank to Ryt Bank row's button is covered by `p.item-description 'Transfer Filled in'`. It passed 2 of 2 alone, so it is a flake in one run of 1392; I can't attribute it to B05 (the functional suite runs reduced). Noted because the brief's goal is a suite motion can't make flaky.",
+   "repro": "pnpm e2e (full); alone: playwright test journeys.spec --project=preview -g own-transfer",
+   "evidence": "Error: own-transfer step 2, one row, filled in ... {\"check\":\"covered\",\"detail\":\"button \\\"Public Bank \u2192 Ryt BankTransfer\\\" 390\u00d758 under p.item-description \\\"TransferFilled in\\\"\"}",
+   "spec": "AC-30",
+   "screenshots": []
+  },
+  {
+   "id": 10,
+   "severity": "Note",
+   "status": "open",
+   "title": "Small gaps: no ripple on `<summary>` rows; a failed `info()` turns haptics off for the session; `reject` skips an Enter-submitted form",
+   "detail": "(a) `TAPPABLE` in `frame/press.ts` has no `summary`, so the two disclosure rows (`settings/email.tsx:65`, `capture/apps.tsx:86`) get no ripple. (b) `bridgeVersion()` caches `0` when `SenShell.info()` rejects once, so haptics stay off until the app restarts. (c) `FieldError` skips the reject haptic when focus is in an input, so an error shown after Enter in a field is silent; tapping a button is felt. Read from code; (a) is also seen in the DOM (12 of 12 tappables on Home had ripples, summaries are not on Home).",
+   "repro": "read apps/web/src/frame/press.ts, apps/web/src/lib/haptics.ts, apps/web/src/components/ui/field.tsx",
+   "evidence": "n/a",
+   "spec": "AC-9, AC-22",
+   "screenshots": []
+  },
+  {
+   "id": 11,
+   "severity": "Note",
+   "status": "open",
+   "title": "Metrics flags other than the ripple: both re-measured, neither is a standing cost",
+   "detail": "`screen:insights/year` settle 2184 ms (main 1258): re-measured 5 times a side: head [2106,1303,2067,1347,1495], main [1553,2449,1999,1138,2258]; blocking is the same. `screen:new-look` blocking 703 ms (main 0): re-measured 5 times: head [0,0,568,0,0], main [0,0,0,0,0]. One in five spikes on the branch; I could not find the cause (the screen runs its own view transition, and in isolation under 4x CPU both builds show 240-270 ms of long tasks). Accepted as intermittent; worth a look if it recurs.",
+   "repro": "QA_ONLY='[\"new-look\",\"insights/year\"]' QA_RUNS=5 playwright test -c e2e/diff.config.ts --project metrics-head metrics.spec",
+   "evidence": "see detail",
+   "spec": "AC-27, D139",
+   "screenshots": []
+  },
+  {
+   "id": 12,
+   "severity": "Note",
+   "status": "open",
+   "title": "How this run differed from the skill",
+   "detail": "The reviewer had no Agent tool, so the sweep was run by me from a script (not a Haiku helper) and the eyes pass was done by me (Sonnet), not `qa-eyes`. The sweep ran `pnpm test:db` and `e2e:server` before Postgres was up (both failed in 1 s and 13 s); I started it and re-ran both: they pass. The qa-diff catalogue shows 3 entries with pixel changes of at most 1/255 (anti-aliasing), so the catalogued screens are unchanged, as the brief says. A unit test (`fake.test.ts` year) timed out once under heavy CPU load during a probe run.",
+   "repro": "-",
+   "evidence": "-",
+   "spec": "skill qa",
+   "screenshots": []
+  }
+ ],
+ "probes": [
+  {
+   "broke": "direction rule swapped (forward/back)",
+   "caught": true,
+   "note": "motion.test.ts \"pushes a step on, and pops a step back\" went red"
+  },
+  {
+   "broke": "tab-to-tab crossfade rule removed from `screenChange`",
+   "caught": true,
+   "note": "motion.test.ts \"crossfades a tab to a tab\" went red"
+  },
+  {
+   "broke": "router transition ignores reduced motion",
+   "caught": true,
+   "note": "motion.spec \"reduced motion: every change is at once\" went red"
+  },
+  {
+   "broke": "ripple no longer skips switches",
+   "caught": true,
+   "note": "motion.spec \"a press shows in the first frame\" went red"
+  },
+  {
+   "broke": "Undo no longer plays its haptic",
+   "caught": true,
+   "note": "motion.spec haptics went red"
+  },
+  {
+   "broke": "Switch no longer plays its haptic",
+   "caught": true,
+   "note": "motion.spec haptics went red"
+  },
+  {
+   "broke": "change motion type `change` replaced by `tab`",
+   "caught": true,
+   "note": "motion.spec Review row went red"
+  },
+  {
+   "broke": "bridge call `SenShell.haptic` removed from haptic()",
+   "caught": false,
+   "note": "unit 198/198 and motion.spec 5/5 stayed green (the played[] list is filled before the shell is checked)"
+  },
+  {
+   "broke": "haptic called on a bridge-1 shell (v >= 2 -> v >= 0)",
+   "caught": false,
+   "note": "unit and motion.spec green"
+  },
+  {
+   "broke": "FieldError reject haptic fires while typing (focus check removed)",
+   "caught": false,
+   "note": "unit and motion.spec green"
+  },
+  {
+   "broke": "ripple on disabled controls (disabled skip removed)",
+   "caught": false,
+   "note": "motion.spec green; my FLOW-7 spec catches it"
+  },
+  {
+   "broke": "reduced-motion CSS for the ripple removed (it spreads under reduce)",
+   "caught": false,
+   "note": "motion.spec green; my FLOW-6 spec catches it"
+  },
+  {
+   "broke": "shared amount name left on outside a transition (type guard removed)",
+   "caught": false,
+   "note": "motion.spec green; my FLOW-3 spec (`named after []`) catches it"
+  }
+ ],
+ "flows": [
+  {
+   "id": "FLOW-1",
+   "title": "A push forward, and back three ways",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Payments, motion on",
+   "covers": [
+    "AC-1",
+    "AC-2",
+    "AC-31"
+   ],
+   "spec": "D140, patterns \u00a78",
+   "status": "pass",
+   "ends": "forward, back, forward, back recorded; new screen group 200 ms with the cubic-bezier(0.2,0,0,1) easing, translate 100% in, old translate -25% at opacity 0.6",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Payments",
+     "assertion": "rows with data-share shown",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-1-payments.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap the first row",
+     "assertion": "URL is /s/txn; transition types [forward], 200 ms",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-2-txn-after-push.png"
+    },
+    {
+     "n": 3,
+     "action": "In-app Back, forward again, browser back",
+     "assertion": "types [forward, back, forward, back]; back slides out right",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-3-payments-after-back.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-2",
+   "title": "Tabs crossfade, also from a pushed screen",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Home",
+   "covers": [
+    "AC-3",
+    "AC-4"
+   ],
+   "spec": "D140",
+   "status": "fail",
+   "ends": "Home tab from Payments played `back`, not `tab`",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Tap the five tabs in turn",
+     "assertion": "four crossfades, no translate; the tabbar group stays at y 835",
+     "status": "pass",
+     "screenshot": "FLOW-2-step-1-tabs-done.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap a row, look 90 ms in",
+     "assertion": "tab bar y unchanged mid-push",
+     "status": "pass",
+     "screenshot": "FLOW-2-step-2-mid-push-90ms.png"
+    },
+    {
+     "n": 3,
+     "action": "From Payments, tap Review, then Home",
+     "assertion": "Review: tab; Home: back (expected tab)",
+     "status": "fail",
+     "screenshot": "FLOW-2-step-3-review-from-pushed.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-3",
+   "title": "The shared amount",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Payments",
+   "covers": [
+    "AC-6",
+    "AC-15"
+   ],
+   "spec": "patterns \u00a78",
+   "status": "pass",
+   "ends": "one [data-sen] per row, names unique, none left after; amount text only ever a stored value",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Tap a row, sample every frame",
+     "assertion": "texts seen are real amounts only; no view-transition-name left after",
+     "status": "pass",
+     "screenshot": "FLOW-3-step-1-txn-figure.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-4",
+   "title": "Review clears a row, Undo",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Review",
+   "covers": [
+    "AC-13",
+    "AC-18",
+    "AC-21"
+   ],
+   "spec": "brief \u00a73",
+   "status": "pass",
+   "ends": "12 rows -> 11 -> 12; a `change` transition ran; haptics exactly [confirm, undo]",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Review with 12 rows",
+     "assertion": "12 tops sampled",
+     "status": "pass",
+     "screenshot": "FLOW-4-step-1-review-before.png"
+    },
+    {
+     "n": 2,
+     "action": "Answer the first",
+     "assertion": "11 rows; `change` transition recorded",
+     "status": "pass",
+     "screenshot": "FLOW-4-step-2-review-after.png"
+    },
+    {
+     "n": 3,
+     "action": "Undo",
+     "assertion": "12 rows again; haptics [confirm, undo]",
+     "status": "pass",
+     "screenshot": "FLOW-4-step-3-review-after-undo.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-5",
+   "title": "Fast hands, tap during a transition, a sheet",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Home, Payments",
+   "covers": [
+    "AC-5",
+    "AC-7",
+    "AC-8"
+   ],
+   "spec": "patterns \u00a78 Speed",
+   "status": "pass",
+   "ends": "five navigations in 200 ms end on the last; no stuck transition; no console error; a sheet runs no screen transition",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Five tab taps 40 ms apart, history jumble",
+     "assertion": "URL /review; no :active-view-transition left",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-1-after-five-fast-taps.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap a row, tap again at 50 ms",
+     "assertion": "no stuck state; Back works afterwards; 0 errors",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-2-after-tap-during-push.png"
+    },
+    {
+     "n": 3,
+     "action": "Open the Ask Sen sheet and go back",
+     "assertion": "no view transition recorded",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-3-sheet-open.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-6",
+   "title": "Reduced motion, the whole journey",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Payments, reducedMotion reduce",
+   "covers": [
+    "AC-24",
+    "AC-25",
+    "AC-26"
+   ],
+   "spec": "patterns \u00a78",
+   "status": "pass",
+   "ends": "no view transition, rows change at once, the ripple is a tint (animation none, transform none, opacity 0.12)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Push, back, tab, clear a Review row, press a tab",
+     "assertion": "vts == [] ; ripple animation none",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-1-reduced-review.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-7",
+   "title": "Ripple on pointerdown",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "More, Settings",
+   "covers": [
+    "AC-9",
+    "AC-10",
+    "AC-11"
+   ],
+   "spec": "D140",
+   "status": "pass",
+   "ends": "ripple in the same task on row, tab and all 12 tappables on Home; none on a switch or a disabled button; box and scroll height unchanged",
+   "steps": [
+    {
+     "n": 1,
+     "action": "pointerdown on a row and tabs",
+     "assertion": ".press present, box unchanged",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-1-more.png"
+    },
+    {
+     "n": 2,
+     "action": "Hold a press 120 ms, release",
+     "assertion": "ripple 376x54 in a 378x56 row; gone after 700 ms",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-2-ripple-held.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-8",
+   "title": "Haptics through a stub shell",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Settings > Appearance with a stub Capacitor shell",
+   "covers": [
+    "AC-19",
+    "AC-20",
+    "AC-21"
+   ],
+   "spec": "brief \u00a74",
+   "status": "pass",
+   "ends": "bridge 1: 0 calls; bridge 2: toggle-on, toggle-off; a shell that throws: no page error from it",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Two switch toggles on a v2 shell",
+     "assertion": "SenShell.haptic called with toggle-off then toggle-on",
+     "status": "pass",
+     "screenshot": "FLOW-8-step-1-v2-two-toggles.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-9",
+   "title": "Loading and sheets",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Payments, a payment, its category sheet",
+   "covers": [
+    "AC-16",
+    "AC-17",
+    "AC-28"
+   ],
+   "spec": "brief \u00a73",
+   "status": "fail",
+   "ends": "CLS 0.005 on load; the sheet jumped 732 -> 285 px with no in-between frame",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Payments loading state",
+     "assertion": "CLS under 0.01",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-1-payments-loading.png"
+    },
+    {
+     "n": 2,
+     "action": "Open a payment's category sheet",
+     "assertion": "sheet open at 732 px",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-3-category-sheet.png"
+    },
+    {
+     "n": 3,
+     "action": "Pick a category (step 2 of the sheet)",
+     "assertion": "heights seen only [732, 285]",
+     "status": "fail",
+     "screenshot": "FLOW-9-step-4-category-sheet-step2.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-10",
+   "title": "Six looks, one motion",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Payments in each look",
+   "covers": [
+    "AC-31",
+    "AC-32"
+   ],
+   "spec": "D140",
+   "status": "pass",
+   "ends": "forward, 200 ms and the same easing in all six",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Push in minted",
+     "assertion": "200 ms, same easing",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-1-minted-txn.png"
+    },
+    {
+     "n": 2,
+     "action": "Push in instrument",
+     "assertion": "200 ms, same easing",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-1-instrument-txn.png"
+    },
+    {
+     "n": 3,
+     "action": "Push in firefly",
+     "assertion": "200 ms, same easing",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-1-firefly-txn.png"
+    },
+    {
+     "n": 4,
+     "action": "Push in line",
+     "assertion": "200 ms, same easing",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-1-line-txn.png"
+    },
+    {
+     "n": 5,
+     "action": "Push in mercury",
+     "assertion": "200 ms, same easing",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-1-mercury-txn.png"
+    },
+    {
+     "n": 6,
+     "action": "Push in copper",
+     "assertion": "200 ms, same easing",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-1-copper-txn.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-11",
+   "title": "Core: first-run (as far as the build reaches)",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/first-run",
+   "covers": [
+    "AC-33"
+   ],
+   "spec": "docs/flows.md",
+   "status": "pass",
+   "ends": "journeys.spec first-run passes in the e2e (reduced) and in both motion-on metrics runs",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open the email step",
+     "assertion": "sign-in email shown",
+     "status": "pass",
+     "screenshot": "FLOW-11-step-1-sign-in-email.png"
+    },
+    {
+     "n": 2,
+     "action": "End of the journey",
+     "assertion": "home before the first salary",
+     "status": "pass",
+     "screenshot": "FLOW-11-step-2-home.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-12",
+   "title": "Core: pay-new",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Review, ROTI BAKAR 88",
+   "covers": [
+    "AC-33"
+   ],
+   "spec": "docs/flows.md",
+   "status": "pass",
+   "ends": "answered, toast with Undo, undone (journeys.spec, reduced and motion on)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Review",
+     "assertion": "new merchant card",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-1-review.png"
+    },
+    {
+     "n": 2,
+     "action": "Answer Meals",
+     "assertion": "toast with Undo",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-2-answered-with-undo.png"
+    },
+    {
+     "n": 3,
+     "action": "Undo",
+     "assertion": "card back",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-3-undone.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-13",
+   "title": "Core: scan-after with motion on, and at 4x CPU",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Home, Scan tab",
+   "covers": [
+    "AC-33"
+   ],
+   "spec": "docs/flows.md",
+   "status": "pass",
+   "ends": "crop, Reading receipt\u2026, confirm, three people RM21.38, Attached to RM64.13 on Ryt Bank with Undo; 0 console errors",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Pick a receipt",
+     "assertion": "Use this visible",
+     "status": "pass",
+     "screenshot": "FLOW-13-step-1-crop.png"
+    },
+    {
+     "n": 2,
+     "action": "Use this",
+     "assertion": "Reading receipt\u2026 visible",
+     "status": "pass",
+     "screenshot": "FLOW-13-step-2-reading.png"
+    },
+    {
+     "n": 3,
+     "action": "Confirm",
+     "assertion": "SATE KAJANG HJ SAMURI shown",
+     "status": "pass",
+     "screenshot": "FLOW-13-step-3-confirm.png"
+    },
+    {
+     "n": 4,
+     "action": "More people twice, Done",
+     "assertion": "toast Attached to RM64.13 on Ryt Bank",
+     "status": "pass",
+     "screenshot": "FLOW-13-step-4-attached-with-undo.png"
+    }
+   ]
+  }
+ ],
+ "criteria": [
+  {
+   "id": "AC-1",
+   "title": "Forward is a push",
+   "spec": "D140",
+   "status": "pass",
+   "evidence": "types forward; new screen translate(100%) -> none, 200 ms, easing on keyframes; old translate(-25%) opacity 0.6"
+  },
+  {
+   "id": "AC-2",
+   "title": "Back is the reverse (in-app back, browser back)",
+   "spec": "D140",
+   "status": "pass",
+   "evidence": "sequence forward back forward back; back old translate(100%), new from translate(-25%). *Done* not exercised"
+  },
+  {
+   "id": "AC-3",
+   "title": "A tab switch crossfades, also from a pushed screen",
+   "spec": "D140, \u00a78",
+   "status": "fail",
+   "evidence": "Home tab from Payments played `back`; Review tab played `tab`"
+  },
+  {
+   "id": "AC-4",
+   "title": "Tab bar and Sen button stay above a transition",
+   "spec": "D140",
+   "status": "pass",
+   "evidence": "tabbar group y unchanged at 90 ms; its old pseudo hidden. The Sen button was not measured separately"
+  },
+  {
+   "id": "AC-5",
+   "title": "A sheet's own history step moves nothing",
+   "spec": "\u00a78",
+   "status": "pass",
+   "evidence": "Ask Sen sheet open then back: 0 view transitions; category sheet: 0"
+  },
+  {
+   "id": "AC-6",
+   "title": "The shared amount, unique, never in between",
+   "spec": "\u00a78",
+   "status": "pass",
+   "evidence": "1 [data-sen] per row (15 rows), ids unique, no name left after, Account list not skipped"
+  },
+  {
+   "id": "AC-7",
+   "title": "Taps blocked during a transition, and not after",
+   "spec": "\u00a78 Speed",
+   "status": "pass",
+   "evidence": "tap at 50 ms and later: no stuck state, no error. Block length: see finding 6"
+  },
+  {
+   "id": "AC-8",
+   "title": "Fast repeated navigation settles",
+   "spec": "robustness",
+   "status": "pass",
+   "evidence": "5 taps in 200 ms + history jumble: ends on last, 0 console errors"
+  },
+  {
+   "id": "AC-9",
+   "title": "Ripple within one frame",
+   "spec": "D140",
+   "status": "pass",
+   "evidence": "row, tab and 12 of 12 Home tappables had .press in the same task as pointerdown"
+  },
+  {
+   "id": "AC-10",
+   "title": "No ripple on switches, disabled controls",
+   "spec": "D140",
+   "status": "pass",
+   "evidence": "switch false, disabled false; no checkbox on that screen; `summary` rows get none (finding 10)"
+  },
+  {
+   "id": "AC-11",
+   "title": "The ripple never changes layout",
+   "spec": "brief",
+   "status": "pass",
+   "evidence": "box unchanged, scrollHeight unchanged, CLS 0.005"
+  },
+  {
+   "id": "AC-12",
+   "title": "Press feedback is not at a call site",
+   "spec": "brief \u00a72",
+   "status": "pass",
+   "evidence": "grep for active:bg/opacity/scale: no hits"
+  },
+  {
+   "id": "AC-13",
+   "title": "A Review row clears and the next slides up",
+   "spec": "\u00a73",
+   "status": "pass",
+   "evidence": "change transition recorded; 12 -> 11 rows; the closing of the gap was not measured frame by frame"
+  },
+  {
+   "id": "AC-14",
+   "title": "A failed write leaves the screen live",
+   "spec": "\u00a73",
+   "status": "unreachable",
+   "evidence": "the preview has no failing write path in its fake"
+  },
+  {
+   "id": "AC-15",
+   "title": "Money never counts",
+   "spec": "\u00a73, D140",
+   "status": "pass",
+   "evidence": "sampled live [data-sen] texts are real values only; no counter code in the diff"
+  },
+  {
+   "id": "AC-16",
+   "title": "A skeleton fades into content",
+   "spec": "\u00a73",
+   "status": "unreachable",
+   "evidence": "CLS passes (0.005); the opacity fade itself was not sampled"
+  },
+  {
+   "id": "AC-17",
+   "title": "A sheet eases to a new height",
+   "spec": "\u00a73",
+   "status": "fail",
+   "evidence": "heights seen [732,285]; ResizeObserver never attached (finding 2)"
+  },
+  {
+   "id": "AC-18",
+   "title": "A toast slides in and out",
+   "spec": "\u00a73",
+   "status": "unreachable",
+   "evidence": "not measured (sonner defaults)"
+  },
+  {
+   "id": "AC-19",
+   "title": "A browser has no haptics; calling them is harmless",
+   "spec": "\u00a73 brief",
+   "status": "pass",
+   "evidence": "every moment ran in Chromium with no error"
+  },
+  {
+   "id": "AC-20",
+   "title": "The bridge is versioned and checked first",
+   "spec": "spec \u00a75.1",
+   "status": "pass",
+   "evidence": "stub shell: v1 0 calls, v2 right kinds, throw swallowed. Behaviour right; no repo test (finding 4)"
+  },
+  {
+   "id": "AC-21",
+   "title": "Haptics only on the listed moments",
+   "spec": "\u00a78",
+   "status": "pass",
+   "evidence": "scroll, tabs, sheet open: []; toggles, confirm, undo exact"
+  },
+  {
+   "id": "AC-22",
+   "title": "A rejected input gives one reject haptic, none while typing",
+   "spec": "\u00a78",
+   "status": "unreachable",
+   "evidence": "no test and not driven"
+  },
+  {
+   "id": "AC-23",
+   "title": "The shell's haptic is covered and uses Android constants",
+   "spec": "\u00a74",
+   "status": "unreachable",
+   "evidence": "no emulator here. Read: ShellTest asserts a `performed` key and that an unknown kind rejects; the constant mapping is not asserted"
+  },
+  {
+   "id": "AC-24",
+   "title": "Reduced motion: no slide, fade or change motion",
+   "spec": "\u00a78",
+   "status": "pass",
+   "evidence": "vts [] across push, back, tab, Review clear; forced reduce in settings: not reachable (no switch found)"
+  },
+  {
+   "id": "AC-25",
+   "title": "Reduced motion keeps the ripple as a tint",
+   "spec": "\u00a78",
+   "status": "pass",
+   "evidence": "animation none, transform none, opacity 0.12"
+  },
+  {
+   "id": "AC-26",
+   "title": "Reduced motion: navigation is never blocked",
+   "spec": "\u00a78",
+   "status": "pass",
+   "evidence": "no view transition ran, so nothing could block"
+  },
+  {
+   "id": "AC-27",
+   "title": "A tap's first change within 100 ms, in every look",
+   "spec": "brief \u00a76",
+   "status": "pass",
+   "evidence": "no step.firstChangeMs flag; head median delta 0 ms over 171 steps. The screen itself arrives 128-199 ms after a tap at 4x (finding 6)"
+  },
+  {
+   "id": "AC-28",
+   "title": "No layout shift from motion",
+   "spec": "Done-when",
+   "status": "pass",
+   "evidence": "0 layoutShift flags; Payments load CLS 0.005"
+  },
+  {
+   "id": "AC-29",
+   "title": "Trees unchanged except where a screen gains an element",
+   "spec": "Done-when",
+   "status": "pass",
+   "evidence": "0 trees changed, 0 new"
+  },
+  {
+   "id": "AC-30",
+   "title": "Functional e2e not flaky under motion",
+   "spec": "Done-when",
+   "status": "fail",
+   "evidence": "1 of 1392 failed (own-transfer covered), passed 2 of 2 alone; the motion-on journeys failed 2 of 76 on head, 0 of 76 on main"
+  },
+  {
+   "id": "AC-31",
+   "title": "One motion for all six looks",
+   "spec": "D140",
+   "status": "pass",
+   "evidence": "six looks: forward, 200 ms, same easing"
+  },
+  {
+   "id": "AC-32",
+   "title": "Look crossfade and a look's own moments survive",
+   "spec": "\u00a78",
+   "status": "pass",
+   "evidence": "new-look runs its own untyped view transition; avatar states e2e green; catalogue pixels unchanged"
+  },
+  {
+   "id": "AC-33",
+   "title": "The core journeys pass with motion on",
+   "spec": "D124",
+   "status": "pass",
+   "evidence": "scan-after with motion on and at 4x CPU; first-run and pay-new in the e2e and the metrics runs"
+  },
+  {
+   "id": "AC-34",
+   "title": "No real financial data in the diff",
+   "spec": "non-negotiable",
+   "status": "pass",
+   "evidence": "pnpm hygiene passed; made-up scenario data only"
+  },
+  {
+   "id": "AC-35",
+   "title": "No float arithmetic on money in the diff",
+   "spec": "non-negotiable",
+   "status": "pass",
+   "evidence": "new toFixed/Math.round only in scripts/frame-times.mjs for milliseconds; lint green"
+  },
+  {
+   "id": "AC-36",
+   "title": "No third-party script or secret in the bundle",
+   "spec": "\u00a717",
+   "status": "pass",
+   "evidence": "dist-production grep: no key, DB URL or token; only w3.org/react.dev/localhost strings; no new dependency"
+  },
+  {
+   "id": "AC-37",
+   "title": "One navigation and one set of patterns",
+   "spec": "non-negotiable",
+   "status": "fail",
+   "evidence": "the shared modules are used and no `active:` tints remain; but `pnpm typecheck` fails (finding 1), and the sheet hook is dead (finding 2)"
+  }
+ ],
+ "notTested": [
+  {
+   "what": "The haptics on a real phone (the touch-feedback setting, the constants per Android version)",
+   "why": "needs a device; the emulator test (ShellTest) could not run here and is queued in docs/local.md"
+  },
+  {
+   "what": "The Kotlin ShellTest on the emulator",
+   "why": "no Android SDK or emulator in this session"
+  },
+  {
+   "what": "Motion feel (smoothness, whether 200 ms reads right) and the Sen button during a push",
+   "why": "needs the owner's eyes on the phone; the brief says sign-off is the owner's"
+  },
+  {
+   "what": "AC-14 (a failed write), AC-16 (the fade), AC-18 (toasts), AC-22 (reject haptic on typing)",
+   "why": "no failing-write path in the fake; no sampling written in time; no screen found that shows an error on mount"
+  },
+  {
+   "what": "A forced-reduced-motion switch in Settings",
+   "why": "no switch named reduce/motion found on Appearance"
+  }
+ ]
+}
