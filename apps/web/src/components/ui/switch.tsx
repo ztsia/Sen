@@ -1,14 +1,19 @@
-// Sen: shadcn/ui's switch, changed in place for the phone (CLAUDE.md, shadcn first): a 48 px touch target (h-12 w-14) around a drawn track and thumb; no sm size.
+// Sen: shadcn/ui's switch, changed in place for the phone (CLAUDE.md, shadcn first): a 48 px touch target (h-12 w-14) around a drawn track and thumb; no sm size; a toggle's haptic as it changes (lib/haptics.ts, B05).
 import * as React from 'react';
+import { haptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { Switch as SwitchPrimitive } from 'radix-ui';
 
 // shadcn's switch, with a 48 px touch target around its track (patterns.md §8): the button is the
 // target, and the track and thumb are drawn inside it.
-function Switch({ className, ...props }: React.ComponentProps<typeof SwitchPrimitive.Root>) {
+function Switch({ className, onCheckedChange, ...props }: React.ComponentProps<typeof SwitchPrimitive.Root>) {
   return (
     <SwitchPrimitive.Root
       data-slot="switch"
+      onCheckedChange={(on) => {
+        haptic(on ? 'toggle-on' : 'toggle-off');
+        onCheckedChange?.(on);
+      }}
       className={cn(
         'peer group/switch relative inline-flex h-12 w-14 shrink-0 items-center justify-center rounded-full outline-none',
         'before:absolute before:h-7 before:w-12 before:rounded-full before:border before:border-input before:bg-muted before:transition-colors',

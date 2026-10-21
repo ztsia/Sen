@@ -7,7 +7,6 @@ import { GroupCard, SwitchRow } from '@/blocks/group';
 import { EmptyState, ListSkeleton } from '@/blocks/states';
 import { StatusCard } from '@/blocks/status';
 import { toastDone } from '@/blocks/toast';
-import { lightTick } from '@/lib/haptics';
 import { SenCapture, type BlockReason, type CaptureApp } from '@/shell/bridge';
 import { useBridge } from '@/shell/use-bridge';
 import { AppIcon, BridgeError, CaptureScreen } from './common';
@@ -46,7 +45,6 @@ export default function CaptureApps() {
   const save = async (next: Set<string>) => {
     const before = list;
     setApps(list?.map((a) => ({ ...a, chosen: next.has(a.package) })));
-    lightTick();
     try {
       const r = await SenCapture.setChosen({ packages: [...next] });
       if (r.refused.length) {

@@ -27,6 +27,8 @@ export interface SenShellPlugin {
   testPrompt(): Promise<void>;
   testIsland(): Promise<{ promoted: boolean; liveUpdates: boolean }>;
   switchIcon(): Promise<{ icon: ShellInfo['icon'] }>;
+  /** Bridge 2 (B05): one of Android's haptics, through the WebView; check `info().bridge` first. */
+  haptic(o: { kind: string }): Promise<{ performed: boolean }>;
 }
 
 export type BlockReason = 'self' | 'sms' | 'messaging' | 'email' | 'social' | 'denylist' | 'missing';

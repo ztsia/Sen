@@ -1,7 +1,9 @@
+// Sen: shadcn/ui's field, changed in place (CLAUDE.md, shadcn first): an error appearing after a tap (a submit, not while typing) plays the error haptic (lib/haptics.ts, B05).
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { haptic } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 
 import { Label } from '@/components/ui/label';
@@ -195,6 +197,12 @@ function FieldError({
       </ul>
     );
   }, [children, errors]);
+
+  // a refusal after a tap is felt; one shown while typing isn't, so the phone never buzzes per key
+  const shown = !!content;
+  useEffect(() => {
+    if (shown && !document.activeElement?.matches('input, textarea, [contenteditable]')) haptic('reject');
+  }, [shown]);
 
   if (!content) {
     return null;

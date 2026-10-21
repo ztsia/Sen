@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { haptic } from '@/lib/haptics';
 
 // Every change happens at once, with Undo in a toast (patterns.md §7, spec §6.7). The toast says what
 // happened, in words, stays 6 seconds or until the next change, and shows only when the change isn't
@@ -27,6 +28,7 @@ function show(message: string, action?: { label: string; onClick: () => void }) 
       label: action.label,
       onClick: () => {
         gone();
+        if (action.label === 'Undo') haptic('undo');
         action.onClick();
       },
     },
@@ -34,6 +36,7 @@ function show(message: string, action?: { label: string; onClick: () => void }) 
 }
 
 export function toastUndo(message: string, onUndo: () => void) {
+  haptic('confirm');
   show(message, { label: 'Undo', onClick: onUndo });
 }
 

@@ -55,8 +55,8 @@ class ShellTest {
         Device.waitFor(what, timeoutMs) { js(s, code) == "true" }
 
     /** Calls a plugin through Capacitor's raw bridge, without the web app's code, and returns its JSON. */
-    private fun call(s: ActivityScenario<MainActivity>, plugin: String, method: String): String {
-        js(s, "window.__senT = null; window.Capacitor.nativePromise('$plugin','$method',{}).then(r => window.__senT = JSON.stringify(r), e => window.__senT = 'ERR ' + e.message); true")
+    private fun call(s: ActivityScenario<MainActivity>, plugin: String, method: String, args: String = "{}"): String {
+        js(s, "window.__senT = null; window.Capacitor.nativePromise('$plugin','$method',$args).then(r => window.__senT = JSON.stringify(r), e => window.__senT = 'ERR ' + e.message); true")
         Device.waitFor("$plugin.$method to answer") { js(s, "window.__senT !== null") == "true" }
         return js(s, "window.__senT")
     }
@@ -81,6 +81,14 @@ class ShellTest {
             val info = call(s, "SenShell", "info")
             assertTrue(info, info.contains("\\\"build\\\":\\\"e2e\\\""))
             assertTrue(info, info.contains("\\\"capture\\\":true"))
+            assertTrue(info, info.contains("\\\"bridge\\\":2"))
+            // B05: a haptic answers whether the phone played it (the emulator's touch feedback decides)
+            for (kind in listOf("confirm", "reject", "long-press", "toggle-on", "toggle-off", "threshold", "tick")) {
+                val r = call(s, "SenShell", "haptic", "{kind:'$kind'}")
+                assertTrue("$kind: $r", r.contains("performed"))
+            }
+            val unknown = call(s, "SenShell", "haptic", "{kind:'buzz'}")
+            assertTrue(unknown, unknown.startsWith("\"ERR"))
         }
     }
 

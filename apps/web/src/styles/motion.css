@@ -15,6 +15,17 @@
   border-radius: 9999px;
 }
 
+/* the tab bar stays above anything moving, and plays its look's own switch live */
+.tabbar-region {
+  view-transition-name: tabbar;
+}
+::view-transition-old(tabbar) {
+  display: none;
+}
+::view-transition-new(tabbar) {
+  animation: none;
+}
+
 /* the page itself is never animated: the tab bar and status bar stay live */
 ::view-transition-group(root),
 ::view-transition-old(root),
@@ -55,7 +66,7 @@ html:active-view-transition-type(change)::view-transition-old(screen),
 html:active-view-transition-type(change)::view-transition-new(screen) {
   animation: none;
 }
-html:active-view-transition-type(change) [data-motion-row] {
+html:active-view-transition-type(change) [data-motion-row]:not([data-motion-off]) {
   view-transition-name: var(--row);
   view-transition-class: row;
 }

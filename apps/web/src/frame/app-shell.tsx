@@ -107,7 +107,7 @@ function PersonShell({ screen }: { screen: ScreenDef | undefined }) {
           <Outlet />
         </div>
         {tabs ? (
-          <div className="relative z-[var(--z-index-tabbar)] shrink-0">
+          <div className="tabbar-region relative z-[var(--z-index-tabbar)] shrink-0">
             {sen ? <SenButton state={senState} onOpen={() => setSenOpen(true)} /> : null}
             <TabBar
               active={screen?.tab ?? null}

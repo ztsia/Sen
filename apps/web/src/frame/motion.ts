@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { flushSync } from 'react-dom';
 import { reducedMotionNow } from '@/theme/store';
 
@@ -88,29 +89,69 @@ export const routerTransition = {
   },
 };
 
-type VT = { finished: Promise<void>; updateCallbackDone: Promise<void> };
 type DocVT = Document & {
-  startViewTransition?: (o: { update: () => Promise<void> | void; types?: string[] }) => VT;
+  startViewTransition?: (o: { update: () => void; types?: string[] }) => { finished: Promise<void> };
 };
 
 /**
- * Change motion within a screen (patterns.md §8): rows marked `data-motion-row` with a
- * `--row` name slide out and in while `change` runs. `change` may update a query cache, whose
- * listeners run a moment later, so the new state is captured after the next task. Under reduced
- * motion, or without view transitions, the change is at once.
+ * Change motion within a screen (patterns.md §8): rows marked by `rowMotion` slide out and in, and
+ * the rest move to their new places, while `change` runs. Under reduced motion, or without view
+ * transitions, the change is at once.
  */
-export function changeMotion(change: () => void): Promise<void> {
+export function changeMotion(change: () => void) {
   const doc = document as DocVT;
-  if (reducedMotionNow() || !canTransition() || !doc.startViewTransition) {
-    change();
-    return Promise.resolve();
-  }
-  const t = doc.startViewTransition({
-    update: async () => {
+  if (reducedMotionNow() || !canTransition() || !doc.startViewTransition) return change();
+  markHidden();
+  doc.startViewTransition({
+    update: () => {
       flushSync(change);
-      await new Promise((r) => setTimeout(r, 0));
+      markHidden();
     },
     types: ['change'],
   });
-  return t.finished.catch(() => undefined);
 }
+
+/**
+ * A moving row is drawn above the screen, so one scrolled partly out of view would show over the app
+ * bar: only rows wholly in their scroll area move, and the rest change in place.
+ */
+function markHidden() {
+  for (const row of document.querySelectorAll<HTMLElement>('[data-motion-row]')) {
+    const area = scrollArea(row);
+    const r = row.getBoundingClientRect();
+    const a = area?.getBoundingClientRect() ?? { top: 0, bottom: innerHeight };
+    if (r.top >= a.top && r.bottom <= a.bottom) delete row.dataset.motionOff;
+    else row.dataset.motionOff = '';
+  }
+}
+function scrollArea(el: HTMLElement): HTMLElement | null {
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const y = getComputedStyle(p).overflowY;
+    if (y === 'auto' || y === 'scroll') return p;
+  }
+  return null;
+}
+
+/**
+ * A list's data, shown through change motion: when `value` changes (an answer cleared a row, a sync
+ * added one), the screen moves to it by `changeMotion`, at the moment the data arrives, so a write
+ * waiting on the network never holds the screen still.
+ */
+export function useChangeMotion<T>(value: T): T {
+  const [shown, setShown] = useState(value);
+  const latest = useRef(value);
+  latest.current = value;
+  useEffect(() => {
+    if (value === shown) return;
+    changeMotion(() => setShown(latest.current));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only a new value starts a change
+  }, [value]);
+  return shown;
+}
+
+/** Marks a row for change motion: its own name while a change runs (motion.css). */
+export const rowMotion = (id: string) =>
+  ({ 'data-motion-row': '', style: { '--row': `row-${id.replace(/[^\w-]/g, '_')}` } }) as {
+    'data-motion-row': string;
+    style: CSSProperties;
+  };
