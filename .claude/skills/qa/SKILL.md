@@ -58,7 +58,10 @@ Run it in the background and keep working.
 ## The helpers' templates
 
 `qa-reviewer` spawns these with the Agent tool (a subagent may spawn subagents, up to three layers,
-when `Agent` is in its tools). Each template fixes the helper's agent, model and prompt; the
+when `Agent` is in its tools). **When it has no Agent tool** (seen in B05 · Feel: a cloud session's subagents
+can't start their own), it runs the sweep itself from the template, and leaves the eyes pass to the
+main session, which spawns `qa-eyes` from its template once the diff report exists, so the screens
+still get Opus's eyes. Each template fixes the helper's agent, model and prompt; the
 reviewer fills in only the angle brackets. Neither helper judges the slice for the reviewer.
 
 **The sweep** (`subagent_type: "implementer"`, `model: "haiku"`, effort `high`), first, in the
