@@ -6,17 +6,21 @@
   --motion-ease: cubic-bezier(0.2, 0, 0, 1);
 }
 
-.screen-region {
+/* named only while one of Sen's own transitions runs, so nothing else (the new look's crossfade) is
+   affected, and no stacking context lingers between transitions */
+html:active-view-transition-type(forward, back, tab, change) .screen-region {
   view-transition-name: screen;
 }
 /* Sen's button stays above the moving screen; it fades where a screen has none */
 .fab {
-  view-transition-name: fab;
   border-radius: 9999px;
+}
+html:active-view-transition-type(forward, back, tab, change) .fab {
+  view-transition-name: fab;
 }
 
 /* the tab bar stays above anything moving, and plays its look's own switch live */
-.tabbar-region {
+html:active-view-transition-type(forward, back, tab, change) .tabbar-region {
   view-transition-name: tabbar;
 }
 ::view-transition-old(tabbar) {
@@ -27,12 +31,12 @@
 }
 
 /* the page itself is never animated: the tab bar and status bar stay live */
-::view-transition-group(root),
-::view-transition-old(root),
-::view-transition-new(root) {
+html:active-view-transition-type(forward, back, tab, change)::view-transition-group(root),
+html:active-view-transition-type(forward, back, tab, change)::view-transition-old(root),
+html:active-view-transition-type(forward, back, tab, change)::view-transition-new(root) {
   animation: none;
 }
-::view-transition-group(*) {
+html:active-view-transition-type(forward, back, tab, change)::view-transition-group(*) {
   animation-duration: var(--motion-ms);
   animation-timing-function: var(--motion-ease);
 }
