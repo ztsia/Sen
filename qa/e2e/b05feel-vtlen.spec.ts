@@ -3,7 +3,14 @@ import { recordVT, vts } from './b05feel-lib';
 
 // How long is the page blocked (a view transition active) for each kind of change, at a 4x slower CPU? (AC-7, AC-27)
 test('view transition length under 4x CPU', async ({ browser }) => {
-  const ctx = await browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, serviceWorkers: 'block', baseURL: 'http://localhost:4176' });
+  const ctx = await browser.newContext({
+    reducedMotion: 'no-preference',
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+    serviceWorkers: 'block',
+    baseURL: 'http://localhost:4176',
+  });
   const page = await ctx.newPage();
   const cdp = await ctx.newCDPSession(page);
   await recordVT(page);
@@ -22,7 +29,12 @@ test('view transition length under 4x CPU', async ({ browser }) => {
     await act();
     await page.waitForTimeout(3500);
     const v = (await vts(page)).slice(n);
-    console.log(name, JSON.stringify(v.map((x) => ({ types: x.types, readyMs: Math.round(x.ready ?? -1), finMs: Math.round(x.fin ?? -1) }))));
+    console.log(
+      name,
+      JSON.stringify(
+        v.map((x) => ({ types: x.types, readyMs: Math.round(x.ready ?? -1), finMs: Math.round(x.fin ?? -1) })),
+      ),
+    );
   }
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
   await ctx.close();

@@ -4,7 +4,14 @@ import { open } from './b05feel-lib';
 // How long after a tap does the new screen show up (DOM commit), under a 4x slower CPU, motion on vs reduced (AC-27)
 for (const rm of ['no-preference', 'reduce'] as const) {
   test(`push latency, motion ${rm}`, async ({ browser }) => {
-    const ctx = await browser.newContext({ reducedMotion: rm, viewport: { width: 412, height: 915 }, hasTouch: true, isMobile: true, serviceWorkers: 'block', baseURL: 'http://localhost:4181' });
+    const ctx = await browser.newContext({
+      reducedMotion: rm,
+      viewport: { width: 412, height: 915 },
+      hasTouch: true,
+      isMobile: true,
+      serviceWorkers: 'block',
+      baseURL: 'http://localhost:4181',
+    });
     const page = await ctx.newPage();
     const cdp = await ctx.newCDPSession(page);
     await open(page, '/s/payments');
@@ -22,7 +29,8 @@ for (const rm of ['no-preference', 'reduce'] as const) {
             const el = document.querySelectorAll<HTMLElement>('[data-share]')[i];
             const t0 = performance.now();
             const poll = () => {
-              if (location.pathname.includes('/s/txn') && document.querySelector('[data-share-figure]')) res(performance.now() - t0);
+              if (location.pathname.includes('/s/txn') && document.querySelector('[data-share-figure]'))
+                res(performance.now() - t0);
               else requestAnimationFrame(poll);
             };
             el.click();

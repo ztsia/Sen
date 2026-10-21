@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from '@/components/ui/drawer';
@@ -25,8 +25,7 @@ interface SheetProps {
  */
 export function Sheet({ open, onOpenChange, title, description, full, head, children }: SheetProps) {
   useBackClose(open, () => onOpenChange(false));
-  const area = useRef<HTMLDivElement>(null);
-  useSheetResize(area, open);
+  const area = useSheetResize();
   return (
     // repositionInputs off: the page already resizes for the keyboard (interactive-widget=resizes-content,
     // and the shell's adjustResize), and vaul's own resize pinned a sheet at half height when its input

@@ -25,6 +25,10 @@ export const SUITES = {
   web: ['pnpm', 'exec', 'vitest', 'run', '--project', 'web', 'apps/web/src/data'],
   // the lived-in deploy journeys (apps/web/e2e/lived.spec.ts): two builds, a service worker
   deploy: ['pnpm', '--filter', '@sen/web', 'exec', 'playwright', 'test', '-c', 'e2e/lived.config.ts', '-g', 'deploy'],
+  // the web app's pure motion and haptics (B05 · Feel)
+  feel: ['pnpm', 'exec', 'vitest', 'run', '--project', 'web', 'apps/web/src/frame', 'apps/web/src/lib'],
+  // the motion journeys with motion on (apps/web/e2e/motion.spec.ts)
+  motion: ['pnpm', '--filter', '@sen/web', 'exec', 'playwright', 'test', 'e2e/motion.spec.ts', '--project', 'preview'],
 } as const;
 export type SuiteId = keyof typeof SUITES;
 
@@ -134,5 +138,86 @@ export const MUTANTS: Mutant[] = [
     find: `const kept = f.startsWith('/assets/') ? await caches.match(f) : undefined;`,
     replace: `const kept = undefined;`,
     suite: 'deploy',
+  },
+  // B05 · Feel (QA run 1, 8)
+  {
+    id: 'motion-direction-swapped',
+    breaks: 'opening a screen slides it in from the left, and back from the right',
+    file: 'apps/web/src/frame/motion.ts',
+    find: `if (b > a) return 'forward';`,
+    replace: `if (b > a) return 'back';`,
+    suite: 'feel',
+  },
+  {
+    id: 'motion-tabs-push',
+    breaks: 'switching tabs slides like opening a screen, rather than crossfading',
+    file: 'apps/web/src/frame/motion.ts',
+    find: `if (TABS.has(from.pathname) && TABS.has(to.pathname)) return 'tab';`,
+    replace: ``,
+    suite: 'feel',
+  },
+  {
+    id: 'motion-ignores-reduced',
+    breaks: 'screens still slide for someone who turned animations off',
+    file: 'apps/web/src/frame/motion.ts',
+    find: `    if (reducedMotionNow()) return false;\n    const change`,
+    replace: `    const change`,
+    suite: 'motion',
+  },
+  {
+    id: 'motion-home-tab-pops',
+    breaks: 'the Home tab, from a screen opened from another tab, slides back instead of crossfading',
+    file: 'apps/web/src/frame/tab-bar.tsx',
+    find: `    tabChangeNext();\n`,
+    replace: ``,
+    suite: 'motion',
+  },
+  {
+    id: 'sheet-jumps',
+    breaks: 'a sheet changing step jumps to its new height',
+    file: 'apps/web/src/frame/motion.ts',
+    find: `      sheet.animate(`,
+    replace: `      void (`,
+    suite: 'motion',
+  },
+  {
+    id: 'ripple-on-switch',
+    breaks: 'a switch shows a ripple over its own thumb',
+    file: 'apps/web/src/frame/press.ts',
+    find: `'[data-slot=switch], [data-slot=checkbox], [data-no-press], input`,
+    replace: `'[data-no-press], input`,
+    suite: 'motion',
+  },
+  {
+    id: 'haptic-undo-silent',
+    breaks: 'Undo is never felt',
+    file: 'apps/web/src/blocks/toast.ts',
+    find: `if (action.label === 'Undo') haptic('undo');`,
+    replace: ``,
+    suite: 'motion',
+  },
+  {
+    id: 'haptic-toggle-silent',
+    breaks: 'a toggle is never felt',
+    file: 'apps/web/src/components/ui/switch.tsx',
+    find: `haptic(on ? 'toggle-on' : 'toggle-off');`,
+    replace: ``,
+    suite: 'motion',
+  },
+  {
+    id: 'haptic-bridge-never-called',
+    breaks: 'the shell is never asked to play a haptic',
+    file: 'apps/web/src/lib/haptics.ts',
+    find: `if (v >= 2) await SenShell.haptic({ kind: NATIVE[kind] }).catch(() => undefined);`,
+    replace: `if (v >= 2) void 0;`,
+    suite: 'feel',
+  },
+  {
+    id: 'haptic-old-shell-called',
+    breaks: 'a shell from before B05 is sent a method it lacks on every moment',
+    file: 'apps/web/src/lib/haptics.ts',
+    find: `if (v >= 2) await`,
+    replace: `if (v >= 0) await`,
+    suite: 'feel',
   },
 ];

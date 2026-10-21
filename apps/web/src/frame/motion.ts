@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { flushSync } from 'react-dom';
 import { reducedMotionNow } from '@/theme/store';
 
@@ -75,14 +75,25 @@ function nameShared(change: ScreenChange) {
       : '';
 }
 
+// the tab bar says when a navigation is a tab tapped: Home from a pushed screen goes back through
+// history (frame/tab-bar.tsx), but it's still a tab change, not a pop
+let tabTapped = -Infinity;
+/** Marks the next navigation, within a second, as a tab tapped, so it crossfades whichever way history goes. */
+export const tabChangeNext = () => {
+  tabTapped = performance.now();
+};
+
 /**
  * The router's `defaultViewTransition`: the kind of each navigation, or false for none. Under reduced
  * motion, every change is at once.
  */
 export const routerTransition = {
   types: ({ fromLocation, toLocation }: { fromLocation?: Loc; toLocation: Loc }): string[] | false => {
+    const tab = performance.now() - tabTapped < 1000;
+    tabTapped = -Infinity;
     if (reducedMotionNow()) return false;
-    const change = screenChange(fromLocation, toLocation);
+    const change =
+      tab && fromLocation && fromLocation.href !== toLocation.href ? 'tab' : screenChange(fromLocation, toLocation);
     if (!change) return false;
     nameShared(change);
     return [change];
@@ -158,19 +169,20 @@ export const rowMotion = (id: string) =>
 
 /**
  * A sheet's content resizing (a step, an error under a field) eases the sheet to its new height,
- * rather than jumping (patterns.md §8). `area` is the sheet's scroll area; the sheet is its parent.
+ * rather than jumping (patterns.md §8). Pass the returned ref to the sheet's scroll area; the sheet
+ * is its parent. A callback ref, since the sheet's content mounts after the sheet's own effects run.
  */
-export function useSheetResize(area: RefObject<HTMLElement | null>, open: boolean) {
+export function useSheetResize(): (el: HTMLElement | null) => void {
+  const [area, setArea] = useState<HTMLElement | null>(null);
   useEffect(() => {
-    const el = area.current;
-    const sheet = el?.parentElement;
-    if (!open || !el || !sheet || typeof ResizeObserver === 'undefined') return;
+    const sheet = area?.parentElement;
+    if (!area || !sheet || typeof ResizeObserver === 'undefined') return;
     let last = sheet.getBoundingClientRect().height;
     const ro = new ResizeObserver(() => {
       const now = sheet.getBoundingClientRect().height;
       const from = last;
       last = now;
-      if (!from || Math.abs(now - from) < 2 || reducedMotionNow() || sheet.getAnimations().length) return;
+      if (!from || Math.abs(now - from) < 2 || reducedMotionNow()) return;
       sheet.animate(
         [
           { height: `${from}px`, overflow: 'hidden' },
@@ -182,7 +194,8 @@ export function useSheetResize(area: RefObject<HTMLElement | null>, open: boolea
         },
       );
     });
-    ro.observe(el);
+    ro.observe(area);
     return () => ro.disconnect();
-  }, [area, open]);
+  }, [area]);
+  return setArea;
 }

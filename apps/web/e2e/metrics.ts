@@ -114,7 +114,15 @@ export function pageProbe() {
           q.events.push({ start: e.startTime, duration: e.duration, id: (e as Ev).interactionId ?? 0 });
       }
     });
-  new MutationObserver(() => {
+  // the ripple (frame/press.ts) is the press's own feedback, fading out after the finger lifts: it's
+  // not the screen settling, so its nodes and attributes don't count as a change (QA B05 Feel run 1, 5)
+  const press = (r: MutationRecord) =>
+    (r.target as Element).closest?.('.press') ||
+    (r.type === 'attributes' && r.attributeName === 'data-pressed') ||
+    (r.type === 'childList' &&
+      [...r.addedNodes, ...r.removedNodes].every((n) => (n as Element).classList?.contains('press')));
+  new MutationObserver((records) => {
+    if (records.every(press)) return;
     const t = now();
     q.lastMutation = t;
     if (q.tapIdx >= 0) q.taps[q.tapIdx]!.lastMutation = t;

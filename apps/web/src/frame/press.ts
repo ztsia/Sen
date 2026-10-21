@@ -4,7 +4,7 @@
 // shows as a tint, with no spread. The CSS is in styles/motion.css.
 
 const TAPPABLE =
-  'button, a[href], label[for], [role=button], [role=tab], [role=radio], [role=menuitem], [role=menuitemradio], [role=option]';
+  'button, summary, a[href], label[for], [role=button], [role=tab], [role=radio], [role=menuitem], [role=menuitemradio], [role=option]';
 // these draw their own response (a switch's thumb, a box's tick), or aren't a tap at all
 const SKIP = '[data-slot=switch], [data-slot=checkbox], [data-no-press], input, textarea, select';
 
@@ -22,9 +22,6 @@ function press(e: PointerEvent) {
   const r = el.getBoundingClientRect();
   if (!r.width || !r.height) return;
   el.dataset.pressed = '';
-  // the ripple is placed inside the pressed thing; one left static is positioned only while it shows
-  const lift = getComputedStyle(el).position === 'static';
-  if (lift) el.style.position = 'relative';
   const clip = document.createElement('span');
   clip.className = 'press';
   clip.setAttribute('aria-hidden', 'true');
@@ -48,7 +45,6 @@ function press(e: PointerEvent) {
       clip.dataset.up = '';
       setTimeout(() => {
         clip.remove();
-        if (lift && !el.querySelector(':scope > .press')) el.style.position = '';
       }, 300);
     }, wait);
   };

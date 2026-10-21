@@ -35,7 +35,11 @@ export async function recordVT(page: Page, detail = true) {
     const start = document.startViewTransition?.bind(document);
     if (!start) return;
     (document as any).startViewTransition = (arg: any) => {
-      const rec: any = { types: arg?.types?.length ? arg.types.join(',') : 'untyped', t0: performance.now(), anims: [] };
+      const rec: any = {
+        types: arg?.types?.length ? arg.types.join(',') : 'untyped',
+        t0: performance.now(),
+        anims: [],
+      };
       w.__vt.push(rec);
       const vt = start(arg);
       if (detail) {

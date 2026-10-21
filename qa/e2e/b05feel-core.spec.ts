@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { open, shot, watch } from './b05feel-lib';
 
 // Core journeys with motion ON (AC-33): scan-after and pay-new, as docs/flows.md writes them.
-test('FLOW-13 core scan-after with motion on', async ({ page, browser }) => {
+test('FLOW-13 core scan-after with motion on', async ({ page }) => {
   const errors = watch(page);
   await open(page, '/');
   const [camera] = await Promise.all([

@@ -14,7 +14,15 @@ test('FLOW-7 ripple on pointerdown, same task (AC-9, AC-10, AC-11)', async ({ pa
       const r = el.getBoundingClientRect();
       const before = el.getBoundingClientRect();
       el.dispatchEvent(
-        new PointerEvent('pointerdown', { bubbles: true, cancelable: true, isPrimary: true, button: 0, pointerType: 'touch', clientX: r.left + 10, clientY: r.top + 10 }),
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          cancelable: true,
+          isPrimary: true,
+          button: 0,
+          pointerType: 'touch',
+          clientX: r.left + 10,
+          clientY: r.top + 10,
+        }),
       );
       const rip = el.querySelector(':scope > .press');
       const after = el.getBoundingClientRect();
@@ -37,7 +45,15 @@ test('FLOW-7 ripple on pointerdown, same task (AC-9, AC-10, AC-11)', async ({ pa
       if (!el) return (out[name] = 'missing');
       const r = el.getBoundingClientRect();
       el.dispatchEvent(
-        new PointerEvent('pointerdown', { bubbles: true, cancelable: true, isPrimary: true, button: 0, pointerType: 'touch', clientX: r.left + 5, clientY: r.top + 5 }),
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          cancelable: true,
+          isPrimary: true,
+          button: 0,
+          pointerType: 'touch',
+          clientX: r.left + 5,
+          clientY: r.top + 5,
+        }),
       );
       out[name] = !!el.querySelector('.press');
       el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, isPrimary: true, button: 0 }));
@@ -61,15 +77,28 @@ test('FLOW-7 ripple on pointerdown, same task (AC-9, AC-10, AC-11)', async ({ pa
 test('FLOW-7b ripple on every tappable kind in the Home screen (AC-9)', async ({ page }) => {
   await open(page, '/');
   const res = await page.evaluate(() => {
-    const els = [...document.querySelectorAll<HTMLElement>('button, a[href], [role=button], [role=tab]')].filter((e) => {
-      const r = e.getBoundingClientRect();
-      return r.width > 0 && r.height > 0 && !e.matches('[data-slot=switch], :disabled');
-    });
+    const els = [...document.querySelectorAll<HTMLElement>('button, a[href], [role=button], [role=tab]')].filter(
+      (e) => {
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && !e.matches('[data-slot=switch], :disabled');
+      },
+    );
     const miss: string[] = [];
     for (const el of els) {
       const r = el.getBoundingClientRect();
-      el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, isPrimary: true, button: 0, clientX: r.left + 3, clientY: r.top + 3 }));
-      if (!el.querySelector(':scope > .press')) miss.push(`${el.tagName}.${el.className.toString().slice(0, 40)}|${el.getAttribute('aria-label') ?? el.textContent?.slice(0, 20)}`);
+      el.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          bubbles: true,
+          isPrimary: true,
+          button: 0,
+          clientX: r.left + 3,
+          clientY: r.top + 3,
+        }),
+      );
+      if (!el.querySelector(':scope > .press'))
+        miss.push(
+          `${el.tagName}.${el.className.toString().slice(0, 40)}|${el.getAttribute('aria-label') ?? el.textContent?.slice(0, 20)}`,
+        );
       el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, isPrimary: true, button: 0 }));
     }
     return { n: els.length, miss };
@@ -90,7 +119,12 @@ test('FLOW-7c ripple css actually positions (a static host is lifted, clip is in
     const p = e.querySelector(':scope > .press') as HTMLElement;
     const r = p.getBoundingClientRect();
     const er = e.getBoundingClientRect();
-    return { pos: getComputedStyle(e).position, press: [r.width, r.height], host: [er.width, er.height], anim: p.firstElementChild ? getComputedStyle(p.firstElementChild).animationName : null };
+    return {
+      pos: getComputedStyle(e).position,
+      press: [r.width, r.height],
+      host: [er.width, er.height],
+      anim: p.firstElementChild ? getComputedStyle(p.firstElementChild).animationName : null,
+    };
   });
   console.log('RIPPLE-GEOM', JSON.stringify(info));
   await shot(page, ID(7), 2, 'ripple-held');
@@ -107,7 +141,10 @@ test('FLOW-4 Review clears a row in motion; Undo; haptic moments (AC-13, AC-18, 
   await open(page, '/review');
   const rows = page.locator('[data-review]');
   await expect(rows.first()).toBeVisible();
-  const tops = async () => page.evaluate(() => [...document.querySelectorAll('[data-review]')].map((e) => Math.round(e.getBoundingClientRect().top)));
+  const tops = async () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('[data-review]')].map((e) => Math.round(e.getBoundingClientRect().top)),
+    );
   const before = await tops();
   console.log('tops before', JSON.stringify(before));
   await shot(page, ID(4), 1, 'review-before');
@@ -116,7 +153,10 @@ test('FLOW-4 Review clears a row in motion; Undo; haptic moments (AC-13, AC-18, 
     w.__samples = [];
     const t0 = performance.now();
     const tick = () => {
-      w.__samples.push([Math.round(performance.now() - t0), [...document.querySelectorAll('[data-review]')].map((e) => Math.round(e.getBoundingClientRect().top))]);
+      w.__samples.push([
+        Math.round(performance.now() - t0),
+        [...document.querySelectorAll('[data-review]')].map((e) => Math.round(e.getBoundingClientRect().top)),
+      ]);
       requestAnimationFrame(tick);
     };
     tick();
@@ -171,7 +211,14 @@ test('FLOW-6 reduced motion: no view transition, no animation, tint only (AC-24.
   await open(page, '/s/payments');
   await page.locator('[data-share]').first().click();
   await expect(page).toHaveURL(/\/s\/txn/);
-  const anims = await page.evaluate(() => document.getAnimations().map((a: any) => `${a.animationName ?? a.transitionProperty}@${a.effect?.pseudoElement ?? a.effect?.target?.tagName}`));
+  const anims = await page.evaluate(() =>
+    document
+      .getAnimations()
+      .map(
+        (a: any) =>
+          `${a.animationName ?? a.transitionProperty}@${a.effect?.pseudoElement ?? a.effect?.target?.tagName}`,
+      ),
+  );
   console.log('RM anims right after push', JSON.stringify(anims));
   await page.goBack();
   await page.locator('[data-k=review]').click();
@@ -179,14 +226,25 @@ test('FLOW-6 reduced motion: no view transition, no animation, tint only (AC-24.
   const rows = page.locator('[data-review]');
   await expect(rows.first()).toBeVisible();
   const n = await rows.count();
-  await rows.getByRole('button', { name: /^(Income|Transfer|Yes|Apply)\b/ }).first().click();
+  await rows
+    .getByRole('button', { name: /^(Income|Transfer|Yes|Apply)\b/ })
+    .first()
+    .click();
   await expect(rows).toHaveCount(n - 1, { timeout: 1000 });
   expect(await vts(page)).toEqual([]);
   // a press: ripple exists but no animation
   const info = await page.evaluate(() => {
     const el = document.querySelector<HTMLElement>('[data-k=home]')!;
     const r = el.getBoundingClientRect();
-    el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, isPrimary: true, button: 0, clientX: r.left + 5, clientY: r.top + 5 }));
+    el.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        isPrimary: true,
+        button: 0,
+        clientX: r.left + 5,
+        clientY: r.top + 5,
+      }),
+    );
     const dot = el.querySelector<HTMLElement>(':scope > .press > span')!;
     const cs = getComputedStyle(dot);
     return { has: !!dot, anim: cs.animationName, transform: cs.transform, opacity: cs.opacity };
@@ -234,7 +292,9 @@ test('FLOW-9 skeleton fades into content, no layout shift (AC-16, AC-28)', async
   await shot(page, ID(9), 1, 'payments-loading');
 });
 
-test('FLOW-8 haptics through a stub shell: v1 none, v2 once per moment, throwing shell swallowed (AC-20)', async ({ browser }) => {
+test('FLOW-8 haptics through a stub shell: v1 none, v2 once per moment, throwing shell swallowed (AC-20)', async ({
+  browser,
+}) => {
   for (const version of [1, 2, 'throw'] as const) {
     const ctx = await browser.newContext({
       viewport: { width: 412, height: 915 },
@@ -253,16 +313,40 @@ test('FLOW-8 haptics through a stub shell: v1 none, v2 once per moment, throwing
       const methods = (names: string[]) => names.map((name) => ({ name, rtype: 'promise' }));
       w.Capacitor = {
         PluginHeaders: [
-          { name: 'SenShell', methods: methods(['info', 'haptic', 'openInBrowser', 'testPrompt', 'testIsland', 'switchIcon']) },
-          { name: 'Haptics', methods: methods(['impact', 'notification', 'vibrate', 'selectionStart', 'selectionChanged', 'selectionEnd']) },
+          {
+            name: 'SenShell',
+            methods: methods(['info', 'haptic', 'openInBrowser', 'testPrompt', 'testIsland', 'switchIcon']),
+          },
+          {
+            name: 'Haptics',
+            methods: methods([
+              'impact',
+              'notification',
+              'vibrate',
+              'selectionStart',
+              'selectionChanged',
+              'selectionEnd',
+            ]),
+          },
         ],
         isNativePlatform: () => true,
         getPlatform: () => 'android',
         nativePromise(plugin: string, method: string, opts: any) {
           w.__native.push(`${plugin}.${method}:${JSON.stringify(opts)}`);
           if (plugin === 'SenShell' && method === 'info')
-            return Promise.resolve({ bridge: version === 1 ? 1 : 2, version: 't', versionCode: 1, build: 'e2e', capture: false, manufacturer: 'x', model: 'y', sdk: 34, icon: 'minted' });
-          if (plugin === 'SenShell' && method === 'haptic') return version === 'throw' ? Promise.reject(new Error('boom')) : Promise.resolve({ performed: true });
+            return Promise.resolve({
+              bridge: version === 1 ? 1 : 2,
+              version: 't',
+              versionCode: 1,
+              build: 'e2e',
+              capture: false,
+              manufacturer: 'x',
+              model: 'y',
+              sdk: 34,
+              icon: 'minted',
+            });
+          if (plugin === 'SenShell' && method === 'haptic')
+            return version === 'throw' ? Promise.reject(new Error('boom')) : Promise.resolve({ performed: true });
           return Promise.resolve({});
         },
         nativeCallback() {},
@@ -278,10 +362,17 @@ test('FLOW-8 haptics through a stub shell: v1 none, v2 once per moment, throwing
     }
     await page.waitForTimeout(300);
     if (version === 2) await shot(page, 'FLOW-8', 1, 'v2-two-toggles');
-    const native = await page.evaluate(() => (window as any).__native.filter((s: string) => s.startsWith('SenShell.haptic') || s.startsWith('Haptics')));
+    const native = await page.evaluate(() =>
+      (window as any).__native.filter((s: string) => s.startsWith('SenShell.haptic') || s.startsWith('Haptics')),
+    );
     console.log(`v=${version}: native haptic calls`, JSON.stringify(native));
     if (version === 1) expect(native).toEqual([]);
-    else expect(native).toEqual(['SenShell.haptic:{"kind":"toggle-on"}', 'SenShell.haptic:{"kind":"toggle-off"}'].sort(() => 0).length ? native : native);
+    else
+      expect(native).toEqual(
+        ['SenShell.haptic:{"kind":"toggle-on"}', 'SenShell.haptic:{"kind":"toggle-off"}'].sort(() => 0).length
+          ? native
+          : native,
+      );
     await ctx.close();
   }
 });

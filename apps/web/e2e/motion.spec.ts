@@ -55,6 +55,50 @@ test.describe('with motion on', () => {
     expect(errors).toEqual([]);
   });
 
+  test('the Home tab, tapped from a pushed screen deep in history, still crossfades', async ({ page }) => {
+    await recordTransitions(page);
+    await open(page, '/');
+    await page.locator('[data-k=more]').click();
+    await page.locator('[data-slot=item]').filter({ hasText: 'Payments' }).first().click();
+    await expect(page).toHaveURL(/\/s\/payments/);
+    // Home goes back through history to its own entry, but it's a tab tapped, not a pop
+    await page.locator('[data-k=home]').click();
+    await expect(page).toHaveURL(/localhost:\d+\/(\?.*)?$/);
+    await expect.poll(() => transitions(page)).toEqual(['tab', 'forward', 'tab']);
+  });
+
+  test('a sheet whose content changes eases to its new height', async ({ page }) => {
+    await open(page, '/s/payments');
+    await page.locator('[data-share]').first().click();
+    await expect(page).toHaveURL(/\/s\/txn/);
+    // the category fact opens the category sheet
+    await page
+      .locator('button')
+      .filter({ hasText: /Meals|Groceries|Transport|Shopping|Bills|Drinks|Health|Fun|Other/i })
+      .first()
+      .click();
+    const sheet = page.getByRole('dialog');
+    await expect(sheet).toBeVisible();
+    await page.waitForTimeout(600);
+    await page.evaluate(() => {
+      const d = document.querySelector('[role=dialog]')!;
+      const w = window as unknown as { __h: number[] };
+      w.__h = [];
+      const t0 = performance.now();
+      const tick = () => {
+        w.__h.push(Math.round(d.getBoundingClientRect().height));
+        if (performance.now() - t0 < 500) requestAnimationFrame(tick);
+      };
+      tick();
+    });
+    const options = sheet.locator('button').filter({ hasNotText: /close/i });
+    await options.nth((await options.count()) - 1).click();
+    await page.waitForTimeout(600);
+    const heights = await page.evaluate(() => (window as unknown as { __h: number[] }).__h);
+    // more than the two end heights: it passed through the ones between
+    expect(new Set(heights).size, JSON.stringify(heights)).toBeGreaterThan(3);
+  });
+
   test('answering a Review row clears it in motion, and Undo brings it back', async ({ page }) => {
     await recordTransitions(page);
     await open(page, '/review');

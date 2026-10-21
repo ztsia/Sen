@@ -127,7 +127,14 @@ html:active-view-transition-type(change) [data-motion-row]:not([data-motion-off]
   }
 }
 
-/* press feedback (frame/press.ts): a ripple from the finger, clipped to the pressed thing's corners */
+/* press feedback (frame/press.ts): a ripple from the finger, clipped to the pressed thing's corners. A
+   pressed thing left static is positioned while its ripple shows; in the base layer, so one Tailwind
+   places itself (absolute, sticky) keeps its own */
+@layer base {
+  :where(:has(> .press)) {
+    position: relative;
+  }
+}
 .press {
   position: absolute;
   inset: 0;

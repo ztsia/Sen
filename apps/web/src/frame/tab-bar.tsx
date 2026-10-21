@@ -3,6 +3,7 @@ import { Link, useRouter } from '@tanstack/react-router';
 import { TABS, type IconTab, type Look, type Mode } from '@sen/looks';
 import { LookMarkup } from '@/components/look/look-markup';
 import { useLongPress } from '@/lib/long-press';
+import { tabChangeNext } from './motion';
 import { useSvgId } from '@/lib/uid';
 import { useLook } from '@/theme/look';
 import { useMode, useReducedMotion } from '@/theme/store';
@@ -59,6 +60,7 @@ export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
     if (active === 'home' || e.metaKey || e.ctrlKey) return;
     const here = historyIndex(history.location.state);
     e.preventDefault();
+    tabChangeNext();
     if (homeIndex !== undefined && here !== undefined && homeIndex < here) history.go(homeIndex - here);
     else void history.replace('/');
   };
@@ -113,7 +115,7 @@ export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
             key={k}
             to={PATHS[k]}
             replace={active !== null && active !== 'home' && k !== 'home'}
-            onClick={k === 'home' ? toHome : undefined}
+            onClick={k === 'home' ? toHome : tabChangeNext}
             className={`tab${on ? ' on' : ''}${fresh === k ? ' fresh' : ''}`}
             data-k={k}
             aria-current={on ? 'page' : undefined}

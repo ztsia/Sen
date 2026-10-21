@@ -20,12 +20,22 @@ const NATIVE: Record<Haptic, string> = {
   threshold: 'threshold',
 };
 
+// the shell's bridge version, read once; a failed read is tried again at the next moment
 let bridge: Promise<number> | null = null;
 const bridgeVersion = () =>
   (bridge ??= SenShell.info().then(
     (i) => i.bridge,
-    () => 0,
+    () => {
+      bridge = null;
+      return 0;
+    },
   ));
+
+/** Tests only: forget the shell's version. */
+export const resetHaptics = () => {
+  bridge = null;
+  played.length = 0;
+};
 
 /** The moments played, in development and previews, so a journey can check them in a browser. */
 export const played: Haptic[] = [];
@@ -35,9 +45,9 @@ if (__SEN_ENV__ !== 'production' && typeof window !== 'undefined')
 export function haptic(kind: Haptic) {
   if (__SEN_ENV__ !== 'production') played.push(kind);
   if (inShell()) {
-    void bridgeVersion().then((v) => {
-      if (v >= 2) return SenShell.haptic({ kind: NATIVE[kind] }).catch(() => undefined);
-      if (kind === 'long-press') return Haptics.impact({ style: ImpactStyle.Light }).catch(() => undefined);
+    void bridgeVersion().then(async (v) => {
+      if (v >= 2) await SenShell.haptic({ kind: NATIVE[kind] }).catch(() => undefined);
+      else if (kind === 'long-press') await Haptics.impact({ style: ImpactStyle.Light }).catch(() => undefined);
     });
     return;
   }

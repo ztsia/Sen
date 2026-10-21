@@ -124,7 +124,9 @@ test('FLOW-3 shared amount unique; text never in between (AC-6, AC-15)', async (
   );
   console.log('sen per row', JSON.stringify([...new Set(counts)]), 'rows', counts.length);
   expect(Math.max(...counts)).toBe(1);
-  const ids = await page.evaluate(() => [...document.querySelectorAll('[data-share]')].map((r) => r.getAttribute('data-share')));
+  const ids = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-share]')].map((r) => r.getAttribute('data-share')),
+  );
   expect(new Set(ids).size).toBe(ids.length);
   const row = page.locator('[data-share]').first();
   const amount = (await row.locator('[data-sen]').innerText()).trim();
@@ -151,7 +153,9 @@ test('FLOW-3 shared amount unique; text never in between (AC-6, AC-15)', async (
   console.log('share css', css);
   // the named elements after the transition: none outside it
   const named = await page.evaluate(() =>
-    [...document.querySelectorAll('*')].filter((e) => getComputedStyle(e).viewTransitionName !== 'none' && e !== document.documentElement).map((e) => `${e.tagName}:${getComputedStyle(e).viewTransitionName}`),
+    [...document.querySelectorAll('*')]
+      .filter((e) => getComputedStyle(e).viewTransitionName !== 'none' && e !== document.documentElement)
+      .map((e) => `${e.tagName}:${getComputedStyle(e).viewTransitionName}`),
   );
   console.log('named after', JSON.stringify(named));
   expect(named).toEqual([]);
@@ -164,7 +168,10 @@ test('FLOW-3b shared amount on an account list (AC-6)', async ({ page }) => {
   const errors = watch(page);
   await recordVT(page);
   await open(page, '/s/accounts');
-  const acct = page.locator('button, a').filter({ hasText: /Ryt|Touch|Public|Grab|TNG/i }).first();
+  const acct = page
+    .locator('button, a')
+    .filter({ hasText: /Ryt|Touch|Public|Grab|TNG/i })
+    .first();
   await acct.click();
   await page.waitForTimeout(500);
   console.log('account url', page.url());
