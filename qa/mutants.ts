@@ -26,7 +26,17 @@ export const SUITES = {
   // the lived-in deploy journeys (apps/web/e2e/lived.spec.ts): two builds, a service worker
   deploy: ['pnpm', '--filter', '@sen/web', 'exec', 'playwright', 'test', '-c', 'e2e/lived.config.ts', '-g', 'deploy'],
   // the web app's pure motion and haptics (B05 · Feel)
-  feel: ['pnpm', 'exec', 'vitest', 'run', '--project', 'web', 'apps/web/src/frame', 'apps/web/src/lib'],
+  feel: [
+    'pnpm',
+    'exec',
+    'vitest',
+    'run',
+    '--project',
+    'web',
+    'apps/web/src/frame',
+    'apps/web/src/lib',
+    'apps/web/src/components',
+  ],
   // the motion journeys with motion on (apps/web/e2e/motion.spec.ts)
   motion: ['pnpm', '--filter', '@sen/web', 'exec', 'playwright', 'test', 'e2e/motion.spec.ts', '--project', 'preview'],
 } as const;
@@ -176,10 +186,35 @@ export const MUTANTS: Mutant[] = [
     id: 'sheet-jumps',
     breaks: 'a sheet changing step jumps to its new height',
     file: 'apps/web/src/frame/motion.ts',
-    find: `      sheet.animate(`,
-    replace: `      (() => undefined)(`,
+    find: `{ duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' },`,
+    replace: `{ duration: 0 },`,
     suite: 'motion',
   },
+  {
+    id: 'sheet-too-slow',
+    breaks: 'a sheet changing step creeps to its new height for seconds (QA B05 Feel run 2, 1)',
+    file: 'apps/web/src/frame/motion.ts',
+    find: `{ duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' },`,
+    replace: `{ duration: 3000, easing: 'cubic-bezier(0.2, 0, 0, 1)' },`,
+    suite: 'motion',
+  },
+  {
+    id: 'reject-while-typing',
+    breaks: 'the phone buzzes at an error shown while typing, or on load (QA B05 Feel run 2, 9)',
+    file: 'apps/web/src/components/ui/field.tsx',
+    find: `if (shown && justCommitted()) haptic('reject');`,
+    replace: `if (shown) haptic('reject');`,
+    suite: 'feel',
+  },
+  {
+    id: 'home-index-stale',
+    breaks: 'the Home tab, tapped soon after leaving Home, lands on the next tab instead (QA B05 Feel run 2, 2)',
+    file: 'apps/web/src/frame/tab-bar.tsx',
+    find: ` && history.location.pathname === '/') homeIndex`,
+    replace: `) homeIndex`,
+    suite: 'motion',
+  },
+
   {
     id: 'ripple-on-switch',
     breaks: 'a switch shows a ripple over its own thumb',

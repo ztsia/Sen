@@ -84,21 +84,26 @@ test.describe('with motion on', () => {
     await page.waitForTimeout(600);
     await page.evaluate(() => {
       const d = document.querySelector('[role=dialog]')!;
-      const w = window as unknown as { __h: number[] };
+      const w = window as unknown as { __h: [number, number][] };
       w.__h = [];
       const t0 = performance.now();
       const tick = () => {
-        w.__h.push(Math.round(d.getBoundingClientRect().height));
-        if (performance.now() - t0 < 500) requestAnimationFrame(tick);
+        w.__h.push([performance.now() - t0, Math.round(d.getBoundingClientRect().height)]);
+        if (performance.now() - t0 < 1200) requestAnimationFrame(tick);
       };
       tick();
     });
     const options = sheet.locator('button').filter({ hasNotText: /close/i });
     await options.nth((await options.count()) - 1).click();
-    await page.waitForTimeout(600);
-    const heights = await page.evaluate(() => (window as unknown as { __h: number[] }).__h);
-    // more than the two end heights: it passed through the ones between
+    await page.waitForTimeout(1400);
+    const samples = await page.evaluate(() => (window as unknown as { __h: [number, number][] }).__h);
+    const heights = samples.map(([, h]) => h);
+    // it passes through the heights between the two ends, and settles within its 200 ms (plus the tap)
     expect(new Set(heights).size, JSON.stringify(heights)).toBeGreaterThan(3);
+    const changes = samples.filter(([, h], i) => i > 0 && h !== samples[i - 1]![1]);
+    const first = changes[0]![0];
+    const last = changes[changes.length - 1]![0];
+    expect(last - first, JSON.stringify(samples)).toBeLessThan(450);
   });
 
   test('answering a Review row clears it in motion, and Undo brings it back', async ({ page }) => {

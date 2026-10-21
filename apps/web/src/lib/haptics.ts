@@ -34,6 +34,7 @@ const bridgeVersion = () =>
 /** Tests only: forget the shell's version. */
 export const resetHaptics = () => {
   bridge = null;
+  committed = -Infinity;
   played.length = 0;
 };
 
@@ -41,6 +42,18 @@ export const resetHaptics = () => {
 export const played: Haptic[] = [];
 if (__SEN_ENV__ !== 'production' && typeof window !== 'undefined')
   (window as unknown as { __senHaptics: Haptic[] }).__senHaptics = played;
+
+// the last commit: a tap, or Enter in a field. Typing anything else clears it, so a refusal shown
+// while typing, or on load, is never felt.
+let committed = -Infinity;
+if (typeof document !== 'undefined') {
+  document.addEventListener('pointerdown', () => (committed = performance.now()), { capture: true, passive: true });
+  document.addEventListener('keydown', (e) => (committed = e.key === 'Enter' ? performance.now() : -Infinity), {
+    capture: true,
+  });
+}
+/** True within a second of a tap or Enter, with nothing typed since. */
+export const justCommitted = () => performance.now() - committed < 1000;
 
 export function haptic(kind: Haptic) {
   if (__SEN_ENV__ !== 'production') played.push(kind);

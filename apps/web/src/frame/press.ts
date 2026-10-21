@@ -4,7 +4,7 @@
 // shows as a tint, with no spread. The CSS is in styles/motion.css.
 
 const TAPPABLE =
-  'button, summary, a[href], label[for], [role=button], [role=tab], [role=radio], [role=menuitem], [role=menuitemradio], [role=option]';
+  'button, summary, a[href], label[for], label:has(input, [role=checkbox], [role=switch], [role=radio]), [role=button], [role=tab], [role=radio], [role=menuitem], [role=menuitemradio], [role=option]';
 // these draw their own response (a switch's thumb, a box's tick), or aren't a tap at all
 const SKIP = '[data-slot=switch], [data-slot=checkbox], [data-no-press], input, textarea, select';
 

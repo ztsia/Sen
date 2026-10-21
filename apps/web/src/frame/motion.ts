@@ -178,21 +178,28 @@ export function useSheetResize(): (el: HTMLElement | null) => void {
     const sheet = area?.parentElement;
     if (!area || !sheet || typeof ResizeObserver === 'undefined') return;
     let last = sheet.getBoundingClientRect().height;
+    // the animation itself resizes the area, so the observer ignores it while it runs, and compares
+    // the next change with where the last one ended (QA B05 Feel run 2, 1)
+    let running: Animation | null = null;
     const ro = new ResizeObserver(() => {
+      if (running) return;
       const now = sheet.getBoundingClientRect().height;
       const from = last;
       last = now;
       if (!from || Math.abs(now - from) < 2 || reducedMotionNow()) return;
-      sheet.animate(
+      running = sheet.animate(
         [
           { height: `${from}px`, overflow: 'hidden' },
           { height: `${now}px`, overflow: 'hidden' },
         ],
-        {
-          duration: 200,
-          easing: 'cubic-bezier(0.2, 0, 0, 1)',
-        },
+        { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
       );
+      const done = () => {
+        running = null;
+        last = sheet.getBoundingClientRect().height;
+      };
+      running.onfinish = done;
+      running.oncancel = done;
     });
     ro.observe(area);
     return () => ro.disconnect();

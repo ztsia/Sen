@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { open, recordVT } from './b05feel-lib';
+import { recordVT } from './b05feel-lib';
 
 // Is the Home tab from a pushed screen unreliable (apps/web/e2e/motion.spec.ts fails ~10% under load)?
 test('Home from Payments (More -> Payments -> Home), cold context each time, with history traced', async ({

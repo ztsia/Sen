@@ -54,7 +54,10 @@ export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
 
   useEffect(() => {
     const st = history.location.state as { senSheet?: string };
-    if (active === 'home' && !st.senSheet) homeIndex = historyIndex(st);
+    // only while Home is the address: a render still showing Home while history has moved on (a view
+    // transition commits the next screen a moment later) would record the next screen's step (QA B05
+    // Feel run 2, 2)
+    if (active === 'home' && !st.senSheet && history.location.pathname === '/') homeIndex = historyIndex(st);
   });
   const toHome = (e: MouseEvent) => {
     if (active === 'home' || e.metaKey || e.ctrlKey) return;

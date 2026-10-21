@@ -60,7 +60,7 @@ async function shellPage(browser: Browser, mode: 'v1' | 'v2' | 'throw' | 'infoth
     );
   return { ctx, page, errors, calls };
 }
-const kinds = (c: string[]) => c.map((s) => (s.match(/"kind":"([^"]+)"/) ?? [, s])[1]);
+const kinds = (c: string[]) => c.map((s) => s.match(/"kind":"([^"]+)"/)?.[1] ?? s);
 
 test('R2-23 bridge 2: one call per moment; none on load or scroll', async ({ browser }) => {
   const { ctx, page, errors, calls } = await shellPage(browser, 'v2');
