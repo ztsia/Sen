@@ -175,3 +175,27 @@ FLOW-R2-11 Core: first-run, pay-new, scan-after                 (happy)
 
 (Run 2, as walked: the specs are `qa/e2e/b05feel2-*.spec.ts`; `b05feel2.config.ts` says how to serve them. The
 probes `b05feel2-homeflake`, `-sheetsettle` and `-sheetwobble` fail today by design: each pins a finding.)
+
+---
+
+# Run 3
+
+FLOW-R3-1  Payments to a detail and back, motion on          (happy)
+        Entry  Payments, 412x915, motion on
+        Steps  1. tap a row  2. read the animation  3. Done / back
+        Ends   forward then back types; 200 ms; amount shared; one transition name at a time
+        Covers R3-1, R3-2, R3-5, R3-6, R3-12, R3-22
+FLOW-R3-2  The same in reduced motion                         (sad)
+        Ends   no `screen` animation; the same destinations. Covers R3-1s, R3-23
+FLOW-R3-3  Ten tab taps in a second, then a tap from a pushed screen   (sad)
+        Ends   last tab wins, no overlay; tab bar not animated. Covers R3-3, R3-3s
+FLOW-R3-4  A Review row cleared, with and without a slow API   (happy/sad)
+        Ends   one fewer row, gap closes; a slow write never freezes. Covers R3-11, R3-15
+FLOW-R3-5  Haptic moments with a fake bridge                   (happy/sad)
+        Ends   the exact list of calls; none on scroll or plain tap; version 1 and no bridge are quiet.
+        Covers R3-16, R3-16s, R3-17
+FLOW-R3-6  Back at the start, a duplicate amount, and no `startViewTransition`   (sad)
+        Covers R3-2s, R3-5s, R3-7
+FLOW-R3-7  Six looks: the same push, and a look change           (happy)
+        Covers R3-25, R3-26
+Then the core journeys `first-run`, `pay-new` and `scan-after` once each (docs/flows.md).

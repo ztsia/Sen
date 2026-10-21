@@ -468,3 +468,96 @@ R2-39 The tests stay reliable with motion in the build
       Then   `own-transfer` and the Home-tab motion test pass every time, as on `main`; the feel pass's journeys
              (`scan-after`, `subscription`) pass as often as on `main`
       Spec   brief *Done when* (*The tests stay reliable*)
+
+---
+
+# Run 3 (a fresh full run, tier 3, after run 2's fixes)
+
+Written from `docs/briefs/B05-feel.md`, `docs/decisions.md` D139 and D140, `docs/ui/patterns.md` §8,
+`docs/flows.md` (core journeys) and `spec_v2.md` §5.1/§17, **before** any source was read and before
+the earlier runs' sections were re-read. A criterion that was already here keeps its old id; these are
+the run's own, numbered R3-.
+
+**Screen transitions**
+R3-1  Forward push
+      Given  Payments, motion on
+      When   the owner taps a payment row
+      Then   a view transition of type `forward` runs: the region `screen` animates with a 200 ms
+             duration and `cubic-bezier(0.2, 0, 0, 1)`; the new page slides in from the right
+      Spec   D140, patterns §8
+R3-1s Sad twin: with `prefers-reduced-motion: reduce` the same tap changes screen with no `screen`
+      animation of any length (0 or none), and the destination is the same
+R3-2  Back reverses: the back button, `history.back()` (the gesture) and *Done* each run type `back`;
+      after it the previous screen's scroll and content are what they were
+R3-2s Sad twin: back from the first entry in history (no earlier entry) leaves the app on its screen,
+      throws nothing, and leaves no transition overlay
+R3-3  Tab switch crossfades: no translate on the `screen` region; the tab bar and Sen's button are
+      not inside the animated region (their box doesn't move or fade during it); also from a pushed
+      screen
+R3-3s Sad twin: ten tab taps in 1 s end on the last tab tapped, with the right screen and no stuck
+      overlay (`::view-transition` gone, `document` takes taps)
+R3-4  A sheet opening or closing moves no screen: no view transition starts for its history step
+R3-5  Shared amount: the tapped row's amount and the detail's figure share one transition name,
+      and the name is on one element at a time (a duplicate name makes the browser abort)
+R3-5s Sad twin: two payments with the same amount in the list; tapping the second still lands on
+      its own detail, with the right payee
+R3-6  Taps are blocked while a transition runs: a second tap 50 ms after the first has no effect;
+      a tap after the 200 ms does
+R3-7  A browser with no `startViewTransition` navigates at once and logs no error
+
+**Press feedback**
+R3-8  Ripple on `pointerdown`: for a button, a chip, a list row, a tab and Sen's button, the ripple
+      exists in the same frame as the pointerdown (before pointerup)
+R3-8s Sad twin: a switch, a checkbox, a `[data-no-press]` element and a disabled button get none
+R3-9  Reduced motion: the ripple is a tint without spreading (no scale animation)
+R3-10 The ripple is drawn in shadcn parts/blocks and the one listener, never at a call site: no
+      `ripple` or `onPointerDown` effect in `apps/web/src/screens/`
+
+**Change motion**
+R3-11 Review: clearing a row slides it out and the rows below close the gap; at the end the list is
+      the data (row count down by one, no ghost)
+R3-11s Sad twin: reduced motion, the row is gone at once; a failed write keeps the row, never a ghost
+R3-12 Money never counts: sampling every amount's text each frame through a push, a back, a tab
+      switch, a Review clear and a sheet resize shows only values that exist in the data
+R3-13 A toast slides in and out; a skeleton fades into its content, with no flash of empty
+R3-14 A sheet whose content changes eases to the new height, with no jump to a third height
+R3-15 A network round trip never freezes the screen: with `/api` slowed 2 s, the screen stays
+      live and taps answer
+
+**Haptics**
+R3-16 `SenShell.haptic` is called once for each of: a change with Undo (confirm), Undo, a field error
+      after a tap (reject), Scan's 500 ms long-press, a switch on and a switch off
+R3-16s Sad twin: none on scroll, on a plain tap, or on a field error on page load (no tap)
+R3-17 No bridge (a browser), and a bridge that reports version 1: no call, no error, the action
+      still happens
+R3-18 The Kotlin side uses Android's haptic constants through the view (so the phone's setting rules)
+      and `ShellTest` calls it; a bad `kind` is rejected, not crashed on
+R3-19 The bridge answers no other origin: `haptic` from a foreign origin is refused
+
+**Speed and smoothness**
+R3-20 Every tap's first visible change is within 100 ms, in the feel pass's capture
+R3-21 Transitions hold 60 fps with the CPU slowed 4× (`frame-times`), push, back and tab
+R3-22 No layout shift from motion (CLS 0 through a push, a back and a tab switch)
+
+**Reduced motion**
+R3-23 A whole journey with `reducedMotion: 'reduce'` has no animations running on any region
+      (`document.getAnimations()` empty after each step), and every step lands
+R3-24 The functional suite runs with reduced motion; the feel pass with it off, per the brief
+
+**Looks**
+R3-25 Six looks, one motion: 200 ms and the same easing in each; each look's own tab `switch`,
+      figure, avatar and reveal are as `main` leaves them
+R3-26 Switching the look (the reveal) still works with view transitions in place
+
+**Docs and non-negotiables**
+R3-27 `patterns.md` §8 is the contract and matches the built numbers (200 ms, the easing, 100 ms,
+      the haptic moments); the `uiux` checklist and `qa-eyes` have the feel items; `docs/local.md`
+      has the new-APK step
+R3-28 Money: no float, no `toFixed`/`parseFloat`/`Math.round` on money in the diff; no money counted
+      by an animation (a count-up library or a rAF counter)
+R3-29 No migration, no schema or RLS change in the diff, and `pnpm test:db` is green
+R3-30 No secret, no third-party script or font in the built output; the CSP is unchanged
+R3-31 Trees: changed only where a screen gains an element; every changed tree is the new element
+R3-32 Edited shadcn files carry a `// Sen:` note on their first line; no parallel hand-rolled part
+R3-33 Tests have teeth: removing the push, the back type, the reduced-motion rule, the ripple, the
+      haptic call or the version check turns a suite red
