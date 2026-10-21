@@ -109,3 +109,69 @@ FLOW-13 Core: `scan-after`                                                     (
 | FLOW-13 Core: scan-after with motion on, and at 4x CPU | pass | crop, Reading receipt…, confirm, three people RM21.38, Attached to RM64.13 on Ryt Bank with Undo; 0 console errors |
 
 FLOW-11 to FLOW-13 are the core journeys. FLOW-11 and FLOW-12 were walked by the repo's `journeys.spec` (reduced motion in `pnpm e2e`, motion on in the metrics runs), FLOW-13 by `qa/e2e/b05feel-core.spec.ts`.
+
+---
+
+# Run 2
+
+Written from the brief, D140 and patterns §8 before reading any code. Phone 412x915, Minted light unless said.
+
+FLOW-R2-1  Push and pop                                         (happy)
+        Entry  `/payments` (More → Payments), motion on
+        Steps  1. tap a payment row  2. wait for the transition  3. back by the button
+               4. tap a row again, then `history.back()`  5. tap a row, then Done where the screen has one
+        Ends   each step lands on the right screen; a transition ran for push and pop (200 ms); the
+               detail's amount matches the row's
+        Covers R2-1, R2-2, R2-6, R2-7
+
+FLOW-R2-2  Tabs                                                 (happy)
+        Entry  Home
+        Steps  1. tap Insights  2. tap Money  3. push into a detail, then tap Home from it
+        Ends   crossfade each time, never a slide; the tab bar never inside the captured region
+        Covers R2-3, R2-4
+
+FLOW-R2-3  Ripple on every kind                                 (happy)
+        Steps  `pointerdown` without release on a button, a row, a chip, a tab, Sen's button, a disabled
+               button, a switch; release, drag off, scroll
+        Ends   ripple exists for the first five within a frame; none for disabled/switch; none left over
+        Covers R2-11, R2-12, R2-14
+
+FLOW-R2-4  Review: clear a row, with Undo                       (happy)
+        Steps  1. open Review  2. resolve the first row  3. Undo from the toast
+        Ends   the row slides out, others close the gap; toast slides in and out; Undo brings it back;
+               one confirm haptic, one Undo haptic; the stored result matches the screen
+        Covers R2-15, R2-16, R2-23
+
+FLOW-R2-5  Reduced motion                                       (sad twin of all motion)
+        Steps  emulate reduced motion; run FLOW-R2-1, -2, -4
+        Ends   no animation; the screen changes at once; the ripple a tint only
+        Covers R2-19
+
+FLOW-R2-6  No View Transitions API                              (sad)
+        Steps  delete `document.startViewTransition` before load; walk FLOW-R2-1 and -2
+        Ends   navigation works, no console error. Covers R2-9
+
+FLOW-R2-7  Hammering                                            (sad)
+        Steps  tap a row and back at once; tab, tab, tab within 100 ms; a push then the back gesture mid-transition
+        Ends   last request wins; not blank; taps work again within 300 ms. Covers R2-7, R2-10
+
+FLOW-R2-8  Haptics through a fake shell, and without one        (happy + sad)
+        Steps  install a fake bridge at version 2: toggle a switch on and off, confirm with Undo, Undo,
+               a field error after a tap, a long-press on Scan, scroll, load; repeat with a bridge at
+               version 1 and with none
+        Ends   calls: one per moment, none on scroll/load; v1 and none: zero calls and no error. Covers R2-22, R2-23
+
+FLOW-R2-9  Sheets and skeletons                                 (happy)
+        Steps  open and close a sheet; a sheet with a step/error that changes its height; load a screen from cold
+        Ends   no screen transition for the sheet; the height eases; skeleton fades to content, CLS 0. Covers R2-5, R2-17, R2-18, R2-27
+
+FLOW-R2-10 Six looks                                            (happy)
+        Steps  FLOW-R2-1 in each of six looks
+        Ends   same duration and easing; each look's tab `switch` still plays. Covers R2-28
+
+FLOW-R2-11 Core: first-run, pay-new, scan-after                 (happy)
+        Entry  per `docs/flows.md`, with the dev simulator, motion on
+        Ends   each journey's *Done* state. Covers R2-36
+
+(Run 2, as walked: the specs are `qa/e2e/b05feel2-*.spec.ts`; `b05feel2.config.ts` says how to serve them. The
+probes `b05feel2-homeflake`, `-sheetsettle` and `-sheetwobble` fail today by design: each pins a finding.)

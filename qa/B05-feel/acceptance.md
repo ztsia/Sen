@@ -323,3 +323,148 @@ AC-37  One navigation and one set of patterns
 | AC-35 | pass | new toFixed/Math.round only in scripts/frame-times.mjs for milliseconds; lint green |
 | AC-36 | pass | dist-production grep: no key, DB URL or token; only w3.org/react.dev/localhost strings; no new dependency |
 | AC-37 | fail | the shared modules are used and no `active:` tints remain; but `pnpm typecheck` fails (finding 1), and the sheet hook is dead (finding 2) |
+
+---
+
+# Run 2 (fresh full run, after run 1's fixes)
+
+Written from `docs/briefs/B05-feel.md`, D140, `docs/ui/patterns.md` §8, spec §5.1/§17 and `CLAUDE.md`
+only, before reading the implementation, run 1's criteria or its report. IDs are `R2-n`.
+
+**Motion**
+
+R2-1  A forward push plays
+      Given  Payments, in Minted light, motion on
+      When   a payment row is tapped
+      Then   the detail screen is shown after a view transition; the `screen` region's new image
+             animates in from the right for 200 ms with easing `cubic-bezier(0.2, 0, 0, 1)`
+      Spec   brief §What it builds 1; D140; patterns §8
+R2-2  Back reverses, whatever starts it
+      When   back is made by the back button, by `history.back()` (the back gesture) and by Done
+      Then   each plays the pop (old image slides out to the right, 200 ms), and ends on the previous screen
+      Spec   D140, patterns §8
+R2-3  A tab switch crossfades, the tab bar stays live
+      When   another tab is tapped
+      Then   the screen region crossfades (no slide); the tab bar and Sen's button are not inside the
+             captured region (they don't move or ghost during the transition); the look's own `switch` plays on the bar
+      Spec   brief 1; D140
+R2-4  A tab tapped from a pushed screen crossfades, it doesn't pop or push
+      Spec   patterns §8
+R2-5  A sheet moves no screen
+      When   a sheet opens and closes (its own history step)
+      Then   no screen transition runs (no push, no crossfade of the screen region); the sheet itself rises and falls
+      Spec   brief 1, patterns §8
+R2-6  The shared amount
+      When   a payment row opens its detail
+      Then   the row's amount and the detail's amount share one transition name and the amount stays
+             in place (it is never counted up or down; only the old or new text is ever shown)
+      Spec   brief 1, patterns §8
+R2-7  Taps are blocked while a screen transition runs, and work after
+      When   a second tap lands during the 200 ms of a push
+      Then   it doesn't navigate again or double-act; a tap after the transition ends works
+      Sad    the block never sticks: after a transition, interrupted or not, `pointer-events` is back
+      Spec   D140 (*taps are blocked while a view transition runs*), patterns §8 *Speed*
+R2-8  Money never counts
+      Given  an amount on screen whose value changes (a Review row clears, a balance changes, a shared amount)
+      When   sampled every frame through the change
+      Then   the text only ever equals the old or the new value
+      Spec   brief 3, patterns §8, CLAUDE.md money rule
+R2-9  Browser without the View Transitions API
+      Then   every navigation still works with no error (sad twin of R2-1)
+      Spec   brief 1 (graceful), patterns §8
+R2-10 Interrupted transitions
+      When   navigation is hit again mid-transition (forward, then back at once; tab, tab)
+      Then   the app lands on the last requested screen, never blank, never stuck, with no console error
+      Spec   brief *Done when* (no flaky motion)
+
+**Press feedback**
+
+R2-11 A ripple within one frame on every tappable kind
+      When   `pointerdown` lands on a button, a list row (`NavRow`, `Item`, `ListRow`), a chip, a tab, Sen's button
+      Then   a ripple element/animation exists in the same frame (before `pointerup`), centred on the finger
+      Spec   brief 2, D140
+R2-12 No ripple where it doesn't belong
+      Then   none on a disabled control, none on switches and checkboxes (they've the haptic/toggle), and
+             the ripple never shifts layout (CLS 0) or intercepts the click (the click still reaches the target)
+      Spec   brief 2, patterns §8
+R2-13 The ripple is in the part, not at a call site
+      Then   `className` at call sites holds no press styling; modified shadcn files carry a `// Sen:` note
+      Spec   CLAUDE.md *shadcn first*, brief 2
+R2-14 Pressing and dragging off, or scrolling, cancels cleanly
+      Then   no ripple left stuck on screen after `pointercancel`/`pointerleave`/scroll
+
+**Change motion**
+
+R2-15 A Review row clears
+      When   a Review row is resolved
+      Then   it slides out and the rows below close the gap, over ~200 ms; the row's write is still correct in the database
+      Sad    a failed write leaves the row (never vanishes while the server refused)
+      Spec   brief 3
+R2-16 Rows added or removed elsewhere, and toasts, slide in and out
+R2-17 A skeleton fades into its content, with no layout shift (CLS 0)
+R2-18 A sheet whose content changes eases to its new height
+      Spec   brief 3
+
+**Reduced motion**
+
+R2-19 With `prefers-reduced-motion: reduce`, screen changes and change motion happen at once
+      (no view-transition animation, no slide), the ripple stays as a tint without spreading, the
+      avatar holds one still frame, nothing loops. Sad: with motion on, they all play.
+      Spec   brief 5, patterns §8
+R2-20 Haptics respect the system touch-feedback setting (the call goes through Android's own feedback
+      constants, not a bare vibrator), so *off* means silent
+      Spec   brief 5, patterns §8
+
+**Haptics**
+
+R2-21 The bridge gains exactly one method; the bridge version is raised; nothing existing changes
+      Spec   brief 4, spec §5.1 (*methods only ever added*)
+R2-22 The web app checks the shell's version before calling; on an older shell and in a browser nothing is called and nothing throws
+      Spec   brief 4
+R2-23 Haptics fire on: change-with-Undo (confirm), Undo, an error after a tap (reject), a long-press, a
+      toggle on and off. Exactly once per moment. Never on scroll, never on every tap, never on page load,
+      never on an error nobody caused by tapping.
+      Sad    a double-tap on the toast's Undo fires Undo's haptic once; an unknown kind is a no-op, not a crash
+      Spec   brief 4, patterns §8
+R2-24 The bridge call answers only our own origin (§17), also for the new method
+      Spec   spec §17
+
+**Speed and smoothness**
+
+R2-25 Every tap's first visible change within 100 ms (QA's latency limits), a screen transition included
+R2-26 Transitions hold 60 fps with CPU 4x in every look (`frame-times`); flagged otherwise
+R2-27 No layout shift from motion (CLS 0 across a push, a tab switch, a sheet, a skeleton)
+      Spec   brief *Done when*
+
+**Looks**
+
+R2-28 One motion for six looks: 200 ms / same easing in every look; each look keeps its own tab-bar `switch`
+      Spec   D140
+R2-29 A new/unknown look still gets the shared motion (no per-look list to forget)
+
+**Tests, docs, non-negotiables**
+
+R2-30 Functional e2e runs with reduced motion; the feel pass with motion on; accessibility trees change only where a screen gained an element
+      Spec   brief *Done when*
+R2-31 `patterns.md` §8 is the contract; the `uiux` checklist has the feel items; `qa-eyes` asks about transitions; `docs/local.md` has the APK update step; D140 recorded
+      Spec   brief 7
+R2-32 No money in a float, anywhere in the diff; the no-float lint passes and has teeth
+      Spec   CLAUDE.md
+R2-33 No third-party script, no new origin, no secret in the built bundle; no real data in fixtures; the motion demo isn't in a production build
+      Spec   CLAUDE.md, brief (*The motion demo is gone*)
+R2-34 No migration, schema, RLS or API route in the diff (so phase 4 doesn't apply)
+R2-35 Touch targets stay 48 px and contrast stays, with the ripple on
+      Spec   patterns §8
+R2-36 Core journeys `first-run`, `pay-new`, `scan-after` pass with motion on, with the shell's dev simulator
+      Spec   docs/flows.md (D124)
+R2-37 Focus: after a push and after back, keyboard focus is on a sensible element (not lost to `body` where it was before) and the focus ring isn't hidden by the ripple
+
+R2-38 The Home tab from a pushed screen lands on Home
+      Given  Home, then More, then Payments (two pushes), in the first seconds after load
+      When   the Home tab is tapped
+      Then   the page is `/` (Home), as on `main`; never `/more`
+      Spec   patterns.md §6 (*the Home tab goes back to Home's own step*), D68
+R2-39 The tests stay reliable with motion in the build
+      Then   `own-transfer` and the Home-tab motion test pass every time, as on `main`; the feel pass's journeys
+             (`scan-after`, `subscription`) pass as often as on `main`
+      Spec   brief *Done when* (*The tests stay reliable*)

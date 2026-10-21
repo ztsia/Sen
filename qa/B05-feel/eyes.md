@@ -17,3 +17,12 @@ channel (anti-aliasing), so there are no changed screens to look at full size. W
 
 I did not look at the motion's smoothness at speed (stills only), and no filmstrip of a push step
 was among those I opened.
+
+## Run 2: not run
+
+The run-2 reviewer had no Agent tool, so `qa-eyes` (Opus) was not spawned. The main session should spawn it
+with the diff report (`qa-artifacts/B05-feel/diff/index.md`), asking it to look hard at the filmstrips
+`fix/4` and `split-stuck/2` (the sheet's creep, QA run 2 finding 1), `email-setup/1` (about 350 ms before the
+slide starts), `ask/4`, and the stills `FLOW-R2-9-step-1..6` (a sheet's top edge dropping from y=168 to y=292
+over 2.5 s). From a filmstrip (read by the run-2 reviewer, not an eyes pass): `fix/4` shows the short sheet
+in place at 250 ms and then drifting for the rest of the second.
