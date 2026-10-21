@@ -19,6 +19,24 @@ Fixed in `b46c021`, except where it says otherwise.
 
 **The batch takes tier 3** (fixes 2, 3 and 5 reach shared code), so a fresh full run follows.
 
+## Run 2 (full): fix first, 3 Major, 4 Minor
+
+Fixed in `d30fa4a`.
+
+| # | Sev | Fix | Tier, and why |
+|---|---|---|---|
+| 1 | Major | The sheet's height animation fed its own ResizeObserver: 135 `animate()` calls from one tap, and 3 s of creeping. Now one animation runs at a time, and the next change is measured from where it ended. `motion.spec` now pins the duration too (the last height change within 450 ms of the first). Mutants `sheet-jumps` and `sheet-too-slow` are killed. | 3: the Sheet block. |
+| 2 | Major | A render still showing Home, while history had already moved on, recorded the next tab's history step as Home's. Home's step is now recorded only while `/` is the address. *Home tab* passed 40 of 40, where it failed about 10% before. No mutant: only a timing race shows it, so a single run can't judge it. | 3: the tab bar. |
+| 3 | Major | **Cause found.** The Payments list guessed a row at 56 px and a day header at 40 px; they measure 58 to 74 px and 34 px. Until the list measured them, a taller row covered the next for a frame. The flake predates B05, and B05's extra work made the race likelier. The guesses are now 58 and 34 px. `own-transfer` passed 40 of 40. | 2: one screen. |
+| 4 | Minor | **Watched.** In the feel pass at 4× CPU, `scan-after` failed 6 of 12 (2 of 12 on `main`) and `subscription` 1 of 12. Both are timing-bound journeys under a slowed CPU. Run 3 re-measures. | None. |
+| 5 | Minor | **Accepted** (run 1, 6): a push costs about 100 ms more before the new screen's first frame at 4× CPU: the capture plus the motion. The ripple answers within one frame, so the first visible change stays under 100 ms. The owner judges the rest on the phone. | None. |
+| 6 | Minor | A `<label>` row around a checkbox, switch or radio gets the ripple. | 2. |
+| 7 | Minor | `reject-while-typing` is pinned by `field.test.tsx` (a tap, Enter, typing, and an error on load). **Left without a test:** the ripple on a disabled control (no screen has one that can be pressed); the skeleton's fade; `canTransition()`'s check, which only a browser without view transitions shows; the shared-amount id check (ids are UUIDs). Kotlin's `hapticConstant` mapping is read, not tested. | 1: tests. |
+| 9 | Note | The error haptic now follows a tap or Enter (`justCommitted`), so an error shown on load, or after Enter, is right too. | 2. |
+
+**The batch takes tier 3** (fixes 1 and 2), so run 3 is a fresh full run. The main session spawns
+`qa-eyes` once the diff report exists, since the reviewer can't.
+
 ## Retro
 
 Run 1 came late on two things:
