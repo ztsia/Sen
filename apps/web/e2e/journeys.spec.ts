@@ -141,6 +141,9 @@ export const JOURNEYS: Record<string, Journey> = {
     await page.getByText('Payments', { exact: true }).click();
     await settled(page);
     await page.getByRole('searchbox', { name: 'Search payments' }).fill('Public Bank');
+    // the search runs 200 ms after typing stops, and this row is in the unfiltered list too: wait for the
+    // search itself, or the step reads the list as it swaps (QA B05 Feel runs 1-3)
+    await expect(page.getByRole('status').filter({ hasText: /payments? match/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Public Bank → Ryt Bank/ }).first()).toBeVisible();
     await shot('one row, filled in');
   },

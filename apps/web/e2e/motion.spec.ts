@@ -31,7 +31,24 @@ test.describe('with motion on', () => {
     const row = page.locator('[data-share]').first();
     await expect(row).toBeVisible();
     const id = await row.getAttribute('data-share');
+    // the push itself: the new screen slides in from the right, in D140's 200 ms
+    await page.evaluate(() => {
+      const w = window as unknown as { __push: string[] };
+      w.__push = [];
+      const look = () => {
+        for (const a of document.getAnimations()) {
+          const e = a.effect as KeyframeEffect | null;
+          if (e?.pseudoElement === '::view-transition-new(screen)')
+            w.__push.push(`${(a as CSSAnimation).animationName} ${e.getTiming().duration}`);
+        }
+        if (!w.__push.length) requestAnimationFrame(look);
+      };
+      requestAnimationFrame(look);
+    });
     await row.click();
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { __push: string[] }).__push))
+      .toEqual(['sen-in-right 200']);
     await expect(page).toHaveURL(/\/s\/txn/);
     // the tapped payment's amount is the one shared element
     await expect
@@ -160,6 +177,20 @@ test('a press shows in the first frame, from the finger, and leaves nothing behi
   await page.mouse.down();
   await expect(toggle.locator('.press')).toHaveCount(0);
   await page.mouse.up();
+});
+
+test("haptics: Scan's long-press", async ({ page }) => {
+  await open(page, '/');
+  const scan = page.locator('[data-k=scan]');
+  const b = (await scan.boundingBox())!;
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(700);
+  await page.mouse.up();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { __senHaptics: string[] }).__senHaptics)).toContain(
+    'long-press',
+  );
 });
 
 test('haptics: a toggle, a change with Undo, and Undo', async ({ page }) => {

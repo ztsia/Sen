@@ -35,10 +35,15 @@ function press(e: PointerEvent) {
   el.append(clip);
 
   const shown = performance.now();
-  const release = () => {
+  const release = (ev: PointerEvent) => {
     window.removeEventListener('pointerup', release, true);
     window.removeEventListener('pointercancel', release, true);
     delete el.dataset.pressed;
+    // a scroll that began on the row cancels the press: the ripple goes at once, so scrolling never flashes
+    if (ev.type === 'pointercancel') {
+      clip.remove();
+      return;
+    }
     // a quick tap still shows the spread for a moment before it fades
     const wait = Math.max(0, 120 - (performance.now() - shown));
     setTimeout(() => {

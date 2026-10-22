@@ -9,7 +9,6 @@ for (const [name, base] of [
   for (const path of ['/review', '/s/payments', '/']) {
     test(`R3-20 pointerdown cost ${name} ${path}`, async ({ browser }) => {
       test.setTimeout(120_000);
-      const res: number[][] = [];
       const ctx = await browser.newContext({
         viewport: { width: 390, height: 844 },
         deviceScaleFactor: 2,
@@ -55,11 +54,10 @@ for (const [name, base] of [
         await page.waitForTimeout(900);
       }
       const p: number[][] = await page.evaluate(() => (window as any).__p);
-      const med = (k: number) =>
-        p
-          .map((r) => r[k]!)
-          .sort((a, b) => a - b)
-          [Math.floor(p.length / 2)]!.toFixed(0);
+      const med = (k: number) => {
+        const sorted = p.map((r) => r[k]!).sort((a, b) => a - b);
+        return sorted[Math.floor(p.length / 2)]!.toFixed(0);
+      };
       console.log(
         `PRESSCOST ${name} ${path}: handler ms median ${med(0)}, pointerdown->2nd frame median ${med(1)} (n=${p.length})`,
       );

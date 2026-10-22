@@ -247,4 +247,28 @@ export const MUTANTS: Mutant[] = [
     replace: `if (v >= 0) await`,
     suite: 'feel',
   },
+  {
+    id: 'motion-slow',
+    breaks: "screens take two seconds to change, not D140's 200 ms",
+    file: 'apps/web/src/styles/motion.css',
+    find: `--motion-ms: 200ms;`,
+    replace: `--motion-ms: 2000ms;`,
+    suite: 'motion',
+  },
+  {
+    id: 'motion-forward-from-left',
+    breaks: 'an opened screen slides in from the left, like going back',
+    file: 'apps/web/src/styles/motion.css',
+    find: `animation: var(--motion-ms) var(--motion-ease) both sen-in-right;`,
+    replace: `animation: var(--motion-ms) var(--motion-ease) both sen-in-left;`,
+    suite: 'motion',
+  },
+  {
+    id: 'long-press-silent',
+    breaks: "Scan's long-press is never felt",
+    file: 'apps/web/src/lib/long-press.ts',
+    find: `haptic('long-press');`,
+    replace: ``,
+    suite: 'motion',
+  },
 ];
