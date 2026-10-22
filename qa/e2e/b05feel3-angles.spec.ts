@@ -10,7 +10,9 @@ test('R3-5 every [data-share] id appears once, and holds exactly one amount', as
   let bad: string[] = [];
   for (let i = 0; i < 12; i++) {
     const r = await page.evaluate(() => {
-      const ids = [...document.querySelectorAll('[data-share]:not([data-share-figure])')].map((e) => e.getAttribute('data-share')!);
+      const ids = [...document.querySelectorAll('[data-share]:not([data-share-figure])')].map((e) =>
+        e.getAttribute('data-share')!,
+      );
       const dup = ids.filter((x, i) => ids.indexOf(x) !== i);
       const multi = [...document.querySelectorAll('[data-share]:not([data-share-figure])')]
         .filter((e) => e.querySelectorAll('[data-sen]').length !== 1)
@@ -18,9 +20,14 @@ test('R3-5 every [data-share] id appears once, and holds exactly one amount', as
       return { ids, dup, multi };
     });
     seen.push(...r.ids);
-    bad = bad.concat(r.dup.map((d) => `dup ${d}`), r.multi);
+    bad = bad.concat(
+      r.dup.map((d) => `dup ${d}`),
+      r.multi,
+    );
     await page.evaluate(() => {
-      const s = [...document.querySelectorAll('main *')].find((e) => e.scrollHeight > e.clientHeight + 50 && /auto|scroll/.test(getComputedStyle(e).overflowY));
+      const s = [...document.querySelectorAll('main *')].find(
+        (e) => e.scrollHeight > e.clientHeight + 50 && /auto|scroll/.test(getComputedStyle(e).overflowY),
+      );
       s?.scrollBy(0, 500);
     });
     await page.waitForTimeout(150);
@@ -50,14 +57,25 @@ test('R3-5 an account list: ids once, one amount per row', async ({ page }) => {
 });
 
 // R3-2: back must give the list back where it was.
-for (const [name, base] of [['head', 'http://localhost:4181'], ['main', 'http://localhost:4183']] as const) {
+for (const [name, base] of [
+  ['head', 'http://localhost:4181'],
+  ['main', 'http://localhost:4183'],
+] as const) {
   test(`R3-2 Payments scroll kept across a push and back (${name})`, async ({ browser }) => {
-    const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, hasTouch: true, isMobile: true, serviceWorkers: 'block', baseURL: base, reducedMotion: 'no-preference' });
+    const ctx = await browser.newContext({
+      viewport: { width: 412, height: 915 },
+      hasTouch: true,
+      isMobile: true,
+      serviceWorkers: 'block',
+      baseURL: base,
+      reducedMotion: 'no-preference',
+    });
     const page = await ctx.newPage();
     await open(page, '/s/payments');
     await page.waitForFunction(() => document.querySelector('main button[data-slot=item]'));
     const finder = `(() => { let p = document.querySelector('main button[data-slot=item]'); while (p && !(p.scrollHeight > p.clientHeight + 200 && /auto|scroll/.test(getComputedStyle(p).overflowY))) p = p.parentElement; return p; })()`;
-    const area = () => page.evaluate(`(() => { const s = ${finder}; return s ? Math.round(s.scrollTop) : -1; })()`) as Promise<number>;
+    const area = () =>
+      page.evaluate(`(() => { const s = ${finder}; return s ? Math.round(s.scrollTop) : -1; })()`) as Promise<number>;
     await page.evaluate(`(() => { const s = ${finder}; s && s.scrollTo(0, 900); })()`);
     await page.waitForTimeout(400);
     const before = await area();
@@ -108,7 +126,9 @@ test('R3-8 ripple while scrolling a list by touch', async ({ page }) => {
     const w = window as any;
     w.__press = [];
     new MutationObserver((ms) => {
-      for (const m of ms) for (const n of m.addedNodes) if ((n as Element).classList?.contains('press')) w.__press.push(Math.round(performance.now()));
+      for (const m of ms)
+        for (const n of m.addedNodes)
+          if ((n as Element).classList?.contains('press')) w.__press.push(Math.round(performance.now()));
     }).observe(document.body, { subtree: true, childList: true });
   });
   const cdp = await page.context().newCDPSession(page);
@@ -129,11 +149,25 @@ test('R3-8 ripple while scrolling a list by touch', async ({ page }) => {
 test('R3-tz day headers do not move with the device timezone', async ({ browser }) => {
   const heads: string[][] = [];
   for (const tz of ['Asia/Kuala_Lumpur', 'America/Los_Angeles', 'Pacific/Kiritimati']) {
-    const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, hasTouch: true, isMobile: true, serviceWorkers: 'block', baseURL: 'http://localhost:4181', timezoneId: tz, reducedMotion: 'reduce' });
+    const ctx = await browser.newContext({
+      viewport: { width: 412, height: 915 },
+      hasTouch: true,
+      isMobile: true,
+      serviceWorkers: 'block',
+      baseURL: 'http://localhost:4181',
+      timezoneId: tz,
+      reducedMotion: 'reduce',
+    });
     const page = await ctx.newPage();
     await open(page, '/s/payments');
     await page.waitForFunction(() => document.querySelector('main button[data-slot=item]'));
-    heads.push(await page.evaluate(() => [...document.querySelectorAll('main h3, main h2, main [role=heading]')].map((e) => e.textContent!.trim()).slice(0, 8)));
+    heads.push(
+      await page.evaluate(() =>
+        [...document.querySelectorAll('main h3, main h2, main [role=heading]')]
+          .map((e) => e.textContent!.trim())
+          .slice(0, 8),
+      ),
+    );
     await ctx.close();
   }
   console.log(JSON.stringify(heads));
@@ -150,6 +184,8 @@ test('R3-26 changing the look still reveals, with no screen name left behind', a
   const opts = page.getByRole('radio');
   const n = await opts.count();
   console.log('appearance radios', n);
-  await page.screenshot({ path: `${process.env.QA_SCREENS ?? '../../qa-artifacts/B05-feel/screens'}/FLOW-R3-7-step-1-appearance.png` });
+  await page.screenshot({
+    path: `${process.env.QA_SCREENS ?? '../../qa-artifacts/B05-feel/screens'}/FLOW-R3-7-step-1-appearance.png`,
+  });
   expect(errors).toEqual([]);
 });

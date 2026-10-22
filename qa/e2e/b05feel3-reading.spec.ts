@@ -3,12 +3,22 @@ import { open } from './b05feel-lib';
 
 // scan-after's "Reading receipt…" under 4x CPU with motion on: is it ever on screen, and for how long,
 // on head and on main? (the feel pass fails this journey on head, run after run)
-for (const [name, base] of [['head', 'http://localhost:4181'], ['main', 'http://localhost:4183']] as const) {
+for (const [name, base] of [
+  ['head', 'http://localhost:4181'],
+  ['main', 'http://localhost:4183'],
+] as const) {
   test(`R3-20 reading receipt is on screen (${name}, 4x, motion on)`, async ({ browser }) => {
     test.setTimeout(240_000);
     const out: any[] = [];
     for (let i = 0; i < 6; i++) {
-      const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, hasTouch: true, isMobile: true, serviceWorkers: 'block', baseURL: base, reducedMotion: 'no-preference' });
+      const ctx = await browser.newContext({
+        viewport: { width: 412, height: 915 },
+        hasTouch: true,
+        isMobile: true,
+        serviceWorkers: 'block',
+        baseURL: base,
+        reducedMotion: 'no-preference',
+      });
       const page = await ctx.newPage();
       await open(page, '/');
       const cdp = await ctx.newCDPSession(page);

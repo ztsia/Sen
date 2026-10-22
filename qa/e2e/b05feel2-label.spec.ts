@@ -11,7 +11,9 @@ test('R2-11 a label row around a checkbox shows press feedback on its text', asy
   const hit = await page.evaluate(() => {
     const l = [...document.querySelectorAll('label')].find((x) => x.querySelector('[role=checkbox],[role=switch]'));
     if (!l) return null;
-    const t = (l.querySelector('span') ?? l) as HTMLElement;
+    // the label's own text, not the checkbox's indicator span (run 3: the old target hit the checkbox, which draws its own response)
+    const t = ([...l.querySelectorAll('span')].find((x) => !x.closest('[role=checkbox],[role=switch]')) ??
+      l) as HTMLElement;
     const r = t.getBoundingClientRect();
     t.dispatchEvent(
       new PointerEvent('pointerdown', {
