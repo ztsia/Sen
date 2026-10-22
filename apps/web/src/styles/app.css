@@ -6,6 +6,7 @@
 @import '../../../../docs/ui/directions/assets/fonts/fonts.css';
 @import './looks.gen.css';
 @import './frame.css';
+@import './motion.css';
 
 /* Light and dark follow data-mode on the element that sets the look (the root, or a preview inside it). */
 @custom-variant dark (&:where([data-mode='dark'], [data-mode='dark'] *));

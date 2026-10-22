@@ -1,7 +1,9 @@
+// Sen: shadcn/ui's field, changed in place (CLAUDE.md, shadcn first): an error appearing after a tap or Enter (not while typing, nor on load) plays the error haptic (lib/haptics.ts, B05).
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { haptic, justCommitted } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 
 import { Label } from '@/components/ui/label';
@@ -195,6 +197,12 @@ function FieldError({
       </ul>
     );
   }, [children, errors]);
+
+  // a refusal after a tap or Enter is felt; one shown while typing, or on load, isn't
+  const shown = !!content;
+  useEffect(() => {
+    if (shown && justCommitted()) haptic('reject');
+  }, [shown]);
 
   if (!content) {
     return null;

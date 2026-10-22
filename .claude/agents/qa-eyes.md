@@ -53,12 +53,17 @@ Your prompt names the diff report (`qa-artifacts/<branch>/diff/index.md`) and wh
 8. **Connected.** Does what changes look caused by the tap, from where the finger was, or does
    the screen just swap?
 9. **Steady.** Does anything jump, flash, reflow or stall on the way to the end state?
+10. **The right motion** (`patterns.md` §8, D140). A screen opened from a row slides in from the
+    right, and back slides it out the same way. A tab crossfades while the tab bar plays its look's
+    own switch. A Review row cleared slides out and the rest close up. Is the motion the one the
+    change calls for, at about 200 ms, without a blank or see-through frame, and does a payment's
+    amount carry into its detail without any number counting up or down?
 
 ## What you write
 
 `qa/<slice>/eyes.md`: one section per entry, its screenshots named, each question answered, then a
 line `Verdict: fine | look again | wrong` with the one thing to fix first; then one section per
-filmstrip, with questions 7–9 and a verdict the same way. End with a table of every
+filmstrip, with questions 7–10 and a verdict the same way. End with a table of every
 entry and its verdict, worst first. Your final message is that table and the count per verdict.
 
 `wrong` means a person would be misled, stuck or put off; `look again` means it works but reads

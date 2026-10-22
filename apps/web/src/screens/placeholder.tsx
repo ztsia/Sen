@@ -37,7 +37,7 @@ export function Placeholder({ screen }: { screen: ScreenDef }) {
       {children.length ? (
         <ItemGroup>
           {children.map((d) => (
-            <Item key={d.id} asChild size="sm" className="min-h-14 rounded-none text-base active:bg-accent">
+            <Item key={d.id} asChild size="sm" className="min-h-14 rounded-none text-base">
               <Link to="/s/$" params={{ _splat: d.id }}>
                 <ItemContent>
                   <ItemTitle className="text-base font-normal">{d.title}</ItemTitle>

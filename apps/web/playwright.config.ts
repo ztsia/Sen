@@ -26,7 +26,14 @@ export default defineConfig({
   expect: { toMatchAriaSnapshot: { pathTemplate: '{testDir}/trees/{arg}{ext}' } },
   // The service worker caches every file; the journeys run without it, so each sees the network as it
   // is. production.spec's offline test turns it on.
-  use: { ...phone, trace: 'retain-on-failure', serviceWorkers: 'block' },
+  // Motion is reduced, so a transition can't make a journey flaky (B05); motion.spec turns it back on to
+  // check the motion itself, and the metrics' feel pass measures with it on (diff.config.ts).
+  use: {
+    ...phone,
+    trace: 'retain-on-failure',
+    serviceWorkers: 'block',
+    contextOptions: { reducedMotion: 'reduce' },
+  },
   projects: [
     {
       name: 'preview',

@@ -401,9 +401,13 @@ export const captureSim: SenCapturePlugin = {
 };
 
 export const shellSim: SenShellPlugin = {
+  // a browser has no haptics; lib/haptics.ts records the moments for the journeys
+  async haptic() {
+    return { performed: false };
+  },
   async info() {
     return {
-      bridge: 1,
+      bridge: 2,
       version: 'simulated',
       versionCode: 0,
       build: 'sim',

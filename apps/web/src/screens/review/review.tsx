@@ -31,6 +31,7 @@ import { longDay, momentLabel } from '@/lib/dates';
 import { categoryIcon, categoryTone } from '../icons';
 import { Loaded, Section, useGo } from '../kit';
 import { settleTap } from '@/lib/tap-guard';
+import { rowMotion, useChangeMotion } from '@/frame/motion';
 
 /**
  * Review (screens.md, D72, §6.6): what needs me, and what am I waiting for? *Needs you* is counted in
@@ -49,7 +50,9 @@ export default function Review() {
 
 const run = (cmd: Command) => runCommand(cmd);
 
-function ReviewBody({ r }: { r: ReviewView }) {
+function ReviewBody({ r: data }: { r: ReviewView }) {
+  // a cleared row slides out and the rest close up (patterns.md §8)
+  const r = useChangeMotion(data);
   const go = useGo();
   const [other, setOther] = useState<{ txnId: string; merchant: string } | null>(null);
   const [refundFor, setRefundFor] = useState<{ txnId: string; from: string } | null>(null);
@@ -100,12 +103,15 @@ function ReviewBody({ r }: { r: ReviewView }) {
           <div className="flex flex-col gap-5 px-4">
             {kinds.map((k) => (
               <div key={k.title} className="flex flex-col gap-2">
-                <h3 className="flex items-center gap-2 px-1 text-sm font-medium text-muted-foreground">
+                <h3
+                  className="flex items-center gap-2 px-1 text-sm font-medium text-muted-foreground"
+                  {...rowMotion(`kind-${k.title}`)}
+                >
                   <k.icon className="size-4 text-icon" aria-hidden="true" />
                   {k.title} · {k.items.length}
                 </h3>
                 {k.items.map((i) => (
-                  <div key={i.id} data-review={i.kind}>
+                  <div key={i.id} data-review={i.kind} {...rowMotion(i.id)}>
                     <ReviewEntry item={i} go={go} setOther={setOther} setRefundFor={setRefundFor} />
                   </div>
                 ))}
@@ -348,11 +354,7 @@ function answersFor(
 function OpensRow({ title, detail, onOpen }: { title: React.ReactNode; detail: string; onOpen: () => void }) {
   return (
     <Card className="p-0">
-      <Item
-        asChild
-        size="sm"
-        className="min-h-16 w-full flex-nowrap rounded-[inherit] text-left text-base active:bg-accent"
-      >
+      <Item asChild size="sm" className="min-h-16 w-full flex-nowrap rounded-[inherit] text-left text-base">
         <button type="button" onClick={onOpen}>
           <ItemContent className="min-w-0 gap-0.5">
             <ItemTitle className="text-base font-semibold text-pretty">{title}</ItemTitle>

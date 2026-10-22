@@ -373,10 +373,37 @@ plan's *2 of 3 moves done*) states it in words first, with an icon, then what it
 
 ## 8. Motion and accessibility
 
-- **UI motion** explains a change and never decorates: 150–250 ms, easing out on entry. A look's own
-  motion stays in its own moments: the figure, the tab switch, the avatar, the reveal.
-- **Reduced motion** (`prefers-reduced-motion`): every look's motion settles to its final frame, the
-  avatar holds one still frame per state, and nothing loops.
+- **UI motion** explains a change and never decorates (D140). It's one motion for all six looks: 200 ms,
+  easing out (`cubic-bezier(0.2, 0, 0, 1)`). A look's own motion stays in its own moments: the
+  figure, the tab switch, the avatar, the reveal.
+  - **Forward** (a pushed screen): the new screen slides in from the right over the old, which
+    shifts left and dims.
+  - **Back** reverses it, whether from the back button, the back gesture or Done.
+  - **A tab switch** crossfades the screen, a tab tapped from a pushed screen too; the tab bar plays
+    the look's own `switch`.
+  - **A sheet** rises from the bottom and falls back.
+  - **One shared element:** a payment row opening its detail keeps its amount in place, growing into
+    the figure.
+- **Press feedback** on everything tappable (buttons, chips, rows, tabs, Sen's button): a ripple
+  spreads from the finger, starting on `pointerdown`, within one frame. It's drawn in the shadcn part
+  or block, never at a call site.
+- **Change motion:** a row cleared from Review slides out and the rows below close the gap; a row
+  added or removed does the same; a toast slides in and out; a skeleton fades into its content.
+  A sheet whose content changes (a step, an error) eases to its new height.
+  **Money never counts up or down**, since an in-between amount is a number nobody had.
+- **Haptics** on a few moments only, in the shell, through Android's own constants, so the phone's
+  touch-feedback setting turns them off: a change with Undo (*confirm*), Undo (a light tick), an
+  error after a tap (*reject*), a long-press, a toggle (on and off), and a pull past a limit. Never on
+  scroll or on every tap. A browser has none.
+- **Built in:** `src/frame/motion.ts` (the direction rule, the shared amount, change motion),
+  `src/frame/press.ts` (the ripple), `src/styles/motion.css`, `src/lib/haptics.ts` and the shell's
+  `SenShell.haptic` (bridge 2).
+- **Speed:** a tap's first visible change comes within 100 ms, and transitions hold 60 fps with the
+  CPU slowed 4×. Taps are blocked while a screen transition runs, so none is longer than 200 ms.
+- **Reduced motion** (`prefers-reduced-motion`, which Android's *Remove animations* sets): screen
+  changes and change motion happen at once, with no slide or fade. The ripple stays, as a tint
+  without spreading. Every look's motion settles to its final frame, the avatar holds one still frame
+  per state, and nothing loops.
 - **Contrast:** text 4.5:1 (large text 3:1), icons and chart marks 3:1, in every look, light and dark.
   The theme section of each look's page measures its tokens.
 - **Touch targets** at least 48 px, 8 px apart, whatever size the control is drawn (§2, *Sizes*). Full-width rows that touch (list rows, settings rows,

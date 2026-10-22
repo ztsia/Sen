@@ -211,7 +211,7 @@ function SplitBody({
           {others.map((p) => {
             const matched = !!p.paidHow?.startsWith('matched');
             return (
-              <Item key={p.id} asChild size="sm" className="min-h-14 flex-nowrap rounded-none active:bg-accent">
+              <Item key={p.id} asChild size="sm" className="min-h-14 flex-nowrap rounded-none">
                 <label>
                   <Checkbox
                     checked={p.paid}

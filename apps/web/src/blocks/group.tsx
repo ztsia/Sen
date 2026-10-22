@@ -110,7 +110,7 @@ export function NavRow({
       </Item>
     );
   return (
-    <Item asChild size="sm" className={cn(cls, 'active:bg-accent')}>
+    <Item asChild size="sm" className={cls}>
       <button type="button" onClick={onOpen} {...press}>
         {inner}
       </button>
@@ -148,10 +148,7 @@ export function SwitchRow({
   return (
     <Item
       size="sm"
-      className={cn(
-        'relative min-h-14 flex-nowrap gap-3 rounded-none py-0 pr-2 text-base',
-        disabled ? 'opacity-70' : 'active:bg-accent',
-      )}
+      className={cn('relative min-h-14 flex-nowrap gap-3 rounded-none py-0 pr-2 text-base', disabled && 'opacity-70')}
     >
       {media ? (
         <span
@@ -256,7 +253,7 @@ export function PersonRow({
       </Item>
     );
   return (
-    <Item asChild size="sm" className={cn(cls, 'active:bg-accent')}>
+    <Item asChild size="sm" className={cls}>
       <button type="button" onClick={onOpen}>
         {inner}
       </button>

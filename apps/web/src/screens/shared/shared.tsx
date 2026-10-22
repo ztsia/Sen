@@ -80,7 +80,7 @@ function Bill({ row: r }: { row: SharedView['rows'][number] }) {
   // you owe is money out, owed to you is money in; a settled bill says neither in colour
   const tone = !r.open ? 'text-muted-foreground' : r.paidBy === 'me' ? 'text-money-in' : 'text-money-out';
   return (
-    <button type="button" className="w-full text-left active:opacity-80" onClick={() => go('split', { id: r.id })}>
+    <button type="button" className="w-full text-left" onClick={() => go('split', { id: r.id })}>
       <Card className="gap-2 px-4 py-3">
         <div className="flex items-center gap-3">
           <span className="flex shrink-0 -space-x-2">

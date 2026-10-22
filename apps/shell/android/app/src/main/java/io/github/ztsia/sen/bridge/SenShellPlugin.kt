@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.view.HapticFeedbackConstants
 import com.getcapacitor.JSObject
 import com.getcapacitor.PermissionState
 import com.getcapacitor.Plugin
@@ -59,6 +60,21 @@ class SenShellPlugin : Plugin() {
         }
     }
 
+    /**
+     * A haptic on one of a few moments (patterns.md §8, B05). Through the WebView's own
+     * performHapticFeedback, so it follows the phone's touch-feedback setting by itself, which a
+     * vibrator call wouldn't. Resolves with whether the phone played it.
+     */
+    @PluginMethod
+    fun haptic(call: PluginCall) {
+        val constant = hapticConstant(call.getString("kind"), Build.VERSION.SDK_INT)
+            ?: return call.reject("Unknown haptic", "UNKNOWN_KIND")
+        activity.runOnUiThread {
+            val performed = bridge.webView.performHapticFeedback(constant)
+            call.resolve(JSObject().put("performed", performed))
+        }
+    }
+
     // The hidden tests (Settings → Account, a long-press on the version).
 
     @PluginMethod
@@ -98,7 +114,23 @@ class SenShellPlugin : Plugin() {
     }
 
     companion object {
-        /** 1: info, openInBrowser, testPrompt, testIsland, switchIcon; SenCapture (B02). */
-        const val BRIDGE = 1
+        /**
+         * 1: info, openInBrowser, testPrompt, testIsland, switchIcon; SenCapture (B02).
+         * 2: haptic (B05).
+         */
+        const val BRIDGE = 2
+
+        /** Each moment's haptic, with an older phone's nearest where Android added it later (API 30, 34). */
+        fun hapticConstant(kind: String?, sdk: Int): Int? = when (kind) {
+            "confirm" -> if (sdk >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.CONTEXT_CLICK
+            "reject" -> if (sdk >= 30) HapticFeedbackConstants.REJECT else HapticFeedbackConstants.LONG_PRESS
+            "long-press" -> HapticFeedbackConstants.LONG_PRESS
+            "toggle-on" -> if (sdk >= 34) HapticFeedbackConstants.TOGGLE_ON else HapticFeedbackConstants.CONTEXT_CLICK
+            "toggle-off" -> if (sdk >= 34) HapticFeedbackConstants.TOGGLE_OFF else HapticFeedbackConstants.CLOCK_TICK
+            "threshold" ->
+                if (sdk >= 34) HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE else HapticFeedbackConstants.CONTEXT_CLICK
+            "tick" -> if (sdk >= 34) HapticFeedbackConstants.SEGMENT_TICK else HapticFeedbackConstants.CLOCK_TICK
+            else -> null
+        }
     }
 }

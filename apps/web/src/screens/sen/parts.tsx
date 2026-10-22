@@ -119,7 +119,7 @@ function Research({ part, messageId }: { part: Extract<SenPart, { type: 'researc
           <li key={s.n}>
             <button
               type="button"
-              className="flex min-h-12 w-full items-center gap-2 text-left active:bg-accent"
+              className="flex min-h-12 w-full items-center gap-2 text-left"
               onClick={() => openInBrowser(s.url)}
               aria-label={`Source ${s.n}: ${s.title}, ${s.site}, ${checkedOn(s.checkedOn)}. Opens in your browser`}
             >

@@ -211,7 +211,7 @@ function EventRow({
   return (
     <li>
       {picking ? (
-        <Item size="sm" className="relative min-h-16 flex-nowrap items-start rounded-none text-base active:bg-accent">
+        <Item size="sm" className="relative min-h-16 flex-nowrap items-start rounded-none text-base">
           <Checkbox
             id={id}
             checked={picked}

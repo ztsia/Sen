@@ -209,8 +209,10 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
   );
 }
 
-const HEAD = 40;
-const ROW = 56;
+// what a day's header and a row measure, so the first frame before measuring has no overlap (QA B05
+// Feel run 2, 3: a row guessed short covered the next one for a frame)
+const HEAD = 34;
+const ROW = 58;
 
 function PaymentsList({
   controls,
@@ -330,6 +332,7 @@ function PaymentsList({
                     kind={f.row.direction === 'in' ? 'in' : 'out'}
                     marks={f.row.marks}
                     onOpen={() => go('txn', { id: f.row.id })}
+                    shareId={f.row.id}
                   />
                 )}
               </div>

@@ -178,6 +178,7 @@ function TxnBody({ v }: { v: TxnView }) {
         title={readableName(v.title)}
         figure={<Money sen={t.amount} kind={t.direction === 'in' ? 'in' : 'out'} />}
         copy={t.amount}
+        shareId={t.id}
         meta={where ? `${when} · ${where}` : when}
         source={v.sourceLabel}
       />

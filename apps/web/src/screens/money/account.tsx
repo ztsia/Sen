@@ -100,6 +100,7 @@ function Body({ v }: { v: AccountView }) {
               kind={r.direction === 'in' ? 'in' : 'out'}
               marks={r.marks}
               onOpen={() => go('txn', { id: r.id })}
+              shareId={r.id}
             />
           ))
         ) : (

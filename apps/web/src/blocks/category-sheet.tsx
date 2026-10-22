@@ -78,7 +78,7 @@ export function CategorySheet({
           {choices.map((c, i) => (
             <div key={c.id}>
               {i ? <ItemSeparator /> : null}
-              <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
+              <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base">
                 <button type="button" onClick={() => choose(c)} aria-current={c.id === current ? 'true' : undefined}>
                   <ItemContent>
                     <ItemTitle className="text-base font-normal">{c.label}</ItemTitle>

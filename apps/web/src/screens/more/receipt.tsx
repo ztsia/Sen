@@ -78,7 +78,7 @@ function ReceiptBody({ r }: { r: ReceiptView }) {
           <button
             type="button"
             onClick={() => setPhotoOpen(true)}
-            className="flex min-h-20 items-center gap-3 rounded-[var(--radius-card,16px)] p-3 text-left active:bg-accent"
+            className="flex min-h-20 items-center gap-3 rounded-[var(--radius-card,16px)] p-3 text-left"
           >
             <span
               className="flex h-16 w-12 shrink-0 items-center justify-center rounded-md bg-muted"

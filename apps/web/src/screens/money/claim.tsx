@@ -210,7 +210,7 @@ function Body({ v }: { v: ClaimView }) {
                   <button
                     type="button"
                     aria-label={`Open ${f.name}`}
-                    className="flex flex-col items-center gap-2 px-3 pt-4 pb-3 active:bg-accent"
+                    className="flex flex-col items-center gap-2 px-3 pt-4 pb-3"
                     onClick={() => toastDone(`Opens ${f.name} on your phone`)}
                   >
                     <IconTile size="lg" icon={f.kind === 'pdf' ? FileTextIcon : ImageIcon} tone="hue1" />

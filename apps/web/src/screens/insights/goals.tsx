@@ -258,7 +258,7 @@ function Body({ v }: { v: GoalsView }) {
               <button
                 key={g.id}
                 type="button"
-                className="flex min-h-20 w-full items-center gap-3 px-4 py-3 text-left active:bg-accent"
+                className="flex min-h-20 w-full items-center gap-3 px-4 py-3 text-left"
                 onClick={() => go('goal', { id: g.id })}
               >
                 <GoalRing saved={g.saved} target={g.target} />

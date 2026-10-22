@@ -183,7 +183,7 @@ export default function DevPanel() {
         </Group>
         {inShell() ? null : <CaptureSim />}
         <Simulator close={() => setOpen(false)} />
-        <div className="py-3">
+        <div className="flex flex-col gap-2 py-3">
           <Button asChild variant="outline" className="w-full">
             <Link to="/dev/gallery" onClick={() => setOpen(false)}>
               Open the gallery

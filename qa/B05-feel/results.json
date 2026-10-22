@@ -1,0 +1,816 @@
+{
+ "module": "B05",
+ "branch": "B05/feel",
+ "verdict": "ship",
+ "generatedAt": "2026-10-22 UTC (scoped re-check, 23613b0..778e21b)",
+ "phases": "scoped: 1-3, 5, 6 for press feedback, sheets and the Payments search",
+ "headline": "Scoped re-check of press feedback, sheet changes and the Payments search: run 3's findings 1, 2 and 6 are fixed and verified; the sheet part of 4 is not (the sheet still renders twice as it opens, cause found); one new Minor (the cancel fix has no repo test). Findings 3, 4 (push part), 5, 7 and 8 stand as run 3 left them, and the film pass was not re-run.",
+ "summary": {
+  "criteria": 50,
+  "pass": 36,
+  "fail": 4,
+  "unreachable": 10
+ },
+ "suites": {
+  "typecheck": "clean",
+  "lint": "clean",
+  "unit": "364/364",
+  "prettier": "clean",
+  "e2e (journeys + motion, preview)": "50 passed",
+  "core and area journeys with motion on": "7 passed",
+  "mutants": "28/28 killed",
+  "own-transfer x100": "100/100 head, 100/100 main"
+ },
+ "findings": [
+  {
+   "id": 1,
+   "severity": "Major",
+   "status": "fixed",
+   "title": "The functional `own-transfer` journey (motion reduced) fails 2-10% of runs on the branch and 0 of 100 on main: third run in a row",
+   "detail": "[Scoped re-check, 778e21b] own-transfer passes 100 of 100 on the branch (main 100 of 100). The ledger's cause (the journey read the list while the 200 ms search swapped it) holds as far as the journey goes: with the wait removed again, the same product still fails 5 of 60. A per-frame sampler (rAF, 25 runs each) saw no row under the sticky day header on either branch or main, so no user-visible frame was found; why the branch lands on the bad moment more often than main is unexplained.\n\nRun 1 saw 2 of 48, run 2 saw 3 of 40 and called it fixed by the 58/34 px size guesses. Run 3: the full `pnpm e2e` failed it once (`covered`: the Payments row `Public Bank → Ryt Bank` 390×58 sits under the sticky day header `Wed, 1 Jul`), and a dedicated repeat failed 2/40, 2/60, 6/60 (head) against 0/40 and 0/60 (main). I bisected by reverting one thing at a time: ripple off (`installPress()` commented out) 2/60; payments.tsx back to main's 40/56 guesses 8/60 (so run 2's sizes help but do not cure it); kit.tsx (skeleton fade) reverted 6/60; app-shell.tsx (`screen-region` wrapper) reverted 3/60. None cured it. The cause is unfound (a guess: another B05 change moves the Payments list's first frame; untested). The brief's Done-when says the functional suite must be reliable.",
+   "repro": "pnpm --filter @sen/web exec playwright test e2e/journeys.spec.ts -g own-transfer --project preview --repeat-each 60 --workers 3   (run it in the main worktree for the 0/60 baseline)",
+   "evidence": "  6 failed\n  54 passed (1.7m)   [head]\n  60 passed (1.8m)   [main]\n+     \"check\": \"covered\",\n+     \"detail\": \"button \\\"Public Bank → Ryt BankTransfer\\\" 390×58 under div.sticky \\\"Wed, 1 JulSpent RM0.00RM 0.00\\\"\"",
+   "spec": "brief Done-when (tests stay reliable), R3-24"
+  },
+  {
+   "id": 2,
+   "severity": "Major",
+   "status": "fixed",
+   "title": "Tests have no teeth for D140's own numbers and the long-press haptic: 6 of 7 probes survive the repo's suites",
+   "detail": "[Scoped re-check, 778e21b] Probes P1 (duration), P2 (direction) and P3 (long-press haptic) are now RED in the repo's motion suite; mutants `motion-slow`, `motion-forward-from-left`, `long-press-silent` killed (28 of 28). Still green, and accepted in the ledger with reasons: the ripple's disabled guard (P4) and the shared-amount id check (P5). New survivor, from finding 6's own fix: the cancel path (P8, see finding 9).\n\nProbes, each made alone against `pnpm exec vitest run --project web apps/web/src/{frame,lib,components}` and `e2e/motion.spec.ts --project preview` (the `feel` and `motion` suites). Survivors: `--motion-ms` 200 ms to 2000 ms; forward's new screen sliding in from the left (`sen-in-left`); the long-press haptic call deleted (`lib/long-press.ts`); the ripple's disabled-control guard removed; the shared-amount id check removed. Only the toggle-kind swap was caught. Run 2's QA specs (`qa/e2e/b05feel2-motion.spec.ts`) do kill the duration and direction probes (verified on probe builds), so they are held by QA specs but no mutant points at them, and nothing at all holds the long-press haptic: with it deleted, run 1 and 2's haptics and feel specs still pass 13 of 13.",
+   "repro": "python3 probe script in the run's scratchpad; or: sed -i 's/--motion-ms: 200ms;/--motion-ms: 2000ms;/' apps/web/src/styles/motion.css && pnpm --filter @sen/web exec playwright test e2e/motion.spec.ts --project preview   (green)",
+   "evidence": "P1 motion-ms 200ms -> 2000ms | feel=green motion=green\nP2 forward slides in from the left | feel=green motion=green\nP3 long-press haptic removed | feel=green motion=green\nP4 disabled controls get a ripple | feel=green motion=green\nP5 shared-amount id no longer checked | feel=green motion=green\nP7 haptic toggle kinds swapped | feel=green motion=RED",
+   "spec": "R3-33, R3-16, D139"
+  },
+  {
+   "id": 3,
+   "severity": "Minor",
+   "status": "open",
+   "title": "The feel pass (motion on, 4x CPU) still fails `scan-after` and `subscription` on the branch (2 of 42); main passes",
+   "detail": "Third run watching this. `Reading receipt…` is in the DOM for about 900 ms on 4 of 6 branch runs, 400 ms on 2 of 6, and 1000 ms on all 6 of main, so Playwright's polling misses it. `/s/reading` appears at about 80 ms and the text at about 450 ms; confirm replaces it at about 855 ms or 1340 ms on the branch (bimodal), 1430-1570 ms on main. Why the branch's reader finishes early in some runs is not explained. A person sees the Reading screen for a shorter time with a made-up reader only; a real reader takes seconds.",
+   "repro": "qa/e2e/b05feel3-reading.spec.ts (6 runs each on :4181 and :4183)",
+   "evidence": "READING head: paths [[87,\"/s/reading\"],[1348,\"/s/confirm\"]] ... [[73,\"/s/reading\"],[854,\"/s/confirm\"]]\nREADING main: ... [[116,\"/s/reading\"],[1468,\"/s/confirm\"]]\nfilm-head: 2 failed (subscription, scan-after), 40 passed (3.5m)",
+   "spec": "R3-20, brief Done-when"
+  },
+  {
+   "id": 4,
+   "severity": "Minor",
+   "status": "still failing",
+   "title": "11 metrics flags; the taps that open a sheet or push a screen answer 60-150 ms later than main at 4x CPU",
+   "detail": "[Scoped re-check, 778e21b] The sheet part is NOT improved: removing the first measure in `useSheetResize` changes nothing. Cause found by probe: the `ref={area}` in `blocks/sheet.tsx` is a callback ref that sets state, so every sheet renders twice as it opens. Ask Sen on Home at 4x CPU, pointerdown to dialog in the DOM, median of 14, two interleaved rounds: head 273 and 239 ms; same build with `ref={area}` removed 201 and 192 ms; main 166 and 179 ms. The category sheet from a Review chip, run after the fix: head 264 ms (motion on) and 351 ms (reduced) against main 198 and 197 ms. The rest of the gap (the probe still sits 25-35 ms above main) is not explained.\n\nFlags: settings/categories blocking 639 vs 420; hawker/1 first change 312 vs 176; own-transfer/2 settle 709 vs 442; payday/5 735 vs 394; proposal/3 1228 vs 555; ask/2 208 vs 88; ask/3 settle 2246 vs 212; ask/4 336 vs 112; capture-off/4 328 vs 184; export/2 230 vs 116; members/11 532 vs 254. Measured causes: (a) the ripple costs 2-3 ms in its handler and the next frame comes within 22 ms at 4x on Review, Payments and Home (so a press IS answered in a frame; the film strips show it late because the video capture slows the page); (b) opening the category sheet from a Review chip takes pointerdown-to-sheet 237-269 ms with motion on, 344 ms with motion reduced, 180 ms on main: the extra is not the view transition; a CPU profile shows 138 ms of `getBoundingClientRect` self time on the branch (43 ms in `useSheetResize`'s first measure, 52 ms in vaul) and none on main, but removing the first measure left the median at 277 ms, so the cause is not found (a guess: layout moved earlier, not removed); (c) ask/3's 2246 ms is a metric artifact: Home to Insights tab to content is 2.07-2.46 s on the branch and 1.84-2.10 s on main (about +250 ms), Insights being slow on both. Verdict: pushes and tabs, accepted as run 1/2 did (the owner judges on the phone); sheet open +60-150 ms is unexplained and left open.",
+   "repro": "qa/e2e/b05feel3-sheetopen.spec.ts, b05feel3-presscost.spec.ts, b05feel3-profile.spec.ts, b05feel3-eyes.spec.ts (E-A)",
+   "evidence": "SHEETOPEN head motion on: median 264, 237, 279\nSHEETOPEN head reduced: median 357, 344, 370\nSHEETOPEN main motion on: median 205, 180, 220\nPRESSCOST head /review: handler ms median 3, pointerdown->2nd frame median 22\nTABINSIGHTS head content ms [2463,2343,2165,2263,2069]; main [2074,2105,2021,1836,2001]",
+   "spec": "R3-20, R3-21, brief §6"
+  },
+  {
+   "id": 5,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Eyes pass: 6 `wrong` verdicts, weighed against main (none is a regression of the branch beyond the latency in finding 4)",
+   "detail": "hawker/2 and fix/5 (a closing sheet shows another step's title, 'Category'; the page changes late): measured the same on main (title flips to 'Category' at 560 ms on main, 663 on branch; row gone 560 vs 663 ms; toast 647 vs 790). own-transfer/1 (nothing for a second): the made-up write lands about 0.6-0.8 s after the tap at 4x on both; only the ripple answers earlier. ask/3: see finding 4c, a metric artifact. members/10 and the toast over sheets: the shared toast overlaps an open sheet by 58 px on main too (Ask Sen sheet: no control covered, chips partly). Pre-existing, so not B05's, but the destructive Remove confirm is the worst place for it. fix/4 (snap with a white void): run 2's sheet spec passes (settles under 450 ms) so the easing works; the one-frame void I could not reproduce at 1x. Undo's late effect (proposal/3, fix/6): Undo measured at 4x: toast gone and value back together at 525 ms (branch) and 550 ms (main).",
+   "repro": "qa/e2e/b05feel3-eyes.spec.ts",
+   "evidence": "HAWKER2 head: rowGone 663/616/603/651, toast 790/735/743/794; main: rowGone 560/520/571/571, toast 647/672/674/664\nUNDOLAG head toastGone==meals 525/482/569; main 550/555/541\nTOASTOVERSHEET head {\"toast\":true,\"overlapPx\":58,\"covered\":[]}; main identical",
+   "spec": "qa/escapes.md E1, E2; patterns §7"
+  },
+  {
+   "id": 6,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "A scroll that starts on a row flashes a ripple",
+   "detail": "[Scoped re-check, 778e21b] A touch scroll from a row now removes the ripple 20-37 ms after the pointercancel (motion on and reduced); with the cancel branch removed it takes about 400 ms. A tap still shows the ripple in the first frame; ten quick tab taps leave no `.press` or `data-pressed` behind.\n\nThe ripple starts on pointerdown by design, so a drag that begins on a list row shows one (faint, 12% opacity) before the browser decides it is a scroll. Measured: one ripple created by one scroll gesture over Payments, gone within about 400 ms. Android's own ripple waits about 100 ms for this reason. Left to the owner's phone.",
+   "repro": "qa/e2e/b05feel3-angles.spec.ts R3-8",
+   "evidence": "ripples created by one scroll gesture: 1",
+   "spec": "R3-8"
+  },
+  {
+   "id": 7,
+   "severity": "Note",
+   "status": "open",
+   "title": "Fixed since run 2, verified",
+   "detail": "Run 2's 1 (sheet creeping): the category-sheet settle spec passes. 2 (Home tab to More): `Home` flake spec passes 40 of 40. 3 (Payments row guess): sizes now 34/58, but see finding 1. 6 (label rows): a real press on a label row's text now shows a ripple (the run-2 spec aimed at the checkbox's own indicator and failed; I corrected its target). 7: `field.test.tsx` pins reject. Five of run 2's six `motion` mutants and all 25 in `qa/mutants.ts` are killed (25/25).",
+   "repro": "qa/e2e/b05feel3-label.spec.ts",
+   "evidence": "REAL PRESS ripple count 1",
+   "spec": "run 2"
+  },
+  {
+   "id": 8,
+   "severity": "Note",
+   "status": "open",
+   "title": "Small notes",
+   "detail": "Payments scroll resets to the top on back, on main too (not a regression). A browser's long-press still calls `navigator.vibrate(10)`, where patterns §8 says a browser has none (pre-existing from B03). Run 1's measurement specs (`b05feel-newlook`, `-tabsettle`, `-vtlen`) assume main on another port and fail without it. Kotlin's `hapticConstant` mapping and `ShellTest` need an emulator; not run. `threshold` has no user.",
+   "repro": "-",
+   "evidence": "SCROLL head: before 900, after 0; SCROLL main: before 900, after 0",
+   "spec": ""
+  },
+  {
+   "id": 9,
+   "severity": "Minor",
+   "status": "open",
+   "title": "The press-cancel fix has no test in the repo's suites (probe P8 survives both `feel` and `motion`)",
+   "detail": "The cancel branch in `press.ts` (a scroll that begins on a row removes the ripple at once) is held only by `qa/e2e/b05feel3-scoped-press.spec.ts` (asserts cancel to gone under 100 ms; it fails on the probe build). The ledger says no journey fires `pointercancel`; a CDP touch scroll does. A mutant would need a suite that runs that spec, or a repo test that dispatches `pointercancel`.",
+   "repro": "remove the `if (ev.type === 'pointercancel') {...}` block in apps/web/src/frame/press.ts; pnpm exec vitest run --project web apps/web/src/frame ...; pnpm --filter @sen/web exec playwright test e2e/motion.spec.ts --project preview  (both green)",
+   "evidence": "P8 a cancelled press keeps its ripple | feel=green motion=green\nQA spec on the probe build: 2 failed; on the branch: SCROLLRIPPLE no-preference: cancel->gone 20 ms; reduce: 37 ms",
+   "spec": "R3S-1, D139"
+  }
+ ],
+ "probes": [
+  {
+   "broke": "--motion-ms 200ms -> 2000ms",
+   "caught": true,
+   "note": "motion suite RED (was green in run 3)"
+  },
+  {
+   "broke": "forward slides in from the left",
+   "caught": true,
+   "note": "motion suite RED (was green)"
+  },
+  {
+   "broke": "long-press haptic removed",
+   "caught": true,
+   "note": "motion suite RED (was green)"
+  },
+  {
+   "broke": "ripple's disabled guard removed",
+   "caught": false,
+   "note": "still green; accepted in the ledger (nothing pressable is disabled)"
+  },
+  {
+   "broke": "shared-amount id check removed",
+   "caught": false,
+   "note": "still green; accepted (ids are UUIDs)"
+  },
+  {
+   "broke": "haptic toggle kinds swapped",
+   "caught": true,
+   "note": "motion suite RED"
+  },
+  {
+   "broke": "cancelled press keeps its ripple (press.ts cancel branch removed)",
+   "caught": false,
+   "note": "repo suites green; QA spec b05feel3-scoped-press fails on it"
+  },
+  {
+   "broke": "sheet height animation duration 0",
+   "caught": true,
+   "note": "motion suite RED"
+  },
+  {
+   "broke": "journey's wait for the search's status removed",
+   "caught": false,
+   "note": "own-transfer fails 5 of 60: the wait is what makes the journey reliable"
+  },
+  {
+   "broke": "qa/mutants.ts, 28 entries (the sweep)",
+   "caught": true,
+   "note": "28/28 killed"
+  }
+ ],
+ "flows": [
+  {
+   "id": "FLOW-R3-1",
+   "title": "Payments to a detail and back, motion on",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/payments, 412x915",
+   "covers": [
+    "R3-1",
+    "R3-2",
+    "R3-5",
+    "R3-22"
+   ],
+   "spec": "patterns §8",
+   "status": "pass",
+   "ends": "forward then back transitions at 200 ms; one shared-amount name; list returns (at the top, as on main)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Tap a row, then go back (run 2's b05feel2-motion specs, re-run)",
+     "assertion": "types forward, back; 200 ms; easing cubic-bezier(0.2,0,0,1) in every look",
+     "status": "pass"
+    },
+    {
+     "n": 2,
+     "action": "Payments after back, head",
+     "assertion": "scroll offset 0 on head and main alike",
+     "status": "pass",
+     "screenshot": "FLOW-R3-1-step-1-payments-after-back-head.png"
+    },
+    {
+     "n": 3,
+     "action": "Payments after back, main",
+     "assertion": "same offset as head",
+     "status": "pass",
+     "screenshot": "FLOW-R3-1-step-2-payments-after-back-main.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-2",
+   "title": "A scroll that starts on a row",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/s/payments",
+   "covers": [
+    "R3-8"
+   ],
+   "spec": "patterns §8",
+   "status": "pass",
+   "ends": "one ripple per gesture, gone by itself (finding 6)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Drag from a row",
+     "assertion": "one `.press` created",
+     "status": "pass",
+     "screenshot": "FLOW-R3-2-step-1-scrolling-finger-ripple.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-7",
+   "title": "Appearance, look change",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/settings/appearance",
+   "covers": [
+    "R3-26"
+   ],
+   "spec": "patterns §8",
+   "status": "pass",
+   "ends": "the page opens with nine radios and no errors; the reveal itself was not exercised",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Appearance",
+     "assertion": "no console errors",
+     "status": "pass",
+     "screenshot": "FLOW-R3-7-step-1-appearance.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-8",
+   "title": "A toast and an open sheet",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "/review",
+   "covers": [
+    "R3-13"
+   ],
+   "spec": "patterns §7",
+   "status": "pass",
+   "ends": "head and main overlap by 58 px alike, no sheet control covered (finding 5)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Answer a Review row, open Ask Sen, head",
+     "assertion": "toast overlaps sheet by 58 px, 0 controls covered",
+     "status": "pass",
+     "screenshot": "FLOW-R3-8-step-1-toast-over-sheet-head.png"
+    },
+    {
+     "n": 2,
+     "action": "Same on main",
+     "assertion": "identical",
+     "status": "pass",
+     "screenshot": "FLOW-R3-8-step-1-toast-over-sheet-main.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-core-1",
+   "title": "first-run, motion on",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/ (journeys.spec, reducedMotion off)",
+   "covers": [
+    "R3-23"
+   ],
+   "spec": "flows.md first-run",
+   "status": "pass",
+   "ends": "home before the first salary",
+   "steps": [
+    {
+     "n": 1,
+     "action": "sign-in email",
+     "assertion": "step reached",
+     "status": "pass",
+     "screenshot": "first-run--minted-light--01_email.png"
+    },
+    {
+     "n": 2,
+     "action": "your apps",
+     "assertion": "step reached",
+     "status": "pass",
+     "screenshot": "first-run--minted-light--03_your_apps.png"
+    },
+    {
+     "n": 3,
+     "action": "home",
+     "assertion": "Spent since you started",
+     "status": "pass",
+     "screenshot": "first-run--minted-light--09_home_before_the_first_salary.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-core-2",
+   "title": "pay-new, motion on",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/review",
+   "covers": [
+    "R3-11"
+   ],
+   "spec": "flows.md pay-new",
+   "status": "pass",
+   "ends": "answered with Undo, then undone",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Review",
+     "assertion": "prompt row present",
+     "status": "pass",
+     "screenshot": "pay-new--minted-light--01_review.png"
+    },
+    {
+     "n": 2,
+     "action": "Answer",
+     "assertion": "toast with Undo",
+     "status": "pass",
+     "screenshot": "pay-new--minted-light--02_answered_with_Undo.png"
+    },
+    {
+     "n": 3,
+     "action": "Undo",
+     "assertion": "row back",
+     "status": "pass",
+     "screenshot": "pay-new--minted-light--03_undone.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3-core-3",
+   "title": "scan-after, motion on",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Scan tab",
+   "covers": [
+    "R3-23"
+   ],
+   "spec": "flows.md scan-after",
+   "status": "pass",
+   "ends": "attached with Undo (the 4x-CPU feel pass still fails it, finding 3)",
+   "steps": [
+    {
+     "n": 1,
+     "action": "crop",
+     "assertion": "Use this",
+     "status": "pass",
+     "screenshot": "scan-after--minted-light--01_crop.png"
+    },
+    {
+     "n": 2,
+     "action": "reading",
+     "assertion": "Reading receipt…",
+     "status": "pass",
+     "screenshot": "scan-after--minted-light--02_reading.png"
+    },
+    {
+     "n": 3,
+     "action": "confirm",
+     "assertion": "items",
+     "status": "pass",
+     "screenshot": "scan-after--minted-light--03_confirm.png"
+    },
+    {
+     "n": 4,
+     "action": "done",
+     "assertion": "Attached to the payment, Undo",
+     "status": "pass",
+     "screenshot": "scan-after--minted-light--05_attached_with_Undo.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3S-1",
+   "title": "A scroll starting on a row, and a tap",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/more, /s/payments",
+   "covers": [
+    "R3S-1",
+    "R3S-1s"
+   ],
+   "spec": "patterns §8",
+   "status": "pass",
+   "ends": "scroll: ripple gone with the cancel; tap: ripple in the first frame",
+   "steps": [
+    {
+     "n": 1,
+     "action": "touchStart on a row",
+     "assertion": "one `.press` while the finger is down",
+     "status": "pass",
+     "screenshot": "FLOW-R3S-1-step-1-tap-ripple.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R3S-2",
+   "title": "Who had this? sheet: error, then name",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/split (made-up)",
+   "covers": [
+    "R3S-3",
+    "R3S-3s"
+   ],
+   "spec": "patterns §8",
+   "status": "pass",
+   "ends": "the sheet eases to its new heights and ends at its first",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Add with no name",
+     "assertion": "error shown, height 294 to 312 over 12 frames",
+     "status": "pass",
+     "screenshot": "FLOW-R3S-2-step-1-who-had-this-after-error.png"
+    }
+   ]
+  }
+ ],
+ "criteria": [
+  {
+   "id": "R3-1",
+   "title": "Forward push: type forward, 200 ms, easing",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "b05feel2-motion in six looks, translate(100%)/-25%"
+  },
+  {
+   "id": "R3-1s",
+   "title": "Reduced motion: no screen animation",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "motion.spec reduced test and FLOW-6"
+  },
+  {
+   "id": "R3-2",
+   "title": "Back reverses (button, history.back)",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "b05feel2-motion R2-2"
+  },
+  {
+   "id": "R3-2s",
+   "title": "Back at the first history entry",
+   "spec": "D140 / patterns §8",
+   "status": "unreachable",
+   "evidence": "not driven"
+  },
+  {
+   "id": "R3-3",
+   "title": "Tab crossfades, tab bar still, also from a pushed screen",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "motion.spec; types ['tab','forward'] after a tab tapped on its own screen"
+  },
+  {
+   "id": "R3-3s",
+   "title": "Ten tab taps in a second",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "R2-7 spec, 3 fast taps and forward+back; ten not run"
+  },
+  {
+   "id": "R3-4",
+   "title": "A sheet starts no screen transition",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "motion.spec: types unchanged after a sheet"
+  },
+  {
+   "id": "R3-5",
+   "title": "Shared amount name on one element",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "15 distinct payment rows and an account list: no duplicate id, one [data-sen] per row"
+  },
+  {
+   "id": "R3-5s",
+   "title": "Two payments with the same amount",
+   "spec": "D140 / patterns §8",
+   "status": "unreachable",
+   "evidence": "not driven; no duplicate id found"
+  },
+  {
+   "id": "R3-6",
+   "title": "Taps blocked during a transition",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "R2-7 spec"
+  },
+  {
+   "id": "R3-7",
+   "title": "No startViewTransition: navigates, no error",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "R2-9 absent and untyped"
+  },
+  {
+   "id": "R3-8",
+   "title": "Ripple on pointerdown in the next frame",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "handler 2-3 ms, 2nd frame 22 ms at 4x"
+  },
+  {
+   "id": "R3-8s",
+   "title": "Switch, checkbox, no-press, disabled get none",
+   "spec": "D140 / patterns §8",
+   "status": "unreachable",
+   "evidence": "switch passes; disabled guard unguarded (probe P4)"
+  },
+  {
+   "id": "R3-9",
+   "title": "Reduced motion: ripple a tint",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "FLOW-6"
+  },
+  {
+   "id": "R3-10",
+   "title": "No call-site ripple code",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "grep of screens/: none"
+  },
+  {
+   "id": "R3-11",
+   "title": "Review row clears in motion",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "motion.spec"
+  },
+  {
+   "id": "R3-11s",
+   "title": "Reduced motion, and a failed write never leaves a ghost",
+   "spec": "D140 / patterns §8",
+   "status": "unreachable",
+   "evidence": "reduced pass; failed write not driven"
+  },
+  {
+   "id": "R3-12",
+   "title": "Money never counts",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "run 1 FLOW-3 per-frame sampling"
+  },
+  {
+   "id": "R3-13",
+   "title": "Toast slides, skeleton fades",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "FLOW-9; toast in/out by eye only"
+  },
+  {
+   "id": "R3-14",
+   "title": "Sheet eases to a new height",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "b05feel2-sheetsettle under 600 ms at 4x"
+  },
+  {
+   "id": "R3-15",
+   "title": "A slow round trip never freezes the screen",
+   "spec": "D140 / patterns §8",
+   "status": "unreachable",
+   "evidence": "preview uses the fake backend"
+  },
+  {
+   "id": "R3-16",
+   "title": "Haptic once per moment incl. long-press",
+   "spec": "D140 / patterns §8",
+   "status": "unreachable",
+   "evidence": "long-press unguarded: probe P3"
+  },
+  {
+   "id": "R3-16s",
+   "title": "None on scroll, a plain tap, or on load",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "b05feel2-haptics"
+  },
+  {
+   "id": "R3-17",
+   "title": "No bridge or bridge 1: quiet",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "haptics.test.ts, b05feel2-haptics"
+  },
+  {
+   "id": "R3-18",
+   "title": "Kotlin uses the view's constants; ShellTest",
+   "spec": "D140 / patterns §8",
+   "status": "unreachable",
+   "evidence": "needs the emulator"
+  },
+  {
+   "id": "R3-19",
+   "title": "Bridge answers no other origin",
+   "spec": "D140 / patterns §8",
+   "status": "unreachable",
+   "evidence": "needs the shell"
+  },
+  {
+   "id": "R3-20",
+   "title": "First visible change within 100 ms",
+   "spec": "D140 / patterns §8",
+   "status": "fail",
+   "evidence": "11 metrics flags; ripple answers in 22 ms, screens later (finding 4)"
+  },
+  {
+   "id": "R3-21",
+   "title": "60 fps at 4x CPU",
+   "spec": "D140 / patterns §8",
+   "status": "unreachable",
+   "evidence": "frame-times not re-run; run 2's figures stand"
+  },
+  {
+   "id": "R3-22",
+   "title": "No layout shift from motion",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "R2-27 spec"
+  },
+  {
+   "id": "R3-23",
+   "title": "Reduced-motion journey",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "FLOW-6; core journeys pass with motion on"
+  },
+  {
+   "id": "R3-24",
+   "title": "Functional suite reduced, feel pass on",
+   "spec": "D140 / patterns §8",
+   "status": "fail",
+   "evidence": "own-transfer flakes 2-10% on head, 0/100 main (finding 1)"
+  },
+  {
+   "id": "R3-25",
+   "title": "Six looks, one motion",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "b05feel2-motion x6"
+  },
+  {
+   "id": "R3-26",
+   "title": "Look change still reveals",
+   "spec": "D140 / patterns §8",
+   "status": "unreachable",
+   "evidence": "Appearance opens; reveal not exercised"
+  },
+  {
+   "id": "R3-27",
+   "title": "Docs match the build",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "patterns §8, uiux, qa-eyes, local.md read"
+  },
+  {
+   "id": "R3-28",
+   "title": "No float money, no counters",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "diff grep: only frame-times.mjs stats"
+  },
+  {
+   "id": "R3-29",
+   "title": "No migration; test:db green",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "pgTAP 103 ok; API 78 pass, 5 skipped (it.runIf on GET routes)"
+  },
+  {
+   "id": "R3-30",
+   "title": "No secrets or third-party scripts",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "production bundle grepped: only CSS words"
+  },
+  {
+   "id": "R3-31",
+   "title": "Trees unchanged",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "0 trees changed, 3 entries with 1-8 pixels"
+  },
+  {
+   "id": "R3-32",
+   "title": "Shadcn edits carry a // Sen: note",
+   "spec": "D140 / patterns §8",
+   "status": "pass",
+   "evidence": "button, field, switch"
+  },
+  {
+   "id": "R3-33",
+   "title": "Tests have teeth",
+   "spec": "D140 / patterns §8",
+   "status": "fail",
+   "evidence": "6 of 7 probes survive the repo suites (finding 2)"
+  },
+  {
+   "id": "R3S-1",
+   "title": "A scroll from a row leaves no ripple at once",
+   "spec": "patterns §8, flows own-transfer",
+   "status": "pass",
+   "evidence": "cancel to gone 20 ms (motion on), 37 ms (reduced)"
+  },
+  {
+   "id": "R3S-1s",
+   "title": "A tap still ripples; ten tab taps leave none",
+   "spec": "patterns §8, flows own-transfer",
+   "status": "pass",
+   "evidence": "`.press` 1 on touchStart; 0 `.press`/`data-pressed` after 10 taps"
+  },
+  {
+   "id": "R3S-2",
+   "title": "Reduced motion: tint stays, cancel removes",
+   "spec": "patterns §8, flows own-transfer",
+   "status": "pass",
+   "evidence": "same spec, reduce"
+  },
+  {
+   "id": "R3S-3",
+   "title": "A sheet measures nothing as it opens; a later change eases",
+   "spec": "patterns §8, flows own-transfer",
+   "status": "pass",
+   "evidence": "0 animate() calls on open; who-had-this error eases through 12 heights in about 190 ms; category sheet settles 257 ms at 4x (main 148)"
+  },
+  {
+   "id": "R3S-3s",
+   "title": "Two quick changes end at one height",
+   "spec": "patterns §8, flows own-transfer",
+   "status": "pass",
+   "evidence": "final 294 = first 294, last move at 696 ms (1x) / 800 ms (4x)"
+  },
+  {
+   "id": "R3S-4",
+   "title": "Search: only matches, no row under the sticky header at any frame",
+   "spec": "patterns §8, flows own-transfer",
+   "status": "pass",
+   "evidence": "rAF sampling, 25 runs each: 0 covered frames on head and main; '25 payments match'"
+  },
+  {
+   "id": "R3S-4s",
+   "title": "No match says so; clearing restores",
+   "spec": "patterns §8, flows own-transfer",
+   "status": "pass",
+   "evidence": "'No payments match', then the list returns"
+  },
+  {
+   "id": "R3S-5",
+   "title": "own-transfer reliable",
+   "spec": "patterns §8, flows own-transfer",
+   "status": "pass",
+   "evidence": "100/100 head, 100/100 main"
+  },
+  {
+   "id": "R3S-6",
+   "title": "Tests hold what run 3 found",
+   "spec": "patterns §8, flows own-transfer",
+   "status": "pass",
+   "evidence": "28/28 mutants killed; P1-P3 RED"
+  },
+  {
+   "id": "R3S-7",
+   "title": "Earlier probes re-run",
+   "spec": "patterns §8, flows own-transfer",
+   "status": "fail",
+   "evidence": "P4, P5 still green (accepted); new P8 green in the repo suites"
+  }
+ ],
+ "notTested": [
+  {
+   "what": "Kotlin hapticConstant and ShellTest, the bridge's origin check",
+   "why": "need the emulator or a device"
+  },
+  {
+   "what": "60 fps at 4x CPU (frame-times)",
+   "why": "not re-run; run 2's measurement stands"
+  },
+  {
+   "what": "Android Remove animations reaching the WebView as reduced motion, and touch-feedback setting silencing haptics",
+   "why": "needs a phone; queued in docs/local.md"
+  },
+  {
+   "what": "Slow API round trip during a Review clear",
+   "why": "the preview runs the fake backend; e2e:server has no motion spec"
+  },
+  {
+   "what": "The 4x-CPU film and metrics passes after the fixes",
+   "why": "not re-run in a scoped check; findings 3 and 4 stand"
+  }
+ ]
+}

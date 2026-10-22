@@ -3,6 +3,7 @@ import { Link, useRouter } from '@tanstack/react-router';
 import { TABS, type IconTab, type Look, type Mode } from '@sen/looks';
 import { LookMarkup } from '@/components/look/look-markup';
 import { useLongPress } from '@/lib/long-press';
+import { tabChangeNext } from './motion';
 import { useSvgId } from '@/lib/uid';
 import { useLook } from '@/theme/look';
 import { useMode, useReducedMotion } from '@/theme/store';
@@ -53,12 +54,16 @@ export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
 
   useEffect(() => {
     const st = history.location.state as { senSheet?: string };
-    if (active === 'home' && !st.senSheet) homeIndex = historyIndex(st);
+    // only while Home is the address: a render still showing Home while history has moved on (a view
+    // transition commits the next screen a moment later) would record the next screen's step (QA B05
+    // Feel run 2, 2)
+    if (active === 'home' && !st.senSheet && history.location.pathname === '/') homeIndex = historyIndex(st);
   });
   const toHome = (e: MouseEvent) => {
     if (active === 'home' || e.metaKey || e.ctrlKey) return;
     const here = historyIndex(history.location.state);
     e.preventDefault();
+    tabChangeNext();
     if (homeIndex !== undefined && here !== undefined && homeIndex < here) history.go(homeIndex - here);
     else void history.replace('/');
   };
@@ -113,7 +118,7 @@ export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
             key={k}
             to={PATHS[k]}
             replace={active !== null && active !== 'home' && k !== 'home'}
-            onClick={k === 'home' ? toHome : undefined}
+            onClick={k === 'home' ? toHome : tabChangeNext}
             className={`tab${on ? ' on' : ''}${fresh === k ? ' fresh' : ''}`}
             data-k={k}
             aria-current={on ? 'page' : undefined}

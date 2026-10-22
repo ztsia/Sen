@@ -99,6 +99,8 @@ const STATES = ['resting', 'note', 'listening', 'thinking', 'helpers', 'speaking
 
 for (const look of LOOKS) {
   test(`${look}: Sen's avatar plays its eight states`, async ({ page }) => {
+    // the journeys run with motion reduced (playwright.config.ts); this one watches it move
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     await open(page, '/dev/gallery', look, 'dark');
     for (const s of STATES) {
       await page.getByTestId(`avatar-${s}`).scrollIntoViewIfNeeded();

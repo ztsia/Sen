@@ -97,7 +97,7 @@ function BudgetsBody({ v, onEdit }: { v: BudgetsView; onEdit: (e: Editing) => vo
               <button
                 key={r.id}
                 type="button"
-                className={cn('flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left active:bg-accent')}
+                className={cn('flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left')}
                 onClick={() => onEdit({ categoryId: r.categoryId, label: r.label, cap: r.cap })}
               >
                 <IconTile icon={categoryIcon(r.label)} tone={categoryTone(r.label)} />

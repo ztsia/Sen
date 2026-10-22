@@ -1,5 +1,5 @@
 import { useRef, type PointerEvent } from 'react';
-import { lightTick } from './haptics';
+import { haptic } from './haptics';
 
 export const LONG_PRESS_MS = 500;
 /** How long after the finger lifts the click it makes is still swallowed. */
@@ -55,7 +55,7 @@ export function useLongPress(onTap: () => void, onLongPress: () => void) {
         fired.current = true;
         timer.current = undefined;
         swallowClickAfterLift();
-        lightTick();
+        haptic('long-press');
         onLongPress();
       }, LONG_PRESS_MS);
     },

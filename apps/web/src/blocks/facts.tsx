@@ -29,6 +29,7 @@ export function HeaderCard({
   source,
   badge,
   copy,
+  shareId,
 }: {
   mark?: ReactNode;
   title: ReactNode;
@@ -38,6 +39,8 @@ export function HeaderCard({
   badge?: ReactNode;
   /** The figure as text, for its Copy button. */
   copy?: number;
+  /** The payment's id: its row's amount carries into this figure (patterns.md §8). */
+  shareId?: string;
 }) {
   const doCopy = async () => {
     try {
@@ -53,7 +56,9 @@ export function HeaderCard({
       <p className="max-w-full text-base font-medium text-pretty wrap-anywhere">{title}</p>
       {figure !== undefined ? (
         <div className="relative flex items-center justify-center">
-          <div className="text-4xl font-semibold">{figure}</div>
+          <div className="text-4xl font-semibold" data-share={shareId} data-share-figure={shareId ? '' : undefined}>
+            {figure}
+          </div>
           {copy !== undefined ? (
             <Button
               variant="ghost"
@@ -98,7 +103,7 @@ export function FactGrid({ facts, className }: { facts: GridFact[]; className?: 
                 <button
                   type="button"
                   onClick={f.onSelect}
-                  className="relative tap -mx-1 inline-flex max-w-full items-center gap-1 rounded-md px-1 text-left active:bg-accent"
+                  className="relative tap -mx-1 inline-flex max-w-full items-center gap-1 rounded-md px-1 text-left"
                 >
                   <span className="min-w-0 wrap-anywhere">{f.value}</span>
                   <ChevronRightIcon className="size-4 shrink-0 text-icon" aria-hidden="true" />
@@ -169,7 +174,7 @@ function BarButton({
       className="group flex min-h-16 flex-col items-center gap-1.5 rounded-xl py-1 text-xs font-medium text-foreground disabled:opacity-50"
       {...props}
     >
-      <span className="inline-flex size-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-opacity group-active:opacity-70">
+      <span className="inline-flex size-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
         <Icon className="size-5" />
       </span>
       <span className="max-w-full text-center leading-tight text-balance">{label}</span>

@@ -26,7 +26,7 @@ export function MatchSheet({
         {choices.map((c, i) => (
           <div key={c.id}>
             {i ? <ItemSeparator /> : null}
-            <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base active:bg-accent">
+            <Item asChild size="sm" className="min-h-14 w-full rounded-none text-left text-base">
               <button type="button" onClick={() => onChoose(c.id)}>
                 <ItemContent>
                   <ItemTitle className="text-base font-normal">{c.label}</ItemTitle>
@@ -119,7 +119,7 @@ function MinePicker({ items, onDone }: { items: DraftItem[]; onDone: (mine: stri
       <ul className="-mx-4 flex flex-col">
         {items.map((i) => (
           <li key={i.id}>
-            <label className="flex min-h-14 cursor-pointer items-center gap-3 px-4 py-2 active:bg-accent">
+            <label className="flex min-h-14 cursor-pointer items-center gap-3 px-4 py-2">
               <Checkbox checked={ticked.has(i.id)} onCheckedChange={(c) => toggle(i.id, c === true)} />
               <span className="min-w-0 flex-1">{i.description}</span>
               <Money sen={i.price} className="font-normal text-foreground" />

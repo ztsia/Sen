@@ -1,45 +1,53 @@
 # Handoff
 
-## Where things stand (17 Oct)
+## Where things stand (22 Oct)
 
-**B05 · QA tooling is done; its PR is open from `B05/qa-tooling`**, waiting for the owner's merge.
-Ledger with the retro: `qa/B05-qa-tooling/ledger.md`. What it adds (D139: measure, never guess
-causes):
-- `qa/limits.ts` judges every number against a human limit and `main`. A crossing counts only as a
-  real step worse than `main`; timings need 50%, bytes and counts 25%. Flags never fail CI.
-- The API sends `Server-Timing` on every answer; its tests record it per route (`QA_METRICS`).
-  Bodies over 256 KB get a 413.
-- The route sweep (`routes.table.ts`, `sweep.test.ts`) and 13 breakage checks
-  (`node scripts/mutants.mjs`), all killed.
-- The lived-in journeys (`e2e:lived`, in CI) and an ended session in `e2e:server` (port 4179).
-- `live-metrics` on every preview: it flagged the region probe (1.3–2.2 s server time against
-  18–23 ms).
-- Metrics in `qa-diff.mjs`: screens opened from the service worker's cache, taps with filmstrips, the
-  API and the build, measured once, then three times for what flags. About 12–13 minutes. Identical
-  code still confirms 1–2 timing flags per run, so the reviewer re-measures each flag once
-  (done-when not quite met; the ledger says why).
-- The `qa` skill, `qa-reviewer`, `qa-eyes`, `brief`, `uiux`, CLAUDE.md and `qa/escapes.md` describe
-  the new run.
-- The general lessons are in [ztsia/claude_skills#4](https://github.com/ztsia/claude_skills/pull/4).
-- Fixed what the tools found: 200% text overlaps, the ended-session message, a resource-upsert race,
-  a 413 missing no-store.
+**B05 · Feel is done on `B05/feel`**, and its PR ([ztsia/Sen#18](https://github.com/ztsia/Sen/pull/18))
+waits only on green CI. The owner said (21 Oct) to merge it once CI is green, and (22 Oct) to stop
+there: B06 starts in a new session. That merge skips the brief's phone sign-off; the owner tries it
+in the review app afterwards (`review` points at `B05/feel`).
 
-**No full QA run** (owner, 17 Oct: not enough quota). Each change has its own test. The diff against
-`main` shows 0 trees and 0 pixels changed in all twelve pairs.
+What it built is in `patterns.md` §8 ("Built in") and `docs/decisions.md` D140. QA took three full
+runs and a scoped re-check: `qa/B05-feel/ledger.md` holds every fix and its tier, the retro, and the
+[published report](https://claude.ai/artifact/GpVyhAnBmTSZJ9E9amaDuq).
 
-**Next: B05 · Feel** (`docs/briefs/B05-feel.md`, branch `B05/feel` from `main` once this PR merges).
-It starts with the motion demo the owner picks from on the phone. Then B06.
+Accepted, and left to the owner's phone (ledger, runs 1–3):
+- At 4× CPU, a push or a sheet appears 60–150 ms later than `main`. The ripple still answers within
+  a frame (22 ms measured).
+- Tab crossfades drop 11–25% of frames at 4× CPU. If tabs feel slow, the lever is to switch them at
+  once: drop `tab` from `routerTransition`.
+- In the feel pass (motion on, 4× CPU), `scan-after` and `subscription` fail 2 of 42 runs, where the
+  made-up reader moves on before the test sees it.
 
-### Known
-- The `scan-after` journey fails now and then under the metrics' throttling: it waits for
-  *Reading receipt…*, which shows for a moment. Its steps are then missing on that side.
-- Agents resumed after a usage limit ran on Opus (`brief` skill: check, and brief a fresh agent if so).
+Pre-existing, left for their own slices (QA run 3's eyes pass):
+- A toast can sit over an open sheet, worst on the Remove confirm.
+- A sheet's title flips to *Category* as it closes.
+- Account's red *RM42.10 less* has no icon.
+- A browser's long-press still calls `navigator.vibrate`.
 
-### Open with the owner
-- docs/local.md *Now*: delete the branch `B05/qa-tooling-iad1-probe`; `SEN_OWNER_EMAIL` in Vercel
-  Production; first sign-in; Q14 (inbox or spam); sign out everywhere.
-- Merge [ztsia/claude_skills#4](https://github.com/ztsia/claude_skills/pull/4).
-- Email stays on Gmail (D54); Resend only if Q14 shows spam. Premium HTML emails are in B38's brief.
+## Next
+1. CI green on the PR, then merge it (owner's go, 21 Oct).
+2. In a new session (owner, 22 Oct): **B06 · Jobs, realtime, push and backups** (`docs/briefs/B06-jobs-realtime-backups.md`), on
+   `B06/jobs-realtime-backups` from `main`. It needs owner accounts (Cloudflare Worker, Firebase
+   for FCM, R2 for dumps, cron-job.org). Write the steps into `docs/local.md` first, and build
+   everything that doesn't wait on them.
+
+## Open with the owner
+- Sign-off on the phone, after the new APK (`docs/local.md`, *Update Sen and Sen review*).
+- `docs/local.md` *Now*:
+  - delete `B05/qa-tooling-iad1-probe` and `B05/qa-tooling`
+  - `SEN_OWNER_EMAIL`
+  - first sign-in
+  - Q14
+  - sign out everywhere
+- Merge [ztsia/claude_skills#5](https://github.com/ztsia/claude_skills/pull/5), which now holds B05's
+  lessons too.
 
 ## Don't argue again
-- D129–D139 (owner's calls). Deploys only by merge (D122); the review build follows `review` (D115).
+- D129–D140 (the owner's calls). Deploys happen only by merge (D122). The review build follows
+  `review` (D115).
+- Money never counts up or down in motion.
+- iOS back is an edge swipe in B39, for iOS standalone only, and never on Android (owner, 21 Oct).
+- Haptics go through `performHapticFeedback` (bridge 2), not `@capacitor/haptics`' vibrator.
+- In cloud sessions, subagents can't start subagents. The QA reviewer runs its sweep, and the main
+  session spawns `qa-eyes` (the `qa` skill).
