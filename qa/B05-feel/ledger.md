@@ -37,6 +37,23 @@ Fixed in `d30fa4a`.
 **The batch takes tier 3** (fixes 1 and 2), so run 3 is a fresh full run. The main session spawns
 `qa-eyes` once the diff report exists, since the reviewer can't.
 
+## Run 3 (full): fix first, 2 Major, 4 Minor (and the eyes pass)
+
+Fixed in `963ad1b` and the commit after it.
+
+| # | Sev | Fix | Tier, and why |
+|---|---|---|---|
+| 1 | Major | **Cause found, in the journey.** `own-transfer` searches Payments and waited for a row that is in the unfiltered list too. The search runs 200 ms after typing stops, so the step read the list while it swapped: the full list's height, with the filtered rows placed by stale measurements under the sticky day. B05's extra work made that moment likelier. The journey now waits for the search's own status (*26 payments match*), and passed 90 of 90. Run 2's estimate fix (58 and 34 px) stays, since it's right regardless. | 1: the journey only. |
+| 2 | Major | `motion.spec` pins D140's numbers: a push runs `sen-in-right` for 200 ms. It also covers Scan's long-press haptic. Mutants `motion-slow`, `motion-forward-from-left` and `long-press-silent` are killed. **Still without a test:** the ripple on a disabled control (nothing pressable is disabled), the shared-amount id check (ids are UUIDs), and the ripple's reduced-motion rule (`app.css` already zeroes every animation under reduced motion). | 1: tests. |
+| 3 | Minor | **Watched.** In the feel pass (motion on, 4× CPU), `scan-after` misses *Reading receipt…* when the made-up reader holds it under about 900 ms, and `subscription` is read before it settles. 2 of 42 runs fail on the branch; `main` fails `scan-after` too, at other times. The functional suite runs reduced and is unaffected. | None. |
+| 4 | Minor | Part fixed: `useSheetResize` no longer measures as a sheet opens (43 ms of the profile); the observer's first report is its baseline. **Accepted** (runs 1 and 2): a push or a sheet answers 60–150 ms later than `main` at 4× CPU. The ripple answers within a frame, which run 3 measured at 22 ms. The owner judges the rest on the phone. | 2: the sheet only. |
+| 5 | Minor | Eyes pass, weighed by the reviewer against `main`: no regression beyond 4. Pre-existing and left for their own slices: the toast drawn over an open sheet (worst on Remove's confirm), the *Category* title flipping as a sheet closes, Undo's late effect, and Account's red *RM42.10 less*. | None. |
+| 6 | Minor | A scroll that begins on a row cancels the press, and the ripple goes at once rather than fading. The ripple still starts on `pointerdown`, as D140 says. | 2: it runs only on `pointercancel`, which no journey fires. |
+
+**The batch takes tier 2:** the journey and test changes, the cancel path and the sheet's baseline
+each stay in one area. So run 3's reviewer is resumed, scoped to press feedback, sheets and the
+Payments search.
+
 ## Retro
 
 Run 1 came late on two things:

@@ -177,7 +177,8 @@ export function useSheetResize(): (el: HTMLElement | null) => void {
   useEffect(() => {
     const sheet = area?.parentElement;
     if (!area || !sheet || typeof ResizeObserver === 'undefined') return;
-    let last = sheet.getBoundingClientRect().height;
+    // the first report, as the observer starts, is the baseline: no measuring while the sheet opens
+    let last = 0;
     // the animation itself resizes the area, so the observer ignores it while it runs, and compares
     // the next change with where the last one ended (QA B05 Feel run 2, 1)
     let running: Animation | null = null;
