@@ -56,14 +56,9 @@ for (const [name, base] of [['head', 'http://localhost:4181'], ['main', 'http://
     const page = await ctx.newPage();
     await open(page, '/s/payments');
     await page.waitForFunction(() => document.querySelector('main button[data-slot=item]'));
-    const area = () => page.evaluate(() => {
-      const s = [...document.querySelectorAll('main *')].find((e) => e.scrollHeight > e.clientHeight + 200 && /auto|scroll/.test(getComputedStyle(e).overflowY));
-      return s ? Math.round(s.scrollTop) : -1;
-    });
-    await page.evaluate(() => {
-      const s = [...document.querySelectorAll('main *')].find((e) => e.scrollHeight > e.clientHeight + 200 && /auto|scroll/.test(getComputedStyle(e).overflowY));
-      s?.scrollTo(0, 900);
-    });
+    const finder = `(() => { let p = document.querySelector('main button[data-slot=item]'); while (p && !(p.scrollHeight > p.clientHeight + 200 && /auto|scroll/.test(getComputedStyle(p).overflowY))) p = p.parentElement; return p; })()`;
+    const area = () => page.evaluate(`(() => { const s = ${finder}; return s ? Math.round(s.scrollTop) : -1; })()`) as Promise<number>;
+    await page.evaluate(`(() => { const s = ${finder}; s && s.scrollTo(0, 900); })()`);
     await page.waitForTimeout(400);
     const before = await area();
     const row = page.locator('main button[data-slot=item]:has-text("RM")').nth(3);
