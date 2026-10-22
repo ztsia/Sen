@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { flushSync } from 'react-dom';
 import { reducedMotionNow } from '@/theme/store';
 
@@ -172,9 +172,13 @@ export const rowMotion = (id: string) =>
  * rather than jumping (patterns.md §8). Pass the returned ref to the sheet's scroll area; the sheet
  * is its parent. A callback ref, since the sheet's content mounts after the sheet's own effects run.
  */
-export function useSheetResize(): (el: HTMLElement | null) => void {
-  const [area, setArea] = useState<HTMLElement | null>(null);
-  useEffect(() => {
+export function useSheetResize(): (area: HTMLElement | null) => void {
+  // observed from the callback ref itself, with no state, so a sheet renders once as it opens (QA B05
+  // Feel run 3, S1)
+  const stop = useRef<(() => void) | null>(null);
+  return useCallback((area: HTMLElement | null) => {
+    stop.current?.();
+    stop.current = null;
     const sheet = area?.parentElement;
     if (!area || !sheet || typeof ResizeObserver === 'undefined') return;
     // the first report, as the observer starts, is the baseline: no measuring while the sheet opens
@@ -203,7 +207,6 @@ export function useSheetResize(): (el: HTMLElement | null) => void {
       running.oncancel = done;
     });
     ro.observe(area);
-    return () => ro.disconnect();
-  }, [area]);
-  return setArea;
+    stop.current = () => ro.disconnect();
+  }, []);
 }

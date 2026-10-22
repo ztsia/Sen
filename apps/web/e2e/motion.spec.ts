@@ -179,6 +179,36 @@ test('a press shows in the first frame, from the finger, and leaves nothing behi
   await page.mouse.up();
 });
 
+test('a scroll that begins on a row takes its ripple away at once', async ({ page }) => {
+  await open(page, '/s/payments');
+  await expect(page.locator('[data-share]').first()).toBeVisible();
+  const cdp = await page.context().newCDPSession(page);
+  const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', y?: number) =>
+    cdp.send('Input.dispatchTouchEvent', { type, touchPoints: y === undefined ? [] : [{ x: 200, y }] });
+  await page.evaluate(() => {
+    const w = window as unknown as { __gone: number };
+    w.__gone = -1;
+    addEventListener(
+      'pointercancel',
+      () => {
+        const at = performance.now();
+        const look = () => {
+          if (!document.querySelector('.press')) w.__gone = performance.now() - at;
+          else requestAnimationFrame(look);
+        };
+        requestAnimationFrame(look);
+      },
+      { capture: true },
+    );
+  });
+  await touch('touchStart', 600);
+  for (let i = 1; i <= 10; i++) await touch('touchMove', 600 - i * 30);
+  await touch('touchEnd');
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __gone: number }).__gone)).toBeGreaterThan(-1);
+  // gone with the cancel, not after the tap's 120 ms hold and 300 ms fade
+  expect(await page.evaluate(() => (window as unknown as { __gone: number }).__gone)).toBeLessThan(100);
+});
+
 test("haptics: Scan's long-press", async ({ page }) => {
   await open(page, '/');
   const scan = page.locator('[data-k=scan]');

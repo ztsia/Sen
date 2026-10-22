@@ -271,4 +271,12 @@ export const MUTANTS: Mutant[] = [
     replace: ``,
     suite: 'motion',
   },
+  {
+    id: 'ripple-flashes-on-scroll',
+    breaks: 'every scroll that starts on a row flashes its ripple (QA B05 Feel run 3, 6)',
+    file: 'apps/web/src/frame/press.ts',
+    find: `    if (ev.type === 'pointercancel') {\n      clip.remove();\n      return;\n    }\n`,
+    replace: ``,
+    suite: 'motion',
+  },
 ];
