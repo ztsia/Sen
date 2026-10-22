@@ -2,10 +2,10 @@
 
 ## Where things stand (22 Oct)
 
-**B05 · Feel is done on `B05/feel`**, and its PR (*B05 · Feel*) waits only on green CI. The owner said
-(21 Oct): once CI is green, merge it and go on to B06 in the same session. That merge skips the
-brief's phone sign-off; the owner tries it in the review app afterwards (`review` points at
-`B05/feel`).
+**B05 · Feel is done on `B05/feel`**, and its PR ([ztsia/Sen#18](https://github.com/ztsia/Sen/pull/18))
+waits only on green CI. The owner said (21 Oct) to merge it once CI is green, and (22 Oct) to stop
+there: B06 starts in a new session. That merge skips the brief's phone sign-off; the owner tries it
+in the review app afterwards (`review` points at `B05/feel`).
 
 What it built is in `patterns.md` §8 ("Built in") and `docs/decisions.md` D140. QA took three full
 runs and a scoped re-check: `qa/B05-feel/ledger.md` holds every fix and its tier, the retro, and the
@@ -27,7 +27,7 @@ Pre-existing, left for their own slices (QA run 3's eyes pass):
 
 ## Next
 1. CI green on the PR, then merge it (owner's go, 21 Oct).
-2. **B06 · Jobs, realtime, push and backups** (`docs/briefs/B06-jobs-realtime-backups.md`), on
+2. In a new session (owner, 22 Oct): **B06 · Jobs, realtime, push and backups** (`docs/briefs/B06-jobs-realtime-backups.md`), on
    `B06/jobs-realtime-backups` from `main`. It needs owner accounts (Cloudflare Worker, Firebase
    for FCM, R2 for dumps, cron-job.org). Write the steps into `docs/local.md` first, and build
    everything that doesn't wait on them.
