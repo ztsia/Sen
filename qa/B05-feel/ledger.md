@@ -54,6 +54,18 @@ Fixed in `963ad1b` and the commit after it.
 each stay in one area. So run 3's reviewer is resumed, scoped to press feedback, sheets and the
 Payments search.
 
+## Run 3, scoped re-check: ship
+
+Run 3's 1, 2 and 6 were verified fixed; `own-transfer` passed 100 of 100 on the branch and on `main`.
+Two new Minors, both fixed in `ab0eaa1`:
+- **S1:** every sheet rendered twice on opening. The callback ref set state; `useSheetResize` now
+  observes from the ref itself.
+- **S2:** the press-cancel fix had no repo test. `motion.spec` now has *a scroll that begins on a row
+  takes its ripple away at once*, and the mutant `ripple-flashes-on-scroll` is killed.
+
+Both are tier 1: one file each, plus a test, and the motion suite passed 4 times over.
+**Published report:** https://claude.ai/artifact/GpVyhAnBmTSZJ9E9amaDuq
+
 ## Retro
 
 Run 1 came late on two things:

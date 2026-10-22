@@ -1,5 +1,7 @@
 # QA report: B05 · Feel (run 3, scoped re-check, commits 23613b0..778e21b)
 
+**Published report:** https://claude.ai/artifact/GpVyhAnBmTSZJ9E9amaDuq
+
 **VERDICT: ship** (for the three areas re-checked; the full run's open Minors stand)
 10 new criteria (R3S-1 to R3S-7): 9 pass, 1 fail (the earlier probes still green: P4, P5 accepted, P8 new)
 Area: press feedback on everything tappable; sheets whose content changes; the Payments search and the
