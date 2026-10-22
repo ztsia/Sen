@@ -77,3 +77,11 @@ What it cost most: the reviewer's run (about 280k tokens and 2 hours on Sonnet).
 tool, so it ran the sweep and the eyes pass itself. `CLAUDE.md` says subagents can't start
 subagents, but the `qa` skill told the reviewer to start its helpers. The skill now says what to do
 without the tool: the reviewer runs the sweep, and the main session spawns `qa-eyes`.
+
+**Carried to `claude_skills`:** [ztsia/claude_skills#5](https://github.com/ztsia/claude_skills/pull/5)
+(commit `3e56c4c`) now holds:
+- transition names only under the app's own types
+- change motion when data arrives, not around the write
+- the self-feeding ResizeObserver
+- the reviewer without an Agent tool
+- unpiped fast checks
