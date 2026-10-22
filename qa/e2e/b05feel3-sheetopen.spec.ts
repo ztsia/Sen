@@ -7,6 +7,7 @@ const cases = [
   ['head motion on', 'http://localhost:4181', 'no-preference'],
   ['head reduced', 'http://localhost:4181', 'reduce'],
   ['probe: no first measure in useSheetResize', 'http://localhost:4184', 'no-preference'],
+  ['main reduced', 'http://localhost:4183', 'reduce'],
   ['main motion on', 'http://localhost:4183', 'no-preference'],
 ] as const;
 for (const [name, base, rm] of cases) {

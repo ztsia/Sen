@@ -199,3 +199,12 @@ FLOW-R3-6  Back at the start, a duplicate amount, and no `startViewTransition`  
 FLOW-R3-7  Six looks: the same push, and a look change           (happy)
         Covers R3-25, R3-26
 Then the core journeys `first-run`, `pay-new` and `scan-after` once each (docs/flows.md).
+
+---
+
+# Run 3, scoped re-check
+
+FLOW-R3S-1  A scroll starting on a row, and ten quick taps          (happy/sad)   Covers R3S-1, R3S-1s, R3S-2
+FLOW-R3S-2  Category sheet: pick, then error/step twice quickly       (happy/sad)   Covers R3S-3, R3S-3s
+FLOW-R3S-3  Payments search: type, sample every frame, clear, no match (happy/sad)  Covers R3S-4, R3S-4s
+FLOW-R3S-4  own-transfer, 100 runs, head against main                  (happy)       Covers R3S-5

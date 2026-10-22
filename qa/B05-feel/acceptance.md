@@ -561,3 +561,29 @@ R3-31 Trees: changed only where a screen gains an element; every changed tree is
 R3-32 Edited shadcn files carry a `// Sen:` note on their first line; no parallel hand-rolled part
 R3-33 Tests have teeth: removing the push, the back type, the reduced-motion rule, the ripple, the
       haptic call or the version check turns a suite red
+
+---
+
+# Run 3, scoped re-check (tier 2, commits 23613b0..778e21b)
+
+Area: press feedback on everything tappable; sheets whose content changes; the Payments search and the
+`own-transfer` journey through it (patterns §8, flows.md `own-transfer`). Findings re-checked: run 3's
+1, 2, 4 (the sheet part), 6.
+
+R3S-1  A scroll that begins on a row shows no lasting ripple: after the browser cancels the press
+       (pointercancel), no `.press` node is left, at once
+R3S-1s Sad twin: a tap (pointerdown, pointerup) still shows the ripple from the finger within a frame,
+       and leaves no `.press` node 1 s later; ten quick taps leave none
+R3S-2  Reduced motion: the ripple stays as a tint, and the cancel path still removes it
+R3S-3  A sheet opening measures nothing before its first paint: a sheet's first observer report is the
+       baseline, and a later change (step, error) still eases to the new height in about 200 ms
+R3S-3s Sad twin: two changes in quick succession (error then step) end at the final height, with no
+       jump to a third height and nothing running after about 450 ms
+R3S-4  After a search the Payments list shows only matching rows and no row sits under the sticky day
+       header at any frame, not only at the end
+R3S-4s Sad twin: a search with no match says so (empty state), and clearing it restores the full list
+R3S-5  `own-transfer` is reliable: 0 failures in 100 runs with motion reduced, as on main
+R3S-6  The tests now hold what run 3 found: a push is `sen-in-right` for 200 ms; Scan's long-press is
+       felt; mutants `motion-slow`, `motion-forward-from-left`, `long-press-silent` are killed
+R3S-7  The earlier probes (duration, direction, long-press, disabled guard, id check, toggle kinds)
+       are re-run: the first three, now caught; the rest named if still green
