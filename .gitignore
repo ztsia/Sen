@@ -55,3 +55,4 @@ qa/**/.gradle/
 .claude/worktrees/
 .vercel/
 apps/web/public/db-deploy.txt
+.neon
