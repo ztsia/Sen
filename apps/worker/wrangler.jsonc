@@ -16,8 +16,8 @@
   "durable_objects": {
     "bindings": [
       { "name": "SCHEDULER", "class_name": "Scheduler" },
-      { "name": "CHANNEL", "class_name": "Channel" }
-    ]
+      { "name": "CHANNEL", "class_name": "Channel" },
+    ],
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Scheduler", "Channel"] }],
   "env": {
@@ -28,10 +28,10 @@
       "durable_objects": {
         "bindings": [
           { "name": "SCHEDULER", "class_name": "Scheduler" },
-          { "name": "CHANNEL", "class_name": "Channel" }
-        ]
+          { "name": "CHANNEL", "class_name": "Channel" },
+        ],
       },
-      "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Scheduler", "Channel"] }]
-    }
-  }
+      "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Scheduler", "Channel"] }],
+    },
+  },
 }
