@@ -27,12 +27,23 @@ backup records itself through `record_backup()`, which B06's production deploy c
 - Verified locally end to end (Worker + API on `sen_dev`): a tick, a hint on an open socket, a test job
   run once with two crons at once.
 
+**Verified (25 Oct):** done-when 1 on the review alias (test job ran at its minute, its hint over
+the deployed relay); done-when 2 in Chrome locally (a change on device B updated tab A; relay stopped →
+*Updated just now*, and the next change arrived within 30 s); 6; 7 (`security` green in CI); 9.
+`review` points at B06 (fast-forwarded). Both Workers' Git builds connected (preview build green).
+
 ## What to do next
 
-1. On the review alias: done-when 1 (test job) and 2 (two screens; relay stopped → 30 s fallback),
-   then the test push on the phone's *Sen review* (done-when 3, needs the new APK).
-2. QA (`qa` skill), then the PR's description; the owner merges, then merges `sen_ops#b06-backup`,
-   sets up cron-job.org (done-when 5) and confirms R2's numbers (D142).
+1. **QA, a fresh full run** (`qa` skill; the first was stopped at a usage limit before it began, nothing
+   written). Reviewer on Opus. On Windows: Postgres 16 + pgTAP in the Docker container `senpg`
+   (image `sen-pg16`: `postgres:16` plus `apt-get install postgresql-16-pgtap
+   libtap-parser-sourcehandler-pgtap-perl`, run with `-p 127.0.0.1:5432:5432 -e POSTGRES_USER=sen_owner
+   -e POSTGRES_HOST_AUTH_METHOD=trust -v "C:/Zhong Tai/Sen/packages/db:/work"`), and `psql`/`pg_prove`
+   shims that `docker exec -i senpg …` (pg_prove with `-w /work`) on PATH. gitleaks from its release zip.
+   `pnpm test:db` and the e2e configs now run in Windows' shell.
+2. Check PR #20's `check` and `e2e` jobs (a formatting fix was pushed after the first `check` failed).
+3. Then the PR's description and ready-for-review; the owner's list in `docs/local.md` → *Now* → B06
+   (the security scan, item 7, before merge; then sen_ops, cron-job.org, the phone, R2's numbers).
 3. **Done-when 8, the whole-codebase `claude-security` scan, can't run in this session** (it needs
    the Workflow tool). The owner runs it in its own session: `claude --agent claude-security:claude-security`
    in the repo, scan codebase, high effort; findings into `qa/B06/security.md`.
