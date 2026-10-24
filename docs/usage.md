@@ -38,4 +38,4 @@ The same pointer brief, run on both models, each in its own worktree:
 | 16 Oct | B05-fixes | `012a2743` | $72.52 | 2× qa-reviewer on opus-5-5 $61.56; 1× implementer on sonnet-5-5 $2.33 | $136.41 | opus 98%, sonnet 2% |
 | 17 Oct | B05-qa-tooling | `012a2743` (cont.) | ≈$62 | 4× implementer on sonnet-5-5 ≈$70 (metrics ≈$67, of it ≈$48 after two usage-limit resumes that ran on opus-5-5); 1× implementer on haiku-5-5 $0.04 | ≈$133 | the same session as B05-fixes: this row is its total since that row ($188.09 − $136.41) plus the transcript after the worker restart ($81.43); estimated by hand, not `--log`, so B05-fixes keeps its row |
 | 22 Oct | B05 · Feel | `f31e101f` | $7.36 | none | $7.36 | opus 100% |
-| 24 Oct | workflow-setup | `d4fb3d26` | $6.06 | none | $6.06 | opus 100% |
+| 24 Oct | workflow-setup | `d4fb3d26` | $11.48 | none | $11.48 | opus 100% |
