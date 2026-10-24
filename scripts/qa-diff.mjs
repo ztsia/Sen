@@ -558,6 +558,7 @@ if (metricsOnly) {
 /* ---------- pixels --------------------------------------------------------------- */
 
 const requireWeb = createRequire(join(web, 'package.json'));
+// eslint-disable-next-line no-unsanitized/method -- a dev script importing pixelmatch resolved from the web app's own node_modules
 const { default: pixelmatch } = await import(pathToFileURL(requireWeb.resolve('pixelmatch')).href);
 const { PNG } = requireWeb('pngjs');
 

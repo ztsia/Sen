@@ -1,6 +1,9 @@
 // @ts-check
 import js from '@eslint/js';
 import reactHooks from 'eslint-plugin-react-hooks';
+import noUnsanitized from 'eslint-plugin-no-unsanitized';
+import react from 'eslint-plugin-react';
+import security from 'eslint-plugin-security';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -83,6 +86,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/dist/**',
       '**/.vercel/**',
+      '**/.wrangler/**',
       '**/dist-production/**',
       '**/dist-server/**',
       'apps/web/dist-*/**',
@@ -135,5 +139,43 @@ export default tseslint.config(
     files: ['apps/web/src/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
     rules: { 'react-hooks/rules-of-hooks': 'error', 'react-hooks/exhaustive-deps': 'error' },
+  },
+  // The security rules (`pnpm security` runs this config): eslint-plugin-security and no-unsanitized
+  // (recommended sets, every rule at error) on every file linted, and react/no-danger on the web app.
+  // A false positive is justified where it sits, with an eslint-disable-next-line and its reason.
+  security.configs.recommended,
+  { rules: Object.fromEntries(Object.keys(security.configs.recommended.rules).map((r) => [r, 'error'])) },
+  {
+    // Off everywhere, after reading every hit (343 at the first run): each is an index read, never a
+    // write, with a key the types restrict (a union of ids, a loop counter, a table's own keys), and
+    // none assigns through a key a request or a person typed. A rule that flags every `a[i]` hides
+    // the real findings behind noise. Writes through request-supplied keys are caught in review and
+    // by the API's schemas (zod strips unknown keys).
+    rules: { 'security/detect-object-injection': 'off' },
+  },
+  {
+    // Tests, QA's specs and probes, and the build and QA scripts never ship and never see a stranger's
+    // input: their file paths and regular expressions are built from repo paths, CLI arguments, ports
+    // and fixed test strings. The shipped code (apps/*/src, packages/*/src) keeps all three rules.
+    files: [
+      '**/*.test.{ts,tsx,mjs}',
+      '**/e2e/**',
+      '**/scripts/**',
+      '**/test/**',
+      'qa/**',
+      'apps/web/sw/**',
+      'apps/web/vite.config.ts',
+    ],
+    rules: {
+      'security/detect-non-literal-fs-filename': 'off',
+      'security/detect-non-literal-regexp': 'off',
+      'security/detect-unsafe-regex': 'off',
+    },
+  },
+  noUnsanitized.configs.recommended,
+  {
+    files: ['apps/web/src/**/*.tsx'],
+    plugins: { react },
+    rules: { 'react/no-danger': 'error' },
   },
 );

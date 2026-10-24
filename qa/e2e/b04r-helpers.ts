@@ -58,6 +58,7 @@ export async function db<T>(page: Page, fn: string): Promise<T> {
       .getEntriesByType('resource')
       .map((e) => e.name)
       .filter((n) => /\/src\/data\/index\.ts/.test(n));
+    // eslint-disable-next-line no-unsanitized/method -- QA probe inside page.evaluate: imports the app's own already-loaded module by its dev-server URL
     const mod = await import(
       /* @vite-ignore */ new URL(loaded.length ? loaded[loaded.length - 1]! : '/src/data/index.ts', location.href).href
     );

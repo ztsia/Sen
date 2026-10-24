@@ -21,6 +21,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+// eslint-disable-next-line no-unsanitized/method -- a dev script importing a file from this repo (root-relative join), never external input
 const { MUTANTS, SUITES } = await import(join(root, 'qa/mutants.ts'));
 
 const git = (args, cwd = root) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();

@@ -1,15 +1,19 @@
 // The no-float rule (eslint.config.js) must catch every way text could become a float near money.
 // Each case plants one into a money file and expects ESLint to fail on it (B01, done-when 6).
 import { ESLint } from 'eslint';
-import { describe, expect, it } from 'vitest';
+import { fileURLToPath } from 'node:url';
+import { beforeAll, describe, expect, it } from 'vitest';
 
-const eslint = new ESLint({ cwd: new URL('..', import.meta.url).pathname });
+const eslint = new ESLint({ cwd: fileURLToPath(new URL('..', import.meta.url)) });
 const lint = async (code, filePath) => {
   const [result] = await eslint.lintText(code, { filePath });
   return result.messages.filter((m) => m.severity === 2).map((m) => m.ruleId);
 };
 
 describe('the no-float rule', () => {
+  // the first lint loads the whole config, plugins included: slow on a busy machine
+  beforeAll(() => lint('export {};', 'packages/core/src/money.ts'), 60_000);
+
   it.each([
     ['parseFloat', 'export const sen = parseFloat("12.50") * 100;', 'no-restricted-globals'],
     ['Number.parseFloat', 'export const sen = Number.parseFloat("12.50") * 100;', 'no-restricted-properties'],

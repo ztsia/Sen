@@ -298,6 +298,7 @@ export const offScreen = (el: Element) => onScreen.get(el) === false;
 // ---------- Home's decorations: markup added to the app's screen, and taken away again ----------
 /** Inserts one element's markup next to `at` and returns a function that removes it again. */
 export function insertDecor(at: Element, where: InsertPosition, html: string): () => void {
+  // eslint-disable-next-line no-unsanitized/method -- html is markup the looks build themselves from constants and numbers (insertDecor's callers in each look); no stored or typed text reaches it
   at.insertAdjacentHTML(where, html);
   const el =
     where === 'afterbegin'

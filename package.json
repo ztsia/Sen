@@ -18,6 +18,7 @@
     "e2e": "pnpm --filter @sen/web e2e",
     "looks": "pnpm --filter @sen/web looks",
     "hygiene": "node scripts/hygiene.mjs",
+    "security": "node scripts/security.mjs",
     "test:db": "bash packages/db/test/run.sh && SEN_DB_TESTS=1 vitest run --project db --passWithNoTests"
   },
   "devDependencies": {

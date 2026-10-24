@@ -68,6 +68,7 @@ const MINUS = '−';
 
 /** Thousands separators on a run of digits. */
 function group(digits: string): string {
+  // eslint-disable-next-line security/detect-unsafe-regex -- thousands separator on a short run of digits: the lookahead repeats a fixed 3-digit group and cannot backtrack catastrophically
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
@@ -211,6 +212,7 @@ export function medianSen(values: readonly number[]): number | null {
  * the rate is text with up to four decimals, `4.2550`, so no float carries it. Never stored as money.
  */
 export function fxApprox(minor: number, rate: string): number {
+  // eslint-disable-next-line security/detect-unsafe-regex -- an anchored digits-dot-digits pattern with one optional group; linear, and the rate is a typed or stored decimal
   const m = /^(\d+)(?:\.(\d{1,4}))?$/.exec(rate.trim());
   if (!m) throw new RangeError(`Not a rate: ${rate}`);
   const scaled = digitsToInt(`${m[1]}${(m[2] ?? '').padEnd(4, '0')}`);
