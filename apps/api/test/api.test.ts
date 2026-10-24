@@ -4,6 +4,8 @@ import pg from 'pg';
 import { bigint, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 import { createApp, type Deps } from '../src/app';
+import { noPush } from '../src/jobs/push';
+import { noRelay } from '../src/jobs/relay';
 import { LIMITS } from '../src/limits';
 import { asPerson } from '../src/db';
 import type { Env } from '../src/context';
@@ -30,10 +32,15 @@ const deps: Deps = {
     secret: 'x'.repeat(48),
     urls: { app_user: url('app_user'), sen_auth: url('sen_auth') },
     gmail: null,
+    scheduler: null,
+    relay: null,
+    firebase: null,
   },
   app: apiPool,
   auth: authPool,
   mailer: { sendCode: async (to, code) => void codes.set(to, code) },
+  push: noPush,
+  relay: noRelay,
 };
 const { api } = createApp(deps);
 const ORIGIN = 'https://sen.test';

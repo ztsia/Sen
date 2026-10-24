@@ -13,6 +13,9 @@ import { ApiError, checkBody, onError, readJson, sameOrigin, signedOut, suspende
 import { clientIp, LIMITS, tooMany, withinLimit } from './limits';
 import { gmailMailer, noMail, type Mailer } from './mail';
 import { countQueries, serverTiming } from './timing';
+import { fcmPusher, noPush, type Pusher } from './jobs/push';
+import { noRelay, workerRelay, type Relay } from './jobs/relay';
+import { personJobRoutes, schedulerRoutes } from './jobs/routes';
 import { adminRoutes, personRoutes } from './routes';
 
 /** The largest request body the API reads, in bytes. */
@@ -23,13 +26,24 @@ export interface Deps {
   app: pg.Pool;
   auth: pg.Pool;
   mailer: Mailer;
+  /** FCM (B06); off when FIREBASE_SERVICE_ACCOUNT is unset. */
+  push: Pusher;
+  /** The Cloudflare Worker's relay and scheduler (B06); off when RELAY_URL is unset. */
+  relay: Relay;
 }
 
 /** The real dependencies, from the environment (env.ts). */
 export function defaultDeps(): Deps {
   const env = readEnv();
   const p = pools(env.urls);
-  return { env, app: p.app, auth: p.auth, mailer: env.gmail ? gmailMailer(env.gmail) : noMail };
+  return {
+    env,
+    app: p.app,
+    auth: p.auth,
+    mailer: env.gmail ? gmailMailer(env.gmail) : noMail,
+    push: env.firebase ? fcmPusher(env.firebase, p.app) : noPush,
+    relay: env.relay ? workerRelay(env.relay, env.scheduler) : noRelay,
+  };
 }
 
 /**
@@ -66,6 +80,11 @@ export function createApp(deps: Deps) {
   );
 
   api.get('/health', (c) => c.json({ ok: true }));
+  // the Worker's tick and the monitor's check: no person, so before the checks for people's requests
+  api.route(
+    '/',
+    schedulerRoutes({ pool: deps.app, push: deps.push, relay: deps.relay, scheduler: deps.env.scheduler }),
+  );
 
   // A write comes only from Sen's own pages, as JSON (QA B05 run 2, 26): another site's form or
   // script can't post here, whatever the cookie's SameSite does. Better Auth checks its own routes.
@@ -160,10 +179,12 @@ export function createApp(deps: Deps) {
       suspended: false,
     });
     c.set('db', db);
+    c.set('svc', { push: deps.push, relay: deps.relay });
     await next();
   });
 
   api.route('/', personRoutes());
+  api.route('/', personJobRoutes({ auth: deps.auth }));
   api.route('/admin', adminRoutes());
   return { api, auth };
 }

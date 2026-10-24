@@ -14,8 +14,10 @@ export type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
  * - `auth`: Better Auth's own, or Sen's sign-in route: open, but writes only from Sen's pages, as JSON
  * - `person`: a signed-in person, as themselves (RLS)
  * - `admin`: the admin only (D52); everyone else gets 403
+ * - `scheduler`: the Cloudflare Worker, with the scheduler secret as a bearer token (D99); no browser
+ *   calls it, so it isn't held to the same-origin and JSON checks, and it reads no body
  */
-export type Access = 'public' | 'auth' | 'person' | 'admin';
+export type Access = 'public' | 'auth' | 'person' | 'admin' | 'scheduler';
 
 export interface RouteSpec {
   method: Method;
@@ -30,6 +32,8 @@ export interface RouteSpec {
 
 export const ROUTES: RouteSpec[] = [
   { method: 'GET', path: '/api/health', access: 'public' },
+  { method: 'POST', path: '/api/jobs/tick', access: 'scheduler' },
+  { method: 'GET', path: '/api/health/jobs', access: 'public' },
   {
     method: 'POST',
     path: '/api/auth/email-otp/send-verification-otp',
@@ -52,6 +56,11 @@ export const ROUTES: RouteSpec[] = [
     access: 'person',
     body: { type: 'setting.set', key: 'you.payday', value: { kind: 'none' } },
   },
+  { method: 'PUT', path: '/api/push/token', access: 'person', body: { token: 'sweep-fcm-token' } },
+  { method: 'DELETE', path: '/api/push/token', access: 'person', body: { token: 'sweep-fcm-token' } },
+  { method: 'POST', path: '/api/push/test', access: 'person', body: {} },
+  { method: 'POST', path: '/api/realtime/token', access: 'person', body: {} },
+  { method: 'POST', path: '/api/jobs/test', access: 'person', body: {} },
   { method: 'GET', path: '/api/admin/members', access: 'admin' },
 ];
 
