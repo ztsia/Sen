@@ -23,9 +23,9 @@ now come from `ztsia/workflow`. What was true of Sen only is in `docs/workflow/{
   before B24 (the OAuth client) and B34 (Q29's captures). B27's model choice runs in the app, so it
   stays in cloud. Not yet tried: a full build session on the Windows laptop (bash scripts, no local
   Postgres there).
-- **QA's security checks:** Sen has no command for them yet. Until a slice adds one (dependency
+- **QA's security checks** go into B06 (owner, 24 Oct; its brief). Until then (dependency
   audit, secret scan, security lint), the sweep runs `pnpm audit --audit-level high` and
-  `pnpm hygiene` (`docs/workflow/qa.md`). Worth adding in B06, the first slice with new secrets.
+  `pnpm hygiene` (`docs/workflow/qa.md`).
 - **The uiux component docs** in the plugin are for Next.js; Sen is Vite. The skill's refresh writes
   Sen's own copy to `docs/workflow/uiux/` the first time a session uses it.
 

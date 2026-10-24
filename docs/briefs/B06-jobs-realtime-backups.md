@@ -81,6 +81,16 @@ What keeps Sen honest runs before any real money reaches the server:
 - **A cron-job.org check of `/health/jobs`** that emails the owner. The steps go into
   `docs/local.md`.
 
+### Security checks (owner, 24 Oct)
+- **One `pnpm security` command**, run on every push in `ci.yml` and in QA's sweep, failing on any
+  high or critical result (the `security` skill's TypeScript note):
+  - the dependency audit: `pnpm audit --audit-level high`
+  - a secret scan of the whole history: `gitleaks git --redact --exit-code 1`
+  - the security lint rules: `eslint-plugin-security` and `eslint-plugin-no-unsanitized` (plus
+    `react/no-danger`), set to `error`
+- **Their first run covers B01–B05 too.** Fix or justify what they find in this slice.
+- Then add the command to `CLAUDE.md` § Commands, and replace the stopgap in `docs/workflow/qa.md`.
+
 ## Leaves for later
 
 - Each job's actual work (watchdogs, reminders and the rest) arrives with its slice. The capture
@@ -97,6 +107,7 @@ What keeps Sen honest runs before any real money reaches the server:
 5. Stopping the Worker's cron makes `/health/jobs` fail, and the monitor emails the owner.
 6. pgTAP covers the new tables. The definer function lists only the people a job is for, and
    returns no money.
+7. `pnpm security` passes in CI on the whole repo.
 
 ## On your phone
 
