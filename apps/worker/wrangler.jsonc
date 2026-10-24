@@ -1,0 +1,37 @@
+// Sen's Cloudflare Worker (D99, D100; apps/worker/README.md). Two of them, from this one file:
+// `sen-worker` serves production (sen-my.vercel.app) and deploys from `main`; `sen-worker-preview`
+// serves the review alias (sen-review.vercel.app) and deploys from every other branch. Cloudflare's
+// Git builds deploy both (D122); their secrets are set with `wrangler secret put`, never here.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "sen-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+  // each minute: the scheduler ticks the API only when something is due (src/scheduler.ts)
+  "triggers": { "crons": ["* * * * *"] },
+  "vars": { "API_ORIGIN": "https://sen-my.vercel.app" },
+  "durable_objects": {
+    "bindings": [
+      { "name": "SCHEDULER", "class_name": "Scheduler" },
+      { "name": "CHANNEL", "class_name": "Channel" }
+    ]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Scheduler", "Channel"] }],
+  "env": {
+    "preview": {
+      "name": "sen-worker-preview",
+      "triggers": { "crons": ["* * * * *"] },
+      "vars": { "API_ORIGIN": "https://sen-review.vercel.app" },
+      "durable_objects": {
+        "bindings": [
+          { "name": "SCHEDULER", "class_name": "Scheduler" },
+          { "name": "CHANNEL", "class_name": "Channel" }
+        ]
+      },
+      "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Scheduler", "Channel"] }]
+    }
+  }
+}

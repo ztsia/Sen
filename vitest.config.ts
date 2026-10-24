@@ -17,6 +17,7 @@ export default defineConfig({
     projects: [
       { test: { name: 'core', include: ['packages/core/src/**/*.test.ts'], environment: 'node' } },
       { test: { name: 'looks', include: ['packages/looks/src/**/*.test.ts'], environment: 'node' } },
+      { test: { name: 'worker', include: ['apps/worker/src/**/*.test.ts'], environment: 'node' } },
       { test: { name: 'repo', include: ['scripts/**/*.test.{ts,mjs}', 'qa/**/*.test.ts'], environment: 'node' } },
       {
         test: {
