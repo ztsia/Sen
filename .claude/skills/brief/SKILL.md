@@ -1,6 +1,6 @@
 ---
 name: brief
-description: How the main session hands work to a subagent and what it does when the work comes back wrong. Choosing the model and effort, the brief's template and its five checks, and the rule for a miss (find what the brief left unsaid, correct the same agent, re-judge on a second miss). Use before every Agent call that does work (implementer, a sweep, a port, tests written to given criteria), and whenever a subagent's report or diff falls short.
+description: Sen's fuller version of the workflow rules' *Models and subagents*: how the main session hands work to a subagent and what it does when the work comes back wrong. Choosing the model and effort, the brief's template and its five checks, and the rule for a miss (find what the brief left unsaid, correct the same agent, re-judge on a second miss). Use before every Agent call that does work (implementer, a sweep, a port, tests written to given criteria), and whenever a subagent's report or diff falls short.
 ---
 
 # Briefing a subagent
@@ -22,7 +22,7 @@ one where what's left can't be written down in advance (step 2).
 The goal is **one run, on the cheapest model a complete brief allows**, not many cheap runs and not
 one expensive one.
 
-- **Haiku at `high` effort** (the `implementer`'s default) for anything the brief can fully specify.
+- **Haiku at `high` effort** (`workflow:implementer`'s default) for anything the brief can fully specify.
   It costs about a twentieth of Sonnet per token; measured runs came out 10 to 16 times cheaper for
   comparable work. Anthropic's docs put `high` at longer agent tasks and strict instruction
   following; at `low` and `medium` it sometimes reports a change done without running a check.
@@ -101,14 +101,15 @@ wrong. When a miss came from the brief, carry that line into the next brief too.
 - **One checkout unless two agents edit the same files.** Worktree agents check out the slice's
   commit first.
 - **Subagents start subagents only when `Agent` is in their tools** (up to three layers, D137).
-  Only `qa-reviewer` has it, for its sweep and eyes pass; for everything else, what an agent would
-  delegate, the main session starts.
+  The plugin's `workflow:implementer`, `workflow:qa-reviewer` and `workflow:qa-eyes` have it. In a
+  cloud session subagents can't start their own whatever their tools list (B05 · Feel), so there
+  the main session starts what an agent would delegate.
 - **Waiting costs.** An agent re-reads its whole conversation each time it wakes, and a wait longer
   than a few minutes lets the prompt cache expire, so the next turn writes it all again (QA tooling,
   15 Oct: one agent, 185 turns, mostly waits). Brief one until-loop per long run, and no repeat of a
   long run whose point an earlier run already proved.
 - **An agent stopped at a usage limit is resumed** (SendMessage), never restarted. Check which
-  model its next turns ran on (`node scripts/usage.mjs`): one resumed on Opus, not its Sonnet, and
+  model its next turns ran on (`node "${CLAUDE_PLUGIN_ROOT}/scripts/usage.mjs"`): one resumed on Opus, not its Sonnet, and
   cost three times its first run (QA tooling, 17 Oct). If it switched, stop it and brief a fresh
   agent on the right model with the work so far.
 - **Commit an agent's files only after reviewing its report**, staging explicit paths, never `-a`,

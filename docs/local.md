@@ -8,6 +8,31 @@ follow on a phone, and commit.
 
 ## Now
 
+- [ ] **Give the cloud environment the workflow plugin** (needed before the next cloud session).
+      Cloud sessions don't install the plugins a repo enables, so without this a session has no
+      rules, no `workflow:` agents and no `qa`, `uiux` or `database` skill. On the phone: claude.ai/code
+      → the environment selector → edit `finance-tracker` → *Setup script* → replace its
+      contents with the whole of
+      [`cloud-setup.sh`](https://github.com/ztsia/workflow/blob/main/plugins/workflow/scripts/cloud-setup.sh)
+      (*Raw*, select all, copy) → *Save*. Then start a new session: it should open with *The
+      workflow* rules, and `/agents` should list `workflow:implementer`. The laptop already has the
+      plugin, `claude-security` and `security-guidance` (24 Oct). On any other machine, once:
+      `claude plugin install claude-security@claude-plugins-official` and
+      `claude plugin install security-guidance@claude-plugins-official`.
+- [ ] **Improvements for `ztsia/workflow`, found moving Sen to the plugin** (24 Oct). Open a PR there,
+      or ask a session with that repo attached:
+      - `workflow:qa-reviewer` and `workflow:qa-eyes` don't read `docs/workflow/qa.md` themselves;
+        only the `qa` skill does. A project's sad paths and eyes questions reach them only if the
+        prompt names the file (Sen's override). Have both agents read it.
+      - Sen's old `qa` skill had *Who makes each fix* (the main session for most fixes, a fresh
+        `implementer` for long decided ones, the agent just finished for follow-ons; a test guarding
+        a fix fails on the code before it). The plugin's skill has no such section.
+      - Sen's `brief` skill holds more than the rules' *Models and subagents*: the table for a miss
+        (first miss, off track, second miss), the cost of waiting (one until-loop per long run), and
+        staging explicit paths while agents edit. Worth shipping as a plugin skill.
+      - The `setup` skill points project docs at the plugin's absolute local path for `usage.mjs` and
+        `qa-report.mjs`, which breaks in a cloud session. `${CLAUDE_PLUGIN_ROOT}`, as the rules use,
+        works in both.
 - [ ] **Update Sen and Sen review on your phone once B05 · Feel merges.** Its haptics live in the
       shell (bridge 2), so the app needs the new APK; until then everything else works and haptics
       stay off. Obtainium → *Update all*, or *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* →

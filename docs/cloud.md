@@ -21,18 +21,22 @@ Claude Code docs. Sessions fill in the table in §5 as they measure things.
   - Python, git and `gh`
   - Chromium. GCO_events measured Chromium 141 there in September 2026. **Never run
     `playwright install`**: pin `@playwright/test` to the preinstalled browser instead.
-- **What it loads from the repo:** `CLAUDE.md`, `.claude/skills/`, `.claude/agents/`, the hooks in
+- **What it loads from the repo:** `CLAUDE.md`, `.claude/skills/`, the hooks in
   `.claude/settings.json`, and `.mcp.json`. It also loads skills enabled on the owner's claude.ai
   account, and claude.ai connectors.
 - **What it doesn't load:** plugins enabled in `.claude/settings.json`. That's why the stack's skills
-  are added to `.claude/skills/` with `npx skills add` (`CLAUDE.md`) rather than installed as a plugin.
+  are added to `.claude/skills/` with `npx skills add` (`CLAUDE.md`), and why the environment's setup
+  script (§2) places the `workflow` plugin (its agents, the `qa`, `uiux`, `database`, `llm` and
+  `security` skills, and the session rules) and Anthropic's security plugins under
+  `~/.claude/skills/`, where a session loads them.
 - **An idle VM pauses after a few minutes and can be reclaimed.** Commit and push work in progress
   often. Background processes, such as a dev server or a tunnel, don't survive a pause.
 - **Command timeouts:** 2 minutes by default, up to 10. After that a command moves to the background
   for up to 30 more minutes.
-- **Startup:** `scripts/session-start.sh` runs on every start and resume (a SessionStart hook). It
-  points the session at unread handoffs and, once the app exists, installs packages and starts the
-  local database.
+- **Startup:** two SessionStart hooks. The `workflow` plugin's loads the rules, points the session at
+  the handoff, names the newest unmerged slice branch, and says when the environment's copy of the
+  plugin is older than `main`'s. Sen's `scripts/session-setup.sh` installs packages and the Gradle
+  mirror, and starts the local database.
 
 ## 2. The environment: paste this once
 
@@ -61,9 +65,12 @@ vercel.com
 **Environment variables:** none. The Expo token an earlier version of this doc asked for is no longer
 needed (D42); delete it if it's set.
 
-**Setup script:** paste the contents of `scripts/cloud-setup.sh`. It installs global tools once. If
-it finishes in under about 5 minutes, the environment is snapshotted, so later sessions start with
-those tools already installed.
+**Setup script:** paste the `workflow` plugin's `scripts/cloud-setup.sh`
+([ztsia/workflow](https://github.com/ztsia/workflow), `plugins/workflow/scripts/cloud-setup.sh`). It
+installs the `workflow`, `claude-security` and `security-guidance` plugins where a session loads
+them, and is cached with the environment for about seven days. When a session says the plugin is
+older than `main`'s, edit any line of the setup script (a comment will do) and start a new session.
+Sen needs nothing else machine-wide; its own installs are in `scripts/session-setup.sh`.
 
 ## 3. What a session must never hold
 
