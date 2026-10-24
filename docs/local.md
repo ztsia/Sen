@@ -33,6 +33,12 @@ follow on a phone, and commit.
          open it, allow notifications when it asks, then *More → Settings → Data → Checks → Send a test
          push*. Then *Schedule a test job*: its push arrives at the minute it names.
       6. **Confirm R2's numbers (D142):** 10 GB counted as 10,000,000,000 bytes, and a push at half.
+      7. **The whole-codebase security scan (done-when 8), at the laptop, before you merge.** A
+         session can't start it (it needs Claude Code's Workflow tool). In `C:\Zhong Tai\Sen`, on
+         the branch: `claude --agent claude-security:claude-security`, then ask *scan the codebase at
+         high effort; I accept the time and token cost*. Leave the checkout alone while it runs (tens
+         of minutes). Then tell the next session: it copies `CLAUDE-SECURITY-<time>/CLAUDE-SECURITY-RESULTS.md`
+         to `qa/B06/security.md` and fixes every Critical and High before the merge.
 - [ ] **Give the cloud environment the workflow plugin** (needed before the next cloud session).
       Cloud sessions don't install the plugins a repo enables, so without this a session has no
       rules, no `workflow:` agents and no `qa`, `uiux` or `database` skill. On the phone: claude.ai/code
