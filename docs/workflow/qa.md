@@ -6,9 +6,6 @@ when Sen took up the plugin.
 
 ## The skill (main session)
 
-- **Pass this file to the reviewer:** the reviewer's prompt adds *Read `docs/workflow/qa.md` first;
-  it wins where it differs from your agent file*. Otherwise it's as thin as the skill says: the
-  branch, the slice label and the slice's row in `docs/modules.md`.
 - **The looks:** pixels are compared in all twelve look-and-mode pairs (six looks, light and dark).
   Behaviour runs once, in Minted light (D137).
 - **The trees** are `apps/web/e2e/trees/*.aria.yml`, re-recorded by `pnpm --filter @sen/web e2e:trees`.
