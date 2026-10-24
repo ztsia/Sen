@@ -65,6 +65,15 @@ jobs:
         run: node apps/shell/scripts/keep-running.mjs || echo "::warning::dontkillmyapp.com didn't answer; kept the committed keep-running.json"
       - name: Capacitor's files into the Android project
         run: pnpm --filter @sen/shell sync
+      - name: Firebase's config for push (B06), from the Actions secrets; never committed (it holds a Google key)
+        env:
+          SEN_GOOGLE_SERVICES_B64: ${{ secrets.SEN_GOOGLE_SERVICES_B64 }}
+        run: |
+          if [ -n "$SEN_GOOGLE_SERVICES_B64" ]; then
+            echo "$SEN_GOOGLE_SERVICES_B64" | base64 -d > apps/shell/android/app/google-services.json
+          else
+            echo "::warning::No SEN_GOOGLE_SERVICES_B64 secret yet, so this build has no push (docs/local.md)"
+          fi
       - name: The release key, from the Actions secrets
         env:
           SEN_KEYSTORE_B64: ${{ secrets.SEN_KEYSTORE_B64 }}

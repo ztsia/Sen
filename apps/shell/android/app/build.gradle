@@ -127,3 +127,14 @@ dependencies {
 }
 
 apply from: 'capacitor.build.gradle'
+
+// Push (B06): FCM's config is app/google-services.json, written by CI from SEN_GOOGLE_SERVICES_B64 and
+// gitignored (it holds a Google key, and the repo is public). It names Sen and Sen review; the e2e
+// build isn't registered with Firebase, so it skips the config. Without the file the app builds, and
+// push answers that it isn't set up.
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+    tasks.configureEach { if (it.name == 'processE2eGoogleServices') it.enabled = false }
+} else {
+    logger.warn('No app/google-services.json: this build has no push (docs/local.md)')
+}

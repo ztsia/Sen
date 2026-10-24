@@ -8,6 +8,8 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:8.13.0'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.20'
+        // FCM's config (B06): reads app/google-services.json when CI has written it
+        classpath 'com.google.gms:google-services:4.4.4'
     }
 }
 
