@@ -46,14 +46,17 @@ export default defineConfig({
   webServer: [
     {
       command:
-        'SEN_ENV=preview pnpm exec vite build --outDir dist && pnpm exec vite preview --outDir dist --port 4173 --strictPort',
+        'pnpm exec vite build --outDir dist && pnpm exec vite preview --outDir dist --port 4173 --strictPort',
+      // in env, not a `VAR=` prefix, so the command runs in Windows' shell too (B06, the laptop)
+      env: { SEN_ENV: 'preview' },
       url: 'http://localhost:4173',
       reuseExistingServer: !!process.env.PW_REUSE,
       timeout: 180_000,
     },
     {
       command:
-        'SEN_ENV=production pnpm exec vite build --outDir dist-production && pnpm exec vite preview --outDir dist-production --port 4174 --strictPort',
+        'pnpm exec vite build --outDir dist-production && pnpm exec vite preview --outDir dist-production --port 4174 --strictPort',
+      env: { SEN_ENV: 'production' },
       url: 'http://localhost:4174',
       reuseExistingServer: !!process.env.PW_REUSE,
       timeout: 180_000,
