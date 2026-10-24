@@ -1,63 +1,54 @@
 # Handoff
 
-## Where things stand (24 Oct)
+## Where things stand (25 Oct)
 
-**Next: B06 · Jobs, realtime, push and backups**, on **`B06/jobs-realtime-backups`** (created from
-`main` on 24 Oct; it holds only this handoff and the brief's additions so far). Brief:
-`docs/briefs/B06-jobs-realtime-backups.md`. It needs owner accounts (the Cloudflare Worker,
-cron-job.org, `sen_ops`' secrets): write the steps into `docs/local.md` first, and build everything
-that doesn't wait on them.
+**B06 · Jobs, realtime, push and backups** on **`B06/jobs-realtime-backups`**, draft PR **#20**. Built,
+tested locally and committed; being verified on the review alias (`review` fast-forwarded to B06).
+`sen_ops`' backup and restore test are on its branch **`b06-backup`**, to merge right after B06 (the
+backup records itself through `record_backup()`, which B06's production deploy creates).
 
-**Merged on 24 Oct:** Sen #19 (Sen takes up the `workflow` plugin) and `ztsia/workflow#11` (plugin
-1.1.0: the QA agents read `docs/workflow/qa.md` themselves, `*Who makes each fix*` is back,
-`workflow:brief` ships in the plugin). The rules, agents and the `qa`, `uiux`, `database`, `llm`,
-`security` and `brief` skills come from the plugin. Sen's own additions are in `docs/workflow/`.
-The laptop's plugin is 1.1.0 at both user and project scope.
+**Done:**
+- Workflow cleanup for plugin 1.1.0 (done-when 9).
+- Tables `scheduled_jobs`, `job_runs`, `alerts_sent`, `push_tokens` with RLS and pgTAP; the
+  scheduler's definer functions (`jobs_people`, `jobs_next_once`, `jobs_health`, `record_backup`,
+  `push_token_claim`) (done-when 6).
+- The API: `/jobs/tick` (frames once per person and KL date, one-off jobs with SKIP LOCKED and retries,
+  every run in `job_runs`), `/health/jobs`, FCM push, relay passes and hints, the test routes.
+- The Worker (`apps/worker`): a scheduler that ticks the API only when something is due (D141), the
+  relay, its own `/health`. Both Workers deployed (`sen-worker`, `sen-worker-preview` on
+  `sen-my.workers.dev`), crons running, and connected to Cloudflare's Git builds.
+- Web: live updates, the 30 s fallback and *Updated 2 min ago*, push registration (bridge 3),
+  Settings → Data real (backup, R2 storage, admin's checks).
+- Shell: Capawesome's FCM plugin, the alerts channel, `google-services.json` from
+  `SEN_GOOGLE_SERVICES_B64` in the Shell workflow. Shell CI green.
+- `pnpm security` (done-when 7 locally; CI runs it on the PR).
+- Secrets, set by the owner's one script (24 Oct): both Workers' and Vercel's scheduler/relay secrets,
+  `RELAY_URL`, Firebase in previews, `sen_ops`' `DATABASE_URL` and `R2_ACCOUNT_ID`.
+- Verified locally end to end (Worker + API on `sen_dev`): a tick, a hint on an open socket, a test job
+  run once with two crons at once.
 
-## Decided, and why (24 Oct, owner)
+## What to do next
 
-- **B06 gained three things** (all in its brief):
-  - **Workflow cleanup, first:** delete Sen's `brief` skill and the two `CLAUDE.md` *Overrides*
-    lines that 1.1.0 makes unnecessary.
-  - **Security checks:** one `pnpm security` command in CI and QA (`pnpm audit`, `gitleaks`, the
-    ESLint security plugins). Its first run covers B01–B05.
-  - **One `claude-security` scan of the whole codebase**, not only B06's diff, before B07 lets real
-    money reach the server. B01–B05 never had one.
-- **Where sessions run:** cloud by default. The laptop is for live keys, real data from `private/`,
-  creating accounts and secrets, and the phone over USB. **B06 mostly on the laptop**. Short laptop
-  sittings: B10's and B15's benchmarks (the capped key; real receipts), and before B24 (the OAuth
-  client) and B34 (Q29's captures). B27's model choice runs in the app, so it stays in cloud. Not
-  yet tried: a full build session on the Windows laptop (bash scripts, no local Postgres there).
-- **Until B06's checks exist,** QA's sweep runs `pnpm audit --audit-level high` and `pnpm hygiene`
-  (`docs/workflow/qa.md`).
-- **The `uiux` component docs** in the plugin are for Next.js; Sen is Vite. The skill re-pulls Sen's
-  own copy into `docs/workflow/uiux/` the first time a session uses it.
-- **The plugin's scripts** are named in docs as `node "<workflow plugin>/scripts/<name>"`: the folder
-  the rules name at session start. Never a local absolute path.
+1. On the review alias: done-when 1 (test job) and 2 (two screens; relay stopped → 30 s fallback),
+   then the test push on the phone's *Sen review* (done-when 3, needs the new APK).
+2. QA (`qa` skill), then the PR's description; the owner merges, then merges `sen_ops#b06-backup`,
+   sets up cron-job.org (done-when 5) and confirms R2's numbers (D142).
+3. **Done-when 8, the whole-codebase `claude-security` scan, can't run in this session** (it needs
+   the Workflow tool). The owner runs it in its own session: `claude --agent claude-security:claude-security`
+   in the repo, scan codebase, high effort; findings into `qa/B06/security.md`.
 
-## Open with the owner
+## Decided (24 Oct)
 
-- **The cloud environment's setup script** must be the plugin's `cloud-setup.sh` before the next
-  cloud session (`docs/local.md`, first item). Without it a cloud session has no rules, agents or
-  skills.
-- `ztsia/claude_skills#5`: `ztsia/workflow` replaced that repo; merge it or close it.
-- From before: the phone sign-off after the new APK; `docs/local.md` *Now* (delete
-  `B05/qa-tooling-iad1-probe` and `B05/qa-tooling`, `SEN_OWNER_EMAIL`, the first sign-in, Q14, sign out
-  everywhere).
-
-## What to do first
-
-1. Check the session opened with the 1.1.0 rules (their path names `workflow/1.1.0`), and that
-   `/agents` lists `workflow:implementer` with no unprefixed copies.
-2. `git checkout -B B06/jobs-realtime-backups origin/B06/jobs-realtime-backups`, then the brief's
-   *Workflow cleanup* step, then the rest of B06.
+- D141: ticks only when due (Neon's compute); the Worker's own `/health` for a stopped cron.
+- D142: two Workers from one config; backup reports via `record_backup()` as the owner role; R2
+  numbers (10⁹-byte GB, push at half) await the owner; production's test menu is Settings → Data's
+  *Checks*; a push token belongs to one person; the web app calls FCM by name, no npm package.
+- In production, Settings itself is still a skeleton: Data and Account are reached by their address
+  (`/s/settings/data`), until the slice that makes Settings real.
 
 ## Don't argue again
 
-- D129–D140 (the owner's calls). Deploys happen only by merge (D122). The review build follows
-  `review` (D115).
-- Money never counts up or down in motion.
-- iOS back is an edge swipe in B39, for iOS standalone only, and never on Android (owner, 21 Oct).
-- Haptics go through `performHapticFeedback` (bridge 2), not `@capacitor/haptics`' vibrator.
-- In cloud sessions, subagents can't start subagents. The QA reviewer runs its sweep, and the main
-  session spawns `workflow:qa-eyes` (the `qa` skill).
+- D129–D142 (the owner's calls and B06's). Deploys happen only by merge (D122); the Workers' first
+  deploy by hand was the one bootstrap.
+- Money never counts up or down in motion. Haptics through `performHapticFeedback` (bridge 2).
+- In cloud sessions, subagents can't start subagents.
