@@ -1,4 +1,4 @@
-// Cloud sessions only, copied into ~/.gradle/init.d by scripts/session-start.sh (docs/cloud.md §5): Maven Central answers 429 to this VM; Google's mirror of it doesn't.
+// Cloud sessions only, copied into ~/.gradle/init.d by scripts/session-setup.sh (docs/cloud.md §5): Maven Central answers 429 to this VM; Google's mirror of it doesn't.
 def mirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
 def swap = { RepositoryHandler repos ->
   repos.withType(MavenArtifactRepository).configureEach { r ->

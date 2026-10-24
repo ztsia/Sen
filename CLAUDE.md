@@ -21,44 +21,7 @@ It's called **Sen** (D48). It's for the owner, and by invitation a few friends a
 | `qa/escapes.md` | Every bug the owner found by hand that QA had passed, why it was missed, its pin and the question it added (D137) | Add an entry before fixing one |
 | `docs/local.md` | What only the owner, or a machine with a device, can do | A queue. Add to it instead of attempting these |
 | `docs/handoff.md` | The one handoff, from the last session to you | Read it first. Rewrite it before you end |
-
-### Session rotation
-
-**`docs/handoff.md` is the one handoff.** Read it before anything else. **Every session rewrites it
-before it ends**, whether its slice is finished or not, and whenever the owner says *hand off*. Never
-append to it: it's the state now, not a log, and git keeps the old versions. Keep it under about 60
-lines:
-- where things stand: which slice is next or in progress, and on which branch (*One brief, one branch*)
-- what was decided, and why
-- what's open with the owner
-- what to do first
-- what must not be argued over again
-
-Anything still true next week belongs in the spec, `docs/decisions.md`, `docs/cloud.md`,
-`docs/local.md` or a brief instead.
-
-**One brief, one branch.** Each slice is built on exactly one branch, named after its brief's file:
-`B01/design-system` for `docs/briefs/B01-design-system.md`, `B07/sync` for `B07-sync.md`. The harness
-assigns each cloud session a `claude/…` branch; ignore it, and work on the slice's branch instead:
-1. Look for it: `git fetch origin && git ls-remote --heads origin '<branch>'`.
-2. **If it exists, continue it.** Never create a second branch for the same brief:
-   `git checkout -B <branch> origin/<branch>`, then read the handoff there.
-3. **If it doesn't, create it from `main`:** `git checkout -b <branch> origin/main`, and push with
-   `git push -u origin <branch>`.
-
-A slice may span sessions, all on that one branch. Its PR is opened from it when the slice is done,
-with the slice's label as its title (*B07 · Sync and the outbox*).
-
-**When context runs high, or the owner says *hand off*, mid-slice:**
-1. Log the session's usage: `node scripts/usage.mjs --log <slice>` (it upserts the session's row in
-   `docs/usage.md`). Commit and push.
-2. Rewrite `docs/handoff.md` on the branch: what's done and verified, what's next, and anything
-   decided. Push again.
-3. End with one line for the owner to paste into the next session: *Continue B07 from branch
-   `B07/sync`*.
-
-`scripts/session-start.sh` also names the newest unmerged branch that changed the handoff, as a
-safety net.
+| `docs/workflow/` | Sen's additions to the `workflow` plugin's skills: `qa.md`, `database.md`, `uiux.md` | Wins over the plugin's skill where they differ |
 
 ## Where the build is
 
@@ -68,9 +31,10 @@ screens, patterns and six looks (`S2`, D75–D84), and the slice map, forty slic
 a brief each (`S3`, D111). The spec's later revisions are D85–D110.
 
 **Built:** B01 (design system and the six looks), B02 (the shell and the listener; its week on the
-owner's phone is still to run), B03 (the five tabs on made-up data, with the data layer), B04 (the
-walking skeleton and its review). **In progress:** the B04 redesign (D130), then B05. Each slice
-waits only for the owner's merge; `docs/handoff.md` says where things stand now.
+owner's phone is still to run), B03 and B04 (the walking skeleton, its review and the redesign,
+D130), B05 (the server, database and sign-in; then QA tooling and Feel, D139, D140). **Next:** B06.
+Each slice waits only for the owner's merge; `docs/handoff.md` says where things stand now.
+
 
 ## Non-negotiables
 
@@ -132,126 +96,91 @@ panel, so flows can be walked in a browser.
 
 ## The owner
 
-Works from a phone through cloud sessions, rarely at a laptop.
+Works from a phone through cloud sessions, rarely at a laptop. A session on the laptop does
+everything it can first and reports once, with only what needs the owner. Nothing is deployed by
+hand: a merge to `main` is the only step (D122).
 
-- **Design sessions (`S1`–`S3`) are conversations.** Ask, but batch questions, prefer multiple
-  choice, keep messages short, and always recommend an answer.
-- **Put what the owner must weigh inside the question's options.** Text written just before a
-  question box can be hidden; the owner once missed a whole list that way.
-- The owner reads every trade-off and often comes back with a better idea. Recommend clearly
-  anyway.
-- **Build sessions run unattended: never stop to ask.** Record the question in the handoff and keep
-  going on everything else.
-- Anything the owner must do by hand goes in `docs/local.md`, with steps a phone can follow.
-- Commit and push work in progress often. An idle cloud VM can be reclaimed, and uncommitted work
-  goes with it.
+## Commands
+
+From the repo root (Node 22, pnpm 10; `scripts/session-setup.sh` installs packages in a cloud session):
+
+| Command | What it does |
+|---|---|
+| `pnpm install` | Install everything |
+| `pnpm dev` | The web app at `localhost:5173`, with the dev panel; `/dev/gallery` shows every building block; `?scenario=` and `?state=` pick the made-up scenario and a screen state on load |
+| `pnpm build` | The web app's production build, as Vercel runs it. A build is production, without dev tools, unless `SEN_ENV=preview` or Vercel's `VERCEL_ENV=preview` says otherwise |
+| `pnpm test` | Unit tests: money, the looks' ports, the hygiene check, the no-float rule, the web app's pure parts |
+| `pnpm e2e` | Playwright on a preview build and a production build, at a phone viewport, under the real CSP: journeys once in Minted light, and every screen in the catalogue (`e2e/catalogue.ts`) in the looks `E2E_LOOKS` names, with its tree and the scripted checks |
+| `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |
+| `pnpm looks` | Regenerates `apps/web/src/styles/looks.gen.css` from `docs/ui/directions/assets/`; CI fails if it's stale |
+| `pnpm --filter @sen/web e2e:trees` | Re-records each screen's accessibility tree in `apps/web/e2e/trees/` after a screen changes; CI fails on a stale one |
+| `node scripts/qa-diff.mjs` | QA's diff against `main` (D137): trees, pixels in all twelve look-and-mode pairs, and the scripted checks, into `qa-artifacts/<branch>/diff/index.md`; then the metrics (D139): each screen, journey tap, API route and the build, on the branch and on `main`, judged by `qa/limits.ts` (`--metrics-only` for just those) |
+| `node scripts/mutants.mjs` | The breakage checks in `qa/mutants.ts`, each made in a worktree of HEAD; a mutant its suite doesn't catch is a finding (D139) |
+| `pnpm --filter @sen/web e2e:lived` | The lived-in journeys: across a deploy, resume, offline, a slow network, 200% text, 360×640, a year of data (`?scenario=year`) |
+| `node scripts/live-metrics.mjs --url <origin>` | A deployed preview's server timings (the `live-metrics` workflow runs it on every preview); production gets only the signed-out part |
+| `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
+| `scripts/local-db.sh start\|stop\|reset` | The local Postgres 16 with pgTAP (started by the session hook): `sen_dev` and `sen_test`, never Neon (`docs/cloud.md` §5) |
+| `pnpm test:db` | A fresh `sen_test`, every migration, pgTAP (RLS for two people over every table, the catalogue check), then the API's tests on it, and the route sweep: every route in `apps/api/src/routes.table.ts` given the same bad requests. With `QA_METRICS=<dir>`, each request's `Server-Timing` is recorded. One at a time: it drops `sen_test` |
+| `pnpm --filter @sen/api dev` | The API on Node at `127.0.0.1:8787/api`, on `sen_dev`; `SEN_BACKEND=api pnpm dev` runs the web app against it (sign in as `weiming@example.com`, code `123456`). If `sen_dev` isn't migrated and seeded, run the preview's deploy step on it from `apps/web`: `VERCEL=1 VERCEL_ENV=preview DATABASE_URL_UNPOOLED=postgres://sen_owner@127.0.0.1:5432/sen_dev BETTER_AUTH_SECRET=<48 characters> pnpm exec tsx scripts/db-deploy.ts`, then delete `public/db-deploy.txt` |
+| `pnpm --filter @sen/web e2e:server` | The sign-in journey in Chromium against the local API and `sen_test` (after `pnpm test:db`) |
+| `gradle -p apps/shell/core test` | The capture core's Kotlin tests; needs no Android SDK |
+| `bash scripts/android-sdk.sh` | Installs the Android SDK in a cloud session (about 2 minutes), to build the shell's APKs there: then `pnpm --filter @sen/shell sync` and `gradle assembleDebug` in `apps/shell/android` |
+| `node apps/shell/scripts/icons.mjs` | Renders the launcher and notification icons from the looks' SVGs into the Android resources |
+| `node apps/web/scripts/frame-times.mjs` | Each look's frame times at 390×844 with the CPU slowed 4×, against a running `vite preview` |
+
+QA's database is the local Postgres: `pnpm test:db` migrates `sen_test`; a preview's is Neon's
+`sen-preview`, seeded with Wei Ming (`docs/local.md`).
+
+**Ports:** two end-to-end runs never overlap, and nor do two `pnpm test:db` (each drops `sen_test`).
+A brief for agents running at once gives each its own ports (main e2e 4173/4174, `qa-diff`
+4175/4176, `e2e:lived` 4177/4178, `e2e:server` 4179 with the API on 8788, the dev API 8787) and says
+who holds the database.
+
+## Layout
+
+| Path | What it holds |
+|---|---|
+| `apps/web/` | The web app: Vite, React, TanStack Router, Tailwind v4 and shadcn/ui. `src/components/ui/` is shadcn's, customised in place; `src/blocks/` the building blocks of `patterns.md` §7; `src/frame/` the tab bar, Sen's button and the shell of every screen; `src/screens/registry.ts` every screen id, `skeleton` or `real`, and `src/screens/skeleton.ts` the walking skeleton's screens, shown in previews only; `src/data/` the one backend interface (`backend.ts`), a query hook per screen (`hooks.ts`) and the skeleton's fake, with Wei Ming's month (`fake/scenario.ts`) and its edge states (`fake/variants.ts`); `src/dev/` the dev panel and gallery; `e2e/` Playwright |
+| `packages/core/` | Pure TypeScript shared by the app, the API and the worker: the money module, pay cycles and KL days (`cycles.ts`), and the shared types with zod: §15's rows (`schema.ts`), each screen's read shape (`views.ts`) and every write (`commands.ts`). The template engine later |
+| `packages/looks/` | The six looks as `DIR` modules, ported from `docs/ui/directions/src/`, each loaded only when shown |
+| `apps/api/` | The Hono API (B05), at `/api` on the web app's origin, bundled into Vercel's Build Output by `apps/web/scripts/vercel-output.mjs` |
+| `packages/db/` | Drizzle's schema, migrations, RLS and grants, the deploy step and the pgTAP tests (its README) |
+| `apps/shell/` | The Capacitor shell for Android (B02): application id **`io.github.ztsia.sen`**, name **Sen** (`.debug`, *Sen review*, for the review build). `android/` is the app, with our Kotlin in `app/src/main/java/io/github/ztsia/sen/` (the listener, the outbox, the bridge's two plugins `SenShell` and `SenCapture`) and its emulator tests in `app/src/androidTest/`; `core/` the pure Kotlin capture core (no Android SDK); `data/` the curated apps and the brands' steps; `sites.json` the one address each build loads; `www/` the page shown when the site can't load |
+| `apps/worker/` | The Cloudflare Worker: schedules and the realtime relay (B06) |
+| `scripts/` | Sen's session setup hook, the hygiene check, QA's diff and breakage checks, the local database |
 
 ## Conventions
 
-- One slice at a time, each ending in one PR to `main` titled with its label (*B07 · Sync and the
-  outbox*). A slice may span sessions (*Session rotation*).
 - Dates and month boundaries are always in `Asia/Kuala_Lumpur`. Store `timestamptz` in UTC.
-- **Design pages and their assets live in the repo**, so nothing depends on a published page or a
-  font CDN staying up. Every published page has its source here (`docs/ui/README.md` lists them
-  with their links), and publishing goes from a committed file. Every custom asset a look uses (its
-  icons, tab bar, marks, theme tokens and fonts) is saved as a file in `docs/ui/directions/assets/`,
-  written by `build.mjs` and `fonts.mjs`. Change the source, never the exported file.
-- **shadcn first, customised in place.** Every building block starts from a shadcn/ui component
-  (the `uiux` skill). When its defaults don't fit the phone, edit the shadcn file itself in
-  `apps/web/src/components/ui/`, with a `// Sen:` note on its first line saying what changed, so an
-  upgrade (`shadcn add <x> --dry-run`) can keep it. Never write a parallel, hand-rolled version of
-  something shadcn has. `className` at a call site is for layout only. `patterns.md`'s building
-  blocks are compositions of them, in `apps/web/src/blocks/`.
-- **Commands**, from the repo root (Node 22, pnpm 10; `scripts/session-start.sh` installs packages):
-
-  | Command | What it does |
-  |---|---|
-  | `pnpm install` | Install everything |
-  | `pnpm dev` | The web app at `localhost:5173`, with the dev panel; `/dev/gallery` shows every building block; `?scenario=` and `?state=` pick the made-up scenario and a screen state on load |
-  | `pnpm build` | The web app's production build, as Vercel runs it. A build is production, without dev tools, unless `SEN_ENV=preview` or Vercel's `VERCEL_ENV=preview` says otherwise |
-  | `pnpm test` | Unit tests: money, the looks' ports, the hygiene check, the no-float rule, the web app's pure parts |
-  | `pnpm e2e` | Playwright on a preview build and a production build, at a phone viewport, under the real CSP: journeys once in Minted light, and every screen in the catalogue (`e2e/catalogue.ts`) in the looks `E2E_LOOKS` names, with its tree and the scripted checks |
-  | `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |
-  | `pnpm looks` | Regenerates `apps/web/src/styles/looks.gen.css` from `docs/ui/directions/assets/`; CI fails if it's stale |
-  | `pnpm --filter @sen/web e2e:trees` | Re-records each screen's accessibility tree in `apps/web/e2e/trees/` after a screen changes; CI fails on a stale one |
-  | `node scripts/qa-diff.mjs` | QA's diff against `main` (D137): trees, pixels in all twelve look-and-mode pairs, and the scripted checks, into `qa-artifacts/<branch>/diff/index.md`; then the metrics (D139): each screen, journey tap, API route and the build, on the branch and on `main`, judged by `qa/limits.ts` (`--metrics-only` for just those) |
-  | `node scripts/mutants.mjs` | The breakage checks in `qa/mutants.ts`, each made in a worktree of HEAD; a mutant its suite doesn't catch is a finding (D139) |
-  | `pnpm --filter @sen/web e2e:lived` | The lived-in journeys: across a deploy, resume, offline, a slow network, 200% text, 360×640, a year of data (`?scenario=year`) |
-  | `node scripts/live-metrics.mjs --url <origin>` | A deployed preview's server timings (the `live-metrics` workflow runs it on every preview); production gets only the signed-out part |
-  | `node scripts/usage.mjs` | What this session cost, by agent and model; `--log <slice>` keeps its row in `docs/usage.md` |
-  | `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
-  | `scripts/local-db.sh start\|stop\|reset` | The local Postgres 16 with pgTAP (started by the session hook): `sen_dev` and `sen_test`, never Neon (`docs/cloud.md` §5) |
-  | `pnpm test:db` | A fresh `sen_test`, every migration, pgTAP (RLS for two people over every table, the catalogue check), then the API's tests on it, and the route sweep: every route in `apps/api/src/routes.table.ts` given the same bad requests. With `QA_METRICS=<dir>`, each request's `Server-Timing` is recorded. One at a time: it drops `sen_test` |
-  | `pnpm --filter @sen/api dev` | The API on Node at `127.0.0.1:8787/api`, on `sen_dev`; `SEN_BACKEND=api pnpm dev` runs the web app against it (sign in as `weiming@example.com`, code `123456`). If `sen_dev` isn't migrated and seeded, run the preview's deploy step on it from `apps/web`: `VERCEL=1 VERCEL_ENV=preview DATABASE_URL_UNPOOLED=postgres://sen_owner@127.0.0.1:5432/sen_dev BETTER_AUTH_SECRET=<48 characters> pnpm exec tsx scripts/db-deploy.ts`, then delete `public/db-deploy.txt` |
-  | `pnpm --filter @sen/web e2e:server` | The sign-in journey in Chromium against the local API and `sen_test` (after `pnpm test:db`) |
-  | `gradle -p apps/shell/core test` | The capture core's Kotlin tests; needs no Android SDK |
-  | `bash scripts/android-sdk.sh` | Installs the Android SDK in a cloud session (about 2 minutes), to build the shell's APKs there: then `pnpm --filter @sen/shell sync` and `gradle assembleDebug` in `apps/shell/android` |
-  | `node apps/shell/scripts/icons.mjs` | Renders the launcher and notification icons from the looks' SVGs into the Android resources |
-  | `node apps/web/scripts/frame-times.mjs` | Each look's frame times at 390×844 with the CPU slowed 4×, against a running `vite preview` |
-
-  QA's database is the local Postgres: `pnpm test:db` migrates `sen_test`; a preview's is Neon's
-  `sen-preview`, seeded with Wei Ming (`docs/local.md`).
-- **Layout** (B01):
-
-  | Path | What it holds |
-  |---|---|
-  | `apps/web/` | The web app: Vite, React, TanStack Router, Tailwind v4 and shadcn/ui. `src/components/ui/` is shadcn's, customised in place; `src/blocks/` the building blocks of `patterns.md` §7; `src/frame/` the tab bar, Sen's button and the shell of every screen; `src/screens/registry.ts` every screen id, `skeleton` or `real`, and `src/screens/skeleton.ts` the walking skeleton's screens, shown in previews only; `src/data/` the one backend interface (`backend.ts`), a query hook per screen (`hooks.ts`) and the skeleton's fake, with Wei Ming's month (`fake/scenario.ts`) and its edge states (`fake/variants.ts`); `src/dev/` the dev panel and gallery; `e2e/` Playwright |
-  | `packages/core/` | Pure TypeScript shared by the app, the API and the worker: the money module, pay cycles and KL days (`cycles.ts`), and the shared types with zod: §15's rows (`schema.ts`), each screen's read shape (`views.ts`) and every write (`commands.ts`). The template engine later |
-  | `packages/looks/` | The six looks as `DIR` modules, ported from `docs/ui/directions/src/`, each loaded only when shown |
-  | `apps/api/` | The Hono API (B05), at `/api` on the web app's origin, bundled into Vercel's Build Output by `apps/web/scripts/vercel-output.mjs` |
-  | `packages/db/` | Drizzle's schema, migrations, RLS and grants, the deploy step and the pgTAP tests (its README) |
-  | `apps/shell/` | The Capacitor shell for Android (B02): application id **`io.github.ztsia.sen`**, name **Sen** (`.debug`, *Sen review*, for the review build). `android/` is the app, with our Kotlin in `app/src/main/java/io/github/ztsia/sen/` (the listener, the outbox, the bridge's two plugins `SenShell` and `SenCapture`) and its emulator tests in `app/src/androidTest/`; `core/` the pure Kotlin capture core (no Android SDK); `data/` the curated apps and the brands' steps; `sites.json` the one address each build loads; `www/` the page shown when the site can't load |
-  | `apps/worker/` | The Cloudflare Worker: schedules and the realtime relay (B06) |
-  | `scripts/` | The session hooks, the hygiene check and the QA report |
-
-### Models and subagents
-
-**Opus is the brain; subagents are its hands (D125, D131).** The main session (Opus) talks with the
-owner, makes every decision, works on the non-negotiables, writes the briefs, and reviews what comes
-back. Subagents carry out work that is decided but too long or too repetitive to be worth Opus's
-price. This is the owner's standing request, so a session spawns them without being asked.
-
-**A brief that leaves thinking to the subagent is the main session's failure, not the model's.** The
-`brief` skill holds how: choosing the model (Haiku at `high` for whatever a brief can fully specify,
-Sonnet for what can't be written down in advance, Opus itself for small changes, design calls and
-the non-negotiables' logic), the brief's template and checks, and what to do when work comes back
-wrong. Measurements are in `docs/usage.md`.
-
-| Agent | What it's for |
-|---|---|
-| `implementer` | A batch already decided, owning its own files; several run in parallel, in the background |
-| `qa-reviewer` (Sonnet; Opus when the risk calls for it) | Always, through the `qa` skill. It spawns its own helpers from the skill's templates: the sweep (`implementer` on Haiku) and the eyes pass (D137) |
-| `qa-eyes` (Opus) | Spawned by `qa-reviewer` only: each changed screen at full size, answering fixed questions in writing |
-| `scout` (Haiku) | Something too big to read, such as a long log; not what one `grep` answers |
-
-- **Two end-to-end runs never overlap** (shared ports 4173/4174 and build folders), and nor do two
-  `pnpm test:db` (each drops `sen_test`). A brief for agents running in parallel gives each its own
-  ports (main e2e 4173/4174, `qa-diff` 4175/4176, `e2e:lived` 4177/4178, `e2e:server` 4179 with the
-  API on 8788, the dev API 8787) and says who holds the database.
-- **Measure:** `node scripts/usage.mjs` (run it from the session's starting directory);
-  `--log <slice>` keeps a row in `docs/usage.md` before every handoff and PR. The main session's
-  own context is the largest cost, so keep its reading and writing small and hand off early.
+- **Design pages and their assets:** every published page has its source here (`docs/ui/README.md`
+  lists them with their links). Every custom asset a look uses (its icons, tab bar, marks, theme
+  tokens and fonts) is a file in `docs/ui/directions/assets/`, written by `build.mjs` and
+  `fonts.mjs`. Change the source, never the exported file.
+- **shadcn, customised in place** in `apps/web/src/components/ui/`, with a `// Sen:` note on the
+  first line saying what changed, so an upgrade (`shadcn add <x> --dry-run`) can keep it.
+  `patterns.md`'s building blocks are compositions of them, in `apps/web/src/blocks/`.
 
 ## Skills
 
+The `workflow` plugin brings `qa`, `uiux`, `database`, `llm` and `security`, with Sen's additions in
+`docs/workflow/`. Sen's own:
+
 | Skill | Use it when |
 |---|---|
-| `qa` | A slice is finished and before its PR, or a non-negotiable was touched. It spawns the `qa-reviewer` subagent, which diffs every screen's tree, pixels and metrics against `main`, runs the scripted visual checks, the route sweep, the breakage checks and the lived-in journeys, and looks hard only at what changed and what the metrics flag (D137, D139); it **sets the three tiers for fixing what QA finds**: small fixes self-verified, scoped ones re-checked by resuming the last run's reviewer, and a fresh full run only when a fix reaches the whole flow (D117, D121) |
 | `brief` | Before every Agent call that does work, and when a subagent's work comes back short: the model, the brief, and what to do about a miss (D131) |
-| `uiux` | Choosing shadcn components for a screen, building one, or checking one before it's done. Ported from GCO_events (D43): it reads its component index first, then only the docs it shortlists |
 | `dataviz` | Any chart, stat tile or chart colour. It comes from the owner's claude.ai account, not the repo |
-| `frontend-design` | Narrowed when `S2` closed (D57, D84): only for a look's own drawing (its figure, strip, avatar, tab bar and reveal) or a new look for the pool. Every screen follows `docs/ui/patterns.md` and `uiux` instead. Installed with `npx skills add` |
-| `database` | Designing or checking tables, migrations, SQL, RLS policies, views, functions, or an API route or sync that touches data. Ported from the owner's `claude_skills` and cut down to this stack. Its rules win over the vendor skills below |
-| `supabase-postgres-best-practices`, `neon`, `neon-postgres` | General Postgres and Neon practice: indexes, locking, pooling, branching. Installed with `npx skills add`. Where they assume Supabase, or steer towards Neon's own Auth, Functions, Storage or AI Gateway, `database` and D54–D55 win |
+| `frontend-design` | Narrowed when `S2` closed (D57, D84): only for a look's own drawing (its figure, strip, avatar, tab bar and reveal) or a new look for the pool. Every screen follows `docs/ui/patterns.md` and `uiux` instead |
+| `supabase-postgres-best-practices`, `neon`, `neon-postgres` | General Postgres and Neon practice. Where they disagree with `database` (and `docs/workflow/database.md`) or D54–D55, ours win |
 
-The stack's own skills came with `npx skills add` (B01), because cloud sessions don't load plugins:
-`shadcn` (shadcn/ui's CLI and components), `vercel-react-best-practices` and `web-design-guidelines`
-(vercel-labs), and `capacitor-app-development`, `capacitor-plugins`, `capacitor-plugin-development`,
-`capacitor-react` and `capacitor-push-notifications` (Capawesome), with `capacitor-app-creation` added
-in B02 for creating the shell. Where one disagrees with `uiux`, `patterns.md` or a decision, ours
-win; a build session never stops to ask the questions a skill says to ask.
+The stack's own skills came with `npx skills add` (B01): `shadcn`, `vercel-react-best-practices` and
+`web-design-guidelines` (vercel-labs), and the `capacitor-*` skills (Capawesome). Where one disagrees
+with `uiux`, `patterns.md` or a decision, ours win; a build session never stops to ask the questions
+a skill says to ask.
 
-Skills are model-invoked from their descriptions, so no session needs to be told to use one.
-**Our own skills are knowledge, not modes (D82).** Invoking one loads what to do and what must be
-true; it never asks which mode to run in or produces an audit report for someone else to act on.
-Build sessions run unattended and call skills themselves.
+## Overrides
+
+- **Briefing subagents:** the `brief` skill (D131) is Sen's fuller version of the rules' *Models and
+  subagents*. Follow it where it says more.
+- **QA:** the reviewer's prompt also names `docs/workflow/qa.md`, which holds Sen's sad paths,
+  probes and eyes questions.
+- **The shadcn note** is `// Sen:`.

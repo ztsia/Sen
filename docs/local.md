@@ -8,6 +8,23 @@ follow on a phone, and commit.
 
 ## Now
 
+- [ ] **Give the cloud environment the workflow plugin** (needed before the next cloud session).
+      Cloud sessions don't install the plugins a repo enables, so without this a session has no
+      rules, no `workflow:` agents and no `qa`, `uiux` or `database` skill. On the phone: claude.ai/code
+      → the environment selector → edit `finance-tracker` → *Setup script* → replace its
+      contents with the whole of
+      [`cloud-setup.sh`](https://github.com/ztsia/workflow/blob/main/plugins/workflow/scripts/cloud-setup.sh)
+      (*Raw*, select all, copy) → *Save*. Then start a new session: it should open with *The
+      workflow* rules, and `/agents` should list `workflow:implementer`. The laptop already has the
+      plugin, `claude-security` and `security-guidance` (24 Oct). On any other machine, once:
+      `claude plugin install claude-security@claude-plugins-official` and
+      `claude plugin install security-guidance@claude-plugins-official`.
+- [ ] **Merge [ztsia/workflow#11](https://github.com/ztsia/workflow/pull/11)** (plugin 1.1.0, CI
+      green). It holds the four fixes found moving Sen to the plugin (24 Oct): the QA agents read
+      `docs/workflow/qa.md` themselves, *Who makes each fix* is back, `brief` ships in the plugin,
+      and docs name the plugin's scripts as `node "<workflow plugin>/scripts/<name>"`. Then move to
+      1.1.0: on the laptop, `claude plugin update workflow@ztsia`; in the cloud, edit any line of the
+      environment's setup script (a comment will do) and start a new session.
 - [ ] **Update Sen and Sen review on your phone once B05 · Feel merges.** Its haptics live in the
       shell (bridge 2), so the app needs the new APK; until then everything else works and haptics
       stay off. Obtainium → *Update all*, or *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* →
