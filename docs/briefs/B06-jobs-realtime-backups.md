@@ -90,6 +90,10 @@ What keeps Sen honest runs before any real money reaches the server:
     `react/no-danger`), set to `error`
 - **Their first run covers B01–B05 too.** Fix or justify what they find in this slice.
 - Then add the command to `CLAUDE.md` § Commands, and replace the stopgap in `docs/workflow/qa.md`.
+- **QA's security scan covers the whole codebase, not only B06's diff** (owner, 24 Oct): ask
+  `claude-security` to scan the codebase at high effort. B01–B05 never had one, and B02's bridge
+  and listener filter and B05's sign-in, RLS and API are checked once this way, before B07 lets real
+  money reach the server. Its findings go through QA's tiers like any other.
 
 ## Leaves for later
 
@@ -108,6 +112,8 @@ What keeps Sen honest runs before any real money reaches the server:
 6. pgTAP covers the new tables. The definer function lists only the people a job is for, and
    returns no money.
 7. `pnpm security` passes in CI on the whole repo.
+8. The whole-codebase security scan has run, with no Critical or High finding left open
+   (`qa/B06/security.md`).
 
 ## On your phone
 
