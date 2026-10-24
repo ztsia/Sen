@@ -1,6 +1,8 @@
 import { ApiFailure, apiCall } from './api/client';
 import { forgetKept } from './api/backend';
 import { CODE_EXPIRED, CODE_OK } from '@/screens/outside/logic';
+import { startPush, stopPush } from '@/shell/push';
+import { startRealtime, stopRealtime } from './realtime';
 
 /** Who is signed in: Better Auth's session, as the screens need it. */
 export interface Session {
@@ -39,13 +41,25 @@ let sessionP: Promise<Session | null | 'unknown'> | null = null;
 
 function load(): Promise<Session | null | 'unknown'> {
   sessionP ??= apiCall<{ user: Session } | null>('/auth/get-session').then(
-    (r) => (r?.user ? { email: r.user.email, name: r.user.name } : null),
+    (r) => {
+      if (!r?.user) return null;
+      // signed in: open screens now update by themselves (D100), and the phone registers for push
+      startRealtime();
+      void startPush();
+      return { email: r.user.email, name: r.user.name };
+    },
     () => {
       sessionP = null; // ask again next time: it may be back
       return 'unknown' as const;
     },
   );
   return sessionP;
+}
+
+/** Before the session ends: the live connection closes and push lets go of this phone, neither holding sign-out up. */
+async function letGo() {
+  stopRealtime();
+  await Promise.race([stopPush(), new Promise((done) => setTimeout(done, 3000))]);
 }
 
 /** The server's sign-in, exported for its tests; screens use `auth`. */
@@ -92,11 +106,13 @@ export const apiAuth: Auth = {
     }
   },
   async signOut() {
+    await letGo();
     forgetKept();
     await apiCall('/auth/sign-out', { body: {} });
     sessionP = Promise.resolve(null);
   },
   async signOutEverywhere() {
+    await letGo();
     forgetKept();
     await apiCall('/auth/revoke-sessions', { body: {} });
     sessionP = Promise.resolve(null);

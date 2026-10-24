@@ -3,6 +3,7 @@ import { SystemBars, SystemBarsStyle } from '@capacitor/core';
 type Router = (typeof import('@/router'))['router'];
 import { resolveMode, useTheme } from '@/theme/store';
 import { inShell } from './bridge';
+import { onPushOpen } from './push';
 
 const TAB_ROOTS = new Set(['/review', '/insights', '/more']);
 
@@ -21,6 +22,11 @@ export function backAction(path: string, sheetOpen: boolean, canGoBack: boolean)
 /** Wires the shell's back button and system bars to the web app. Does nothing in a browser. */
 export function initShell(router: Router) {
   if (!inShell()) return;
+
+  // a tapped push opens the screen it names (shell/push.ts)
+  onPushOpen(
+    (t) => void ('id' in t ? router.navigate({ to: '/s/$', params: { _splat: t.id } }) : router.navigate({ to: t.to })),
+  );
 
   void App.addListener('backButton', ({ canGoBack }) => {
     const { location } = router.history;

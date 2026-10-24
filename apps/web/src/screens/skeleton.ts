@@ -47,7 +47,6 @@ export const SKELETON: Screens =
         'settings/you': lazy(() => import('./settings/you')),
         'settings/categories': lazy(() => import('./settings/categories')),
         'settings/email': lazy(() => import('./settings/email')),
-        'settings/data': lazy(() => import('./settings/data')),
         'settings/claims': lazy(() => import('./settings/claims')),
         'settings/sen': lazy(() => import('./settings/sen')),
         'settings/members': lazy(() => import('./settings/members')),

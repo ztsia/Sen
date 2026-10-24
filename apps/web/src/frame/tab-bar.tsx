@@ -98,6 +98,7 @@ export function TabBar({ active, reviewCount, onScan, onScanMore }: Props) {
         className="tab-ind"
         aria-hidden="true"
         hidden={index < 0}
+        // eslint-disable-next-line react/no-danger -- the looks' own drawing (packages/looks), built from constants and the mode; no text from data
         dangerouslySetInnerHTML={{ __html: look?.tabs.ind ? look.tabs.ind(mode, `${uid}i`) : '' }}
       />
       {TABS.map(([k, label]) => {
@@ -146,7 +147,9 @@ function TabIcon({ look, k, mode, uid }: { look: Look | null; k: IconTab; mode: 
   if (!look) return <span className="ti" aria-hidden="true" />;
   return (
     <span className="ti" aria-hidden="true">
+      {/* eslint-disable-next-line react/no-danger -- the looks' own drawing (packages/looks), built from constants and the mode; no text from data */}
       <span className="i-off" dangerouslySetInnerHTML={{ __html: look.tabs.icon(k, false, mode, `${uid}0`) }} />
+      {/* eslint-disable-next-line react/no-danger -- the looks' own drawing (packages/looks), built from constants and the mode; no text from data */}
       <span className="i-on" dangerouslySetInnerHTML={{ __html: look.tabs.icon(k, true, mode, `${uid}1`) }} />
     </span>
   );
@@ -162,6 +165,7 @@ function ReviewBadge({ look, count, mode, uid }: { look: Look | null; count: num
           aria-hidden="true"
           data-testid="review-badge"
           data-count={text}
+          // eslint-disable-next-line react/no-danger -- the look's badge drawing; `text` is the review count, a number
           dangerouslySetInnerHTML={{ __html: look.tabs.badge(text, mode, uid) }}
         />
       ) : (

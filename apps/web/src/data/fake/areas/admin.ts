@@ -119,6 +119,7 @@ export function seedAdmin(db: Db): Pick<SettingsState, 'claims' | 'members' | 's
 const validEmail = (a: string) =>
   a.length <= 254 &&
   !a.includes('..') &&
+  // eslint-disable-next-line security/detect-unsafe-regex -- runs only after the length cap above, which bounds its backtracking
   /^[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(a);
 
 const fail = (m: string): never => {

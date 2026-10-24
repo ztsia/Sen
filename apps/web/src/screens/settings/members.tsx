@@ -99,6 +99,7 @@ const EMAIL_MAX = 254;
 const validEmail = (a: string) =>
   a.length <= EMAIL_MAX &&
   !a.includes('..') &&
+  // eslint-disable-next-line security/detect-unsafe-regex -- runs only after the length cap above, which bounds its backtracking
   /^[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,}$/.test(a);
 const WELCOME = '10.00';
 const ALLOWANCE = '2.00';

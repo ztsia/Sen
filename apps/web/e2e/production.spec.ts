@@ -21,6 +21,14 @@ test('production shows Not built yet, the pinned look, and no dev tools', async 
   expect(errors).toEqual([]);
 });
 
+// B06: Settings → Data is real. With no server in this build it says it couldn't load, never made-up data
+test('production’s Settings → Data shows nothing made up', async ({ page }) => {
+  await page.goto('/s/settings/data');
+  await expect(page.getByTestId('not-built')).toHaveCount(0);
+  await expect(page.getByText(/GB of|Last backup|Wei Ming/)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Dev panel' })).toHaveCount(0);
+});
+
 test('the site sends a strict content security policy and no referrer', async ({ request }) => {
   const r = await request.get('/');
   const csp = r.headers()['content-security-policy'] ?? '';
@@ -37,11 +45,16 @@ test('the site sends a strict content security policy and no referrer', async ({
   expect(directives.get('frame-ancestors')).toEqual(["'none'"]);
   expect(directives.get('object-src')).toEqual(["'none'"]);
   const allowed = new Set(["'self'", "'none'", 'data:', 'blob:']);
+  // the one other host: the realtime relays (D100, B06), for connecting only, and only these two
+  const relays = new Set(['wss://sen-worker.sen-my.workers.dev', 'wss://sen-worker-preview.sen-my.workers.dev']);
   for (const [name, sources] of directives)
     for (const src of sources)
-      expect(allowed.has(src) || (name === 'style-src' && src === "'unsafe-inline'"), `${name} allows ${src}`).toBe(
-        true,
-      );
+      expect(
+        allowed.has(src) ||
+          (name === 'style-src' && src === "'unsafe-inline'") ||
+          (name === 'connect-src' && relays.has(src)),
+        `${name} allows ${src}`,
+      ).toBe(true);
   expect(r.headers()['referrer-policy']).toBe('no-referrer');
 });
 
@@ -194,7 +207,6 @@ const B04 = [
   '/s/settings/claims',
   '/s/settings/sen',
   '/s/settings/members',
-  '/s/settings/data',
   '/s/first-run',
   '/s/new-look',
 ];

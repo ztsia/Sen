@@ -1,10 +1,11 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { useRouterState } from '@tanstack/react-router';
 import { cn } from '@/lib/utils';
+import { LiveStamp } from './live-stamp';
 
 /**
  * The frame of every screen: its app bar, then its content, which scrolls inside the page (patterns.md
- * §10). A screen with Sen's button keeps room at the bottom so the button never covers its last row.
+ * §10); while the live connection is down, *Updated 2 min ago* sits between them. A screen with Sen's button keeps room at the bottom so the button never covers its last row.
  */
 export function Screen({
   bar,
@@ -27,6 +28,7 @@ export function Screen({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {bar}
+      <LiveStamp />
       {/* focusable, so a keyboard or switch user can scroll a screen that holds nothing else to focus
           (axe: scrollable-region-focusable); its ring shows for keyboard use only */}
       <main ref={main} tabIndex={0} className={cn('scroll-area min-h-0 flex-1', senRoom ? 'pb-24' : 'pb-6', className)}>

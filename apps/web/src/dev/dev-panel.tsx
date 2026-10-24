@@ -11,6 +11,10 @@ import { DEV_STATES, useUi, type DevState } from '@/frame/ui-store';
 import { LOOK_IDS, LOOK_NAMES, isLookId } from '@/looks/ids';
 import { useTheme, type ModePref } from '@/theme/store';
 import { inShell } from '@/shell/bridge';
+import { scheduleTestJob, sendTestPush } from '@/data/checks';
+import { useLive } from '@/data/realtime';
+import { now as clockNow } from '@/lib/clock';
+import { toastDone } from '@/blocks/toast';
 import { SCENARIOS, SCENARIO_NAMES, type ScenarioId } from '@/data/fake/variants';
 import { sim, useCaptureSim } from './capture-sim';
 import { NativeLayer } from './native/native-layer';
@@ -181,6 +185,7 @@ export default function DevPanel() {
             ))}
           </ToggleGroup>
         </Group>
+        <LiveUpdates />
         {inShell() ? null : <CaptureSim />}
         <Simulator close={() => setOpen(false)} />
         <div className="flex flex-col gap-2 py-3">
@@ -251,6 +256,44 @@ function Simulator({ close }: { close: () => void }) {
         </Button>
       </Group>
     </>
+  );
+}
+
+/**
+ * Live updates (D100): the stamp *Updated 2 min ago* shows while the relay is down. The switch forces it, for
+ * its tree and screenshot; with the server's backend, the two checks of Settings → Data run from here too.
+ */
+function LiveUpdates() {
+  const forced = useLive((s) => s.forced !== null);
+  const [busy, setBusy] = useState(false);
+  const run = (check: () => Promise<string>) => () => {
+    setBusy(true);
+    void check()
+      .then(toastDone)
+      .finally(() => setBusy(false));
+  };
+  return (
+    <Group label="Live updates">
+      <div className="-mx-4">
+        <SwitchRow
+          title="Show the relay as down"
+          checked={forced}
+          onCheckedChange={(on) =>
+            useLive.setState({ forced: on ? { updatedAt: new Date(clockNow().getTime() - 120_000) } : null })
+          }
+        />
+      </div>
+      {__SEN_BACKEND__ === 'api' ? (
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" disabled={busy} onClick={run(sendTestPush)}>
+            Send a test push
+          </Button>
+          <Button variant="outline" disabled={busy} onClick={run(scheduleTestJob)}>
+            Schedule a test job
+          </Button>
+        </div>
+      ) : null}
+    </Group>
   );
 }
 

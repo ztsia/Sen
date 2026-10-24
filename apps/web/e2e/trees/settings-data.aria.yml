@@ -8,7 +8,11 @@
     - button "Export everything"
   - region "Backups":
     - heading "Backups" [level=2]
-    - text: /Last backup Yesterday, \d+:\d+/
+    - text: /Last backup Yesterday, \d+:\d+ Storage \d+\.\d+ GB of \d+ GB/
+  - region "Checks":
+    - heading "Checks" [level=2]
+    - button "Send a test push"
+    - button "Schedule a test job"
 - navigation "Tabs":
   - link "Home":
     - /url: /
