@@ -19,20 +19,12 @@ follow on a phone, and commit.
       plugin, `claude-security` and `security-guidance` (24 Oct). On any other machine, once:
       `claude plugin install claude-security@claude-plugins-official` and
       `claude plugin install security-guidance@claude-plugins-official`.
-- [ ] **Improvements for `ztsia/workflow`, found moving Sen to the plugin** (24 Oct). Open a PR there,
-      or ask a session with that repo attached:
-      - `workflow:qa-reviewer` and `workflow:qa-eyes` don't read `docs/workflow/qa.md` themselves;
-        only the `qa` skill does. A project's sad paths and eyes questions reach them only if the
-        prompt names the file (Sen's override). Have both agents read it.
-      - Sen's old `qa` skill had *Who makes each fix* (the main session for most fixes, a fresh
-        `implementer` for long decided ones, the agent just finished for follow-ons; a test guarding
-        a fix fails on the code before it). The plugin's skill has no such section.
-      - Sen's `brief` skill holds more than the rules' *Models and subagents*: the table for a miss
-        (first miss, off track, second miss), the cost of waiting (one until-loop per long run), and
-        staging explicit paths while agents edit. Worth shipping as a plugin skill.
-      - The `setup` skill points project docs at the plugin's absolute local path for `usage.mjs` and
-        `qa-report.mjs`, which breaks in a cloud session. `${CLAUDE_PLUGIN_ROOT}`, as the rules use,
-        works in both.
+- [ ] **Merge [ztsia/workflow#11](https://github.com/ztsia/workflow/pull/11)** (plugin 1.1.0, CI
+      green). It holds the four fixes found moving Sen to the plugin (24 Oct): the QA agents read
+      `docs/workflow/qa.md` themselves, *Who makes each fix* is back, `brief` ships in the plugin,
+      and docs name the plugin's scripts as `node "<workflow plugin>/scripts/<name>"`. Then move to
+      1.1.0: on the laptop, `claude plugin update workflow@ztsia`; in the cloud, edit any line of the
+      environment's setup script (a comment will do) and start a new session.
 - [ ] **Update Sen and Sen review on your phone once B05 · Feel merges.** Its haptics live in the
       shell (bridge 2), so the app needs the new APK; until then everything else works and haptics
       stay off. Obtainium → *Update all*, or *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* →

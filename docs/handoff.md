@@ -12,8 +12,14 @@ slice worth running mostly on the laptop (below).
 and subagents, the owner's working rules), the agents (`workflow:implementer`, `workflow:qa-reviewer`,
 `workflow:qa-eyes`, `workflow:scout`) and the `qa`, `uiux`, `database`, `llm` and `security` skills
 now come from `ztsia/workflow`. What was true of Sen only is in `docs/workflow/{qa,database,uiux}.md`;
-`CLAUDE.md` keeps Sen's facts, with an *Overrides* section. `brief` stays Sen's own skill.
-`scripts/usage.mjs` and `qa-report.mjs` are the plugin's now: `node "${CLAUDE_PLUGIN_ROOT}/scripts/usage.mjs"`.
+`CLAUDE.md` keeps Sen's facts, with an *Overrides* section. `brief` stays Sen's own skill until 1.1.0.
+`scripts/usage.mjs` and `qa-report.mjs` are the plugin's now: `node "<workflow plugin>/scripts/usage.mjs"`,
+the folder the rules name at session start.
+
+**Once Sen runs plugin 1.1.0** ([ztsia/workflow#11](https://github.com/ztsia/workflow/pull/11)):
+delete `.claude/skills/brief/` (the plugin ships `workflow:brief`; anything Sen-only in it goes to
+`docs/workflow/brief.md`), and drop `CLAUDE.md`'s *Overrides* lines for `brief` and for naming
+`docs/workflow/qa.md` in the reviewer's prompt (its agents read it themselves).
 
 ## Decided, and why
 
@@ -36,7 +42,7 @@ now come from `ztsia/workflow`. What was true of Sen only is in `docs/workflow/{
 - **Check after merging:** a fresh session opens with *The workflow* rules, `/agents` lists
   `workflow:implementer`, and the old unprefixed `implementer`, `qa-reviewer`, `qa-eyes` and `scout`
   are gone.
-- Four improvements for `ztsia/workflow` (`docs/local.md`).
+- Merge `ztsia/workflow#11` (plugin 1.1.0), then update the plugin (`docs/local.md`).
 - `ztsia/claude_skills#5`: `ztsia/workflow` replaced that repo; merge it or close it.
 - From before: the phone sign-off after the new APK; `docs/local.md` *Now* (delete
   `B05/qa-tooling-iad1-probe` and `B05/qa-tooling`, `SEN_OWNER_EMAIL`, the first sign-in, Q14, sign out

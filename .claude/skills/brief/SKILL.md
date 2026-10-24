@@ -109,7 +109,7 @@ wrong. When a miss came from the brief, carry that line into the next brief too.
   15 Oct: one agent, 185 turns, mostly waits). Brief one until-loop per long run, and no repeat of a
   long run whose point an earlier run already proved.
 - **An agent stopped at a usage limit is resumed** (SendMessage), never restarted. Check which
-  model its next turns ran on (`node "${CLAUDE_PLUGIN_ROOT}/scripts/usage.mjs"`): one resumed on Opus, not its Sonnet, and
+  model its next turns ran on (`node "<workflow plugin>/scripts/usage.mjs"`): one resumed on Opus, not its Sonnet, and
   cost three times its first run (QA tooling, 17 Oct). If it switched, stop it and brief a fresh
   agent on the right model with the work so far.
 - **Commit an agent's files only after reviewing its report**, staging explicit paths, never `-a`,
