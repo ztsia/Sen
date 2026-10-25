@@ -1,5 +1,7 @@
 # QA B06 · Jobs, realtime, push and backups, run 1
 
+**Report:** https://claude.ai/artifact/4TcXmtm89wh94V3KGYYt6d
+
 *Written by the main session from the reviewer's final message: the harness refused the reviewer's
 own write to this file.*
 
