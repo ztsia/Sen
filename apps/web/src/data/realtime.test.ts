@@ -57,7 +57,7 @@ function setup(token?: () => Promise<{ url: string; pass: string }>) {
     now: () => new Date(),
     online: () => true,
   });
-  return { rt, invalidate, sockets, getToken };
+  return { rt, client, invalidate, sockets, getToken };
 }
 
 const flush = () => vi.advanceTimersByTimeAsync(0);
@@ -200,6 +200,21 @@ describe('the relay going down', () => {
     await vi.advanceTimersByTimeAsync(BACKOFF_MS[0]!);
     s.sockets[0]!.open();
     expect(status()).toBe('live');
+  });
+
+  // a screen that loads while the relay refuses says its age at once, not after the first poll
+  // (QA B06 run 2, finding 3)
+  it('dates the stamp from the first load, without waiting for a poll', async () => {
+    const s = setup(async () => {
+      throw new ApiFailure(0, 'offline', 'no connection');
+    });
+    s.rt.start();
+    await flush();
+    expect(status()).toBe('down');
+    expect(useLive.getState().updatedAt).toBeNull();
+    await s.client.fetchQuery({ queryKey: ['settings'], queryFn: async () => ({}) });
+    expect(useLive.getState().updatedAt).toEqual(new Date());
+    expect(s.invalidate).not.toHaveBeenCalled();
   });
 
   it('counts a silent socket as dead: a ping every 25 s, and no answer in 10 s means down', async () => {

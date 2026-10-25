@@ -97,6 +97,19 @@ export function createRealtime(deps: RealtimeDeps) {
   }
   const refreshAll = () => settle(client.invalidateQueries());
 
+  // A screen's first load dates the stamp too, not only a refresh: one that loads while the relay
+  // refuses says its age at once, not after the first poll (QA B06 run 2, finding 3)
+  let unwatch: (() => void) | undefined;
+  function noteLoad() {
+    if (useLive.getState().updatedAt) return;
+    const loaded = client
+      .getQueryCache()
+      .findAll({ predicate: (q) => q.state.status === 'success' })
+      .map((q) => q.state.dataUpdatedAt);
+    const at = Math.max(0, ...loaded);
+    if (at) useLive.setState({ updatedAt: new Date(at) });
+  }
+
   function stopTimers() {
     clearInterval(ping);
     clearTimeout(dead);
@@ -261,6 +274,8 @@ export function createRealtime(deps: RealtimeDeps) {
     attempt = 0;
     lastSeq = null;
     connecting = false;
+    unwatch?.();
+    unwatch = undefined;
     useLive.setState({ status: 'off', ...(clearStamp ? { updatedAt: null } : {}) });
   }
 
@@ -273,6 +288,10 @@ export function createRealtime(deps: RealtimeDeps) {
       document.addEventListener('visibilitychange', onVisible);
       window.addEventListener('offline', onOffline);
       window.addEventListener('online', onOnline);
+      unwatch = client.getQueryCache().subscribe((e) => {
+        if (e.type === 'updated' && e.action.type === 'success') noteLoad();
+      });
+      noteLoad();
       if (!deps.online()) {
         down();
         return;

@@ -71,6 +71,13 @@
       "when": 1792918142678,
       "tag": "0009_b06_health_admin_only",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792923977469,
+      "tag": "0010_b06_scheduler_tokens",
+      "breakpoints": true
     }
   ]
 }

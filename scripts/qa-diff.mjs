@@ -64,7 +64,9 @@ const git = (args, cwd = root) => execFileSync('git', args, { cwd, encoding: 'ut
 // Windows runs pnpm (a .cmd) only through its shell, which needs spaced arguments quoted, as
 // security.mjs does (QA B06 run 1, finding 5)
 const WIN = process.platform === 'win32';
-const winArgs = (args) => (WIN ? args.map((a) => (/[\s"]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)) : args);
+// cmd.exe runs pnpm here: an argument with a space or any of its operators goes in quotes (QA B06 run 2, 5)
+const winArgs = (args) =>
+  WIN ? args.map((a) => (/[\s"&|<>^()%!]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)) : args;
 const sh = (cmd, args, opts = {}) => {
   const r = spawnSync(cmd, winArgs(args), { stdio: 'inherit', shell: WIN, ...opts });
   if (r.status !== 0) throw new Error(`${cmd} ${args.join(' ')} failed (${r.status})`);

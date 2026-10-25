@@ -39,6 +39,11 @@ SELECT ok(jobs_next_once() BETWEEN now() + interval '59 minutes' AND now() + int
 UPDATE scheduled_jobs SET run_at = now() - interval '1 minute' WHERE dedupe_key = 'test:b';
 SELECT set_eq($$SELECT * FROM jobs_people('once')$$, ARRAY['00000000-0000-4000-8000-00000000000b'::uuid],
   'only the person whose job is due');
+-- a suspended person's due job neither runs nor wakes the scheduler (QA B06 run 2, finding 2)
+UPDATE user_access SET suspended_at = now() WHERE user_id = '00000000-0000-4000-8000-00000000000b';
+SELECT is_empty($$SELECT * FROM jobs_people('once')$$, 'a suspended person''s due job doesn''t run');
+SELECT ok(coalesce(jobs_next_once() > now(), true), 'nor sets the next wake');
+UPDATE user_access SET suspended_at = NULL WHERE user_id = '00000000-0000-4000-8000-00000000000b';
 UPDATE scheduled_jobs SET status = 'running', started_at = now() - interval '1 minute' WHERE dedupe_key = 'test:b';
 SELECT is_empty($$SELECT * FROM jobs_people('once')$$, 'not while it runs');
 UPDATE scheduled_jobs SET started_at = now() - interval '11 minutes' WHERE dedupe_key = 'test:b';

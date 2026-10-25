@@ -323,6 +323,19 @@ describe('health', () => {
     expect(m.body!.data).toEqual({ lastBackup: null, exportReady: false, storage: null });
   });
 
+  // the bucket deletes a dump after 30 days, and a failed one holds nothing (QA B06 run 2, finding 6)
+  it('counts only the good dumps of the last 30 days as held', async () => {
+    await owner.query(
+      `insert into job_runs (user_id, job, run_key, status, bytes, ran_at) values
+         ($1, 'backup', 'old', 'ok', 3000000000, now() - interval '31 days'),
+         ($1, 'backup', 'broke', 'failed', 9000000000, now())`,
+      [admin.id],
+    );
+    const a = await call('/api/settings', { cookie: cookies.admin });
+    expect(a.body!.data).toMatchObject({ storage: { used: 4096 } });
+    await owner.query("delete from job_runs where run_key in ('old', 'broke')");
+  });
+
   it('warns the admin once a month when backups pass half of R2', async () => {
     await owner.query("select record_backup('8', 'ok', 5000000000, 1000, null)");
     // today's morning, so the backups just recorded count as held (the last 30 days)
@@ -404,6 +417,40 @@ describe('push and live updates', () => {
     expect(await count(admin.id)).toBe(adminTokens);
     await owner.query('delete from push_tokens where fcm_token = $1', [admins]);
     cookies.member = await signIn(member.email);
+  });
+
+  const tokensOf = async (id: string) =>
+    (await owner.query<{ fcm_token: string }>('select fcm_token from push_tokens where user_id = $1', [id])).rows
+      .map((r) => r.fcm_token)
+      .sort();
+  const register = (token: string, cookie = cookies.member) =>
+    call('/api/push/token', { method: 'PUT', body: { token }, cookie });
+
+  // D142 (5): a sign-out forgets the phone's token even if the app's DELETE didn't get through, when
+  // it ends the person's last session (QA B06 run 2, finding 8)
+  it('forgets the person’s tokens when a sign-out ends their last session', async () => {
+    const second = await signIn(member.email);
+    await register(`fcm-out-${randomUUID()}`);
+    // another session left: that phone's own DELETE is what forgets it
+    expect((await call('/api/auth/sign-out', { body: {}, cookie: second })).status).toBe(200);
+    expect(await tokensOf(member.id)).toHaveLength(1);
+    expect((await call('/api/auth/sign-out', { body: {}, cookie: cookies.member })).status).toBe(200);
+    expect(await tokensOf(member.id)).toEqual([]);
+    cookies.member = await signIn(member.email);
+  });
+
+  // a person's phones and browsers, not hundreds: each push calls FCM once per token (run 2, finding 7)
+  it('keeps a person’s newest ten tokens, counting a token registered again as new', async () => {
+    const t = Array.from({ length: 12 }, (_, i) => `fcm-many-${String(i).padStart(2, '0')}-${randomUUID()}`);
+    for (const token of t) expect((await register(token)).status).toBe(200);
+    expect(await tokensOf(member.id)).toEqual(t.slice(2).sort());
+    await register(t[2]!);
+    await register(`fcm-many-new-${randomUUID()}`);
+    const kept = await tokensOf(member.id);
+    expect(kept).toHaveLength(10);
+    expect(kept).toContain(t[2]);
+    expect(kept).not.toContain(t[3]);
+    await owner.query('delete from push_tokens where user_id = $1', [member.id]);
   });
 });
 

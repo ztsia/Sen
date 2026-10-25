@@ -154,15 +154,28 @@ export function createApp(deps: Deps) {
     return c.json({ success: true });
   });
   api.on(['GET', 'POST'], '/auth/*', async (c) => {
-    // Sign out everywhere ends every phone's pushes too, the lost one included (D142 (5)): read who
-    // it is before the sessions go
-    const everywhere = c.req.method === 'POST' && c.req.path.endsWith('/auth/revoke-sessions');
-    const who = everywhere ? await auth.api.getSession({ headers: c.req.raw.headers }) : null;
+    // A token goes with the person's sessions (D142 (5)). Sign out everywhere ends every phone's pushes,
+    // the lost one included (QA B06 run 1, finding 1); a sign-out that ends the last session does too,
+    // in case the app's own DELETE didn't get through (run 2, finding 8). With another session left,
+    // that DELETE is what forgets this phone. Read who it is before the session goes.
+    const post = c.req.method === 'POST';
+    const everywhere = post && c.req.path.endsWith('/auth/revoke-sessions');
+    const signOut = post && c.req.path.endsWith('/auth/sign-out');
+    const who = everywhere || signOut ? await auth.api.getSession({ headers: c.req.raw.headers }) : null;
     const res = await auth.handler(c.req.raw);
-    if (who && res.ok)
-      await asPerson(deps.app, who.user.id, (db) =>
-        db.delete(schema.pushTokens).where(eq(schema.pushTokens.userId, who.user.id)),
-      );
+    if (who && res.ok) {
+      const left = everywhere
+        ? 0
+        : (
+            await deps.auth.query('select 1 from auth_session where user_id = $1 and expires_at > now() limit 1', [
+              who.user.id,
+            ])
+          ).rowCount;
+      if (!left)
+        await asPerson(deps.app, who.user.id, (db) =>
+          db.delete(schema.pushTokens).where(eq(schema.pushTokens.userId, who.user.id)),
+        );
+    }
     // an unknown path under /auth: the error shape, as everywhere else (QA B05 run 2, 25)
     if (res.status === 404 && !res.headers.get('content-length') && !(await res.clone().text()))
       return c.json({ code: 'not_found', message: 'No such route.' }, 404);

@@ -28,7 +28,9 @@ const git = (args, cwd = root) => execFileSync('git', args, { cwd, encoding: 'ut
 // Windows runs pnpm (a .cmd) only through its shell, which needs spaced arguments quoted, as
 // security.mjs does (QA B06 run 1, finding 5)
 const WIN = process.platform === 'win32';
-const winArgs = (args) => (WIN ? args.map((a) => (/[\s"]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)) : args);
+// cmd.exe runs pnpm here: an argument with a space or any of its operators goes in quotes (QA B06 run 2, 5)
+const winArgs = (args) =>
+  WIN ? args.map((a) => (/[\s"&|<>^()%!]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)) : args;
 
 const argv = process.argv.slice(2);
 const arg = (name) => {
@@ -100,13 +102,15 @@ const results = [];
 for (const m of chosen) {
   const file = join(tree, m.file);
   const original = existsSync(file) ? readFileSync(file, 'utf8') : '';
-  const count = original.split(m.find).length - 1;
+  // Git for Windows checks out CRLF (`* text=auto`), and a find is written with \n (QA B06 run 2, 4)
+  const text = original.replace(/\r\n/g, '\n');
+  const count = text.split(m.find).length - 1;
   let verdict;
   let seconds = 0;
   if (count !== 1) verdict = `stale (found ${count} times)`;
   else if (!clean[m.suite].passed) verdict = 'not judged (the suite fails unmutated)';
   else {
-    writeFileSync(file, original.replace(m.find, m.replace));
+    writeFileSync(file, text.replace(m.find, m.replace));
     try {
       const r = run(m.suite, m.id);
       seconds = r.seconds;
