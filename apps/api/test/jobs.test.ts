@@ -341,14 +341,15 @@ describe('health', () => {
   it('never counts a failed backup as the last one', async () => {
     await owner.query('create table qa_saved_runs as select * from job_runs');
     await owner.query('delete from job_runs');
-    // dated from this morning's tick, which the watchdog judges by: the good one 49 h before it
+    // the good one 49 h before both this morning's tick (the watchdog's clock) and now (the monitor's),
+    // whichever is earlier: before 07:00 in KL, the tick is still ahead
     const today = klDay(new Date());
     const tick = klAt(today, 7);
     await owner.query(
       `insert into job_runs (user_id, job, run_key, status, bytes, ran_at) values
          ($1, 'morning', 'm-now', 'ok', null, now()),
-         ($1, 'backup', 'good', 'ok', 4096, $2::timestamptz - interval '49 hours'),
-         ($1, 'backup', 'broke', 'failed', null, $2::timestamptz - interval '1 hour')`,
+         ($1, 'backup', 'good', 'ok', 4096, least(now(), $2::timestamptz) - interval '49 hours'),
+         ($1, 'backup', 'broke', 'failed', null, least(now(), $2::timestamptz) - interval '1 hour')`,
       [admin.id, tick],
     );
     expect(await call('/api/health/jobs')).toMatchObject({ status: 503, body: { late: ['backup'] } });
