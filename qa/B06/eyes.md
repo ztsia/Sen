@@ -572,3 +572,539 @@ Verdict: **look again**. Fix first: no toast over an open sheet (as F6). Offline
 **Count:** wrong 1 · look again 8 · fine 4 (2 entries: 1 look again, 1 fine; 11 filmstrip steps: 1
 wrong, 7 look again, 3 fine). The two *Checks* rows aren't in any journey, so their taps (run 1's
 entries 4 and 5) have no filmstrip and couldn't be rechecked here.
+
+---
+
+# Run 3 (25 Oct 2026)
+
+From the diff report `qa-artifacts/B06/jobs-realtime-backups/diff/index.md` (head `db4e5b91` with
+uncommitted changes, against `origin/main` `662b7d25`). Note the folder: this run's artifacts are under
+`qa-artifacts/B06/jobs-realtime-backups/`, not run 2's `B06_jobs-realtime-backups/`. Paths below are
+relative to it. The report lists **2 changed entries**: `settings/data`, with its tree and all twelve pairs,
+and `settings/claims`, with pixels only in six pairs. None is new. It flags **1 tap**, `members…/1`
+(settled in 272 ms against 142 on `main`), and drops **2 as noise**, `proposal/4` and `ask/4`.
+
+Read first, as before: `docs/ui/patterns.md` §2, §3, §7 and §8; `docs/workflow/qa.md`; and `qa/escapes.md`
+(E1–E3's **Ask**).
+
+Also opened: seven screenshots from run 3's own flows against the real server (`screens/FLOW-R3-*.png`,
+Minted light, 390×844).
+
+Filmstrips opened:
+- the flagged `members…/1`, and every other step of that journey (2–11), because it ends in *remove with
+  an export*, which this slice adds;
+- every step of `export` (1–4) and `offline` (1–3), as in run 2;
+- run 2's two flagged steps, `ask/3` and `refund/2`, to see whether they changed;
+- the two steps dropped as noise, `ask/4` and `proposal/4`.
+
+Each strip is 21 frames, 50 ms apart, drawn small. Several `members` strips start before their own tap,
+because the test moves faster than the camera, so I describe what each strip shows.
+
+---
+
+## R3-1. Settings → Data (`settings/data`), the catalogue
+
+Opened, head first, one at a time: `diff/head/catalogue/settings_data--minted-light.png`, `--minted-dark`,
+`--line-light`, `--instrument-dark`, `--mercury-dark`, `--copper-dark`, `--line-dark`, `--instrument-light`,
+`--firefly-light`, `--firefly-dark`, `--mercury-light` and `--copper-light`. Then the base images:
+`diff/base/catalogue/settings_data--minted-light.png` and `--line-light`.
+
+1. **First look.** The *Export* card and its *Export everything* pill. That's right. From the screen
+   alone, it's *take your data out, see it's backed up, test two things*. The three cards have even gaps,
+   and the bottom third is empty and calm. As far as I can see, the pixels are the same as run 2's.
+2. **Reading.** It reads easily, but the words haven't changed. *Send a test push* and *Schedule a test
+   job* still have no line under them, so "push" and "job" are never explained. *Storage* still doesn't
+   say whose storage it is. In Line, *keep.* still sits alone on its line.
+3. **Tapping.** *Export everything* is plainly a button. The two *Checks* rows still lead with a tile and
+   have no chevron and no state on the right. They look like navigation, but a tap acts at once. The
+   facts have no tile, which is right. The main action is still in the top third.
+4. **Broken.**
+   - In Instrument dark, Mercury dark and Copper dark, the *Export everything* pill is a shade off the
+     card, so it reads as a label. In Mercury dark and Copper dark the *Checks* tiles almost disappear.
+   - In Line, light and dark, the *Export* block sits at x≈32, while *Backups* and *Checks* sit at x≈66.
+     `main` already has the first mismatch, and B06 adds a group to it.
+   - The download icon still appears twice in one card. Nothing is cut off.
+5. **Trust.** *Yesterday, 03:00* and *1.24 GB of 10 GB* are the same in all twelve pairs. Nothing is
+   alarming, and no money is shown. The screen still can't show me whether a check worked.
+6. **E1:** calm, apart from the check rows, which look like `NavRow`s. **E2:** a still can't show a
+   pending state, and the check rows aren't in any journey. **E3:** not applicable.
+
+**Against `main`.** It's the same as run 2's comparison. Adding *Storage* and *Checks* makes the screen
+look finished, but the check rows explain nothing. Neither of run 2's fix-firsts shows in these images.
+
+Verdict: **look again**. Fix first: give each *Checks* row one line saying what it does and how it last
+went. Then make the pill visible in Instrument, Mercury and Copper dark.
+
+---
+
+## R3-2. Settings → Claims (`settings/claims`)
+
+Opened: `diff/head/catalogue/settings_claims--firefly-light.png`, `--firefly-dark`, the diff
+`diff/diff/settings_claims--firefly-light.png` and the base `diff/base/catalogue/settings_claims--firefly-light.png`.
+Then `--mercury-light`, `--mercury-dark` (with its diff), `--copper-light` and `--copper-dark`. Minted didn't
+change.
+
+1. **First look.** The two scheme cards, then *ESS*. It's where claim schemes and Sen's ESS steps are
+   set up.
+2. **Reading.** Readable. As in run 2, and as on `main`, *ess-* / *noreply@example.com* breaks at its
+   hyphen against the chevron.
+3. **Tapping.** *Add*, *Edit*, *Teach Sen* and the ESS email row look tappable. The facts don't.
+4. **Broken.** Both diffs light up only the tab labels and the badge's *12*, which is anti-aliasing. Head
+   and base look identical.
+5. **Trust.** *Up to RM100.00 a month* is in the app's format in every look. Nothing changed.
+6. **E1:** calm. **E2, E3:** not applicable.
+
+**Against `main`.** There's no visible difference.
+
+Verdict: **fine**. Outside B06: the ESS address shouldn't break at its hyphen.
+
+---
+
+## R3-3. Data with real numbers, the admin (`screens/FLOW-R3-4-step-1-facts.png`)
+
+1. **First look.** The *Export* card, then *Last backup Fri, 23 Oct, 20:01* and *Storage 1.50 GB of 10 GB*.
+2. **Reading.** Clear. Since the date is two days back, a weekday and date is the right way to say it.
+3. **Tapping.** The same as R3-1.
+4. **Broken.** Nothing. The values are right-aligned on one line.
+5. **Trust.** The figures look plausible and are in the same units as the catalogue. One question the
+   screen can't answer: if backups run nightly, a last backup two days ago means one was missed, yet it
+   sits as calmly as yesterday's would. The screen never says how often backups run, so I can't tell
+   whether to worry.
+6. **E1:** calm. **E2, E3:** not applicable.
+
+Verdict: **fine**. Worth confirming: if a nightly backup is missed, the row should say so.
+
+---
+
+## R3-4. Storage past half (`screens/FLOW-R3-4-step-2-half.png`, `screens/FLOW-R3-4b-step-2-half.png`)
+
+1. **First look.** The amber warning triangle and *5.70 GB of 10 GB* in amber on the *Storage* row. It's
+   the only colour on the screen, so it draws the eye before *Export*.
+2. **Reading.** The figure is clear, but the warning has **no words**. Nothing says what's wrong (*over
+   half full*?), what happens when it's full, or what to do.
+3. **Tapping.** The row has no chevron and no button. A warning that looks like it wants something gives
+   me nothing to tap.
+4. **Broken.** Nothing in the layout: the icon and figure sit on one line. Both shots are the same. *4b*
+   says *19:00* where *4* says *19:01*.
+5. **Trust.** At 57% the screen raises an alarm with no reason given. §3 says a warning comes with an
+   icon **and words**, and §7's health warnings say what's wrong and offer the button that fixes it. The
+   owner would wonder whether backups are about to fail.
+   - *Last backup Sun, 25 Oct, 19:01*: if this ran today, 25 Oct, the catalogue's own rule would say
+     *Today, 19:01*. Run 1's point about one phrasing for this fact still stands. FLOW-R3-1's
+     *Sat, 24 Oct, 23:30* would likewise be *Yesterday, 23:30*.
+6. **E1:** the warning is the one thing first, and it isn't the thing that matters most. **E2, E3:** not
+   applicable.
+
+Verdict: **look again**. Fix first: say the warning in words, such as *Over half full · Sen keeps 30
+days*. Say what happens at 10 GB, and what to do if there's anything to do. Otherwise, don't warn until
+there is something to do.
+
+---
+
+## R3-5. Data, a member (`screens/FLOW-R3-4c-step-1-member.png`)
+
+1. **First look.** Only the *Export* card, then empty screen down to the tab bar.
+2. **Reading.** One sentence and one button. Easy.
+3. **Tapping.** *Export everything* is obvious.
+4. **Broken.** Nothing.
+5. **Trust.** This is unchanged from run 1's entry 3. A friend on Sen sees nothing about backups, so
+   they can't tell whether their own payments are kept safe.
+6. **E1:** calm. **E2:** not visible. **E3:** not applicable.
+
+Verdict: **look again**. Fix first: one fact row for members, such as *Backed up every night*, without
+the admin's storage figure.
+
+---
+
+## R3-6. The fourth test push (`screens/FLOW-R3-5-step-1-fourth.png`)
+
+1. **First look.** The toast: *That's a few tests already. Wait a minute.*
+2. **Reading.** Plain and friendly, and *a minute* says how long to wait.
+3. **Tapping.** The row looks as before. Nothing on it shows that the tests are paused.
+4. **Broken.** Nothing. The toast sits above the tab bar's ribbon, inside the margins.
+5. **Trust.** It's fine on its own. Whether the earlier three taps now give a next step can't be seen
+   from this shot.
+6. **E1:** calm. **E2:** a still can't show a pending state. **E3:** not applicable.
+
+Verdict: **fine**.
+
+---
+
+## R3-7. Schedule a test job (`screens/FLOW-R3-1-step-1-scheduled.png`)
+
+1. **First look.** The toast: *Test job set for 18:58. Push isn't set up here, so it only runs.*
+2. **Reading.** Much better than run 1's *Its push arrives then*: it no longer promises a push that can't
+   come. But *so it only runs* is awkward. It wraps with *runs.* alone on the second line, and it doesn't
+   say how I'd ever know it ran.
+3. **Tapping.** The row is unchanged, with no line and no result.
+4. **Broken.** Nothing.
+5. **Trust.** It's honest now, so I'm no longer misled. It's still a check that can't show me its
+   result: after 18:58, nothing on the screen will say it ran.
+6. **E1:** calm. **E2:** not visible in a still. **E3:** not applicable.
+
+**Against run 1.** Run 1 called this *wrong* because the toast promised a push that couldn't arrive. That
+is fixed.
+
+Verdict: **look again**. Fix first: show the result on the row once it ran (*Ran at 18:58*), and say so
+in the toast (*It runs at 18:58; the result shows here*).
+
+---
+
+## R3-8. The live-updates stamp, offline (`screens/FLOW-R3-3-step-1-offline-stamp.png`)
+
+1. **First look.** The offline banner at the top, then *You*. Over the *Payday* label line sits a raised,
+   centred pill: *Updated just now*.
+2. **Reading.** Readable. Shown together, *You're offline* and *Updated just now* pull two ways for a
+   moment, but the stamp will age to *2 min ago*, as §7 intends.
+3. **Tapping.** **The stamp is now a raised pill with a shadow, which looks like a chip or button.**
+   Nothing says it does anything. §7 asks for *Updated 2 min ago* in `muted`, as plain text.
+4. **Broken.** It no longer reflows the screen. Run 1's 60 px jump is gone: the pill floats over the
+   gap between *Payday* and the first card, and *Last working day* is where it would be anyway under
+   the banner. It doesn't cover text here. As an overlay, though, it would sit over rows once the screen
+   scrolls.
+5. **Trust.** It doesn't contradict the screen any more, because it shows over loaded content with the
+   app bar in place.
+6. **E1:** calm. **E2:** not applicable. **E3:** this is a phone with Sen open losing its connection, and
+   the stamp now behaves.
+
+**Against run 1.** Better. Run 1's entries 6 and 7 (a stamp without an app bar, and the reflow) are both
+fixed here.
+
+Verdict: **look again**. Fix first: draw the stamp flat, as muted text and not a raised pill, so it
+doesn't read as tappable.
+
+---
+
+## Run 3 filmstrips
+
+### G1. `members…/1` (flagged: 272 ms median against 142 on `main`): `metrics/film/members_unlimited_at_invite_resend_and_revoke_remove_with_an_export/1.png`
+
+The tap is *+ Invite* on *Members*.
+
+7. **Answered.** Frames 1–5 (0–200 ms) are unchanged. *Invite*'s press and the scrim first show at
+   about 250 ms, past §8's 100 ms.
+8. **Connected.** The *Invite someone* sheet rises from the bottom over the dimmed list, which is the
+   pattern for a sheet.
+9. **Steady.** It rises from 250 to 550 ms and settles near the top. At this size I see no jump. The
+   sheet is nearly full height (*Their email*, *They will use*, six switches, *Welcome credit*), which is
+   long for a sheet (§7: long things get a screen), but that isn't B06's.
+10. **Motion.** It's the right motion, but it starts about 150 ms late.
+
+Verdict: **look again**. Fix first: the press within one frame of the tap, and find what this branch adds
+to the tap's path before the sheet can start.
+
+### G2. `members…/2`: `…/2.png`
+
+The *Invite someone* sheet is filled in (*free@example.com*) and sent.
+
+7. **Answered.** *Send invitation* darkens when pressed, and the sheet starts to fall within about
+   100 ms.
+8. **Connected.** Yes. *Free · Invited* appears in the list, and the toast *Invited free@example.com ·
+   Undo* slides in. The new row is on screen, but the toast is still worth having for its *Undo*.
+9. **Steady.** No. As the sheet falls (frames 11–13), **its header *Invite someone* shows twice**, one
+   copy a little under the other, for about two frames.
+10. **Motion.** The fall and the toast are right. The doubled header isn't.
+
+Verdict: **look again**. Fix first: one sheet header while it falls (the same doubling as run 2's F7
+and F11).
+
+### G3. `members…/3`: `…/3.png`
+
+Its frames show the same send-and-close as G2. The tap of its own isn't distinguishable at this size.
+
+7. **Answered.** Yes. **8. Connected.** Yes. **9. Steady.** No. In frames 9–11 the falling sheet passes
+   *under* the *Invited…* toast, and two *Invite someone* headers show at once. **10. Motion.** The
+   layering is wrong.
+
+Verdict: **look again**. The fix is the same as G2's.
+
+### G4. `members…/4`: `…/4.png`
+
+The same sequence again. In frames 6–8 the toast sits over the falling sheet, and the header shows twice.
+
+Verdict: **look again**. The fix is the same as G2's.
+
+### G5. `members…/5`: `…/5.png`
+
+The tap is *Farid* in the list, which opens his member page. Then *Resend*.
+
+7. **Answered.** Frames 1–4 are unchanged.
+8. **Connected.** No. At about 200 ms there's a **see-through frame**, with the list showing under grey
+   bars. Then comes a generic row skeleton with **no app bar** and the old toast still faintly visible,
+   until *Member* appears at about 500 ms.
+9. **Steady.** The swap is from skeleton to page, not a slide. Later in the strip, *Resend* shows a grey
+   press band and *Invitation sent again* appears, which is clear.
+10. **Motion.** §8: a screen opened from a row slides in from the right. Here it crossfades through a
+    see-through skeleton, the same as run 2's F9.
+
+Verdict: **look again**. Fix first: slide the member page in from the right, keeping its app bar and its
+own skeleton from the first frame.
+
+### G6. `members…/6`: `…/6.png`
+
+The tap is *Revoke*, then *Undo*.
+
+7. **Answered.** The press shows, then *Members* comes back with Farid's row gone. The toast reads
+   *Withdrew the invitation to farid@example.com · Undo*. **8. Connected.** Yes: his row leaves, and after
+   *Undo* it comes back and the toast says *Undone*. **9. Steady.** The back motion shows *Members* and
+   *Member* side by side for a frame, which is the slide. Nothing jumps. **10. Motion.** Right.
+
+Verdict: **fine**.
+
+### G7. `members…/7`: `…/7.png`
+
+Back on *Members*, *Undo*, then *Hui Min*.
+
+7. **Answered.** Yes. **8. Connected.** *Hui Min*'s page slides in from the right (frames 19–21), as
+   §8 says. **9. Steady.** Yes. **10. Motion.** Right.
+
+Verdict: **fine**.
+
+### G8. `members…/8`: `…/8.png`
+
+The tap is *Remove* on Hui Min's page.
+
+7. **Answered.** *Remove* darkens, and the scrim follows at about 300 ms. **8. Connected.** The *Remove
+   Hui Min?* sheet rises from the bottom. **9. Steady.** No. **The *Undone* toast from the earlier step
+   stays on top of the rising sheet**, across its first lines. **10. Motion.** The rise is right. The
+   layering isn't.
+
+Verdict: **look again**. Fix first: dismiss the toast, or put it behind the scrim, when a sheet opens.
+This is run 2's F6 fix, still not made.
+
+### G9. `members…/9`: `…/9.png`
+
+The *Remove Hui Min?* sheet settles: *They can't sign in any more and their data is deleted. This can't
+be undone. Send them a copy of their data first?* Then *Export their data first*, *Remove* and *Keep
+them*.
+
+7. **Answered.** Yes. **8. Connected.** Yes. **9. Steady.** No. From frame 15 to the end, **the *Undone*
+   toast sits across the sheet exactly where *Export their data first* is**. Only the top edge of that
+   button shows above the toast, and *Remove*'s top half is covered too. **10. Motion.** It's the same
+   layering fault as G8, but here it hides a choice.
+
+Verdict: **wrong**. The dialog asks whether to keep a copy before an irreversible delete, and the button
+that keeps the copy is hidden under a toast, while *Remove* stays visible. A person could remove Hui Min
+without ever seeing the export option. Fix first: no toast over a sheet. This dialog in particular must
+never have anything over its buttons.
+
+### G10. `members…/10`: `…/10.png`
+
+The same sheet, held for the whole second.
+
+7–9. In all 21 frames the *Undone* toast covers *Export their data first* and the top of *Remove*. A toast
+lasts 6 s (§7), so a person sees this for up to six seconds, which is how long the decision takes.
+10. There's no motion. It's static and wrong.
+
+Verdict: **wrong**. The fix is the same as G9's.
+
+### G11. `members…/11`: `…/11.png`
+
+The tap is *Export their data first*, judging by the result.
+
+7. **Answered.** Yes. The sheet starts to fall within about 150 ms.
+8. **Connected.** The sheet falls and *Members* slides back in, now *1 of 20* with Hui Min gone. The toast
+   *Removed Hui Min. Their data export goes to huimin@example.com.* arrives at about 500 ms.
+9. **Steady.** Mostly. As the sheet falls, the page behind it, which was scrolled down to the allowances,
+   jumps to its top (*HM · Hui Min · Active* and her switches) for a few frames before it slides away.
+10. **Motion.** A fall, then back, which is right. Apart from that jump, it's clean.
+
+**Trust.** The button said *Export their data first*, which reads as a step before deciding. It removed
+her at once. The toast says what happened, but a person who wanted a copy before thinking it over would
+be surprised.
+
+Verdict: **look again**. Fix first: name the buttons for what they do, such as *Send a copy, then remove*
+and *Remove without a copy*. Keep the page behind still while the sheet falls.
+
+### G12. `export/1`: `metrics/film/export/1.png`
+
+7. **Answered.** The press on *Export everything* shows at about 100 ms, and the toast *Export isn't ready
+   yet. Nothing was exported.* slides in from about 200 ms. **8. Connected.** Yes. **9. Steady.** Yes. Later
+   in the strip the test opens the preview-only dev panel, and the toast rides over it (see G13).
+   **10. Motion.** The toast slides, which is right.
+
+Verdict: **fine**.
+
+### G13. `export/2`: `metrics/film/export/2.png`
+
+7. **Answered.** The press shows within about 100 ms and a fresh toast slides in. **8. Connected.** Yes.
+   **9. Steady.** The dev panel's sheet rises *under* the toast, which sits over its rows for the rest of
+   the second. This is unchanged from run 2's F6. **10. Motion.** Each part is right, but the layering is
+   wrong.
+
+Verdict: **look again**. Fix first: no toast over a sheet (as G8–G10).
+
+### G14. `export/3`: `metrics/film/export/3.png`
+
+The dev panel to *Native stand-ins* (preview-only). The old sheet falls, the screen stands bare for about
+half a second, then the new sheet rises, with the toast over it again. This is unchanged from run 2's F7.
+
+Verdict: **fine**. It's preview-only, and the toast is counted under G13.
+
+### G15. `export/4`: `metrics/film/export/4.png`
+
+The *Your export is ready* stand-in. The row's press shows at about 150 ms, and the toast changes in place
+to *Simulated: the download opens*. Nothing else moves.
+
+Verdict: **fine**.
+
+### G16. `offline/1`: `metrics/film/offline/1.png`
+
+Offline, the *Review* tab from Home.
+
+7. **Answered.** Frames 1–7 (0–300 ms) are unchanged.
+8. **Connected.** At 350 ms there's a see-through frame, with Home's figure faded under skeleton bars.
+   From 400 to 850 ms a generic skeleton shows with no app bar and no title.
+9. **Steady.** *← Review* with its questions arrives at about 900 ms. That's better than run 2, where it
+   hadn't arrived within the second.
+10. **Motion.** The crossfade still passes through a see-through frame, and the skeleton isn't Review's
+    shape.
+
+Verdict: **look again**. Fix first: keep the app bar and Review's own skeleton from the first frame, with
+no see-through frame. Review's questions are local, so they could show at once.
+
+### G17. `offline/2`: `metrics/film/offline/2.png`
+
+The tap is *Meals* on *RM9.50 · Roti Bakar 88*.
+
+7. **Answered.** The chip's press shows at about 150 ms. That's better than run 2's 400.
+8. **Connected.** *Needs you · 12* becomes *11* at about 750 ms. Then the row slides out and the cards
+   below close up, from 800 to 900 ms. That's better than run 2, where the clear came after the second.
+9. **Steady.** For a frame or two, the leaving row's faded copy overlaps the *Splits* header and the next
+   card. It settles by about 950 ms.
+10. **Motion.** It's the right motion, but it starts about 700 ms after the answer, not within about
+    200 ms. In G18's first frame the toast still reads ***ROTI BAKAR 88* is Meals from now on · Undo** in
+    capitals, where §2 says *Roti Bakar 88*.
+
+Verdict: **look again**. Fix first: the payee in title case in the toast. Then clear the row sooner.
+
+### G18. `offline/3`: `metrics/film/offline/3.png`
+
+Offline, Sen's button.
+
+7. **Answered.** Frames 1–6 (0–250 ms) are unchanged, and the scrim comes at about 300 ms.
+8. **Connected.** The sheet rises from the bottom, which is right. From about 850 ms it shows the cached
+   chat, and the composer says *Sen is not answering right now*. That's better than run 2's endless
+   skeleton.
+9. **Steady.** No. **The *ROTI BAKAR 88 is Meals…* toast floats over Sen's sheet** all through the second,
+   over the chat's lower half.
+10. **Motion.** The rise is right. The toast over it isn't.
+
+**Trust.** Offline, *Sen is not answering right now* doesn't say why. It sounds as if Sen is broken.
+§7 asks for *Sen needs a connection*.
+
+Verdict: **look again**. Fix first: no toast over the sheet. Offline, say *Sen needs a connection*.
+
+### G19. `ask/3` (run 2's flag, not flagged now): `metrics/film/ask/3.png`
+
+The *Insights* tab, from Home.
+
+7. **Answered.** Frames 1–6 (0–250 ms) are unchanged, and the tab's press shows at 300 ms.
+8. **Connected.** At 350 ms there's a see-through frame of Home under grey bars. Then a generic skeleton
+   with no app bar from 400 to 500 ms, then *← Insights* over a card skeleton from 550 ms to the end.
+   The content arrives about 350 ms into G20, so about 1.35 s after the tap.
+9. **Steady.** No. One skeleton is swapped for another of a different shape.
+10. **Motion.** It isn't a clean crossfade.
+
+To my eyes this is the same as run 2's F2. The report no longer flags it against `main`, so I count it as
+standing rather than B06's.
+
+Verdict: **look again** (standing). Fix first: Insights' own skeleton with its app bar from the first
+frame, and no see-through frame.
+
+### G20. `ask/4` (dropped as noise): `metrics/film/ask/4.png`
+
+Sen's button on Insights.
+
+7. **Answered.** Late. The Insights skeleton holds until about 300 ms, its content pops in at 350 ms, and
+   only at about 450 ms do the scrim and sheet start.
+8. **Connected.** The sheet rises from the bottom, which is right.
+9. **Steady.** No. Insights' content flashes in just before the scrim covers it. Then the sheet fills
+   with a skeleton, then the chat, which jumps once as it scrolls to the latest message (frames 13–15).
+10. **Motion.** The rise is right, but it starts late, and the chat shouldn't jump.
+
+Verdict: **look again** (standing). Fix first: open the sheet within one frame of the tap, scrolled to
+the latest message.
+
+### G21. `refund/2` (run 2's flag, not flagged now): `metrics/film/refund/2.png`
+
+Picking in *A refund of which payment?*.
+
+7. **Answered.** Frames 1–6 (0–250 ms) show no press. 8. **Connected.** At 300 ms the sheet's list
+   **swaps to other payments** (*Sate Kajang Hj Samuri RM64.13*, *Grabfood*, *Nando's*). It shrinks, then
+   falls. **9. Steady.** No. At 1 s, *+RM100.00 from Tan Ah Kow* is still in Review with its chips.
+   **10. Motion.** The sheet's content changes while it falls.
+
+This is unchanged from run 2's F1.
+
+Verdict: **look again**. Fix first: freeze the sheet's list while it closes, and clear the answered row
+as it goes.
+
+### G22. `proposal/4` (dropped as noise): `metrics/film/proposal/4.png`
+
+The tap is *Dismiss* on the *ZUS COFFEE, CHASEE → Drinks & desserts* suggestion, in Sen's sheet.
+
+7. **Answered.** Late. No press shows on *Dismiss*, and *Dismissed* replaces the two buttons only at
+   about 800 ms.
+8. **Connected.** Yes, it changes in place.
+9. **Steady.** No. Between frames 1 and 2 the chat jumps by most of a screen. When *Dismissed* lands, the
+   card shrinks and everything under it moves up. The *Undone* toast sits over the chat's suggestion
+   chips above the composer the whole time.
+10. **Motion.** §8's sheet that eases to its new height isn't visible here. It's a jump.
+
+Verdict: **look again** (standing). Fix first: a press within one frame. And again, no toast over Sen's
+sheet.
+
+---
+
+## Run 3 verdicts, worst first
+
+| # | Entry or step | Screenshots or film | Verdict | Fix first |
+|---|---|---|---|---|
+| G9 | `members…/9`, *Remove Hui Min?* settles | `metrics/film/members…/9.png` | wrong | The *Undone* toast covers *Export their data first* on an irreversible delete; no toast over a sheet |
+| G10 | `members…/10`, the same sheet held | `metrics/film/members…/10.png` | wrong | The same: the export choice is hidden for the whole second (and the toast's 6 s) |
+| R3-4 | Storage past half | `FLOW-R3-4-step-2-half`, `FLOW-R3-4b-step-2-half` | look again | An amber warning with no words, no reason and nothing to do |
+| R3-7 | Schedule a test job | `FLOW-R3-1-step-1-scheduled` | look again | No longer misleading (run 1's *wrong* is fixed), but the row never shows that it ran |
+| R3-1 | Settings → Data, catalogue | `settings_data`, all 12 head pairs, base minted-light and line-light | look again | Each *Checks* row needs a line; the pill is faint in Instrument, Mercury and Copper dark |
+| R3-5 | Data, a member | `FLOW-R3-4c-step-1-member` | look again | Tell a member their data is backed up |
+| R3-8 | Live-updates stamp, offline | `FLOW-R3-3-step-1-offline-stamp` | look again | The reflow is fixed, but the raised pill looks tappable; draw it flat and muted |
+| G11 | `members…/11`, *Export their data first* | `metrics/film/members…/11.png` | look again | The button removes at once; name it *Send a copy, then remove*. The page behind jumps to its top |
+| G1 | `members…/1`, *+ Invite* (flagged) | `metrics/film/members…/1.png` | look again | ~250 ms with nothing before the press and the sheet |
+| G8 | `members…/8`, *Remove* | `metrics/film/members…/8.png` | look again | A toast rides over the rising sheet |
+| G18 | `offline/3`, Sen's button offline | `metrics/film/offline/3.png` | look again | A toast over Sen's sheet; *Sen is not answering right now* should be *Sen needs a connection* |
+| G13 | `export/2` | `metrics/film/export/2.png` | look again | A toast over a sheet (unchanged from run 2) |
+| G5 | `members…/5`, open Farid | `metrics/film/members…/5.png` | look again | A see-through frame and a skeleton with no app bar, not a slide from the right |
+| G16 | `offline/1`, Review tab | `metrics/film/offline/1.png` | look again | A see-through frame and a skeleton with no app bar; Review now arrives at ~900 ms |
+| G17 | `offline/2`, *Meals* | `metrics/film/offline/2.png` | look again | The toast still says *ROTI BAKAR 88*; the row clears ~700 ms after the answer (better than run 2) |
+| G21 | `refund/2` | `metrics/film/refund/2.png` | look again | The list swaps as the sheet closes; the answered row is still there at 1 s (unchanged) |
+| G19 | `ask/3`, Insights tab (standing now) | `metrics/film/ask/3.png` | look again | A see-through frame and two skeletons; content at ~1.35 s |
+| G2 | `members…/2`, send the invitation | `metrics/film/members…/2.png` | look again | The falling sheet's header shows twice |
+| G3 | `members…/3` | `metrics/film/members…/3.png` | look again | The same as G2, and the sheet falls under the toast |
+| G4 | `members…/4` | `metrics/film/members…/4.png` | look again | The same as G3 |
+| G20 | `ask/4`, Sen on Insights (noise) | `metrics/film/ask/4.png` | look again | ~450 ms before the sheet starts; the chat jumps as it fills |
+| G22 | `proposal/4`, *Dismiss* (noise) | `metrics/film/proposal/4.png` | look again | ~800 ms with no press; the chat jumps; a toast over the sheet |
+| R3-2 | Settings → Claims | `settings_claims`, firefly, mercury and copper pairs, two diffs, base firefly-light | fine | No visible change (tab-label anti-aliasing) |
+| R3-3 | Data with real numbers | `FLOW-R3-4-step-1-facts` | fine | Confirm a missed nightly backup would be said |
+| R3-6 | Fourth test push | `FLOW-R3-5-step-1-fourth` | fine | — |
+| G6 | `members…/6`, revoke and undo | `metrics/film/members…/6.png` | fine | — |
+| G7 | `members…/7`, open Hui Min | `metrics/film/members…/7.png` | fine | — |
+| G12 | `export/1` | `metrics/film/export/1.png` | fine | — |
+| G14 | `export/3` (preview-only) | `metrics/film/export/3.png` | fine | — |
+| G15 | `export/4` (preview-only) | `metrics/film/export/4.png` | fine | — |
+
+**Count:** wrong 2 · look again 20 · fine 8. Of these, 8 are entries (5 look again, 3 fine) and 22 are
+filmstrip steps (2 wrong, 15 look again, 5 fine).
+
+**What got better since run 2:**
+- *Schedule a test job* no longer promises a push (run 1's *wrong*).
+- The stamp no longer reflows, and it no longer shows over an empty skeleton (run 1's *wrong* and *look
+  again*).
+- `offline/2` clears its row within the second, and `offline/1` reaches Review within it.
+
+**What didn't change:**
+- The *Checks* rows and the faint pill.
+- Toasts drawn over sheets. That is now the worst problem on the branch, because in the remove dialog it
+  hides the export choice.
+- The capitalised payee in the toast.
+- `refund/2`'s list swap.
+- The see-through tab crossfade.

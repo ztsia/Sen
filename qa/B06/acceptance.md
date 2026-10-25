@@ -467,3 +467,162 @@ R2-AC-57  Settings > Data follows patterns.md: a skeleton while loading, an erro
           do, no screen-specific row or card
           From run 1 AC-50; CLAUDE.md "one set of UI patterns"
 ```
+
+## Run 3 (25 Oct 2026, full run at db4e5b9, reviewer on Opus)
+
+Written from `spec_v2.md` §5, §5.1, §15–§18, D85, D99, D100, D122, D126, D141, D142, the brief,
+`screens.md` (Settings → Data) and `patterns.md` §7, **before reading the implementation**. **Bias
+declared:** I had read the headings (only) of runs 1–2's sections and `docs/handoff.md`, which names
+the definer functions (`jobs_people`, `jobs_next_once`, `jobs_health`, `record_backup`,
+`push_token_claim`). Runs 1–2's criteria are read after this section; what they had that this lacks
+is added at the end, marked.
+
+### Tables and definer functions (§15, §17, done-when 6)
+
+```
+R3-AC-1   RLS on every new table
+          Given  scheduled_jobs, job_runs, alerts_sent, push_tokens
+          When   pg_class and pg_policies are read
+          Then   relrowsecurity and relforcerowsecurity true on all four; every policy keyed on user_id
+          Spec   §15 ("job_runs included"); CLAUDE.md non-negotiable
+R3-AC-2   (sad) Person B can't read or write A's job rows
+          Given  A has one row in each table
+          When   app_user as B selects, updates, deletes, and inserts a row with user_id = A
+          Then   0 rows read, 0 changed, 0 deleted; the insert refused by WITH CHECK (42501)
+R3-AC-3   (sad) No user id set
+          When   app_user selects each table with app.user_id unset or ''
+          Then   0 rows each
+R3-AC-4   Uniques hold
+          When   the same (user_id, dedupe_key | alert_key | fcm_token) is inserted twice for one person
+          Then   23505 on the second; one row. Sad twin R3-AC-5: the same key for two people is two rows
+          Spec   §15
+R3-AC-6   The jobs' people function lists ids only, no money
+          When   its result columns are read, and it is called for a frame
+          Then   no amount, balance or sen column; only people the job is for
+          Spec   done-when 6; §5 "one narrow function per job"
+R3-AC-7   (sad) app_user can't use a definer function beyond its purpose
+          When   app_user as B calls each definer function
+          Then   EXECUTE refused, or nothing of A's beyond what its one purpose names
+R3-AC-8   Every SECURITY DEFINER function pins search_path
+R3-AC-9   scheduled_jobs.status takes only due|running|done|failed (23514 otherwise)
+```
+
+### /jobs/tick (§16, D99, D141, done-when 1)
+
+```
+R3-AC-10  Morning frame, due, right secret → the morning job runs once per listed person: one job_runs
+          row each, status ok
+R3-AC-11  (sad) No secret / wrong secret → 401 { code, message }; nothing runs; job_runs unchanged
+R3-AC-12  The same tick twice on one KL date → job_runs for the morning job doesn't grow
+R3-AC-13  (twin) The next KL date → one more row per person
+R3-AC-14  Frame boundaries in KL time: 06:59 KL nothing; 07:00 runs; a tick at 06:30 KL (22:30 UTC the
+          day before) doesn't run it; the job's date is the KL date, not UTC's
+R3-AC-15  Evening frame at 21:00 KL, once per person per KL date; (sad) 20:59 nothing
+R3-AC-16  A one-off job a minute ahead: a tick before run_at doesn't run it; after, it runs once;
+          status done, attempts 1
+R3-AC-17  Two overlapping ticks → the one-off job runs exactly once (one job_runs row)
+R3-AC-18  (sad) A one-off job that throws → attempts + 1, retried later; failed after the cap;
+          job_runs.error holds the message; the tick's response carries no stack
+R3-AC-19  Jobs run as the person, under RLS: a job for A sees none of B's rows
+R3-AC-20  The alerts helper sends a key once; a second run sends nothing (alerts_sent one row)
+R3-AC-21  Backup watchdog: no successful backup for > 2 days → one push, once (alerts_sent);
+          (twin) a backup within 2 days → no push
+R3-AC-22  R2 at half (≥ 5,000,000,000 bytes held) → one health warning a month; (twin) under half, none
+```
+
+### /health/jobs (§16, §18, D99, D141)
+
+```
+R3-AC-23  Healthy (morning run < 26 h, a successful backup < 2 days) → 2xx; body carries no data
+          (no user ids, counts, sizes)
+R3-AC-24  (sad) Morning run > 26 h old → non-2xx
+R3-AC-25  (sad) Last successful backup > 2 days → non-2xx
+R3-AC-26  (sad) No morning run or no backup ever → non-2xx (fails closed)
+R3-AC-27  (sad) A failed backup doesn't count as the last success
+```
+
+### The Worker (D99, D100, D141)
+
+```
+R3-AC-28  The scheduler ticks only when due (next frame, a 5-min retry in a window,
+          jobs_next_once()); (sad) not every minute otherwise
+R3-AC-29  POST /schedule wakes it sooner; (sad) without the secret, refused
+R3-AC-30  GET /health fails when the cron hasn't run for 5 min or ticks failed for 15; no DB call
+R3-AC-31  The relay: a pass opens only its own user:<id>; (sad) expired (> 5 min), forged or another
+          channel's pass refused
+R3-AC-32  The relay carries {seq, topics} only; (sad) a client can't publish to a channel
+R3-AC-33  The Worker deploys with no secret in ztsia/Sen's Actions (D122, brief)
+```
+
+### /realtime/token (§16, D100)
+
+```
+R3-AC-34  Signed in → a signed pass for user:<own id>, 5 minutes
+R3-AC-35  (sad) Signed out → 401 and no pass; a request can't name another person's channel
+```
+
+### Hints and the web app (D100, patterns §7, §18, done-when 2)
+
+```
+R3-AC-36  After a change through the API, a hint {seq, topics} goes to the person's channel; topic
+          names in one place
+R3-AC-37  An open screen receiving a hint reloads those topics' queries, with no page reload
+R3-AC-38  Relay down → a reload every 30 s only while down, and "Updated N min ago" in muted;
+          (twin) relay up → no 30 s polling, no stamp
+R3-AC-39  Reload on return to the app and on reconnect
+R3-AC-40  (sad) A malformed or unknown-topic hint is ignored without error
+```
+
+### Push (§5.1, D142 (4)-(6))
+
+```
+R3-AC-41  Registering a token makes one push_tokens row; registering again changes nothing
+R3-AC-42  A token B registers that A held moves to B (A's row gone); (sad) A can't see B's tokens
+R3-AC-43  A person keeps their newest ten; an eleventh drops the oldest; one re-registered counts new
+R3-AC-44  Sign-out of the last session, or everywhere, deletes the person's tokens
+R3-AC-45  Test push: admin only, 3 a minute; (sad) non-admin 403; the 4th in a minute 429
+R3-AC-46  Schedule a test job: admin only, 3 a minute; (sad) non-admin 403
+R3-AC-47  The built web app holds no Firebase SDK (D142 (6))
+```
+
+### Backups and Settings → Data (§17, D85, D126, D142 (2)-(3))
+
+```
+R3-AC-48  record_backup() records a job_runs row with its size; owner role only; (sad) app_user refused
+R3-AC-49  Settings → Data shows the last successful backup to the admin; (sad) not to a non-admin
+R3-AC-50  Storage used against 10 GB from Sen's counts: dumps held = the last 30 days of successful
+          backups' sizes, integer bytes, 10⁹-byte GB
+R3-AC-51  No dump committed; .gitignore covers dumps
+```
+
+### Security and non-negotiables
+
+```
+R3-AC-52  No float in money or byte paths in the diff
+R3-AC-53  No secret in the built web app (scheduler secret, relay key, service account)
+R3-AC-54  The admin's Settings → Data shows no one's money
+R3-AC-55  pnpm security passes on the whole repo (done-when 7)
+R3-AC-56  Every new route is in routes.table.ts and passes the route sweep
+R3-AC-57  Errors are { code, message, field? }; no stack, no 500 on bad input
+R3-AC-58  The CSP adds only the relay's origins (no wildcard)
+```
+
+### Taken from runs 1–2's criteria after this section was written
+
+```
+R3-AC-59  (sad) /health/jobs can't be made green by rows a member can write (job_runs inserted
+          by a member as user A under RLS don't count)
+          From R2-AC-43, run 1 finding 3
+R3-AC-60  The tick answers when it next needs waking (D141), and that time skips suspended people
+          From R2-AC-19, run 2 finding 2
+R3-AC-61  (sad) After A's change, B's channel gets no hint
+          From R2-AC-28
+R3-AC-62  (sad) A stale or repeated hint (a seq already seen): no error, at most a harmless refetch
+          From R2-AC-56
+R3-AC-63  Settings → Data follows patterns.md (skeleton while loading, a plain error with what to
+          do, no screen-specific row or card)
+          From R2-AC-57
+R3-AC-64  A sign-out that ends the last session deletes the person's tokens on the server; another
+          session left, the app's DELETE forgets that phone
+          From run 2 finding 8, D142 (5)
+```
