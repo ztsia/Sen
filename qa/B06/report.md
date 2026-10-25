@@ -1,5 +1,7 @@
 # QA B06 · Jobs, realtime, push and backups, run 2
 
+**Published report:** https://claude.ai/artifact/4TcXmtm89wh94V3KGYYt6d (version 2, this run; private to the owner)
+
 ```
 VERDICT   fix first
           57 criteria, 55 pass, 2 fail, 0 not reachable
