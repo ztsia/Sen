@@ -161,8 +161,14 @@ describe('the relay going down', () => {
     expect(status()).toBe('live');
     expect(s.invalidate.mock.calls.at(-1)).toEqual([]);
     s.invalidate.mockClear();
-    // (a silent fake would fail its first ping, so look within the ping interval)
-    await vi.advanceTimersByTimeAsync(PING_MS - 1);
+    // past two of the old interval's beats, answering each ping, so polling left running would show
+    // (QA B06 run 1, finding 4)
+    for (let waited = 0; waited < 2 * POLL_MS; waited += PING_MS) {
+      await vi.advanceTimersByTimeAsync(PING_MS);
+      s.sockets[1]!.say('pong');
+      await flush();
+      expect(status()).toBe('live');
+    }
     expect(s.invalidate).not.toHaveBeenCalled();
   });
 

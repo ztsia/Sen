@@ -22,8 +22,11 @@ export async function sendTestPush(): Promise<string> {
 export async function scheduleTestJob(): Promise<string> {
   if (__SEN_BACKEND__ !== 'api') return NOT_HERE;
   try {
-    const { runAt } = await apiCall<{ runAt: string }>('/jobs/test', { body: {} });
-    return `Test job set for ${timeLabel(new Date(runAt))}. Its push arrives then.`;
+    const { runAt, push } = await apiCall<{ runAt: string; push: boolean }>('/jobs/test', { body: {} });
+    const at = timeLabel(new Date(runAt));
+    return push
+      ? `Test job set for ${at}. When it runs, each phone registered for push gets one.`
+      : `Test job set for ${at}. Push isn’t set up here, so it only runs.`;
   } catch (e) {
     return e instanceof ApiFailure ? e.message : 'The test job didn’t go. Try again.';
   }

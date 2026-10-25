@@ -154,7 +154,15 @@ export function createApp(deps: Deps) {
     return c.json({ success: true });
   });
   api.on(['GET', 'POST'], '/auth/*', async (c) => {
+    // Sign out everywhere ends every phone's pushes too, the lost one included (D142 (5)): read who
+    // it is before the sessions go
+    const everywhere = c.req.method === 'POST' && c.req.path.endsWith('/auth/revoke-sessions');
+    const who = everywhere ? await auth.api.getSession({ headers: c.req.raw.headers }) : null;
     const res = await auth.handler(c.req.raw);
+    if (who && res.ok)
+      await asPerson(deps.app, who.user.id, (db) =>
+        db.delete(schema.pushTokens).where(eq(schema.pushTokens.userId, who.user.id)),
+      );
     // an unknown path under /auth: the error shape, as everywhere else (QA B05 run 2, 25)
     if (res.status === 404 && !res.headers.get('content-length') && !(await res.clone().text()))
       return c.json({ code: 'not_found', message: 'No such route.' }, 404);

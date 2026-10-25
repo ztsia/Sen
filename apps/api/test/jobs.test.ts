@@ -267,16 +267,17 @@ describe('one-off jobs', () => {
 
   it('schedules the test job a minute ahead, once per minute, and wakes the Worker', async () => {
     const [a, b] = [
-      await call('/api/jobs/test', { body: {}, cookie: cookies.member }),
-      await call('/api/jobs/test', { body: {}, cookie: cookies.member }),
+      await call('/api/jobs/test', { body: {}, cookie: cookies.admin }),
+      await call('/api/jobs/test', { body: {}, cookie: cookies.admin }),
     ];
     expect(a.status).toBe(200);
+    expect(a.body!.push).toBe(true);
     const runAt = new Date(a.body!.runAt as string);
     expect(runAt.getTime() - Date.now()).toBeGreaterThan(55_000);
     expect(runAt.getTime() - Date.now()).toBeLessThanOrEqual(120_000);
     const rows = await owner.query(
       "select 1 from scheduled_jobs where user_id = $1 and kind = 'test' and status = 'due'",
-      [member.id],
+      [admin.id],
     );
     expect(rows.rowCount).toBe(b.body!.runAt === a.body!.runAt ? 1 : 2);
     expect(wakes.map((w) => w.toISOString())).toContain(runAt.toISOString());
@@ -285,6 +286,16 @@ describe('one-off jobs', () => {
 });
 
 describe('health', () => {
+  // a member's own rows can't hide a dead backup or morning from the monitor (QA B06 run 1, finding 3)
+  it('counts only the admin’s runs', async () => {
+    await owner.query('delete from job_runs');
+    await owner.query(
+      "insert into job_runs (user_id, job, run_key, status) values ($1, 'morning', 'fake-m', 'ok'), ($1, 'backup', 'fake-b', 'ok')",
+      [member.id],
+    );
+    expect((await call('/api/health/jobs')).body).toMatchObject({ late: ['morning', 'backup'] });
+  });
+
   it('fails while the morning job or the backup is late, with no data', async () => {
     await owner.query('delete from job_runs');
     const late = await call('/api/health/jobs');
@@ -341,13 +352,26 @@ describe('push and live updates', () => {
     );
   });
 
-  it('sends a test push to the person’s own phones, a few a minute at most', async () => {
-    const r = await call('/api/push/test', { body: {}, cookie: cookies.member });
+  it('sends a test push to the admin’s own phones, a few a minute at most', async () => {
+    const r = await call('/api/push/test', { body: {}, cookie: cookies.admin });
     expect(r).toEqual({ status: 200, body: { sent: 1 } });
-    expect(pushed.map((p) => p.userId)).toEqual([member.id]);
+    expect(pushed.map((p) => p.userId)).toEqual([admin.id]);
     for (let i = 0; i < LIMITS.testsPerPerson.max; i++)
-      await call('/api/push/test', { body: {}, cookie: cookies.member });
-    expect((await call('/api/push/test', { body: {}, cookie: cookies.member })).status).toBe(429);
+      await call('/api/push/test', { body: {}, cookie: cookies.admin });
+    expect((await call('/api/push/test', { body: {}, cookie: cookies.admin })).status).toBe(429);
+  });
+
+  // D142 (4): the checks are the admin's (QA B06 run 1, finding 2)
+  it('refuses the test push and the test job to a member', async () => {
+    const before = await owner.query("select 1 from scheduled_jobs where user_id = $1 and kind = 'test'", [member.id]);
+    for (const path of ['/api/push/test', '/api/jobs/test'])
+      expect(await call(path, { body: {}, cookie: cookies.member })).toEqual({
+        status: 403,
+        body: { code: 'forbidden', message: 'Only the admin can do that.' },
+      });
+    expect(pushed).toEqual([]);
+    const after = await owner.query("select 1 from scheduled_jobs where user_id = $1 and kind = 'test'", [member.id]);
+    expect(after.rowCount).toBe(before.rowCount);
   });
 
   it('gives a pass to the person’s own channel only', async () => {
@@ -362,6 +386,24 @@ describe('push and live updates', () => {
       cookie: cookies.member,
     });
     expect(hints).toEqual([{ userId: member.id, topics: ['settings'] }]);
+  });
+
+  // D142 (5): a lost phone stops getting the person's pushes (QA B06 run 1, finding 1)
+  it('forgets every phone’s token when the person signs out everywhere', async () => {
+    const phones = [`fcm-lost-${randomUUID()}`, `fcm-kept-${randomUUID()}`];
+    for (const token of phones)
+      await call('/api/push/token', { method: 'PUT', body: { token }, cookie: cookies.member });
+    const admins = `fcm-admin-${randomUUID()}`;
+    await call('/api/push/token', { method: 'PUT', body: { token: admins }, cookie: cookies.admin });
+    const count = async (id: string) =>
+      (await owner.query('select 1 from push_tokens where user_id = $1', [id])).rowCount;
+    const adminTokens = await count(admin.id);
+    expect(await count(member.id)).toBeGreaterThanOrEqual(2);
+    expect((await call('/api/auth/revoke-sessions', { body: {}, cookie: cookies.member })).status).toBe(200);
+    expect(await count(member.id)).toBe(0);
+    expect(await count(admin.id)).toBe(adminTokens);
+    await owner.query('delete from push_tokens where fcm_token = $1', [admins]);
+    cookies.member = await signIn(member.email);
   });
 });
 

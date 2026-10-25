@@ -5,7 +5,7 @@ import type pg from 'pg';
 import { z } from 'zod';
 import { schema } from '@sen/db';
 import type { Env } from '../context';
-import { ApiError, parse, readJson } from '../errors';
+import { ApiError, forbidden, parse, readJson } from '../errors';
 import { LIMITS, tooMany, withinLimit } from '../limits';
 import { BACKUP_LATE_MS } from './frames';
 import { runTick, type TickDeps } from './tick';
@@ -58,8 +58,8 @@ const withinTests = (pool: pg.Pool, what: string, person: string) =>
   withinLimit(pool, `${what}:${person}`, LIMITS.testsPerPerson.max, LIMITS.testsPerPerson.windowMs);
 
 /**
- * A signed-in person's B06 routes: their phone's push token, a test push, a pass to their realtime
- * channel, and a test job a minute ahead (the dev panel, and the hidden test menu in production).
+ * A signed-in person's B06 routes: their phone's push token and a pass to their realtime channel; and
+ * the admin's checks, a test push and a test job a minute ahead (Settings → Data, D142 (4)).
  */
 export function personJobRoutes(pool: { auth: pg.Pool }) {
   const r = new Hono<Env>();
@@ -81,6 +81,7 @@ export function personJobRoutes(pool: { auth: pg.Pool }) {
   r.post('/push/test', async (c) => {
     parse(Nothing, await readJson(c));
     const { person, svc } = c.var;
+    if (!c.var.access.isAdmin) throw forbidden();
     if (!(await withinTests(pool.auth, 'push-test', person.id)))
       throw tooMany('That’s a few tests already. Wait a minute.');
     if (!svc.push.on) throw new ApiError(503, 'not_configured', 'Push isn’t set up here.');
@@ -101,6 +102,7 @@ export function personJobRoutes(pool: { auth: pg.Pool }) {
   r.post('/jobs/test', async (c) => {
     parse(Nothing, await readJson(c));
     const { person, svc } = c.var;
+    if (!c.var.access.isAdmin) throw forbidden();
     if (!(await withinTests(pool.auth, 'job-test', person.id)))
       throw tooMany('That’s a few tests already. Wait a minute.');
     // a minute ahead, to the minute: tapping twice in that minute schedules one job
@@ -113,7 +115,8 @@ export function personJobRoutes(pool: { auth: pg.Pool }) {
         .onConflictDoNothing(),
     );
     await svc.relay.wake(runAt);
-    return c.json({ runAt: runAt.toISOString() });
+    // whether its push can go, so the screen promises only what will happen (QA B06 run 1, finding 7)
+    return c.json({ runAt: runAt.toISOString(), push: svc.push.on });
   });
 
   return r;

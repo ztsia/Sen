@@ -58,9 +58,9 @@ export const ROUTES: RouteSpec[] = [
   },
   { method: 'PUT', path: '/api/push/token', access: 'person', body: { token: 'sweep-fcm-token' } },
   { method: 'DELETE', path: '/api/push/token', access: 'person', body: { token: 'sweep-fcm-token' } },
-  { method: 'POST', path: '/api/push/test', access: 'person', body: {} },
+  { method: 'POST', path: '/api/push/test', access: 'admin', body: {} },
   { method: 'POST', path: '/api/realtime/token', access: 'person', body: {} },
-  { method: 'POST', path: '/api/jobs/test', access: 'person', body: {} },
+  { method: 'POST', path: '/api/jobs/test', access: 'admin', body: {} },
   { method: 'GET', path: '/api/admin/members', access: 'admin' },
 ];
 

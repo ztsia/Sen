@@ -18,13 +18,18 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // eslint-disable-next-line no-unsanitized/method -- a dev script importing a file from this repo (root-relative join), never external input
-const { MUTANTS, SUITES } = await import(join(root, 'qa/mutants.ts'));
+const { MUTANTS, SUITES } = await import(pathToFileURL(join(root, 'qa/mutants.ts')).href);
 
 const git = (args, cwd = root) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
+// Windows runs pnpm (a .cmd) only through its shell, which needs spaced arguments quoted, as
+// security.mjs does (QA B06 run 1, finding 5)
+const WIN = process.platform === 'win32';
+const winArgs = (args) => (WIN ? args.map((a) => (/[\s"]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)) : args);
+
 const argv = process.argv.slice(2);
 const arg = (name) => {
   const i = argv.indexOf(name);
@@ -60,6 +65,7 @@ if (existsSync(join(tree, '.git'))) {
 }
 console.log(`HEAD ${head.slice(0, 8)} in ${tree}`);
 const install = spawnSync('pnpm', ['install', '--frozen-lockfile', '--prefer-offline'], {
+  shell: WIN,
   cwd: tree,
   stdio: 'inherit',
 });
@@ -75,7 +81,7 @@ function run(suite, name) {
   const t0 = Date.now();
   const env = { ...process.env };
   delete env.CI;
-  const r = spawnSync(cmd, args, { cwd: tree, env, stdio: ['ignore', log, log] });
+  const r = spawnSync(cmd, winArgs(args), { cwd: tree, env, stdio: ['ignore', log, log], shell: WIN });
   closeSync(log);
   return { passed: r.status === 0, seconds: Math.round((Date.now() - t0) / 1000) };
 }

@@ -5,7 +5,8 @@ import { now as clockNow } from '@/lib/clock';
 
 /**
  * While the live connection is down, how long since the screen last updated, in muted (patterns.md §7,
- * D100). Shows only then: below the app bar of every screen, from the shared frame.
+ * D100). Shows only then, once the screen has loaded: a pill over the top of every screen's content,
+ * below its app bar, from the shared frame.
  */
 export function LiveStamp() {
   const forced = useLive((s) => s.forced);
@@ -19,11 +20,16 @@ export function LiveStamp() {
     const id = setInterval(() => tick((n) => n + 1), 30_000);
     return () => clearInterval(id);
   }, [shown]);
-  if (!shown) return null;
-  const at = forced ? forced.updatedAt : (real ?? new Date());
+  // before the first load there's no age to tell (QA B06 run 1, finding 6)
+  const at = forced ? forced.updatedAt : real;
+  if (!shown || !at) return null;
+  // floats over the content's top, so nothing moves under a finger as the relay drops and returns
+  // (QA B06 run 1, finding 8)
   return (
-    <div role="status" className="px-4 pt-1 pb-2">
-      <UpdatedAgo at={at} now={forced ? clockNow() : new Date()} />
+    <div role="status" className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center pt-1">
+      <div className="rounded-full bg-muted px-3 py-0.5 shadow-sm">
+        <UpdatedAgo at={at} now={forced ? clockNow() : new Date()} />
+      </div>
     </div>
   );
 }

@@ -46,6 +46,15 @@ describe('the stamp', () => {
     expect(screen.getByText('Updated 2 min ago')).toBeTruthy();
   });
 
+  // nothing has loaded, so there's no age to tell (QA B06 run 1, finding 6)
+  it('says nothing before the screen has loaded once', () => {
+    render(<LiveStamp />);
+    act(() => useLive.setState({ status: 'down', updatedAt: null }));
+    expect(screen.queryByText(/Updated/)).toBeNull();
+    act(() => useLive.setState({ updatedAt: new Date() }));
+    expect(screen.getByText('Updated just now')).toBeTruthy();
+  });
+
   it('shows when the dev panel forces it', () => {
     render(<LiveStamp />);
     act(() => useLive.setState({ forced: { updatedAt: new Date(Date.now() - 120_000) } }));
