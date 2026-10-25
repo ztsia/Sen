@@ -32,7 +32,7 @@ follow on a phone, and commit.
       5. **On your phone, once B06's release is out:** install the new Sen (push is a native change),
          open it, allow notifications when it asks, then *More → Settings → Data → Checks → Send a test
          push*. Then *Schedule a test job*: its push arrives at the minute it names.
-      6. **Confirm R2's numbers (D142):** 10 GB counted as 10,000,000,000 bytes, and a push at half.
+      6. ~~**Confirm R2's numbers (D142)**~~ Confirmed 25 Oct: 10 GB counted as 10,000,000,000 bytes, a push at half.
       7. **The whole-codebase security scan (done-when 8), at the laptop, before you merge.** A
          session can't start it (it needs Claude Code's Workflow tool). In `C:\Zhong Tai\Sen`, on
          the branch: `claude --agent claude-security:claude-security`, then ask *scan the codebase at
