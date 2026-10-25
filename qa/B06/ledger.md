@@ -69,3 +69,29 @@ stale on Windows (`test-job-for-members`, `health-counts-members`, `polling-afte
 `watchdog-pushes-members`, `kept-after-sign-out`, `motion-ignores-reduced`, `motion-home-tab-pops`,
 `ripple-flashes-on-scroll`), so finding 4's fix holds. Unit 412 pass, pgTAP 218, API 128 pass and 7
 skipped, typecheck and lint clean.
+
+## Run 3 → fixes (25 Oct)
+
+Sorted fix by fix. The batch is **tier 2**, from note 11's fix, which changes how the Worker's
+scheduler behaves (one area, no migration). The rest are tier 1: tests, a word, and a formatting rule.
+
+| Finding | Tier | Fix | Guard (red before the fix, or the break QA used) |
+|---|---|---|---|
+| 1 Major | 1 (test) | `jobs.test.ts` › *never counts a failed backup as the last one*: the newest backup failed and the last good one is 49 h before the morning tick. The monitor answers 503 `late: [backup]`, Settings → Data shows the good one, and the watchdog pushes the admin | `r3-health-counts-failed-backup`, `r3-last-backup-counts-failed` killed |
+| 2 Major | 1 (test) | `scheduler.test.ts` drives the Durable Object's `cron()` with a stand-in storage and tick (the Worker's stub base class now keeps `ctx` and `env`): one tick in 3 hours of crons, and a failed tick retried at 5 minutes, not each minute | `r3-scheduler-ticks-every-minute` killed |
+| 3 Major, not B06's | — | **Deferred.** The toast over the Members *Remove* sheet comes from shared toast and sheet layering B06 doesn't touch. `git diff main...HEAD` on `components/ui`, `blocks` and `members.tsx` shows two lint comments only. Named in the handoff as a follow-up for main | — |
+| 4 Minor | 1 (test) | `jobs.test.ts` (core) › *refuse a signature changed in any one byte*: the first, 16th and last bytes | `r3-pass-checks-one-byte` killed |
+| 5 Minor | 1 (test) | The hint test names `['settings']` for the `jobs` topic, instead of comparing with `TOPIC_QUERIES` itself | `r3-jobs-topic-reloads-nothing` killed |
+| 6 Minor | 1 (a word) | Past half, the row reads *5.70 GB of 10 GB, over half* (`storageWords`, moved to `data/checks.ts`) | `checks.test.ts` › *says when backups pass half of R2*: red `storageWords is not a function`; `storage-warning-no-words` killed. No screenshot: the fake has no over-half state, and a run's eyes see it in the preview |
+| 7 Minor | 1 (tooling) | `push-token-shared` (0008's replaced copy) removed; the reviewer's `r3-push-token-shared-0010` holds it. Every other migration check edits the function's last definition (listed). A note above `MUTANTS` says so | `r3-push-token-shared-0010` killed |
+| note 9 | 1 | `formatBytes` says GB from 999.5 MB | `checks.test.ts`: red `expected '1000 MB' to be '1.00 GB'` |
+| note 11 | **2** | A wake asked for while a tick runs is kept and applied when it ends, and the tick's save keeps the latest cron time | `scheduler.test.ts` › *keeps a wake that comes while a tick runs*: red (`next` was the API's 3 h, not the wake's 10 min); `scheduler-loses-wake-in-tick`, `scheduler-cron-steps-back` killed |
+
+All nine checks were killed at e025494. Unit 416 pass, pgTAP 218, API 129 pass and 7 skipped,
+typecheck and lint clean. The re-check for tier 2 is run 3's reviewer, resumed on the scheduler.
+
+**Left:** note 8 (a preview's moved clock can't say *Today* for a real backup; production's label
+reads the real clock); note 10 (`/health/jobs` is open by design, D141, so cron-job.org needs no
+secret; one query per call, every 3 hours); 12 (accepted, measured, not B06's); 13 (B05's
+`for-update-you`, as run 2); 14 (the eyes' look-agains, named for the slice that next touches
+Settings → Data).
