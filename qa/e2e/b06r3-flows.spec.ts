@@ -457,12 +457,10 @@ test('FLOW-R3-8: signing in opens the live connection without a reload; signing 
     'one socket to the relay’s /connect, open',
     async () => {
       const relay = sockets.filter((s) => s.url.includes('/connect'));
-      test
-        .info()
-        .annotations.push({
-          type: 'sockets',
-          description: JSON.stringify(sockets.map((s) => ({ ...s, url: s.url.replace(/pass=[^&]+/, 'pass=…') }))),
-        });
+      test.info().annotations.push({
+        type: 'sockets',
+        description: JSON.stringify(sockets.map((s) => ({ ...s, url: s.url.replace(/pass=[^&]+/, 'pass=…') }))),
+      });
       test.info().annotations.push({ type: 'navigations during sign-in', description: String(navsAfterSignIn) });
       expect(relay.length).toBe(1);
       expect(relay[0]!.closed).toBe(false);
