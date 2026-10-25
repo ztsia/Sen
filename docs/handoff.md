@@ -44,6 +44,10 @@ Critical and High.
 - The Insights tab's first frames take about 2.5 s on main too (run 2, finding 9).
 - A deliberate sign-out says *You were signed out* in error red (B05).
 - B05's `for-update-you` check survives although its test runs.
+- **CI flaked once** at 027fde3 and passed at the next commit:
+  - the `capture-off` journey's *Widgets* click (the button was replaced mid-click);
+  - axe's contrast check on *agent/usage, empty* and *payday, offline* in Minted dark (likely mid-fade).
+  If it recurs, make those tests wait for the screen to settle.
 - The eyes' look-agains on Settings → Data: what each Check does, the faint *Updated* pill in three
   dark looks.
 
