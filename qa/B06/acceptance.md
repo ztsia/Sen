@@ -626,3 +626,29 @@ R3-AC-64  A sign-out that ends the last session deletes the person's tokens on t
           session left, the app's DELETE forgets that phone
           From run 2 finding 8, D142 (5)
 ```
+
+## Run 3, scoped re-check (25 Oct 2026, db4e5b9..8579176)
+
+Area: the Worker's scheduler, from the cron each minute to the API's `/jobs/tick` and back, with the
+API's wakes (spec §16, D99, D141). Fixed in it: run 3's finding 2 and note 11. Criteria the fixes call
+for, written after reading the fix commit (`e025494`), so weaker evidence than run 3's own.
+
+```
+R3S-AC-1  Only when due
+          Given  the API answered next = 3 h ahead
+          When   the cron runs each minute for 3 h
+          Then   one tick at the start, the next at 3 h; none between       D141
+R3S-AC-2  (sad) A failed tick retries in 5 minutes, not each minute; failingSince is set, and the
+          Worker's /health says `tick` after 15 minutes of failures; a success clears it
+R3S-AC-3  A wake that comes while a tick runs survives the tick's save: next = the sooner of the wake
+          and the API's answer                                           note 11
+R3S-AC-4  (twin) Two wakes during one tick: the sooner wins, whatever their order
+R3S-AC-5  (sad) A wake later than the API's answer doesn't delay the tick
+R3S-AC-6  A cron during a tick: its lastCron survives the tick's save (never steps back), so /health
+          stays ok through a long tick                                     note 11
+R3S-AC-7  (sad) A cron during a tick never starts a second tick
+R3S-AC-8  (sad) A tick that throws or answers non-2xx after a wake still keeps the wake
+R3S-AC-9  The API's answer is clamped: at least a minute ahead, at most 16 h; no answer = retry in 5 min
+R3S-AC-10 (sad) POST /schedule without the scheduler secret, or with a time that isn't one: refused,
+          nothing changes
+```

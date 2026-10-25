@@ -511,6 +511,47 @@ export const MUTANTS: Mutant[] = [
     replace: ``,
     suite: 'web',
   },
+  // QA B06 run 3's scoped re-check: the scheduler (finding 2, note 11)
+  {
+    id: 'r3s-tick-overwrites-cron',
+    breaks: 'a long tick puts back the cron time it started with, so the Worker’s /health can read late',
+    file: 'apps/worker/src/scheduler.ts',
+    find: `const merged = { ...after, lastCron: Math.max(after.lastCron, latest.lastCron) };`,
+    replace: `const merged = after;`,
+    suite: 'unit',
+  },
+  {
+    id: 'r3s-tick-drops-wake',
+    breaks: 'a one-off job scheduled while a tick runs waits for the next frame (hours)',
+    file: 'apps/worker/src/scheduler.ts',
+    find: `await this.save(this.woke === null ? merged : wake(merged, this.woke));`,
+    replace: `await this.save(merged);`,
+    suite: 'unit',
+  },
+  {
+    id: 'r3s-later-wake-wins',
+    breaks: 'of two jobs scheduled during one tick, the later one sets the wake, and the sooner one runs late',
+    file: 'apps/worker/src/scheduler.ts',
+    find: `this.woke = Math.min(this.woke ?? at, at);`,
+    replace: `this.woke = at;`,
+    suite: 'unit',
+  },
+  {
+    id: 'r3s-second-tick-at-once',
+    breaks: 'a cron that comes while a tick runs starts a second tick',
+    file: 'apps/worker/src/scheduler.ts',
+    find: `if (!due(s, now) || this.ticking) return;`,
+    replace: `if (!due(s, now)) return;`,
+    suite: 'unit',
+  },
+  {
+    id: 'r3s-failure-not-remembered',
+    breaks: 'ticks refused by the API (a wrong secret) never make the Worker’s /health fail',
+    file: 'apps/worker/src/scheduler.ts',
+    find: "console.error(`tick: ${res.status}`);\n        return afterFailure(s, now);",
+    replace: "console.error(`tick: ${res.status}`);\n        return afterTick(s, now, undefined);",
+    suite: 'unit',
+  },
   // QA B06 run 3's probes
   {
     id: 'r3-scheduler-ticks-every-minute',

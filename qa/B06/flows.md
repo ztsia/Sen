@@ -172,3 +172,14 @@ FLOW-R3-C2  pay-new (core)     Entry dev panel: a new merchant's notification   
             picked, a rule made, the next payment there asks nothing
 FLOW-R3-C3  scan-after (core)  Entry Scan tab   Ends a receipt attached to its payment
 ```
+
+## Run 3, scoped re-check (db4e5b9..8579176): the scheduler
+
+```
+FLOW-R3S-1  The test job a minute ahead, through the real Worker                 (happy + sad)
+            Entry  Settings → Data → Schedule a test job (wrangler dev, local API, sen_qa)
+            Steps  1. schedule: the API wakes the Worker  2. crons before its minute: no tick
+                   3. two crons at once after it: one run  4. the Worker's /health
+            Ends   one ok job_runs row; scheduled_jobs done 1; /health 200
+            Covers R3S-AC-1, R3S-AC-3, R3S-AC-7   Spec D141
+```

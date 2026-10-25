@@ -1,0 +1,1184 @@
+{
+  "module": "B06",
+  "branch": "B06/jobs-realtime-backups",
+  "verdict": "fix first",
+  "generatedAt": "2026-10-25 23:10 MYT",
+  "phases": "1-6",
+  "headline": "Everything B06 promises works when walked: 62 of 64 criteria pass, 1 fails (a storage warning with no words) and 1 couldn’t be reached; every suite is green and all 13 flows pass against the real Worker, API and database. But two guards on critical paths hold nothing: no suite notices if a failed backup starts counting as a backup (in /health/jobs, the watchdog and Settings), or if the Worker starts ticking the API every minute (D141). Five of nine new breakage checks survived. The eyes pass also found a toast hiding Export their data first in the Remove dialog, which isn’t B06’s code.",
+  "summary": {
+    "criteria": 64,
+    "pass": 62,
+    "fail": 1,
+    "unreachable": 1
+  },
+  "suites": {
+    "typecheck": "clean",
+    "lint": "clean (pnpm lint, max-warnings 0)",
+    "unit": "411/411 pass",
+    "security": "pnpm security: audit, gitleaks (407 commits, no leaks), security lint all PASS; pnpm hygiene clean",
+    "db": "pgTAP 218/218; API 128 pass, 7 skipped (the body checks a GET or the tick doesn't take); route sweep green",
+    "e2e": "1397 passed (14.2 min)",
+    "lived": "24 passed",
+    "server": "4 passed",
+    "mutants": "56 of 58 killed (sweep); run 3's probes 4 of 9 killed",
+    "qa-e2e": "b06r3-flows.spec.ts: 13 flows, 13 pass"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "Major",
+      "status": "open",
+      "title": "No suite notices a failed backup being counted as a backup: not in /health/jobs, not in the watchdog, not in Settings → Data.",
+      "detail": "Two breakage checks survive. In `jobs_health()` (0009), dropping `AND r.status = 'ok'` from the backup's subquery makes the monitor's check pass on a failed backup. In `backupFacts()` (`apps/api/src/jobs/frames.ts`), dropping `eq(r.status, 'ok')` from the *last backup* query makes Settings → Data show a failed backup as the last one, and silences the backup watchdog, which reads the same `last`. Today the code is right: FLOW-R3-6 step 4 (the last good backup 49 h old, a failed one today) answers 503 *late backup*, and FLOW-R3-4 doesn't show today's failed run. But a failing `sen_ops` workflow that reports `failed` every night is exactly what §18's three guards exist for, and nothing would tell anyone if one of them regressed. pgTAP's *health sees the backup* and the API's health test only cover good or missing backups.",
+      "repro": "node scripts/mutants.mjs --only r3-health-counts-failed-backup,r3-last-backup-counts-failed --out qa-artifacts/B06/jobs-realtime-backups/probes",
+      "evidence": "| `r3-health-counts-failed-backup` | db | **SURVIVED** | a failed backup keeps /health/jobs green |\n| `r3-last-backup-counts-failed` | db | **SURVIVED** | Settings → Data shows a failed backup as the last backup |\nBoth logs: `Files=4, Tests=218 ... Result: PASS` then `Tests  128 passed | 7 skipped (135)`",
+      "spec": "R3-AC-21, R3-AC-27, R3-AC-49; spec §18 (Backups stop), §16 /health/jobs",
+      "screenshots": [
+        "FLOW-R3-6-step-4-backup-late.png",
+        "FLOW-R3-4-step-1-facts.png"
+      ]
+    },
+    {
+      "id": 2,
+      "severity": "Major",
+      "status": "open",
+      "title": "The Worker's only-when-due gate (D141) has no test: it can tick the API every minute and every suite stays green.",
+      "detail": "`Scheduler.cron()` (`apps/worker/src/scheduler.ts`) calls `/jobs/tick` only when `due(s, now)`. Replacing `if (!due(s, now) || this.ticking) return;` with `if (this.ticking) return;` survives: `clock.test.ts` tests the pure `due()`, but nothing drives the Durable Object's `cron()`, so nothing checks it uses it. Each tick wakes Neon for 5 minutes; a tick a minute keeps it awake around the clock, and at Neon's 0.25 CU minimum that is about 180 CU-hours a month against the free 100: the database would stop for the rest of the month. D141 was decided for exactly this. The same untested method also writes back the state it read before the tick (see finding 11).",
+      "repro": "node scripts/mutants.mjs --only r3-scheduler-ticks-every-minute --out qa-artifacts/B06/jobs-realtime-backups/probes",
+      "evidence": "| `r3-scheduler-ticks-every-minute` | unit | **SURVIVED** | the Worker ticks the API every minute, so Neon never sleeps (D141) |\nlog: `Tests  95 passed (95)`",
+      "spec": "R3-AC-28; D141; spec §5.1 Schedules",
+      "screenshots": []
+    },
+    {
+      "id": 3,
+      "severity": "Major",
+      "status": "open",
+      "title": "On the Members journey, the Undone toast covers “Export their data first” in the Remove dialog, while Remove stays visible (not B06’s code).",
+      "detail": "The eyes pass (G9, G10) and I both see it in the film of `members…/9`: from about frame 15 the *Undone* toast from the step before sits across the *Remove Hui Min?* sheet exactly over *Export their data first*, and stays for the toast’s life. The dialog asks whether to keep a copy before an irreversible delete, and the copy’s button is the one hidden. B06’s diff changes no toast, sheet or members code (members.tsx gains one lint comment), so this almost certainly stands on main; the diff run films only the branch, so main’s film wasn’t seen. Toasts over sheets recur elsewhere (G8, G13, G18, G22): the shared toast layer sits above sheets.",
+      "repro": "node scripts/qa-diff.mjs --out qa-artifacts/B06/jobs-realtime-backups/diff; film members_unlimited_at_invite_resend_and_revoke_remove_with_an_export/9.png and 10.png",
+      "evidence": "qa/B06/eyes.md G9: “From frame 15 to the end, the Undone toast sits across the sheet exactly where Export their data first is. Only the top edge of that button shows above the toast, and Remove’s top half is covered too.” Verdict wrong; G10 the same.",
+      "spec": "patterns.md (toasts, sheets); flows.md invite; D52",
+      "screenshots": []
+    },
+    {
+      "id": 4,
+      "severity": "Minor",
+      "status": "open",
+      "title": "A relay pass whose signature is right only in its first byte is accepted, and no test notices.",
+      "detail": "In `verifyPass()` (`packages/core/src/realtime.ts`), comparing one byte of the HMAC instead of all 32 survives: the forged-pass tests change the whole signature, so they still fail on the first byte. With a one-byte check, about 256 tries forge a 5-minute pass to any `user:<id>` channel. The relay carries only topic names (no data), hence Minor, but it is the relay's only check. A test that flips the signature's last byte would hold it.",
+      "repro": "node scripts/mutants.mjs --only r3-pass-checks-one-byte --out qa-artifacts/B06/jobs-realtime-backups/probes",
+      "evidence": "| `r3-pass-checks-one-byte` | unit | **SURVIVED** | a relay pass is accepted when only the first byte of its signature is right |\nlog: `Tests  95 passed (95)`",
+      "spec": "R3-AC-31; spec §16 /realtime/token; D100",
+      "screenshots": []
+    },
+    {
+      "id": 5,
+      "severity": "Minor",
+      "status": "open",
+      "title": "The `jobs` topic's reload has no test: mapping it to nothing leaves Settings → Data stale after a job, with every suite green.",
+      "detail": "`TOPIC_QUERIES.jobs` (`apps/web/src/data/realtime.ts`) maps the scheduler's hint to the `settings` query. Changing it to `[]` survives the web suite. The behaviour is right today: FLOW-R3-1 step 4 saw the open Data screen re-read `/api/settings` after the test job's hint, with no navigation.",
+      "repro": "node scripts/mutants.mjs --only r3-jobs-topic-reloads-nothing --out qa-artifacts/B06/jobs-realtime-backups/probes",
+      "evidence": "| `r3-jobs-topic-reloads-nothing` | web | **SURVIVED** | a job’s hint reloads nothing, so Settings → Data stays stale |\nlog: `Tests  162 passed (162)`",
+      "spec": "R3-AC-36, R3-AC-37; D100",
+      "screenshots": [
+        "FLOW-R3-1-step-4-hint-reload.png"
+      ]
+    },
+    {
+      "id": 6,
+      "severity": "Minor",
+      "status": "open",
+      "title": "The storage warning is amber with an icon, but no words say what’s wrong or what to do.",
+      "detail": "Past half (5.70 GB of 10 GB) the Storage row turns `money-warning` with a triangle, and still says only the figure. patterns.md §3: “A warning (over budget, *Over by RM215.40*) is `money-warning` with an icon and words.” The eyes pass (R3-4, look again) read it as an alarm with no reason; something like *Over half of R2’s free 10 GB* would say it.",
+      "repro": "FLOW-R3-4 step 2 (qa/e2e/b06r3-flows.spec.ts)",
+      "evidence": "FLOW-R3-4 step 2: “5.70 GB of 10 GB” in a span with class text-money-warning and one svg; eyes R3-4: “An amber warning at 57% with no words, no reason and nothing to do”",
+      "spec": "R3-AC-63; patterns.md §3; D126",
+      "screenshots": [
+        "FLOW-R3-4-step-2-half.png"
+      ]
+    },
+    {
+      "id": 7,
+      "severity": "Minor",
+      "status": "open",
+      "title": "The breakage check `push-token-shared` is decorative: it edits 0008, but 0010 replaced that function.",
+      "detail": "Run 2's fix redefined `push_token_claim()` in 0010 (`CREATE OR REPLACE`), so removing the DELETE from 0008's copy changes nothing in the database and the check survives every run. The live definition is guarded: the same edit in 0010 (`r3-push-token-shared-0010`) is killed by pgTAP (*the token is Ben's alone now*, *still one row*). Retarget the entry at 0010. The same trap waits for any check on a function a later migration replaces (`jobs_health`, `jobs_next_once`).",
+      "repro": "node scripts/mutants.mjs --only push-token-shared,r3-push-token-shared-0010",
+      "evidence": "sweep: | `push-token-shared` | db | **SURVIVED** | ... (log: `Result: PASS`, `Tests  128 passed | 7 skipped (135)`)\nrun 3: | `r3-push-token-shared-0010` | db | killed | (log: `# Failed test 34: \"the token is Ben's alone now\"`, `# Failed test 36: \"still one row\"`)\n0010_b06_scheduler_tokens.sql:24: CREATE OR REPLACE FUNCTION push_token_claim(token text) RETURNS void",
+      "spec": "D139; R3-AC-42",
+      "screenshots": []
+    },
+    {
+      "id": 8,
+      "severity": "Note",
+      "status": "open",
+      "title": "In a preview, Settings → Data dates a backup from today by the made-up scenario's clock: “Sun, 25 Oct, 19:01” on 25 Oct, never “Today”.",
+      "detail": "With the api backend in a preview build, the fake still wraps the server and moves the app's clock to 18 Oct 2026 (`lib/clock.ts`, `data/fake/connect.ts`), so `momentLabel()` can't say *Today* or *Yesterday* for a real backup. The date and time shown are right, in KL, and the same from New York (FLOW-R3-4b). The owner verifies on the review alias, so he sees this. Production has no fake; I didn't run a production build against the API to confirm its label.",
+      "repro": "qa/e2e b06r3.config.ts, FLOW-R3-4: record a backup now, reopen /s/settings/data",
+      "evidence": "annotation \"last backup label\": \"Backups\\nLast backup\\nSun, 25 Oct, 19:01\\nStorage\\n5.70 GB of 10 GB\" (run at 19:01 KL on Sun 25 Oct)",
+      "spec": "R3-AC-49; patterns.md §3",
+      "screenshots": [
+        "FLOW-R3-4-step-2-half.png"
+      ]
+    },
+    {
+      "id": 9,
+      "severity": "Note",
+      "status": "open",
+      "title": "Storage between 999,500,000 and 999,999,999 bytes reads “1000 MB”, not “1.00 GB”.",
+      "detail": "`formatBytes()` rounds MB below 10⁹ bytes, so the last half-megabyte under a gigabyte rounds up to 1000 MB.",
+      "repro": "formatBytes(999_500_000), formatBytes(999_999_999)",
+      "evidence": "999499999 -> 999 MB\n999500000 -> 1000 MB\n999999999 -> 1000 MB\n1000000000 -> 1.00 GB",
+      "spec": "R3-AC-50",
+      "screenshots": []
+    },
+    {
+      "id": 10,
+      "severity": "Note",
+      "status": "open",
+      "title": "`/health/jobs` is open to anyone and costs one database query per call, so a stranger polling it keeps Neon awake.",
+      "detail": "Measured in the API metrics: every call, 200 or 503, makes one query. It has no rate limit or secret. This isn't new exposure: signed-out `GET /api/*` already makes one query on main's routes. The monitor checks it every 3 hours (docs/local.md). A shared secret in cron-job.org's request header would close it if Neon's hours ever run short.",
+      "repro": "GET /api/health/jobs (no auth)",
+      "evidence": "{\"method\":\"GET\",\"route\":\"/api/health/jobs\",\"status\":200,\"appMs\":2.8,\"queries\":1,\"rows\":1,\"dbMs\":2.5,\"bytes\":11}\n{\"method\":\"GET\",\"route\":\"/api/health/jobs\",\"status\":503,\"appMs\":1.8,\"queries\":1,\"rows\":1,\"dbMs\":1.3,\"bytes\":78}\nGET /api/* 401 max queries 1 n 7",
+      "spec": "D141; spec §5.1 free-tier limits",
+      "screenshots": []
+    },
+    {
+      "id": 11,
+      "severity": "Note",
+      "status": "open",
+      "title": "`Scheduler.cron()` saves the state it read before a tick once the tick returns, over whatever changed meanwhile.",
+      "detail": "Read, not reproduced. `await this.save(await this.tick(s, now))` writes `s` (read before the up-to-5-minute fetch) with the tick's answer. A `wake()` from the API during the tick is lost (run 1 named this half, note 12), and `lastCron` steps back to the tick's start over the crons saved while it ran. For a tick near 5 minutes the Worker's `/health` could briefly read *cron late*. It sits in the same untested method as finding 2.",
+      "repro": "read apps/worker/src/scheduler.ts cron() and tick()",
+      "evidence": "const s = { ...(await this.state()), lastCron: now }; ... await this.save(await this.tick(s, now));",
+      "spec": "D141; R3-AC-29, R3-AC-30",
+      "screenshots": []
+    },
+    {
+      "id": 12,
+      "severity": "Note",
+      "status": "open",
+      "title": "The one metrics flag (Members → Invite settles in 272 ms against 142) isn't B06's: the same mutations land at the same times on both builds.",
+      "detail": "Accepted, with measurement. Main's own samples settle before they first change (settle 142 and 130 ms, first change 248 and 224 ms): settle is the last DOM mutation, first change the paint, so on main the measured window closed before the sheet's later mutations. B06 changes the members screen only by a lint comment. Measured: tapping Invite with the CPU slowed 4×, three times on each side, gives 99 mutations of the same kinds on both, the first after 200 ms at 664 and 653 ms on the branch (warm runs) against 648 and 649 ms on main. Both are far under the 1000 ms limit. The diff run's other red tests fail on main too: `subscription` under the metrics config (`getByText('Claude Pro')` matches three elements) and `scan-more` catalogue timeouts. settings/claims' pixel change (firefly, mercury, copper) is the tab bar's label anti-aliasing, tree unchanged. The run also rewrote 86 trees, line endings only (`git diff --ignore-cr-at-eol` is empty).",
+      "repro": "node scripts/qa-diff.mjs --out qa-artifacts/B06/jobs-realtime-backups/diff; then scratchpad probe-mut/mut.cjs against vite on the branch (4187) and main's worktree (4188)",
+      "evidence": "base: firstChangeMs 248, settleMs 142; base-confirm: 224, 130; head: 288, 326; head-confirm: 256, 268\nhead run 2: 99 mutations, last at 1070 ms ... 664 | childList | | body.\nhead run 3: 99 mutations, last at 1053 ms ... 653\nbase run 2: 99 mutations, last at 1046 ms ... 648\nbase run 3: 99 mutations, last at 1052 ms ... 649",
+      "spec": "qa/limits.ts; D139",
+      "screenshots": []
+    },
+    {
+      "id": 13,
+      "severity": "Note",
+      "status": "open",
+      "title": "`for-update-you` still survives (B05's area, standing since run 2).",
+      "detail": "Run 2's note 13. B06 doesn't touch that route; named for B05's area in the handoff.",
+      "repro": "node scripts/mutants.mjs --only for-update-you",
+      "evidence": "| `for-update-you` | db | **SURVIVED** | two identical writes of You sent at once log two changes (QA B05 run 2, 22) |",
+      "spec": "D139",
+      "screenshots": []
+    },
+    {
+      "id": 14,
+      "severity": "Note",
+      "status": "open",
+      "title": "The eyes pass’s other look-agains on B06’s screens.",
+      "detail": "Settings → Data: each *Checks* row wants a line saying what it does; the *Updated* pill is faint in Instrument, Mercury and Copper dark, and its raised shadow reads as tappable; after *Schedule a test job* the screen never shows that the job ran (only the push says so); a member could be told their data is backed up. Standing, not B06’s: toasts over sheets (G8, G13, G18, G22), see-through frames on tab crossfades (G5, G16, G19), the capitalised payee in the Meals toast (G17), refund’s list swap (G21). All in qa/B06/eyes.md, Run 3.",
+      "repro": "qa/B06/eyes.md, Run 3 verdicts",
+      "evidence": "eyes: 2 wrong · 20 look again · 8 fine",
+      "spec": "patterns.md §7",
+      "screenshots": [
+        "FLOW-R3-1-step-1-scheduled.png",
+        "FLOW-R3-3-step-1-offline-stamp.png"
+      ]
+    }
+  ],
+  "probes": [
+    {
+      "broke": "Scheduler.cron ticks whenever not already ticking (the due() gate removed)",
+      "caught": false,
+      "note": "unit 95/95 pass: survived (finding 2). Keep as qa/mutants.ts r3-scheduler-ticks-every-minute"
+    },
+    {
+      "broke": "verifyPass compares only the first byte of the signature",
+      "caught": false,
+      "note": "unit 95/95 pass: survived (finding 4). Keep as r3-pass-checks-one-byte"
+    },
+    {
+      "broke": "job_runs_own_select USING (true): RLS open for reads",
+      "caught": true,
+      "note": "test:db red. Keep as r3-job-runs-select-open"
+    },
+    {
+      "broke": "push_tokens_own_delete USING (true): anyone deletes anyone's tokens",
+      "caught": true,
+      "note": "test:db red. Keep as r3-push-tokens-delete-open"
+    },
+    {
+      "broke": "alerts_sent's (user_id, alert_key) index not UNIQUE (dedupe)",
+      "caught": true,
+      "note": "test:db red. Keep as r3-alerts-not-unique"
+    },
+    {
+      "broke": "jobs_health() counts a failed backup",
+      "caught": false,
+      "note": "test:db green: survived (finding 1). Keep as r3-health-counts-failed-backup"
+    },
+    {
+      "broke": "backupFacts' last backup counts a failed one (Settings and the watchdog)",
+      "caught": false,
+      "note": "test:db green: survived (finding 1). Keep as r3-last-backup-counts-failed"
+    },
+    {
+      "broke": "the jobs topic reloads no query",
+      "caught": false,
+      "note": "web suite green: survived (finding 5). Keep as r3-jobs-topic-reloads-nothing"
+    },
+    {
+      "broke": "push_token_claim's DELETE removed in 0010 (the live definition)",
+      "caught": true,
+      "note": "pgTAP red: 'the token is Ben's alone now'. Keep as r3-push-token-shared-0010, replacing push-token-shared (finding 7)"
+    }
+  ],
+  "flows": [
+    {
+      "id": "FLOW-R3-1",
+      "title": "A one-off test job, a minute ahead, two crons at once; its hint reloads the open Data screen",
+      "kind": "happy",
+      "actor": "owner (admin)",
+      "entry": "Settings → Data → Checks → Schedule a test job",
+      "covers": [
+        "R3-AC-16",
+        "R3-AC-17",
+        "R3-AC-29",
+        "R3-AC-30",
+        "R3-AC-36",
+        "R3-AC-46"
+      ],
+      "spec": "done-when 1, D99, D141",
+      "ends": "one job_runs row; scheduled_jobs done 1; Data re-read with no reload; Worker /health 200",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "tap Schedule a test job",
+          "assertion": "toast names its minute; one due row",
+          "status": "pass",
+          "screenshot": "FLOW-R3-1-step-1-scheduled.png"
+        },
+        {
+          "n": 2,
+          "action": "a cron before its minute",
+          "assertion": "still due; nothing ran",
+          "status": "pass",
+          "screenshot": "FLOW-R3-1-step-2-not-yet.png"
+        },
+        {
+          "n": 3,
+          "action": "two crons at once after its minute, then a third",
+          "assertion": "done 1; one ok job_runs row",
+          "status": "pass",
+          "screenshot": "FLOW-R3-1-step-3-ran-once.png"
+        },
+        {
+          "n": 4,
+          "action": "the job’s hint reaches the open Data screen",
+          "assertion": "a GET /api/settings, no reload",
+          "status": "pass",
+          "screenshot": "FLOW-R3-1-step-4-hint-reload.png"
+        },
+        {
+          "n": 5,
+          "action": "GET the Worker’s /health",
+          "assertion": "200 {ok:true}",
+          "status": "pass",
+          "screenshot": "FLOW-R3-1-step-5-worker-health.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-2",
+      "title": "A change reaches the person’s other device, and not another person",
+      "kind": "happy",
+      "actor": "owner on two contexts, Ben on a third",
+      "entry": "Settings → You in three browser contexts",
+      "covers": [
+        "R3-AC-36",
+        "R3-AC-37",
+        "R3-AC-61"
+      ],
+      "spec": "done-when 2, D100",
+      "ends": "device A shows the change in 625 ms with no reload; Ben’s device reads nothing",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "two of the admin’s devices and Ben’s open You",
+          "assertion": "Not set on each",
+          "status": "pass",
+          "screenshot": "FLOW-R3-2-step-1-three-open.png"
+        },
+        {
+          "n": 2,
+          "action": "the admin’s second device picks Last working day",
+          "assertion": "saved",
+          "status": "pass",
+          "screenshot": "FLOW-R3-2-step-2-b-changes.png"
+        },
+        {
+          "n": 3,
+          "action": "wait on the first device",
+          "assertion": "Last working day, no reload, within 5 s",
+          "status": "pass",
+          "screenshot": "FLOW-R3-2-step-3-a-updates.png"
+        },
+        {
+          "n": 4,
+          "action": "Ben’s device, 3 s on",
+          "assertion": "no settings read; still Not set",
+          "status": "pass",
+          "screenshot": "FLOW-R3-2-step-4-ben-untouched.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-3",
+      "title": "Offline, a change underneath, back online; then a return to the app",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "Settings → You",
+      "covers": [
+        "R3-AC-38",
+        "R3-AC-39"
+      ],
+      "spec": "§18, patterns §7, D100",
+      "ends": "the stamp shows offline; reconnect reloads in 155 ms; resume reloads",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "the phone goes offline",
+          "assertion": "the Updated stamp shows",
+          "status": "pass",
+          "screenshot": "FLOW-R3-3-step-1-offline-stamp.png"
+        },
+        {
+          "n": 2,
+          "action": "back online",
+          "assertion": "Not set within 10 s (a reconnect reloads); the stamp goes",
+          "status": "pass",
+          "screenshot": "FLOW-R3-3-step-2-online.png"
+        },
+        {
+          "n": 3,
+          "action": "the app returns to the front",
+          "assertion": "Last working day within 5 s",
+          "status": "pass",
+          "screenshot": "FLOW-R3-3-step-3-resume.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-4",
+      "title": "The admin’s Data, worked by hand (Kuala Lumpur)",
+      "kind": "happy",
+      "actor": "owner (admin)",
+      "entry": "/s/settings/data",
+      "covers": [
+        "R3-AC-49",
+        "R3-AC-50",
+        "R3-AC-54",
+        "R3-AC-27"
+      ],
+      "spec": "§17, D126, D142 (3)",
+      "ends": "1.50 GB of 10 GB (the 31-day dump not held, the failed one not shown); 5.70 GB with the warning after a 4.2 GB dump",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open Data",
+          "assertion": "last backup at 20:01 KL (2 days ago); storage 1.50 GB of 10 GB",
+          "status": "pass",
+          "screenshot": "FLOW-R3-4-step-1-facts.png"
+        },
+        {
+          "n": 2,
+          "action": "a 4.2 GB dump lands; reopen",
+          "assertion": "last backup at 19:01 KL; 5.70 GB of 10 GB with the warning icon",
+          "status": "pass",
+          "screenshot": "FLOW-R3-4-step-2-half.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-4b",
+      "title": "The admin’s Data in New York",
+      "kind": "sad",
+      "actor": "owner (admin), device in America/New_York",
+      "entry": "/s/settings/data",
+      "covers": [
+        "R3-AC-49",
+        "R3-AC-50"
+      ],
+      "spec": "Conventions: KL dates",
+      "ends": "the same KL times and figures as in Kuala Lumpur",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open Data",
+          "assertion": "last backup at 20:00 KL (2 days ago); storage 1.50 GB of 10 GB",
+          "status": "pass",
+          "screenshot": "FLOW-R3-4b-step-1-facts.png"
+        },
+        {
+          "n": 2,
+          "action": "a 4.2 GB dump lands; reopen",
+          "assertion": "last backup at 19:00 KL; 5.70 GB of 10 GB with the warning icon",
+          "status": "pass",
+          "screenshot": "FLOW-R3-4b-step-2-half.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-4c",
+      "title": "A member’s Data",
+      "kind": "sad",
+      "actor": "Ben (member)",
+      "entry": "/s/settings/data",
+      "covers": [
+        "R3-AC-45",
+        "R3-AC-49"
+      ],
+      "spec": "screens.md (backups: admin)",
+      "ends": "no backup, storage or checks; POST /api/push/test 403",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Ben opens Data",
+          "assertion": "no Last backup, Storage or Checks",
+          "status": "pass",
+          "screenshot": "FLOW-R3-4c-step-1-member.png"
+        },
+        {
+          "n": 2,
+          "action": "Ben posts /api/push/test himself",
+          "assertion": "403 forbidden",
+          "status": "pass",
+          "screenshot": "FLOW-R3-4c-step-2-member-403.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-5",
+      "title": "Four test pushes in a minute",
+      "kind": "sad",
+      "actor": "owner (admin)",
+      "entry": "Settings → Data → Send a test push ×4",
+      "covers": [
+        "R3-AC-45"
+      ],
+      "spec": "D142 (4)",
+      "ends": "503 ×3 (push not set up here), then 429 “Wait a minute.”",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "tap Send a test push four times",
+          "assertion": "the 4th says to wait a minute",
+          "status": "pass",
+          "screenshot": "FLOW-R3-5-step-1-fourth.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-6",
+      "title": "/health/jobs: fresh, late, forged, never",
+      "kind": "sad",
+      "actor": "the outside monitor",
+      "entry": "GET /api/health/jobs",
+      "covers": [
+        "R3-AC-23",
+        "R3-AC-24",
+        "R3-AC-25",
+        "R3-AC-26",
+        "R3-AC-27",
+        "R3-AC-59"
+      ],
+      "spec": "§16, §18, done-when 5",
+      "ends": "200 only when both are fresh; 503 with no ids or dates otherwise; a member’s own row can’t turn it green",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "a morning run and a backup within their limits",
+          "assertion": "200 {ok:true}",
+          "status": "pass",
+          "screenshot": "FLOW-R3-6-step-1-fresh.png"
+        },
+        {
+          "n": 2,
+          "action": "the morning run 27 h old",
+          "assertion": "503, late morning, no ids or dates",
+          "status": "pass",
+          "screenshot": "FLOW-R3-6-step-2-morning-late.png"
+        },
+        {
+          "n": 3,
+          "action": "Ben’s own fresh morning row",
+          "assertion": "still 503",
+          "status": "pass",
+          "screenshot": "FLOW-R3-6-step-3-forged.png"
+        },
+        {
+          "n": 4,
+          "action": "the last good backup 49 h ago, a failed one today",
+          "assertion": "503 late backup",
+          "status": "pass",
+          "screenshot": "FLOW-R3-6-step-4-backup-late.png"
+        },
+        {
+          "n": 5,
+          "action": "no run of either ever",
+          "assertion": "503, both late",
+          "status": "pass",
+          "screenshot": "FLOW-R3-6-step-5-never.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-7",
+      "title": "Push tokens across two sessions and their sign-outs",
+      "kind": "sad",
+      "actor": "owner on two phones",
+      "entry": "PUT /api/push/token, Settings → Account → Sign out",
+      "covers": [
+        "R3-AC-41",
+        "R3-AC-44",
+        "R3-AC-64"
+      ],
+      "spec": "D142 (5)",
+      "ends": "two rows; the first sign-out keeps phone two’s; the last sign-out leaves none",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "two phones register (one twice)",
+          "assertion": "two rows",
+          "status": "pass",
+          "screenshot": "FLOW-R3-7-step-1-two-tokens.png"
+        },
+        {
+          "n": 2,
+          "action": "phone one signs out; phone two still signed in",
+          "assertion": "phone two’s token kept",
+          "status": "pass",
+          "screenshot": "FLOW-R3-7-step-2-one-out.png"
+        },
+        {
+          "n": 3,
+          "action": "phone two signs out: the last session",
+          "assertion": "no tokens left",
+          "status": "pass",
+          "screenshot": "FLOW-R3-7-step-3-last-out.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-8",
+      "title": "Signing in opens the live connection without a reload; signing out closes it",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "sign-in",
+      "covers": [
+        "R3-AC-34",
+        "R3-AC-37"
+      ],
+      "spec": "D100",
+      "ends": "one relay socket after sign-in; none open after sign-out",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "sign in by code, no reload",
+          "assertion": "one socket to the relay’s /connect, open",
+          "status": "pass",
+          "screenshot": "FLOW-R3-8-step-1-connected.png"
+        },
+        {
+          "n": 2,
+          "action": "sign out",
+          "assertion": "every relay socket closed",
+          "status": "pass",
+          "screenshot": "FLOW-R3-8-step-2-closed.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-C1",
+      "title": "first-run (core)",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/s/first-run signed out",
+      "covers": [],
+      "spec": "flows.md first-run, D124",
+      "ends": "sign-in, home, first run opens",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "open first-run signed out",
+          "assertion": "sent to sign-in",
+          "status": "pass",
+          "screenshot": "FLOW-R3-C1-step-1-gate.png"
+        },
+        {
+          "n": 2,
+          "action": "sign in by code",
+          "assertion": "home with the tab bar",
+          "status": "pass",
+          "screenshot": "FLOW-R3-C1-step-2-home.png"
+        },
+        {
+          "n": 3,
+          "action": "open first-run signed in",
+          "assertion": "the first-run screen opens",
+          "status": "pass",
+          "screenshot": "FLOW-R3-C1-step-3-first-run.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-C2",
+      "title": "pay-new (core)",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "Review",
+      "covers": [],
+      "spec": "flows.md pay-new, D124",
+      "ends": "Meals from now on; the card goes",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Review shows the new merchant",
+          "assertion": "RM9.50 · Roti Bakar 88",
+          "status": "pass",
+          "screenshot": "FLOW-R3-C2-step-1-prompt.png"
+        },
+        {
+          "n": 2,
+          "action": "tap Meals",
+          "assertion": "toast: Meals from now on; the card goes",
+          "status": "pass",
+          "screenshot": "FLOW-R3-C2-step-2-answered.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-R3-C3",
+      "title": "scan-after (core)",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "the Scan tab",
+      "covers": [],
+      "spec": "flows.md scan-after, D124",
+      "ends": "Attached to RM64.13 on Ryt Bank",
+      "status": "pass",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Scan tab, choose a photo",
+          "assertion": "crop opens",
+          "status": "pass",
+          "screenshot": "FLOW-R3-C3-step-1-crop.png"
+        },
+        {
+          "n": 2,
+          "action": "Use this",
+          "assertion": "confirm: items add up to the total",
+          "status": "pass",
+          "screenshot": "FLOW-R3-C3-step-2-confirm.png"
+        },
+        {
+          "n": 3,
+          "action": "Done",
+          "assertion": "Attached to RM64.13 on Ryt Bank, with Undo",
+          "status": "pass",
+          "screenshot": "FLOW-R3-C3-step-3-attached.png"
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "R3-AC-1",
+      "title": "RLS on every new table",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "relrowsecurity t on all four; 11 policies, every one keyed on user_id (FORCE off, as on every B05 table)"
+    },
+    {
+      "id": "R3-AC-2",
+      "title": "(sad) B can't read or write A's job rows",
+      "spec": "§15, D52",
+      "status": "pass",
+      "evidence": "matrix: B sees A rows 0; B updates A 0 (scheduled_jobs, job_runs); B deletes A 0 (alerts_sent, push_tokens); inserts as A: 'new row violates row-level security policy' ×4; push_tokens insert 'permission denied'"
+    },
+    {
+      "id": "R3-AC-3",
+      "title": "(sad) No user id set",
+      "spec": "§5",
+      "status": "pass",
+      "evidence": "unset and '' : 0 rows in each of the four tables"
+    },
+    {
+      "id": "R3-AC-4",
+      "title": "Uniques hold",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "pgTAP 23505 on a second scheduled job and a second morning run; probe r3-alerts-not-unique killed; push_token_claim twice = one row"
+    },
+    {
+      "id": "R3-AC-5",
+      "title": "(twin) the same key for two people is two rows",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "seed: alert_key 'k' and run_key 'morning:qa' for A and B: INSERT 0 2 each"
+    },
+    {
+      "id": "R3-AC-6",
+      "title": "The people function lists ids only",
+      "spec": "done-when 6",
+      "status": "pass",
+      "evidence": "pg_get_function_result: SETOF uuid; jobs_health two timestamps; jobs_next_once one"
+    },
+    {
+      "id": "R3-AC-7",
+      "title": "(sad) app_user can't use a definer function beyond its purpose",
+      "spec": "§5",
+      "status": "pass",
+      "evidence": "as B: 'only the scheduler lists people', 'only the health check asks this', 'only the scheduler asks this', 'permission denied for function record_backup'; sen_auth: permission denied"
+    },
+    {
+      "id": "R3-AC-8",
+      "title": "Definer functions pin search_path",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "proconfig {search_path=public, pg_temp} on all five"
+    },
+    {
+      "id": "R3-AC-9",
+      "title": "scheduled_jobs.status constrained",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "status 'queued': violates check constraint scheduled_jobs_status_check"
+    },
+    {
+      "id": "R3-AC-10",
+      "title": "Morning frame once per person",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "jobs.test.ts 'runs the morning job once per person and date, even when two ticks overlap' green in test:db"
+    },
+    {
+      "id": "R3-AC-11",
+      "title": "(sad) No or wrong secret",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "route sweep green; api metrics: POST /api/jobs/tick 401, 0 queries ×7"
+    },
+    {
+      "id": "R3-AC-12",
+      "title": "The same tick twice is a no-op",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "jobs.test.ts: again.ran 0; mutant tick-frame-reclaimed killed"
+    },
+    {
+      "id": "R3-AC-13",
+      "title": "(twin) the next KL date runs again",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "jobs.test.ts runs 2030-01-02 then 2030-01-03 for both people"
+    },
+    {
+      "id": "R3-AC-14",
+      "title": "Frame boundaries in KL time",
+      "spec": "§16, Conventions",
+      "status": "pass",
+      "evidence": "core jobs.test.ts frame windows; mutant tick-utc-day killed"
+    },
+    {
+      "id": "R3-AC-15",
+      "title": "Evening frame at 21:00 KL",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "core jobs.test.ts; 'sleeps outside the frames' next = 21:00 KL"
+    },
+    {
+      "id": "R3-AC-16",
+      "title": "A one-off job a minute ahead runs on time, once",
+      "spec": "done-when 1",
+      "status": "pass",
+      "evidence": "FLOW-R3-1: before its minute still 'due'; after, 'done 1'"
+    },
+    {
+      "id": "R3-AC-17",
+      "title": "Two overlapping ticks run it once",
+      "spec": "done-when 1",
+      "status": "pass",
+      "evidence": "FLOW-R3-1 step 3: two crons at once, one ok job_runs row; mutant tick-no-skip-locked killed"
+    },
+    {
+      "id": "R3-AC-18",
+      "title": "(sad) A failing one-off job retries, then fails",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "jobs.test.ts 'retries a failing job later, then gives up': failed, attempts 3"
+    },
+    {
+      "id": "R3-AC-19",
+      "title": "Jobs run as the person under RLS",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "tick uses asPerson on app_user; RLS matrix holds; mutants daily/once-jobs-for-suspended killed"
+    },
+    {
+      "id": "R3-AC-20",
+      "title": "The alerts helper sends a key once",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "mutant alert-not-once killed; probe r3-alerts-not-unique killed"
+    },
+    {
+      "id": "R3-AC-21",
+      "title": "Backup watchdog after 2 days, once",
+      "spec": "§18",
+      "status": "pass",
+      "evidence": "jobs.test.ts 'pushes the backup alert once a day'; but a failed backup counting is untested (finding 1)"
+    },
+    {
+      "id": "R3-AC-22",
+      "title": "R2 half warning once a month",
+      "spec": "D126, D142 (3)",
+      "status": "pass",
+      "evidence": "jobs.test.ts 'warns the admin once a month when backups pass half of R2'"
+    },
+    {
+      "id": "R3-AC-23",
+      "title": "Health 200 with no data",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "FLOW-R3-6 step 1: 200 {\"ok\":true}"
+    },
+    {
+      "id": "R3-AC-24",
+      "title": "(sad) Morning run 27 h old",
+      "spec": "§18",
+      "status": "pass",
+      "evidence": "FLOW-R3-6 step 2: 503 {code: late, late: [morning]}, no uuid or date in the body"
+    },
+    {
+      "id": "R3-AC-25",
+      "title": "(sad) Backup 49 h old",
+      "spec": "§18",
+      "status": "pass",
+      "evidence": "FLOW-R3-6 step 4: 503 late [backup]"
+    },
+    {
+      "id": "R3-AC-26",
+      "title": "(sad) Never ran",
+      "spec": "§18",
+      "status": "pass",
+      "evidence": "FLOW-R3-6 step 5: 503 late [morning, backup]"
+    },
+    {
+      "id": "R3-AC-27",
+      "title": "(sad) A failed backup isn't the last success",
+      "spec": "§18",
+      "status": "pass",
+      "evidence": "FLOW-R3-6 step 4 (a failed one today, 503); FLOW-R3-4 doesn't show it. No suite guards it (finding 1)"
+    },
+    {
+      "id": "R3-AC-28",
+      "title": "The scheduler ticks only when due",
+      "spec": "D141",
+      "status": "unreachable",
+      "evidence": "neither the local API nor wrangler dev logs a tick, so I couldn't count them; no test holds the gate (finding 2)"
+    },
+    {
+      "id": "R3-AC-29",
+      "title": "POST /schedule wakes it; refused without the secret",
+      "spec": "D141",
+      "status": "pass",
+      "evidence": "worker log: POST /schedule 200, then the job ran at its minute; index.test.ts 'needs the scheduler's own secret'"
+    },
+    {
+      "id": "R3-AC-30",
+      "title": "The Worker's /health",
+      "spec": "D141",
+      "status": "pass",
+      "evidence": "503 before the first cron (curl), 200 {ok:true} after (FLOW-R3-1 step 5); clock.test.ts 5 and 15 min"
+    },
+    {
+      "id": "R3-AC-31",
+      "title": "A pass opens only its channel; forged or expired refused",
+      "spec": "§16, D100",
+      "status": "pass",
+      "evidence": "index.test.ts, core jobs.test.ts green; signature check under-tested (finding 4)"
+    },
+    {
+      "id": "R3-AC-32",
+      "title": "The relay carries {seq, topics} only; no client publishes",
+      "spec": "D100",
+      "status": "pass",
+      "evidence": "index.test.ts 'reaches the one channel it names, as topics only'; Channel ignores client messages; mutant relay-hint-no-secret killed"
+    },
+    {
+      "id": "R3-AC-33",
+      "title": "The Worker deploys with no secret in the repo's Actions",
+      "spec": "D122, brief",
+      "status": "pass",
+      "evidence": "no workflow in .github/workflows mentions wrangler or Cloudflare"
+    },
+    {
+      "id": "R3-AC-34",
+      "title": "A signed pass, 5 minutes",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "core jobs.test.ts; FLOW-R3-8 one socket to /connect after sign-in"
+    },
+    {
+      "id": "R3-AC-35",
+      "title": "(sad) Signed out: 401",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "route sweep: signed out 401 signed_out"
+    },
+    {
+      "id": "R3-AC-36",
+      "title": "A change posts a hint to the person's channel",
+      "spec": "D100",
+      "status": "pass",
+      "evidence": "FLOW-R3-2; worker log POST /hint 200"
+    },
+    {
+      "id": "R3-AC-37",
+      "title": "An open screen reloads without a page reload",
+      "spec": "done-when 2",
+      "status": "pass",
+      "evidence": "FLOW-R3-2 step 3: Last working day in 625 ms, 0 navigations"
+    },
+    {
+      "id": "R3-AC-38",
+      "title": "Relay down: the stamp and the 30 s reload",
+      "spec": "§18, patterns §7",
+      "status": "pass",
+      "evidence": "FLOW-R3-3 step 1 (stamp offline); 30 s polling in realtime.test.ts; mutant polling-after-reconnect killed"
+    },
+    {
+      "id": "R3-AC-39",
+      "title": "Reload on reconnect and on return",
+      "spec": "D100",
+      "status": "pass",
+      "evidence": "FLOW-R3-3 step 2: reloaded 155 ms after going online; step 3: resume reloaded within 5 s"
+    },
+    {
+      "id": "R3-AC-40",
+      "title": "(sad) A malformed hint is ignored",
+      "spec": "D100",
+      "status": "pass",
+      "evidence": "realtime.test.ts 'ignore a topic this build does not know, and text that is no hint'"
+    },
+    {
+      "id": "R3-AC-41",
+      "title": "A token registered twice is one row",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "FLOW-R3-7 step 1: two phones (one registered twice), two rows"
+    },
+    {
+      "id": "R3-AC-42",
+      "title": "A token moves to the person who claims it",
+      "spec": "D142 (5)",
+      "status": "pass",
+      "evidence": "matrix: after B's claim, tok-a owner = B; probe r3-push-token-shared-0010 killed"
+    },
+    {
+      "id": "R3-AC-43",
+      "title": "The newest ten tokens",
+      "spec": "D142 (5)",
+      "status": "pass",
+      "evidence": "jobs.test.ts; mutants push-tokens-uncapped, push-token-not-refreshed killed"
+    },
+    {
+      "id": "R3-AC-44",
+      "title": "Sign-out of the last session deletes the tokens",
+      "spec": "D142 (5)",
+      "status": "pass",
+      "evidence": "FLOW-R3-7 step 3: 0 tokens"
+    },
+    {
+      "id": "R3-AC-45",
+      "title": "Test push: admin only, 3 a minute",
+      "spec": "D142 (4)",
+      "status": "pass",
+      "evidence": "FLOW-R3-4c: member 403 forbidden; FLOW-R3-5: 503, 503, 503, then 429 'That’s a few tests already. Wait a minute.'"
+    },
+    {
+      "id": "R3-AC-46",
+      "title": "Test job: admin only",
+      "spec": "D142 (4)",
+      "status": "pass",
+      "evidence": "jobs.test.ts 'refuses the test push and the test job to a member'; mutant test-job-for-members killed"
+    },
+    {
+      "id": "R3-AC-47",
+      "title": "No Firebase SDK in the built web app",
+      "spec": "D142 (6)",
+      "status": "pass",
+      "evidence": "grep of apps/web/dist and dist-production for initializeApp|getMessaging|firebase-messaging|private_key|client_email: no file"
+    },
+    {
+      "id": "R3-AC-48",
+      "title": "record_backup() owner only",
+      "spec": "D142 (2)",
+      "status": "pass",
+      "evidence": "as B: permission denied for function record_backup; EXECUTE held by sen_owner only"
+    },
+    {
+      "id": "R3-AC-49",
+      "title": "Last backup shown to the admin, not a member",
+      "spec": "§17, screens.md",
+      "status": "pass",
+      "evidence": "FLOW-R3-4 (KL time of the good backup, 47 h ago), FLOW-R3-4c (no backup row)"
+    },
+    {
+      "id": "R3-AC-50",
+      "title": "Storage from Sen's own counts",
+      "spec": "D126, D142 (3)",
+      "status": "pass",
+      "evidence": "by hand: held = 1,500,000,000 (the 3,600,000,000 dump 31 days old not held; the failed one null) → '1.50 GB of 10 GB'; + 4,200,000,000 → '5.70 GB of 10 GB' with the warning icon"
+    },
+    {
+      "id": "R3-AC-51",
+      "title": "No dump committed; .gitignore covers dumps",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": ".gitignore: backups/, *.dump, *.sql.gz"
+    },
+    {
+      "id": "R3-AC-52",
+      "title": "No float in money or byte paths",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "diff grep for parseFloat|toFixed|Number(|numeric|float: only comments and identifiers; byte counts bigint"
+    },
+    {
+      "id": "R3-AC-53",
+      "title": "No secret in the built app",
+      "spec": "CLAUDE.md, §17",
+      "status": "pass",
+      "evidence": "grep of built bundles for SCHEDULER_SECRET|RELAY_SECRET|qa secrets|private_key: no file; gitleaks over 407 commits: no leaks"
+    },
+    {
+      "id": "R3-AC-54",
+      "title": "The admin's Data shows no one's money",
+      "spec": "D52",
+      "status": "pass",
+      "evidence": "FLOW-R3-4 screenshots: last backup, storage, checks only"
+    },
+    {
+      "id": "R3-AC-55",
+      "title": "pnpm security passes",
+      "spec": "done-when 7",
+      "status": "pass",
+      "evidence": "PASS dependency audit; PASS secret scan; PASS security lint rules"
+    },
+    {
+      "id": "R3-AC-56",
+      "title": "New routes in the table and swept",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "routes.table.ts lists tick, health/jobs, push token PUT/DELETE, push/test, realtime/token, jobs/test; sweep green"
+    },
+    {
+      "id": "R3-AC-57",
+      "title": "Errors are {code, message}",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "route sweep; FLOW-R3-6 bodies {code: late, message, late}"
+    },
+    {
+      "id": "R3-AC-58",
+      "title": "The CSP adds only the relays",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "vercel.json connect-src 'self' plus the two wss:// Worker origins, no wildcard (production naming the preview relay: run 1 note 11, standing)"
+    },
+    {
+      "id": "R3-AC-59",
+      "title": "(sad) A member's rows can't turn health green",
+      "spec": "§18",
+      "status": "pass",
+      "evidence": "FLOW-R3-6 step 3: 503 with Ben's fresh morning row; matrix: B's forged backup row, jobs_health backup=null"
+    },
+    {
+      "id": "R3-AC-60",
+      "title": "The tick answers when it next needs waking, skipping suspended people",
+      "spec": "D141",
+      "status": "pass",
+      "evidence": "jobs.test.ts next; pgTAP 'nor sets the next wake'; mutant next-once-for-suspended killed"
+    },
+    {
+      "id": "R3-AC-61",
+      "title": "(sad) Another person's channel gets no hint",
+      "spec": "D100",
+      "status": "pass",
+      "evidence": "FLOW-R3-2 step 4: Ben's device made 0 settings reads"
+    },
+    {
+      "id": "R3-AC-62",
+      "title": "(sad) A stale or repeated hint",
+      "spec": "D100",
+      "status": "pass",
+      "evidence": "realtime.test.ts 'invalidate everything after a gap in seq'"
+    },
+    {
+      "id": "R3-AC-63",
+      "title": "Settings → Data follows patterns.md",
+      "spec": "patterns.md",
+      "status": "fail",
+      "evidence": "the storage warning lacks words (finding 6); otherwise skeleton, rows and groups are the shared ones (eyes R3-1, R3-3)"
+    },
+    {
+      "id": "R3-AC-64",
+      "title": "Sign-out token rules across sessions",
+      "spec": "D142 (5)",
+      "status": "pass",
+      "evidence": "FLOW-R3-7 step 2: phone two's token kept while its session lives; step 3: none after the last"
+    }
+  ],
+  "notTested": [
+    {
+      "what": "A real push arriving on the Xiaomi, and the alerts channel",
+      "why": "needs the phone and Firebase's production config; on the owner's list in docs/local.md (B06 item 5)"
+    },
+    {
+      "what": "The deployed Workers' crons, the cron-job.org monitor's email, and a real backup landing in R2 and restoring",
+      "why": "production and sen_ops are out of a QA session's reach (docs/cloud.md §3); docs/local.md items 3–4"
+    },
+    {
+      "what": "How often the Worker actually calls /jobs/tick (R3-AC-28)",
+      "why": "neither the local API nor wrangler dev logs a tick; finding 2 is the missing test"
+    },
+    {
+      "what": "Settings → Data's last-backup label in a production build against the API",
+      "why": "not run; previews keep the scenario's clock (finding 8)"
+    },
+    {
+      "what": "The whole-codebase claude-security scan (done-when 8)",
+      "why": "queued for the owner in docs/local.md; not run here, as asked"
+    }
+  ]
+}
