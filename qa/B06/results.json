@@ -1,0 +1,1020 @@
+{
+  "module": "B06",
+  "branch": "B06/jobs-realtime-backups",
+  "verdict": "fix first",
+  "generatedAt": "2026-10-25 09:10 UTC",
+  "phases": "1-6 (no diff report or mutants index: both scripts fail on Windows)",
+  "headline": "The scheduler, relay and health checks hold up under overlap, forgery and every probe but one; fix two things first: Sign out everywhere leaves the lost phone its pushes, and the test push and test job are open to every member, not the admin (D142).",
+  "summary": {
+    "criteria": 51,
+    "pass": 48,
+    "fail": 2,
+    "unreachable": 1
+  },
+  "suites": {
+    "unit": "pnpm test: 402/402 pass",
+    "db": "pnpm test:db: pgTAP 216 ok; API 122 pass, 7 skipped; route sweep green",
+    "e2e": "pnpm e2e 1397 pass; e2e:lived 24 pass; e2e:server 4 pass; QA b06 flows 7 of 8 pass (FLOW-5 fails on finding 2)",
+    "typecheck": "clean",
+    "lint": "clean",
+    "security": "pnpm security pass (audit, gitleaks, security lint); hygiene pass",
+    "mutants": "did not run (ERR_UNSUPPORTED_ESM_URL_SCHEME on Windows)",
+    "diff": "did not run (pnpm install failed in the base worktree)"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "status": "open",
+      "severity": "Major",
+      "title": "Sign out everywhere leaves every phone’s push token: a lost phone keeps getting the person’s pushes",
+      "detail": "D142 (5) makes a push token one person’s and says sign-out deletes it, *because a stale token would show someone’s notifications on a phone they’ve left*. The lost-phone journey (flows.md) is exactly that phone: from another device, Settings → Account → *Sign out everywhere*. `apiAuth.signOutEverywhere()` calls `letGo()`, whose `stopPush()` deletes only **this** device’s token (and only when push started in this session), then `/auth/revoke-sessions` revokes every session but touches no `push_tokens` row. Every other phone keeps its token, so the scheduler’s pushes (today the backup and storage alerts; later the check-in, claim reminders and the rest) keep arriving on the lost phone. Nothing on the server deletes a person’s tokens when their sessions are revoked.",
+      "repro": "API on sen_qa (qa/e2e/b06.config.ts header). Sign in as qa-ben; PUT /api/push/token with four tokens; POST /api/auth/revoke-sessions; count push_tokens for Ben.",
+      "evidence": "push_tokens for Ben before: 4 · sessions: 1\nPOST /api/auth/revoke-sessions → {\"status\":true}  [200]\ntokens after sign out everywhere: 4\nsessions: 0",
+      "spec": "AC-51; D142 (5); flows.md lost-phone; spec §17 Login"
+    },
+    {
+      "id": 2,
+      "status": "open",
+      "severity": "Major",
+      "title": "The test push and test job routes are open to every member, not the admin only",
+      "detail": "D142 (4): *Production’s test menu is Settings → Data’s Checks, admin only: Send a test push and Schedule a test job, 3 a minute at most.* The screen hides *Checks* from a member, but `POST /api/push/test` and `POST /api/jobs/test` are mounted in `personJobRoutes` with access `person` (routes.table.ts), with a rate limit and no admin check. Any signed-in member can schedule test jobs (each one wakes the Worker and then the API and Neon at its minute, D141) and send test pushes. `apps/api/test/jobs.test.ts` asserts the member *can* (`schedules the test job … cookie: cookies.member` → 200), so the suite pins the deviation rather than the decision.",
+      "repro": "Signed in as the member qa-ben: POST /api/jobs/test {} and POST /api/push/test {} (same origin, JSON). Or `playwright test -c b06.config.ts -g FLOW-5` from qa/e2e.",
+      "evidence": "== member Ben: POST /api/jobs/test (D142 says admin only)\n{\"runAt\":\"2026-10-25T08:20:00.000Z\"}  [HTTP 200]\n== member Ben: POST /api/push/test (D142 says admin only)\n{\"code\":\"not_configured\",\"message\":\"Push isn’t set up here.\"}  [HTTP 503]   ← past the (missing) admin check, at the send itself\nsen_qa: 00000000-0000-4000-8000-00000000000b|test|2026-10-25 08:20:00+00|test:2026-10-25T08:20:00.000Z|due\nFLOW-5 annotation: member routes: jobs/test 200, push/test 503",
+      "spec": "AC-38, AC-42; D142 (4)",
+      "screenshots": [
+        "FLOW-5-step-1-member-data.png"
+      ]
+    },
+    {
+      "id": 3,
+      "status": "open",
+      "severity": "Minor",
+      "title": "Any member can make /health/jobs green with their own job_runs rows (a fake backup and morning run)",
+      "detail": "`record_backup()` is owner-only so that only `sen_ops`’ workflow can record a backup (D142 (2), §17 *Only migrations and the backup use the owner role*), and pgTAP checks the API’s role can’t call it. But 0008 grants `INSERT, UPDATE` on `job_runs` to `app_user`, and RLS lets a person write their own rows with any `job` and `status`, while `jobs_health()` reads `max(ran_at)` of `job = 'backup' and status = 'ok'` across **everyone**. So one `app_user` statement as any member hides a dead backup from the outside monitor. No route exposes job_runs today, so it needs SQL as app_user (a future generic resource route or an injection); defence in depth for the one guard that tells the owner backups stopped. Narrow it: let `jobs_health()` count only the admin’s backup rows, or refuse `job = 'backup'` in the insert policy.",
+      "repro": "psql sen_qa: delete from job_runs where job in ('backup','morning'); then as app_user with app.user_id = Ben: insert into job_runs (user_id, job, run_key, status) values (<Ben>, 'backup', 'fake', 'ok'), (<Ben>, 'morning', 'fake-m', 'ok'); select * from jobs_health(); then GET /api/health/jobs.",
+      "evidence": " ?column? | morning_at | backup_at \n before   |            | \nINSERT 0 1\nINSERT 0 1\nCOMMIT\n after    | 2026-10-25 08:16:14.767197+00 | 2026-10-25 08:16:14.767197+00\n== health/jobs\n{\"ok\":true}  [HTTP 200]",
+      "spec": "AC-44; D142 (2); spec §17, §18 Backups stop"
+    },
+    {
+      "id": 4,
+      "status": "open",
+      "severity": "Minor",
+      "title": "The test that should hold “polling stops once the relay is back” can’t see polling continue",
+      "detail": "realtime.test.ts *reloads only the active queries every 30 s, and reconnecting reloads everything and stops that* checks for no invalidation within `PING_MS - 1` (25 s) after the reconnect. The 30 s interval started when the relay dropped, so its next fire after a reconnect at ~30 s is ~60 s, outside the window. Deleting `stopPolling()` from `onopen` leaves the suite green (probe P9). The behaviour itself is right today (FLOW-2 step 4: 0 settings reads in 35 s once live), but a regression that polls every open screen every 30 s forever (keeping Neon awake, D141’s whole point) would pass CI.",
+      "repro": "In apps/web/src/data/realtime.ts delete the line `      stopPolling();` in `s.onopen`; `pnpm exec vitest run apps/web/src/data/realtime.test.ts`.",
+      "evidence": " Test Files  1 passed (1)\n      Tests  15 passed (15)",
+      "spec": "AC-35; brief “every 30 s only while the relay is down”; D100"
+    },
+    {
+      "id": 5,
+      "status": "open",
+      "severity": "Minor",
+      "title": "QA’s breakage checks and diff don’t run on the Windows laptop, and B06 added no breakage checks",
+      "detail": "`node scripts/mutants.mjs` dies at its first import (`import(join(root, 'qa/mutants.ts'))` needs `pathToFileURL` on Windows), and `node scripts/qa-diff.mjs` dies at `pnpm install` in its base worktree (`spawnSync('pnpm', …)` without a shell: status null). So this run has no mutants index, no pixel or tree diff against main, no scripted-check findings and no Metrics section; the handoff says the laptop is QA-ready (test:db and the e2e configs were fixed for Windows’ shell, these two were not). Separately, `qa/mutants.ts` has no entry for any B06 guard, so even where it runs nothing checks the scheduler’s idempotency, health limits or pass expiry; the probes below name ten worth keeping.",
+      "repro": "node scripts/mutants.mjs; node scripts/qa-diff.mjs --out qa-artifacts/B06_jobs-realtime-backups/diff",
+      "evidence": "Error [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'\n---\nError: pnpm install --frozen-lockfile --prefer-offline failed (null)\n    at sh (file:///C:/Zhong%20Tai/Sen/scripts/qa-diff.mjs:66:29)",
+      "spec": "docs/workflow/qa.md (the sweep’s commands); D137, D139"
+    },
+    {
+      "id": 6,
+      "status": "open",
+      "severity": "Minor",
+      "title": "“Updated just now” shows over a loading skeleton, before the screen has loaded anything",
+      "detail": "With the relay unreachable from the start, the stamp appears while the screen is still a skeleton and says *Updated just now*, in that frame where the app bar’s title would be (the eyes pass, entry 6, *wrong*: no back arrow or title showed): `LiveStamp` shows `real ?? new Date()`, so a screen that has never loaded claims it just updated. patterns.md §7 has the stamp say how old what you see is; with nothing seen yet it should wait for the first load (or say nothing).",
+      "repro": "qa/e2e: `playwright test -c b06.config.ts -g FLOW-2` (the relay refuses A’s socket from the first connect); look at step 1.",
+      "evidence": "FLOW-2-step-1-stamp.png: \"Updated just now\" above four skeleton rows, no content yet.",
+      "spec": "AC-34, AC-50; patterns.md §7 Live updates, Loading",
+      "screenshots": [
+        "FLOW-2-step-1-stamp.png"
+      ]
+    },
+    {
+      "id": 7,
+      "status": "open",
+      "severity": "Minor",
+      "title": "Schedule a test job promises a push that may never come",
+      "detail": "The eyes pass (qa/B06/eyes.md, entry 5, *wrong*): the toast says *Test job set for 16:54. Its push arrives then.* on a device that a moment earlier was told *Push isn’t set up here.*, or that has no phone registered at all (a browser). When the job runs, Settings → Data shows nothing new, so the owner can’t tell a job that ran from one that didn’t. `scheduleTestJob()` always promises the push; the job’s `jobs` hint invalidates only the settings query, which shows no job result.",
+      "repro": "qa/e2e: playwright test -c b06.config.ts -g FLOW-7 (local API, no Firebase).",
+      "evidence": "FLOW-7-step-1-scheduled.png: toast \"Test job set for … Its push arrives then.\"; FLOW-6 toasts: \"Push isn’t set up here.\" ×3; FLOW-7-step-2-ran.png: the screen unchanged after the job ran (done 1, one job_runs row).",
+      "spec": "AC-39; patterns.md §7 (status in words); D142 (4)",
+      "screenshots": [
+        "FLOW-7-step-1-scheduled.png",
+        "FLOW-7-step-2-ran.png"
+      ]
+    },
+    {
+      "id": 8,
+      "status": "open",
+      "severity": "Minor",
+      "title": "The stamp pushes the screen down by about 30 px when it appears and goes",
+      "detail": "The eyes pass (entry 7, *look again*), confirmed by measuring FLOW-2-step-2 against FLOW-2-step-3: LiveStamp is a block between the app bar and the content, so when the relay drops or returns everything below it moves by the stamp’s height, under a finger that may be about to tap a payday choice. A status that comes and goes on its own shouldn’t move what the person is about to tap.",
+      "repro": "qa/e2e: playwright test -c b06.config.ts -g FLOW-2; compare step 2 and step 3.",
+      "evidence": "Screenshots at 2×: the Payday label’s top at y ≈ 219 with the stamp (FLOW-2-step-2-fallback.png) and y ≈ 159 without it (FLOW-2-step-3-back.png): 60 image px, 30 CSS px.",
+      "spec": "AC-34; patterns.md §7 Live updates",
+      "screenshots": [
+        "FLOW-2-step-2-fallback.png",
+        "FLOW-2-step-3-back.png"
+      ]
+    },
+    {
+      "id": 9,
+      "status": "open",
+      "severity": "Note",
+      "title": "A person who knows another’s FCM token can take it",
+      "detail": "`push_token_claim()` moves a token to whoever claims it (D142 (5), by design), so a member who learnt another person’s token would receive that person’s pushes. Tokens never leave the phone or the server, so this is a note on the design’s trust in the token, not a defect.",
+      "repro": "As Ben: PUT /api/push/token {\"token\":\"tok-a\"} (the admin’s seeded token).",
+      "evidence": "{\"ok\":true}  [HTTP 200]\npush_tokens: 00000000-0000-4000-8000-00000000000b|tok-a",
+      "spec": "D142 (5)"
+    },
+    {
+      "id": 10,
+      "status": "open",
+      "severity": "Note",
+      "title": "The tick’s own database work isn’t in its Server-Timing",
+      "detail": "The route sweep’s metrics show `POST /api/jobs/tick 200` with 2 queries, but a tick runs `jobs_people`, a claim, a finish and each task per person through `deps.pool`, outside the request’s counted connection. When later slices add work to the frames, the tick’s cost won’t show in QA’s API metrics.",
+      "repro": "sweep/metrics/api.jsonl, POST /api/jobs/tick 200",
+      "evidence": "POST /api/jobs/tick 200   n=2 appMs med=9.2 max=9.2 queries max=2",
+      "spec": "D139 (measure, don’t guess)"
+    },
+    {
+      "id": 11,
+      "status": "open",
+      "severity": "Note",
+      "title": "Production’s CSP also admits the preview relay",
+      "detail": "vercel.json’s one CSP serves production and previews alike, so production’s `connect-src` includes `wss://sen-worker-preview.sen-my.workers.dev`. Connecting is all it allows and passes are signed per Worker, so nothing reaches the bridge; it is still one more origin than production needs.",
+      "repro": "apps/web/vercel.json; production.spec.ts allows both.",
+      "evidence": "connect-src 'self' wss://sen-worker.sen-my.workers.dev wss://sen-worker-preview.sen-my.workers.dev",
+      "spec": "AC-47; spec §17"
+    },
+    {
+      "id": 12,
+      "status": "open",
+      "severity": "Note",
+      "title": "Read, not run: a wake that lands during a tick can be lost",
+      "detail": "By reading only (not reproduced): `Scheduler.cron()` saves `await this.tick(s, now)`, built from the state read before the tick’s fetch. A `wake()` that arrives while that fetch is in flight (the Durable Object’s input gate opens during it) is saved, then overwritten by the tick’s result. If the API scheduled the job after the tick’s own `jobs_next_once()` query, the job waits for the next frame, up to 14 hours. The window is a few milliseconds; a test job tapped at that instant would be late. Re-reading the state after the tick and keeping the earlier `next` would close it.",
+      "repro": "apps/worker/src/scheduler.ts, cron() and wake()",
+      "evidence": "Not run.",
+      "spec": "AC-26; D141"
+    },
+    {
+      "id": 13,
+      "status": "open",
+      "severity": "Note",
+      "title": "The eyes pass’s other look-agains on Settings → Data",
+      "detail": "From qa/B06/eyes.md, not judged further here: the two Checks rows read as links to other screens and never show a result; in Line the Export card and the rows start at two left edges; in Instrument dark and Mercury dark the Export everything button barely stands out from its card; a member sees nothing about backups; the real server says *Sat, 24 Oct, 23:30* where the made-up data says *Yesterday, 03:00* (momentLabel uses the app clock, which a preview’s fake pins to 18 Oct, so a real backup from yesterday reads as a date). Without a pixel diff against main (finding 5) the look-specific ones weren’t compared with main.",
+      "repro": "qa/B06/eyes.md entries 1–4",
+      "evidence": "settings_data--line-light.png, settings_data--instrument-dark.png, settings_data--mercury-dark.png; FLOW-4-step-1-admin-data.png",
+      "spec": "patterns.md §2, §7",
+      "screenshots": [
+        "FLOW-4-step-1-admin-data.png"
+      ]
+    }
+  ],
+  "probes": [
+    {
+      "broke": "P1: `for update skip locked` dropped from the one-off claim (tick.ts)",
+      "caught": true,
+      "note": "jobs.test.ts › runs a due job once, even when two ticks overlap: ran twice"
+    },
+    {
+      "broke": "P2: a frame’s run reclaimed whatever its state (ON CONFLICT … where true)",
+      "caught": true,
+      "note": "runs the morning job once per person and date: [ok,2] not [ok,1]"
+    },
+    {
+      "broke": "P3: the run key’s day taken in UTC, not Kuala Lumpur",
+      "caught": true,
+      "note": "the morning run at 07:10 KL keyed on the day before: runs() empty"
+    },
+    {
+      "broke": "P4: /health/jobs’ morning limit 26 h → 260 h",
+      "caught": true,
+      "note": "health › fails while the morning job … is late: got {ok:true}"
+    },
+    {
+      "broke": "P5: once() sends even when the alert key was already claimed",
+      "caught": true,
+      "note": "pushes the backup alert once a day; warns … once a month"
+    },
+    {
+      "broke": "P6: jobs_people() no longer refuses a request with a person set",
+      "caught": true,
+      "note": "pgTAP jobs.sql: 1 of 37 failed"
+    },
+    {
+      "broke": "P7: push_token_claim() stops taking the token from its last owner",
+      "caught": true,
+      "note": "pgTAP jobs.sql tests 32, 34 failed"
+    },
+    {
+      "broke": "P8: verifyPass() ignores the pass’s expiry",
+      "caught": true,
+      "note": "core jobs.test.ts › relay passes … for five minutes"
+    },
+    {
+      "broke": "P9: polling keeps going after the relay reconnects (stopPolling removed from onopen)",
+      "caught": false,
+      "note": "realtime.test.ts stayed green, 15/15: finding 4"
+    },
+    {
+      "broke": "P10: the Worker’s cron-late limit 5 → 50 min",
+      "caught": true,
+      "note": "clock.test.ts › fails when the cron stops"
+    },
+    {
+      "broke": "P11: the API’s `next` trusted however far ahead (MAX_SLEEP_MS dropped)",
+      "caught": true,
+      "note": "clock.test.ts › never trusts an answer too near or too far"
+    },
+    {
+      "broke": "P12: wake() moves the next tick later as well as sooner",
+      "caught": true,
+      "note": "clock.test.ts › wakes sooner … never later"
+    },
+    {
+      "broke": "P13: the stamp shows whenever the relay isn’t live (off included)",
+      "caught": true,
+      "note": "live-stamp.test.tsx › shows only while the relay is down"
+    }
+  ],
+  "flows": [
+    {
+      "id": "FLOW-1",
+      "title": "A change on one device updates the same screen open on another",
+      "kind": "happy",
+      "actor": "the admin, two browsers",
+      "entry": "/s/settings/you in both",
+      "covers": [
+        "AC-28",
+        "AC-29",
+        "AC-30",
+        "AC-32"
+      ],
+      "spec": "D100; brief done-when 2",
+      "status": "pass",
+      "ends": "A shows Last working day within 10 s with 0 navigations, no stamp; user_settings.expected_payday = last-working",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Settings → You in A and B",
+          "assertion": "A’s Last working day not checked",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-1-a-open.png"
+        },
+        {
+          "n": 2,
+          "action": "In B, choose Last working day",
+          "assertion": "B’s radio checked",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-2-b-changes.png"
+        },
+        {
+          "n": 3,
+          "action": "Watch A",
+          "assertion": "A’s radio checked within 10 s, 0 navigations, no “Updated … ago”; the row in sen_qa is last-working",
+          "status": "pass",
+          "screenshot": "FLOW-1-step-3-a-updated.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-2",
+      "title": "The relay is down: stamp, 30 s fallback, and back",
+      "kind": "sad",
+      "actor": "the admin, two browsers",
+      "entry": "/s/settings/you; A’s relay socket closed on open",
+      "covers": [
+        "AC-34",
+        "AC-35"
+      ],
+      "spec": "patterns.md §7; §18",
+      "status": "pass",
+      "ends": "stamp shown while down; B’s change reached A after 30.2 s with no navigation; stamp gone on reconnect; 0 settings reads in the next 35 s",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open with the relay refusing A",
+          "assertion": "role=status “Updated …” visible",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-1-stamp.png"
+        },
+        {
+          "n": 2,
+          "action": "In B, choose Not set",
+          "assertion": "A shows Not set within 40 s (took 30 201 ms), 0 navigations",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-2-fallback.png"
+        },
+        {
+          "n": 3,
+          "action": "Let the relay accept A again",
+          "assertion": "the stamp is gone within 45 s; then 0 /api/settings reads in 35 s",
+          "status": "pass",
+          "screenshot": "FLOW-2-step-3-back.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-3",
+      "title": "Coming back to the app reloads the screen",
+      "kind": "happy",
+      "actor": "the admin",
+      "entry": "/s/settings/you, no relay",
+      "covers": [
+        "AC-36"
+      ],
+      "spec": "D100",
+      "status": "pass",
+      "ends": "after hidden → visible, the screen shows the value changed underneath it",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open; change the payday in the database",
+          "assertion": "Last working day checked",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-1-open.png"
+        },
+        {
+          "n": 2,
+          "action": "visibilitychange hidden → visible",
+          "assertion": "Not set checked within 5 s",
+          "status": "pass",
+          "screenshot": "FLOW-3-step-2-reloaded.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-4",
+      "title": "The admin sees the last good backup, storage and the checks",
+      "kind": "happy",
+      "actor": "the admin",
+      "entry": "/s/settings/data",
+      "covers": [
+        "AC-41",
+        "AC-43"
+      ],
+      "spec": "§17; D126; D142 (3)",
+      "status": "pass",
+      "ends": "Last backup “Sat, 24 Oct, 23:30” (the good one, not the later failed run), “1.50 GB of 10 GB”, both checks; the same in New York time",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Settings → Data (KL)",
+          "assertion": "“24 Oct, 23:30”, “1.50 GB of 10 GB”, Send a test push, Schedule a test job",
+          "status": "pass",
+          "screenshot": "FLOW-4-step-1-admin-data.png"
+        },
+        {
+          "n": 2,
+          "action": "The same in a browser in America/New_York",
+          "assertion": "“24 Oct, 23:30”",
+          "status": "pass",
+          "screenshot": "FLOW-4b-step-1-new-york.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-5",
+      "title": "A member opens Settings → Data",
+      "kind": "sad",
+      "actor": "a member (qa-ben)",
+      "entry": "/s/settings/data",
+      "covers": [
+        "AC-38",
+        "AC-42"
+      ],
+      "spec": "screens.md Data; D142 (4)",
+      "status": "fail",
+      "ends": "Export only on screen (pass); the test routes refuse the member (fail: jobs/test 200, push/test 503 at the send)",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Settings → Data; call the two test routes",
+          "assertion": "no Backups or Checks (pass); routes 403 (fail: 200 and 503)",
+          "status": "fail",
+          "screenshot": "FLOW-5-step-1-member-data.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-6",
+      "title": "Test pushes, three a minute",
+      "kind": "sad",
+      "actor": "the admin",
+      "entry": "Settings → Data → Checks",
+      "covers": [
+        "AC-38"
+      ],
+      "spec": "D142 (4)",
+      "status": "pass",
+      "ends": "toasts: “Push isn’t set up here.” ×3 (no Firebase locally), then “That’s a few tests already. Wait a minute.”",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Tap Send a test push (1)",
+          "assertion": "a toast; the row back to Send a test push",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-1-push-1.png"
+        },
+        {
+          "n": 2,
+          "action": "Tap Send a test push (2)",
+          "assertion": "a toast; the row back to Send a test push",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-2-push-2.png"
+        },
+        {
+          "n": 3,
+          "action": "Tap Send a test push (3)",
+          "assertion": "a toast; the row back to Send a test push",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-3-push-3.png"
+        },
+        {
+          "n": 4,
+          "action": "Tap Send a test push (4)",
+          "assertion": "the toast says “a few tests already”",
+          "status": "pass",
+          "screenshot": "FLOW-6-step-4-push-4.png"
+        }
+      ]
+    },
+    {
+      "id": "FLOW-7",
+      "title": "The admin schedules a test job; it runs once",
+      "kind": "happy",
+      "actor": "the admin",
+      "entry": "Settings → Data → Checks",
+      "covers": [
+        "AC-17",
+        "AC-39"
+      ],
+      "spec": "done-when 1",
+      "status": "pass",
+      "ends": "one due test job; after two ticks at once: done, attempts 1, one once:test job_runs row",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Tap Schedule a test job",
+          "assertion": "toast “Test job set for HH:MM”; 1 due row",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-1-scheduled.png"
+        },
+        {
+          "n": 2,
+          "action": "Two ticks at once with the scheduler secret",
+          "assertion": "both 200; job “done 1”; 1 job_runs row",
+          "status": "pass",
+          "screenshot": "FLOW-7-step-2-ran.png"
+        }
+      ]
+    },
+    {
+      "id": "CORE-1",
+      "title": "first-run (core)",
+      "kind": "happy",
+      "actor": "the owner",
+      "entry": "sign-in",
+      "covers": [],
+      "spec": "flows.md first-run",
+      "status": "pass",
+      "ends": "home reads Spent since you started (the sweep’s journeys.spec, Minted light)",
+      "steps": [
+        {
+          "n": 1,
+          "action": "email",
+          "assertion": "journeys.spec assertions (pnpm e2e, 1397 passed)",
+          "status": "pass",
+          "screenshot": "CORE-first-run-01_email.png"
+        },
+        {
+          "n": 2,
+          "action": "code expired",
+          "assertion": "journeys.spec assertions (pnpm e2e, 1397 passed)",
+          "status": "pass",
+          "screenshot": "CORE-first-run-02_code_expired.png"
+        },
+        {
+          "n": 3,
+          "action": "your apps",
+          "assertion": "journeys.spec assertions (pnpm e2e, 1397 passed)",
+          "status": "pass",
+          "screenshot": "CORE-first-run-03_your_apps.png"
+        },
+        {
+          "n": 4,
+          "action": "notification access",
+          "assertion": "journeys.spec assertions (pnpm e2e, 1397 passed)",
+          "status": "pass",
+          "screenshot": "CORE-first-run-04_notification_access.png"
+        },
+        {
+          "n": 5,
+          "action": "keep Sen running",
+          "assertion": "journeys.spec assertions (pnpm e2e, 1397 passed)",
+          "status": "pass",
+          "screenshot": "CORE-first-run-05_keep_Sen_running.png"
+        },
+        {
+          "n": 6,
+          "action": "your accounts",
+          "assertion": "journeys.spec assertions (pnpm e2e, 1397 passed)",
+          "status": "pass",
+          "screenshot": "CORE-first-run-06_your_accounts.png"
+        },
+        {
+          "n": 7,
+          "action": "your name",
+          "assertion": "journeys.spec assertions (pnpm e2e, 1397 passed)",
+          "status": "pass",
+          "screenshot": "CORE-first-run-07_your_name.png"
+        },
+        {
+          "n": 8,
+          "action": "expected payday",
+          "assertion": "journeys.spec assertions (pnpm e2e, 1397 passed)",
+          "status": "pass",
+          "screenshot": "CORE-first-run-08_expected_payday.png"
+        },
+        {
+          "n": 9,
+          "action": "home before the first salary",
+          "assertion": "journeys.spec assertions (pnpm e2e, 1397 passed)",
+          "status": "pass",
+          "screenshot": "CORE-first-run-09_home_before_the_first_salary.png"
+        }
+      ]
+    },
+    {
+      "id": "CORE-2",
+      "title": "pay-new (core)",
+      "kind": "happy",
+      "actor": "the owner",
+      "entry": "review",
+      "covers": [],
+      "spec": "flows.md pay-new",
+      "status": "pass",
+      "ends": "answered, with Undo, and undone",
+      "steps": [
+        {
+          "n": 1,
+          "action": "review",
+          "assertion": "journeys.spec assertions",
+          "status": "pass",
+          "screenshot": "CORE-pay-new-01_review.png"
+        },
+        {
+          "n": 2,
+          "action": "answered with Undo",
+          "assertion": "journeys.spec assertions",
+          "status": "pass",
+          "screenshot": "CORE-pay-new-02_answered_with_Undo.png"
+        },
+        {
+          "n": 3,
+          "action": "undone",
+          "assertion": "journeys.spec assertions",
+          "status": "pass",
+          "screenshot": "CORE-pay-new-03_undone.png"
+        }
+      ]
+    },
+    {
+      "id": "CORE-3",
+      "title": "scan-after (core)",
+      "kind": "happy",
+      "actor": "the owner",
+      "entry": "scan",
+      "covers": [],
+      "spec": "flows.md scan-after",
+      "status": "pass",
+      "ends": "attached with Undo",
+      "steps": [
+        {
+          "n": 1,
+          "action": "crop",
+          "assertion": "journeys.spec assertions",
+          "status": "pass",
+          "screenshot": "CORE-scan-after-01_crop.png"
+        },
+        {
+          "n": 2,
+          "action": "reading",
+          "assertion": "journeys.spec assertions",
+          "status": "pass",
+          "screenshot": "CORE-scan-after-02_reading.png"
+        },
+        {
+          "n": 3,
+          "action": "confirm",
+          "assertion": "journeys.spec assertions",
+          "status": "pass",
+          "screenshot": "CORE-scan-after-03_confirm.png"
+        },
+        {
+          "n": 4,
+          "action": "three people ate",
+          "assertion": "journeys.spec assertions",
+          "status": "pass",
+          "screenshot": "CORE-scan-after-04_three_people_ate.png"
+        },
+        {
+          "n": 5,
+          "action": "attached with Undo",
+          "assertion": "journeys.spec assertions",
+          "status": "pass",
+          "screenshot": "CORE-scan-after-05_attached_with_Undo.png"
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "AC-1",
+      "title": "RLS on the four new tables",
+      "spec": "non-negotiable; §15",
+      "status": "pass",
+      "evidence": "matrix: no id 0, empty id 0, A 1 own:1, B 1 own:1, sen_auth denied, owner 2 — each table"
+    },
+    {
+      "id": "AC-2",
+      "title": "No user id set reads nothing, writes nothing",
+      "spec": "§5",
+      "status": "pass",
+      "evidence": "count 0; insert → new row violates row-level security policy for table \"job_runs\""
+    },
+    {
+      "id": "AC-3",
+      "title": "Writing another person’s row is refused",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "B inserting A’s rows: RLS violation ×3; B moving its row to A refused; UPDATE 0, DELETE 0"
+    },
+    {
+      "id": "AC-4",
+      "title": "One-off job dedupe",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "pgTAP 23505; repeat for A: INSERT 0 0, still 2 rows"
+    },
+    {
+      "id": "AC-5",
+      "title": "The dedupe key is per person",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "same key for A and B: 2 rows"
+    },
+    {
+      "id": "AC-6",
+      "title": "alerts_sent: a reminder once",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "jobs.test.ts backup alert once a day; P5 caught"
+    },
+    {
+      "id": "AC-7",
+      "title": "A different alert key sends",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "backup_late and r2_half both pushed to the admin (jobs.test.ts)"
+    },
+    {
+      "id": "AC-8",
+      "title": "A token belongs to one person",
+      "spec": "D142 (5)",
+      "status": "pass",
+      "evidence": "Ben claimed tok-a: 1 row, Ben’s; pgTAP; P7 caught"
+    },
+    {
+      "id": "AC-9",
+      "title": "Re-registering a token is a no-op",
+      "spec": "§15",
+      "status": "pass",
+      "evidence": "pgTAP still one row; PUT twice 200"
+    },
+    {
+      "id": "AC-10",
+      "title": "Sign-out deletes the phone’s token",
+      "spec": "D142 (5)",
+      "status": "unreachable",
+      "evidence": "DELETE /api/push/token passes (jobs.test.ts); the shell’s stopPush needs the phone"
+    },
+    {
+      "id": "AC-11",
+      "title": "The people function lists ids only, no suspended person",
+      "spec": "done-when 6",
+      "status": "pass",
+      "evidence": "SETOF uuid; pgTAP suspended excluded; P6 caught"
+    },
+    {
+      "id": "AC-12",
+      "title": "The definer functions refuse a person; record_backup owner-only",
+      "spec": "§5, §17",
+      "status": "pass",
+      "evidence": "pgTAP denied ×5 (but see finding 3: job_runs insert)"
+    },
+    {
+      "id": "AC-13",
+      "title": "The tick checks its secret",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "no secret 401, wrong secret 401, cookie without bearer 401, { code, message }"
+    },
+    {
+      "id": "AC-14",
+      "title": "Morning once per person and KL date",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "jobs.test.ts two ticks at 07:10 → [ok,1]×2; P2 caught"
+    },
+    {
+      "id": "AC-15",
+      "title": "Outside the windows nothing frames",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "tick at 13:00 KL frame null (test); live tick at 16:21 KL {\"frame\":null}; evening once not run separately"
+    },
+    {
+      "id": "AC-16",
+      "title": "The KL date keys idempotency",
+      "spec": "conventions",
+      "status": "pass",
+      "evidence": "P3 (UTC day) caught"
+    },
+    {
+      "id": "AC-17",
+      "title": "A one-off job runs once under two overlapping ticks",
+      "spec": "done-when 1",
+      "status": "pass",
+      "evidence": "live: two crons + two ticks → done 1, one job_runs row; P1 caught"
+    },
+    {
+      "id": "AC-18",
+      "title": "A job not yet due is left alone",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "jobs.test.ts leaves a job in the future alone"
+    },
+    {
+      "id": "AC-19",
+      "title": "Retries, then failed, each try recorded",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "jobs.test.ts retries a failing job later, then gives up: failed, 3"
+    },
+    {
+      "id": "AC-20",
+      "title": "Each job as its person; no user id leaks on a pooled connection",
+      "spec": "§5",
+      "status": "pass",
+      "evidence": "after commit/rollback app.user_id = [] on the same session"
+    },
+    {
+      "id": "AC-21",
+      "title": "Every run recorded",
+      "spec": "§15, §18",
+      "status": "pass",
+      "evidence": "live once:test row ok, attempts 1"
+    },
+    {
+      "id": "AC-22",
+      "title": "/health/jobs healthy: 2xx, no data",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "{\"ok\":true} [200]"
+    },
+    {
+      "id": "AC-23",
+      "title": "Morning late → non-2xx",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "503 late:[morning]; P4 caught"
+    },
+    {
+      "id": "AC-24",
+      "title": "Backup late or none → non-2xx",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "503 late:[morning, backup] with none"
+    },
+    {
+      "id": "AC-25",
+      "title": "The backup watchdog pushes once",
+      "spec": "§18",
+      "status": "pass",
+      "evidence": "jobs.test.ts; P5 caught"
+    },
+    {
+      "id": "AC-26",
+      "title": "The scheduler ticks only when due",
+      "spec": "D141",
+      "status": "pass",
+      "evidence": "clock.test.ts; P11, P12 caught; live tick answered next 09:15 (the next due job)"
+    },
+    {
+      "id": "AC-27",
+      "title": "The Worker’s /health",
+      "spec": "D141",
+      "status": "pass",
+      "evidence": "live: 503 late:[cron] before the first cron, 200 after; P10 caught"
+    },
+    {
+      "id": "AC-28",
+      "title": "A pass opens its one channel",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "live ws: real true; channel swapped false; expired false; other key false; split false"
+    },
+    {
+      "id": "AC-29",
+      "title": "Hints carry no data",
+      "spec": "D100",
+      "status": "pass",
+      "evidence": "received {\"seq\":1,\"topics\":[\"settings\"]}; a topic \"RM12.50\" refused 400"
+    },
+    {
+      "id": "AC-30",
+      "title": "A pass for your own channel, 5 minutes",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "channel user:<Ben>, ttl 300 s"
+    },
+    {
+      "id": "AC-31",
+      "title": "Signed out, or asking for another channel",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "401; body channel of A ignored → pass for B"
+    },
+    {
+      "id": "AC-32",
+      "title": "A hint reloads only its topics",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "realtime.test.ts; FLOW-1"
+    },
+    {
+      "id": "AC-33",
+      "title": "A stale or repeated hint is harmless",
+      "spec": "D100",
+      "status": "pass",
+      "evidence": "realtime.test.ts gap → reload all"
+    },
+    {
+      "id": "AC-34",
+      "title": "Fallbacks while the relay is down",
+      "spec": "patterns §7",
+      "status": "pass",
+      "evidence": "FLOW-2: stamp; change arrived after 30 201 ms"
+    },
+    {
+      "id": "AC-35",
+      "title": "No polling and no stamp while live",
+      "spec": "brief",
+      "status": "pass",
+      "evidence": "FLOW-2 step 4: 0 reads in 35 s (the unit test can’t see it: finding 4)"
+    },
+    {
+      "id": "AC-36",
+      "title": "Return to the app reloads",
+      "spec": "D100",
+      "status": "pass",
+      "evidence": "FLOW-3"
+    },
+    {
+      "id": "AC-37",
+      "title": "Registering a token needs a session",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "route sweep (pnpm test:db) green for person routes"
+    },
+    {
+      "id": "AC-38",
+      "title": "Test push and test job: admin only, 3 a minute",
+      "spec": "D142 (4)",
+      "status": "fail",
+      "evidence": "rate limit holds (FLOW-6); member jobs/test 200, push/test 503 (finding 2)"
+    },
+    {
+      "id": "AC-39",
+      "title": "Schedule a test job runs once",
+      "spec": "done-when 1",
+      "status": "pass",
+      "evidence": "FLOW-7"
+    },
+    {
+      "id": "AC-40",
+      "title": "No Firebase SDK in the bundle",
+      "spec": "D142 (6)",
+      "status": "pass",
+      "evidence": "grep firebase|gstatic|googleapis|private_key over dist-production: no file"
+    },
+    {
+      "id": "AC-41",
+      "title": "The admin sees the last successful backup",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "Sat, 24 Oct, 23:30 (the later failed run ignored)"
+    },
+    {
+      "id": "AC-42",
+      "title": "A member sees no backups or checks",
+      "spec": "screens.md",
+      "status": "pass",
+      "evidence": "screen shows Export only; settings data {lastBackup:null, storage:null} (the routes: AC-38)"
+    },
+    {
+      "id": "AC-43",
+      "title": "Storage from Sen’s counts, integer bytes",
+      "spec": "D126, D142 (3)",
+      "status": "pass",
+      "evidence": "1.50 GB of 10 GB from job_runs.bytes; half-full push once a month (test)"
+    },
+    {
+      "id": "AC-44",
+      "title": "record_backup records; owner only",
+      "spec": "D142 (2)",
+      "status": "pass",
+      "evidence": "pgTAP; but a direct job_runs insert fakes it (finding 3)"
+    },
+    {
+      "id": "AC-45",
+      "title": "No float in money or bytes",
+      "spec": "non-negotiable",
+      "status": "pass",
+      "evidence": "diff grep: no parseFloat/toFixed/Number( on amounts; byte divisions only for display"
+    },
+    {
+      "id": "AC-46",
+      "title": "No secret in the built app",
+      "spec": "non-negotiable",
+      "status": "pass",
+      "evidence": "grep over dist-production and dist: no key, secret, private_key"
+    },
+    {
+      "id": "AC-47",
+      "title": "The CSP names the relays exactly",
+      "spec": "§17",
+      "status": "pass",
+      "evidence": "production.spec green; two exact wss origins (note 11)"
+    },
+    {
+      "id": "AC-48",
+      "title": "New routes in the table, structured errors",
+      "spec": "§16",
+      "status": "pass",
+      "evidence": "route sweep green; 400 { code, message, field }; NUL refused"
+    },
+    {
+      "id": "AC-49",
+      "title": "pnpm security and hygiene pass",
+      "spec": "brief done-when 7",
+      "status": "pass",
+      "evidence": "security 0 (audit, gitleaks, lint PASS), hygiene 0"
+    },
+    {
+      "id": "AC-50",
+      "title": "Settings → Data follows the patterns",
+      "spec": "CLAUDE.md",
+      "status": "pass",
+      "evidence": "ListSkeleton loading, GroupCard and NavRow; see finding 6 on the stamp"
+    },
+    {
+      "id": "AC-51",
+      "title": "Sign out everywhere stops every phone’s pushes",
+      "spec": "D142 (5)",
+      "status": "fail",
+      "evidence": "4 tokens before and after revoke-sessions (finding 1)"
+    }
+  ],
+  "notTested": [
+    {
+      "what": "A test push arriving on the Xiaomi (done-when 3), and sign-out deleting the phone’s token through the shell",
+      "why": "needs the phone and Firebase; queued in docs/local.md B06 item 5 (already there)"
+    },
+    {
+      "what": "A backup landing in R2 and restoring (done-when 4)",
+      "why": "runs in sen_ops’ workflow with production secrets no session holds; only record_backup() was tested"
+    },
+    {
+      "what": "Stopping the deployed Worker’s cron and the monitor’s email (done-when 5)",
+      "why": "needs Cloudflare and cron-job.org; the local Worker’s /health went 503 → 200 around its first cron"
+    },
+    {
+      "what": "The pixel and tree diff against main, the scripted checks, and the metrics against main",
+      "why": "scripts/qa-diff.mjs fails on this laptop (finding 5); the eyes pass looked at the changed screens from the catalogue and the flows instead"
+    },
+    {
+      "what": "qa/mutants.ts’ standing breakage checks",
+      "why": "scripts/mutants.mjs fails on this laptop (finding 5); 13 probes made by hand instead"
+    },
+    {
+      "what": "The whole-codebase claude-security scan (done-when 8)",
+      "why": "queued for the owner in docs/local.md; not run by QA, as asked"
+    },
+    {
+      "what": "The live relay under the real CSP",
+      "why": "vite preview serves vercel.json’s CSP, which names only the deployed relays; the flows ran on vite dev against a local Worker"
+    }
+  ]
+}
