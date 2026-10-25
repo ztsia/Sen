@@ -40,3 +40,4 @@ The same pointer brief, run on both models, each in its own worktree:
 | 22 Oct | B05 · Feel | `f31e101f` | $7.36 | none | $7.36 | opus 100% |
 | 24 Oct | workflow-setup | `d4fb3d26` | $11.48 | none | $11.48 | opus 100% |
 | 25 Oct | B06 | `88d31755` | $48.06 | 2× workflow:implementer on sonnet-5-5 $3.61; 1× workflow:qa-reviewer on opus-5-5 $0.39 | $52.07 | opus 93%, sonnet 7% |
+| 25 Oct | B06 | `5be7393e` | $32.48 | 3× workflow:qa-eyes on opus-5-5 $6.31; 3× workflow:implementer on haiku-5-5 $0.19; 3× workflow:qa-reviewer on opus-5-5 $70.93 | $109.9 | opus 100%, haiku 0% |

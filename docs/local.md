@@ -25,7 +25,9 @@ follow on a phone, and commit.
          the backup records itself through a function B06's production deploy creates. Merging runs the
          backup and the restore test once; both should be green within 10 minutes, and Settings → Data
          then shows the backup.
-      4. **The outside monitor** (cron-job.org, your account): two jobs, each emailing you on failure.
+      4. **The outside monitor** (cron-job.org, your account; you asked a session to set it up, 25 Oct.
+         A session at the laptop does it with Claude in Chrome, signed in as you, after the merge; the
+         extension wasn't connected on 25 Oct). Two jobs, each emailing you on failure.
          `https://sen-worker.sen-my.workers.dev/health` every 15 minutes (the cron and ticks; no
          database), and `https://sen-my.vercel.app/api/health/jobs` every 3 hours (the morning job and
          the backup; each check wakes Neon, so not more often). Both answer 200 when well, 503 when late.
@@ -33,12 +35,18 @@ follow on a phone, and commit.
          open it, allow notifications when it asks, then *More → Settings → Data → Checks → Send a test
          push*. Then *Schedule a test job*: its push arrives at the minute it names.
       6. ~~**Confirm R2's numbers (D142)**~~ Confirmed 25 Oct: 10 GB counted as 10,000,000,000 bytes, a push at half.
-      7. **The whole-codebase security scan (done-when 8), at the laptop, before you merge.** A
-         session can't start it (it needs Claude Code's Workflow tool). In `C:\Zhong Tai\Sen`, on
-         the branch: `claude --agent claude-security:claude-security`, then ask *scan the codebase at
-         high effort; I accept the time and token cost*. Leave the checkout alone while it runs (tens
-         of minutes). Then tell the next session: it copies `CLAUDE-SECURITY-<time>/CLAUDE-SECURITY-RESULTS.md`
-         to `qa/B06/security.md` and fixes every Critical and High before the merge.
+      7. **The whole-codebase security scan (done-when 8), before you merge.** It needs Claude Code's
+         Workflow tool (*Dynamic workflows*), which the 25 Oct laptop session didn't have. Either:
+         - **at the laptop:** turn on *Dynamic workflows* in `/config`, start a new session in
+           `C:\Zhong Tai\Sen` on the branch, and ask *run Claude Security: scan the codebase at high
+           effort; the cost is accepted*. Leave the checkout alone while it runs (tens of minutes); or
+         - **in a cloud session** on `B06/jobs-realtime-backups` (its setup script installs
+           `claude-security`), the same request. Not yet tried: if it says the Workflow tool is
+           missing, use the laptop.
+
+         The session then copies `CLAUDE-SECURITY-<time>/CLAUDE-SECURITY-RESULTS.md` to
+         `qa/B06/security.md` and fixes every Critical and High before the merge. Say in `docs/cloud.md`
+         whether a cloud session could run it.
 - [ ] **Give the cloud environment the workflow plugin** (needed before the next cloud session).
       Cloud sessions don't install the plugins a repo enables, so without this a session has no
       rules, no `workflow:` agents and no `qa`, `uiux` or `database` skill. On the phone: claude.ai/code
