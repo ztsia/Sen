@@ -32,12 +32,17 @@ export async function scheduleTestJob(): Promise<string> {
   }
 }
 
+/** R2's storage in Settings → Data; past the warning (half, D142 (3)) it says so in words (patterns.md §3). */
+export const storageWords = ({ used, allowance, warnAt }: { used: number; allowance: number; warnAt: number }) =>
+  `${formatBytes(used)} of ${formatBytes(allowance)}${used >= warnAt ? ', over half' : ''}`;
+
 /**
  * Bytes as decimal MB or GB, for storage: `120 MB`, `1.24 GB`, `12 GB`. Whole numbers of bytes in,
  * words out, with no floating-point text: hundredths are worked out in integers.
  */
 export function formatBytes(bytes: number): string {
-  if (bytes < 1_000_000_000) return `${Math.round(bytes / 1_000_000)} MB`;
+  // from 999.5 MB, which would round to 1000 MB, it says GB (QA B06 run 3, note 9)
+  if (bytes < 999_500_000) return `${Math.round(bytes / 1_000_000)} MB`;
   const hundredths = Math.round(bytes / 10_000_000);
   if (hundredths >= 1000) return `${Math.round(bytes / 1_000_000_000)} GB`;
   const digits = String(hundredths).padStart(3, '0');

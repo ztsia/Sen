@@ -58,4 +58,19 @@ describe('relay passes', () => {
     expect(await verifyPass('k', forged, now)).toBeNull();
     for (const junk of ['', '.', 'a.b', 'a.b.c', '%%%.%%%']) expect(await verifyPass('k', junk, now)).toBeNull();
   });
+  // every byte of the signature counts, not only the first (QA B06 run 3, finding 4)
+  it('refuse a signature changed in any one byte', async () => {
+    const pass = await signPass('k', 'user:1', now);
+    const [body, sig] = pass.split('.') as [string, string];
+    const bytes = Uint8Array.from(atob(sig.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+    for (const i of [0, 15, bytes.length - 1]) {
+      const changed = bytes.slice();
+      changed[i]! ^= 1;
+      const b64 = btoa(String.fromCharCode(...changed))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+      expect(await verifyPass('k', `${body}.${b64}`, now)).toBeNull();
+    }
+  });
 });

@@ -1,16 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiFailure } from './api/client';
-import {
-  BACKOFF_MS,
-  PING_MS,
-  PONG_WITHIN_MS,
-  POLL_MS,
-  TOPIC_QUERIES,
-  createRealtime,
-  useLive,
-  type Socket,
-} from './realtime';
+import { BACKOFF_MS, PING_MS, PONG_WITHIN_MS, POLL_MS, createRealtime, useLive, type Socket } from './realtime';
 
 // The relay's connection (D100): hints become invalidations, and a dropped connection falls back to
 // reloading what's open every 30 s, until it comes back.
@@ -112,7 +103,8 @@ describe('hints', () => {
     const sock = await live(s);
     sock.say({ seq: 1, topics: ['jobs'] });
     await flush();
-    expect(s.invalidate.mock.calls.map((c) => c[0])).toEqual(TOPIC_QUERIES.jobs.map((queryKey) => ({ queryKey })));
+    // the Data screen reads its backups and checks through ['settings'] (QA B06 run 3, finding 5)
+    expect(s.invalidate.mock.calls.map((c) => c[0])).toEqual([{ queryKey: ['settings'] }]);
     s.invalidate.mockClear();
     sock.say({ seq: 2, topics: ['settings', 'jobs'] });
     await flush();

@@ -11,6 +11,8 @@ const INITIAL: ClockState = { next: 0, lastCron: 0, failingSince: null };
  */
 export class Scheduler extends DurableObject<Env> {
   private ticking = false;
+  /** The soonest wake asked for while a tick runs, kept for when it ends. */
+  private woke: number | null = null;
 
   private async state(): Promise<ClockState> {
     return (await this.ctx.storage.get<ClockState>('clock')) ?? INITIAL;
@@ -26,10 +28,17 @@ export class Scheduler extends DurableObject<Env> {
     await this.save(s);
     if (!due(s, now) || this.ticking) return;
     this.ticking = true;
+    this.woke = null;
     try {
-      await this.save(await this.tick(s, now));
+      const after = await this.tick(s, now);
+      // A tick can take minutes: a later cron and a wake may have come meanwhile, and the state read
+      // before it mustn't undo them (QA B06 run 3, note 11)
+      const latest = await this.state();
+      const merged = { ...after, lastCron: Math.max(after.lastCron, latest.lastCron) };
+      await this.save(this.woke === null ? merged : wake(merged, this.woke));
     } finally {
       this.ticking = false;
+      this.woke = null;
     }
   }
 
@@ -54,6 +63,7 @@ export class Scheduler extends DurableObject<Env> {
 
   /** The API scheduled a one-off job sooner than the next tick. */
   async wake(at: number): Promise<void> {
+    if (this.ticking && Number.isFinite(at)) this.woke = Math.min(this.woke ?? at, at);
     await this.save(wake(await this.state(), at));
   }
 

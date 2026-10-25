@@ -46,6 +46,8 @@ export type SuiteId = keyof typeof SUITES;
 
 const ME = `(select nullif(current_setting('app.user_id', true), '')::uuid)`;
 
+// A check on a SQL function edits the migration that defines it last: an edit to a copy a later
+// migration replaced tests nothing (QA B06 run 3, finding 7).
 export const MUTANTS: Mutant[] = [
   {
     id: 'for-update-you',
@@ -323,14 +325,6 @@ export const MUTANTS: Mutant[] = [
     suite: 'db',
   },
   {
-    id: 'push-token-shared',
-    breaks: 'a phone signed in as someone new still gets the last person’s pushes',
-    file: 'packages/db/migrations/0008_b06_grants_functions.sql',
-    find: `DELETE FROM push_tokens p WHERE p.fcm_token = token AND p.user_id <> me;`,
-    replace: ``,
-    suite: 'db',
-  },
-  {
     id: 'revoke-keeps-tokens',
     breaks: 'after Sign out everywhere, a lost phone keeps getting the person’s pushes (QA B06 run 1, 1)',
     file: 'apps/api/src/app.ts',
@@ -589,5 +583,30 @@ export const MUTANTS: Mutant[] = [
     find: `DELETE FROM push_tokens p WHERE p.fcm_token = token AND p.user_id <> me;`,
     replace: ``,
     suite: 'db',
+  },
+  // QA B06 run 3's fixes (qa/B06/ledger.md)
+  {
+    id: 'scheduler-loses-wake-in-tick',
+    breaks: 'a one-off job scheduled while a tick runs waits for the tick after, hours later',
+    file: 'apps/worker/src/scheduler.ts',
+    find: `if (this.ticking && Number.isFinite(at)) this.woke = Math.min(this.woke ?? at, at);`,
+    replace: ``,
+    suite: 'unit',
+  },
+  {
+    id: 'scheduler-cron-steps-back',
+    breaks: 'a tick saves the cron time it read before it, so the Worker looks late to its monitor',
+    file: 'apps/worker/src/scheduler.ts',
+    find: `lastCron: Math.max(after.lastCron, latest.lastCron)`,
+    replace: `lastCron: after.lastCron`,
+    suite: 'unit',
+  },
+  {
+    id: 'storage-warning-no-words',
+    breaks: 'past half of R2 the storage row warns by colour and icon only (patterns.md §3)',
+    file: 'apps/web/src/data/checks.ts',
+    find: `used >= warnAt ? ', over half' : ''`,
+    replace: `''`,
+    suite: 'web',
   },
 ];

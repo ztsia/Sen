@@ -336,6 +336,34 @@ describe('health', () => {
     await owner.query("delete from job_runs where run_key in ('old', 'broke')");
   });
 
+  // a sen_ops workflow failing every night is what §18's guards are for: a failed backup is no backup
+  // to the monitor, Settings → Data or the watchdog (QA B06 run 3, finding 1)
+  it('never counts a failed backup as the last one', async () => {
+    await owner.query('create table qa_saved_runs as select * from job_runs');
+    await owner.query('delete from job_runs');
+    // dated from this morning's tick, which the watchdog judges by: the good one 49 h before it
+    const today = klDay(new Date());
+    const tick = klAt(today, 7);
+    await owner.query(
+      `insert into job_runs (user_id, job, run_key, status, bytes, ran_at) values
+         ($1, 'morning', 'm-now', 'ok', null, now()),
+         ($1, 'backup', 'good', 'ok', 4096, $2::timestamptz - interval '49 hours'),
+         ($1, 'backup', 'broke', 'failed', null, $2::timestamptz - interval '1 hour')`,
+      [admin.id, tick],
+    );
+    expect(await call('/api/health/jobs')).toMatchObject({ status: 503, body: { late: ['backup'] } });
+    const s = await call('/api/settings', { cookie: cookies.admin });
+    const last = Date.parse((s.body!.data as { lastBackup: string }).lastBackup);
+    expect(Date.now() - last).toBeGreaterThan(48 * 3_600_000);
+    await owner.query('delete from alerts_sent where alert_key = $1', [`backup_late:${today}`]);
+    await runTick(tickDeps, tick);
+    expect(pushed.filter((p) => p.msg.title.includes('backed up')).map((p) => p.userId)).toEqual([admin.id]);
+    // back as it was, for the tests after
+    await owner.query('delete from job_runs');
+    await owner.query('insert into job_runs select * from qa_saved_runs');
+    await owner.query('drop table qa_saved_runs');
+  });
+
   it('warns the admin once a month when backups pass half of R2', async () => {
     await owner.query("select record_backup('8', 'ok', 5000000000, 1000, null)");
     // today's morning, so the backups just recorded count as held (the last 30 days)

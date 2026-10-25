@@ -7,7 +7,7 @@ import { GroupCard, GroupLabel, NavRow } from '@/blocks/group';
 import { ListSkeleton } from '@/blocks/states';
 import { IconTile } from '@/blocks/tile';
 import { toastDone } from '@/blocks/toast';
-import { formatBytes, scheduleTestJob, sendTestPush } from '@/data/checks';
+import { scheduleTestJob, sendTestPush, storageWords } from '@/data/checks';
 import { useSettings } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -47,9 +47,6 @@ function CheckRow({
     />
   );
 }
-
-const storageWords = ({ used, allowance }: { used: number; allowance: number }) =>
-  `${formatBytes(used)} of ${formatBytes(allowance)}`;
 
 /**
  * Settings → Data (screens.md; D49): *Export everything*, which isn't built yet, so it says so; and for
