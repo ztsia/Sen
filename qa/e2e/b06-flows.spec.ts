@@ -148,7 +148,9 @@ test('FLOW-5: a member sees Export only, and the test routes still answer them',
   // D142 (4): the checks are admin only. The routes behind them:
   const job = await page.request.post('/api/jobs/test', { data: {}, headers: { origin: 'http://127.0.0.1:4185' } });
   const push = await page.request.post('/api/push/test', { data: {}, headers: { origin: 'http://127.0.0.1:4185' } });
-  test.info().annotations.push({ type: 'member routes', description: `jobs/test ${job.status()}, push/test ${push.status()}` });
+  test
+    .info()
+    .annotations.push({ type: 'member routes', description: `jobs/test ${job.status()}, push/test ${push.status()}` });
   expect.soft(job.status(), 'a member scheduling a test job').toBe(403);
   expect.soft(push.status(), 'a member sending a test push').toBe(403);
 });
@@ -178,16 +180,24 @@ test('FLOW-7: the admin schedules a test job; it runs once', async ({ page, requ
   const toast = page.locator('[data-sonner-toast]').last();
   await expect(toast).toContainText(/Test job set for \d\d:\d\d/);
   await shot(page, 'FLOW-7-step-1-scheduled');
-  expect(sql(`select count(*) from scheduled_jobs where user_id = '${PEOPLE.admin.id}' and kind = 'test' and status = 'due'`)).toBe('1');
+  expect(
+    sql(
+      `select count(*) from scheduled_jobs where user_id = '${PEOPLE.admin.id}' and kind = 'test' and status = 'due'`,
+    ),
+  ).toBe('1');
   // two ticks at once, after its minute
   sql(`update scheduled_jobs set run_at = now() - interval '1 second' where kind = 'test'`);
   const tick = () =>
     request.post('http://127.0.0.1:8791/api/jobs/tick', {
-      headers: { authorization: `Bearer ${process.env.QA_SCHEDULER_SECRET ?? 'qa-scheduler-secret-0123456789abcdefXYZ'}` },
+      headers: {
+        authorization: `Bearer ${process.env.QA_SCHEDULER_SECRET ?? 'qa-scheduler-secret-0123456789abcdefXYZ'}`,
+      },
     });
   const [r1, r2] = await Promise.all([tick(), tick()]);
   expect([r1.status(), r2.status()]).toEqual([200, 200]);
-  expect(sql(`select status || ' ' || attempts from scheduled_jobs where user_id = '${PEOPLE.admin.id}' and kind = 'test'`)).toBe('done 1');
+  expect(
+    sql(`select status || ' ' || attempts from scheduled_jobs where user_id = '${PEOPLE.admin.id}' and kind = 'test'`),
+  ).toBe('done 1');
   expect(sql(`select count(*) from job_runs where user_id = '${PEOPLE.admin.id}' and job = 'once:test'`)).toBe('1');
   await shot(page, 'FLOW-7-step-2-ran');
 });

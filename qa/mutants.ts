@@ -548,8 +548,8 @@ export const MUTANTS: Mutant[] = [
     id: 'r3s-failure-not-remembered',
     breaks: 'ticks refused by the API (a wrong secret) never make the Worker’s /health fail',
     file: 'apps/worker/src/scheduler.ts',
-    find: "console.error(`tick: ${res.status}`);\n        return afterFailure(s, now);",
-    replace: "console.error(`tick: ${res.status}`);\n        return afterTick(s, now, undefined);",
+    find: 'console.error(`tick: ${res.status}`);\n        return afterFailure(s, now);',
+    replace: 'console.error(`tick: ${res.status}`);\n        return afterTick(s, now, undefined);',
     suite: 'unit',
   },
   // QA B06 run 3's probes

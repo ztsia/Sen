@@ -31,7 +31,10 @@ async function step(
   }
   await page.waitForTimeout(250);
   await page.screenshot({ path: `${SHOTS}/${file}.png` }).catch(() => undefined);
-  fs.appendFileSync(STEPS, JSON.stringify({ flow, n, action, assertion, status, screenshot: `${file}.png`, err }) + '\n');
+  fs.appendFileSync(
+    STEPS,
+    JSON.stringify({ flow, n, action, assertion, status, screenshot: `${file}.png`, err }) + '\n',
+  );
   if (status === 'fail') throw new Error(`${flow} step ${n}: ${err}`);
 }
 
@@ -95,10 +98,14 @@ test('FLOW-R3-1: a test job runs once through the real Worker, and its hint relo
   await page.getByText('Schedule a test job').click();
   await step(page, F, 1, 'scheduled', 'tap Schedule a test job', 'toast names its minute; one due row', async () => {
     await expect(toast(page)).toContainText(/Test job set for \d\d:\d\d/);
-    expect(sql(`select count(*) from scheduled_jobs where user_id = '${admin}' and kind = 'test' and status = 'due'`)).toBe('1');
+    expect(
+      sql(`select count(*) from scheduled_jobs where user_id = '${admin}' and kind = 'test' and status = 'due'`),
+    ).toBe('1');
   });
   const runAt = Date.parse(
-    sql(`select to_char(run_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') from scheduled_jobs where kind = 'test'`),
+    sql(
+      `select to_char(run_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') from scheduled_jobs where kind = 'test'`,
+    ),
   );
   const reads = settingsReads(page);
   const navs = navigations(page);
@@ -115,15 +122,35 @@ test('FLOW-R3-1: a test job runs once through the real Worker, and its hint relo
   await page.waitForTimeout(3000);
   await cron();
   await page.waitForTimeout(1500);
-  await step(page, F, 3, 'ran-once', 'two crons at once after its minute, then a third', 'done 1; one ok job_runs row', async () => {
-    expect(sql(`select status || ' ' || attempts from scheduled_jobs where kind = 'test'`)).toBe('done 1');
-    expect(sql(`select count(*) from job_runs where user_id = '${admin}' and job = 'once:test' and status = 'ok'`)).toBe('1');
-  });
-  await step(page, F, 4, 'hint-reload', 'the job’s hint reaches the open Data screen', 'a GET /api/settings, no reload', async () => {
-    expect(reads.length - before).toBeGreaterThanOrEqual(1);
-    expect(navs.count).toBe(0);
-    test.info().annotations.push({ type: 'settings reads after the job', description: String(reads.length - before) });
-  });
+  await step(
+    page,
+    F,
+    3,
+    'ran-once',
+    'two crons at once after its minute, then a third',
+    'done 1; one ok job_runs row',
+    async () => {
+      expect(sql(`select status || ' ' || attempts from scheduled_jobs where kind = 'test'`)).toBe('done 1');
+      expect(
+        sql(`select count(*) from job_runs where user_id = '${admin}' and job = 'once:test' and status = 'ok'`),
+      ).toBe('1');
+    },
+  );
+  await step(
+    page,
+    F,
+    4,
+    'hint-reload',
+    'the job’s hint reaches the open Data screen',
+    'a GET /api/settings, no reload',
+    async () => {
+      expect(reads.length - before).toBeGreaterThanOrEqual(1);
+      expect(navs.count).toBe(0);
+      test
+        .info()
+        .annotations.push({ type: 'settings reads after the job', description: String(reads.length - before) });
+    },
+  );
   const health = await request.get(`${WORKER}/health`);
   await step(page, F, 5, 'worker-health', 'GET the Worker’s /health', '200 {ok:true}', async () => {
     expect(health.status()).toBe(200);
@@ -182,11 +209,19 @@ test('FLOW-R3-3: offline, a change underneath, back online; then a return to the
   sql(`update user_settings set expected_payday = null where user_id = '${admin}'`);
   const t0 = Date.now();
   await a.context().setOffline(false);
-  await step(a, F, 2, 'online', 'back online', 'Not set within 10 s (a reconnect reloads); the stamp goes', async () => {
-    await expect(a.getByRole('radio', { name: 'Not set' })).toBeChecked({ timeout: 10_000 });
-    await expect(stamp).toHaveCount(0, { timeout: 10_000 });
-    test.info().annotations.push({ type: 'reconnect reload took', description: `${Date.now() - t0} ms` });
-  });
+  await step(
+    a,
+    F,
+    2,
+    'online',
+    'back online',
+    'Not set within 10 s (a reconnect reloads); the stamp goes',
+    async () => {
+      await expect(a.getByRole('radio', { name: 'Not set' })).toBeChecked({ timeout: 10_000 });
+      await expect(stamp).toHaveCount(0, { timeout: 10_000 });
+      test.info().annotations.push({ type: 'reconnect reload took', description: `${Date.now() - t0} ms` });
+    },
+  );
   // again, underneath; this time the app goes to the background and comes back
   sql(`update user_settings set expected_payday = 'last-working' where user_id = '${admin}'`);
   await a.evaluate(() => {
@@ -216,7 +251,9 @@ function seedBackups() {
 }
 
 for (const tz of ['Asia/Kuala_Lumpur', 'America/New_York'] as const) {
-  test(`FLOW-R3-4${tz === 'Asia/Kuala_Lumpur' ? '' : 'b'}: the admin’s Data, worked by hand (${tz})`, async ({ browser }) => {
+  test(`FLOW-R3-4${tz === 'Asia/Kuala_Lumpur' ? '' : 'b'}: the admin’s Data, worked by hand (${tz})`, async ({
+    browser,
+  }) => {
     const F = tz === 'Asia/Kuala_Lumpur' ? 'FLOW-R3-4' : 'FLOW-R3-4b';
     seedBackups();
     const want = sql(
@@ -224,23 +261,44 @@ for (const tz of ['Asia/Kuala_Lumpur', 'America/New_York'] as const) {
     );
     const p = await phone(browser, PEOPLE.admin.email, tz);
     await p.goto('/s/settings/data');
-    const backups = p.getByRole('region', { name: 'Backups' }).or(p.locator('section', { hasText: 'Last backup' })).first();
-    await step(p, F, 1, 'facts', 'open Data', `last backup at ${want} KL (2 days ago); storage 1.50 GB of 10 GB`, async () => {
-      await expect(p.getByText('Last backup')).toBeVisible();
-      await expect(backups).toContainText(want);
-      await expect(backups).toContainText('1.50 GB of 10 GB');
-    });
+    const backups = p
+      .getByRole('region', { name: 'Backups' })
+      .or(p.locator('section', { hasText: 'Last backup' }))
+      .first();
+    await step(
+      p,
+      F,
+      1,
+      'facts',
+      'open Data',
+      `last backup at ${want} KL (2 days ago); storage 1.50 GB of 10 GB`,
+      async () => {
+        await expect(p.getByText('Last backup')).toBeVisible();
+        await expect(backups).toContainText(want);
+        await expect(backups).toContainText('1.50 GB of 10 GB');
+      },
+    );
     sql("select record_backup('qa3-big', 'ok', 4200000000, 1000, null)");
-    const nowKL = sql("select to_char(ran_at at time zone 'Asia/Kuala_Lumpur', 'HH24:MI') from job_runs where run_key = 'backup:qa3-big'");
+    const nowKL = sql(
+      "select to_char(ran_at at time zone 'Asia/Kuala_Lumpur', 'HH24:MI') from job_runs where run_key = 'backup:qa3-big'",
+    );
     await p.reload();
-    await step(p, F, 2, 'half', 'a 4.2 GB dump lands; reopen', `last backup at ${nowKL} KL; 5.70 GB of 10 GB with the warning icon`, async () => {
-      await expect(backups).toContainText(nowKL);
-      test.info().annotations.push({ type: 'last backup label', description: await backups.innerText() });
-      const row = p.getByText('5.70 GB of 10 GB');
-      await expect(row).toBeVisible();
-      expect(await row.evaluate((e) => (e.closest('span') ?? e).className)).toMatch(/warning/);
-      expect(await row.locator('xpath=..').locator('svg').count()).toBeGreaterThanOrEqual(1);
-    });
+    await step(
+      p,
+      F,
+      2,
+      'half',
+      'a 4.2 GB dump lands; reopen',
+      `last backup at ${nowKL} KL; 5.70 GB of 10 GB with the warning icon`,
+      async () => {
+        await expect(backups).toContainText(nowKL);
+        test.info().annotations.push({ type: 'last backup label', description: await backups.innerText() });
+        const row = p.getByText('5.70 GB of 10 GB');
+        await expect(row).toBeVisible();
+        expect(await row.evaluate((e) => (e.closest('span') ?? e).className)).toMatch(/warning/);
+        expect(await row.locator('xpath=..').locator('svg').count()).toBeGreaterThanOrEqual(1);
+      },
+    );
     sql("delete from job_runs where run_key = 'backup:qa3-big'");
     await p.context().close();
   });
@@ -266,7 +324,7 @@ test('FLOW-R3-4c: a member’s Data', async ({ browser }) => {
 
 test('FLOW-R3-5: four test pushes in a minute', async ({ browser }) => {
   const F = 'FLOW-R3-5';
-  sql("delete from auth_rate_limit");
+  sql('delete from auth_rate_limit');
   const p = await phone(browser, PEOPLE.admin.email);
   await p.goto('/s/settings/data');
   const said: string[] = [];
@@ -319,10 +377,18 @@ test('FLOW-R3-6: /health/jobs, fresh, late and forged', async ({ page, request }
   sql("update job_runs set ran_at = now() - interval '49 hours' where run_key = 'backup:qa3-good'");
   const bl = await request.get(`${API}/api/health/jobs`);
   await page.goto(`${API}/api/health/jobs`);
-  await step(page, F, 4, 'backup-late', 'the last good backup 49 h ago, a failed one today', '503 late backup', async () => {
-    expect(bl.status()).toBe(503);
-    expect(await bl.json()).toMatchObject({ late: ['backup'] });
-  });
+  await step(
+    page,
+    F,
+    4,
+    'backup-late',
+    'the last good backup 49 h ago, a failed one today',
+    '503 late backup',
+    async () => {
+      expect(bl.status()).toBe(503);
+      expect(await bl.json()).toMatchObject({ late: ['backup'] });
+    },
+  );
   sql("delete from job_runs where job in ('morning', 'backup')");
   const none = await request.get(`${API}/api/health/jobs`);
   await page.goto(`${API}/api/health/jobs`);
@@ -348,11 +414,19 @@ test('FLOW-R3-7: push tokens across two sessions and their sign-outs', async ({ 
   });
   await one.getByText('Sign out', { exact: true }).click();
   await expect(one).toHaveURL(/sign-in/);
-  await step(one, F, 2, 'one-out', 'phone one signs out; phone two still signed in', 'phone two’s token kept', async () => {
-    expect(sql(`select string_agg(fcm_token, ',' order by fcm_token) from push_tokens where user_id = '${admin}'`)).toContain(
-      'qa3-phone-two',
-    );
-  });
+  await step(
+    one,
+    F,
+    2,
+    'one-out',
+    'phone one signs out; phone two still signed in',
+    'phone two’s token kept',
+    async () => {
+      expect(
+        sql(`select string_agg(fcm_token, ',' order by fcm_token) from push_tokens where user_id = '${admin}'`),
+      ).toContain('qa3-phone-two');
+    },
+  );
   await two.goto('/s/settings/account');
   await two.getByText('Sign out', { exact: true }).click();
   await expect(two).toHaveURL(/sign-in/);
@@ -374,14 +448,31 @@ test('FLOW-R3-8: signing in opens the live connection without a reload; signing 
   await signIn(page, PEOPLE.admin.email);
   const navsAfterSignIn = navs.count;
   await page.waitForTimeout(3000);
-  await step(page, F, 1, 'connected', 'sign in by code, no reload', 'one socket to the relay’s /connect, open', async () => {
-    const relay = sockets.filter((s) => s.url.includes('/connect'));
-    test.info().annotations.push({ type: 'sockets', description: JSON.stringify(sockets.map((s) => ({ ...s, url: s.url.replace(/pass=[^&]+/, 'pass=…') }))) });
-    test.info().annotations.push({ type: 'navigations during sign-in', description: String(navsAfterSignIn) });
-    expect(relay.length).toBe(1);
-    expect(relay[0]!.closed).toBe(false);
-  });
-  await page.getByRole('navigation', { name: 'Tabs' }).getByRole('link', { name: /More/ }).click().catch(() => undefined);
+  await step(
+    page,
+    F,
+    1,
+    'connected',
+    'sign in by code, no reload',
+    'one socket to the relay’s /connect, open',
+    async () => {
+      const relay = sockets.filter((s) => s.url.includes('/connect'));
+      test
+        .info()
+        .annotations.push({
+          type: 'sockets',
+          description: JSON.stringify(sockets.map((s) => ({ ...s, url: s.url.replace(/pass=[^&]+/, 'pass=…') }))),
+        });
+      test.info().annotations.push({ type: 'navigations during sign-in', description: String(navsAfterSignIn) });
+      expect(relay.length).toBe(1);
+      expect(relay[0]!.closed).toBe(false);
+    },
+  );
+  await page
+    .getByRole('navigation', { name: 'Tabs' })
+    .getByRole('link', { name: /More/ })
+    .click()
+    .catch(() => undefined);
   await page.goto('/s/settings/account');
   await page.getByText('Sign out', { exact: true }).click();
   await expect(page).toHaveURL(/sign-in/);
