@@ -50,6 +50,17 @@ describe('the scheduler', () => {
     expect(ticks).toHaveBeenCalledTimes(2);
   });
 
+  // a refused tick (a secret rotated on one side, a broken deploy) shows on the Worker's own /health
+  // after 15 minutes, one of the monitor's two signals (D141; QA B06 run 3, scoped, finding 15)
+  it('says ticks are failing once they have failed for 15 minutes', async () => {
+    const { sched } = setup(async () => new Response('', { status: 401 }));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    for (let m = 0; m <= 14; m++) await sched.cron(t0 + m * MINUTE);
+    expect(await sched.health(t0 + 14 * MINUTE)).toEqual({ ok: true });
+    for (let m = 15; m <= 16; m++) await sched.cron(t0 + m * MINUTE);
+    expect(await sched.health(t0 + 16 * MINUTE)).toEqual({ ok: false, late: ['tick'] });
+  });
+
   it('wakes sooner when the API asks, and keeps a wake that comes while a tick runs', async () => {
     const s = setup(async () => {
       // during the tick: a one-off job is scheduled, and the next minute's cron comes
@@ -63,5 +74,16 @@ describe('the scheduler', () => {
     expect(s.clock()).toMatchObject({ next: t0 + 10 * MINUTE, lastCron: t0 + MINUTE });
     await sched.wake(t0 + 5 * MINUTE);
     expect(s.clock().next).toBe(t0 + 5 * MINUTE);
+  });
+
+  // two one-off jobs scheduled during one tick: the sooner sets the wake (run 3, scoped, finding 16)
+  it('keeps the sooner of two wakes that come while a tick runs', async () => {
+    const s = setup(async () => {
+      await s.sched.wake(t0 + 10 * MINUTE);
+      await s.sched.wake(t0 + 20 * MINUTE);
+      return Response.json({ next: new Date(t0 + 3 * HOUR) });
+    });
+    await s.sched.cron(t0);
+    expect(s.clock().next).toBe(t0 + 10 * MINUTE);
   });
 });
