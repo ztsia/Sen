@@ -45,8 +45,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command:
-        'pnpm exec vite build --outDir dist && pnpm exec vite preview --outDir dist --port 4173 --strictPort',
+      command: 'pnpm exec vite build --outDir dist && pnpm exec vite preview --outDir dist --port 4173 --strictPort',
       // in env, not a `VAR=` prefix, so the command runs in Windows' shell too (B06, the laptop)
       env: { SEN_ENV: 'preview' },
       url: 'http://localhost:4173',
