@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { PEOPLE, fresh, sql } from './b06-setup';
 
 // QA B06 run 3, scoped re-check (the scheduler): FLOW-R3S-1 in qa/B06/flows.md, against the local Worker, API and sen_qa
@@ -9,7 +9,6 @@ const SHOTS = decodeURIComponent(new URL('screens/', ROOT).pathname).replace(/^\
 const STEPS = decodeURIComponent(new URL('r3s-steps.jsonl', ROOT).pathname).replace(/^\/([A-Za-z]:)/, '$1');
 fs.mkdirSync(SHOTS, { recursive: true });
 const WORKER = 'http://127.0.0.1:8795';
-const API = 'http://127.0.0.1:8796';
 
 async function step(
   page: Page,
@@ -31,7 +30,10 @@ async function step(
   }
   await page.waitForTimeout(250);
   await page.screenshot({ path: `${SHOTS}/${file}.png` }).catch(() => undefined);
-  fs.appendFileSync(STEPS, JSON.stringify({ flow, n, action, assertion, status, screenshot: `${file}.png`, err }) + '\n');
+  fs.appendFileSync(
+    STEPS,
+    JSON.stringify({ flow, n, action, assertion, status, screenshot: `${file}.png`, err }) + '\n',
+  );
   if (status === 'fail') throw new Error(`${flow} step ${n}: ${err}`);
 }
 
@@ -42,21 +44,6 @@ async function signIn(page: Page, email: string) {
   await page.getByLabel('6-digit code').fill('123456');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).not.toHaveURL(/sign-in/);
-}
-
-async function phone(browser: Browser, email: string, timezoneId = 'Asia/Kuala_Lumpur') {
-  const ctx = await browser.newContext({
-    timezoneId,
-    viewport: { width: 390, height: 844 },
-    deviceScaleFactor: 2,
-    isMobile: true,
-    hasTouch: true,
-    serviceWorkers: 'block',
-    baseURL: 'http://127.0.0.1:4187',
-  });
-  const page = await ctx.newPage();
-  await signIn(page, email);
-  return page;
 }
 
 /** Counts the page's GET /api/settings from now. */
@@ -79,7 +66,6 @@ function navigations(p: Page) {
 
 const toast = (p: Page) => p.locator('[data-sonner-toast]').last();
 const admin = PEOPLE.admin.id;
-const ben = PEOPLE.ben.id;
 
 test.beforeEach(() => fresh());
 
@@ -95,10 +81,14 @@ test('FLOW-R3S-1: a test job runs once through the real Worker, and its hint rel
   await page.getByText('Schedule a test job').click();
   await step(page, F, 1, 'scheduled', 'tap Schedule a test job', 'toast names its minute; one due row', async () => {
     await expect(toast(page)).toContainText(/Test job set for \d\d:\d\d/);
-    expect(sql(`select count(*) from scheduled_jobs where user_id = '${admin}' and kind = 'test' and status = 'due'`)).toBe('1');
+    expect(
+      sql(`select count(*) from scheduled_jobs where user_id = '${admin}' and kind = 'test' and status = 'due'`),
+    ).toBe('1');
   });
   const runAt = Date.parse(
-    sql(`select to_char(run_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') from scheduled_jobs where kind = 'test'`),
+    sql(
+      `select to_char(run_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') from scheduled_jobs where kind = 'test'`,
+    ),
   );
   const reads = settingsReads(page);
   const navs = navigations(page);
@@ -115,19 +105,38 @@ test('FLOW-R3S-1: a test job runs once through the real Worker, and its hint rel
   await page.waitForTimeout(3000);
   await cron();
   await page.waitForTimeout(1500);
-  await step(page, F, 3, 'ran-once', 'two crons at once after its minute, then a third', 'done 1; one ok job_runs row', async () => {
-    expect(sql(`select status || ' ' || attempts from scheduled_jobs where kind = 'test'`)).toBe('done 1');
-    expect(sql(`select count(*) from job_runs where user_id = '${admin}' and job = 'once:test' and status = 'ok'`)).toBe('1');
-  });
-  await step(page, F, 4, 'hint-reload', 'the job’s hint reaches the open Data screen', 'a GET /api/settings, no reload', async () => {
-    expect(reads.length - before).toBeGreaterThanOrEqual(1);
-    expect(navs.count).toBe(0);
-    test.info().annotations.push({ type: 'settings reads after the job', description: String(reads.length - before) });
-  });
+  await step(
+    page,
+    F,
+    3,
+    'ran-once',
+    'two crons at once after its minute, then a third',
+    'done 1; one ok job_runs row',
+    async () => {
+      expect(sql(`select status || ' ' || attempts from scheduled_jobs where kind = 'test'`)).toBe('done 1');
+      expect(
+        sql(`select count(*) from job_runs where user_id = '${admin}' and job = 'once:test' and status = 'ok'`),
+      ).toBe('1');
+    },
+  );
+  await step(
+    page,
+    F,
+    4,
+    'hint-reload',
+    'the job’s hint reaches the open Data screen',
+    'a GET /api/settings, no reload',
+    async () => {
+      expect(reads.length - before).toBeGreaterThanOrEqual(1);
+      expect(navs.count).toBe(0);
+      test
+        .info()
+        .annotations.push({ type: 'settings reads after the job', description: String(reads.length - before) });
+    },
+  );
   const health = await request.get(`${WORKER}/health`);
   await step(page, F, 5, 'worker-health', 'GET the Worker’s /health', '200 {ok:true}', async () => {
     expect(health.status()).toBe(200);
     expect(await health.json()).toEqual({ ok: true });
   });
 });
-
