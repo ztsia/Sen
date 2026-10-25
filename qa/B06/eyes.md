@@ -288,3 +288,287 @@ what the stills suggest the filmstrips should check first:
 | 8 | Updated from another device | FLOW-1-step-1, step-3 (+ step-2) | fine | — |
 
 **Count:** wrong 2 · look again 6 · fine 1. No filmstrips.
+
+---
+
+# Run 2 (25 Oct 2026)
+
+From the diff report `qa-artifacts/B06_jobs-realtime-backups/diff/index.md` (head `3c7005a5` with
+uncommitted changes, against `origin/main` `662b7d25`). It lists **2 changed entries** (`settings/data`,
+tree and pixels in all twelve pairs; `settings/claims`, pixels only in six pairs), none new, and **2
+flagged taps** (`refund/2`, `ask/3`). Paths below are relative to `qa-artifacts/B06_jobs-realtime-backups/`.
+
+Read first, as in run 1: `docs/ui/patterns.md` §2, §3, §7, §8; `docs/workflow/qa.md` (default look Minted
+light, then Minted dark; question 5 about money; question 10, the right motion); `qa/escapes.md` (E1–E3's
+**Ask**).
+
+Filmstrips opened: the two flagged steps; every step of `export`, the journey through the screen this
+slice changed; every step of `offline`, where B06's live connection and its stamp would show; and
+`refund/1` and `ask/2`, the steps just before the flagged ones, for context. Each strip is 21 frames,
+50 ms apart, so frame *n* is at (*n*−1)×50 ms. They're drawn small, so what I say about them is what's
+visible at that size.
+
+---
+
+## R2-1. Settings → Data (`settings/data`)
+
+Opened, head first, one at a time: `diff/head/catalogue/settings_data--minted-light.png`, `--minted-dark`,
+`--line-light`, `--line-dark`, `--instrument-dark`, `--mercury-dark`, `--instrument-light`, `--firefly-light`,
+`--firefly-dark`, `--mercury-light`, `--copper-light` and `--copper-dark`. Then the base images:
+`diff/base/catalogue/settings_data--minted-light.png` and `--line-light`.
+
+1. **First look.** The *Export* card, its tile and the *Export everything* pill, the same as run 1.
+   That's right. From the screen alone, its purpose is *take your data out, see it's backed up, and test
+   two things*. Three cards with even gaps and a calm empty bottom third.
+2. **Reading.** Text is easy, but the words are run 1's, unchanged on this screen. *Send a test push* and
+   *Schedule a test job* still have no line under them, so "push" and "job" are left unexplained.
+   *Storage 1.24 GB of 10 GB* still doesn't say whose storage it is. In Line, *keep.* still wraps alone.
+3. **Tapping.** *Export everything* clearly looks like a button. The two *Checks* rows still lead with a
+   tile and have no chevron and no state on the right. They look like navigation, but a tap acts at
+   once. The facts (*Last backup*, *Storage*) correctly have no tile. The main action is still in the
+   top third.
+4. **Broken.**
+   - **The pill nearly vanishes in Instrument dark, Mercury dark and now Copper dark too:** the
+     *Export everything* fill is a shade off the card, so in those three it reads as a label with an
+     icon, not a button. In Mercury dark and Copper dark the *Checks* tiles nearly disappear as well.
+   - **Line, light and dark: two left edges.** The *Export* tile and pill sit flush at x≈32, while the
+     *Backups* rows and the *Checks* tiles sit at x≈66. The base shows the same edge between *Export*
+     and *Backups* on `main`, so it isn't B06's to fix. B06 adds a third group on the indented edge,
+     though, which makes the mismatch more visible.
+   - The download icon still appears twice in the *Export* card.
+   - Nothing is cut off, and the cards don't overlap anything in any look.
+5. **Trust.** *Yesterday, 03:00* and *1.24 GB of 10 GB* are the same digits and units in all twelve
+   pairs, with nothing alarming. No money is shown. The checks still can't show their result on this
+   screen, so the screen can't tell me whether a check worked.
+6. **E1, calm or crowded:** calm. There's one thing first, room between the three groups, and facts
+   look different from actions, except that the two check rows look like `NavRow`s. **E2:** a still
+   can't show a pending state. In the export filmstrip below, *Export everything* answers within about
+   150 ms, but the check rows aren't in any journey, so their pending state can't be judged.
+   **E3:** not applicable to the pixels.
+
+**Against `main`.** `main` had *Export* and one *Backups* row, *Last backup*. The head adds *Storage* and
+the *Checks* card. That's better: the screen now looks finished, with the same rhythm and nothing
+crowded. Worse: the new card adds two rows that look like navigation and explain nothing. In Line, the
+added group repeats the indented edge. Run 1's fix-first for this screen isn't visible in these images.
+
+Verdict: **look again**. Fix first: give each *Checks* row one line saying what it does and how it last
+went (such as *Sends a notification to this phone · Last: not set up here*), so it stops reading as
+navigation. Then make the pill visible in Instrument, Mercury and Copper dark.
+
+---
+
+## R2-2. Settings → Claims (`settings/claims`)
+
+Opened: `diff/head/catalogue/settings_claims--firefly-light.png`, `--firefly-dark`, then the diff image
+`diff/diff/settings_claims--firefly-light.png` and the base `diff/base/catalogue/settings_claims--firefly-light.png`.
+Then `--mercury-light`, `--mercury-dark` (with its diff image), `--copper-light` and `--copper-dark` (with
+the `--copper-light` diff image). Minted didn't change, so the report has no Minted pair for this entry.
+
+1. **First look.** The two scheme cards, *Phone bill* and *Parking*, each with its limit and deadline.
+   Then *ESS*. It's the place to set up claim schemes and Sen's ESS steps. That's right.
+2. **Reading.** It's all readable. One thing reads badly and is unchanged from `main`: *ESS email
+   address* wraps onto two lines, and its value breaks at the hyphen as *ess-* / *noreply@example.com*,
+   pushed against the chevron. An address split at its own hyphen is hard to read.
+3. **Tapping.** *Add*, each *Edit* (with Sen's avatar dot) and *Teach Sen* are clearly buttons.
+   *Import recipe* is a text button with no fill, which is fine. *Last payslip fetched* is a fact with no
+   tile. The ESS email row has a chevron.
+4. **Broken.** The diff images light up only the tab bar's labels (*Home*, *Review*, *Scan*, *Insights*,
+   *More*) and the badge's *12*. That's text anti-aliasing, a few hundred pixels. Side by side, the head
+   and the base look the same, and a person couldn't tell them apart.
+5. **Trust.** *Up to RM100.00 a month* is in the app's money format in every look. The *Signed in*,
+   *Recorded* and *Not recorded* badges say their state in words. Nothing changed that would affect trust.
+6. **E1:** calm enough for a two-card screen, with headings bigger than their rows. **E2, E3:** not
+   applicable, since nothing here changed.
+
+**Against `main`.** There's no visible difference. The change is rendering noise in the tab-bar text.
+
+Verdict: **fine**. Nothing to fix in this slice. Outside it: let the ESS address wrap at the `@` or
+truncate in the middle, rather than breaking at its hyphen.
+
+---
+
+## Filmstrips
+
+### F1. `step:refund/2` (flagged: settled in 1835 ms, against 1189 on `main`): `metrics/film/refund/2.png`
+
+The tap lands inside the *A refund of which payment?* sheet, which lists *Tan Ah Kow · RM500.00* rows.
+
+7. **Answered.** Frames 1–9 (0–400 ms) are identical. At this size I can't see any press on the tapped
+   row, so the sheet sits still for nearly half a second.
+8. **Connected.** At 450 ms the sheet's list **changes to different payments**: *Sate Kajang Hj Samuri
+   RM64.13*, *Grabfood RM32.50*, *Nando's*. At 500 ms the sheet shrinks to a shorter height. From 550 ms
+   it slides down, and by 650 ms it's gone. If I'd just picked a payment, a list of *other* payments
+   flashing up reads as if my choice changed the question, not as a result of it.
+9. **Steady.** No. There are two jumps on the way out: the list swap, then the change in height. When
+   the sheet has gone, Review is back, and at 1 s the *+RM100.00 from Tan Ah Kow* question is still
+   there with its *Income · Transfer · Refund of…* chips. Whatever cleared it came after the second
+   ended, so for over a second the answer looks like it didn't take (E2's shape).
+10. **Motion.** The sheet does fall, as §8 says, but its content must stay as it was while it falls. A
+    cleared row should slide out within about 200 ms of the choice, not a second later.
+
+Verdict: **look again**. Fix first: keep the sheet's list exactly as it was while the sheet closes, and
+clear the answered Review row as the sheet goes, not more than a second after.
+
+### F2. `step:ask/3` (flagged: settled in 2908 ms, against 455 on `main`): `metrics/film/ask/3.png`
+
+The tap is the *Insights* tab, from Home.
+
+7. **Answered.** Frames 1–7 (0–300 ms) show Home unchanged. The *Insights* tab's press tint first
+   shows at frame 8 (350 ms). For a third of a second, the tap looks ignored.
+8. **Connected.** The tab bar marks *Insights* in time, but the screen doesn't become Insights. At
+   400 ms there's a **see-through frame**: grey skeleton bars over a faded Home, with *1,931.27* and the
+   chart showing through. From 450–550 ms there's a generic row skeleton with no app bar and no title.
+   Only from 600 ms does *← Insights* appear, over a different, card-shaped skeleton.
+9. **Steady.** No. Home is shown through the skeleton, then one skeleton is swapped for another of a
+   different shape, and at 1 s the screen is still all grey cards. On `main` this tap settled in under
+   half a second. Here a person looks at placeholders for nearly three seconds on a tab they open often.
+   (*Insights* also shows a back arrow, though it's a tab root. It's probably the same on `main`, but
+   worth checking.)
+10. **Motion.** §8 asks for a crossfade with no blank or see-through frame. Two different skeletons in a
+    row, the first without its app bar, isn't a skeleton "shaped like the content".
+
+Verdict: **wrong**. A tab that used to open almost at once now flashes Home through grey bars, swaps
+skeletons and stays empty for about 3 s, which would put a person off. Fix first: find what B06 makes
+Insights wait for and show its cached content at once. Failing that, show one skeleton, the
+screen's own, with its app bar, from the first frame.
+
+### F3. `step:refund/1` (context, standing): `metrics/film/refund/1.png`
+
+The tap is the *Refund of…* chip on the *+RM100.00 from Tan Ah Kow* row.
+
+7. **Answered.** Nothing changes for about 600 ms. The chip's press shows only once the scrim starts,
+   at about 650 ms. **8. Connected.** The sheet rises from the bottom over a dimming Review, which fits
+   the chip. **9. Steady.** It rises smoothly through the rest of the second. **10. Motion.** It's the
+   right motion, but it starts far too late.
+
+Verdict: **look again** (it's standing, the same on `main`). Fix first: the press within one frame.
+
+### F4. `step:ask/2` (context, standing): `metrics/film/ask/2.png`
+
+The tap is *How am I doing this cycle?* in Sen's sheet.
+
+7. **Answered.** The chip greys from about 350 ms, and nothing else changes for the whole second. No
+   question appears in the chat and no *thinking* state shows. **8. Connected.** Only the press is
+   connected. **9. Steady.** It's steady, but static. **10. Motion.** None, though the question should
+   appear at once as my own message.
+
+Verdict: **look again** (it's standing). Fix first: post the question into the chat at once, with
+Sen's working state, so the tap is plainly taken.
+
+### F5. `export/1`: `metrics/film/export/1.png`
+
+The tap is *Export everything* on the Data screen.
+
+7. **Answered.** The pill's press tint shows at about 150 ms, and the toast starts sliding in at about
+   300 ms. **8. Connected.** The toast, *Export isn't ready yet. Nothing was exported.*, is clearly the
+   result. It's honest, though it doesn't say when export will work. **9. Steady.** The toast slides up
+   cleanly above the tab bar. Late in the second, the test opens the preview-only dev panel, and **the
+   toast stays on top of the sheet, across its middle, covering its rows** (see F6). **10. Motion.**
+   The toast slides in, as §8 says.
+
+Verdict: **fine** for the tap itself.
+
+### F6. `export/2`: `metrics/film/export/2.png`
+
+The second tap on *Export everything*, then the dev panel opens.
+
+7. **Answered.** The press and a fresh toast come within about 100 ms. **8. Connected.** Yes.
+   **9. Steady.** The old toast drops and the new one slides in, which is fine. Then the sheet rises
+   *under* the toast: for the rest of the second, *Export isn't ready yet…* sits on the sheet over its
+   *Light and dark* and *Text size* rows. This sheet is preview-only, but F11 shows the same with Sen's
+   sheet in production. **10. Motion.** Each movement is right on its own, but they're layered wrongly.
+
+Verdict: **look again**. Fix first: when a sheet opens, put the toast behind the scrim or dismiss it,
+so it never sits over a sheet's content.
+
+### F7. `export/3`: `metrics/film/export/3.png`
+
+In the dev panel, from the panel to *Native stand-ins* (preview-only).
+
+7. **Answered.** The panel scrolls within about 150 ms. **8. Connected.** The old sheet falls, and about
+   half a second of bare screen with no scrim follows before the new sheet rises. At about 300 ms, one
+   frame shows two sheet headers at once. **9. Steady.** The stall and the doubled frame are visible,
+   and the toast again rides over the new sheet. **10. Motion.** It's a sheet-to-sheet swap that drops
+   to nothing in between.
+
+Verdict: **fine**. It's preview-only tooling that a person never sees. The toast layering is counted
+under F6.
+
+### F8. `export/4`: `metrics/film/export/4.png`
+
+The tap is the *Your export is ready* stand-in notification (preview-only).
+
+7. **Answered.** The row's press shows at about 150 ms, and the toast changes to *Simulated: the
+   download opens* at about 150 ms. **8. Connected.** Yes, the toast changes in place. **9. Steady.**
+   Nothing else moves. **10. Motion.** It's right.
+
+Verdict: **fine**.
+
+### F9. `offline/1`: `metrics/film/offline/1.png`
+
+Offline, with the banner *You're offline. What you add is kept and syncs when you're back.* The tap is
+the *Review* tab.
+
+7. **Answered.** Home is unchanged for about 400 ms. The tab's press shows at frame 9. **8. Connected.**
+   At 450 ms there's a see-through frame of skeleton bars over a faded Home figure, then a generic row
+   skeleton with **no app bar and no title** for the rest of the second. The tab bar says *Review*, but
+   the screen doesn't, and Review's own questions are local yet haven't appeared after a second. No
+   *Updated…* stamp shows over the skeleton, which fixes run 1's entry 6 for this path. The missing app
+   bar from that entry is still missing here. **9. Steady.** It's the same see-through crossfade as F2.
+   **10. Motion.** The crossfade isn't clean, and the skeleton isn't shaped like Review.
+
+Verdict: **look again**. Fix first: the same as F2. Keep the app bar and the screen's own skeleton from
+the first frame, and don't fade through a see-through frame.
+
+### F10. `offline/2`: `metrics/film/offline/2.png`
+
+The tap is *Meals* on *RM9.50 · Roti Bakar 88*.
+
+7. **Answered.** The chip's press shows at about 400 ms. **8. Connected.** Only the press: the row is
+   still there at 1 s, and *Needs you · 12* hasn't changed. Step 3's first frame shows the row gone and
+   *Needs you · 11*, so the clear came after the second. **9. Steady.** Nothing jumps. It's just slow.
+   **10. Motion.** The clear and slide-out happen after the film ends, so it's too slow to judge here. In step 3,
+   the toast reads ***ROTI BAKAR 88* is Meals from now on · Undo**, in capitals. §2 says a payee is shown
+   in title case (*Roti Bakar 88*), as the row above it shows.
+
+Verdict: **look again**. Fix first: the toast should show the payee as the row does, *Roti Bakar 88*.
+Then make the row clear within about 200 ms of the answer.
+
+### F11. `offline/3`: `metrics/film/offline/3.png`
+
+The tap is Sen's button, offline, with the *Roti Bakar 88* toast still showing.
+
+7. **Answered.** For about 400 ms nothing changes, then the scrim and the sheet come. **8. Connected.** The
+   sheet rises from the bottom, from where the button is, which is right. **9. Steady.** Around 500 ms one
+   frame seems to show the sheet's *Sen* header twice. More importantly, **the toast stays on top of
+   Sen's sheet for the rest of the second, floating mid-sheet where the chat goes.** And offline, the
+   sheet shows only grey skeleton rows. A full second in, it still doesn't say *Sen needs a
+   connection*, as §7 *Offline* asks, so a person waits for something that can't load. **10. Motion.**
+   The rise is right. The toast over it isn't.
+
+Verdict: **look again**. Fix first: no toast over an open sheet (as F6). Offline, Sen's sheet should say
+*Sen needs a connection* at once instead of loading.
+
+---
+
+## Run 2 verdicts, worst first
+
+| # | Entry or step | Screenshots or film | Verdict | Fix first |
+|---|---|---|---|---|
+| F2 | `ask/3`, Home → Insights tab (flagged) | `metrics/film/ask/3.png` | wrong | Insights now waits ~3 s behind a see-through frame and two different skeletons; show cached content, or its own skeleton with its app bar, at once |
+| R2-1 | Settings → Data | `settings_data`, all 12 head pairs, base minted-light and line-light | look again | Each *Checks* row needs a line saying what it does and how it last went; the pill is near-invisible in Instrument, Mercury and Copper dark |
+| F1 | `refund/2`, picking in *A refund of which payment?* (flagged) | `metrics/film/refund/2.png` | look again | The sheet's list swaps to other payments as it closes, and the answered row is still there a second later |
+| F11 | `offline/3`, Sen's button offline | `metrics/film/offline/3.png` | look again | A toast floats over Sen's sheet; offline it loads instead of saying *Sen needs a connection* |
+| F6 | `export/2`, second export, then a sheet | `metrics/film/export/2.png` | look again | A toast sits over an open sheet's content |
+| F9 | `offline/1`, Home → Review tab | `metrics/film/offline/1.png` | look again | A see-through crossfade, then a skeleton with no app bar |
+| F10 | `offline/2`, *Meals* on Roti Bakar 88 | `metrics/film/offline/2.png` | look again | The toast shouts *ROTI BAKAR 88*; the row clears more than a second after the answer |
+| F3 | `refund/1`, *Refund of…* chip (standing) | `metrics/film/refund/1.png` | look again | ~600 ms with no press before the sheet rises |
+| F4 | `ask/2`, a suggested question to Sen (standing) | `metrics/film/ask/2.png` | look again | The question doesn't appear in the chat for a whole second |
+| R2-2 | Settings → Claims | `settings_claims`, firefly, mercury and copper pairs, three diffs, base firefly-light | fine | No visible change (tab-label anti-aliasing); outside B06: the ESS address breaks at its hyphen |
+| F5 | `export/1`, *Export everything* | `metrics/film/export/1.png` | fine | — |
+| F7 | `export/3`, dev panel → stand-ins (preview-only) | `metrics/film/export/3.png` | fine | — |
+| F8 | `export/4`, export-ready stand-in (preview-only) | `metrics/film/export/4.png` | fine | — |
+
+**Count:** wrong 1 · look again 8 · fine 4 (2 entries: 1 look again, 1 fine; 11 filmstrip steps: 1
+wrong, 7 look again, 3 fine). The two *Checks* rows aren't in any journey, so their taps (run 1's
+entries 4 and 5) have no filmstrip and couldn't be rechecked here.

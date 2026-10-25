@@ -19,3 +19,15 @@ function (`jobs_health()`), and finding 8's changes the shared screen frame (`sr
 **Left:** notes 9–13. 9 is D142 (5)'s design. 10, 11 and 12 are named for later: the tick's
 per-person queries outside `Server-Timing`, production's CSP naming the preview relay, and a wake
 during a tick (a few milliseconds' window; read, not reproduced). 13's look-agains go to run 2's eyes.
+
+## Run 2's metrics flags (25 Oct, the reviewer)
+
+qa-diff's confirm step can't start on Windows (run 2, finding 5), so both flags were single samples.
+Re-measured by hand, three times on each side at once (`e2e/diff.config.ts`, `--repeat-each 3`):
+
+| Flag | Main (ms) | Branch (ms) | Verdict |
+|---|---|---|---|
+| `step:ask/3` settle (first pass 2908 vs 455) | 2582, 2533, 2490 | 2698, 2522, 2551 | **Noise against main; standing.** Main's 455 was an outlier. Over the 1000 ms limit on both: the Insights tab's first frames (eyes run 2, F2). Follow-up: the tab opens on its own skeleton with its app bar (run 2, finding 9) |
+| `step:refund/2` settle (first pass 1835 vs 1189) | 1694, 1760, 1826 | 1673, 1733, 1809 | **Noise against main; standing.** Over 1000 ms on both |
+
+B06's diff touches neither screen beyond comments and the shared frame's wrapper; the numbers agree.

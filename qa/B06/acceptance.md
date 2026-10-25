@@ -309,3 +309,161 @@ AC-51  Sign out everywhere stops pushes to every phone
        Spec   D142 (5) "sign-out deletes it … a stale token would show someone's notifications on a
               phone they've left"; flows.md lost-phone; spec §17 Login
 ```
+
+## Run 2 (25 Oct 2026, full run at 3c7005a, reviewer on Opus)
+
+Written from the docs only, before opening any implementation file: the brief, `spec_v2.md` §5, §5.1,
+§15, §16, §17, §18, D85, D99, D100, D126, D141, D142, `patterns.md` §7 (*Live updates*),
+`screens.md` (Settings → Data), `flows.md` (`lost-phone`, the core journeys) and `CLAUDE.md`'s
+non-negotiables. **Bias declared:** before writing these I had seen the first 40 lines of
+`report-run1.md` (run 1's findings table), so R2-AC-36, R2-AC-38 and R2-AC-43 are not independent of
+run 1. Run 1's criteria were read only after this section was written; what they had that this
+lacked is added at the end, marked.
+
+### Tables and the definer functions (§15, done-when 6)
+
+```
+R2-AC-1   One-off job deduped
+          Given  a scheduled_jobs row for user A with dedupe_key K
+          When   a second row for A with K is inserted
+          Then   unique violation (23505); 1 row. Sad twin: the same K for user B is a second row
+          Spec   §15 scheduled_jobs UNIQUE (user_id, dedupe_key)
+R2-AC-2   An alert is sent once
+          Given  alerts_sent has (A, key)    When the helper is asked to send (A, key) again
+          Then   it reports "already sent"; 1 row. Sad twin: (B, key) is sent
+          Spec   §15 alerts_sent; brief "a helper makes every reminder safe to re-run"
+R2-AC-3   A push token registered twice is one row; another person registering it takes it
+          Then   push_tokens has 1 row for that token, owned by the last person
+          Spec   §15 push_tokens UNIQUE (user_id, fcm_token); D142 (5)
+R2-AC-4   RLS on all four tables, keyed on user_id
+          Then   relrowsecurity on scheduled_jobs, job_runs, alerts_sent, push_tokens; as
+                 app_user with no user id: 0 rows; as B: 0 of A's rows; B can't insert a row with
+                 A's user_id (WITH CHECK)
+          Spec   CLAUDE.md non-negotiable; §15 "job_runs included"
+R2-AC-5   The people function lists only the people a job is for, and no money
+          Then   its result columns hold ids/flags only; a person the job isn't for is absent
+          Spec   done-when 6; §5 "one narrow SECURITY DEFINER function per job"
+R2-AC-6   (sad) app_user can't use the scheduler's definer functions to list other people
+          Then   EXECUTE as app_user on the people/health/record functions is refused
+          Spec   §5, §17 "only migrations and the backup use the owner role"
+R2-AC-7   Every size figure is an integer type: no float/numeric columns; sizes bigint bytes
+          Spec   CLAUDE.md (integers); D142 (3)
+```
+
+### /jobs/tick (§16, D99, D141, done-when 1)
+
+```
+R2-AC-8   (sad) No secret or a wrong secret: 401 {code,message}, no job_runs row, no job runs
+R2-AC-9   A tick at 07:15 KL runs the morning job once for each listed person; job_runs has one
+          morning row per person for that KL date
+R2-AC-10  (sad) A second tick at 07:40 KL the same KL date: no new morning rows
+R2-AC-11  (sad) Two ticks at once in the window: still exactly one morning row per person
+R2-AC-12  A tick at 21:xx KL runs the evening job once per person per KL date; at 12:00 KL
+          neither frame runs
+R2-AC-13  (sad, timezone) The KL date is the key: 07:15 KL on 26 Oct is 23:15 UTC on 25 Oct and
+          counts as 26 Oct; the next morning runs again
+R2-AC-14  A due one-off job (run_at <= now) runs once; status done; a job_runs row
+R2-AC-15  (sad) A job not yet due doesn't run; a done job never runs again
+R2-AC-16  (sad) A failing one-off job: attempts +1, error kept, retried later, failed after its
+          last attempt; it never blocks other jobs
+R2-AC-17  (sad) Two ticks at once never run the same one-off twice
+R2-AC-18  Each job runs as its person under RLS: its database work sees only that person
+R2-AC-19  The tick answers when it next needs waking (D141)
+R2-AC-20  Scheduling a job asks the Worker to wake sooner; the Worker's /schedule refuses a call
+          without its secret (D141)
+```
+
+### The Worker (D99, D100, D141)
+
+```
+R2-AC-21  The cron calls /jobs/tick only when the time the last tick named has come
+R2-AC-22  Worker GET /health fails when the cron hasn't run for 5 minutes, or ticks have failed
+          for 15; 200 otherwise; no database call
+R2-AC-23  (sad) A relay connection with no pass, a forged pass, an expired pass, or a pass for
+          another channel is refused
+R2-AC-24  The API's hint post to the relay needs a secret; without it, refused, nothing sent
+R2-AC-25  A hint is {seq, topics} only: no amount, name, row id or any data  (D100, §17)
+```
+
+### /realtime/token (§16)
+
+```
+R2-AC-26  Signed in: a pass for user:<own id> only, expiring in 5 minutes
+R2-AC-27  (sad) Signed out: 401; a request naming another person's channel never gets a pass for it
+```
+
+### Hints after changes, and the web app (D100, patterns §7)
+
+```
+R2-AC-28  After a change by A, A's channel gets a hint with that change's topics; B's channel none
+R2-AC-29  A hint invalidates only the queries for its topics; the open screen shows the new value
+          with no reload (done-when 2)
+R2-AC-30  Topic names are listed in one place
+R2-AC-31  On return to the app (visible again) and on reconnect, the open screen reloads
+R2-AC-32  While the relay is down the screen re-fetches every 30 s and shows "Updated N min ago"
+          in muted; once the relay is back, polling stops and the stamp goes
+R2-AC-33  (sad) While connected, no 30 s polling and no stamp
+```
+
+### Push (D142 (4)-(6))
+
+```
+R2-AC-34  Registering a token needs a session; signed out: 401
+R2-AC-35  Sign-out deletes this device's token
+R2-AC-36  Sign out everywhere (the lost phone) leaves none of the person's tokens
+          Spec  flows.md lost-phone, §17 Login, D142 (5)
+R2-AC-37  The web bundle holds no Firebase SDK and no service-account key  (D142 (6))
+R2-AC-38  The test push and test job are admin only: a member gets 403; more than 3 a minute: 429
+          Spec  D142 (4)
+```
+
+### /health/jobs (§16, §18, D99)
+
+```
+R2-AC-39  Returns no data: the body carries no ids, names, counts or timestamps
+R2-AC-40  200 when the last morning run is under 26 h old and the last successful backup under
+          2 days; non-2xx when either is late
+R2-AC-41  (sad) A failed backup run doesn't count as the last backup
+R2-AC-42  (sad) No morning run or backup ever recorded: fails, not passes
+R2-AC-43  Health can't be made green by rows any member can write
+```
+
+### Backups (§17, D85, D126, D142 (2)-(3))
+
+```
+R2-AC-44  record_backup() is callable by the owner role, refused to app_user; it writes one
+          job_runs row with the dump's size in bytes
+R2-AC-45  Settings > Data shows the last successful backup to the admin; a member sees no backup
+          section  (screens.md: "backups: admin")
+R2-AC-46  Storage used vs 10,000,000,000 bytes: dumps held = the sizes of the last 30 days of
+          successful backups; integer bytes
+R2-AC-47  The morning job pushes the admin a health warning at half (5,000,000,000 bytes), once
+          a month (alerts_sent)
+R2-AC-48  The backup watchdog: after 2 days without a successful backup, the morning job pushes
+          once (alerts_sent), only to the admin
+R2-AC-49  .gitignore covers database dumps
+```
+
+### Security and the non-negotiables
+
+```
+R2-AC-50  pnpm security and pnpm hygiene pass; gitleaks over the history finds nothing
+R2-AC-51  The production web bundle holds none of: the scheduler secret, the relay signing key,
+          the Firebase service account, R2 keys
+R2-AC-52  The CSP's connect-src names the relay's own origin(s), no wildcard
+R2-AC-53  The admin's Checks and Data show no member's money or chosen apps (D52)
+R2-AC-54  Every new route is in routes.table.ts and passes the route sweep; errors are
+          {code, message, field?}, never a stack or a 500
+R2-AC-55  No float in the diff's money or byte arithmetic (parseFloat, toFixed, / outside the
+          money module)
+```
+
+### Taken from run 1's criteria after this section was written
+
+```
+R2-AC-56  (sad) A stale or repeated hint (a seq already seen): no error, at most a harmless refetch
+          From run 1 AC-33; D100
+R2-AC-57  Settings > Data follows patterns.md: a skeleton while loading, an error that says what to
+          do, no screen-specific row or card
+          From run 1 AC-50; CLAUDE.md "one set of UI patterns"
+```

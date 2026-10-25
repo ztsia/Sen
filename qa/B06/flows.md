@@ -64,3 +64,60 @@ CORE-3  scan-after  scan → reading → confirm → Done → attached
 ```
 Walked through the project's own e2e journeys in the sweep (they're the regression suite for these),
 plus a screenshot walk in `qa/e2e/` where the build lets them run in a browser.
+
+## Run 2 (25 Oct 2026, full run at 3c7005a)
+
+Written from the docs before reading the implementation. Walked at 390×844 in Chromium, Minted light.
+
+```
+FLOW-R2-1  A one-off test job, a minute ahead, two ticks at once            (happy + sad)
+           Actor  the owner (admin)   Entry  POST /api/jobs/test, then POST /api/jobs/tick x2 at once
+           Steps  1. schedule the test job  2. before run_at, tick: nothing runs
+                  3. after run_at, two ticks at once  4. a third tick
+           Ends   exactly one job_runs row for the test job, status ok; scheduled_jobs status done,
+                  attempts 1
+           Covers R2-AC-14..17, R2-AC-38   Spec  done-when 1, D99, D141
+
+FLOW-R2-2  An open screen updates from another device                          (happy)
+           Actor  the owner on two devices   Entry  the same screen open in two browser contexts
+           Steps  1. both open Home  2. device B makes a change through the API
+           Ends   device A shows the change with no reload and no navigation
+           Covers R2-AC-28, R2-AC-29   Spec  done-when 2, D100
+
+FLOW-R2-3  The relay is down                                                   (sad)
+           Actor  the owner   Entry  Home with the relay unreachable
+           Steps  1. the relay is stopped  2. wait  3. a change on another device  4. relay back
+           Ends   "Updated N min ago" in muted while down; the change shows within 30 s; the stamp
+                  goes once the relay is back
+           Covers R2-AC-31..33   Spec  D100, patterns §7
+
+FLOW-R2-4  The admin's Settings > Data                                         (happy)
+           Actor  the owner (admin)   Entry  /s/settings/data
+           Steps  1. open Data  2. read the last backup and storage  3. Send a test push
+                  4. Schedule a test job
+           Ends   the last backup time and storage used of 10 GB shown; each check confirms in words
+           Covers R2-AC-45, R2-AC-46, R2-AC-38   Spec  screens.md Data, D142 (3)-(4)
+
+FLOW-R2-5  A member's Settings > Data                                          (sad)
+           Actor  a member (not admin)   Entry  /s/settings/data
+           Ends   no backup, storage or Checks section; the test routes answer 403
+           Covers R2-AC-38, R2-AC-45, R2-AC-53
+
+FLOW-R2-6  A lost phone                                                        (sad)
+           Actor  the owner from another browser   Entry  Settings > Account
+           Steps  1. two phones registered push tokens  2. Sign out everywhere
+           Ends   push_tokens has none of the owner's rows; the lost phone's session is revoked
+           Covers R2-AC-35, R2-AC-36   Spec  flows.md lost-phone, D142 (5)
+
+FLOW-R2-7  The scheduler stops                                                 (sad)
+           Actor  the outside monitor   Entry  GET /api/health/jobs
+           Steps  1. a fresh morning run and backup: 200  2. the morning run 27 h old: fails
+                  3. the backup 3 days old (a failed one yesterday): fails
+           Ends   non-2xx with no data in the body
+           Covers R2-AC-39..43   Spec  done-when 5, §18
+
+Core journeys (D124), walked once in the preview build through the dev panel:
+FLOW-R2-8   first-run   (core)  sign-in to home, through the dev panel's first run
+FLOW-R2-9   pay-new     (core)  a new merchant's prompt; a category; a rule; the next asks nothing
+FLOW-R2-10  scan-after  (core)  scan, reading, confirm, Done, attached
+```
