@@ -95,3 +95,47 @@ reads the real clock); note 10 (`/health/jobs` is open by design, D141, so cron-
 secret; one query per call, every 3 hours); 12 (accepted, measured, not B06's); 13 (B05's
 `for-update-you`, as run 2); 14 (the eyes' look-agains, named for the slice that next touches
 Settings → Data).
+
+## Run 3's scoped re-check → fixes (25 Oct)
+
+The scheduler re-check said **ship** for its area (findings 2 and 11 fixed, measured on the real
+Worker), with two gaps in the tests. Both are tier 1: tests only, at 9db4fac.
+
+| Finding | Fix | Guard |
+|---|---|---|
+| 15 Minor | `scheduler.test.ts` › *says ticks are failing once they have failed for 15 minutes*: refused ticks, `/health` ok at 14 minutes, `late: ['tick']` at 16 | `r3s-failure-not-remembered` killed |
+| 16 Minor | › *keeps the sooner of two wakes that come while a tick runs* | `r3s-later-wake-wins` killed |
+
+## Retro
+
+**Found late, round after round.** Every Major after run 1 was a guard with no test, found only by a
+breakage check the reviewer wrote that run:
+- run 2: the relay's secret and pass;
+- run 3: a failed backup counting, and the scheduler's due gate;
+- the scoped re-check: the Worker's failing-tick signal.
+
+The code was right each time. The build made twelve breakage checks for B06, all after run 1, for
+the guards run 1 had named. It never listed every guard the decisions name (D99–D100, D141–D142,
+§18) with a check for each, so each run found the next unguarded one. Two runs also lost ground to
+the tools:
+- run 2's eight "stale" checks were Windows line endings in `mutants.mjs`;
+- run 2's base API numbers came from the laptop's `pg_prove` shim running the branch's tests;
+- run 3's `push-token-shared` edited a function a later migration had replaced.
+
+Run 1's fix 6 caused run 2's finding 3: the stamp waited for its first poll.
+
+**What cost most** (`usage.mjs`, this session, $108): the three full QA runs, $15, $23 and $33 (run 3
+includes its scoped re-check). This session's own work came to $31, and the sweeps and eyes passes to
+$6. Run 3 spent five hours elapsed, most of it waiting out a usage limit.
+
+**What changed because of it:**
+- `scripts/mutants.mjs` matches across CRLF files, and both QA scripts quote cmd.exe's operators;
+- the Worker's routes and scheduler have a test harness (`workers-stub.ts`);
+- `qa/mutants.ts` says a check on a SQL function must edit the migration that defines it last;
+- the `pg_prove` shim copies the caller's own `test/` (the handoff records it).
+
+**For the `workflow` plugin** (not yet sent to `ztsia/workflow`; listed in the handoff):
+- the `mutants.mjs` template needs the CRLF and quoting fixes;
+- the `brief` and `qa` skills should ask the build to list each guard the slice's decisions name,
+  with a breakage check per guard, before the first QA run;
+- the sweep should be a read-only agent, not `implementer` (the owner asked why QA had one).
