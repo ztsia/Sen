@@ -60,3 +60,6 @@ apps/web/public/db-deploy.txt
 .wrangler/
 # the shell's Firebase config holds a Google key: CI writes it from SEN_GOOGLE_SERVICES_B64
 apps/shell/android/app/google-services.json
+
+# a Gradle probe's outputs under qa/ (B02's model comparison)
+qa/**/build/
