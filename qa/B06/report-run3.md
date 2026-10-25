@@ -1,8 +1,6 @@
 # QA B06 · Jobs, realtime, push and backups, run 3
 
-**Published report:** https://claude.ai/artifact/4TcXmtm89wh94V3KGYYt6d, version 3 (version 4 is the scoped re-check)
-
-**Published report:** https://claude.ai/artifact/4TcXmtm89wh94V3KGYYt6d (version 3, this run; private to the owner)
+**Published report:** https://claude.ai/artifact/4TcXmtm89wh94V3KGYYt6d, version 3 (version 4 is the scoped re-check; private to the owner)
 
 ```
 VERDICT   fix first
