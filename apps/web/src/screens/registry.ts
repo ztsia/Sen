@@ -28,6 +28,8 @@ const BUILT = new Set([
   'settings/capture/captured',
   'settings/account',
   'settings/member',
+  // B06: the last backup and R2's storage, from the server (admin), and the admin's checks
+  'settings/data',
 ]);
 
 const s = (id: string, title: string, kind: ScreenKind, tab: TabId | undefined, slice: string): ScreenDef => ({

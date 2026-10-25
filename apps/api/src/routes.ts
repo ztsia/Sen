@@ -7,6 +7,7 @@ import { schema } from '@sen/db';
 import { audit } from './audit';
 import { NO_SWITCHES, type Env } from './context';
 import { ApiError, forbidden, notBuilt, parse, readJson } from './errors';
+import { backupFacts, R2_ALLOWANCE_BYTES, R2_WARN_BYTES } from './jobs/frames';
 
 const Payday = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('last-working') }),
@@ -47,15 +48,21 @@ export function personRoutes() {
 
   r.get('/settings', async (c) => {
     const { person, access } = c.var;
-    const row = await c.var.db(async (db) => {
+    const { row, backups } = await c.var.db(async (db) => {
       const [s] = await db.select().from(schema.userSettings).where(eq(schema.userSettings.userId, person.id));
-      return s;
+      // the backups are the admin's (job_runs, B06); everyone else has none to see
+      return { row: s, backups: access.isAdmin ? await backupFacts(db, person.id, new Date()) : null };
     });
     const view: SettingsCore = {
       email: person.email,
       admin: access.isAdmin,
       switches: access.features,
       you: { bankNames: row?.ownNames ?? [], payday: toPayday(row?.expectedPayday ?? null), qr: false },
+      data: {
+        lastBackup: backups?.last?.at.toISOString() ?? null,
+        exportReady: false,
+        storage: backups ? { used: backups.heldBytes, allowance: R2_ALLOWANCE_BYTES, warnAt: R2_WARN_BYTES } : null,
+      },
     };
     return c.json(view);
   });
@@ -73,6 +80,8 @@ export function personRoutes() {
     }
     if (cmd.type !== 'setting.set') throw notBuilt('a later slice');
     const result = await setYou(c.var, cmd.key, cmd.value);
+    // the person's other open screens reload their settings (D100)
+    await c.var.svc.relay.hint(c.var.person.id, ['settings']);
     return c.json(result);
   });
 

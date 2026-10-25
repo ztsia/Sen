@@ -23,7 +23,7 @@ export function blankSettings(): SettingsState {
     claims: { schemes: [], essSender: null, ess: { signedIn: false, capabilities: [], lastPayslip: null } },
     members: [],
     seats: { used: 0, of: 20 },
-    data: { lastBackup: null, exportReady: false },
+    data: { lastBackup: null, exportReady: false, storage: null },
     calendar: false,
   };
 }
@@ -52,7 +52,11 @@ export function seedSettings(db: Db): SettingsState {
     categories,
     rules,
     receiptsByEmail: { address: 'weiming.7f3k@in.sen-my.app', code: '428913', received: 3 },
-    data: { lastBackup: LAST_BACKUP, exportReady: false },
+    data: {
+      lastBackup: LAST_BACKUP,
+      exportReady: false,
+      storage: { used: 1_240_000_000, allowance: 10_000_000_000, warnAt: 5_000_000_000 },
+    },
   };
 }
 

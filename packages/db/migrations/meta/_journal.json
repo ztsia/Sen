@@ -50,6 +50,34 @@
       "when": 1792092110255,
       "tag": "0006_invitations_email_case",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792854717051,
+      "tag": "0007_b06_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792854722752,
+      "tag": "0008_b06_grants_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792918142678,
+      "tag": "0009_b06_health_admin_only",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792923977469,
+      "tag": "0010_b06_scheduler_tokens",
+      "breakpoints": true
     }
   ]
 }

@@ -360,6 +360,7 @@ export const DIR: Look = {
       if (!fig.isConnected) return;
       const k = Math.min(1, (now - t0) / ms);
       const e = 1 - Math.pow(1 - k, 3);
+      // eslint-disable-next-line no-unsanitized/property -- the look's own heroFigure markup, built from a number and a fixed state; no stored or typed text
       fig.innerHTML = DIR.heroFigure(Math.round(sen * e), 'dark', state);
       if (k < 1) requestAnimationFrame(step);
     };

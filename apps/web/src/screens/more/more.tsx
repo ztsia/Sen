@@ -41,7 +41,10 @@ function MoreRows({ capture, claims }: { capture: boolean; claims: boolean }) {
           id="payments"
           label="Payments"
           icon={CreditCardIcon}
-          value={payments ? String(payments.rows.length).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : undefined}
+          value={
+            // eslint-disable-next-line security/detect-unsafe-regex -- thousands separator on a short run of digits: the lookahead repeats a fixed 3-digit group and cannot backtrack catastrophically
+            payments ? String(payments.rows.length).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : undefined
+          }
         />
         <LinkRow
           id="shared"

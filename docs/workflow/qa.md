@@ -6,9 +6,6 @@ when Sen took up the plugin.
 
 ## The skill (main session)
 
-- **Pass this file to the reviewer:** the reviewer's prompt adds *Read `docs/workflow/qa.md` first;
-  it wins where it differs from your agent file*. Otherwise it's as thin as the skill says: the
-  branch, the slice label and the slice's row in `docs/modules.md`.
 - **The looks:** pixels are compared in all twelve look-and-mode pairs (six looks, light and dark).
   Behaviour runs once, in Minted light (D137).
 - **The trees** are `apps/web/e2e/trees/*.aria.yml`, re-recorded by `pnpm --filter @sen/web e2e:trees`.
@@ -18,9 +15,9 @@ when Sen took up the plugin.
   `E2E_SHOTS=$PWD/qa-artifacts/<branch>/sweep/screens pnpm e2e`, `pnpm --filter @sen/web e2e:lived`,
   `pnpm --filter @sen/web e2e:server`, `node scripts/mutants.mjs`,
   `node scripts/qa-diff.mjs --out qa-artifacts/<branch>/diff`.
-- **Security checks:** Sen has no dedicated command yet. Until one exists, the sweep runs
-  `pnpm audit --audit-level high` and `pnpm hygiene`, and says the secret scan and the stack's
-  security lint rules are missing.
+- **Security checks:** the sweep runs `pnpm security` (the dependency audit, the gitleaks scan of the
+  whole history, and the security lint rules) and `pnpm hygiene`. A missing `gitleaks` binary is a
+  failure to report, not a skip.
 - **Retaking the report's screenshots:** serve the preview builds, then `playwright test` from
   `qa/e2e`, as `qa/e2e/playwright.config.ts`'s header says.
 - **A full run** is also due when a fix touches `apps/web/src/components/ui/`, a pattern in

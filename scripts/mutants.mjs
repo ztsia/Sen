@@ -18,12 +18,20 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const { MUTANTS, SUITES } = await import(join(root, 'qa/mutants.ts'));
+// eslint-disable-next-line no-unsanitized/method -- a dev script importing a file from this repo (root-relative join), never external input
+const { MUTANTS, SUITES } = await import(pathToFileURL(join(root, 'qa/mutants.ts')).href);
 
 const git = (args, cwd = root) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
+// Windows runs pnpm (a .cmd) only through its shell, which needs spaced arguments quoted, as
+// security.mjs does (QA B06 run 1, finding 5)
+const WIN = process.platform === 'win32';
+// cmd.exe runs pnpm here: an argument with a space or any of its operators goes in quotes (QA B06 run 2, 5)
+const winArgs = (args) =>
+  WIN ? args.map((a) => (/[\s"&|<>^()%!]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)) : args;
+
 const argv = process.argv.slice(2);
 const arg = (name) => {
   const i = argv.indexOf(name);
@@ -59,6 +67,7 @@ if (existsSync(join(tree, '.git'))) {
 }
 console.log(`HEAD ${head.slice(0, 8)} in ${tree}`);
 const install = spawnSync('pnpm', ['install', '--frozen-lockfile', '--prefer-offline'], {
+  shell: WIN,
   cwd: tree,
   stdio: 'inherit',
 });
@@ -74,7 +83,7 @@ function run(suite, name) {
   const t0 = Date.now();
   const env = { ...process.env };
   delete env.CI;
-  const r = spawnSync(cmd, args, { cwd: tree, env, stdio: ['ignore', log, log] });
+  const r = spawnSync(cmd, winArgs(args), { cwd: tree, env, stdio: ['ignore', log, log], shell: WIN });
   closeSync(log);
   return { passed: r.status === 0, seconds: Math.round((Date.now() - t0) / 1000) };
 }
@@ -93,13 +102,15 @@ const results = [];
 for (const m of chosen) {
   const file = join(tree, m.file);
   const original = existsSync(file) ? readFileSync(file, 'utf8') : '';
-  const count = original.split(m.find).length - 1;
+  // Git for Windows checks out CRLF (`* text=auto`), and a find is written with \n (QA B06 run 2, 4)
+  const text = original.replace(/\r\n/g, '\n');
+  const count = text.split(m.find).length - 1;
   let verdict;
   let seconds = 0;
   if (count !== 1) verdict = `stale (found ${count} times)`;
   else if (!clean[m.suite].passed) verdict = 'not judged (the suite fails unmutated)';
   else {
-    writeFileSync(file, original.replace(m.find, m.replace));
+    writeFileSync(file, text.replace(m.find, m.replace));
     try {
       const r = run(m.suite, m.id);
       seconds = r.seconds;

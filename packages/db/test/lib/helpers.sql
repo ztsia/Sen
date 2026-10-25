@@ -142,5 +142,14 @@ BEGIN
   INSERT INTO audit_log (user_id, entity, entity_id, action, after, actor) VALUES
     (a, 'user_settings', a, 'update', '{"expected_payday":"last-working"}', 'user'),
     (b, 'user_settings', b, 'update', '{"expected_payday":"25"}', 'user');
+  -- B06
+  INSERT INTO scheduled_jobs (user_id, kind, run_at, dedupe_key) VALUES
+    (a, 'test', now() + interval '1 hour', 'test:a'),
+    (b, 'test', now() + interval '1 hour', 'test:b');
+  INSERT INTO job_runs (user_id, job, run_key, status) VALUES
+    (a, 'morning', 'morning:2026-10-24', 'ok'),
+    (b, 'morning', 'morning:2026-10-24', 'ok');
+  INSERT INTO alerts_sent (user_id, alert_key) VALUES (a, 'backup_late:2026-10-24'), (b, 'sen_push:2026-10-24');
+  INSERT INTO push_tokens (user_id, fcm_token) VALUES (a, 'fcm-a'), (b, 'fcm-b');
 END
 $$;

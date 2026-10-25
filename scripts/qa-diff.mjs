@@ -61,8 +61,14 @@ const MODES = ['light', 'dark'];
 /* ---------- arguments ---------------------------------------------------------- */
 
 const git = (args, cwd = root) => execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 1 << 28 }).trim();
+// Windows runs pnpm (a .cmd) only through its shell, which needs spaced arguments quoted, as
+// security.mjs does (QA B06 run 1, finding 5)
+const WIN = process.platform === 'win32';
+// cmd.exe runs pnpm here: an argument with a space or any of its operators goes in quotes (QA B06 run 2, 5)
+const winArgs = (args) =>
+  WIN ? args.map((a) => (/[\s"&|<>^()%!]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a)) : args;
 const sh = (cmd, args, opts = {}) => {
-  const r = spawnSync(cmd, args, { stdio: 'inherit', ...opts });
+  const r = spawnSync(cmd, winArgs(args), { stdio: 'inherit', shell: WIN, ...opts });
   if (r.status !== 0) throw new Error(`${cmd} ${args.join(' ')} failed (${r.status})`);
 };
 
@@ -143,7 +149,7 @@ function run(project) {
   if (!base) args.push('--update-snapshots=all');
   console.log(`running the catalogue on ${project} (${looks.join(', ')}) ...`);
   const t0 = Date.now();
-  const r = spawnSync('pnpm', args, { cwd: web, env, stdio: ['ignore', log, log] });
+  const r = spawnSync('pnpm', winArgs(args), { cwd: web, env, stdio: ['ignore', log, log], shell: WIN });
   closeSync(log);
   console.log(
     `  ${project}: exit ${r.status}, ${Math.round((Date.now() - t0) / 1000)} s, log ${relative(root, join(out, 'logs', `${project}.log`))}`,
@@ -232,7 +238,12 @@ async function metricsPlaywright(
   console.log(`measuring ${name} (${files.join(', ')}; ${workers} worker${workers > 1 ? 's' : ''}) ...`);
   const t0 = Date.now();
   const r = await new Promise((done) => {
-    const child = spawn('pnpm', [...args, ...files], { cwd: web, env: runEnv, stdio: ['ignore', log, log] });
+    const child = spawn('pnpm', winArgs([...args, ...files]), {
+      cwd: web,
+      env: runEnv,
+      stdio: ['ignore', log, log],
+      shell: WIN,
+    });
     child.on('close', (status) => done({ status }));
   });
   closeSync(log);
@@ -252,12 +263,14 @@ function metricsApi(side, cwd, name, dir = join(metricsDir, side)) {
     );
     return;
   }
-  if (spawnSync('pg_isready', ['-h', '127.0.0.1'], { stdio: 'ignore' }).status !== 0)
+  // on Windows the local Postgres is a Docker container, started by hand (docs/local.md)
+  if (!WIN && spawnSync('pg_isready', ['-h', '127.0.0.1'], { stdio: 'ignore' }).status !== 0)
     spawnSync('bash', [join(root, 'scripts/local-db.sh'), 'start'], { stdio: 'inherit' });
   const log = openSync(join(metricsLogs, `${name}.log`), 'w');
   console.log(`measuring ${name} (pnpm test:db) ...`);
   const t0 = Date.now();
   const r = spawnSync('pnpm', ['test:db'], {
+    shell: WIN,
     cwd,
     env: { ...process.env, QA_METRICS: dir },
     stdio: ['ignore', log, log],
@@ -558,6 +571,7 @@ if (metricsOnly) {
 /* ---------- pixels --------------------------------------------------------------- */
 
 const requireWeb = createRequire(join(web, 'package.json'));
+// eslint-disable-next-line no-unsanitized/method -- a dev script importing pixelmatch resolved from the web app's own node_modules
 const { default: pixelmatch } = await import(pathToFileURL(requireWeb.resolve('pixelmatch')).href);
 const { PNG } = requireWeb('pngjs');
 

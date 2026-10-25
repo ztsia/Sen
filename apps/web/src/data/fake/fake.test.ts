@@ -446,7 +446,8 @@ describe('QA B03 run 3', () => {
 describe('the heavy-year scenario', () => {
   it('leaves Wei Ming byte for byte as it was', () => {
     const hash = createHash('sha256').update(JSON.stringify(weiMing())).digest('hex');
-    expect(hash).toBe('73571858011f4a8f226bb4403f4faf2e8920f58f5955e9ccad0c22f4882188b5');
+    // changes only when Wei Ming's data does: B06 added Settings → Data's storage
+    expect(hash).toBe('55cd5c80561d7c78cbce7e0cee938fa38c96fc742700c43f29ae01dab86608e8');
   });
   it('has a year of every captured payment, built quickly', () => {
     const t0 = performance.now();

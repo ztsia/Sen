@@ -40,7 +40,9 @@ export default defineConfig({
   webServer: {
     cwd: '..',
     command:
-      'SEN_ENV=preview pnpm exec vite build --outDir dist-lived-a && pnpm exec vite preview --outDir dist-lived-a --port 4178 --strictPort',
+      'pnpm exec vite build --outDir dist-lived-a && pnpm exec vite preview --outDir dist-lived-a --port 4178 --strictPort',
+    // in env, not a `VAR=` prefix, so the command runs in Windows' shell too (B06)
+    env: { SEN_ENV: 'preview' },
     url: 'http://localhost:4178',
     reuseExistingServer: false,
     timeout: 180_000,

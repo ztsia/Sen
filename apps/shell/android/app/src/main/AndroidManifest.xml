@@ -133,6 +133,14 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- Push (B06): FCM shows Sen's own notifications on the alerts channel, with Sen's small icon -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="alerts" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_minted" />
+
         <!-- WorkManager starts itself; the heartbeat schedules its work from SenApplication. -->
     </application>
 </manifest>

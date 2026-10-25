@@ -797,16 +797,25 @@ export const SettingsView = z.object({
     }),
   ),
   seats: z.object({ used: z.int(), of: z.int() }),
-  data: z.object({ lastBackup: Instant.nullable(), exportReady: z.boolean() }),
+  data: z.object({
+    /** The last good nightly backup (admin only; null for everyone else). */
+    lastBackup: Instant.nullable(),
+    exportReady: z.boolean(),
+    /**
+     * R2's storage, from Sen's own counts, never a listing of the bucket (D126; admin only): bytes
+     * held, the free allowance, and where the morning job warns.
+     */
+    storage: z.object({ used: z.int().min(0), allowance: z.int().min(0), warnAt: z.int().min(0) }).nullable(),
+  }),
 });
 export type SettingsView = z.infer<typeof SettingsView>;
 
 /**
- * What the server holds of Settings from B05: who you are, what you may use, and *You*. The rest of
- * SettingsView arrives with the slices that own its tables; until then a preview fills it from the
- * made-up scenario.
+ * What the server holds of Settings: who you are, what you may use and *You* (B05), and *Data*'s
+ * backups (B06). The rest of SettingsView arrives with the slices that own its tables; until then a
+ * preview fills it from the made-up scenario.
  */
-export const SettingsCore = SettingsView.pick({ email: true, admin: true, switches: true, you: true });
+export const SettingsCore = SettingsView.pick({ email: true, admin: true, switches: true, you: true, data: true });
 export type SettingsCore = z.infer<typeof SettingsCore>;
 
 /** `GET /api/admin/members` (B05's read; B38's screens): people and their switches, never their money (D52). */

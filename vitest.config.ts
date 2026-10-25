@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 // One run for every package's unit tests. Playwright's journeys run separately (pnpm e2e). The API's
@@ -17,6 +18,12 @@ export default defineConfig({
     projects: [
       { test: { name: 'core', include: ['packages/core/src/**/*.test.ts'], environment: 'node' } },
       { test: { name: 'looks', include: ['packages/looks/src/**/*.test.ts'], environment: 'node' } },
+      {
+        resolve: {
+          alias: { 'cloudflare:workers': fileURLToPath(new URL('./apps/worker/src/workers-stub.ts', import.meta.url)) },
+        },
+        test: { name: 'worker', include: ['apps/worker/src/**/*.test.ts'], environment: 'node' },
+      },
       { test: { name: 'repo', include: ['scripts/**/*.test.{ts,mjs}', 'qa/**/*.test.ts'], environment: 'node' } },
       {
         test: {

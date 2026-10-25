@@ -8,6 +8,45 @@ follow on a phone, and commit.
 
 ## Now
 
+- [ ] **B06 · Jobs, realtime, push and backups: what the slice can't do itself.** In this order:
+      1. **The secrets and the Workers' first deploy** (24 Oct, at the laptop): one script the session
+         wrote, run by you with `!` in the session: it deploys `sen-worker` and `sen-worker-preview` once
+         (Cloudflare's Git builds deploy them after), puts a fresh `SCHEDULER_SECRET` and `RELAY_SECRET`
+         in each Worker and in Vercel (production and previews apart), `RELAY_URL` in Vercel, the
+         Firebase key in Vercel's previews, the database's owner URL and R2's account id in `sen_ops`, and
+         Firebase's Android config in `ztsia/Sen` (`SEN_GOOGLE_SERVICES_B64`). It prints names, never
+         values. The Workers' subdomain is `sen-my.workers.dev` (renamed from the account's handle).
+      2. **Connect the Workers to Git** (Cloudflare → *Workers & Pages* → each Worker → *Settings* →
+         *Builds* → *Connect* → GitHub, `ztsia/Sen`; allow Cloudflare's GitHub app for that repo only).
+         Root directory `apps/worker`, deploy command `npx wrangler deploy`. `sen-worker`: production
+         branch `main`, builds for other branches off. `sen-worker-preview`: production branch `main`,
+         other branches on with the same deploy command, and the build variable `CLOUDFLARE_ENV=preview`.
+      3. **Merge `sen_ops`' `b06-backup` after B06 merges** (github.com/ztsia/sen_ops → *Pull requests*):
+         the backup records itself through a function B06's production deploy creates. Merging runs the
+         backup and the restore test once; both should be green within 10 minutes, and Settings → Data
+         then shows the backup.
+      4. **The outside monitor** (cron-job.org, your account; you asked a session to set it up, 25 Oct.
+         A session at the laptop does it with Claude in Chrome, signed in as you, after the merge; the
+         extension wasn't connected on 25 Oct). Two jobs, each emailing you on failure.
+         `https://sen-worker.sen-my.workers.dev/health` every 15 minutes (the cron and ticks; no
+         database), and `https://sen-my.vercel.app/api/health/jobs` every 3 hours (the morning job and
+         the backup; each check wakes Neon, so not more often). Both answer 200 when well, 503 when late.
+      5. **On your phone, once B06's release is out:** install the new Sen (push is a native change),
+         open it, allow notifications when it asks, then *More → Settings → Data → Checks → Send a test
+         push*. Then *Schedule a test job*: its push arrives at the minute it names.
+      6. ~~**Confirm R2's numbers (D142)**~~ Confirmed 25 Oct: 10 GB counted as 10,000,000,000 bytes, a push at half.
+      7. **The whole-codebase security scan (done-when 8), before you merge.** It needs Claude Code's
+         Workflow tool (*Dynamic workflows*), which the 25 Oct laptop session didn't have. Either:
+         - **at the laptop:** turn on *Dynamic workflows* in `/config`, start a new session in
+           `C:\Zhong Tai\Sen` on the branch, and ask *run Claude Security: scan the codebase at high
+           effort; the cost is accepted*. Leave the checkout alone while it runs (tens of minutes); or
+         - **in a cloud session** on `B06/jobs-realtime-backups` (its setup script installs
+           `claude-security`), the same request. Not yet tried: if it says the Workflow tool is
+           missing, use the laptop.
+
+         The session then copies `CLAUDE-SECURITY-<time>/CLAUDE-SECURITY-RESULTS.md` to
+         `qa/B06/security.md` and fixes every Critical and High before the merge. Say in `docs/cloud.md`
+         whether a cloud session could run it.
 - [ ] **Give the cloud environment the workflow plugin** (needed before the next cloud session).
       Cloud sessions don't install the plugins a repo enables, so without this a session has no
       rules, no `workflow:` agents and no `qa`, `uiux` or `database` skill. On the phone: claude.ai/code

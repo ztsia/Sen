@@ -159,7 +159,7 @@ function PaymentsBody() {
           </div>
           <p role="status" className="text-sm text-muted-foreground">
             {data
-              ? `${String(data.rows.length).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} ${data.rows.length === 1 ? 'payment' : 'payments'}${active ? ' match' : ''}`
+              ? `${String(data.rows.length).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} ${data.rows.length === 1 ? 'payment' : 'payments'}${active ? ' match' : ''}` // eslint-disable-line security/detect-unsafe-regex -- thousands separator on a short run of digits: the lookahead repeats a fixed 3-digit group and cannot backtrack catastrophically
               : 'Loading'}
           </p>
           <FilterSheet

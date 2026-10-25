@@ -22,16 +22,28 @@ const appPool = new pg.Pool({ connectionString: url('app_user'), max: 5 });
 const authPool = new pg.Pool({ connectionString: url('sen_auth'), max: 5 });
 
 const codes = new Map<string, string>();
+const SCHEDULER = 's'.repeat(40);
 const deps: Deps = {
   env: {
     target: 'production',
     secret: 'y'.repeat(48),
     urls: { app_user: url('app_user'), sen_auth: url('sen_auth') },
     gmail: null,
+    scheduler: SCHEDULER,
+    relay: null,
+    firebase: null,
   },
   app: appPool,
   auth: authPool,
   mailer: { sendCode: async (to, code) => void codes.set(to, code) },
+  // push and the relay answer as if they were set up, so their routes are swept past the 503
+  push: { on: true, send: async () => 0 },
+  relay: {
+    on: true,
+    hint: async () => undefined,
+    pass: async () => ({ url: 'wss://relay.test/connect', pass: 'p' }),
+    wake: async () => undefined,
+  },
 };
 const { api } = createApp(deps);
 const ORIGIN = 'https://sen.test';
@@ -125,6 +137,7 @@ beforeAll(async () => {
   LIMITS.codesPerEmail.max = 1000;
   LIMITS.codesPerIp.max = 1000;
   LIMITS.lookupsPerIp.max = 1000;
+  LIMITS.testsPerPerson.max = 1000;
   for (const [p, isAdmin] of [
     [admin, true],
     [member, false],
@@ -137,6 +150,13 @@ beforeAll(async () => {
     ]);
     await owner.query('insert into user_access (user_id, is_admin, features) values ($1, $2, $3)', [p.id, isAdmin, {}]);
   }
+  // a morning run and a backup just now, so /health/jobs answers its good request with 200
+  for (const job of ['morning', 'backup'])
+    await owner.query(`insert into job_runs (user_id, job, run_key, status) values ($1, $2, $3, 'ok')`, [
+      admin.id,
+      job,
+      `${job}:sweep`,
+    ]);
   cookies.admin = await signIn(admin.email);
   cookies.member = await signIn(member.email);
   cookies.spare = await signIn(spare.email);
@@ -166,13 +186,16 @@ describe('the route table lists every route', () => {
 
 describe.each(ROUTES)('$method $path', (spec) => {
   const asWho = spec.access === 'admin' ? 'admin' : spec.access === 'auth' ? 'spare' : 'member';
+  // the Worker's tick carries the scheduler secret, not a session
+  const cred = (): Partial<Req> =>
+    spec.access === 'scheduler' ? { headers: { authorization: `Bearer ${SCHEDULER}` } } : { cookie: cookies[asWho] };
 
   it('answers its own request', async () => {
     if (spec.access === 'auth') return; // Better Auth's own answers are its tests'; the bad ones are ours
     const res = await send({
       method: spec.method,
       path: spec.path,
-      cookie: cookies[asWho],
+      ...cred(),
       body: bodyFor(spec, spec.path),
     });
     holds(res, 'the good request');
@@ -185,6 +208,15 @@ describe.each(ROUTES)('$method $path', (spec) => {
     holds(out, 'signed out');
     expect(out.status).toBe(401);
     expect(out.json).toMatchObject({ code: 'signed_out' });
+    if (spec.access === 'scheduler') {
+      for (const authorization of [`Bearer ${SCHEDULER}x`, `Bearer ${SCHEDULER.slice(1)}`, SCHEDULER, cookies.member]) {
+        const wrong = await send({ method: spec.method, path: spec.path, headers: { authorization } });
+        holds(wrong, 'a wrong secret');
+        expect(wrong.status).toBe(401);
+      }
+      const person = await send({ method: spec.method, path: spec.path, cookie: cookies.admin });
+      expect(person.status, 'a session is no scheduler').toBe(401);
+    }
     if (spec.access === 'admin') {
       const m = await send({
         method: spec.method,
@@ -200,47 +232,54 @@ describe.each(ROUTES)('$method $path', (spec) => {
   it('answers a wrong method and an unknown path with the error shape', async () => {
     for (const path of callsOf(spec)) {
       for (const method of METHODS.filter((m) => !ROUTES.some((r) => r.method === m && r.path === spec.path))) {
-        const res = await send({ method, path, cookie: cookies[asWho], body: method === 'GET' ? undefined : {} });
+        const res = await send({ method, path, ...cred(), body: method === 'GET' ? undefined : {} });
         holds(res, `${method} ${path}`, { sensShape: spec.access !== 'auth' });
         expect(res.status, `${method} ${path}`).toBeGreaterThanOrEqual(400);
       }
       const res = await send({
         method: spec.method,
         path: `${path}/nope`,
-        cookie: cookies[asWho],
+        ...cred(),
         body: bodyFor(spec, path),
       });
       holds(res, `${path}/nope`);
-      expect(res.status, `${path}/nope`).toBe(404);
+      // with no session, an unknown path is the signed-out answer first
+      expect([spec.access === 'scheduler' ? 401 : 404], `${path}/nope`).toContain(res.status);
     }
   });
 
-  it.runIf(spec.method !== 'GET')('takes a write only from Sen’s pages, as JSON, and refuses bad bodies', async () => {
-    for (const path of callsOf(spec)) {
-      const good = bodyFor(spec, path);
-      const bad = async (what: string, r: Partial<Req>, status: number | number[]) => {
-        const res = await send({ method: spec.method, path, cookie: cookies[asWho], body: good, ...r });
-        holds(res, `${path}: ${what}`);
-        expect([status].flat(), `${path}: ${what} gave ${res.status} ${res.text.slice(0, 120)}`).toContain(res.status);
-      };
-      await bad('a foreign Origin', { headers: { origin: 'https://evil.example' } }, 403);
-      await bad('Origin null', { headers: { origin: 'null' } }, 403);
-      await bad('not JSON', { raw: 'email=a', headers: { 'content-type': 'text/plain' } }, [400, 415]);
-      await bad('broken JSON', { raw: '{"a":' }, 400);
-      await bad('a NUL', { body: { ...(good as object), note: 'a\u0000b' } }, 400);
-      await bad('deep nesting', { body: deep(40) }, 400);
-      await bad('an oversized body', { raw: JSON.stringify({ note: 'x'.repeat(MAX_BODY) }) }, 413);
-      // no Origin at all is a client that isn't a browser: allowed, and still never a 5xx
-      const res = await send({
-        method: spec.method,
-        path,
-        cookie: cookies[asWho],
-        body: good,
-        headers: { origin: undefined },
-      });
-      holds(res, `${path}: no Origin`, { sensShape: spec.access !== 'auth' });
-    }
-  });
+  // the tick is no browser's: it reads no body, and its secret is its check (the test above)
+  it.runIf(spec.method !== 'GET' && spec.access !== 'scheduler')(
+    'takes a write only from Sen’s pages, as JSON, and refuses bad bodies',
+    async () => {
+      for (const path of callsOf(spec)) {
+        const good = bodyFor(spec, path);
+        const bad = async (what: string, r: Partial<Req>, status: number | number[]) => {
+          const res = await send({ method: spec.method, path, cookie: cookies[asWho], body: good, ...r });
+          holds(res, `${path}: ${what}`);
+          expect([status].flat(), `${path}: ${what} gave ${res.status} ${res.text.slice(0, 120)}`).toContain(
+            res.status,
+          );
+        };
+        await bad('a foreign Origin', { headers: { origin: 'https://evil.example' } }, 403);
+        await bad('Origin null', { headers: { origin: 'null' } }, 403);
+        await bad('not JSON', { raw: 'email=a', headers: { 'content-type': 'text/plain' } }, [400, 415]);
+        await bad('broken JSON', { raw: '{"a":' }, 400);
+        await bad('a NUL', { body: { ...(good as object), note: 'a\u0000b' } }, 400);
+        await bad('deep nesting', { body: deep(40) }, 400);
+        await bad('an oversized body', { raw: JSON.stringify({ note: 'x'.repeat(MAX_BODY) }) }, 413);
+        // no Origin at all is a client that isn't a browser: allowed, and still never a 5xx
+        const res = await send({
+          method: spec.method,
+          path,
+          cookie: cookies[asWho],
+          body: good,
+          headers: { origin: undefined },
+        });
+        holds(res, `${path}: no Origin`, { sensShape: spec.access !== 'auth' });
+      }
+    },
+  );
 });
 
 describe('the generic resource routes, swept', () => {

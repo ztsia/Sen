@@ -81,7 +81,7 @@ class ShellTest {
             val info = call(s, "SenShell", "info")
             assertTrue(info, info.contains("\\\"build\\\":\\\"e2e\\\""))
             assertTrue(info, info.contains("\\\"capture\\\":true"))
-            assertTrue(info, info.contains("\\\"bridge\\\":2"))
+            assertTrue(info, info.contains("\\\"bridge\\\":3"))
             // B05: a haptic answers whether the phone played it (the emulator's touch feedback decides)
             for (kind in listOf("confirm", "reject", "long-press", "toggle-on", "toggle-off", "threshold", "tick")) {
                 val r = call(s, "SenShell", "haptic", "{kind:'$kind'}")

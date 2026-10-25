@@ -18,18 +18,29 @@
     "e2e": "pnpm --filter @sen/web e2e",
     "looks": "pnpm --filter @sen/web looks",
     "hygiene": "node scripts/hygiene.mjs",
-    "test:db": "bash packages/db/test/run.sh && SEN_DB_TESTS=1 vitest run --project db --passWithNoTests"
+    "security": "node scripts/security.mjs",
+    "test:db": "bash packages/db/test/run.sh && bash -c \"SEN_DB_TESTS=1 vitest run --project db --passWithNoTests\""
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.20.5",
     "eslint": "^10.12.0",
+    "eslint-plugin-no-unsanitized": "^4.1.5",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-security": "^4.2.0",
     "fast-check": "^4.10.2",
     "globals": "^17.13.0",
     "prettier": "^3.9.9",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.1",
     "vitest": "^5.0.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "undici@>=8.0.0 <8.12.2": "^8.12.2",
+      "undici@>=7.0.0 <7.30.1": "^7.30.1",
+      "zod@>=4.0.0 <4.6.6": "^4.6.7"
+    }
   }
 }

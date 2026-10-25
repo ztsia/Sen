@@ -95,6 +95,19 @@ What keeps Sen honest runs before any real money reaches the server:
   and listener filter and B05's sign-in, RLS and API are checked once this way, before B07 lets real
   money reach the server. Its findings go through QA's tiers like any other.
 
+### Workflow cleanup for plugin 1.1.0 (owner, 24 Oct)
+Do this first: it changes how the session briefs its agents and runs QA. Check the session opened
+with plugin 1.1.0 (the rules' path names `workflow/1.1.0`); if not, record it and leave this step.
+- **Delete `.claude/skills/brief/`**: the plugin ships `workflow:brief`, made general from Sen's
+  copy. Compare the two first. Anything still true of Sen only (`pnpm test:db` drops `sen_test`; the
+  examples from QA tooling and Feel) goes into `docs/workflow/brief.md`, one line each.
+- **`CLAUDE.md`:** drop the *Overrides* lines for `brief` and for naming `docs/workflow/qa.md` in
+  the reviewer's prompt (the plugin's QA agents now read it themselves). Change the `brief` row in
+  *Skills* to say the plugin brings it, with Sen's additions in `docs/workflow/brief.md`, and add
+  `brief.md` to the `docs/workflow/` row in *Read these first*.
+- **`docs/workflow/qa.md`:** drop its first bullet, the one telling the main session to pass the
+  file to the reviewer.
+
 ## Leaves for later
 
 - Each job's actual work (watchdogs, reminders and the rest) arrives with its slice. The capture
@@ -114,6 +127,7 @@ What keeps Sen honest runs before any real money reaches the server:
 7. `pnpm security` passes in CI on the whole repo.
 8. The whole-codebase security scan has run, with no Critical or High finding left open
    (`qa/B06/security.md`).
+9. Sen has no copy of `brief` and no *Overrides* line that plugin 1.1.0 makes unnecessary.
 
 ## On your phone
 

@@ -13,6 +13,9 @@ import { ApiError, checkBody, onError, readJson, sameOrigin, signedOut, suspende
 import { clientIp, LIMITS, tooMany, withinLimit } from './limits';
 import { gmailMailer, noMail, type Mailer } from './mail';
 import { countQueries, serverTiming } from './timing';
+import { fcmPusher, noPush, type Pusher } from './jobs/push';
+import { noRelay, workerRelay, type Relay } from './jobs/relay';
+import { personJobRoutes, schedulerRoutes } from './jobs/routes';
 import { adminRoutes, personRoutes } from './routes';
 
 /** The largest request body the API reads, in bytes. */
@@ -23,13 +26,24 @@ export interface Deps {
   app: pg.Pool;
   auth: pg.Pool;
   mailer: Mailer;
+  /** FCM (B06); off when FIREBASE_SERVICE_ACCOUNT is unset. */
+  push: Pusher;
+  /** The Cloudflare Worker's relay and scheduler (B06); off when RELAY_URL is unset. */
+  relay: Relay;
 }
 
 /** The real dependencies, from the environment (env.ts). */
 export function defaultDeps(): Deps {
   const env = readEnv();
   const p = pools(env.urls);
-  return { env, app: p.app, auth: p.auth, mailer: env.gmail ? gmailMailer(env.gmail) : noMail };
+  return {
+    env,
+    app: p.app,
+    auth: p.auth,
+    mailer: env.gmail ? gmailMailer(env.gmail) : noMail,
+    push: env.firebase ? fcmPusher(env.firebase, p.app) : noPush,
+    relay: env.relay ? workerRelay(env.relay, env.scheduler) : noRelay,
+  };
 }
 
 /**
@@ -66,6 +80,11 @@ export function createApp(deps: Deps) {
   );
 
   api.get('/health', (c) => c.json({ ok: true }));
+  // the Worker's tick and the monitor's check: no person, so before the checks for people's requests
+  api.route(
+    '/',
+    schedulerRoutes({ pool: deps.app, push: deps.push, relay: deps.relay, scheduler: deps.env.scheduler }),
+  );
 
   // A write comes only from Sen's own pages, as JSON (QA B05 run 2, 26): another site's form or
   // script can't post here, whatever the cookie's SameSite does. Better Auth checks its own routes.
@@ -135,7 +154,28 @@ export function createApp(deps: Deps) {
     return c.json({ success: true });
   });
   api.on(['GET', 'POST'], '/auth/*', async (c) => {
+    // A token goes with the person's sessions (D142 (5)). Sign out everywhere ends every phone's pushes,
+    // the lost one included (QA B06 run 1, finding 1); a sign-out that ends the last session does too,
+    // in case the app's own DELETE didn't get through (run 2, finding 8). With another session left,
+    // that DELETE is what forgets this phone. Read who it is before the session goes.
+    const post = c.req.method === 'POST';
+    const everywhere = post && c.req.path.endsWith('/auth/revoke-sessions');
+    const signOut = post && c.req.path.endsWith('/auth/sign-out');
+    const who = everywhere || signOut ? await auth.api.getSession({ headers: c.req.raw.headers }) : null;
     const res = await auth.handler(c.req.raw);
+    if (who && res.ok) {
+      const left = everywhere
+        ? 0
+        : (
+            await deps.auth.query('select 1 from auth_session where user_id = $1 and expires_at > now() limit 1', [
+              who.user.id,
+            ])
+          ).rowCount;
+      if (!left)
+        await asPerson(deps.app, who.user.id, (db) =>
+          db.delete(schema.pushTokens).where(eq(schema.pushTokens.userId, who.user.id)),
+        );
+    }
     // an unknown path under /auth: the error shape, as everywhere else (QA B05 run 2, 25)
     if (res.status === 404 && !res.headers.get('content-length') && !(await res.clone().text()))
       return c.json({ code: 'not_found', message: 'No such route.' }, 404);
@@ -160,10 +200,12 @@ export function createApp(deps: Deps) {
       suspended: false,
     });
     c.set('db', db);
+    c.set('svc', { push: deps.push, relay: deps.relay });
     await next();
   });
 
   api.route('/', personRoutes());
+  api.route('/', personJobRoutes({ auth: deps.auth }));
   api.route('/admin', adminRoutes());
   return { api, auth };
 }

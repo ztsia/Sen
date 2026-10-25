@@ -34,7 +34,9 @@ export default defineConfig({
     {
       cwd: '..',
       command:
-        'SEN_ENV=preview SEN_BACKEND=api SEN_API_PORT=8788 pnpm exec vite build --outDir dist-server && SEN_BACKEND=api SEN_API_PORT=8788 pnpm exec vite preview --outDir dist-server --port 4179 --strictPort',
+        'pnpm exec vite build --outDir dist-server && pnpm exec vite preview --outDir dist-server --port 4179 --strictPort',
+      // in env, not `VAR=` prefixes, so the command runs in Windows' shell too (B06)
+      env: { SEN_ENV: 'preview', SEN_BACKEND: 'api', SEN_API_PORT: '8788' },
       url: 'http://localhost:4179',
       reuseExistingServer: false,
       timeout: 180_000,

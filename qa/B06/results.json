@@ -1,0 +1,244 @@
+{
+  "module": "B06",
+  "branch": "B06/jobs-realtime-backups",
+  "verdict": "ship",
+  "generatedAt": "2026-10-25 23:40 MYT",
+  "phases": "scoped (tier 2): the Worker's scheduler, from the cron to /jobs/tick and back, with the API's wakes (spec §16, D99, D141); db4e5b9..8579176",
+  "headline": "Both fixes in the area hold. Finding 2's own breakage check is now killed. Both halves of note 11 (a wake, and a later cron, arriving during a tick) are tested and killed. Measured against the real Worker: six crons with nothing due made one tick, and the flow's four crons made one tick, at the job's minute. Two new edits survive the tests, but the behaviour behind both is right today, so neither blocks: forgetting a refused tick, and the later of two wakes during one tick winning.",
+  "summary": {
+    "criteria": 10,
+    "pass": 8,
+    "fail": 0,
+    "unreachable": 2
+  },
+  "suites": {
+    "typecheck": "clean",
+    "lint": "clean",
+    "unit": "416/416 pass (Worker 15/15, scheduler.test.ts 3 new)",
+    "db": "pgTAP 218/218; API 129 pass, 7 skipped",
+    "probes": "5 of 7 killed (qa-artifacts/B06/jobs-realtime-backups/scoped-probes/index.md)",
+    "qa-e2e": "b06r3-scoped.spec.ts: FLOW-R3S-1 pass (5 steps)"
+  },
+  "findings": [
+    {
+      "id": 2,
+      "severity": "Major",
+      "status": "fixed",
+      "title": "The Worker's only-when-due gate (D141) had no test.",
+      "detail": "`scheduler.test.ts` now drives `Scheduler.cron()` with stand-in storage. The run-3 check `r3-scheduler-ticks-every-minute` is killed. Measured against the real Worker (`wrangler dev`, the local API on `sen_qa`), counting `jobs_next_once()` calls, which each tick makes once: six crons in 15 s with nothing due made one tick. In FLOW-R3S-1, four crons (one before the test job's minute, two at once after it, one more) made one tick, at the job's minute.",
+      "repro": "node scripts/mutants.mjs --only r3-scheduler-ticks-every-minute; ticks = pg_stat_user_functions.calls for jobs_next_once (track_functions = 'pl' on sen_qa)",
+      "evidence": "× ticks the API only when something is due, not each minute\nAssertionError: expected \"vi.fn()\" to be called 1 times, but got 180 times\nticks after 6 crons: 1\nticks before: 1 ... (FLOW-R3S-1) ... ticks after: 2",
+      "spec": "R3-AC-28, R3S-AC-1; D141",
+      "screenshots": [
+        "FLOW-R3S-1-step-2-not-yet.png",
+        "FLOW-R3S-1-step-3-ran-once.png"
+      ]
+    },
+    {
+      "id": 11,
+      "severity": "Note",
+      "status": "fixed",
+      "title": "`Scheduler.cron()` wrote back the state it had read before a tick.",
+      "detail": "After the tick, `cron()` now reads the latest state again. It keeps the later `lastCron`, and applies the soonest wake that came during the tick. Both halves are guarded: dropping the merge or the wake fails *wakes sooner when the API asks, and keeps a wake that comes while a tick runs*.",
+      "repro": "node scripts/mutants.mjs --only r3s-tick-overwrites-cron,r3s-tick-drops-wake",
+      "evidence": "r3s-tick-drops-wake: AssertionError: expected { next: 1792904400000, …(2) } to match object { next: 1792894200000, …(1) }\nr3s-tick-overwrites-cron: AssertionError: expected { next: 1792894200000, …(2) } to match object { next: 1792894200000, …(1) }",
+      "spec": "R3S-AC-3, R3S-AC-6; D141",
+      "screenshots": []
+    },
+    {
+      "id": 15,
+      "severity": "Minor",
+      "status": "open",
+      "title": "No test notices if the scheduler forgets ticks the API refused, which would keep the Worker's /health green while every tick fails.",
+      "detail": "In `tick()`, if a non-2xx answer returned `afterTick(s, now, undefined)` instead of `afterFailure(s, now)`, every suite would stay green. The retry would still come in 5 minutes, so the new test (*after a failed tick, tries again in five minutes*), which counts only calls, still passes. But `failingSince` would never be set, so the Worker's `/health` would never say `tick`. D141 names *ticks fail for 15 minutes* as one of the monitor's two signals, as when a secret is rotated on one side only. `clock.test.ts` tests `afterFailure()` itself, not that `tick()` calls it. The behaviour is right today, measured end to end: a Worker given the wrong scheduler secret was refused (`tick: 401`, 3 times about 5 minutes apart). Its `/health` stayed `{\"ok\":true}` until 15:27, then answered 503 `late: [tick]` at 15:29, 16 minutes after the first refusal. Minor rather than Major: `/health/jobs` still fails after 26 hours. A test would hold it by asserting `/health` after a failed tick and 15 minutes.",
+      "repro": "node scripts/mutants.mjs --only r3s-failure-not-remembered",
+      "evidence": "| `r3s-failure-not-remembered` | unit | **SURVIVED** | ... | log: Tests  99 passed (99)\nreal Worker, wrong secret: [ERROR] tick: 401 (×3)\n15:27:01 cron; health: {\"ok\":true}\n15:29:01 cron; health: {\"code\":\"late\",\"message\":\"Late: tick.\",\"late\":[\"tick\"]}\n15:31:02 final health: ... 503",
+      "spec": "R3S-AC-2; D141",
+      "screenshots": []
+    },
+    {
+      "id": 16,
+      "severity": "Minor",
+      "status": "open",
+      "title": "No test holds that, of two wakes during one tick, the sooner one wins.",
+      "detail": "`wake()` keeps `Math.min(this.woke ?? at, at)` while a tick runs. Replacing it with `at` (the last wake wins) survives, because the test makes only one wake during its tick. With two one-off jobs scheduled during one tick, the later-scheduled one would set the wake, and a sooner job would wait for it. Ticks take seconds, so it's rare.",
+      "repro": "node scripts/mutants.mjs --only r3s-later-wake-wins",
+      "evidence": "| `r3s-later-wake-wins` | unit | **SURVIVED** | ... | log: Tests  99 passed (99)",
+      "spec": "R3S-AC-4",
+      "screenshots": []
+    }
+  ],
+  "probes": [
+    {
+      "broke": "Scheduler.cron without the due() gate (run 3's finding 2)",
+      "caught": true,
+      "note": "scheduler.test.ts: called 180 times, expected 1"
+    },
+    {
+      "broke": "after a tick, the state read before it is saved (lastCron steps back)",
+      "caught": true,
+      "note": "keep: r3s-tick-overwrites-cron"
+    },
+    {
+      "broke": "a wake during a tick dropped",
+      "caught": true,
+      "note": "keep: r3s-tick-drops-wake"
+    },
+    {
+      "broke": "a cron during a tick starts a second tick (the ticking guard removed)",
+      "caught": true,
+      "note": "keep: r3s-second-tick-at-once"
+    },
+    {
+      "broke": "a refused tick isn't remembered as failing",
+      "caught": false,
+      "note": "finding 15; keep: r3s-failure-not-remembered"
+    },
+    {
+      "broke": "the later of two wakes during a tick wins",
+      "caught": false,
+      "note": "finding 16; keep: r3s-later-wake-wins"
+    },
+    {
+      "broke": "wake-delays (run 1's): a wake can push the next tick later",
+      "caught": true,
+      "note": "still killed"
+    }
+  ],
+  "flows": [
+    {
+      "id": "FLOW-R3S-1",
+      "title": "The test job a minute ahead, through the real Worker",
+      "kind": "happy",
+      "actor": "owner (admin)",
+      "entry": "Settings → Data → Schedule a test job (wrangler dev, local API, sen_qa)",
+      "covers": [
+        "R3S-AC-1",
+        "R3S-AC-3",
+        "R3S-AC-7"
+      ],
+      "spec": "D141, done-when 1",
+      "status": "pass",
+      "ends": "one ok job_runs row; scheduled_jobs done 1; one tick for four crons; /health 200",
+      "steps": [
+        {
+          "n": 1,
+          "action": "tap Schedule a test job",
+          "assertion": "toast names its minute; one due row",
+          "status": "pass",
+          "screenshot": "FLOW-R3S-1-step-1-scheduled.png"
+        },
+        {
+          "n": 2,
+          "action": "a cron before its minute",
+          "assertion": "still due; nothing ran",
+          "status": "pass",
+          "screenshot": "FLOW-R3S-1-step-2-not-yet.png"
+        },
+        {
+          "n": 3,
+          "action": "two crons at once after its minute, then a third",
+          "assertion": "done 1; one ok job_runs row (and one tick, counted in Postgres)",
+          "status": "pass",
+          "screenshot": "FLOW-R3S-1-step-3-ran-once.png"
+        },
+        {
+          "n": 4,
+          "action": "the job’s hint reaches the open Data screen",
+          "assertion": "a GET /api/settings, no reload",
+          "status": "pass",
+          "screenshot": "FLOW-R3S-1-step-4-hint-reload.png"
+        },
+        {
+          "n": 5,
+          "action": "GET the Worker’s /health",
+          "assertion": "200 {ok:true}",
+          "status": "pass",
+          "screenshot": "FLOW-R3S-1-step-5-worker-health.png"
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "R3S-AC-1",
+      "title": "Only when due",
+      "spec": "D141",
+      "status": "pass",
+      "evidence": "real Worker: 6 crons, 1 tick; FLOW-R3S-1: 4 crons, 1 tick; scheduler.test.ts"
+    },
+    {
+      "id": "R3S-AC-2",
+      "title": "(sad) A failed tick retries in 5 min; /health says tick after 15",
+      "spec": "D141",
+      "status": "pass",
+      "evidence": "wrong-secret Worker: 3 refused ticks in 16 min; 503 late [tick] at 15:29 after the first refusal at 15:12:43. Untested wiring: finding 15"
+    },
+    {
+      "id": "R3S-AC-3",
+      "title": "A wake during a tick survives",
+      "spec": "note 11",
+      "status": "pass",
+      "evidence": "scheduler.test.ts; r3s-tick-drops-wake killed"
+    },
+    {
+      "id": "R3S-AC-4",
+      "title": "(twin) Of two wakes during a tick, the sooner wins",
+      "spec": "note 11",
+      "status": "unreachable",
+      "evidence": "read only, not run: Math.min(this.woke ?? at, at); untested (finding 16)"
+    },
+    {
+      "id": "R3S-AC-5",
+      "title": "(sad) A later wake doesn't delay",
+      "spec": "D141",
+      "status": "pass",
+      "evidence": "mutant wake-delays killed"
+    },
+    {
+      "id": "R3S-AC-6",
+      "title": "A cron during a tick keeps its lastCron",
+      "spec": "note 11",
+      "status": "pass",
+      "evidence": "scheduler.test.ts lastCron t0+MINUTE; r3s-tick-overwrites-cron killed"
+    },
+    {
+      "id": "R3S-AC-7",
+      "title": "(sad) No second tick during a tick",
+      "spec": "D141",
+      "status": "pass",
+      "evidence": "r3s-second-tick-at-once killed; FLOW-R3S-1 two crons at once → one tick"
+    },
+    {
+      "id": "R3S-AC-8",
+      "title": "(sad) A failed tick keeps a wake",
+      "spec": "note 11",
+      "status": "unreachable",
+      "evidence": "read only, not run: the merge runs after tick() returns afterFailure too (tick catches its own errors)"
+    },
+    {
+      "id": "R3S-AC-9",
+      "title": "The API's answer is clamped",
+      "spec": "D141",
+      "status": "pass",
+      "evidence": "clock.test.ts 'never trusts an answer too near or too far, or none at all'"
+    },
+    {
+      "id": "R3S-AC-10",
+      "title": "(sad) /schedule needs the secret and a time",
+      "spec": "D141",
+      "status": "pass",
+      "evidence": "index.test.ts 'needs the scheduler’s own secret, not the relay’s'"
+    }
+  ],
+  "notTested": [
+    {
+      "what": "The deployed Workers' crons and the cron-job.org email",
+      "why": "out of a QA session's reach; docs/local.md"
+    },
+    {
+      "what": "Everything outside the scheduler",
+      "why": "scoped run: run 3's other fixes (backups, relay pass, the jobs topic, storage words, the mutants entry) are tier 1, in the ledger, not re-walked here; their checks ran green in this run's unit and db suites"
+    }
+  ]
+}

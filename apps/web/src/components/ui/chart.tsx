@@ -82,6 +82,7 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 
   return (
     <style
+      // eslint-disable-next-line react/no-danger -- CSS variables built from the chart config's colours, which our own blocks write as theme tokens; no stored or typed text
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(

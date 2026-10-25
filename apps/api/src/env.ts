@@ -11,6 +11,40 @@ export interface ApiEnv {
   urls: Record<LoginRole, string>;
   /** Sen's Gmail (D54): production sends every code through it. */
   gmail: { user: string; password: string } | null;
+  /** SCHEDULER_SECRET (D99): the Worker's cron sends it to /jobs/tick, and the API to the Worker. */
+  scheduler: string | null;
+  /** The relay (D100): RELAY_URL, the Worker's address, and RELAY_SECRET, which signs passes and hints. */
+  relay: { url: string; secret: string } | null;
+  /** FIREBASE_SERVICE_ACCOUNT: the service account's JSON key, for FCM (spec §5.1 Push). */
+  firebase: FirebaseAccount | null;
+}
+
+export interface FirebaseAccount {
+  project_id: string;
+  client_email: string;
+  private_key: string;
+}
+
+/** The B06 services' variables, the same locally and on Vercel; each is off when unset. */
+function services(e: NodeJS.ProcessEnv): Pick<ApiEnv, 'scheduler' | 'relay' | 'firebase'> {
+  const short = (v: string | undefined) => (v && v.length >= 32 ? v : null);
+  const relaySecret = short(e.RELAY_SECRET);
+  let firebase: FirebaseAccount | null = null;
+  if (e.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      const a = JSON.parse(e.FIREBASE_SERVICE_ACCOUNT) as Partial<FirebaseAccount>;
+      if (a.project_id && a.client_email && a.private_key)
+        firebase = { project_id: a.project_id, client_email: a.client_email, private_key: a.private_key };
+    } catch {
+      console.error('FIREBASE_SERVICE_ACCOUNT is not the service account JSON; push is off');
+    }
+  }
+  return {
+    // a secret shorter than 32 characters is treated as unset, so a typo can't open the tick
+    scheduler: short(e.SCHEDULER_SECRET),
+    relay: e.RELAY_URL && relaySecret ? { url: e.RELAY_URL.replace(/\/+$/, ''), secret: relaySecret } : null,
+    firebase,
+  };
 }
 
 const LOCAL_SECRET = 'sen-local-development-secret-not-for-any-deploy';
@@ -36,7 +70,7 @@ export function readEnv(e: NodeJS.ProcessEnv = process.env): ApiEnv {
     for (const u of Object.values(urls))
       if (!['127.0.0.1', 'localhost'].includes(new URL(u).hostname))
         throw new Error('A local API connects only to the local Postgres (scripts/local-db.sh)');
-    return { target, secret: e.BETTER_AUTH_SECRET ?? LOCAL_SECRET, urls, gmail };
+    return { target, secret: e.BETTER_AUTH_SECRET ?? LOCAL_SECRET, urls, gmail, ...services(e) };
   }
   const secret = e.BETTER_AUTH_SECRET;
   const pooled = e.DATABASE_URL;
@@ -51,5 +85,6 @@ export function readEnv(e: NodeJS.ProcessEnv = process.env): ApiEnv {
       sen_auth: roleUrl(pooled, 'sen_auth', rolePassword(secret, 'sen_auth')),
     },
     gmail,
+    ...services(e),
   };
 }

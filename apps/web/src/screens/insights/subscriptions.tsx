@@ -206,6 +206,7 @@ const SYMBOL: Record<string, string> = { USD: 'US$', SGD: 'S$', EUR: '€', GBP:
 function formatMinor(amount: number, currency: string): string {
   if (currency === 'MYR') return formatSen(amount);
   const digits = String(amount).padStart(3, '0');
+  // eslint-disable-next-line security/detect-unsafe-regex -- thousands separator on a short run of digits: the lookahead repeats a fixed 3-digit group and cannot backtrack catastrophically
   const whole = digits.slice(0, -2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return `${SYMBOL[currency] ?? `${currency} `}${whole}.${digits.slice(-2)}`;
 }

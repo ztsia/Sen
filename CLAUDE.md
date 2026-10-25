@@ -21,7 +21,7 @@ It's called **Sen** (D48). It's for the owner, and by invitation a few friends a
 | `qa/escapes.md` | Every bug the owner found by hand that QA had passed, why it was missed, its pin and the question it added (D137) | Add an entry before fixing one |
 | `docs/local.md` | What only the owner, or a machine with a device, can do | A queue. Add to it instead of attempting these |
 | `docs/handoff.md` | The one handoff, from the last session to you | Read it first. Rewrite it before you end |
-| `docs/workflow/` | Sen's additions to the `workflow` plugin's skills: `qa.md`, `database.md`, `uiux.md` | Wins over the plugin's skill where they differ |
+| `docs/workflow/` | Sen's additions to the `workflow` plugin's skills: `qa.md`, `database.md`, `uiux.md`, `brief.md` | Wins over the plugin's skill where they differ |
 
 ## Where the build is
 
@@ -118,6 +118,7 @@ From the repo root (Node 22, pnpm 10; `scripts/session-setup.sh` installs packag
 | `node scripts/mutants.mjs` | The breakage checks in `qa/mutants.ts`, each made in a worktree of HEAD; a mutant its suite doesn't catch is a finding (D139) |
 | `pnpm --filter @sen/web e2e:lived` | The lived-in journeys: across a deploy, resume, offline, a slow network, 200% text, 360×640, a year of data (`?scenario=year`) |
 | `node scripts/live-metrics.mjs --url <origin>` | A deployed preview's server timings (the `live-metrics` workflow runs it on every preview); production gets only the signed-out part |
+| `pnpm security` | The security checks, each run and none skipped: `pnpm audit --audit-level high`, `gitleaks git --redact` over the whole history (needs the `gitleaks` binary on PATH; CI installs a pinned release), and `pnpm lint` with the security rules (`eslint-plugin-security`, `no-unsanitized`, `react/no-danger`). Fails on any high or critical finding. CI runs it on every push and QA's sweep runs it |
 | `pnpm hygiene` | The repo hygiene check: tracked `private/` paths, and the `DENYLIST` strings if set |
 | `scripts/local-db.sh start\|stop\|reset` | The local Postgres 16 with pgTAP (started by the session hook): `sen_dev` and `sen_test`, never Neon (`docs/cloud.md` §5) |
 | `pnpm test:db` | A fresh `sen_test`, every migration, pgTAP (RLS for two people over every table, the catalogue check), then the API's tests on it, and the route sweep: every route in `apps/api/src/routes.table.ts` given the same bad requests. With `QA_METRICS=<dir>`, each request's `Server-Timing` is recorded. One at a time: it drops `sen_test` |
@@ -162,12 +163,11 @@ who holds the database.
 
 ## Skills
 
-The `workflow` plugin brings `qa`, `uiux`, `database`, `llm` and `security`, with Sen's additions in
-`docs/workflow/`. Sen's own:
+The `workflow` plugin brings `qa`, `uiux`, `database`, `llm`, `security` and `brief`, with Sen's
+additions in `docs/workflow/`. Sen's own:
 
 | Skill | Use it when |
 |---|---|
-| `brief` | Before every Agent call that does work, and when a subagent's work comes back short: the model, the brief, and what to do about a miss (D131) |
 | `dataviz` | Any chart, stat tile or chart colour. It comes from the owner's claude.ai account, not the repo |
 | `frontend-design` | Narrowed when `S2` closed (D57, D84): only for a look's own drawing (its figure, strip, avatar, tab bar and reveal) or a new look for the pool. Every screen follows `docs/ui/patterns.md` and `uiux` instead |
 | `supabase-postgres-best-practices`, `neon`, `neon-postgres` | General Postgres and Neon practice. Where they disagree with `database` (and `docs/workflow/database.md`) or D54–D55, ours win |
@@ -179,8 +179,4 @@ a skill says to ask.
 
 ## Overrides
 
-- **Briefing subagents:** the `brief` skill (D131) is Sen's fuller version of the rules' *Models and
-  subagents*. Follow it where it says more.
-- **QA:** the reviewer's prompt also names `docs/workflow/qa.md`, which holds Sen's sad paths,
-  probes and eyes questions.
 - **The shadcn note** is `// Sen:`.

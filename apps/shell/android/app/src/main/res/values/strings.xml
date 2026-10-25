@@ -4,6 +4,8 @@
     <string name="title_activity_main">Sen</string>
     <string name="package_name">io.github.ztsia.sen</string>
     <string name="custom_url_scheme">io.github.ztsia.sen</string>
+    <string name="channel_alerts">Alerts</string>
+    <string name="channel_alerts_about">What Sen tells you: reminders, warnings and tests</string>
     <string name="channel_tests">Tests</string>
     <string name="channel_tests_about">Sen\'s hidden tests, while the shell is being tried out</string>
     <string name="channel_moments">Live moments</string>

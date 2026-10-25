@@ -34,6 +34,8 @@ export const LIMITS = {
   // Better Auth's own limit on its send route, kept now that Sen sends the code itself (QA B05 run 2, 18)
   codesPerIp: { max: 5, windowMs: 60_000 },
   codesPerEmail: { max: 5, windowMs: 10 * 60_000 },
+  // a test push or test job (B06), per person, so the routes can't be used to spam a phone
+  testsPerPerson: { max: 3, windowMs: 60_000 },
 };
 
 export const tooMany = (message: string) => new ApiError(429, 'too_many', message);

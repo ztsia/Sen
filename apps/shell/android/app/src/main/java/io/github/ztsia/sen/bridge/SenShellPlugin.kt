@@ -117,8 +117,9 @@ class SenShellPlugin : Plugin() {
         /**
          * 1: info, openInBrowser, testPrompt, testIsland, switchIcon; SenCapture (B02).
          * 2: haptic (B05).
+         * 3: Capawesome's FirebaseMessaging plugin is in the shell: push (B06).
          */
-        const val BRIDGE = 2
+        const val BRIDGE = 3
 
         /** Each moment's haptic, with an older phone's nearest where Android added it later (API 30, 34). */
         fun hapticConstant(kind: String?, sdk: Int): Int? = when (kind) {
