@@ -21,11 +21,15 @@ follow on a phone, and commit.
          Root directory `apps/worker`, deploy command `npx wrangler deploy`. `sen-worker`: production
          branch `main`, builds for other branches off. `sen-worker-preview`: production branch `main`,
          other branches on with the same deploy command, and the build variable `CLOUDFLARE_ENV=preview`.
-      3. **Merge `sen_ops`' `b06-backup` after B06 merges** (github.com/ztsia/sen_ops → *Pull requests*):
+      3. ~~**Merge `sen_ops`' `b06-backup` after B06 merges**~~ Merged 28 Oct: the backup ran green and
+         `/health/jobs` answers 200. The restore test failed on Neon's own roles; **merge `sen_ops` PR
+         #2** (the fix, already green on its branch). Was: (github.com/ztsia/sen_ops → *Pull requests*):
          the backup records itself through a function B06's production deploy creates. Merging runs the
          backup and the restore test once; both should be green within 10 minutes, and Settings → Data
          then shows the backup.
-      4. **The outside monitor** (cron-job.org, your account; you asked a session to set it up, 25 Oct.
+      4. ~~**The outside monitor**~~ Set up 28 Oct by a session in Chrome: *Sen worker health* every
+         15 minutes and *Sen jobs and backup health* at minute 0 every 3 hours (KL time), each emailing
+         you on a failure and on recovery. Was: (cron-job.org, your account; you asked a session to set it up, 25 Oct.
          A session at the laptop does it with Claude in Chrome, signed in as you, after the merge; the
          extension wasn't connected on 25 Oct). Two jobs, each emailing you on failure.
          `https://sen-worker.sen-my.workers.dev/health` every 15 minutes (the cron and ticks; no
