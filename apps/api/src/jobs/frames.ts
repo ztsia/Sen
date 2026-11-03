@@ -106,9 +106,11 @@ export const captureWatchdog: Task = async (ctx) => {
     ctx.push.send(ctx.userId, {
       title: 'Capture may be off',
       body:
-        health.silent === 'no-heartbeat'
-          ? 'Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.'
-          : 'No payment notifications for 2 days. Open Sen to check it can still read them.',
+        health.silent === 'no-access'
+          ? 'Your phone says Sen can’t read notifications. Open Sen to turn access back on.'
+          : health.silent === 'no-heartbeat'
+            ? 'Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.'
+            : 'No payment notifications for 2 days. Open Sen to check it can still read them.',
       data: { open: 'home' },
     }),
   );

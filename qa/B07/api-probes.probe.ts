@@ -78,7 +78,7 @@ async function call(path: string, init: Init = {}) {
     body: init.raw ?? (init.body !== undefined ? JSON.stringify(init.body) : undefined),
   });
   const text = await res.text();
-  let body: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
+  let body: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   try {
     body = text ? JSON.parse(text) : null;
   } catch {
@@ -339,7 +339,7 @@ describe('Captured on this phone (AC-30)', () => {
   it('paging through 51 events posted in the same millisecond returns all 51', async () => {
     const t = Date.UTC(2026, 9, 10, 2, 0, 0);
     const evs = Array.from({ length: 51 }, (_, i) => event(a.id, { when: t + i, posted: t, key: `tie-${i}` }));
-    const r = await sync('a', { events: evs.slice(0, 51 > 100 ? 100 : 51) });
+    const r = await sync('a', { events: evs });
     expect(r.body.synced.events).toHaveLength(51);
     const p1 = await call('/api/captured', { cookie: s.a.cookie });
     const p2 = p1.body.next ? await call(`/api/captured?before=${encodeURIComponent(p1.body.next)}`, { cookie: s.a.cookie }) : { body: { events: [] } };

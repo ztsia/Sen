@@ -20,7 +20,7 @@ export interface ShellFacts {
 }
 
 export interface CaptureWarning {
-  key: 'listener-off' | 'no-heartbeat' | 'no-events' | 'scheduler';
+  key: 'listener-off' | 'no-access' | 'no-heartbeat' | 'no-events' | 'scheduler';
   title: string;
   detail: string;
   /** Whether *Fix* is offered: the first opens Android's notification access; the others, Capture's own screen. */
@@ -51,11 +51,24 @@ export function captureWarning(
       detail: "Sen can't read your payment notifications.",
       fix: true,
     };
+  // in a browser, or when the phone's own view is fine but its last sync said otherwise
+  if (health?.silent === 'no-access')
+    return {
+      key: 'no-access',
+      title: 'Capture is off',
+      detail: "Your phone says Sen can't read your payment notifications.",
+      fix: canFix,
+    };
   if (health?.silent === 'no-heartbeat' && health.lastBeatAt)
     return {
       key: 'no-heartbeat',
       title: 'Capture may be off',
-      detail: `Sen hasn't heard from your phone since ${when(health.lastBeatAt)}.`,
+      detail:
+        health.listenerConnected === false
+          ? health.lastListenAt
+            ? `Sen's listener on your phone has been off since ${when(health.lastListenAt)}.`
+            : "Sen's listener on your phone is off."
+          : `Sen hasn't heard from your phone since ${when(health.lastBeatAt)}.`,
       fix: canFix,
     };
   if (health?.silent === 'no-events')

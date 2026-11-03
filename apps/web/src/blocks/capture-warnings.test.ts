@@ -11,6 +11,7 @@ const HEALTHY: CaptureHealthView = {
   lastBeatAt: '2026-11-02T09:00:00+08:00',
   listenerConnected: true,
   access: true,
+  lastListenAt: '2026-11-02T09:00:00+08:00',
   lastEventAt: '2026-11-02T08:00:00+08:00',
   silent: null,
   morningAt: '2026-11-03T06:00:00+08:00',
@@ -60,6 +61,18 @@ describe('the capture warnings', () => {
     const w = warn({ silent: 'no-heartbeat', lastBeatAt: '2026-11-01T01:30:00Z', schedulerLate: true });
     expect(w).toMatchObject({ key: 'no-heartbeat', title: 'Capture may be off', fix: false });
     expect(w?.detail).toBe("Sen hasn't heard from your phone since Sun, 1 Nov, 09:30.");
+  });
+
+  it('2. in a browser, says the phone reported access off, or its listener off since when', () => {
+    const w = warn({ silent: 'no-access', access: false, listenerConnected: false });
+    expect(w).toMatchObject({ key: 'no-access', title: 'Capture is off', fix: false });
+    expect(w?.detail).toBe("Your phone says Sen can't read your payment notifications.");
+    expect(warn({ silent: 'no-access' }, PHONE, true)?.fix).toBe(true);
+    const off = warn({ silent: 'no-heartbeat', listenerConnected: false, lastListenAt: '2026-11-01T01:30:00Z' });
+    expect(off?.detail).toBe("Sen's listener on your phone has been off since Sun, 1 Nov, 09:30.");
+    expect(warn({ silent: 'no-heartbeat', listenerConnected: false, lastListenAt: null })?.detail).toBe(
+      "Sen's listener on your phone is off.",
+    );
   });
 
   it('3. says no payment notifications have come', () => {

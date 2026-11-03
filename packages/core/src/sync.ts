@@ -147,8 +147,13 @@ export const CaptureHealthView = z.object({
   listenerConnected: z.boolean().nullable(),
   access: z.boolean().nullable(),
   lastEventAt: Instant.nullable(),
-  /** The watchdog's reading (24 h without a heartbeat, 48 h without an event). */
-  silent: z.enum(['no-heartbeat', 'no-events']).nullable(),
+  /** The newest heartbeat with the listener connected and access granted: the listener's own. */
+  lastListenAt: Instant.nullable(),
+  /**
+   * The watchdog's reading: the phone says notification access is off (`no-access`); the listener
+   * hasn't been connected for 24 h (`no-heartbeat`); or no event for 48 h (`no-events`).
+   */
+  silent: z.enum(['no-access', 'no-heartbeat', 'no-events']).nullable(),
   /** The morning job's last run, and whether it's over 26 hours ago (§18). */
   morningAt: Instant.nullable(),
   schedulerLate: z.boolean(),
@@ -173,8 +178,8 @@ export type CapturedEvent = z.infer<typeof CapturedEvent>;
 
 export const CapturedView = z.object({
   events: z.array(CapturedEvent),
-  /** Pass as `before` for the next page; null at the end. */
-  next: Instant.nullable(),
+  /** Pass as `before` for the next page (an opaque cursor); null at the end. */
+  next: z.string().max(100).nullable(),
 });
 export type CapturedView = z.infer<typeof CapturedView>;
 

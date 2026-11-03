@@ -40,6 +40,7 @@ export function captureHealthView(db: Db): CaptureHealthView {
     lastBeatAt: at(1),
     listenerConnected: true,
     access: true,
+    lastListenAt: at(1),
     lastEventAt: at(off ? 51 : 3),
     silent: off ? 'no-events' : null,
     morningAt: at(late ? 30 : 6),

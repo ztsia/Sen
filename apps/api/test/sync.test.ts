@@ -6,6 +6,7 @@ import type { SyncEvent } from '@sen/core/sync';
 import { createApp, type Deps } from '../src/app';
 import { asPerson } from '../src/db';
 import { captureWatchdog, type JobCtx } from '../src/jobs/frames';
+import { captureHealth } from '../src/sync/health';
 import type { PushMessage } from '../src/jobs/push';
 import { LIMITS } from '../src/limits';
 import { dedupeKey, eventId } from '@sen/db';
@@ -324,6 +325,28 @@ describe('what the web app reads', () => {
     expect((await call('/api/captured', { cookie: s.other.cookie })).body?.events).toEqual([]);
   });
 
+  it('Captured on this phone pages through events that share a posted time', async () => {
+    const at = new Date('2026-10-10T02:00:00Z');
+    for (let i = 0; i < 51; i++)
+      await owner.query(
+        `insert into bank_events (id, user_id, package, notification_key, posted_at, notified_at, title, text, dedupe_key)
+         values ($1, $2, 'my.com.tngdigital.ewallet', 'k', $3, $3, 'Payment', 'Tie', $4)`,
+        [randomUUID(), other.id, at, randomUUID().replaceAll('-', '').repeat(2)],
+      );
+    const seen = new Set<string>();
+    let before: string | null = null;
+    do {
+      const q: string = before ? `?before=${encodeURIComponent(before)}` : '';
+      const r = await call(`/api/captured${q}`, { cookie: s.other.cookie });
+      expect(r.status).toBe(200);
+      for (const e of r.body?.events as { id: string }[]) seen.add(e.id);
+      before = r.body?.next ?? null;
+    } while (before);
+    expect(seen.size).toBe(51);
+    expect((await call('/api/captured?before=2026-10-10T02:00:00Z', { cookie: s.other.cookie })).status).toBe(400);
+    await owner.query("delete from bank_events where user_id = $1 and text = 'Tie'", [other.id]);
+  });
+
   it('capture’s health says when the morning job last ran, and if that’s over 26 hours', async () => {
     await owner.query(
       "insert into job_runs (user_id, job, run_key, status, ran_at) values ($1, 'morning', $2, 'ok', now() - interval '27 hours')",
@@ -347,27 +370,114 @@ describe('the capture watchdog', () => {
     relay,
   });
 
-  it('pushes once a day when the listener has been quiet for a day', async () => {
-    const now = new Date();
-    await owner.query("update device_heartbeats set created_at = now() - interval '25 hours' where user_id = $1", [
-      phone.id,
+  const H = 3_600_000;
+  /** 10:00 in Kuala Lumpur on a day of its own, so each test's once-a-day alert is its own. */
+  const day = (n: number) => new Date(Date.UTC(2027, 0, n, 2));
+  /** The phone's capture state, set outright: one heartbeat and at most one event, so each rule is tested alone. */
+  const state = async (
+    now: Date,
+    o: {
+      beatAgo: number;
+      connected?: boolean;
+      access?: boolean;
+      eventAgo?: number | null;
+      eventAt?: Date;
+      gotAt?: Date;
+      listenAgo?: number;
+    },
+  ) => {
+    await owner.query('delete from device_heartbeats where user_id = $1', [phone.id]);
+    await owner.query('delete from bank_events where user_id = $1', [phone.id]);
+    const beatAt = new Date(now.getTime() - o.beatAgo * H);
+    if (o.listenAgo !== undefined)
+      await owner.query(
+        "insert into device_heartbeats (id, user_id, listener_connected, access, app_version, created_at) values ($1, $2, true, true, '0.7.0', $3)",
+        [randomUUID(), phone.id, new Date(now.getTime() - o.listenAgo * H)],
+      );
+    await owner.query(
+      "insert into device_heartbeats (id, user_id, listener_connected, access, app_version, created_at) values ($1, $2, $3, $4, '0.7.0', $5)",
+      [randomUUID(), phone.id, o.connected ?? true, o.access ?? true, beatAt],
+    );
+    if (o.eventAgo === null) return;
+    const posted = o.eventAt ?? new Date(now.getTime() - (o.eventAgo ?? 1) * H);
+    // the server got it when it was posted, or now for one stamped in the future
+    const got = o.gotAt ?? (posted.getTime() > now.getTime() ? now : posted);
+    await owner.query(
+      `insert into bank_events (id, user_id, package, notification_key, posted_at, notified_at, title, text, dedupe_key, created_at)
+       values ($1, $2, 'my.com.tngdigital.ewallet', 'k', $3, $3, 'Payment', 'You paid RM1.00', $4, $5)`,
+      [randomUUID(), phone.id, posted, randomUUID().replaceAll('-', '').repeat(2), got],
+    );
+  };
+  const health = (now: Date) => asPerson(appPool, phone.id, (db) => captureHealth(db, phone.id, true, now));
+
+  it('pushes once a day when the listener has been quiet for a day, though events are recent', async () => {
+    const now = day(1);
+    await state(now, { beatAgo: 25, eventAgo: 1 });
+    expect((await health(now)).silent).toBe('no-heartbeat');
+    await captureWatchdog(ctx(phone.id, now));
+    // later the same Kuala Lumpur day: no second push
+    await captureWatchdog(ctx(phone.id, new Date(now.getTime() + 60_000)));
+    expect(pushed).toEqual([
+      {
+        userId: phone.id,
+        msg: expect.objectContaining({ title: 'Capture may be off', body: expect.stringMatching(/for a day/) }),
+      },
     ]);
-    await captureWatchdog(ctx(phone.id, now));
-    await captureWatchdog(ctx(phone.id, now));
-    expect(pushed).toEqual([{ userId: phone.id, msg: expect.objectContaining({ title: 'Capture may be off' }) }]);
     // the next day, still quiet: again
     await captureWatchdog(ctx(phone.id, new Date(now.getTime() + 86_400_000)));
     expect(pushed).toHaveLength(2);
   });
 
+  it('stays quiet 23 hours after the last heartbeat, with an event the same day', async () => {
+    const now = day(4);
+    await state(now, { beatAgo: 23, eventAgo: 2 });
+    await captureWatchdog(ctx(phone.id, now));
+    expect(pushed).toEqual([]);
+  });
+
+  it('pushes at once when the phone says notification access is off, though it synced an hour ago', async () => {
+    const now = day(5);
+    await state(now, { beatAgo: 1, access: false, connected: false, eventAgo: 2 });
+    const h = await health(now);
+    expect(h).toMatchObject({ silent: 'no-access', access: false, listenerConnected: false });
+    await captureWatchdog(ctx(phone.id, now));
+    expect(pushed[0]?.msg.body).toMatch(/can’t read notifications/);
+  });
+
+  it('counts a day from the listener’s own last heartbeat, not a sync that says it’s off', async () => {
+    const now = day(6);
+    await state(now, { beatAgo: 1, connected: false, listenAgo: 25, eventAgo: 2 });
+    const h = await health(now);
+    expect(h.silent).toBe('no-heartbeat');
+    expect(Date.parse(h.lastListenAt!)).toBe(now.getTime() - 25 * H);
+    await state(now, { beatAgo: 1, connected: false, listenAgo: 20, eventAgo: 2 });
+    expect((await health(now)).silent).toBeNull();
+  });
+
   it('pushes when no event has come for 2 days, though heartbeats do', async () => {
-    const now = new Date(Date.now() + 5 * 86_400_000);
-    await owner.query(
-      "update device_heartbeats set created_at = $2::timestamptz - interval '1 hour' where user_id = $1",
-      [phone.id, now],
-    );
+    const now = day(7);
+    await state(now, { beatAgo: 1, eventAgo: 49 });
+    expect((await health(now)).silent).toBe('no-events');
+    await state(now, { beatAgo: 1, eventAgo: 47 });
+    expect((await health(now)).silent).toBeNull();
+    await state(now, { beatAgo: 1, eventAgo: 49 });
     await captureWatchdog(ctx(phone.id, now));
     expect(pushed[0]?.msg.body).toMatch(/No payment notifications for 2 days/);
+  });
+
+  it('isn’t silenced by a phone clock running ahead', async () => {
+    const now = day(8);
+    // the last real event was 3 days ago; the phone stamped this one a week ahead, and the server got it then
+    await state(now, {
+      beatAgo: 1,
+      eventAt: new Date(now.getTime() + 7 * 86_400_000),
+      gotAt: new Date(now.getTime() - 72 * H),
+    });
+    await owner.query('update device_heartbeats set last_bank_event_at = $2 where user_id = $1', [
+      phone.id,
+      new Date(now.getTime() + 7 * 86_400_000),
+    ]);
+    expect((await health(now)).silent).toBe('no-events');
   });
 
   it('stays quiet with Capture off, or with no shell ever synced', async () => {

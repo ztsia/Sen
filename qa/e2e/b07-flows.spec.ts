@@ -29,7 +29,7 @@ async function step(page: Page, flow: string, n: number, slug: string, action: s
 /** One query on sen_test as its owner, answering the rows. */
 async function sql<T>(text: string, params: unknown[] = []): Promise<T[]> {
   const req = createRequire(createRequire(new URL('../../apps/web/package.json', import.meta.url)).resolve('@sen/db'));
-  const pg = req('pg') as { Client: new (o: { connectionString: string }) => any }; // eslint-disable-line
+  const pg = req('pg') as { Client: new (o: { connectionString: string }) => unknown };
   const c = new pg.Client({ connectionString: 'postgres://sen_owner@127.0.0.1:5432/sen_test' });
   await c.connect();
   try {

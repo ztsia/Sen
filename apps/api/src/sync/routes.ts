@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, lt, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Topic } from '@sen/core/realtime';
@@ -38,6 +38,21 @@ const Envelope = z
 /** An item's id for a refusal, when it has one. */
 const idOf = (x: unknown) =>
   typeof x === 'object' && x && 'id' in x && typeof x.id === 'string' ? x.id.slice(0, 64) : '?';
+
+/** `/captured`'s page cursor: the last row's posted time and id, as `<instant>_<uuid>`. */
+const Cursor = z
+  .string()
+  .max(100)
+  .transform((v, ctx) => {
+    const [at, id, ...rest] = v.split('_');
+    const ok =
+      rest.length === 0 && z.iso.datetime({ offset: true }).safeParse(at).success && z.uuid().safeParse(id).success;
+    if (!ok) {
+      ctx.addIssue({ code: 'custom', message: 'a page cursor' });
+      return z.NEVER;
+    }
+    return { at: at as string, id: id as string };
+  });
 
 const CHANGES_PAGE = 500;
 const CAPTURED_PAGE = 50;
@@ -234,17 +249,26 @@ export function syncRoutes() {
     return c.json(await v.db((db) => captureHealth(db, v.person.id, v.access.features.capture, new Date())));
   });
 
-  /** *Captured on this phone* (B07): the server's events, raw and masked, newest first. */
+  /**
+   * *Captured on this phone* (B07): the server's events, raw and masked, newest first. The next page
+   * starts after the last row's posted time *and* id, so events sharing a time (Ryt posts some twice)
+   * never fall between pages.
+   */
   r.get('/captured', async (c) => {
     const before = c.req.query('before');
-    const at = before === undefined ? null : new Date(parse(z.iso.datetime({ offset: true }), before));
+    const cursor = before === undefined ? null : parse(Cursor, before);
     const e = schema.bankEvents;
     const rows = await c.var.db((db) =>
       db
         .select()
         .from(e)
-        .where(and(eq(e.userId, c.var.person.id), at ? lt(e.postedAt, at) : undefined))
-        .orderBy(desc(e.postedAt))
+        .where(
+          and(
+            eq(e.userId, c.var.person.id),
+            cursor ? sql`(${e.postedAt}, ${e.id}) < (${cursor.at}::timestamptz, ${cursor.id}::uuid)` : undefined,
+          ),
+        )
+        .orderBy(desc(e.postedAt), desc(e.id))
         .limit(CAPTURED_PAGE + 1),
     );
     const page = rows.slice(0, CAPTURED_PAGE);
@@ -261,7 +285,8 @@ export function syncRoutes() {
         parseStatus: r.parseStatus,
         synced: true,
       })),
-      next: rows.length > CAPTURED_PAGE ? (page.at(-1)?.postedAt.toISOString() ?? null) : null,
+      next:
+        rows.length > CAPTURED_PAGE && page.length ? `${page.at(-1)!.postedAt.toISOString()}_${page.at(-1)!.id}` : null,
     };
     return c.json(out);
   });
