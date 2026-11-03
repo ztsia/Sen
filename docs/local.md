@@ -21,11 +21,15 @@ follow on a phone, and commit.
          Root directory `apps/worker`, deploy command `npx wrangler deploy`. `sen-worker`: production
          branch `main`, builds for other branches off. `sen-worker-preview`: production branch `main`,
          other branches on with the same deploy command, and the build variable `CLOUDFLARE_ENV=preview`.
-      3. **Merge `sen_ops`' `b06-backup` after B06 merges** (github.com/ztsia/sen_ops → *Pull requests*):
+      3. ~~**Merge `sen_ops`' `b06-backup` after B06 merges**~~ Merged 28 Oct: the backup ran green and
+         `/health/jobs` answers 200. The restore test failed on Neon's own roles; **merge `sen_ops` PR
+         #2** (the fix, already green on its branch). Was: (github.com/ztsia/sen_ops → *Pull requests*):
          the backup records itself through a function B06's production deploy creates. Merging runs the
          backup and the restore test once; both should be green within 10 minutes, and Settings → Data
          then shows the backup.
-      4. **The outside monitor** (cron-job.org, your account; you asked a session to set it up, 25 Oct.
+      4. ~~**The outside monitor**~~ Set up 28 Oct by a session in Chrome: *Sen worker health* every
+         15 minutes and *Sen jobs and backup health* at minute 0 every 3 hours (KL time), each emailing
+         you on a failure and on recovery. Was: (cron-job.org, your account; you asked a session to set it up, 25 Oct.
          A session at the laptop does it with Claude in Chrome, signed in as you, after the merge; the
          extension wasn't connected on 25 Oct). Two jobs, each emailing you on failure.
          `https://sen-worker.sen-my.workers.dev/health` every 15 minutes (the cron and ticks; no
@@ -35,7 +39,9 @@ follow on a phone, and commit.
          open it, allow notifications when it asks, then *More → Settings → Data → Checks → Send a test
          push*. Then *Schedule a test job*: its push arrives at the minute it names.
       6. ~~**Confirm R2's numbers (D142)**~~ Confirmed 25 Oct: 10 GB counted as 10,000,000,000 bytes, a push at half.
-      7. **The whole-codebase security scan (done-when 8), before you merge.** It needs Claude Code's
+      7. ~~**The whole-codebase security scan (done-when 8)**~~ Run 28 Oct to 3 Nov by a laptop session
+         (paused twice by the usage limit): six LOW findings, in `qa/B06/security.md`; four fixed, F1 and
+         F2 (sign-in says who's invited) wait on your call. Was: It needs Claude Code's
          Workflow tool (*Dynamic workflows*), which the 25 Oct laptop session didn't have. Either:
          - **at the laptop:** turn on *Dynamic workflows* in `/config`, start a new session in
            `C:\Zhong Tai\Sen` on the branch, and ask *run Claude Security: scan the codebase at high

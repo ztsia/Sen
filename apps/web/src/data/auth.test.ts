@@ -80,4 +80,33 @@ describe('the kept reads', () => {
     forgetSession();
     expect(localStorage.getItem('sen.api.kept')).toBeNull();
   });
+
+  // a session revoked elsewhere shows up as nobody signed in, not a 401 (security scan, F4)
+  it('are forgotten when the server says nobody is signed in', async () => {
+    vi.resetModules();
+    localStorage.setItem('sen.api.kept', JSON.stringify({ __who: 'a@example.com', me: { capture: true } }));
+    vi.stubGlobal('fetch', answer(200, null));
+    const { apiAuth: fresh } = await import('./auth');
+    expect(await fresh.signedOut()).toBe(true);
+    expect(localStorage.getItem('sen.api.kept')).toBeNull();
+  });
+
+  it('are only ever the signed-in person’s', async () => {
+    vi.resetModules();
+    localStorage.setItem('sen.api.kept', JSON.stringify({ __who: 'a@example.com', me: { capture: true } }));
+    vi.stubGlobal('fetch', answer(200, { user: { email: 'b@example.com', name: 'B' } }));
+    const { apiAuth: fresh } = await import('./auth');
+    expect(await fresh.session()).toEqual({ email: 'b@example.com', name: 'B' });
+    expect(JSON.parse(localStorage.getItem('sen.api.kept')!)).toEqual({ __who: 'b@example.com' });
+  });
+
+  it('stay for the same person', async () => {
+    vi.resetModules();
+    const mine = { __who: 'b@example.com', me: { capture: true } };
+    localStorage.setItem('sen.api.kept', JSON.stringify(mine));
+    vi.stubGlobal('fetch', answer(200, { user: { email: 'b@example.com', name: 'B' } }));
+    const { apiAuth: fresh } = await import('./auth');
+    await fresh.session();
+    expect(JSON.parse(localStorage.getItem('sen.api.kept')!)).toEqual(mine);
+  });
 });

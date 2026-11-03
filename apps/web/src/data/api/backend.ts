@@ -5,6 +5,8 @@ import { readStored, writeStored } from '@/lib/storage';
 import { ApiFailure, apiCall } from './client';
 
 const KEPT = 'sen.api.kept';
+/** Whose answers they are: no read is named this. */
+const WHO = '__who';
 
 /**
  * The last answer each read had, kept on this device, for when the server can't be reached: Sen
@@ -32,6 +34,20 @@ async function kept<T>(key: string, load: () => Promise<T>): Promise<T> {
 /** Forgets every kept answer: at sign-out, so the next person on this device sees nothing of them. */
 export function forgetKept() {
   writeStored(KEPT, null);
+}
+
+/**
+ * Marks the kept answers as `email`'s, once the server has said who is signed in: answers kept for
+ * anyone else are forgotten first, so they never reach the wrong person offline (security scan, F4).
+ */
+export function keepFor(email: string) {
+  let who: unknown;
+  try {
+    who = (JSON.parse(readStored(KEPT) ?? '{}') as Record<string, unknown>)[WHO];
+  } catch {
+    who = undefined;
+  }
+  if (who !== email) writeStored(KEPT, JSON.stringify({ [WHO]: email }));
 }
 
 /** What a screen whose server isn't built yet gets: production shows *Not built yet* instead. */

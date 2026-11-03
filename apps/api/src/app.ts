@@ -50,6 +50,10 @@ export function defaultDeps(): Deps {
  * The one API (spec §16), at /api on the web app's own origin. Every request after sign-in runs as
  * its person under RLS (db.ts); Better Auth reaches only its own tables, as `sen_auth`.
  */
+/** Better Auth's routes that Sen's pages call (apps/web/src/data/auth.ts); the code is sent by Sen's own. */
+const AUTH_GETS = new Set(['/get-session']);
+const AUTH_POSTS = new Set(['/sign-in/email-otp', '/sign-out', '/revoke-sessions']);
+
 export function createApp(deps: Deps) {
   const auth: Auth = createAuth({
     pool: deps.auth,
@@ -139,6 +143,18 @@ export function createApp(deps: Deps) {
       throw tooMany('Too many codes asked for. Wait a minute, then try again.');
     if (!(await withinLimit(deps.auth, `codes:${email}`, codesPerEmail.max, codesPerEmail.windowMs)))
       throw tooMany('Too many codes asked for. Wait a few minutes, then try again.');
+    if (deps.env.target === 'production') {
+      const { codesPerEmailDay, codesPerIpDay, codesPerDay } = LIMITS;
+      if (!(await withinLimit(deps.auth, `codes-day:${email}`, codesPerEmailDay.max, codesPerEmailDay.windowMs)))
+        throw tooMany('Too many codes asked for today. Try again tomorrow.');
+      const ip = clientIp(c.req.raw.headers);
+      if (!(await withinLimit(deps.auth, `codes-ip-day:${ip}`, codesPerIpDay.max, codesPerIpDay.windowMs)))
+        throw tooMany('Too many codes asked for today. Try again tomorrow.');
+      if (!(await withinLimit(deps.auth, 'codes-day', codesPerDay.max, codesPerDay.windowMs))) {
+        console.error('sign-in codes: Sen’s daily cap on code emails was reached');
+        throw tooMany('Sen has sent too many codes today. Try again tomorrow.');
+      }
+    }
     // The code is made by Better Auth and sent here, awaited: its own route sends in the background
     // and answers success even when Gmail fails, so a code never sent would look like one in spam
     // (QA B05 run 2, 18). The previous code for this address is replaced, as its route would.
@@ -154,6 +170,12 @@ export function createApp(deps: Deps) {
     return c.json({ success: true });
   });
   api.on(['GET', 'POST'], '/auth/*', async (c) => {
+    // Only the routes Sen's pages use reach Better Auth. Its others go unused, and one of them,
+    // check-verification-otp, counts tries at a code by reading then writing, so requests sent
+    // together could each guess the same code (security scan, F3's review)
+    const route = c.req.path.slice(c.req.path.indexOf('/auth/') + '/auth'.length);
+    if (!(c.req.method === 'GET' ? AUTH_GETS : AUTH_POSTS).has(route))
+      return c.json({ code: 'not_found', message: 'No such route.' }, 404);
     // A token goes with the person's sessions (D142 (5)). Sign out everywhere ends every phone's pushes,
     // the lost one included (QA B06 run 1, finding 1); a sign-out that ends the last session does too,
     // in case the app's own DELETE didn't get through (run 2, finding 8). With another session left,

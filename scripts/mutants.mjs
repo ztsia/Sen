@@ -16,7 +16,6 @@
  */
 import { execFileSync, spawnSync } from 'node:child_process';
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -56,8 +55,17 @@ if (git(['status', '--porcelain', '--', ':!qa-artifacts']) !== '')
 
 /* ---------- the worktree ------------------------------------------------------- */
 
-const tree = join(tmpdir(), 'sen-mutants');
-if (existsSync(join(tree, '.git'))) {
+// Worktrees live in this checkout's own git folder, never the shared temp folder, where another user
+// could make the folder first and have this run their code (security scan, F5); one is reused only if
+// git lists it as this repository's
+const gitDir = resolve(root, git(['rev-parse', '--git-common-dir']));
+const same = (a, b) => (WIN ? resolve(a).toLowerCase() === resolve(b).toLowerCase() : resolve(a) === resolve(b));
+const isWorktree = (dir) =>
+  git(['worktree', 'list', '--porcelain'])
+    .split('\n')
+    .some((l) => l.startsWith('worktree ') && same(l.slice('worktree '.length), dir));
+const tree = join(gitDir, 'sen-qa', 'mutants');
+if (isWorktree(tree) && existsSync(join(tree, '.git'))) {
   git(['checkout', '--force', '--detach', head], tree);
   git(['clean', '-fdq', '-e', 'node_modules', '-e', 'dist*'], tree);
 } else {
