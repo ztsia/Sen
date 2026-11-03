@@ -50,6 +50,10 @@ export function defaultDeps(): Deps {
  * The one API (spec §16), at /api on the web app's own origin. Every request after sign-in runs as
  * its person under RLS (db.ts); Better Auth reaches only its own tables, as `sen_auth`.
  */
+/** Better Auth's routes that Sen's pages call (apps/web/src/data/auth.ts); the code is sent by Sen's own. */
+const AUTH_GETS = new Set(['/get-session']);
+const AUTH_POSTS = new Set(['/sign-in/email-otp', '/sign-out', '/revoke-sessions']);
+
 export function createApp(deps: Deps) {
   const auth: Auth = createAuth({
     pool: deps.auth,
@@ -166,6 +170,12 @@ export function createApp(deps: Deps) {
     return c.json({ success: true });
   });
   api.on(['GET', 'POST'], '/auth/*', async (c) => {
+    // Only the routes Sen's pages use reach Better Auth. Its others go unused, and one of them,
+    // check-verification-otp, counts tries at a code by reading then writing, so requests sent
+    // together could each guess the same code (security scan, F3's review)
+    const route = c.req.path.slice(c.req.path.indexOf('/auth/') + '/auth'.length);
+    if (!(c.req.method === 'GET' ? AUTH_GETS : AUTH_POSTS).has(route))
+      return c.json({ code: 'not_found', message: 'No such route.' }, 404);
     // A token goes with the person's sessions (D142 (5)). Sign out everywhere ends every phone's pushes,
     // the lost one included (QA B06 run 1, finding 1); a sign-out that ends the last session does too,
     // in case the app's own DELETE didn't get through (run 2, finding 8). With another session left,

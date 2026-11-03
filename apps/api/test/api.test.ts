@@ -514,6 +514,19 @@ describe('QA B05 run 2', () => {
     expect(r.body).toMatchObject({ code: 'not_found' });
   });
 
+  // its tries at a code are counted by reading then writing, so it's closed (security scan, F3)
+  it('keeps Better Auth’s routes Sen doesn’t use closed, the code check among them', async () => {
+    for (const path of [
+      '/api/auth/email-otp/check-verification-otp',
+      '/api/auth/email-otp/verify-email',
+      '/api/auth/sign-in/email-otp/',
+    ]) {
+      const r = await call(path, { body: { email: member.email, type: 'sign-in', otp: '000000' } });
+      expect(r.status).toBe(404);
+      expect(r.body).toMatchObject({ code: 'not_found' });
+    }
+  });
+
   it('takes writes only from Sen’s own origin, and only as JSON (26)', async () => {
     const cookie = await signIn(member.email);
     const post = (headers: Record<string, string>) =>
