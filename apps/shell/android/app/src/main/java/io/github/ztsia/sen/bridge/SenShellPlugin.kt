@@ -16,6 +16,8 @@ import com.getcapacitor.annotation.Permission
 import com.getcapacitor.annotation.PermissionCallback
 import io.github.ztsia.sen.BuildConfig
 import io.github.ztsia.sen.moments.TestMoments
+import io.github.ztsia.sen.sync.Session
+import io.github.ztsia.sen.sync.SyncWorker
 
 /**
  * The shell itself, to the web app (apps/web/src/shell/). Methods are only ever added, never changed
@@ -75,6 +77,17 @@ class SenShellPlugin : Plugin() {
         }
     }
 
+    /**
+     * The web app signed in or out (B07): the shell takes the WebView's session cookie, or drops its own
+     * if the cookie is gone, and syncs when there is one.
+     */
+    @PluginMethod
+    fun sessionChanged(call: PluginCall) {
+        val signedIn = Session.adopt(context)
+        if (signedIn) SyncWorker.enqueue(context)
+        call.resolve(JSObject().put("signedIn", signedIn))
+    }
+
     // The hidden tests (Settings → Account, a long-press on the version).
 
     @PluginMethod
@@ -118,8 +131,9 @@ class SenShellPlugin : Plugin() {
          * 1: info, openInBrowser, testPrompt, testIsland, switchIcon; SenCapture (B02).
          * 2: haptic (B05).
          * 3: Capawesome's FirebaseMessaging plugin is in the shell: push (B06).
+         * 4: sessionChanged; SenCapture write, pending and syncNow; events' `pending` and `refused` (B07).
          */
-        const val BRIDGE = 3
+        const val BRIDGE = 4
 
         /** Each moment's haptic, with an older phone's nearest where Android added it later (API 30, 34). */
         fun hapticConstant(kind: String?, sdk: Int): Int? = when (kind) {

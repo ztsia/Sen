@@ -236,7 +236,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
     fun pendingCount(): Long = readableDatabase.compileStatement("SELECT COUNT(*) FROM events WHERE $PENDING").use { it.simpleQueryForLong() }
 
     fun markEventsSynced(rowIds: Collection<Long>, now: Long = System.currentTimeMillis()) =
-        inChunks(rowIds) { ph, args -> writableDatabase.execSQL("UPDATE events SET synced_at = ? WHERE id IN ($ph)", arrayOf<Any>(now) + args) }
+        inChunks(rowIds) { ph, args -> writableDatabase.execSQL("UPDATE events SET synced_at = ? WHERE id IN ($ph)", listOf<Any>(now).plus(args.toList()).toTypedArray()) }
 
     /** The server won't take this event, ever: kept, marked, and not sent again. */
     fun markEventRefused(rowId: Long, reason: String) {
@@ -337,7 +337,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
 
     fun markAppsSynced(ids: Collection<String>, now: Long = System.currentTimeMillis()) {
         ids.chunked(400).forEach { chunk ->
-            writableDatabase.execSQL("UPDATE capture_apps SET synced_at = ? WHERE id IN (${chunk.joinToString(",") { "?" }})", arrayOf<Any>(now) + chunk)
+            writableDatabase.execSQL("UPDATE capture_apps SET synced_at = ? WHERE id IN (${chunk.joinToString(",") { "?" }})", listOf<Any>(now).plus(chunk).toTypedArray())
         }
     }
 
@@ -348,7 +348,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
         if (verdict == io.github.ztsia.sen.core.AppMerge.KEEP_LOCAL) return
         writableDatabase.execSQL(
             "INSERT OR REPLACE INTO capture_apps (id, package, label, chosen_at, deleted_at, synced_at) VALUES (?, ?, ?, ?, ?, ?)",
-            arrayOf(a.id, a.packageName, a.label, a.chosenAt, a.deletedAt, now),
+            arrayOf<Any?>(a.id, a.packageName, a.label, a.chosenAt, a.deletedAt, now),
         )
     }
 

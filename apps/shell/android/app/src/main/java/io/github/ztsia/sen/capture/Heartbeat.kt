@@ -11,6 +11,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import io.github.ztsia.sen.core.DedupeKey
 import io.github.ztsia.sen.core.Posted
+import io.github.ztsia.sen.sync.CaptureSwitch
 import java.util.concurrent.TimeUnit
 
 /**
@@ -82,7 +83,8 @@ object Heartbeat {
             val ctx = applicationContext
             if (hasAccess(ctx)) {
                 record(ctx, "beat")
-                if (!CaptureListener.connected) {
+                // not while the Capture switch is off: the listener is disabled on purpose (B07)
+                if (!CaptureListener.connected && CaptureSwitch.isOn(ctx)) {
                     NotificationListenerService.requestRebind(ComponentName(ctx, CaptureListener::class.java))
                 }
             }

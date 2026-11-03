@@ -18,6 +18,13 @@ import io.github.ztsia.sen.capture.Heartbeat
 import io.github.ztsia.sen.capture.InstalledApps
 import io.github.ztsia.sen.capture.KeepRunning
 import io.github.ztsia.sen.capture.Outbox
+import io.github.ztsia.sen.core.Iso
+import io.github.ztsia.sen.sync.CaptureSwitch
+import io.github.ztsia.sen.sync.Meta
+import io.github.ztsia.sen.sync.Session
+import io.github.ztsia.sen.sync.SyncWorker
+import org.json.JSONException
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -46,6 +53,10 @@ class SenCapturePlugin : Plugin() {
                 .put("ignoringBattery", KeepRunning.ignoringBattery(context))
                 .put("chosen", JSArray(Chosen.get(context).sorted()))
                 .put("events", Outbox.get(context).count())
+                // B07: the Capture switch the server last said, the last good sync and what's still to send
+                .put("captureSwitch", CaptureSwitch.isOn(context))
+                .put("lastSyncAt", lastSyncAt() ?: JSONObject.NULL)
+                .put("pendingEvents", Outbox.get(context).pendingCount())
                 // Android 13+ greys out notification access for sideloaded apps until "Allow restricted
                 // settings" is chosen on the app's info page (spec §6.2).
                 .put("restrictedSettings", Build.VERSION.SDK_INT >= 33),
@@ -85,7 +96,9 @@ class SenCapturePlugin : Plugin() {
             val why = if (app == null) "missing" else app.blocked?.name?.lowercase()
             if (why == null) ok += p else refused.put(JSObject().put("package", p).put("reason", why))
         }
-        Chosen.set(context, ok)
+        // B07: the difference becomes rows to sync (a new choice, or a tombstone), then a sync
+        Chosen.choose(context, ok, ok.associateWith { installed[it]?.label ?: it })
+        SyncWorker.enqueue(context)
         call.resolve(JSObject().put("chosen", JSArray(ok.sorted())).put("refused", refused))
     }
 
@@ -131,9 +144,10 @@ class SenCapturePlugin : Plugin() {
     fun events(call: PluginCall) {
         val limit = (call.getInt("limit") ?: 50).coerceIn(1, 200)
         val before = call.getLong("before")
+        val pending = call.getBoolean("pending", false) ?: false
         val outbox = Outbox.get(context)
         val out = JSArray()
-        outbox.events(limit, before).forEach { e ->
+        outbox.events(limit, before, pending = pending).forEach { e ->
             out.put(
                 JSObject()
                     .put("id", e.id)
@@ -146,11 +160,64 @@ class SenCapturePlugin : Plugin() {
                     .put("bigText", e.bigText)
                     .put("capturedAt", e.capturedAt)
                     .put("synced", e.synced)
-                    .put("maybeOtp", e.maybeOtp),
+                    .put("maybeOtp", e.maybeOtp)
+                    .put("refused", e.refused ?: JSONObject.NULL),
             )
         }
         call.resolve(JSObject().put("events", out).put("total", outbox.count()))
     }
+
+    /**
+     * A write the web app made (B07, spec §5 *Writes*): stored in the outbox with the id it was made with,
+     * and sent by the next sync. Resolves at once; `pending()` shows what became of it.
+     */
+    @PluginMethod
+    fun write(call: PluginCall) {
+        val id = call.getString("id")
+        val command = call.getObject("command")
+        val madeAt = Iso.parse(call.getString("madeAt"))
+        if (id == null || !UUID_RE.matches(id)) return call.reject("A write needs a UUID id", "BAD_ID")
+        if (command == null) return call.reject("A write needs a command object", "BAD_COMMAND")
+        if (madeAt == null) return call.reject("A write needs madeAt as an ISO time", "BAD_TIME")
+        Outbox.get(context).insertCommand(id, command.toString(), madeAt)
+        SyncWorker.enqueue(context)
+        call.resolve(JSObject().put("queued", true))
+    }
+
+    /** What is waiting to sync, and what the last sync learned (B07). */
+    @PluginMethod
+    fun pending(call: PluginCall) {
+        val outbox = Outbox.get(context)
+        val commands = JSArray()
+        outbox.recentCommands().forEach { c ->
+            commands.put(
+                JSObject()
+                    .put("id", c.id)
+                    .put("command", try { JSONObject(c.body) } catch (_: JSONException) { JSONObject() })
+                    .put("madeAt", Iso.format(c.madeAt))
+                    .put("status", c.status ?: JSONObject.NULL)
+                    .put("said", c.said ?: JSONObject.NULL),
+            )
+        }
+        call.resolve(
+            JSObject()
+                .put("commands", commands)
+                .put("events", outbox.pendingCount())
+                .put("lastSyncAt", lastSyncAt() ?: JSONObject.NULL)
+                .put("morningAt", outbox.meta(Meta.MORNING_AT) ?: JSONObject.NULL)
+                .put("serverNow", outbox.meta(Meta.SERVER_NOW) ?: JSONObject.NULL)
+                .put("capture", CaptureSwitch.isOn(context))
+                .put("signedIn", Session.token(context) != null),
+        )
+    }
+
+    @PluginMethod
+    fun syncNow(call: PluginCall) {
+        SyncWorker.enqueue(context)
+        call.resolve(JSObject())
+    }
+
+    private fun lastSyncAt(): Long? = Outbox.get(context).meta(Meta.LAST_SYNC_AT)?.toLongOrNull()
 
     @PluginMethod
     fun heartbeats(call: PluginCall) {
@@ -189,6 +256,10 @@ class SenCapturePlugin : Plugin() {
                 .putExtra(Intent.EXTRA_SUBJECT, "Sen samples (${events.size})")
                 .putExtra(Intent.EXTRA_TEXT, "Sen samples: real notifications, to anonymise before anything is saved.\n\n$text")
         start(call, listOf(Intent.createChooser(send, "Share samples")))
+    }
+
+    private companion object {
+        val UUID_RE = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
     }
 
     private fun start(call: PluginCall, intents: List<Intent>) {
