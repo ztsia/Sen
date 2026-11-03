@@ -167,7 +167,7 @@ export default function CapturedOnPhone() {
           ) : null}
           <p className="px-4 pt-2 pb-2 text-sm text-muted-foreground">
             {rows.length === 1 ? '1 notification' : `${rows.length}${next ? '+' : ''} notifications`}, newest first,
-            numbers hidden.
+            kept for you only. Every number but the amounts is hidden.
           </p>
           {rows.length === 0 && !server.isError ? (
             <EmptyState

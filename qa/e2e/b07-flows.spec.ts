@@ -91,7 +91,7 @@ for (const tz of ['Asia/Kuala_Lumpur', 'America/New_York']) {
         await openFake(page, '/s/settings/capture/captured');
         const rows = page.getByRole('main').getByRole('listitem');
         await expect(rows.first()).toBeVisible();
-        await expect(page.getByText(/notifications, newest first, numbers hidden/)).toBeVisible();
+        await expect(page.getByText(/notifications, newest first, kept for you only/)).toBeVisible();
         const texts = await rows.allInnerTexts();
         captured[tz] = texts;
         expect(texts.length).toBeGreaterThan(1);

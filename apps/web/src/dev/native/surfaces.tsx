@@ -158,7 +158,7 @@ export const SURFACES: Def[] = [
     kind: 'notification',
     name: 'Health alert: capture',
     title: 'Capture may be off',
-    body: 'No notification from your apps since Thursday, 9:12 am.',
+    body: 'No payment notifications for 2 days. Open Sen to check it can still read them.',
     open: { label: 'Open Home', run: (c) => (c.dismiss(), c.scenario('capture-off'), c.go('home')) },
     does: 'Opens home, with the fix.',
   },

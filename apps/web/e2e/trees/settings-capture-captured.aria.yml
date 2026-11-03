@@ -3,7 +3,7 @@
   - heading "Captured on this phone" [level=1]
   - button "Heartbeat"
 - main:
-  - paragraph: 4 notifications, newest first, numbers hidden.
+  - paragraph: 4 notifications, newest first, kept for you only. Every number but the amounts is hidden.
   - list:
     - listitem:
       - paragraph: /Touch 'n Go eWallet Today, \d+:\d+/
