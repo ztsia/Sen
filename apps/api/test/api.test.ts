@@ -94,6 +94,9 @@ async function signIn(email: string): Promise<string> {
 beforeAll(async () => {
   // most tests sign in often; the per-email limit has its own test below
   LIMITS.codesPerEmail.max = 1000;
+  LIMITS.codesPerEmailDay.max = 1000;
+  LIMITS.triesPerEmailDay.max = 1000;
+  LIMITS.codesPerDay.max = 1000;
   for (const [p, isAdmin] of [
     [admin, true],
     [member, false],
@@ -252,6 +255,77 @@ describe('rate limits (QA B05 run 1, 4 and 6)', () => {
       LIMITS.codesPerEmail.max = max;
       await owner.query('delete from auth_user where id = $1', [id]);
     }
+  });
+
+  // over a day, across codes and addresses (security scan, F3 and F6)
+  const invited = async () => {
+    const email = `daily-${randomUUID()}@example.com`;
+    const id = randomUUID();
+    await owner.query('insert into auth_user (id, name, email, email_verified) values ($1, $2, $3, true)', [
+      id,
+      'D',
+      email,
+    ]);
+    return { email, gone: () => owner.query('delete from auth_user where id = $1', [id]) };
+  };
+  const capped = async (limit: { max: number }, max: number, run: () => Promise<void>) => {
+    const was = limit.max;
+    limit.max = max;
+    try {
+      await run();
+    } finally {
+      limit.max = was;
+    }
+  };
+
+  it('gives one email at most its daily codes, however they are spaced', async () => {
+    const { email, gone } = await invited();
+    await capped(LIMITS.codesPerEmailDay, 3, async () => {
+      const statuses = [];
+      for (let i = 0; i < 4; i++) statuses.push((await send(email, nextIp())).status);
+      expect(statuses).toEqual([200, 200, 200, 429]);
+    }).finally(gone);
+  });
+
+  it('stops tries at one email’s codes after its daily number, across new codes', async () => {
+    const { email, gone } = await invited();
+    const verify = (otp: string) =>
+      api.request(`${ORIGIN}/api/auth/sign-in/email-otp`, {
+        method: 'POST',
+        headers: { origin: ORIGIN, 'content-type': 'application/json', 'x-forwarded-for': nextIp() },
+        body: JSON.stringify({ email, otp }),
+      });
+    await capped(LIMITS.triesPerEmailDay, 4, async () => {
+      await send(email, nextIp());
+      const wrong = codes.get(email) === '000000' ? '111111' : '000000';
+      for (let i = 0; i < 3; i++) expect((await verify(wrong)).status).not.toBe(429);
+      // a new code doesn't bring new tries: the fourth is the last, even with the right code after it
+      await send(email, nextIp());
+      expect((await verify(wrong)).status).not.toBe(429);
+      const last = await verify(codes.get(email)!);
+      expect(last.status).toBe(429);
+      expect(await last.json()).toMatchObject({ code: 'too_many' });
+    }).finally(gone);
+  });
+
+  it('sends at most Sen’s daily number of codes in all', async () => {
+    const a = await invited();
+    const b = await invited();
+    // the window began with this file's earlier codes, so the cap is counted from what's been sent
+    const sent = await authPool.query<{ count: number }>(
+      `select count from auth_rate_limit where key = 'sen:codes-day'`,
+    );
+    const already = sent.rows[0]?.count ?? 0;
+    await capped(LIMITS.codesPerDay, already + 2, async () => {
+      expect((await send(a.email, nextIp())).status).toBe(200);
+      expect((await send(b.email, nextIp())).status).toBe(200);
+      const over = await send(a.email, nextIp());
+      expect(over.status).toBe(429);
+      expect(await over.json()).toMatchObject({ code: 'too_many' });
+    }).finally(async () => {
+      await a.gone();
+      await b.gone();
+    });
   });
 
   it('limits lookups of uninvited emails from one address', async () => {

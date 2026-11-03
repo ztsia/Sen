@@ -39,7 +39,9 @@ follow on a phone, and commit.
          open it, allow notifications when it asks, then *More → Settings → Data → Checks → Send a test
          push*. Then *Schedule a test job*: its push arrives at the minute it names.
       6. ~~**Confirm R2's numbers (D142)**~~ Confirmed 25 Oct: 10 GB counted as 10,000,000,000 bytes, a push at half.
-      7. **The whole-codebase security scan (done-when 8), before you merge.** It needs Claude Code's
+      7. ~~**The whole-codebase security scan (done-when 8)**~~ Run 28 Oct to 3 Nov by a laptop session
+         (paused twice by the usage limit): six LOW findings, in `qa/B06/security.md`; four fixed, F1 and
+         F2 (sign-in says who's invited) wait on your call. Was: It needs Claude Code's
          Workflow tool (*Dynamic workflows*), which the 25 Oct laptop session didn't have. Either:
          - **at the laptop:** turn on *Dynamic workflows* in `/config`, start a new session in
            `C:\Zhong Tai\Sen` on the branch, and ask *run Claude Security: scan the codebase at high

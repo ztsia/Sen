@@ -72,6 +72,11 @@ them, and is cached with the environment for about seven days. When a session sa
 older than `main`'s, edit any line of the setup script (a comment will do) and start a new session.
 Sen needs nothing else machine-wide; its own installs are in `scripts/session-setup.sh`.
 
+**Claude Security's whole-codebase scan** needs the Workflow tool (*Dynamic workflows*). It ran at
+the laptop (B06, 28 Oct to 3 Nov), not yet in a cloud session. At high effort it dispatches about 250
+agents, more than one five-hour usage window holds: when the limit stops it, resuming the same run
+(`Workflow` with `resumeFromRunId`) keeps every finished agent and redoes only the rest.
+
 ## 3. What a session must never hold
 
 | Credential | Why not |

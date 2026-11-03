@@ -112,6 +112,9 @@ let cookies = { admin: '', member: '' };
 
 beforeAll(async () => {
   LIMITS.codesPerEmail.max = 1000;
+  LIMITS.codesPerEmailDay.max = 1000;
+  LIMITS.triesPerEmailDay.max = 1000;
+  LIMITS.codesPerDay.max = 1000;
   LIMITS.codesPerIp.max = 1000;
   LIMITS.lookupsPerIp.max = 1000;
   // this file is the scheduler's: only its two people get daily jobs, and health starts from nothing

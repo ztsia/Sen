@@ -139,6 +139,15 @@ export function createApp(deps: Deps) {
       throw tooMany('Too many codes asked for. Wait a minute, then try again.');
     if (!(await withinLimit(deps.auth, `codes:${email}`, codesPerEmail.max, codesPerEmail.windowMs)))
       throw tooMany('Too many codes asked for. Wait a few minutes, then try again.');
+    if (deps.env.target === 'production') {
+      const { codesPerEmailDay, codesPerDay } = LIMITS;
+      if (!(await withinLimit(deps.auth, `codes-day:${email}`, codesPerEmailDay.max, codesPerEmailDay.windowMs)))
+        throw tooMany('Too many codes asked for today. Try again tomorrow.');
+      if (!(await withinLimit(deps.auth, 'codes-day', codesPerDay.max, codesPerDay.windowMs))) {
+        console.error('sign-in codes: Sen’s daily cap on code emails was reached');
+        throw tooMany('Sen has sent too many codes today. Try again tomorrow.');
+      }
+    }
     // The code is made by Better Auth and sent here, awaited: its own route sends in the background
     // and answers success even when Gmail fails, so a code never sent would look like one in spam
     // (QA B05 run 2, 18). The previous code for this address is replaced, as its route would.
@@ -152,6 +161,24 @@ export function createApp(deps: Deps) {
       throw new ApiError(502, 'mail_failed', 'Sen couldn’t send the email. Try again in a minute.');
     }
     return c.json({ success: true });
+  });
+  // Tries at a code, per address and day across its codes: each new code brings Better Auth's 3
+  // again, so only this bounds guessing (security scan, F3). Production only, as above.
+  api.post('/auth/sign-in/email-otp', async (c, next) => {
+    if (deps.env.target === 'production') {
+      const body = (await c.req.raw
+        .clone()
+        .json()
+        .catch(() => null)) as { email?: unknown } | null;
+      const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+      const { triesPerEmailDay } = LIMITS;
+      if (
+        email &&
+        !(await withinLimit(deps.auth, `tries-day:${email}`, triesPerEmailDay.max, triesPerEmailDay.windowMs))
+      )
+        throw tooMany('Too many tries today. Try again tomorrow.');
+    }
+    await next();
   });
   api.on(['GET', 'POST'], '/auth/*', async (c) => {
     // A token goes with the person's sessions (D142 (5)). Sign out everywhere ends every phone's pushes,

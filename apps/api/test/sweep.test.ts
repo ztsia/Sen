@@ -135,6 +135,9 @@ async function signIn(email: string): Promise<string> {
 
 beforeAll(async () => {
   LIMITS.codesPerEmail.max = 1000;
+  LIMITS.codesPerEmailDay.max = 1000;
+  LIMITS.triesPerEmailDay.max = 1000;
+  LIMITS.codesPerDay.max = 1000;
   LIMITS.codesPerIp.max = 1000;
   LIMITS.lookupsPerIp.max = 1000;
   LIMITS.testsPerPerson.max = 1000;

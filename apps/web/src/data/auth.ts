@@ -1,5 +1,5 @@
 import { ApiFailure, apiCall } from './api/client';
-import { forgetKept } from './api/backend';
+import { forgetKept, keepFor } from './api/backend';
 import { CODE_EXPIRED, CODE_OK } from '@/screens/outside/logic';
 import { startPush, stopPush } from '@/shell/push';
 import { startRealtime, stopRealtime } from './realtime';
@@ -42,7 +42,15 @@ let sessionP: Promise<Session | null | 'unknown'> | null = null;
 function load(): Promise<Session | null | 'unknown'> {
   sessionP ??= apiCall<{ user: Session } | null>('/auth/get-session').then(
     (r) => {
-      if (!r?.user) return null;
+      // nobody signed in is a session end too, revoked or expired: its offline copy goes, so an
+      // offline launch can't show it after (security scan, F4)
+      if (!r?.user) {
+        stopRealtime();
+        forgetKept();
+        return null;
+      }
+      // the copy kept for offline is this person's only: someone else's is dropped (F4)
+      keepFor(r.user.email);
       // signed in: open screens now update by themselves (D100), and the phone registers for push
       startRealtime();
       void startPush();

@@ -28,7 +28,7 @@
  * A flag never changes the exit code, because timings vary. --metrics-only skips the catalogue runs and does
  * only this, and swaps the Metrics section into an index.md that is already there.
  *
- * Main's build is made in a git worktree under the temp folder, kept for the next run. The specs are this
+ * Main's build is made in a git worktree in this checkout's git folder, kept for the next run. The specs are this
  * checkout's in both runs (e2e/diff.config.ts): only the app differs. A failing test never stops the
  * script; it still writes the report, and exits 1 at the end if a test failed.
  */
@@ -46,7 +46,6 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { createRequire } from 'node:module';
-import { tmpdir } from 'node:os';
 import { stripVTControlCharacters } from 'node:util';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -105,8 +104,17 @@ const dirty = git(['status', '--porcelain', '--', ':!qa-artifacts']) !== '';
 
 /* ---------- main's worktree and the two builds ----------------------------------- */
 
-const worktree = join(tmpdir(), `sen-base-${baseSha.slice(0, 8)}`);
-if (!existsSync(join(worktree, '.git'))) {
+// Worktrees live in this checkout's own git folder, never the shared temp folder, where another user
+// could make the folder first and have this run their code (security scan, F5); one is reused only if
+// git lists it as this repository's
+const gitDir = resolve(root, git(['rev-parse', '--git-common-dir']));
+const same = (a, b) => (WIN ? resolve(a).toLowerCase() === resolve(b).toLowerCase() : resolve(a) === resolve(b));
+const isWorktree = (dir) =>
+  git(['worktree', 'list', '--porcelain'])
+    .split('\n')
+    .some((l) => l.startsWith('worktree ') && same(l.slice('worktree '.length), dir));
+const worktree = join(gitDir, 'sen-qa', `base-${baseSha.slice(0, 8)}`);
+if (!isWorktree(worktree) || !existsSync(join(worktree, '.git'))) {
   git(['worktree', 'prune']);
   rmSync(worktree, { recursive: true, force: true });
   git(['worktree', 'add', '--detach', worktree, baseSha]);

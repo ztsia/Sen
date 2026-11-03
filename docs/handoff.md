@@ -1,33 +1,29 @@
 # Handoff
 
-## Where things stand (28 Oct)
+## Where things stand (3 Nov)
 
-**B06 · Jobs, realtime, push and backups** is **merged** (PR #20, 25 Oct), though its security scan
-(done-when 8) had not run. `B06/jobs-realtime-backups` continues for B06's follow-ups: the scan's
-results and fixes go on it, as a small PR. QA's record is in `qa/B06/` (`ledger.md`). Report:
-https://claude.ai/artifact/4TcXmtm89wh94V3KGYYt6d
+**B06 · Jobs, realtime, push and backups** is merged (PR #20, 25 Oct), and every done-when is met
+except **3, a push on the phone** (the owner's, `docs/local.md` → B06 item 5). Its follow-ups are on
+`B06/jobs-realtime-backups`, as a small PR:
+- **The security scan (done-when 8)** ran 28 Oct to 3 Nov at the laptop, high effort, verified:
+  six LOW findings, none Critical, High or Medium. Record and fixes in `qa/B06/security.md`.
+  F3 and F6 (daily caps on sign-in codes and tries, production only), F4 (the offline copy goes with
+  the session) and F5 (QA's worktrees in `.git/sen-qa/`) are fixed, with tests.
+- **F1 and F2 wait on the owner:** the sign-in screen says *not invited* and *access paused*, which
+  tells a stranger who uses Sen. Options: keep it (an accepted risk), or say *paused* only by email.
+- **4, backups:** green since 28 Oct; the restore test's fix (`sen_ops` #2) is merged and passed.
+- **5, monitors:** the two cron-job.org jobs, since 28 Oct.
 
-**Done-whens:**
-- **1, 2, 6, 7, 9:** done.
-- **3, a push on the phone:** the owner's (`docs/local.md` → B06 item 5).
-- **4, a backup in R2:** the owner merged `sen_ops` #1 on 28 Oct; the backup ran green and
-  `/health/jobs` answers 200. The restore test failed: the dump's default privileges name Neon's
-  `neon_superuser` and `cloud_admin`. The fix is **`sen_ops` PR #2**, green on its branch; it waits
-  for the owner's merge, which runs the test once more on `main`.
-- **5, the monitor:** two cron-job.org jobs, set up in Chrome on 28 Oct (`docs/local.md` → item 4).
-- **8, the security scan:** not run. This laptop's Claude Code now has *Dynamic workflows* on.
+QA's record: `qa/B06/`. Report: https://claude.ai/artifact/4TcXmtm89wh94V3KGYYt6d
 
 ## What to do next
 
-1. **The scan**, on `main`'s code (this branch, fast-forwarded): *Claude Security, scan the codebase
-   at high effort*. Copy `CLAUDE-SECURITY-<time>/CLAUDE-SECURITY-RESULTS.md` to `qa/B06/security.md`,
-   fix every Critical and High by the `qa` skill's tiers, then a PR. Say in `docs/cloud.md` that a
-   laptop session ran it.
-2. Check `sen_ops` #2 merged and its run on `main` passed.
-3. **B07 · Sync and the outbox** (`docs/briefs/B07-sync.md`) on `B07/sync`.
-4. **Lessons for the `workflow` plugin** (`ztsia/workflow`; the retro in `qa/B06/ledger.md`): the
-   `mutants.mjs` template's CRLF and quoting fixes; list each guard the decisions name, with a
-   breakage check per guard, before the first QA run; a read-only sweep agent instead of `implementer`.
+1. The owner's answer on F1 and F2; then the fix, if any, on this branch.
+2. **B07 · Sync and the outbox** (`docs/briefs/B07-sync.md`) on `B07/sync`.
+3. **Lessons for the `workflow` plugin** (`ztsia/workflow`; the retro in `qa/B06/ledger.md`): the
+   `mutants.mjs` template's CRLF and quoting fixes, and its worktree out of the temp folder (F5); list
+   each guard the decisions name, with a breakage check per guard, before the first QA run; a
+   read-only sweep agent instead of `implementer`; a high-effort scan outlasts one usage window.
 
 ## Follow-ups found by QA, not B06's
 
