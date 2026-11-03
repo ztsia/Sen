@@ -3,6 +3,7 @@ import type { Frame } from '@sen/core/jobs';
 import { klDay } from '@sen/core/cycles';
 import { schema } from '@sen/db';
 import type { Db } from '../db';
+import { captureHealth } from '../sync/health';
 import { once } from './alerts';
 import type { Pusher } from './push';
 import type { Relay } from './relay';
@@ -87,11 +88,38 @@ const storageWatch: Task = async (ctx) => {
 };
 
 /**
+ * The capture watchdog (spec §6.2 *Health*, §18; B07): with *Capture* on, no heartbeat for 24 hours
+ * or no bank event for 48 hours sends *Capture may be off*, once a day while it lasts. A person whose
+ * shell has never synced has nothing to watch yet.
+ */
+export const captureWatchdog: Task = async (ctx) => {
+  const health = await ctx.db(async (db) => {
+    const [a] = await db
+      .select({ features: schema.userAccess.features })
+      .from(schema.userAccess)
+      .where(eq(schema.userAccess.userId, ctx.userId));
+    const on = (a?.features as { capture?: boolean } | undefined)?.capture === true;
+    return captureHealth(db, ctx.userId, on, ctx.now);
+  });
+  if (!health.silent) return;
+  await once(ctx.db, ctx.userId, `capture_off:${ctx.day}`, () =>
+    ctx.push.send(ctx.userId, {
+      title: 'Capture may be off',
+      body:
+        health.silent === 'no-heartbeat'
+          ? 'Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.'
+          : 'No payment notifications for 2 days. Open Sen to check it can still read them.',
+      data: { open: 'home' },
+    }),
+  );
+};
+
+/**
  * Each frame's work, in order. Later slices add theirs (spec §16: claim reminders, subscription
- * matching, exchange rates, the check-in and the rest); the listener watchdog comes with B07.
+ * matching, exchange rates, the check-in and the rest).
  */
 export const FRAME_TASKS: Record<Frame, Task[]> = {
-  morning: [backupWatchdog, storageWatch],
+  morning: [backupWatchdog, storageWatch, captureWatchdog],
   evening: [],
 };
 

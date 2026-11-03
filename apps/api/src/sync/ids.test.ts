@@ -18,3 +18,13 @@ describe('derived ids', () => {
     expect(txnId(e, 1)).toBe('5b69ef63-d6d3-5bcb-bfd7-3974eea526e5');
   });
 });
+
+describe('the dedupe key', () => {
+  it('is the shell’s: SHA-256 of each field, length-prefixed (DedupeKeyTest.kt)', async () => {
+    const { createHash } = await import('node:crypto');
+    const { dedupeKey } = await import('./ids');
+    expect(dedupeKey('p', 'k', 1, 't', 'x', null)).toBe(createHash('sha256').update('1:p1:k1:11:t1:x0:').digest('hex'));
+    expect(dedupeKey('p', 'k', 1, '\u00e9', '', null)).not.toBe(dedupeKey('p', 'k', 1, 'e\u0301', '', null));
+    expect(dedupeKey('p', 'k', 1, 'ab', 'c', null)).not.toBe(dedupeKey('p', 'k', 1, 'a', 'bc', null));
+  });
+});

@@ -1,5 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { bearer } from 'better-auth/plugins/bearer';
 import { emailOTP } from 'better-auth/plugins/email-otp';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import type pg from 'pg';
@@ -14,7 +15,7 @@ const CODE_SECONDS = 600;
  * Better Auth (D13, D54): a 6-digit code by email, sign-up off, UUIDs made by Postgres, its tables
  * prefixed `auth_` and reached only through `sen_auth`. No admin plugin, which can impersonate people:
  * the admin is a flag on `user_access` (D52). Mounted at /api/auth on the web app's own origin, so
- * its session cookie is first-party.
+ * its session cookie is first-party; the shell sends the same session as a bearer token.
  */
 export function createAuth(opts: { pool: pg.Pool; secret: string; target: Target; mailer: Mailer }) {
   const fixedCode = opts.target !== 'production';
@@ -56,6 +57,10 @@ export function createAuth(opts: { pool: pg.Pool; secret: string; target: Target
     },
     telemetry: { enabled: false },
     plugins: [
+      // the shell's own requests (its sync) carry the session as a bearer token, read from its
+      // WebView's cookie, so the shell and the web app share one login (B07, spec §5). Only a signed
+      // token is taken, so a session's id alone can't be sent as one.
+      bearer({ requireSignature: true }),
       emailOTP({
         otpLength: 6,
         expiresIn: CODE_SECONDS,

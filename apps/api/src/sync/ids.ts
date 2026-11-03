@@ -26,3 +26,26 @@ export function uuidV5(namespace: string, name: string): string {
 
 export const eventId = (userId: string, dedupeKey: string) => uuidV5(EVENT_NAMESPACE, `${userId}:${dedupeKey}`);
 export const txnId = (eventId: string, index: number) => uuidV5(TXN_NAMESPACE, `${eventId}:${index}`);
+
+/**
+ * The listener's dedupe key (spec §6.2, D115; the shell's `DedupeKey.kt`): SHA-256 over the package,
+ * the notification's key, its `when` in milliseconds, the title, the text and the expanded text, each
+ * written as its length in UTF-8 bytes, a colon, then its bytes; a missing field is empty. The server
+ * recomputes it from what an event carries, so an event's key always names its own text.
+ */
+export function dedupeKey(
+  pkg: string,
+  key: string,
+  whenMillis: number,
+  title: string | null,
+  text: string | null,
+  bigText: string | null,
+): string {
+  const sha = createHash('sha256');
+  for (const field of [pkg, key, String(whenMillis), title ?? '', text ?? '', bigText ?? '']) {
+    const bytes = Buffer.from(field, 'utf8');
+    sha.update(`${bytes.length}:`, 'ascii');
+    sha.update(bytes);
+  }
+  return sha.digest('hex');
+}

@@ -16,6 +16,7 @@ import { queryClient } from './index';
 export const TOPIC_QUERIES: Record<Topic, unknown[][]> = {
   settings: [['settings'], ['me']],
   jobs: [['settings']],
+  capture: [['captured'], ['capture-health']],
 };
 
 /** `off`: no relay here (a preview without one), or not started; `live`: connected; `down`: not connected, polling. */

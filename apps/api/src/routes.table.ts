@@ -62,6 +62,12 @@ export const ROUTES: RouteSpec[] = [
   { method: 'POST', path: '/api/realtime/token', access: 'person', body: {} },
   { method: 'POST', path: '/api/jobs/test', access: 'admin', body: {} },
   { method: 'GET', path: '/api/admin/members', access: 'admin' },
+  // B07: the outbox's sync, from the shell (its bearer session) and the routes the web app reads
+  { method: 'POST', path: '/api/sync', access: 'person', body: { heartbeat: null } },
+  { method: 'GET', path: '/api/sync/changes', access: 'person' },
+  { method: 'POST', path: '/api/match', access: 'person', body: {} },
+  { method: 'GET', path: '/api/capture/health', access: 'person' },
+  { method: 'GET', path: '/api/captured', access: 'person' },
 ];
 
 /**
