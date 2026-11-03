@@ -53,6 +53,21 @@ follow on a phone, and commit.
          The session then copies `CLAUDE-SECURITY-<time>/CLAUDE-SECURITY-RESULTS.md` to
          `qa/B06/security.md` and fixes every Critical and High before the merge. Say in `docs/cloud.md`
          whether a cloud session could run it.
+- [ ] **B07 · Sync and the outbox: on your phone** (after B07 merges and its release is published;
+  Obtainium picks it up). In this order:
+  1. **Install the new release** and open Sen. Sign in once, in the app: the shell keeps that session
+     and syncs with it.
+  2. **Settings → Capture → *Captured on this phone*** should now list the soak's events from the
+     server, newest first. Any still on the phone show first, marked *Not synced yet*, and go within a
+     minute on Wi-Fi or data.
+  3. **The watchdog, for a day:** Android Settings → Notifications → *Device & app notifications* →
+     Sen → off. By the next morning (07:00–08:00) a push should say *Capture may be off*, and Home
+     shows *Capture is off* with *Fix*. Tap *Fix*, turn access back on.
+  4. **Sign out everywhere** from a browser (Settings → Account): the app on the phone should ask you
+     to sign in again the next time it opens.
+  5. **After a week of real syncs:** open Neon's console → project `sen` → *Monitoring*, and send me
+     the week's compute hours (Q25), so the spec and `docs/cloud.md` can record them.
+
 - [ ] **Give the cloud environment the workflow plugin** (needed before the next cloud session).
       Cloud sessions don't install the plugins a repo enables, so without this a session has no
       rules, no `workflow:` agents and no `qa`, `uiux` or `database` skill. On the phone: claude.ai/code
