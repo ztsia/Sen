@@ -142,6 +142,16 @@ AC-20b The watchdog, 48 hours without a bank event, with fresh heartbeats: the s
 AC-20s No push: capture off; or a shell that has never synced; or heartbeat and an event recent
       Spec   §6.2 *Health*, §18, brief *Health*, D143 (7), B5
 
+AC-20c The listener stopped, as the phone reports it              (added in phase 4, from B5)
+      Given  capture on; notification access revoked (or the listener killed) after a payment
+             yesterday evening; the shell's daily sync still reports `access: false` /
+             `listenerConnected: false`
+      When   the next morning's job runs
+      Then   one push *Capture may be off* (the brief's phone check: "revoking access for a day")
+      Spec   brief *Done when* 5, `docs/local.md` B07 step 3, `flows.md` `capture-off` 1
+      Note   Written after reading the shell's heartbeat code, so weaker evidence than the rest: it
+             was missed in phase 1, though the brief states it.
+
 AC-21 Each sync returns when the morning job last ran
       Spec   brief *The 26-hour check*, §18
 
