@@ -37,10 +37,12 @@ export const LIMITS = {
   codesPerIp: { max: 5, windowMs: 60_000 },
   codesPerEmail: { max: 5, windowMs: 10 * 60_000 },
   // and over a day, in production only (previews and a local server send nothing and take one fixed
-  // code). An address gets 10 codes and 20 tries at them, so guessing one stays hopeless for years
-  // (security scan, F3), and Sen sends at most 200 codes in all, below Gmail's daily quota (F6)
+  // code). An address gets 10 codes, each with Better Auth's 3 tries: 30 guesses a day, about 1% a year
+  // (security scan, F3). Tries aren't capped on their own: that would let anyone lock a person out
+  // without a single email. One address asks for 30 codes, and Sen sends at most 200 in all, below
+  // Gmail's daily quota (F6)
   codesPerEmailDay: { max: 10, windowMs: DAY },
-  triesPerEmailDay: { max: 20, windowMs: DAY },
+  codesPerIpDay: { max: 30, windowMs: DAY },
   codesPerDay: { max: 200, windowMs: DAY },
   // a test push or test job (B06), per person, so the routes can't be used to spam a phone
   testsPerPerson: { max: 3, windowMs: 60_000 },

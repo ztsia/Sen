@@ -95,7 +95,7 @@ beforeAll(async () => {
   // most tests sign in often; the per-email limit has its own test below
   LIMITS.codesPerEmail.max = 1000;
   LIMITS.codesPerEmailDay.max = 1000;
-  LIMITS.triesPerEmailDay.max = 1000;
+  LIMITS.codesPerIpDay.max = 1000;
   LIMITS.codesPerDay.max = 1000;
   for (const [p, isAdmin] of [
     [admin, true],
@@ -287,25 +287,22 @@ describe('rate limits (QA B05 run 1, 4 and 6)', () => {
     }).finally(gone);
   });
 
-  it('stops tries at one email’s codes after its daily number, across new codes', async () => {
-    const { email, gone } = await invited();
-    const verify = (otp: string) =>
-      api.request(`${ORIGIN}/api/auth/sign-in/email-otp`, {
-        method: 'POST',
-        headers: { origin: ORIGIN, 'content-type': 'application/json', 'x-forwarded-for': nextIp() },
-        body: JSON.stringify({ email, otp }),
-      });
-    await capped(LIMITS.triesPerEmailDay, 4, async () => {
-      await send(email, nextIp());
-      const wrong = codes.get(email) === '000000' ? '111111' : '000000';
-      for (let i = 0; i < 3; i++) expect((await verify(wrong)).status).not.toBe(429);
-      // a new code doesn't bring new tries: the fourth is the last, even with the right code after it
-      await send(email, nextIp());
-      expect((await verify(wrong)).status).not.toBe(429);
-      const last = await verify(codes.get(email)!);
-      expect(last.status).toBe(429);
-      expect(await last.json()).toMatchObject({ code: 'too_many' });
-    }).finally(gone);
+  it('gives one address at most its daily codes, whichever emails they are for', async () => {
+    const a = await invited();
+    const b = await invited();
+    const ip = nextIp();
+    await capped(LIMITS.codesPerIpDay, 2, async () => {
+      expect((await send(a.email, ip)).status).toBe(200);
+      expect((await send(b.email, ip)).status).toBe(200);
+      const over = await send(a.email, ip);
+      expect(over.status).toBe(429);
+      expect(await over.json()).toMatchObject({ code: 'too_many' });
+      // another address still gets one
+      expect((await send(b.email, nextIp())).status).toBe(200);
+    }).finally(async () => {
+      await a.gone();
+      await b.gone();
+    });
   });
 
   it('sends at most Sen’s daily number of codes in all', async () => {

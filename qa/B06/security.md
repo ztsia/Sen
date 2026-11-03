@@ -226,9 +226,13 @@ for what was found to be fixed, so each is fixed or put to the owner.
 | Finding | What changed | Test that catches its break |
 |---|---|---|
 | F1, F2 | Nothing yet: revealing whether an email is invited, and when access is paused, is the sign-in screen's design (the comment at `apps/api/src/app.ts`, flows.md). **The owner's call**, in the handoff | — |
-| F3 | Production counts tries at one address's codes over a day, across new codes: 20 (`LIMITS.triesPerEmailDay`), and 10 codes an address a day (`codesPerEmailDay`). Guessing stays below 1% a year | `apps/api/test/api.test.ts`: *stops tries at one email’s codes after its daily number, across new codes*; *gives one email at most its daily codes* |
-| F6 | Production sends at most 200 codes a day in all (`codesPerDay`), below Gmail's quota, and logs when it's reached. Someone flooding it can stop sign-ins for the rest of that day, but Gmail no longer flags Sen's account | *sends at most Sen’s daily number of codes in all* |
+| F3 | Production gives an address 10 codes a day (`LIMITS.codesPerEmailDay`), each with Better Auth's 3 tries: 30 guesses a day, about 1% a year. Tries get no cap of their own: the commit review showed it would let anyone lock a person out without one email | `apps/api/test/api.test.ts`: *gives one email at most its daily codes, however they are spaced*; *takes a new code after three wrong ones* (the 3 tries) |
+| F6 | Production sends at most 200 codes a day in all (`codesPerDay`), below Gmail's quota, and logs when it's reached; one client address asks for at most 30 (`codesPerIpDay`). Someone with many addresses can still stop sign-ins for the rest of a day, but Gmail no longer flags Sen's account | *sends at most Sen’s daily number of codes in all*; *gives one address at most its daily codes* |
 | F4 | A session check answering *nobody signed in* clears the offline copy and stops realtime; the copy is marked with whose it is, and someone else's is dropped | `apps/web/src/data/auth.test.ts`: *are forgotten when the server says nobody is signed in*, *are only ever the signed-in person’s* (both fail with the fix taken out) |
 | F5 | `qa-diff` and `mutants` keep their worktrees in this checkout's `.git/sen-qa/`, and reuse one only if git lists it as this repository's | — (QA tooling; run by hand) |
 
 Previews and a local server keep no daily caps: they send nothing and take one fixed code.
+
+**Accepted with the fixes:** whoever knows an invited email can use up its 10 codes and stop that
+person signing in until the next day, though they get every one of those emails. Sessions last 90
+days, so it bites only someone signing in that day.

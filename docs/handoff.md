@@ -7,7 +7,7 @@ except **3, a push on the phone** (the owner's, `docs/local.md` → B06 item 5).
 `B06/jobs-realtime-backups`, as a small PR:
 - **The security scan (done-when 8)** ran 28 Oct to 3 Nov at the laptop, high effort, verified:
   six LOW findings, none Critical, High or Medium. Record and fixes in `qa/B06/security.md`.
-  F3 and F6 (daily caps on sign-in codes and tries, production only), F4 (the offline copy goes with
+  F3 and F6 (daily caps on sign-in codes, per address, per client and in all; production only), F4 (the offline copy goes with
   the session) and F5 (QA's worktrees in `.git/sen-qa/`) are fixed, with tests.
 - **F1 and F2 wait on the owner:** the sign-in screen says *not invited* and *access paused*, which
   tells a stranger who uses Sen. Options: keep it (an accepted risk), or say *paused* only by email.
