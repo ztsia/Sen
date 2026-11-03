@@ -1,3 +1,4 @@
+import { dedupeKey, eventId } from './ids';
 import type pg from 'pg';
 import type { MemberSwitches } from '@sen/core/views';
 
@@ -80,10 +81,51 @@ export async function seedPreview(client: pg.ClientBase, people: PreviewPerson[]
          on conflict (user_id) do update set own_names = excluded.own_names, expected_payday = excluded.expected_payday, updated_at = now()`,
         [p.id, p.ownNames, p.expectedPayday],
       );
+      if (p.features.capture) await seedCapture(client, p.id, new Date());
     }
     await client.query('commit');
   } catch (e) {
     await client.query('rollback');
     throw e;
   }
+}
+
+/** The made-up notifications a preview's *Captured on this phone* shows (B07), masked as the listener stores them. */
+const PREVIEW_EVENTS = [
+  {
+    minutesAgo: 50,
+    title: 'Payment successful',
+    text: 'You have paid RM12.90 to ZUS COFFEE •••• on ••/••/•••• ••:••.',
+  },
+  { minutesAgo: 60 * 26, title: 'eWallet reload', text: 'RM50.00 has been reloaded into your eWallet.' },
+  { minutesAgo: 60 * 50, title: 'Payment successful', text: 'You have paid RM8.50 to •-ELEVEN MALAYSIA.' },
+];
+
+/**
+ * A preview person's capture, reset on every deploy (B07): Touch 'n Go chosen, three events with the
+ * ids the shell would derive, and a heartbeat just now, so Home's warnings start quiet.
+ */
+async function seedCapture(client: pg.ClientBase, userId: string, now: Date): Promise<void> {
+  const pkg = 'my.com.tngdigital.ewallet';
+  for (const t of ['bank_events', 'capture_apps', 'device_heartbeats'])
+    await client.query(`delete from ${t} where user_id = $1`, [userId]);
+  await client.query(
+    `insert into capture_apps (id, user_id, package, label, chosen_at) values (gen_random_uuid(), $1, $2, 'TNG eWallet', $3)`,
+    [userId, pkg, now],
+  );
+  for (const [i, e] of PREVIEW_EVENTS.entries()) {
+    const when = new Date(now.getTime() - e.minutesAgo * 60_000);
+    const key = `0|${pkg}|${1000 + i}|null|10123`;
+    const dedupe = dedupeKey(pkg, key, when.getTime(), e.title, e.text, null);
+    await client.query(
+      `insert into bank_events (id, user_id, package, channel_id, notification_key, posted_at, notified_at, title, text, dedupe_key)
+       values ($1, $2, $3, 'payments', $4, $5, $5, $6, $7, $8)`,
+      [eventId(userId, dedupe), userId, pkg, key, when, e.title, e.text, dedupe],
+    );
+  }
+  await client.query(
+    `insert into device_heartbeats (id, user_id, listener_connected, access, last_bank_event_at, app_version)
+     values (gen_random_uuid(), $1, true, true, $2, 'preview')`,
+    [userId, new Date(now.getTime() - PREVIEW_EVENTS[0]!.minutesAgo * 60_000)],
+  );
 }

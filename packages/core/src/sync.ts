@@ -21,7 +21,7 @@ const Package = z
 
 /** A captured notification, raw and masked as the listener stored it (§6.2, D121). */
 export const SyncEvent = z.object({
-  /** UUIDv5 of the person and the dedupe key (apps/api/src/sync/ids.ts); the server checks it. */
+  /** UUIDv5 of the person and the dedupe key (packages/db/src/ids.ts); the server checks it. */
   id: Id,
   package: Package,
   channelId: Text(255),

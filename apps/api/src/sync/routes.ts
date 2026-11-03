@@ -19,7 +19,7 @@ import type { Env } from '../context';
 import { ApiError, parse, readJson } from '../errors';
 import { runCommand } from '../routes';
 import { captureHealth, morningAt } from './health';
-import { dedupeKey, eventId } from './ids';
+import { dedupeKey, eventId } from '@sen/db';
 
 /**
  * The envelope is checked as a whole and each item on its own (§16 `/sync`), so one malformed item

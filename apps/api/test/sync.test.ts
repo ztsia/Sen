@@ -8,7 +8,7 @@ import { asPerson } from '../src/db';
 import { captureWatchdog, type JobCtx } from '../src/jobs/frames';
 import type { PushMessage } from '../src/jobs/push';
 import { LIMITS } from '../src/limits';
-import { dedupeKey, eventId } from '../src/sync/ids';
+import { dedupeKey, eventId } from '@sen/db';
 
 // The outbox's sync against the local Postgres (pnpm test:db, B07): the same batch twice is a no-op,
 // a bad item is refused alone, the shell's bearer session, the Capture switch, commands applied once,

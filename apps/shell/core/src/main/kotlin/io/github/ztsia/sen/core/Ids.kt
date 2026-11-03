@@ -5,7 +5,7 @@ import java.util.UUID
 
 /**
  * The ids the phone and the server both derive (spec §5, §6.5), as UUIDv5 under namespaces fixed here
- * and in the API's `apps/api/src/sync/ids.ts`. Neither may ever change once events sync.
+ * and in the API's `packages/db/src/ids.ts`. Neither may ever change once events sync.
  *
  * An event's id is of its person and its dedupe key, so a notification captured again (a reconnect, a
  * reinstall, a second phone) lands on the same row. A transaction's is of its event's id and an index,

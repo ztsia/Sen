@@ -18,7 +18,7 @@ import { ownRows } from './rls';
 
 /**
  * §15's tables that B07 brings: what the phone's outbox syncs (spec §5, §6.2, §6.5). Ids are made on
- * the phone: an event's is a UUIDv5 of its person and dedupe key (apps/api/src/sync/ids.ts), so a
+ * the phone: an event's is a UUIDv5 of its person and dedupe key (packages/db/src/ids.ts), so a
  * notification captured again, after a reconnect, a reinstall or on a second phone, lands on the same
  * row. Every write goes through migration 0012's `sync_*` functions, which hold the rules: raw text
  * never changes, an edit sets only the fields it names, and a tombstone stays.
