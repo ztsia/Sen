@@ -50,9 +50,27 @@ class SyncRun(private val context: Context, private val client: SyncClient = Syn
                     is SyncClient.Reply.Failed -> return Outcome.RETRY
                     else -> return Outcome.DONE
                 }
+        claim(userId)
         Chosen.reconcile(context)
         pushLoop(token, userId)?.let { return it }
         return pull(token)
+    }
+
+    /**
+     * The outbox belongs to the first person who syncs it. A different person's session (someone else
+     * signed in on this phone) starts from an empty outbox and an empty choice of apps, so the last
+     * person's notifications and writes never land in the new person's account (D52).
+     */
+    private fun claim(userId: String) {
+        when (outbox.meta(Meta.OWNER)) {
+            userId -> return
+            null -> {}
+            else -> {
+                outbox.forgetPerson()
+                Chosen.set(context, emptySet())
+            }
+        }
+        outbox.setMeta(Meta.OWNER, userId)
     }
 
     /** A null means the push finished; otherwise the outcome to return now. */

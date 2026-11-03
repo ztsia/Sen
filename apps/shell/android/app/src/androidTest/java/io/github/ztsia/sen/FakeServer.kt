@@ -19,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * can see that sending them again adds nothing. Served on 127.0.0.1, which the e2e build may reach over
  * cleartext (src/e2e/res/xml/network_security_config.xml).
  */
-class FakeServer(private val userId: String) {
+class FakeServer(var userId: String) {
     enum class Mode { NORMAL, UNAUTHORIZED, CAPTURE_OFF, SHELL_OFF, DOWN }
 
     private val server = MockWebServer()

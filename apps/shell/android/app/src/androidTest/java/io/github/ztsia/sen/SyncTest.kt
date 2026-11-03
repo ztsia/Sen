@@ -261,6 +261,35 @@ class SyncTest {
     }
 
     @Test
+    fun another_person_signing_in_never_sends_the_last_ones_notifications_or_writes() {
+        val outbox = Outbox.get(ctx)
+        outbox.insert(raw(1))
+        assertEquals(SyncRun.Outcome.DONE, sync())
+        assertEquals(user, outbox.meta(Meta.OWNER))
+
+        // captured and written while the first person was signed in, never synced
+        outbox.insert(raw(2))
+        outbox.insertCommand("11111111-2222-4333-8444-555555555556", JSONObject().put("kind", "test").toString(), 1_793_494_800_000L)
+        Chosen.set(ctx, setOf("my.com.tngdigital.ewallet"))
+
+        val other = "00000000-0000-4000-8000-0000000000bb"
+        server.userId = other
+        Session.set(ctx, "better-auth.session_token", "someone-else.signature")
+        val before = server.syncBodies.size
+        assertEquals(SyncRun.Outcome.DONE, sync())
+
+        server.syncBodies.drop(before).forEach { b ->
+            assertEquals(0, b.optJSONArray("events")?.length() ?: 0)
+            assertEquals(0, b.optJSONArray("commands")?.length() ?: 0)
+            assertEquals(0, b.optJSONArray("captureApps")?.length() ?: 0)
+        }
+        assertEquals(0, outbox.count())
+        assertTrue(outbox.recentCommands().isEmpty())
+        assertTrue(Chosen.get(ctx).isEmpty())
+        assertEquals(other, outbox.meta(Meta.OWNER))
+    }
+
+    @Test
     fun a_write_from_the_web_app_goes_up_once_and_its_outcome_comes_back() {
         val id = "11111111-2222-4333-8444-555555555555"
         val body = JSONObject().put("kind", "test").put("n", 1).toString()

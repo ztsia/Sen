@@ -390,6 +390,20 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
         return readCommands("synced_at IS NULL OR synced_at >= ?", arrayOf((now - TEN_MIN_MS).toString()))
     }
 
+    /**
+     * Another person signed in on this phone: what the last one captured, chose and wrote, and what their
+     * syncs learned, goes, so none of it is ever sent as the new person's. The heartbeat log stays (it
+     * holds no one's money).
+     */
+    fun forgetPerson() {
+        writableDatabase.transaction {
+            execSQL("DELETE FROM events")
+            execSQL("DELETE FROM commands")
+            execSQL("DELETE FROM capture_apps")
+            execSQL("DELETE FROM meta")
+        }
+    }
+
     // What the last sync learned (B07).
 
     fun meta(key: String): String? =

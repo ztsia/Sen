@@ -9,4 +9,7 @@ object Meta {
     const val CAPTURE_ON = "capture_on"
     const val SHELL_OFF = "shell_off"
     const val LATE_NOTICE_DAY = "late_notice_day"
+
+    /** Whose outbox this is: the user id of the first session that synced it. */
+    const val OWNER = "owner"
 }
