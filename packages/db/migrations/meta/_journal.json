@@ -78,6 +78,20 @@
       "when": 1792923977469,
       "tag": "0010_b06_scheduler_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793720155253,
+      "tag": "0011_b07_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793720156457,
+      "tag": "0012_b07_sync_functions",
+      "breakpoints": true
     }
   ]
 }

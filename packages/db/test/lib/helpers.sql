@@ -151,5 +151,15 @@ BEGIN
     (b, 'morning', 'morning:2026-10-24', 'ok');
   INSERT INTO alerts_sent (user_id, alert_key) VALUES (a, 'backup_late:2026-10-24'), (b, 'sen_push:2026-10-24');
   INSERT INTO push_tokens (user_id, fcm_token) VALUES (a, 'fcm-a'), (b, 'fcm-b');
+  -- B07
+  INSERT INTO bank_events (id, user_id, package, notification_key, posted_at, notified_at, title, text, dedupe_key) VALUES
+    ('00000000-0000-5000-8000-0000000000ea', a, 'my.com.tngdigital.ewallet', '0|tng|1', now(), now(), 'Payment', 'RM•.•• paid', repeat('a', 64)),
+    ('00000000-0000-5000-8000-0000000000eb', b, 'my.com.tngdigital.ewallet', '0|tng|1', now(), now(), 'Payment', 'RM•.•• paid', repeat('b', 64));
+  INSERT INTO capture_apps (id, user_id, package, label, chosen_at) VALUES
+    (gen_random_uuid(), a, 'my.com.tngdigital.ewallet', 'TNG eWallet', now()),
+    (gen_random_uuid(), b, 'my.com.tngdigital.ewallet', 'TNG eWallet', now());
+  INSERT INTO device_heartbeats (id, user_id, listener_connected, access, app_version) VALUES
+    (gen_random_uuid(), a, true, true, '0.7.0'), (gen_random_uuid(), b, true, true, '0.7.0');
+  INSERT INTO outbox_applied (id, user_id, kind) VALUES (gen_random_uuid(), a, 'command'), (gen_random_uuid(), b, 'command');
 END
 $$;
