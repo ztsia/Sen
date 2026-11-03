@@ -100,7 +100,10 @@ async function signIn(email: string) {
 }
 
 let n = 1000;
-function event(userId: string, o: Partial<{ when: number; posted: number; title: string; text: string; key: string }> = {}): SyncEvent {
+function event(
+  userId: string,
+  o: Partial<{ when: number; posted: number; title: string; text: string; key: string }> = {},
+): SyncEvent {
   const i = ++n;
   const when = o.when ?? Date.UTC(2026, 9, 1, 1, 0, 0) + i * 1000;
   const e = {
@@ -145,11 +148,26 @@ let s = { a: { cookie: '', token: '' }, b: { cookie: '', token: '' }, admin: { c
 const sync = (who: 'a' | 'b', body: unknown) => call('/api/sync', { body, bearer: s[who].token, origin: null });
 
 beforeAll(async () => {
-  for (const k of ['codesPerEmail', 'codesPerEmailDay', 'codesPerIpDay', 'codesPerDay', 'codesPerIp', 'lookupsPerIp'] as const)
+  for (const k of [
+    'codesPerEmail',
+    'codesPerEmailDay',
+    'codesPerIpDay',
+    'codesPerDay',
+    'codesPerIp',
+    'lookupsPerIp',
+  ] as const)
     LIMITS[k].max = 1000;
   for (const p of [a, b, admin]) {
-    await owner.query('insert into auth_user (id, name, email, email_verified) values ($1, $2, $3, true)', [p.id, 'QA', p.email]);
-    await owner.query('insert into user_access (user_id, is_admin, features) values ($1, $2, $3)', [p.id, p === admin, ON]);
+    await owner.query('insert into auth_user (id, name, email, email_verified) values ($1, $2, $3, true)', [
+      p.id,
+      'QA',
+      p.email,
+    ]);
+    await owner.query('insert into user_access (user_id, is_admin, features) values ($1, $2, $3)', [
+      p.id,
+      p === admin,
+      ON,
+    ]);
   }
   s = { a: await signIn(a.email), b: await signIn(b.email), admin: await signIn(admin.email) };
 });
@@ -171,14 +189,32 @@ describe('dedupe (AC-4, AC-4s, AC-5)', () => {
     const r1 = await sync('a', { events: [e] });
     const r2 = await sync('a', { events: [e] });
     const r3 = await sync('a', { events: [event(a.id), e] });
-    note(`dedupe: statuses ${r1.status},${r2.status},${r3.status}; rows for e = ${await count('select count(*) n from bank_events where id = $1', [e.id])}`);
+    note(
+      `dedupe: statuses ${r1.status},${r2.status},${r3.status}; rows for e = ${await count('select count(*) n from bank_events where id = $1', [e.id])}`,
+    );
     expect(await count('select count(*) n from bank_events where user_id = $1', [a.id])).toBe(2);
     const same = { text: 'You paid RM5.00 to KEDAI MAJU', key: '0|com.rytbank.app|77|null|10123' };
-    await sync('a', { events: [event(a.id, { ...same, when: Date.UTC(2026, 9, 2, 4, 0, 0) }), event(a.id, { ...same, when: Date.UTC(2026, 9, 2, 4, 3, 0) })] });
-    expect(await count("select count(*) n from bank_events where user_id = $1 and text = 'You paid RM5.00 to KEDAI MAJU'", [a.id])).toBe(2);
+    await sync('a', {
+      events: [
+        event(a.id, { ...same, when: Date.UTC(2026, 9, 2, 4, 0, 0) }),
+        event(a.id, { ...same, when: Date.UTC(2026, 9, 2, 4, 3, 0) }),
+      ],
+    });
+    expect(
+      await count("select count(*) n from bank_events where user_id = $1 and text = 'You paid RM5.00 to KEDAI MAJU'", [
+        a.id,
+      ]),
+    ).toBe(2);
     const w = Date.UTC(2026, 9, 3, 1, 0, 0);
-    await sync('a', { events: [event(a.id, { when: w, key: 'k1', title: 'ab', text: 'c' }), event(a.id, { when: w, key: 'k1', title: 'a', text: 'bc' })] });
-    expect(await count("select count(*) n from bank_events where user_id = $1 and notification_key = 'k1'", [a.id])).toBe(2);
+    await sync('a', {
+      events: [
+        event(a.id, { when: w, key: 'k1', title: 'ab', text: 'c' }),
+        event(a.id, { when: w, key: 'k1', title: 'a', text: 'bc' }),
+      ],
+    });
+    expect(
+      await count("select count(*) n from bank_events where user_id = $1 and notification_key = 'k1'", [a.id]),
+    ).toBe(2);
   });
 
   it('five identical batches at once: one row each, no 500', async () => {
@@ -203,17 +239,32 @@ describe('isolation (AC-1s, AC-14)', () => {
     expect(rb2.body?.synced?.events).toEqual([eb.id]);
     expect(await count('select count(*) n from bank_events where dedupe_key = $1', [ea.dedupeKey])).toBe(2);
     // B edits A's event by id: not found, A's row unchanged
-    const ed = await sync('b', { edits: [{ id: randomUUID(), kind: 'bank_event', rowId: ea.id, fields: { parse_status: 'dismissed' } }] });
+    const ed = await sync('b', {
+      edits: [{ id: randomUUID(), kind: 'bank_event', rowId: ea.id, fields: { parse_status: 'dismissed' } }],
+    });
     note(`B edits A's event: ${JSON.stringify(ed.body?.refused?.edits)}`);
     expect(ed.body?.refused?.edits?.[0]?.reason).toBe('not_found');
-    expect((await owner.query('select parse_status from bank_events where id = $1', [ea.id])).rows[0].parse_status).toBe('unparsed');
+    expect(
+      (await owner.query('select parse_status from bank_events where id = $1', [ea.id])).rows[0].parse_status,
+    ).toBe('unparsed');
     // B's Captured shows only B's
     const cb = await call('/api/captured', { cookie: s.b.cookie });
     expect(cb.body.events.map((x: { id: string }) => x.id)).toEqual([eb.id]);
   });
 
   it('the admin reads no one’s chosen apps or events through /admin/members', async () => {
-    await sync('a', { events: [event(a.id)], captureApps: [{ id: randomUUID(), package: 'com.rytbank.app', label: 'Ryt Bank', chosenAt: new Date().toISOString(), deletedAt: null }] });
+    await sync('a', {
+      events: [event(a.id)],
+      captureApps: [
+        {
+          id: randomUUID(),
+          package: 'com.rytbank.app',
+          label: 'Ryt Bank',
+          chosenAt: new Date().toISOString(),
+          deletedAt: null,
+        },
+      ],
+    });
     const m = await call('/api/admin/members', { cookie: s.admin.cookie });
     const txt = JSON.stringify(m.body);
     note(`admin members: status ${m.status}, mentions a package: ${/com\.rytbank|KEDAI/.test(txt)}`);
@@ -227,7 +278,13 @@ describe('isolation (AC-1s, AC-14)', () => {
 describe('the Capture switch (AC-11, AC-12)', () => {
   it('a mixed batch with Capture off: what is refused and what is kept', async () => {
     await setFeatures(a.id, { ...ON, capture: false });
-    const app = { id: randomUUID(), package: 'com.rytbank.app', label: 'Ryt Bank', chosenAt: new Date().toISOString(), deletedAt: null };
+    const app = {
+      id: randomUUID(),
+      package: 'com.rytbank.app',
+      label: 'Ryt Bank',
+      chosenAt: new Date().toISOString(),
+      deletedAt: null,
+    };
     const r = await sync('a', { events: [event(a.id)], captureApps: [app], heartbeat: beat() });
     const apps = await count('select count(*) n from capture_apps where user_id = $1', [a.id]);
     const beats = await count('select count(*) n from device_heartbeats where user_id = $1', [a.id]);
@@ -264,10 +321,14 @@ describe('edits (AC-8, AC-9)', () => {
     await sync('a', { events: [e] });
     const ed = { id: randomUUID(), kind: 'bank_event', rowId: e.id, fields: { parse_status: 'skipped' } };
     await sync('a', { edits: [ed] });
-    await owner.query("update bank_events set parse_status = 'dismissed', linked_event_id = null where id = $1", [e.id]);
+    await owner.query("update bank_events set parse_status = 'dismissed', linked_event_id = null where id = $1", [
+      e.id,
+    ]);
     const again = await sync('a', { edits: [ed] });
     const st = (await owner.query('select parse_status from bank_events where id = $1', [e.id])).rows[0].parse_status;
-    note(`edit replay: synced ${JSON.stringify(again.body?.synced?.edits)}; status ${st}; ledger rows ${await count('select count(*) n from outbox_applied where id = $1', [ed.id])}`);
+    note(
+      `edit replay: synced ${JSON.stringify(again.body?.synced?.edits)}; status ${st}; ledger rows ${await count('select count(*) n from outbox_applied where id = $1', [ed.id])}`,
+    );
     expect(st).toBe('dismissed');
   });
 });
@@ -275,7 +336,13 @@ describe('edits (AC-8, AC-9)', () => {
 describe('the offline copy (AC-17, AC-18)', () => {
   it('changes since a version: a choice and a removal, then nothing; no one else’s', async () => {
     const v0 = (await call('/api/sync/changes', { bearer: s.a.token, origin: null })).body.version;
-    const c1 = { id: randomUUID(), package: 'my.com.tngdigital.ewallet', label: "Touch 'n Go eWallet", chosenAt: '2026-10-01T00:00:00.000Z', deletedAt: null };
+    const c1 = {
+      id: randomUUID(),
+      package: 'my.com.tngdigital.ewallet',
+      label: "Touch 'n Go eWallet",
+      chosenAt: '2026-10-01T00:00:00.000Z',
+      deletedAt: null,
+    };
     await sync('a', { captureApps: [c1] });
     await sync('b', { captureApps: [{ ...c1, id: randomUUID() }] });
     await sync('a', { captureApps: [{ ...c1, deletedAt: '2026-10-02T00:00:00.000Z' }] });
@@ -287,27 +354,52 @@ describe('the offline copy (AC-17, AC-18)', () => {
     expect(again.body.captureApps).toEqual([]);
     // a stale phone re-sends the live choice
     await sync('a', { captureApps: [c1] });
-    expect(await count('select count(*) n from capture_apps where user_id = $1 and deleted_at is null', [a.id])).toBe(0);
+    expect(await count('select count(*) n from capture_apps where user_id = $1 and deleted_at is null', [a.id])).toBe(
+      0,
+    );
     for (const q of ['abc', '-1', '1.5', '99999999999999999999'])
-      note(`changes?since=${q}: ${(await call(`/api/sync/changes?since=${q}`, { bearer: s.a.token, origin: null })).status}`);
+      note(
+        `changes?since=${q}: ${(await call(`/api/sync/changes?since=${q}`, { bearer: s.a.token, origin: null })).status}`,
+      );
   });
 
   it('the version counter is shared by everyone (what it tells another person)', async () => {
     const v0 = (await call('/api/sync/changes', { bearer: s.a.token, origin: null })).body.version;
     for (let i = 0; i < 5; i++)
-      await sync('b', { captureApps: [{ id: randomUUID(), package: `com.qa.b${i}`, label: 'x', chosenAt: new Date().toISOString(), deletedAt: null }] });
-    await sync('a', { captureApps: [{ id: randomUUID(), package: 'com.qa.a', label: 'x', chosenAt: new Date().toISOString(), deletedAt: null }] });
+      await sync('b', {
+        captureApps: [
+          {
+            id: randomUUID(),
+            package: `com.qa.b${i}`,
+            label: 'x',
+            chosenAt: new Date().toISOString(),
+            deletedAt: null,
+          },
+        ],
+      });
+    await sync('a', {
+      captureApps: [
+        { id: randomUUID(), package: 'com.qa.a', label: 'x', chosenAt: new Date().toISOString(), deletedAt: null },
+      ],
+    });
     const v1 = (await call(`/api/sync/changes?since=${v0}`, { bearer: s.a.token, origin: null })).body.version;
-    note(`A's version jumped from ${v0} to ${v1} for A's one change: B's 5 changes are visible as a gap of ${v1 - v0 - 1}`);
+    note(
+      `A's version jumped from ${v0} to ${v1} for A's one change: B's 5 changes are visible as a gap of ${v1 - v0 - 1}`,
+    );
   });
 });
 
 describe('the watchdog (AC-20)', () => {
   it('access revoked: the shell still syncs heartbeats saying so; does the push come within a day?', async () => {
     const lastPay = new Date(Date.now() - 20 * 3_600_000); // a payment yesterday evening
-    await sync('a', { events: [event(a.id, { when: lastPay.getTime(), posted: lastPay.getTime() })], heartbeat: beat() });
+    await sync('a', {
+      events: [event(a.id, { when: lastPay.getTime(), posted: lastPay.getTime() })],
+      heartbeat: beat(),
+    });
     // access revoked; the next morning's daily sync says so
-    await sync('a', { heartbeat: beat({ access: false, listenerConnected: false, lastBankEventAt: lastPay.toISOString() }) });
+    await sync('a', {
+      heartbeat: beat({ access: false, listenerConnected: false, lastBankEventAt: lastPay.toISOString() }),
+    });
     await captureWatchdog(ctx(a.id, new Date(Date.now() + 10 * 3_600_000)));
     const h = await call('/api/capture/health', { cookie: s.a.cookie });
     note(`access off, 30 h after the last payment: pushes ${pushed.length}; health ${JSON.stringify(h.body)}`);
@@ -317,7 +409,10 @@ describe('the watchdog (AC-20)', () => {
   it('a phone clock a year ahead: posted_at in the future keeps no-events quiet for ever', async () => {
     const ahead = Date.now() + 365 * 86_400_000;
     await sync('a', { events: [event(a.id, { when: ahead, posted: ahead })], heartbeat: beat() });
-    await owner.query("update device_heartbeats set created_at = now() + interval '3 days' - interval '1 hour' where user_id = $1", [a.id]);
+    await owner.query(
+      "update device_heartbeats set created_at = now() + interval '3 days' - interval '1 hour' where user_id = $1",
+      [a.id],
+    );
     await captureWatchdog(ctx(a.id, new Date(Date.now() + 3 * 86_400_000)));
     note(`future posted_at, 3 days without a real event: pushes ${pushed.length}`);
     expect(pushed).toHaveLength(1);
@@ -325,11 +420,16 @@ describe('the watchdog (AC-20)', () => {
 
   it('25 h without a heartbeat: one push and one alerts_sent row, ticked twice', async () => {
     await sync('a', { heartbeat: beat() });
-    await owner.query("update device_heartbeats set created_at = now() - interval '25 hours' where user_id = $1", [a.id]);
+    await owner.query("update device_heartbeats set created_at = now() - interval '25 hours' where user_id = $1", [
+      a.id,
+    ]);
     const now = new Date();
     await captureWatchdog(ctx(a.id, now));
     await captureWatchdog(ctx(a.id, now));
-    const sent = await count("select count(*) n from alerts_sent where user_id = $1 and alert_key like 'capture_off:%'", [a.id]);
+    const sent = await count(
+      "select count(*) n from alerts_sent where user_id = $1 and alert_key like 'capture_off:%'",
+      [a.id],
+    );
     note(`25 h quiet: pushes ${pushed.length}, alerts_sent ${sent}, title ${pushed[0]?.msg.title}`);
     expect([pushed.length, sent]).toEqual([1, 1]);
   });
@@ -342,9 +442,13 @@ describe('Captured on this phone (AC-30)', () => {
     const r = await sync('a', { events: evs });
     expect(r.body.synced.events).toHaveLength(51);
     const p1 = await call('/api/captured', { cookie: s.a.cookie });
-    const p2 = p1.body.next ? await call(`/api/captured?before=${encodeURIComponent(p1.body.next)}`, { cookie: s.a.cookie }) : { body: { events: [] } };
+    const p2 = p1.body.next
+      ? await call(`/api/captured?before=${encodeURIComponent(p1.body.next)}`, { cookie: s.a.cookie })
+      : { body: { events: [] } };
     const seen = new Set([...p1.body.events, ...p2.body.events].map((x: { id: string }) => x.id));
-    note(`ties: page 1 ${p1.body.events.length}, next ${p1.body.next}, page 2 ${p2.body.events.length}; distinct seen ${seen.size} of 51`);
+    note(
+      `ties: page 1 ${p1.body.events.length}, next ${p1.body.next}, page 2 ${p2.body.events.length}; distinct seen ${seen.size} of 51`,
+    );
     expect(seen.size).toBe(51);
   });
 });
@@ -359,7 +463,10 @@ describe('hostile and malformed input (AC-10, AC-10s)', () => {
       ['an unknown key', { body: { events: [], extra: 1 } }],
       ['heartbeat malformed', { body: { heartbeat: { id: 'x' } } }],
       ['a null item', { body: { events: [null, 7, 'x'] } }],
-      ['a command not an object', { body: { commands: [{ id: randomUUID(), command: 'x', madeAt: new Date().toISOString() }] } }],
+      [
+        'a command not an object',
+        { body: { commands: [{ id: randomUUID(), command: 'x', madeAt: new Date().toISOString() }] } },
+      ],
     ];
     for (const [name, init] of cases) {
       const r = await call('/api/sync', { ...init, bearer: s.a.token, origin: null });
@@ -385,13 +492,16 @@ describe('hostile and malformed input (AC-10, AC-10s)', () => {
     const m2 = await call('/api/match', { body: {}, cookie: s.a.cookie });
     const m3 = await call('/api/match', { body: {} });
     const m4 = await call('/api/match', { body: { x: 1 }, cookie: s.a.cookie });
-    note(`match: ${m1.status} ${JSON.stringify(m1.body)}, ${m2.status}, signed out ${m3.status} ${JSON.stringify(m3.body)}, extra ${m4.status} ${JSON.stringify(m4.body)}`);
+    note(
+      `match: ${m1.status} ${JSON.stringify(m1.body)}, ${m2.status}, signed out ${m3.status} ${JSON.stringify(m3.body)}, extra ${m4.status} ${JSON.stringify(m4.body)}`,
+    );
     expect([m1.status, m2.status, m3.status, m4.status]).toEqual([200, 200, 401, 400]);
   });
 
   it('a heartbeat can’t set its own time', async () => {
     const r = await sync('a', { heartbeat: { ...beat(), createdAt: '2020-01-01T00:00:00Z' } });
-    const at = (await owner.query('select created_at from device_heartbeats where user_id = $1', [a.id])).rows[0]?.created_at as Date;
+    const at = (await owner.query('select created_at from device_heartbeats where user_id = $1', [a.id])).rows[0]
+      ?.created_at as Date;
     note(`heartbeat with createdAt: ${r.status}; stored ${at?.toISOString()}`);
     expect(Math.abs(at.getTime() - Date.now())).toBeLessThan(60_000);
   });
@@ -402,8 +512,14 @@ describe('the session (AC-24, AC-25, AC-26)', () => {
     const shell = await signIn(a.email);
     const enc = await call('/api/sync', { body: {}, bearer: shell.token, origin: null });
     const dec = await call('/api/sync', { body: {}, bearer: decodeURIComponent(shell.token), origin: null });
-    const forged = await call('/api/sync', { body: {}, bearer: decodeURIComponent(shell.token).split('.')[0] + '.AAAA', origin: null });
-    note(`bearer: encoded ${enc.status}, decoded ${dec.status}, forged signature ${forged.status} ${JSON.stringify(forged.body)}`);
+    const forged = await call('/api/sync', {
+      body: {},
+      bearer: decodeURIComponent(shell.token).split('.')[0] + '.AAAA',
+      origin: null,
+    });
+    note(
+      `bearer: encoded ${enc.status}, decoded ${dec.status}, forged signature ${forged.status} ${JSON.stringify(forged.body)}`,
+    );
     expect(enc.status).toBe(200);
     expect(forged.status).toBe(401);
     const browser = await signIn(a.email);
