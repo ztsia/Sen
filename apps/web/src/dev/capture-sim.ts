@@ -120,7 +120,7 @@ const APPS: Omit<CaptureApp, 'chosen'>[] = [
 ];
 
 // As the shell stores them: every digit outside an amount masked (D121).
-const SAMPLES: Omit<CapturedEvent, 'id' | 'postTime' | 'when' | 'capturedAt' | 'synced' | 'maybeOtp'>[] = [
+const SAMPLES: Omit<CapturedEvent, 'id' | 'postTime' | 'when' | 'capturedAt' | 'synced' | 'maybeOtp' | 'refused'>[] = [
   {
     package: 'my.rytbank.app',
     channel: 'transactions',
@@ -283,7 +283,7 @@ export const sim = {
   },
 };
 
-type Posted = Omit<CapturedEvent, 'id' | 'postTime' | 'when' | 'capturedAt' | 'synced' | 'maybeOtp'> & {
+type Posted = Omit<CapturedEvent, 'id' | 'postTime' | 'when' | 'capturedAt' | 'synced' | 'maybeOtp' | 'refused'> & {
   otp?: boolean;
   maybeOtp?: boolean;
 };
@@ -312,7 +312,15 @@ function store(posted: Posted, when: number) {
   const now = Date.now();
   set({
     events: [
-      { ...event, id: (s.events[0]?.id ?? 1000) + 1, postTime: now, when, capturedAt: now, synced: false },
+      {
+        ...event,
+        id: (s.events[0]?.id ?? 1000) + 1,
+        postTime: now,
+        when,
+        capturedAt: now,
+        synced: false,
+        refused: null,
+      },
       ...s.events,
     ],
   });
@@ -335,6 +343,10 @@ const status = () => {
     chosen: [...s.chosen].sort(),
     events: s.events.length,
     restrictedSettings: true,
+    // the simulator has no server to sync with: the Capture switch is on and every event waits
+    captureSwitch: true,
+    lastSyncAt: null,
+    pendingEvents: s.events.length,
   };
 };
 
@@ -384,11 +396,11 @@ export const captureSim: SenCapturePlugin = {
   async openBrandStep({ index }) {
     toastDone(`Simulated: ${XIAOMI.opens[index]?.label ?? 'the app’s info page'}`);
   },
-  async events({ limit = 50, before }) {
+  async events({ limit = 50, before, pending = false }) {
     await pause();
     const all = get().events;
     const from = before === undefined ? all : all.filter((e) => e.id < before);
-    return { events: from.slice(0, limit), total: all.length };
+    return { events: from.filter((e) => !pending || !e.synced).slice(0, limit), total: all.length };
   },
   async heartbeats() {
     return { beats: get().beats };
@@ -398,9 +410,32 @@ export const captureSim: SenCapturePlugin = {
     if (!ids.length) throw Object.assign(new Error('Nothing chosen'), { code: 'EMPTY' });
     toastDone(`Simulated: the share sheet with ${ids.length} sample${ids.length === 1 ? '' : 's'}`);
   },
+  // The outbox's write path (bridge 4) isn't simulated: the simulator reports bridge 2 and the page is
+  // not the shell, so a browser's writes go to the API and never reach these.
+  async write() {
+    return { queued: true };
+  },
+  async pending() {
+    const s = get();
+    return {
+      commands: [],
+      events: s.events.length,
+      lastSyncAt: null,
+      morningAt: null,
+      serverNow: null,
+      capture: true,
+      signedIn: true,
+    };
+  },
+  async syncNow() {
+    return {};
+  },
 };
 
 export const shellSim: SenShellPlugin = {
+  async sessionChanged() {
+    return { signedIn: true };
+  },
   // a browser has no haptics; lib/haptics.ts records the moments for the journeys
   async haptic() {
     return { performed: false };

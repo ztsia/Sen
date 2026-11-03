@@ -87,7 +87,11 @@ test('a suspended person is told their access is paused', async ({ page }) => {
 // QA tooling (D139): a session that ends while Sen is open (it expired, or was ended elsewhere) must
 // leave the person at sign-in, not on a broken screen or a spinner that never ends.
 test('a session that ends while Sen is open leaves the person at sign-in, not on a broken screen', async ({ page }) => {
+  // Home asks the server for capture's health as it opens (B07); it has answered before the session
+  // ends, so the first thing the session's end touches is the thing the person does next
+  const health = page.waitForResponse((r) => r.url().endsWith('/api/capture/health'));
   await signIn(page);
+  await health;
   await expect(page.getByRole('navigation', { name: 'Tabs' })).toBeVisible();
   // the server forgets this person's session: its row goes, as an expiry would remove it
   await ownerSql(
@@ -111,4 +115,44 @@ test('a session that ends while Sen is open leaves the person at sign-in, not on
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).not.toHaveURL(/sign-in/);
   await expect(page.getByRole('navigation', { name: 'Tabs' })).toBeVisible();
+});
+
+// B07, done-when 4: in a browser a write shows at once; if the request fails, the field goes back to
+// what the server has and the toast offers Retry, which saves it.
+test('a failed write reverts the field and offers Retry, and Retry saves it', async ({ page }) => {
+  // the sign-in screen's sends are limited to five a minute, and the journeys above have used them
+  await ownerSql('truncate auth_rate_limit');
+  await signIn(page);
+  await page.goto('/s/settings/you');
+  const names = page.getByLabel('Your names as banks print them');
+  await expect(names).toBeVisible();
+  const before = await names.inputValue();
+  const mine = 'ZZ TEST NAME';
+
+  let blocked = true;
+  const sent: string[] = [];
+  await page.route('**/api/commands', (route) => {
+    sent.push(route.request().postData() ?? '');
+    return blocked ? route.abort('connectionrefused') : route.continue();
+  });
+
+  await names.fill(mine);
+  await names.blur();
+  // the field went back to what the server has, and the toast offers Retry
+  await expect(names).toHaveValue(before);
+  const retry = page.getByRole('button', { name: 'Retry' });
+  await expect(retry).toBeVisible();
+  await expect(page.getByText("Couldn't save. Check your connection.")).toBeVisible();
+  expect(sent).toHaveLength(1);
+
+  blocked = false;
+  await retry.click();
+  await expect(page.getByText('Names saved')).toBeVisible();
+  await expect(names).toHaveValue(mine);
+  expect(sent).toHaveLength(2);
+  expect(sent[1]).toBe(sent[0]);
+
+  // and the server has it
+  await page.reload();
+  await expect(page.getByLabel('Your names as banks print them')).toHaveValue(mine);
 });

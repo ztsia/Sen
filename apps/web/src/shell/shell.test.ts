@@ -32,6 +32,9 @@ describe("the listener's state, in words", () => {
     chosen: ['my.rytbank.app', 'com.pbb.mypb'],
     events: 0,
     restrictedSettings: true,
+    captureSwitch: true,
+    lastSyncAt: null,
+    pendingEvents: 0,
   };
   it('says what stops it, most basic first', () => {
     expect(listenerState({ ...base, enabled: false }).state).toBe('Off in this build');

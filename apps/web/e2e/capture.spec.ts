@@ -63,37 +63,47 @@ test('Capture says what stops the listener, and each step fixes one thing', asyn
   expect(errors).toEqual([]);
 });
 
-test('Captured on this phone lists what arrived, and shares the ones ticked', async ({ page }) => {
+test('Captured on this phone lists the server’s events, this phone’s own first, and shares the ones ticked', async ({
+  page,
+}) => {
   // in-app navigation throughout: the simulator lives in the page, as the shell lives on the phone
   await open(page, '/more');
   await page.getByRole('link', { name: 'Settings' }).click();
   await page.getByRole('button', { name: 'Capture' }).click();
   await page.getByRole('button', { name: /Captured on this phone/ }).click();
-  await expect(page.getByText('Notifications from your chosen apps appear here as they arrive.')).toBeVisible();
+  // the server's events (the scenario's, here), none of them this phone's to share
+  await expect(page.getByText('You paid RM6.50 to KEDAI MAJU via DuitNow QR using your Main Account.')).toBeVisible();
+  await expect(page.getByText('Not synced yet')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Share samples' })).toHaveCount(0);
   // access on, but no app chosen: nothing is stored
   await simulate(page, 'Grant access');
   await simulate(page, 'Post a notification');
-  await expect(page.getByText('0 notifications', { exact: false })).toBeVisible();
-  await page.getByRole('button', { name: 'Choose your apps' }).click();
+  await expect(page.getByText('Not synced yet')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: /Your apps/ }).click();
   await page.getByRole('button', { name: 'Choose these 4' }).click();
   await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: /Captured on this phone/ }).click();
   await simulate(page, 'Post a notification', 3);
-  await expect(page.getByText('3 notifications', { exact: false })).toBeVisible();
+  // this phone's own, waiting to sync, show first and say so
+  await expect(page.getByText('Not synced yet')).toHaveCount(3);
+  const first = page.locator('main li').first();
+  await expect(first).toContainText('Not synced yet');
   // the same one again, as a reconnect replays it, and an OTP: neither adds a row
   await simulate(page, 'Post it again');
   await simulate(page, 'Post an OTP');
-  await expect(page.getByText('3 notifications', { exact: false })).toBeVisible();
+  await expect(page.getByText('Not synced yet')).toHaveCount(3);
   await expect(page.getByText('RM38.15 paid at Petron using your Main Account.')).toBeVisible();
   // maybe an OTP: stored, its numbers hidden, and marked (D116)
   await simulate(page, 'Post a maybe-OTP');
-  await expect(page.getByText('4 notifications', { exact: false })).toBeVisible();
+  await expect(page.getByText('Not synced yet')).toHaveCount(4);
   await expect(page.getByText('RM50.00 transfer to TAN WEI MING: ••••••. Never share your TAC.')).toBeVisible();
   await expect(page.getByText('Maybe a one-time code, so its numbers are hidden')).toBeVisible();
   await page.getByRole('button', { name: 'Share samples' }).click();
-  // nothing ticked: it says so, and stays ready to tick
+  // nothing ticked: it says so, and stays ready to tick; the server's events can't be ticked
   await page.getByRole('button', { name: 'Tick the ones to share' }).click();
   await expect(page.getByText('Tick the notifications to share first.')).toBeVisible();
-  await expect(page.getByRole('checkbox').first()).toBeVisible();
+  await expect(page.getByRole('checkbox')).toHaveCount(4);
   await page.getByRole('checkbox').first().click();
   await page.getByRole('button', { name: 'Share 1 sample' }).click();
   await expect(page.getByText('Simulated: the share sheet with 1 sample')).toBeVisible();

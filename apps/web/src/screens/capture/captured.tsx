@@ -1,20 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { HeartPulseIcon, InboxIcon } from 'lucide-react';
+import { HeartPulseIcon, InboxIcon, TriangleAlertIcon } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
 import { NavRow } from '@/blocks/group';
+import { Marks } from '@/blocks/rows';
 import { Sheet } from '@/blocks/sheet';
-import { EmptyState, ListSkeleton } from '@/blocks/states';
+import { EmptyState, ErrorState, ListSkeleton } from '@/blocks/states';
 import { toastDone } from '@/blocks/toast';
+import { useCaptured } from '@/data/hooks';
+import { backend } from '@/data';
 import { momentLabel } from '@/lib/dates';
-import { SenCapture, type Beat, type CapturedEvent } from '@/shell/bridge';
+import type { CapturedView } from '@sen/core/sync';
+import { SenCapture, captureReachable, type Beat } from '@/shell/bridge';
 import { useBridge } from '@/shell/use-bridge';
-import { BottomAction, BridgeError, CaptureScreen } from './common';
+import { BottomAction, CaptureScreen } from './common';
 
 const PAGE = 50;
+/** How many of the phone's own events are looked through to find the ones a server row can be shared as. */
+const HELD = 200;
 
 const BEATS: Record<Beat['kind'], string> = {
   connected: 'Listener connected',
@@ -26,33 +32,96 @@ const BEATS: Record<Beat['kind'], string> = {
   unread: 'Skipped a notification Sen couldn’t read or store',
 };
 
+/** One notification as the list shows it: the server's, or still on this phone's outbox. */
+interface Row {
+  key: string;
+  /** The phone's own id for it, when this phone has it: only these can be shared (*Share samples*). */
+  phoneId: number | null;
+  package: string;
+  at: number;
+  title: string | null;
+  text: string | null;
+  bigText: string | null;
+  maybeOtp: boolean;
+  /** `pending`: not synced yet; `refused`: the server won't take it; `synced`: the server has it. */
+  state: 'pending' | 'refused' | 'synced';
+  reason: string | null;
+}
+
+/** What identifies a notification across the phone and the server: the same app, moment and words. */
+const same = (e: { package: string; title: string | null; text: string | null }, at: number) =>
+  [e.package, at, e.title, e.text].join('\u0000');
+
 /**
- * Captured on this phone (brief B02, for the soak only; B07 replaces it): the outbox's raw events,
- * newest first, exactly as the bank apps wrote them. Real data, on the phone only. *Share samples*
- * sends the ones chosen as text through Android's share sheet, for a session to anonymise into
- * docs/notifications.md.
+ * Captured on this phone (brief B02, B07): the server's `bank_events`, raw and masked, newest first, exactly
+ * as the bank apps wrote them. Real data. In the shell, this phone's own events still waiting to sync show
+ * first, marked *Not synced yet*, and one the server won't take is marked *Not accepted* with why. *Share
+ * samples* sends the ones chosen as text through Android's share sheet, for a session to anonymise into
+ * docs/notifications.md; only the phone can share, so only the notifications it holds can be ticked.
  */
 export default function CapturedOnPhone() {
   const navigate = useNavigate();
-  const first = useBridge(() =>
-    Promise.all([SenCapture.events({ limit: PAGE }), SenCapture.apps({ icons: false }), SenCapture.status()]),
-  );
-  const [older, setOlder] = useState<CapturedEvent[]>([]);
+  const server = useCaptured();
+  const phone = useBridge(async () => {
+    if (!captureReachable()) return null;
+    const [waiting, held, apps, status] = await Promise.all([
+      SenCapture.events({ limit: PAGE, pending: true }),
+      SenCapture.events({ limit: HELD }),
+      SenCapture.apps({ icons: false }),
+      SenCapture.status(),
+    ]);
+    return { waiting, held, apps, status };
+  });
+  const [older, setOlder] = useState<{ events: CapturedView['events']; next: string | null } | null>(null);
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<Set<number>>(new Set());
   const [beats, setBeats] = useState<Beat[] | null>(null);
-  const [first0, apps0, status] = first.data ?? [];
-  // a fresh first page (after a resume) starts the list over
-  useEffect(() => setOlder([]), [first0]);
-  const events = useMemo(() => [...(first0?.events ?? []), ...older], [first0, older]);
-  const total = first0?.total ?? 0;
-  const label = useMemo(() => new Map(apps0?.apps.map((a) => [a.package, a.label])), [apps0]);
+  const first = server.data;
+  // a fresh first page (after a change or a resume) starts the list over
+  useEffect(() => setOlder(null), [first]);
+  const label = useMemo(() => new Map(phone.data?.apps.apps.map((a) => [a.package, a.label])), [phone.data]);
+
+  const rows = useMemo<Row[]>(() => {
+    const held = new Map((phone.data?.held.events ?? []).map((e) => [same(e, e.postTime), e.id]));
+    const onServer: Row[] = [...(first?.events ?? []), ...(older?.events ?? [])].map((e) => {
+      const at = Date.parse(e.postedAt);
+      return {
+        key: e.id,
+        phoneId: held.get(same(e, at)) ?? null,
+        package: e.package,
+        at,
+        title: e.title,
+        text: e.text,
+        bigText: e.bigText,
+        maybeOtp: e.maybeOtp,
+        state: 'synced',
+        reason: null,
+      };
+    });
+    const have = new Set(onServer.map((r) => same(r, r.at)));
+    const waiting: Row[] = (phone.data?.waiting.events ?? [])
+      .filter((e) => !e.synced && !have.has(same(e, e.postTime)))
+      .map((e) => ({
+        key: `phone-${e.id}`,
+        phoneId: e.id,
+        package: e.package,
+        at: e.postTime,
+        title: e.title,
+        text: e.text,
+        bigText: e.bigText,
+        maybeOtp: e.maybeOtp,
+        state: e.refused ? 'refused' : 'pending',
+        reason: e.refused ?? null,
+      }));
+    return [...waiting, ...onServer];
+  }, [first, older, phone.data]);
+  const next = older ? older.next : (first?.next ?? null);
+  const shareable = rows.some((r) => r.phoneId !== null);
 
   const more = async () => {
-    const last = events[events.length - 1];
-    if (!last) return;
-    const r = await SenCapture.events({ limit: PAGE, before: last.id });
-    setOlder((o) => [...o, ...r.events]);
+    if (!next) return;
+    const r = await (await backend()).captured(next);
+    setOlder((o) => ({ events: [...(o?.events ?? []), ...r.events], next: r.next }));
   };
   const share = async () => {
     if (!picked.size) {
@@ -69,6 +138,7 @@ export default function CapturedOnPhone() {
   };
   const openBeats = async () => setBeats((await SenCapture.heartbeats({ limit: 200 })).beats);
 
+  const loading = server.isPending && !rows.length;
   return (
     <CaptureScreen
       title="Captured on this phone"
@@ -78,21 +148,34 @@ export default function CapturedOnPhone() {
         </Button>
       }
     >
-      {first.error ? <BridgeError onRetry={first.reload} /> : null}
-      {!first.data && !first.error ? <ListSkeleton rows={5} /> : null}
-      {first.data ? (
+      {loading ? <ListSkeleton rows={5} /> : null}
+      {!loading ? (
         <div className="flex min-h-full flex-col">
+          {server.isError ? (
+            <div className="p-4 pb-0">
+              <ErrorState
+                title="Couldn't load the list from the server"
+                detail={
+                  rows.length
+                    ? 'The notifications still waiting on this phone are below.'
+                    : 'Check the connection and try again.'
+                }
+                action="Try again"
+                onAction={() => void server.refetch()}
+              />
+            </div>
+          ) : null}
           <p className="px-4 pt-2 pb-2 text-sm text-muted-foreground">
-            {total === 1 ? '1 notification' : `${total} notifications`}, newest first, numbers hidden. They stay on this
-            phone.
+            {rows.length === 1 ? '1 notification' : `${rows.length}${next ? '+' : ''} notifications`}, newest first,
+            numbers hidden.
           </p>
-          {events.length === 0 ? (
+          {rows.length === 0 && !server.isError ? (
             <EmptyState
               icon={InboxIcon}
               title="Nothing captured yet"
               line="Notifications from your chosen apps appear here as they arrive."
               action={
-                status?.chosen.length
+                phone.data?.status.chosen.length
                   ? undefined
                   : {
                       label: 'Choose your apps',
@@ -103,18 +186,19 @@ export default function CapturedOnPhone() {
           ) : (
             <Card className="mx-4 gap-0 overflow-hidden py-0">
               <ul className="flex flex-col divide-y divide-border">
-                {events.map((e) => (
+                {rows.map((e) => (
                   <EventRow
-                    key={e.id}
+                    key={e.key}
                     e={e}
                     app={label.get(e.package) ?? e.package}
                     picking={picking}
-                    picked={picked.has(e.id)}
+                    picked={e.phoneId !== null && picked.has(e.phoneId)}
                     onPick={(on) =>
                       setPicked((p) => {
                         const n = new Set(p);
-                        if (on) n.add(e.id);
-                        else n.delete(e.id);
+                        if (e.phoneId === null) return n;
+                        if (on) n.add(e.phoneId);
+                        else n.delete(e.phoneId);
                         return n;
                       })
                     }
@@ -123,14 +207,14 @@ export default function CapturedOnPhone() {
               </ul>
             </Card>
           )}
-          {events.length < total ? (
+          {next ? (
             <div className="px-4 pt-2">
               <Button variant="outline" size="sm" onClick={() => void more()}>
                 Show older
               </Button>
             </div>
           ) : null}
-          {events.length ? (
+          {shareable ? (
             <BottomAction>
               {picking ? (
                 <>
@@ -183,18 +267,18 @@ function EventRow({
   picked,
   onPick,
 }: {
-  e: CapturedEvent;
+  e: Row;
   app: string;
   picking: boolean;
   picked: boolean;
   onPick: (on: boolean) => void;
 }) {
-  const id = `ev-${e.id}`;
+  const id = `ev-${e.key}`;
   const body = (
     <ItemContent className="min-w-0 gap-1">
       <ItemDescription className="flex justify-between gap-2 text-sm">
         <span className="min-w-0 truncate">{app}</span>
-        <span className="shrink-0 text-xs">{momentLabel(new Date(e.postTime))}</span>
+        <span className="shrink-0 text-xs">{momentLabel(new Date(e.at))}</span>
       </ItemDescription>
       {e.title ? (
         <ItemTitle className="selectable w-full text-base wrap-anywhere whitespace-pre-line">{e.title}</ItemTitle>
@@ -206,11 +290,18 @@ function EventRow({
       {e.maybeOtp ? (
         <p className="text-sm text-muted-foreground">Maybe a one-time code, so its numbers are hidden</p>
       ) : null}
+      {e.state === 'pending' ? <Marks marks={['pending']} /> : null}
+      {e.state === 'refused' ? (
+        <p className="flex items-start gap-1 text-xs text-money-warning">
+          <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+          <span>Not accepted{e.reason ? `: ${e.reason}` : ''}</span>
+        </p>
+      ) : null}
     </ItemContent>
   );
   return (
     <li>
-      {picking ? (
+      {picking && e.phoneId !== null ? (
         <Item size="sm" className="relative min-h-16 flex-nowrap items-start rounded-none text-base">
           <Checkbox
             id={id}

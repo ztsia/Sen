@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ChoiceCards } from '@/blocks/choice';
 import { GroupCard, GroupLabel, SwitchRow } from '@/blocks/group';
+import { Marks } from '@/blocks/rows';
 import { ListSkeleton } from '@/blocks/states';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { useMe, useSettings, useWrite } from '@/data/hooks';
+import { usePendingFor } from '@/data/pending';
 import { Loaded } from '../kit';
 
 type PaydayKind = 'last-working' | 'day' | 'none';
@@ -48,6 +50,8 @@ function Body({
   capture: boolean;
 }) {
   const write = useWrite();
+  const namesPending = usePendingFor('you.bankNames');
+  const paydayPending = usePendingFor('you.payday');
   const [text, setText] = useState(names.join('\n'));
   const [kind, setKind] = useState<PaydayKind>(payday.kind);
   const [day, setDay] = useState(payday.kind === 'day' ? String(payday.day) : '');
@@ -111,6 +115,7 @@ function Body({
                 onBlur={saveNames}
               />
               <FieldDescription>One to a line. Sen matches a notification’s name against these.</FieldDescription>
+              {namesPending.showNotSynced ? <Marks marks={['pending']} /> : null}
             </Field>
           </Card>
         </section>
@@ -152,6 +157,11 @@ function Body({
                 <FieldError>{dayError}</FieldError>
               </Field>
             </Card>
+          </div>
+        ) : null}
+        {paydayPending.showNotSynced ? (
+          <div className="px-5">
+            <Marks marks={['pending']} />
           </div>
         ) : null}
         <p className="px-5 text-sm text-muted-foreground">

@@ -90,7 +90,7 @@ export const SCREENS: ScreenDef[] = [
   s('settings/capture/apps', 'Your apps', 'pushed', 'more', 'B02'),
   s('settings/capture/access', 'Notification access', 'pushed', 'more', 'B02'),
   s('settings/capture/running', 'Keep Sen running', 'pushed', 'more', 'B02'),
-  s('settings/capture/captured', 'Captured on this phone', 'pushed', 'more', 'B02; B07 replaces it'),
+  s('settings/capture/captured', 'Captured on this phone', 'pushed', 'more', 'B02, B07; B10 replaces it'),
   s('settings/you', 'You', 'pushed', 'more', 'B08'),
   s('settings/categories', 'Categories and rules', 'pushed', 'more', 'B12'),
   s('settings/email', 'Receipts by email', 'pushed', 'more', 'B19'),

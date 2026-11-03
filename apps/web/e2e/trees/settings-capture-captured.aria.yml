@@ -3,9 +3,24 @@
   - heading "Captured on this phone" [level=1]
   - button "Heartbeat"
 - main:
-  - paragraph: 0 notifications, newest first, numbers hidden. They stay on this phone.
-  - text: Nothing captured yet Notifications from your chosen apps appear here as they arrive.
-  - button "Choose your apps"
+  - paragraph: 4 notifications, newest first, numbers hidden.
+  - list:
+    - listitem:
+      - paragraph: /Touch 'n Go eWallet Today, \d+:\d+/
+      - text: Cashback is waiting 🎁
+      - paragraph: Pay with eWallet at any participating merchant this weekend and enjoy up to RM5 cashback.
+    - listitem:
+      - paragraph: /Ryt Bank Yesterday, \d+:\d+/
+      - text: Payment successful 🎉
+      - paragraph: /You paid RM6\.\d+ to KEDAI MAJU via DuitNow QR using your Main Account\./
+    - listitem:
+      - paragraph: /Grab Fri, \d+ Oct, \d+:\d+/
+      - text: Collected your food?
+      - paragraph: Let the host know, so they can ensure everyone gets exactly what they ordered.
+    - listitem:
+      - paragraph: /Ryt Bank Fri, 2 Oct, \d+:\d+/
+      - text: Your statement is ready
+      - paragraph: Your September statement for Main Account is now available in the app.
 - navigation "Tabs":
   - link "Home":
     - /url: /

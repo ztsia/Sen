@@ -40,6 +40,11 @@ export function toastUndo(message: string, onUndo: () => void) {
   show(message, { label: 'Undo', onClick: onUndo });
 }
 
+/** A change the server didn't take, said in words, with *Retry*: it reverted, and Retry makes it again (B07). */
+export function toastRetry(message: string, onRetry: () => void) {
+  show(message, { label: 'Retry', onClick: onRetry });
+}
+
 /** A change that can't be undone from here, said in words. */
 export function toastDone(message: string) {
   show(message);

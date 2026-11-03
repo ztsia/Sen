@@ -6,6 +6,7 @@ import { toastDone, toastUndo } from '@/blocks/toast';
 import { DEV_TOOLS } from '@/lib/env';
 import { SETTLE_MS } from '@/lib/tap-guard';
 import type { Backend } from './backend';
+import { failedSince } from './pending';
 import { backend, queryClient } from './index';
 
 // The query hooks, one per screen (B03): each reads one shape from @sen/core/views through the backend.
@@ -46,6 +47,9 @@ export const useResearch = () => useRead(['research'], (b) => b.research());
 export const useUsage = () => useRead(['usage'], (b) => b.usage());
 export const useSettings = () => useRead(['settings'], (b) => b.settings());
 export const usePayday = () => useRead(['payday'], (b) => b.payday());
+// B07
+export const useCaptured = () => useRead(['captured'], (b) => b.captured());
+export const useCaptureHealth = (enabled = true) => useRead(['capture-health'], (b) => b.captureHealth(), enabled);
 export const useDraft = (id: string) => useRead(['draft', id], (b) => b.draft(id), !!id);
 export const useMatches = (total: number, at: string, enabled: boolean) =>
   useRead(['matches', total, at], (b) => b.matches(total, at), enabled);
@@ -65,13 +69,18 @@ export function useNeedsYouCount(): number {
 }
 
 /** Runs one command and refreshes every screen. Returns what happened and its Undo, for a row that raises its own toast. */
-export async function runCommand(cmd: Command): Promise<{ said: string; undo: () => void; canUndo: boolean }> {
+export async function runCommand(
+  cmd: Command,
+): Promise<{ said: string; undo: () => void; canUndo: boolean; failed: boolean }> {
   const b = await backend();
+  const started = performance.now();
   const r = await b.run(cmd);
   await queryClient.invalidateQueries();
   const undo = r.undo;
   return {
     said: r.said,
+    // a browser's write answers at once and may already have failed (B07): its Retry toast is up
+    failed: failedSince(cmd, started),
     // a write that changed nothing (*They are already invited*) has nothing to undo
     canUndo: !!undo,
     undo: () => {
@@ -101,7 +110,7 @@ export function useWrite() {
     lastWrite = { key, at: now };
     try {
       const r = await runCommand(cmd);
-      if (!opts.quiet) {
+      if (!opts.quiet && !r.failed) {
         if (r.canUndo) toastUndo(r.said, r.undo);
         else toastDone(r.said);
       }

@@ -110,3 +110,13 @@ describe('the kept reads', () => {
     expect(JSON.parse(localStorage.getItem('sen.api.kept')!)).toEqual(mine);
   });
 });
+
+describe('why the app sent someone to sign-in', () => {
+  it('keeps paused when reads still on their way come back signed out after it', async () => {
+    vi.resetModules();
+    const { noteSignedOutBecause, signedOutReason } = await import('./auth');
+    noteSignedOutBecause('paused');
+    noteSignedOutBecause('ended');
+    expect(signedOutReason()).toBe('paused');
+  });
+});

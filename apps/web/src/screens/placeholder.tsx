@@ -1,5 +1,6 @@
 import { ChevronRightIcon } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
+import { CaptureWarnings } from '@/blocks/capture-warnings';
 import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from '@/components/ui/item';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -24,6 +25,8 @@ export function Placeholder({ screen }: { screen: ScreenDef }) {
   return (
     <Screen bar={<AppBar title={screen.title} home={screen.id === 'home'} />} senRoom={showsSenButton(screen)}>
       {screen.id === 'home' ? <h2 className="sr-only">Home</h2> : null}
+      {/* capture's health is real before Home is: production warns here too (B07) */}
+      {screen.id === 'home' ? <CaptureWarnings className="mx-4 mt-1 w-auto" /> : null}
       <div className="flex flex-col gap-1 px-5 pt-4 pb-6">
         <p className="text-lg font-medium" data-testid="not-built">
           Not built yet

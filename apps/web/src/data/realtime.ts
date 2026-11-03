@@ -57,6 +57,14 @@ export interface RealtimeDeps {
   online: () => boolean;
 }
 
+const hintListeners = new Set<(topics: Topic[]) => void>();
+
+/** Called with the topics of every hint that arrives: the shell's outbox looks at its writes on a `settings` one (B07). */
+export function onHint(fn: (topics: Topic[]) => void): () => void {
+  hintListeners.add(fn);
+  return () => hintListeners.delete(fn);
+}
+
 const isTopic = (t: unknown): t is Topic => typeof t === 'string' && t in TOPIC_QUERIES;
 
 function parseHint(data: unknown): Hint | null {
@@ -200,6 +208,7 @@ export function createRealtime(deps: RealtimeDeps) {
       if (!h) return;
       const gap = lastSeq !== null && h.seq !== lastSeq + 1;
       lastSeq = h.seq;
+      for (const fn of hintListeners) fn(h.topics);
       if (gap) {
         void refreshAll();
         return;
