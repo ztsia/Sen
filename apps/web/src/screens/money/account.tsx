@@ -22,7 +22,7 @@ import { SenMark } from '@/components/look/avatar';
 import { useUi } from '@/frame/ui-store';
 import { shortDay } from '@/lib/dates';
 import { categoryIcon, categoryTone } from '../icons';
-import { canOpen } from '../registry';
+import { canOpen } from '../can-open';
 import { Loaded, useGo, useScreenSearch } from '../kit';
 
 /**

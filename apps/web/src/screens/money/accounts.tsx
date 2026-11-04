@@ -12,7 +12,7 @@ import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { shortDay } from '@/lib/dates';
 import { klDay } from '@sen/core/cycles';
-import { canOpen } from '../registry';
+import { canOpen } from '../can-open';
 import { Loaded, useGo } from '../kit';
 
 /** *Checked 1 Oct · Ryt Bank*: when it was last checked and the app that feeds it. */

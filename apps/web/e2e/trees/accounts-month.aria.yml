@@ -1,7 +1,7 @@
 - banner:
   - button "Back"
   - heading "Accounts" [level=1]
-- main: No accounts yet Your accounts and their balances show here once Sen is reading your bank apps.
+- main: No accounts yet Your accounts appear here once first run has made them, one for each app you chose.
 - navigation "Tabs":
   - link "Home":
     - /url: /

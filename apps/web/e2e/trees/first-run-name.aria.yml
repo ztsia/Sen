@@ -8,7 +8,8 @@
     - text: Your name
     - textbox "Your name":
       - /placeholder: TAN WEI MING
-    - paragraph: You can add other spellings later in Settings.
+      - text: tan wei ming
+    - paragraph: Sen will look for TAN WEI MING.
   - button "Next"
 - region "Notifications alt+T"
 - button "Dev panel"

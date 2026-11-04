@@ -2,7 +2,7 @@
   - button "Back"
   - heading "Accounts" [level=1]
 - main:
-  - paragraph: In 5 accounts
+  - paragraph: In 4 accounts
   - text: /RM \d+,\d+\.\d+/
   - paragraph: /The last check found RM \d+\.\d+ that left without a notification, booked as Unaccounted\./
   - button "Check balances"
@@ -12,10 +12,8 @@
       - paragraph: Checked 1 Oct
     - button /Public Bank Not checked MyPB RM \d+,\d+\.\d+/:
       - paragraph: Not checked MyPB
-    - button /TNG eWallet Not checked RM \d+\.\d+/:
+    - button /TNG eWallet Not checked RM \d+,\d+\.\d+/:
       - paragraph: Not checked
-    - button /GO\+ Not checked TNG eWallet RM \d+,\d+\.\d+/:
-      - paragraph: Not checked TNG eWallet
     - button /GrabPay Wallet Not checked Grab RM \d+\.\d+/:
       - paragraph: Not checked Grab
   - region "Elsewhere":

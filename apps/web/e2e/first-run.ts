@@ -32,6 +32,9 @@ export async function walkFirstRun(page: Page, stop?: FirstRunStep) {
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await atStep(page, 2);
   await page.getByRole('button', { name: /^Choose these \d$/ }).click();
+  // the chosen switches settle before anything is looked at
+  await expect(page.getByRole('switch', { name: 'Ryt Bank' })).toBeChecked();
+  await page.waitForTimeout(400);
   if (stop === 'apps') return;
   await page.getByRole('button', { name: 'Next' }).click();
   await atStep(page, 3);

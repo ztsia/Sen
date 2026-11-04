@@ -1,5 +1,3 @@
-import { DEV_TOOLS } from '@/lib/env';
-
 // Every screen in docs/screens.md, by its id, with where it sits and whether it's built (B01).
 // A `skeleton` screen shows "Not built yet" in production, and never shows data there (modules.md,
 // rule 6). A slice that makes a screen real changes its status here.
@@ -115,12 +113,6 @@ export const SCREENS: ScreenDef[] = [
 ];
 
 export const screenById = new Map(SCREENS.map((d) => [d.id, d]));
-
-/**
- * Whether a button may lead to a screen (B08): one that's built, anywhere; a skeleton one only in
- * previews, where the made-up data stands behind it. Production never offers a way into *Not built yet*.
- */
-export const canOpen = (id: string) => screenById.get(id)?.status === 'real' || DEV_TOOLS;
 
 /** The tab bar shows on the tabs and the screens pushed from them, and hides during a task with an end (patterns.md §6). */
 export const showsTabBar = (d: ScreenDef | undefined) => !!d && (d.kind === 'tab' || d.kind === 'pushed');
