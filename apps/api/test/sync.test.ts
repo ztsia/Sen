@@ -450,6 +450,8 @@ describe('the capture watchdog', () => {
     const h = await health(now);
     expect(h.silent).toBe('no-heartbeat');
     expect(Date.parse(h.lastListenAt!)).toBe(now.getTime() - 25 * H);
+    await captureWatchdog(ctx(phone.id, now));
+    expect(pushed[0]?.msg.body).toMatch(/listener on your phone has been off for a day/);
     await state(now, { beatAgo: 1, connected: false, listenAgo: 20, eventAgo: 2 });
     expect((await health(now)).silent).toBeNull();
   });
@@ -463,6 +465,12 @@ describe('the capture watchdog', () => {
     await state(now, { beatAgo: 1, eventAgo: 49 });
     await captureWatchdog(ctx(phone.id, now));
     expect(pushed[0]?.msg.body).toMatch(/No payment notifications for 2 days/);
+  });
+
+  it('isn’t fooled by a phone clock running behind: an event counts when the server got it', async () => {
+    const now = day(9);
+    await state(now, { beatAgo: 1, eventAt: new Date(now.getTime() - 72 * H), gotAt: new Date(now.getTime() - H) });
+    expect((await health(now)).silent).toBeNull();
   });
 
   it('isn’t silenced by a phone clock running ahead', async () => {

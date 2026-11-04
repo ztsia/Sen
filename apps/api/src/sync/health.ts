@@ -1,4 +1,4 @@
-import { and, desc, eq, max, sql } from 'drizzle-orm';
+import { and, desc, eq, max } from 'drizzle-orm';
 import { EVENTS_SILENT_MS, HEARTBEAT_SILENT_MS, SCHEDULER_LATE_MS, type CaptureHealthView } from '@sen/core/sync';
 import { schema } from '@sen/db';
 import type { Db } from '../db';
@@ -18,8 +18,9 @@ export async function morningAt(db: Db, userId: string): Promise<Date | null> {
  * - the heartbeat that counts is the listener's own, one sent with it connected and access granted; a
  *   daily sync that says the listener is off isn't one;
  * - the newest heartbeat saying access is off is a warning at once: the phone itself says so;
- * - an event counts no later than the server got it, so a phone clock running ahead can't silence the
- *   watchdog; the heartbeat's own last-event time (the phone's clock) isn't counted at all.
+ * - an event counts when the server got it, never by the phone's clock, which may run ahead or behind;
+ *   the heartbeat's own last-event time isn't counted either. A phone offline for days is caught by
+ *   the heartbeat rule.
  * With no heartbeat yet (the shell has never synced, or a browser-only person), nothing is watched.
  */
 export async function captureHealth(db: Db, userId: string, captureOn: boolean, now: Date): Promise<CaptureHealthView> {
@@ -39,7 +40,7 @@ export async function captureHealth(db: Db, userId: string, captureOn: boolean, 
     .orderBy(h.createdAt)
     .limit(1);
   const [ev] = await db
-    .select({ at: sql<Date | null>`max(least(${e.postedAt}, ${e.createdAt}))`.mapWith(e.postedAt) })
+    .select({ at: max(e.createdAt) })
     .from(e)
     .where(eq(e.userId, userId));
   const morning = await morningAt(db, userId);

@@ -54,6 +54,9 @@ const Cursor = z
     return { at: at as string, id: id as string };
   });
 
+/** An instant to the millisecond, as the phone's clock and the page cursor count (QA B07 run 2, 15). */
+const ms = (at: string) => new Date(at).toISOString();
+
 const CHANGES_PAGE = 500;
 const CAPTURED_PAGE = 50;
 
@@ -115,8 +118,8 @@ export function syncRoutes() {
     await v.db(async (db) => {
       for (const e of events) {
         const r = await db.execute<{ added: boolean }>(
-          sql`select sync_bank_event(${e.id}, ${e.package}, ${e.channelId}, ${e.notificationKey}, ${e.postedAt},
-            ${e.notifiedAt}, ${e.title}, ${e.text}, ${e.bigText}, ${e.maybeOtp}, ${e.dedupeKey}) as added`,
+          sql`select sync_bank_event(${e.id}, ${e.package}, ${e.channelId}, ${e.notificationKey}, ${ms(e.postedAt)},
+            ${ms(e.notifiedAt)}, ${e.title}, ${e.text}, ${e.bigText}, ${e.maybeOtp}, ${e.dedupeKey}) as added`,
         );
         if (r.rows[0]?.added) addedEvents++;
         result.synced.events.push(e.id);

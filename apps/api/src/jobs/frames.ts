@@ -109,7 +109,9 @@ export const captureWatchdog: Task = async (ctx) => {
         health.silent === 'no-access'
           ? 'Your phone says Sen can’t read notifications. Open Sen to turn access back on.'
           : health.silent === 'no-heartbeat'
-            ? 'Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.'
+            ? health.listenerConnected === false
+              ? 'Sen’s listener on your phone has been off for a day. Open Sen to check it can still read notifications.'
+              : 'Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.'
             : 'No payment notifications for 2 days. Open Sen to check it can still read them.',
       data: { open: 'home' },
     }),

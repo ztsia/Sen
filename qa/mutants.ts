@@ -748,8 +748,8 @@ export const MUTANTS: Mutant[] = [
     id: 'b07-phone-clock-trusted',
     breaks: 'a phone clock running ahead silences the no-events watchdog',
     file: 'apps/api/src/sync/health.ts',
-    find: 'max(least(${e.postedAt}, ${e.createdAt}))',
-    replace: 'max(${e.postedAt})',
+    find: '.select({ at: max(e.createdAt) })',
+    replace: '.select({ at: max(e.postedAt) })',
     suite: 'db',
   },
 ];

@@ -13,6 +13,9 @@ class CaptureListener : NotificationListenerService() {
     override fun onListenerConnected() {
         connected = true
         Heartbeat.record(this, "connected")
+        // the server counts its 24 hours from a heartbeat with the listener connected: send one now, so a
+        // switch turned back on, or access given again, doesn't read as a day off (QA B07 run 2, 12)
+        io.github.ztsia.sen.sync.SyncWorker.enqueue(this)
         val showing = runCatching { activeNotifications }.getOrNull().orEmpty()
         showing.forEach { Capture.post(this, it) }
     }

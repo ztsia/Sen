@@ -36,3 +36,33 @@ All 19 of QA's API probes pass (16/19 in run 1). `pnpm test:db`: pgTAP 340, API 
 - **Eyes `proposal/3` wrong** (the slow Undo in Sen's sheet) is the same on main: a follow-up in the
   handoff, not B07's. The other eyes look-agains are dev-panel timing or main's, and wait for their
   slices.
+
+## Run 2 (scoped: ship) → fixes (4 Nov)
+
+**Tier 1 each:** a few lines in one file plus its test, no behaviour beyond the finding, none a Blocker.
+
+| Finding | Fix | Guard |
+|---|---|---|
+| 12 Minor | The listener enqueues a sync when it connects, so a heartbeat with it connected reaches the server as soon as Capture is back on or access is given again | Compiles; the device timing is the owner's check (`docs/local.md` B07 step 3). QA's probe `Capture switched back on` still fails by design: it models a phone that sends no connected heartbeat, which the shell no longer is |
+| 13 Minor | The push says *Sen's listener on your phone has been off for a day* when the last heartbeat says so | `sync.test.ts` › *counts a day from the listener's own last heartbeat* asserts the words. QA probe `23 h: quiet` now passes |
+| 15 Minor | `/sync` stores an event's times to the millisecond, as the cursor counts | QA probe `microsecond` now passes |
+| 16 Minor | An event counts at `created_at` alone, when the server got it | *isn't fooled by a phone clock running behind*. QA probe `3 days behind` now passes. Mutant `b07-phone-clock-trusted` rewritten for it |
+
+QA's probes: 25 of 26 pass; the one left is 12's, as above. `pnpm test:db`: API 174 passed.
+
+**Left:** 14 (Minor): Home's banner wraps its date, and the widget says *Capture is off* where the
+banner and push say *may be off*. The widget is B02's stand-in until B13 builds widgets; the wrap is
+the shared `HealthBar`'s, so its fix belongs to a slice that touches shared blocks (a full run).
+
+## Retro
+
+- **Found late:** the watchdog read only *when* heartbeats came, never what they said (run 1's two
+  Majors). The brief named the trigger (*killing the listener*), but the tests used heartbeats that
+  stopped altogether, the easy case. Breakage checks written with the slice, before QA, would have
+  shown the 24-hour rule held by nothing (the B06 retro asked for this; B07 didn't do it).
+- **Cost:** the main session most of it, then the web agent; see `docs/usage.md`.
+- **Changed:** `qa/mutants.ts` has B07's twelve checks, and QA's probe files pass lint and Prettier
+  now (they were committed failing both). Lessons for `ztsia/workflow`: a brief lists the breakage
+  checks each guard needs, and the main session runs them before the first QA run; a reviewer in a
+  cloud session can't write `report.md`, so the skill says the main session writes it from the
+  message.
