@@ -3,27 +3,28 @@
   - heading "Your accounts" [level=1]
   - text: Step 5 of 7
 - main:
-  - paragraph: Type the balance each app shows today, pockets and GO+ included. Sen counts from here.
+  - paragraph: Type the balance each app shows today. Sen counts from here.
   - group:
     - text: TNG eWallet
     - textbox "TNG eWallet":
       - /placeholder: "0.00"
-    - paragraph: Touch 'n Go eWallet
+    - paragraph: From Touch 'n Go eWallet · eWallet and GO+ together
   - group:
     - text: Ryt Bank
     - textbox "Ryt Bank":
       - /placeholder: "0.00"
       - text: /\d+,\d+\.\d+/
+    - paragraph: Main account and pockets together
   - group:
     - text: Public Bank
     - textbox "Public Bank":
       - /placeholder: "0.00"
-    - paragraph: MyPB by Public Bank
+    - paragraph: From MyPB by Public Bank
   - group:
     - text: GrabPay Wallet
     - textbox "GrabPay Wallet":
       - /placeholder: "0.00"
-    - paragraph: Grab
+    - paragraph: From Grab
   - button "Next"
 - region "Notifications alt+T"
 - button "Dev panel"

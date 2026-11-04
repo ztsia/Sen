@@ -13,6 +13,7 @@ import { Screen } from '@/frame/screen';
 import { shortDay } from '@/lib/dates';
 import { klDay } from '@sen/core/cycles';
 import { canOpen } from '../can-open';
+import { HOLDS } from '../outside/logic';
 import { Loaded, useGo } from '../kit';
 
 /** *Checked 1 Oct · Ryt Bank*: when it was last checked and the app that feeds it. */
@@ -103,6 +104,8 @@ function Body({ v }: { v: AccountsView }) {
                       </Badge>
                     ) : null}
                     {a.app && a.app !== a.name ? <span className="truncate">{a.app}</span> : null}
+                    {/* one account per app (D145): what its figure holds, so it's checked whole */}
+                    {a.package && HOLDS[a.package] ? <span className="truncate">{HOLDS[a.package]}</span> : null}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions className="max-w-[45%] shrink-0 justify-end text-right">

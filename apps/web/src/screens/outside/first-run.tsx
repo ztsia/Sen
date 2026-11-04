@@ -125,7 +125,13 @@ function Steps({ capture }: { capture: boolean }) {
     <Frame
       title={TITLES[step]}
       count={{ at: i + 1, of: steps.length }}
-      offline={online ? null : step === 'sign-in' ? 'You’re offline. Signing in needs a connection.' : 'You’re offline. What you’ve typed is kept; Next saves it once you’re back online.'}
+      offline={
+        online
+          ? null
+          : step === 'sign-in'
+            ? 'You’re offline. Signing in needs a connection.'
+            : 'You’re offline. What you’ve typed is kept; Next saves it once you’re back online.'
+      }
       onBack={() => (i <= first ? window.history.back() : to(i - 1))}
     >
       {step === 'sign-in' ? (
@@ -389,7 +395,6 @@ function NameStep({
                   autoComplete="name"
                   autoCapitalize="characters"
                   spellCheck={false}
-                  placeholder="TAN WEI MING"
                   value={value}
                   aria-invalid={error ? true : undefined}
                   aria-describedby="name-msg"
@@ -491,7 +496,6 @@ function PaydayStep({
                     inputMode="numeric"
                     maxLength={2}
                     className="num"
-                    placeholder="25"
                     value={value.day}
                     aria-invalid={error ? true : undefined}
                     aria-describedby="payday-msg"

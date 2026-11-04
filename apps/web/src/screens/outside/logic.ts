@@ -116,7 +116,7 @@ export function suggestAccounts(
  * What one app's account holds besides its main balance (D145), said beside the balance a person types,
  * so they type the whole: an app the person can read two figures from.
  */
-const HOLDS: Record<string, string> = {
+export const HOLDS: Record<string, string> = {
   'my.com.tngdigital.ewallet': 'eWallet and GO+ together',
   'my.rytbank.app': 'Main account and pockets together',
 };

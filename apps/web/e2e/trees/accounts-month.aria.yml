@@ -1,7 +1,7 @@
 - banner:
   - button "Back"
   - heading "Accounts" [level=1]
-- main: No accounts yet Your accounts appear here once first run has made them, one for each app you chose.
+- main: No accounts yet Each app you choose for Sen to read gets an account here, with the balance you type for it.
 - navigation "Tabs":
   - link "Home":
     - /url: /
