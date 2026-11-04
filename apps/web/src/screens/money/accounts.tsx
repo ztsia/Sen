@@ -12,6 +12,7 @@ import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { shortDay } from '@/lib/dates';
 import { klDay } from '@sen/core/cycles';
+import { canOpen } from '../registry';
 import { Loaded, useGo } from '../kit';
 
 /** *Checked 1 Oct · Ryt Bank*: when it was last checked and the app that feeds it. */
@@ -58,7 +59,7 @@ function Body({ v }: { v: AccountsView }) {
       <EmptyState
         icon={WalletIcon}
         title="No accounts yet"
-        line="Your accounts and their balances show here once Sen is reading your bank apps."
+        line="Your accounts appear here once first run has made them, one for each app you chose."
       />
     );
   return (
@@ -73,12 +74,14 @@ function Body({ v }: { v: AccountsView }) {
           </p>
         ) : null}
       </div>
-      <div className="px-4">
-        <Button className="w-full" onClick={() => go('balance-check')}>
-          <ScaleIcon aria-hidden="true" />
-          Check balances
-        </Button>
-      </div>
+      {canOpen('balance-check') ? (
+        <div className="px-4">
+          <Button className="w-full" onClick={() => go('balance-check')}>
+            <ScaleIcon aria-hidden="true" />
+            Check balances
+          </Button>
+        </div>
+      ) : null}
       <GroupCard label="Tracked">
         {v.tracked.map((a) => (
           <Item

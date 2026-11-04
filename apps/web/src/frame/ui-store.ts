@@ -14,6 +14,7 @@ const SCENARIO_IDS: readonly string[] = [
   'month',
   'capture-off',
   'cap',
+  'new',
 ];
 
 /** ?scenario= and ?state= pick the made-up scenario and the screen state on load (previews only: production has no fake). */

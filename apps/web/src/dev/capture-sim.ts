@@ -183,6 +183,17 @@ interface SimState {
   next: number;
 }
 
+/** The chosen apps, kept for this tab as the shell keeps them on the phone, so a reload mid-first-run keeps them (B08). */
+const CHOSEN_KEY = 'sen.sim.chosen';
+function keptChosen(): string[] {
+  try {
+    const v = JSON.parse(sessionStorage.getItem(CHOSEN_KEY) ?? '[]') as unknown;
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
 export const useCaptureSim = create<SimState>(() => {
   const now = Date.now();
   return {
@@ -190,7 +201,7 @@ export const useCaptureSim = create<SimState>(() => {
     access: false,
     connected: false,
     ignoringBattery: false,
-    chosen: [],
+    chosen: keptChosen(),
     events: [],
     beats: [{ at: now - 90 * MIN, kind: 'boot', connected: false }],
     icon: 'minted',
@@ -371,6 +382,11 @@ export const captureSim: SenCapturePlugin = {
     });
     const chosen = packages.filter((p) => !refused.some((r) => r.package === p));
     set({ chosen });
+    try {
+      sessionStorage.setItem(CHOSEN_KEY, JSON.stringify(chosen));
+    } catch {
+      // a blocked storage only loses the choice at a reload
+    }
     return { chosen, refused };
   },
   async openNotificationAccess() {

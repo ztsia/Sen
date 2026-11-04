@@ -7,6 +7,7 @@ import { SETTLE_MS } from '../src/lib/tap-guard';
 import { stepMetrics } from './metrics';
 import { uid } from '../src/data/fake/ids';
 import { JOURNEYS as GUIDED } from '../src/dev/journeys';
+import { atStep, BALANCES, TOTAL } from './first-run';
 
 // B03 done-when 1: each journey the five tabs carry (docs/flows.md) clicks through on the made-up
 // data, at 390×844, with a screenshot per step. Each is walked once, in Minted, light (helpers.ts's
@@ -334,9 +335,10 @@ export const JOURNEYS: Record<string, Journey> = {
 
   // ---- B04 (flows.md): the journeys whose screens B04 built ----
 
-  // first-run (core, D124): the shell's seven steps, from the email to Home, before any salary
+  // first-run (core, D124, B08): the shell's seven steps, from the email to Home. Each step saves as it
+  // goes: closing at step 4 reopens at step 4 (done-when 1), and typed balances survive a reload
   'first-run': async (page, shot, go) => {
-    await go('/s/first-run?scenario=before-salary');
+    await go('/s/first-run?scenario=new');
     await expect(page.getByRole('heading', { name: 'Sign in to Sen' })).toBeVisible();
     await shot('email');
     await page.getByLabel('Your email').fill('wei.ming@example.com');
@@ -349,45 +351,74 @@ export const JOURNEYS: Record<string, Journey> = {
     await shot('code expired');
     await page.getByLabel('6-digit code').fill('123456');
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-    await expect(page.getByText('Step 2 of 7')).toBeVisible();
+    await atStep(page, 2);
     await expect(page.getByText('Sen found 4 banks and e-wallets on this phone.')).toBeVisible();
+    await page.getByRole('button', { name: 'Choose these 4' }).click();
     await shot('your apps');
     await page.getByRole('button', { name: 'Next' }).click();
-    await expect(page.getByText('Step 3 of 7')).toBeVisible();
+    await atStep(page, 3);
     await expect(page.getByText('Sen can’t read your bank notifications yet.')).toBeVisible();
     await shot('notification access');
     await page.getByRole('button', { name: 'Skip for now' }).click();
-    await expect(page.getByText('Step 4 of 7')).toBeVisible();
+    await atStep(page, 4);
     await shot('keep Sen running');
+    // closed at step 4, it reopens at step 4 (done-when 1)
+    await page.reload();
+    await atStep(page, 4);
     await page.getByRole('button', { name: 'Skip for now' }).click();
-    await expect(page.getByText('Step 5 of 7')).toBeVisible();
+    await atStep(page, 5);
+    // one account per chosen app (D145): Google Wallet holds no money of its own, so it has none
+    await expect(page.getByRole('textbox')).toHaveCount(4);
+    await expect(page.getByLabel('Google Wallet')).toHaveCount(0);
+    // every balance is asked for: 0 is a balance, blank isn't
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.getByText('Type today’s balance, or 0.')).toHaveCount(4);
     // an amount is typed as digits only (D132): the dot and the second one are ignored, so 12.3.4 reads 12.34
-    await page.getByLabel('Ryt Bank').fill('12.3.4');
-    await expect(page.getByLabel('Ryt Bank')).toHaveValue('12.34');
-    await page.getByLabel('Ryt Bank').fill('1,200.50');
+    await page.getByLabel('Ryt Bank', { exact: true }).fill('12.3.4');
+    await expect(page.getByLabel('Ryt Bank', { exact: true })).toHaveValue('12.34');
+    await page.getByLabel('Ryt Bank', { exact: true }).clear();
+    for (const [name, text] of Object.entries(BALANCES)) await page.getByLabel(name, { exact: true }).fill(text);
+    // what's typed survives a reload before it's saved
+    await page.reload();
+    await atStep(page, 5);
+    await expect(page.getByLabel('Ryt Bank', { exact: true })).toHaveValue('3,200.50');
     await shot('your accounts');
     await page.getByRole('button', { name: 'Next' }).click();
-    await expect(page.getByText('Step 6 of 7')).toBeVisible();
+    await atStep(page, 6);
     await page.getByRole('button', { name: 'Next' }).click();
     await expect(page.getByText('Type your name as your bank prints it.')).toBeVisible();
     await page.getByLabel('Your name').fill('tan wei  ming');
     await expect(page.getByText('Sen will look for TAN WEI MING.')).toBeVisible();
     await shot('your name');
     await page.getByRole('button', { name: 'Next' }).click();
-    await expect(page.getByText('Step 7 of 7')).toBeVisible();
+    await atStep(page, 7);
     await page.getByRole('radio', { name: 'A day number' }).click();
     await page.getByRole('button', { name: 'Finish' }).click();
     await expect(page.getByText('Type a day from 1 to 31.')).toBeVisible();
     await page.getByLabel('Day of the month').fill('28');
     await shot('expected payday');
-    // back keeps the steps' order
+    // back keeps the steps' order, and the accounts as saved
     await page.getByRole('button', { name: 'Back' }).click();
-    await expect(page.getByText('Step 6 of 7')).toBeVisible();
+    await atStep(page, 6);
+    await page.getByRole('button', { name: 'Back' }).click();
+    await atStep(page, 5);
+    await expect(page.getByLabel('Public Bank', { exact: true })).toHaveValue('6,400.00');
     await page.getByRole('button', { name: 'Next' }).click();
+    await atStep(page, 6);
+    await page.getByRole('button', { name: 'Next' }).click();
+    await atStep(page, 7);
     await page.getByRole('button', { name: 'Finish' }).click();
     await expect(page).toHaveURL(/\/$|\/\?/);
     await expect(page.getByTestId('hero')).toContainText('Spent since you started');
     await shot('home, before the first salary');
+    // each account shows its opening balance (done-when 2), and the total is what was typed
+    // (in the app, not a fresh page: a fresh page would start the made-up data again)
+    await page.getByRole('link', { name: 'More' }).click();
+    await page.getByRole('link', { name: /^Accounts/ }).click();
+    await expect(page.getByText('In 4 accounts')).toBeVisible();
+    await expect(page.getByText(TOTAL)).toBeVisible();
+    await expect(page.getByText('RM3,200.50')).toBeVisible();
+    await shot('accounts');
   },
 
   // invited: the invitation's link opens sign-in with the email filled in; the short first run follows
