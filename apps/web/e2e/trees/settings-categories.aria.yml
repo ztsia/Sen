@@ -53,6 +53,7 @@
         - button "Interest & returns, no rules"
       - listitem:
         - button "Other income, no rules"
+  - button "Add a category"
 - navigation "Tabs":
   - link "Home":
     - /url: /

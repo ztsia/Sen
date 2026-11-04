@@ -1,0 +1,1482 @@
+{
+ "module": "B08",
+ "branch": "B08/first-run-accounts",
+ "verdict": "fix first",
+ "generatedAt": "2026-11-04 UTC",
+ "phases": "1-6",
+ "headline": "The ledger, its RLS and the balance view hold, and every API refusal is clean. But first run, the slice’s own journey, can’t be finished by someone with an empty account (RM0.00 can’t be typed), and it gets stuck after a lost answer while saving accounts. Three tests the slice made stale leave pnpm e2e and e2e:server red, and the first-run redirect has no test.",
+ "summary": {
+  "criteria": 55,
+  "pass": 50,
+  "fail": 3,
+  "unreachable": 2
+ },
+ "suites": {
+  "typecheck": "clean",
+  "lint": "clean",
+  "unit": "480/481 (year scenario timed out at 5 s; passes alone in 3.1 s)",
+  "security": "pnpm security pass (audit, gitleaks over history, security lint); hygiene pass",
+  "db": "pgTAP 462/462; API 198 pass, 13 skipped",
+  "e2e": "615 run (E2E_LOOKS=minted,copper): 613 pass, 2 fail (stale tests)",
+  "lived": "pass",
+  "server": "4/5 (1 stale test)",
+  "mutants": "84 killed, 2 stale",
+  "diff": "88 entries, 10 trees changed, 0 check findings, 6 metrics flags",
+  "qa-flows": "62 steps in 19 flows: 4 flows fail (findings 1, 2, 5, 6)"
+ },
+ "findings": [
+  {
+   "id": 1,
+   "severity": "Major",
+   "status": "open",
+   "title": "A balance of RM0.00 can’t be typed, so anyone with an empty account can’t finish first run",
+   "detail": "The money input drops leading zeros: `typedSen` in `packages/core/src/money.ts` strips `^0+`, so typing `0`, `000` or pasting `0.00` leaves the field `''`. First run's accounts step then refuses the empty field with *Type today’s balance, or 0.* There's no way to type the 0 the message asks for. An empty GrabPay Wallet or Ryt account is common, and the router holds an unfinished person at first run, so they can't reach Home except by going back and un-choosing that app (which stops capturing it). The owner's own phone step 4 in `docs/local.md` says *0 is fine for one that's empty*. The same input can't correct an opening balance to 0 in Account → Edit. The money input is B04's; the step that makes it a dead end is B08's.",
+   "repro": "Sign in as a capture person on the server preview → /s/first-run → Choose these → Next → Skip → Skip → type the other balances → tap GrabPay Wallet → type 0 on the number pad → Next",
+   "evidence": "FLOW-3z after typing 0: \"\"\nFLOW-3z after typing 000: \"\"\nFLOW-3z after fill 0.00: \"\"\nLocator: getByLabel('GrabPay Wallet', { exact: true })  Expected pattern: /^0\\.00$/  Received string: \"\"\nmoney.ts:139  const digits = input.replace(/[^0-9]/g, '').replace(/^0+/, '').slice(0, MAX_DIGITS);\nmoney.ts:143  if (!digits) return '';\nfirst-run.tsx: if (!t.trim()) e[a.package] = 'Type today’s balance, or 0.';",
+   "spec": "AC-22s, D146 (4), DW 1, spec §9.5 step 5",
+   "screenshots": [
+    "FLOW-3z-step-1-typed-zero.png"
+   ]
+  },
+  {
+   "id": 2,
+   "severity": "Major",
+   "status": "open",
+   "title": "A lost answer while the accounts save leaves first run stuck: Next again says *That app already has an account*",
+   "detail": "The accounts step sends one `account.add` per app, each with a fresh `newId()`. If an answer is lost (a dropped connection after the server saved it) or a later add fails, the step stays on 5. `runCommand` in `data/hooks.ts` only refetches after success, so the account list still lacks the saved account, and the next Next mints a new id for that app. The server refuses it with 409 `account_exists`, toasting *That app already has an account in Sen. Each app has one.*, and every further Next fails the same way. Only a reload (which refetches) gets past it. A retry should be a no-op (non-negotiable: every input has a dedupe key): the id per app should be kept for the step (in the draft), or the list refetched on failure.",
+   "repro": "FLOW-R: step 5, all four typed → Next while the 2nd account.add is answered by the server but the response is dropped (route.fetch then abort) → Next again",
+   "evidence": "FLOW-R retry responses: [\"409 {\\\"code\\\":\\\"account_exists\\\",\\\"message\\\":\\\"That app already has an account in Sen. Each app has one.\\\"}\"]\nFLOW-R toast: [ 'That app already has an account in Sen. Each app has one.' ]\nFLOW-R accounts: [\"Ryt Bank\",\"TNG eWallet\"]\nwaiting for getByText('Step 6 of 7') … element(s) not found\nAPI probe: same app, new id: 409 {\"code\":\"account_exists\",…}",
+   "spec": "AC-17, CLAUDE.md non-negotiable (dedupe), D146 (8)",
+   "screenshots": [
+    "FLOW-R-step-1-lost.png",
+    "FLOW-R-step-2-retried.png"
+   ]
+  },
+  {
+   "id": 3,
+   "severity": "Major",
+   "status": "open",
+   "title": "Three tests the slice made stale leave `pnpm e2e` and `e2e:server` red",
+   "detail": "The app behaves correctly in all three cases, but CI's suites fail on the branch (the handoff says the full `pnpm e2e` was left to QA):\n1. `e2e/journeys.spec.ts` › balance-check expects *In 5 accounts*; D145 made the scenario 4 (the page reads *In 4 accounts*).\n2. `e2e/production.spec.ts` › *B04's screens say Not built yet in production* still lists `/s/accounts` (and the other screens B08 made real); production now opens the real screen, which shows its error state with no server behind the test build.\n3. `e2e/server.spec.ts` › *a session that ends while Sen is open…*: More now reads `/api/accounts` as it opens, so the ended session sends the person to sign-in (correctly, with *You were signed out*) before the test taps Settings, and the click times out on a detached element.",
+   "repro": "pnpm e2e (E2E_LOOKS=minted,copper); pnpm --filter @sen/web e2e:server after pnpm test:db",
+   "evidence": "✘ 468 [preview] › e2e/journeys.spec.ts:951:3 › balance-check — Locator: getByText('In 5 accounts') … element(s) not found  (page: paragraph \"In 4 accounts\")\n✘ 614 [production] › e2e/production.spec.ts:214:1 — Error: /s/accounts … getByTestId('not-built') … element(s) not found  (page: alert \"Couldn't load your accounts\")\n  2 failed, 613 passed (22.9m)\n✘ 4 [server] › e2e/server.spec.ts:89:1 › a session that ends while Sen is open … — locator.click: Test timeout of 60000ms exceeded … element was detached from the DOM  (page: \"Sign in to Sen\", alert \"You were signed out. Sign in again to carry on.\")",
+   "spec": "CI; DW 5",
+   "screenshots": []
+  },
+  {
+   "id": 4,
+   "severity": "Major",
+   "status": "open",
+   "title": "The first-run redirect, D146 (2)'s rule that \"could strand the owner\", has no test",
+   "detail": "`firstRunDue()` in `router.tsx` decides who is held at first run. Breaking it to send *everyone* unfinished there, including capture people in a plain browser (exactly what D146 (2) forbids), leaves every suite green. The unit suite never loads the router. The fake backend skips `beforeLoad` (`__SEN_BACKEND__ !== 'api'`). `e2e:server` seeds only Wei Ming, with `setupDone: true`. My FLOW-1 step 1 and FLOW-10 now check (b) and (c) once; (a), in the shell, needs the phone.",
+   "repro": "In router.tsx replace `return !me.setupDone && (!me.capture || inShell());` with `return !me.setupDone;` → pnpm exec vitest run apps/web/src",
+   "evidence": "### W3 router sends capture-on browser people to first run\n      Tests  291 passed (291)\napps/web/e2e/server.setup.ts:  setupDone: true,  // the only person e2e:server seeds",
+   "spec": "D146 (2), AC-27",
+   "screenshots": []
+  },
+  {
+   "id": 5,
+   "severity": "Minor",
+   "status": "open",
+   "title": "An archived account has no way back once its toast goes: no Archived list, no Add",
+   "detail": "Account → Edit → *Archive this account* removes it from Accounts with a 6-second *Undo*. After that, Accounts lists only live accounts, with no *Archived* section and no *Bring back* (Settings → Categories has both for categories). There's no *Add* either (handoff: not built), and first run's steps never come back. So one tap plus a missed toast loses the account and its opening balance from the app for good, while its app may still be chosen. Patterns: *Only a destructive action that can't be undone asks first*. Archive wasn't in the brief.",
+   "repro": "FLOW-6 step 6: Account → Edit → Archive this account → wait 7 s → reload Accounts",
+   "evidence": "In 3 accounts  (TNG eWallet gone)\nLocator: getByRole('main').getByText(/Archived|Bring back|Add an account/) — element(s) not found",
+   "spec": "screens.md accounts, patterns §7 Sheets and dialogs",
+   "screenshots": [
+    "FLOW-6-step-6-archived-gone.png"
+   ]
+  },
+  {
+   "id": 6,
+   "severity": "Minor",
+   "status": "open",
+   "title": "The short first run offers *Cash* as a switch it can’t honour, and turning it off blocks *Start using Sen*",
+   "detail": "Without capture, first run lists the spending categories with a switch each; *switched off means archived*. Cash is a system category that can't be archived (D146 (6)), but its switch is enabled. Turning it off makes *Start using Sen* fail on `category.archive` with 409 `system_category`, and the person stays on *Step 2 of 2* until they find Cash and switch it back on. Cash's switch should be absent or disabled with its reason (patterns: a disabled switch says why).",
+   "repro": "FLOW-10s: sign in without capture → switch off Cash and Groceries → Start using Sen",
+   "evidence": "Cash switch count: 1   Cash switch disabled: false\nFLOW-10s responses: [\"409 {\\\"code\\\":\\\"system_category\\\",\\\"message\\\":\\\"Sen needs this category, so it can’t be archived. You can rename it.\\\"}\"]\nFLOW-10s url: http://localhost:4179/s/first-run",
+   "spec": "§8, D146 (6), flows invited",
+   "screenshots": [
+    "FLOW-10s-step-1-cash-offered.png",
+    "FLOW-10s-step-2-cash-off.png"
+   ]
+  },
+  {
+   "id": 7,
+   "severity": "Minor",
+   "status": "open",
+   "title": "No test guards *balances use amount, not my_share*",
+   "detail": "Probe P2 made `account_balances` subtract `coalesce(my_share, amount)` for money out. pgTAP, the API tests and the catalogue all stayed green, because no fixture row on a balance account carries a share. §7 makes the separation explicit. B08 can't write a share yet, but B11's splits will, and the view is what Accounts and the agent read. One fixture row with `my_share < amount` in `ledger.sql` would catch it; then add the mutant below.",
+   "repro": "In 0014 replace the money-out sum with `sum(coalesce(t.my_share, t.amount))` → pg_prove ledger.sql rls.sql catalogue.sql on a fresh database",
+   "evidence": "### P2 balance uses my_share when set\ntest/ledger.sql ..... ok\ntest/rls.sql ........ ok\ntest/catalogue.sql .. ok\nResult: PASS",
+   "spec": "§7 Spending vs cash flow, DW 2",
+   "screenshots": []
+  },
+  {
+   "id": 8,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Two breakage checks went stale: B08 rewrote the lines they break",
+   "detail": "`kept-after-sign-out` looks for `  writeStored(KEPT, null);\\n}` in `data/api/backend.ts`, but `forgetKept` now has the first-run line after it. `no-hint-after-change` looks for `relay.hint(c.var.person.id, ['settings'])` in `routes.ts`, which is now a ternary with `ledger`. Neither guard is being checked. New find strings are in the report's mutant list.",
+   "repro": "node scripts/mutants.mjs",
+   "evidence": "| `kept-after-sign-out` | web | **stale (found 0 times)** | the next person on the device sees the last one’s settings offline (QA B05 run 3, 30) |\n| `no-hint-after-change` | db | **stale (found 0 times)** | a settings change no longer updates the person’s other open screens |",
+   "spec": "D139",
+   "screenshots": []
+  },
+  {
+   "id": 9,
+   "severity": "Minor",
+   "status": "open",
+   "title": "*Finish* waits on the server with no spinner and no words",
+   "detail": "Pressing *Finish* dims the button for about 0.45 s (9 film frames) while `setup.finish` runs and every active query refetches. Then Home's skeleton shows. Patterns §7 *Waiting on the server* (and escapes E2) ask for a spinner and words such as *Finishing…*. The accounts step does it (*Saving…*); payday's Finish doesn't. This is also the measured cause of the metrics flag `step:first-run/18` (1601 ms): the dimmed button, then Home loading its data, which is over the 1000 ms limit on main too (standing `screen.settleMs`).",
+   "repro": "qa-artifacts film first-run/18.png (diff run), or tap Finish on step 7",
+   "evidence": "flag: step:first-run/18 step.settleMs 1601 ms (median of 3), main: none\nfilm: frames 1–4 Finish solid, 5–9 dimmed with no text, 10–20 Home skeleton\nfirst-run.tsx PaydayStep: <Button type=\"submit\" disabled={busy}>{last ? 'Finish' : 'Next'}</Button>",
+   "spec": "patterns §7, qa/escapes.md E2, AC-37",
+   "screenshots": []
+  },
+  {
+   "id": 10,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Offline at the accounts step, the banner promises *the rest waits*, but Next just fails",
+   "detail": "First run's offline banner reads *You’re offline. Signing in needs a connection; the rest waits.* At step 5, accounts go straight to the API (D146 (8)), so Next toasts *Sen can’t reach its server. Check the connection.* and stays put. The typed balances are kept, and Next works once online (FLOW-12 step 2 passes). The banner should say the accounts need a connection.",
+   "repro": "FLOW-12: step 5, typed → context.setOffline(true) → Next",
+   "evidence": "FLOW-12 banner: You’re offline. Signing in needs a connection; the rest waits.\nFLOW-12 toast: [\"Sen can’t reach its server. Check the connection.\"]",
+   "spec": "patterns §7 Offline/Error, D146 (8)",
+   "screenshots": [
+    "FLOW-12-step-1-offline-next.png"
+   ]
+  },
+  {
+   "id": 11,
+   "severity": "Minor",
+   "status": "open",
+   "title": "`pnpm test` went red once: the year scenario sits near its 5 s timeout",
+   "detail": "`fake.test.ts` › *every scenario parses with the shared schemas* › year timed out at 5 s in the full suite (5199 ms), and takes 3.1 s alone. The slice grew the fake (ledger area, variants). A flaky red in CI's first suite.",
+   "repro": "pnpm test; then pnpm exec vitest run apps/web/src/data/fake/fake.test.ts --reporter=verbose",
+   "evidence": "× year 5199ms — Error: Test timed out in 5000ms.   Tests 1 failed | 480 passed (481)\nalone: ✓ … > year 3122ms",
+   "spec": "CI",
+   "screenshots": []
+  },
+  {
+   "id": 12,
+   "severity": "Minor",
+   "status": "open",
+   "title": "The scan-after core journey failed twice under the metrics run on head only; a race on a transient screen",
+   "detail": "`journeys.spec.ts` › scan-after waits for *Reading receipt…*, a screen that's up for about 0.4–0.8 s. In the diff run's metrics (3 workers, CPU 4×, mobile network) it failed on head twice (metrics, film), and never on main. I walked it warm and throttled four times per side: the Reading screen showed every time, with overlapping windows (main 420–1359 ms, head 421–940 ms to Confirm). So it doesn't reproduce as a product difference. The assertion races the screen under load and should wait for Confirm instead.",
+   "repro": "node scripts/qa-diff.mjs (metrics); qa/e2e b08-measure.config.ts -g 'warm scan-after'",
+   "evidence": "✘ [metrics-head] › journeys.spec.ts › scan-after — getByText('Reading receipt…') … Timeout: 20000ms … not found\nmeasured (warm, CPU 4×): main [\"145ms /s/reading\",\"476ms +Reading\",\"782ms /s/confirm +Reading\"] …\n                          head [\"165ms /s/reading\",\"531ms +Reading\",\"918ms /s/confirm\"], [\"120ms\",\"421ms +Reading\",\"928ms /s/confirm +Reading\"] …",
+   "spec": "D124 core journeys",
+   "screenshots": []
+  },
+  {
+   "id": 13,
+   "severity": "Note",
+   "status": "open",
+   "title": "An app un-chosen after its account was saved keeps a live account",
+   "detail": "Going back from step 5 to step 2 and switching Grab off leaves GrabPay Wallet's account live; step 5 then offers three fields. §7 says accounts follow the apps you chose. Whether to archive it is a design call.",
+   "repro": "FLOW-13: after step 5 saved, Back ×4 → Grab off → forward to step 5",
+   "evidence": "FLOW-13 live accounts after un-choosing Grab: [\"GrabPay Wallet\",\"Public Bank\",\"Ryt Bank\",\"TNG eWallet\"]",
+   "spec": "§7 Accounts follow the apps you chose",
+   "screenshots": [
+    "FLOW-13-step-1-unchosen.png"
+   ]
+  },
+  {
+   "id": 14,
+   "severity": "Note",
+   "status": "open",
+   "title": "More asks `/api/accounts` for people without Capture, and gets a 403 every time",
+   "detail": "More calls `useAccountList()` before checking capture, so a person without Capture triggers a refused request on every visit. Nothing shows, but it's a wasted round trip, and it's why the session-end test in finding 3 now trips on More.",
+   "repro": "FLOW-10 step 4",
+   "evidence": "FLOW-10 More asked: [\"403 /accounts\"]",
+   "spec": "D146 (7)",
+   "screenshots": []
+  },
+  {
+   "id": 15,
+   "severity": "Note",
+   "status": "open",
+   "title": "The API accepts what the screens never send",
+   "detail": "Seen in the probes: an opening balance of −500 is stored; `you.bankNames` saves with Capture off (Settings hides it); a single 2000-character name is stored; `/sync/changes` still returns accounts to a person whose Capture is off. None is reachable from the UI today.",
+   "repro": "qa/B08/api-probes.probe.ts",
+   "evidence": "opening -500: 200 …; stored -500\nnames with capture off: 200 {\"said\":\"Names saved\",…}\nnames: 2000-char 200\n/sync/changes with capture off: 200 accounts=1",
+   "spec": "D146 (7)",
+   "screenshots": []
+  },
+  {
+   "id": 16,
+   "severity": "Note",
+   "status": "open",
+   "title": "On the server preview, Home after first run shows the skeleton’s made-up figures beside the person’s real accounts",
+   "detail": "Home isn't built yet, so previews fill it from Wei Ming's scenario: *Total balance RM29,871.77* while the person's Accounts read RM1,809.40. That's expected until Home is real, but flows step 8 (*Spent since you started*) can only be seen on the fake (CORE-first-run passes it).",
+   "repro": "FLOW-1 step 9",
+   "evidence": "FLOW-1 Home text: Home Payday plan · 2 of 3 Left until payday RM 1,931.27 … Total balance RM29,871.77",
+   "spec": "flows first-run step 8",
+   "screenshots": [
+    "FLOW-1-step-9-home.png"
+   ]
+  },
+  {
+   "id": 17,
+   "severity": "Note",
+   "status": "open",
+   "title": "The committed tree for Settings → Categories missed *Add a category*; the diff run rewrote it",
+   "detail": "`apps/web/e2e/trees/settings-categories.aria.yml` lacked the always-present *Add a category* button. Partial aria matching kept CI green. The diff run rewrote the file (left uncommitted for the main session).",
+   "repro": "git diff apps/web/e2e/trees/settings-categories.aria.yml",
+   "evidence": "+  - button \"Add a category\"",
+   "spec": "D137",
+   "screenshots": []
+  },
+  {
+   "id": 18,
+   "severity": "Note",
+   "status": "open",
+   "title": "For spec writers: Playwright `fill` on a money input as its sheet opens appends rather than replaces",
+   "detail": "Filling Account → Edit's *Opening balance* in the same moment the sheet opens turned 1,284.50 into RM1,284,501,300.00 (3 of 3 tries). Every way a person edits (tap then select all, or delete, then type) replaces it correctly (FLOW-6x). Not a product bug. A test should tap first.",
+   "repro": "FLOW-6y",
+   "evidence": "FLOW-6y fill at open: \"1,284,501,300.00\"\nFLOW-6x after select all + type: \"1,300.00\"   after delete + type: \"1,300.00\"",
+   "spec": "patterns §7 Forms",
+   "screenshots": [
+    "FLOW-6x-step-1-select-all.png"
+   ]
+  },
+  {
+   "id": 19,
+   "severity": "Note",
+   "status": "open",
+   "title": "From reading only (not run): a reopened accounts step shows each account’s computed balance as if it were its opening",
+   "detail": "`Accounts` in first-run.tsx builds `openings` from `AccountRow.balance`, the view's computed balance. In B08 they're equal (no transactions). From B09, a person who goes back to step 5 after captured payments sees the moved balance, and a re-save would write it as the opening, keeping the old `opening_at`. AccountView has `opening`; the list doesn't.",
+   "repro": "read apps/web/src/screens/outside/first-run.tsx, `const openings = new Map([...v.tracked].map((a) => [a.id, a.balance ?? 0]))`",
+   "evidence": "not run",
+   "spec": "§7 Opening balance",
+   "screenshots": []
+  }
+ ],
+ "probes": [
+  {
+   "broke": "balance boundary: occurred_at > opening_at → >=",
+   "caught": true,
+   "note": "ledger.sql tests 36, 39, 40 red"
+  },
+  {
+   "broke": "balance subtracts coalesce(my_share, amount) for money out",
+   "caught": false,
+   "note": "ledger, rls, catalogue all green: finding 7"
+  },
+  {
+   "broke": "accounts_one_per_app made non-unique",
+   "caught": true,
+   "note": "ledger.sql test 16 red"
+  },
+  {
+   "broke": "accounts select policy USING (true)",
+   "caught": true,
+   "note": "rls.sql and catalogue.sql red"
+  },
+  {
+   "broke": "Unaccounted trigger lets a spend through",
+   "caught": true,
+   "note": "ledger.sql 28, 31 red"
+  },
+  {
+   "broke": "account_balances without security_invoker",
+   "caught": true,
+   "note": "catalogue.sql red"
+  },
+  {
+   "broke": "transactions insert WITH CHECK (true)",
+   "caught": true,
+   "note": "catalogue.sql red"
+  },
+  {
+   "broke": "GET /accounts without needsCapture",
+   "caught": true,
+   "note": "ledger.test “come with capture” red"
+  },
+  {
+   "broke": "/categories offers Unaccounted",
+   "caught": true,
+   "note": "ledger.test seeding test red"
+  },
+  {
+   "broke": "account.edit moves opening_at",
+   "caught": true,
+   "note": "ledger.test “keeps the moment” red"
+  },
+  {
+   "broke": "setup.finish moves its time on a retry",
+   "caught": true,
+   "note": "ledger.test “finishes once” red"
+  },
+  {
+   "broke": "account.add without onConflictDoNothing (same id twice)",
+   "caught": true,
+   "note": "ledger.test “one per app” red"
+  },
+  {
+   "broke": "/accounts total sums every row plus one",
+   "caught": true,
+   "note": "ledger.test two tests red"
+  },
+  {
+   "broke": "a card wallet gets an account",
+   "caught": true,
+   "note": "logic.test red"
+  },
+  {
+   "broke": "an unchosen app gets an account",
+   "caught": true,
+   "note": "logic.test red"
+  },
+  {
+   "broke": "sign-out keeps first run’s draft",
+   "caught": true,
+   "note": "auth.test red"
+  },
+  {
+   "broke": "router sends every unfinished person to first run",
+   "caught": false,
+   "note": "291/291 unit green; no server journey has an unfinished person: finding 4"
+  }
+ ],
+ "flows": [
+  {
+   "id": "FLOW-1",
+   "title": "First run, start to finish, against the API",
+   "kind": "happy",
+   "actor": "new person, capture on (simulated shell)",
+   "entry": "sign-in, then /s/first-run",
+   "covers": [
+    "AC-6",
+    "AC-20",
+    "AC-22",
+    "AC-23",
+    "AC-24",
+    "AC-25",
+    "AC-26"
+   ],
+   "spec": "§9.5, flows first-run",
+   "status": "pass",
+   "ends": "Home; four accounts at the typed balances; 21 categories; own_names {TAN WEI MING}; payday last-working; setup_done_at set",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Sign in, open first run",
+     "assertion": "Step 2 of 7: Choose your apps",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-1-signed-in.png"
+    },
+    {
+     "n": 2,
+     "action": "Choose these, Next",
+     "assertion": "Step 3 of 7",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-2-apps.png"
+    },
+    {
+     "n": 3,
+     "action": "Skip notification access",
+     "assertion": "Step 4 of 7: Keep Sen running",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-3-access-skipped.png"
+    },
+    {
+     "n": 4,
+     "action": "Skip Keep Sen running",
+     "assertion": "Step 5: four balance fields, no Add",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-4-accounts.png"
+    },
+    {
+     "n": 5,
+     "action": "Type TNG as digits 128450, the rest",
+     "assertion": "TNG reads 1,284.50",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-5-typed.png"
+    },
+    {
+     "n": 6,
+     "action": "Next",
+     "assertion": "Step 6; four accounts with those opening balances",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-6-saved.png"
+    },
+    {
+     "n": 7,
+     "action": "Type tan wei ming, Next",
+     "assertion": "Step 7; own_names {TAN WEI MING}",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-7-name.png"
+    },
+    {
+     "n": 8,
+     "action": "Payday: the default, Finish",
+     "assertion": "Home; setup_done_at set; payday last-working",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-8-payday.png"
+    },
+    {
+     "n": 9,
+     "action": "Look at Home",
+     "assertion": "Home shows (its figures are the skeleton’s until Home is built)",
+     "status": "pass",
+     "screenshot": "FLOW-1-step-9-home.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-5",
+   "title": "Finished means finished",
+   "kind": "happy",
+   "actor": "same person",
+   "entry": "Home after FLOW-1",
+   "covers": [
+    "AC-26"
+   ],
+   "spec": "D26",
+   "status": "pass",
+   "ends": "reload lands on Home, never a first-run step",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Reload Home",
+     "assertion": "still Home, never a first-run step",
+     "status": "pass",
+     "screenshot": "FLOW-5-step-1-reload.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-6",
+   "title": "Accounts and an account: edit, archive, undo",
+   "kind": "happy",
+   "actor": "same person",
+   "entry": "More → Accounts",
+   "covers": [
+    "AC-31",
+    "AC-32",
+    "AC-16"
+   ],
+   "spec": "screens accounts/account",
+   "status": "fail",
+   "ends": "total = sum; opening edited with opening_at kept; archive undone; a way back after the toast",
+   "steps": [
+    {
+     "n": 1,
+     "action": "More → Accounts",
+     "assertion": "total RM1,809.40; TNG RM1,284.50",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-1-accounts.png"
+    },
+    {
+     "n": 2,
+     "action": "Open TNG eWallet",
+     "assertion": "opening balance RM1,284.50, fed by its app",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-2-account.png"
+    },
+    {
+     "n": 3,
+     "action": "Edit → opening 1,300.00 → Save",
+     "assertion": "stored 130000; opening_at unchanged",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-3-edit.png"
+    },
+    {
+     "n": 4,
+     "action": "Edit → Archive this account",
+     "assertion": "back on Accounts, TNG gone, Undo offered",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-4-archived.png"
+    },
+    {
+     "n": 5,
+     "action": "Undo",
+     "assertion": "TNG back on Accounts, archived_at null",
+     "status": "pass",
+     "screenshot": "FLOW-6-step-5-undone.png"
+    },
+    {
+     "n": 6,
+     "action": "Archive again, let the toast go",
+     "assertion": "is there any way back on Accounts?",
+     "status": "fail",
+     "screenshot": "FLOW-6-step-6-archived-gone.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-7",
+   "title": "Settings → Categories",
+   "kind": "happy",
+   "actor": "same person",
+   "entry": "Settings → Categories",
+   "covers": [
+    "AC-6",
+    "AC-7",
+    "AC-8",
+    "AC-18",
+    "AC-33"
+   ],
+   "spec": "§8",
+   "status": "pass",
+   "ends": "renamed, added, flagged, archived; Unaccounted and Cash locked",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Settings → Categories",
+     "assertion": "the 18 spending and 3 income categories",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-1-list.png"
+    },
+    {
+     "n": 2,
+     "action": "Groceries → Groceries & market",
+     "assertion": "the row is renamed",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-2-renamed.png"
+    },
+    {
+     "n": 3,
+     "action": "Add a category: Pets",
+     "assertion": "Pets is in the spending grid",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-3-added.png"
+    },
+    {
+     "n": 4,
+     "action": "Pets → Discretionary on",
+     "assertion": "is_discretionary true",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-4-flag.png"
+    },
+    {
+     "n": 5,
+     "action": "Archive Pets",
+     "assertion": "Pets under Archived, with Bring back",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-5-archived.png"
+    },
+    {
+     "n": 6,
+     "action": "Open Unaccounted",
+     "assertion": "no flags, no Archive",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-6-unaccounted.png"
+    },
+    {
+     "n": 7,
+     "action": "Open Cash",
+     "assertion": "flags, no Archive",
+     "status": "pass",
+     "screenshot": "FLOW-7-step-7-cash.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-8",
+   "title": "Settings → You",
+   "kind": "happy",
+   "actor": "same person",
+   "entry": "Settings → You",
+   "covers": [
+    "AC-24",
+    "AC-25",
+    "AC-34"
+   ],
+   "spec": "§9.5, D14, D17",
+   "status": "pass",
+   "ends": "two names and day 25 stored and kept after reload",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Settings → You",
+     "assertion": "shows TAN WEI MING",
+     "status": "pass",
+     "screenshot": "FLOW-8-step-1-you.png"
+    },
+    {
+     "n": 2,
+     "action": "Add TAN W M; payday day 25",
+     "assertion": "stored",
+     "status": "pass",
+     "screenshot": "FLOW-8-step-2-saved.png"
+    },
+    {
+     "n": 3,
+     "action": "Reload",
+     "assertion": "both kept",
+     "status": "pass",
+     "screenshot": "FLOW-8-step-3-reloaded.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-2",
+   "title": "Closed at step 4 and at step 5",
+   "kind": "sad",
+   "actor": "new person",
+   "entry": "first run step 4",
+   "covers": [
+    "AC-21"
+   ],
+   "spec": "DW 1, D146 (1)",
+   "status": "pass",
+   "ends": "reopens at the same step with the typed balance",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Reload at step 4",
+     "assertion": "Step 4 of 7 again",
+     "status": "pass",
+     "screenshot": "FLOW-2-step-1-reload-4.png"
+    },
+    {
+     "n": 2,
+     "action": "Step 5, type Ryt 500.00, reload",
+     "assertion": "Step 5, Ryt still 500.00",
+     "status": "pass",
+     "screenshot": "FLOW-2-step-2-reload-5.png"
+    },
+    {
+     "n": 3,
+     "action": "Back to step 5",
+     "assertion": "the saved balances show",
+     "status": "pass",
+     "screenshot": "FLOW-2-step-3-back-5.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-3",
+   "title": "A balance left empty",
+   "kind": "sad",
+   "actor": "same person",
+   "entry": "step 5",
+   "covers": [
+    "AC-22s"
+   ],
+   "spec": "D146 (4)",
+   "status": "pass",
+   "ends": "stays on 5 and names the empty one; then saves",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Leave TNG empty, Next",
+     "assertion": "stays on 5, says what is missing, nothing saved",
+     "status": "pass",
+     "screenshot": "FLOW-3-step-1-empty.png"
+    },
+    {
+     "n": 2,
+     "action": "TNG 2.00, Next",
+     "assertion": "step 6; four accounts",
+     "status": "pass",
+     "screenshot": "FLOW-3-step-2-filled.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-3z",
+   "title": "A balance of RM0.00",
+   "kind": "sad",
+   "actor": "new person",
+   "entry": "step 5",
+   "covers": [
+    "AC-22s"
+   ],
+   "spec": "D146 (4)",
+   "status": "fail",
+   "ends": "GrabPay Wallet typed as 0 and saved at 0",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Type 0 on the number pad into GrabPay Wallet",
+     "assertion": "the field holds 0.00",
+     "status": "fail",
+     "screenshot": "FLOW-3z-step-1-typed-zero.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-12",
+   "title": "Offline at the accounts step",
+   "kind": "sad",
+   "actor": "new person",
+   "entry": "step 5",
+   "covers": [
+    "AC-21"
+   ],
+   "spec": "D146 (8), patterns §7 Error",
+   "status": "pass",
+   "ends": "a plain-words error, balances kept; online saves",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Go offline, tap Next",
+     "assertion": "still step 5, a plain-words error, balances kept",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-1-offline-next.png"
+    },
+    {
+     "n": 2,
+     "action": "Back online, Next",
+     "assertion": "step 6, four accounts",
+     "status": "pass",
+     "screenshot": "FLOW-12-step-2-online-next.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-13",
+   "title": "An app un-chosen after its account was saved",
+   "kind": "sad",
+   "actor": "same person",
+   "entry": "back to step 2",
+   "covers": [],
+   "spec": "§7 Accounts follow the apps",
+   "status": "pass",
+   "ends": "records what happens to the saved account",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Back to step 2, switch Grab off, forward to step 5",
+     "assertion": "three fields; is Grab’s account still live?",
+     "status": "pass",
+     "screenshot": "FLOW-13-step-1-unchosen.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-R",
+   "title": "A lost answer while the accounts save",
+   "kind": "sad",
+   "actor": "new person",
+   "entry": "step 5",
+   "covers": [
+    "AC-17"
+   ],
+   "spec": "NN dedupe",
+   "status": "fail",
+   "ends": "Next again reaches step 6 with four accounts, no error",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Next; the 2nd account.add is saved but its answer lost",
+     "assertion": "an error, still step 5",
+     "status": "pass",
+     "screenshot": "FLOW-R-step-1-lost.png"
+    },
+    {
+     "n": 2,
+     "action": "Next again",
+     "assertion": "step 6; four accounts; no 409",
+     "status": "fail",
+     "screenshot": "FLOW-R-step-2-retried.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-9",
+   "title": "Signed out mid-first-run; someone else signs in",
+   "kind": "sad",
+   "actor": "two people, one browser",
+   "entry": "step 5 with a balance typed",
+   "covers": [
+    "AC-21s"
+   ],
+   "spec": "NN real data",
+   "status": "pass",
+   "ends": "nothing of the first person’s typed balance",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Settings → Account → Sign out",
+     "assertion": "signed out",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-1-signed-out.png"
+    },
+    {
+     "n": 2,
+     "action": "Another person signs in, opens first run",
+     "assertion": "step 2, nothing of 777.77",
+     "status": "pass",
+     "screenshot": "FLOW-9-step-2-other.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-10",
+   "title": "Without capture: the short first run",
+   "kind": "sad",
+   "actor": "person without capture",
+   "entry": "sign-in",
+   "covers": [
+    "AC-14",
+    "AC-27",
+    "AC-31s"
+   ],
+   "spec": "D52, D79, D146 (2, 7)",
+   "status": "pass",
+   "ends": "sent to Step 2 of 2; no Accounts; /api/accounts 403 capture_off",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Sign in without capture",
+     "assertion": "sent to first run: Step 2 of 2, Your categories",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-1-sent.png"
+    },
+    {
+     "n": 2,
+     "action": "Look at the list",
+     "assertion": "17 spending categories, no Unaccounted",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-2-list.png"
+    },
+    {
+     "n": 3,
+     "action": "Switch off Travel, Start using Sen",
+     "assertion": "Home; Travel archived; setup done",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-3-done.png"
+    },
+    {
+     "n": 4,
+     "action": "More; /api/accounts",
+     "assertion": "no Accounts row; 403 capture_off",
+     "status": "pass",
+     "screenshot": "FLOW-10-step-4-no-accounts.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-10s",
+   "title": "Without capture: switching off Cash",
+   "kind": "sad",
+   "actor": "person without capture",
+   "entry": "the short first run",
+   "covers": [
+    "AC-8"
+   ],
+   "spec": "§8, D146 (6)",
+   "status": "fail",
+   "ends": "Home, with Cash either not offered or kept",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Look for Cash",
+     "assertion": "is Cash offered as a switch?",
+     "status": "pass",
+     "screenshot": "FLOW-10s-step-1-cash-offered.png"
+    },
+    {
+     "n": 2,
+     "action": "Switch off Cash and Groceries, Start using Sen",
+     "assertion": "Home, Groceries archived",
+     "status": "fail",
+     "screenshot": "FLOW-10s-step-2-cash-off.png"
+    }
+   ]
+  },
+  {
+   "id": "CORE-first-run",
+   "title": "first-run (core), on the fake",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "/s/first-run?scenario=new",
+   "covers": [
+    "AC-20",
+    "AC-29"
+   ],
+   "spec": "D124",
+   "status": "pass",
+   "ends": "Home reads Spent since you started; Accounts total",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Type the email, send the code, sign in",
+     "assertion": "Step 2 of 7",
+     "status": "pass",
+     "screenshot": "CORE-first-run-step-1-email.png"
+    },
+    {
+     "n": 2,
+     "action": "Apps, access, running",
+     "assertion": "Step 5: four balance fields",
+     "status": "pass",
+     "screenshot": "CORE-first-run-step-2-accounts.png"
+    },
+    {
+     "n": 3,
+     "action": "Type the balances, Next",
+     "assertion": "Step 6",
+     "status": "pass",
+     "screenshot": "CORE-first-run-step-3-name.png"
+    },
+    {
+     "n": 4,
+     "action": "Name, Next",
+     "assertion": "Step 7",
+     "status": "pass",
+     "screenshot": "CORE-first-run-step-4-payday.png"
+    },
+    {
+     "n": 5,
+     "action": "Finish",
+     "assertion": "Home: Spent since you started",
+     "status": "pass",
+     "screenshot": "CORE-first-run-step-5-home.png"
+    },
+    {
+     "n": 6,
+     "action": "More → Accounts",
+     "assertion": "total RM1,809.40",
+     "status": "pass",
+     "screenshot": "CORE-first-run-step-6-accounts-total.png"
+    }
+   ]
+  },
+  {
+   "id": "CORE-pay-new",
+   "title": "pay-new (core), on the fake",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "dev panel",
+   "covers": [],
+   "spec": "D124",
+   "status": "pass",
+   "ends": "the prompt files the payment",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Dev panel → A notification arrives",
+     "assertion": "the prompt names RM9.50 · ROTI BAKAR 88",
+     "status": "pass",
+     "screenshot": "CORE-pay-new-step-1-prompt.png"
+    },
+    {
+     "n": 2,
+     "action": "Tap Meals",
+     "assertion": "the payment is filed, the prompt goes",
+     "status": "pass",
+     "screenshot": "CORE-pay-new-step-2-filed.png"
+    }
+   ]
+  },
+  {
+   "id": "CORE-scan-after",
+   "title": "scan-after (core), on the fake",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Scan tab",
+   "covers": [],
+   "spec": "D124",
+   "status": "pass",
+   "ends": "Attached to RM64.13 on Ryt Bank",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Scan, choose a photo",
+     "assertion": "Use this",
+     "status": "pass",
+     "screenshot": "CORE-scan-after-step-1-crop.png"
+    },
+    {
+     "n": 2,
+     "action": "Use this",
+     "assertion": "confirm shows SATE KAJANG HJ SAMURI",
+     "status": "pass",
+     "screenshot": "CORE-scan-after-step-2-confirm.png"
+    },
+    {
+     "n": 3,
+     "action": "More people twice",
+     "assertion": "RM21.38 a person",
+     "status": "pass",
+     "screenshot": "CORE-scan-after-step-3-three.png"
+    },
+    {
+     "n": 4,
+     "action": "Done",
+     "assertion": "Attached to RM64.13 on Ryt Bank",
+     "status": "pass",
+     "screenshot": "CORE-scan-after-step-4-attached.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-11",
+   "title": "Away from KL",
+   "kind": "sad",
+   "actor": "owner",
+   "entry": "Accounts in America/Los_Angeles",
+   "covers": [],
+   "spec": "§15 conventions",
+   "status": "pass",
+   "ends": "identical text to KL",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Accounts in Los Angeles time",
+     "assertion": "the same total as in KL",
+     "status": "pass",
+     "screenshot": "FLOW-11-step-1-la-accounts.png"
+    },
+    {
+     "n": 2,
+     "action": "Accounts in KL time",
+     "assertion": "identical text to Los Angeles",
+     "status": "pass",
+     "screenshot": "FLOW-11-step-2-kl-accounts.png"
+    }
+   ]
+  },
+  {
+   "id": "FLOW-6x",
+   "title": "Correcting an opening balance as a person does",
+   "kind": "happy",
+   "actor": "owner",
+   "entry": "Account → Edit",
+   "covers": [
+    "AC-32"
+   ],
+   "spec": "patterns §7 Forms",
+   "status": "pass",
+   "ends": "select-all and delete both replace the amount",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Tap the field, Select all, type 130000",
+     "assertion": "the field reads 1,300.00",
+     "status": "pass",
+     "screenshot": "FLOW-6x-step-1-select-all.png"
+    },
+    {
+     "n": 2,
+     "action": "Delete every digit, type 130000",
+     "assertion": "the field reads 1,300.00",
+     "status": "pass",
+     "screenshot": "FLOW-6x-step-2-delete-type.png"
+    },
+    {
+     "n": 3,
+     "action": "Playwright fill(\"1,300.00\") over the old amount",
+     "assertion": "records what fill gives",
+     "status": "pass",
+     "screenshot": "FLOW-6x-step-3-fill.png"
+    }
+   ]
+  }
+ ],
+ "criteria": [
+  {
+   "id": "AC-1",
+   "title": "accounts has the spec’s columns, money BIGINT",
+   "spec": "§15",
+   "status": "pass",
+   "evidence": "0013 migration; pgTAP accounts tests; opening_balance bigint"
+  },
+  {
+   "id": "AC-1s",
+   "title": "bad kind or fractional balance refused",
+   "spec": "§15, NN money",
+   "status": "pass",
+   "evidence": "API: kind savings 400; opening 12.5 400 \"expected int\"; pgTAP amount 1.5 → 22P02"
+  },
+  {
+   "id": "AC-2",
+   "title": "one live account per app",
+   "spec": "D145, D146 (6)",
+   "status": "pass",
+   "evidence": "pgTAP test 16 (23505); probe P3 killed; API same app new id → 409 account_exists"
+  },
+  {
+   "id": "AC-2s",
+   "title": "the rule doesn’t over-reach",
+   "spec": "D145",
+   "status": "pass",
+   "evidence": "B used A’s package: 200; two Elsewhere accounts with no app: count 2 (sen_qa); archive frees the app (ledger.test)"
+  },
+  {
+   "id": "AC-3",
+   "title": "account_names unique (user, package, label)",
+   "spec": "§15",
+   "status": "pass",
+   "evidence": "duplicate insert: unique violation account_names_label (sen_qa)"
+  },
+  {
+   "id": "AC-3s",
+   "title": "an account name can’t point at another’s account",
+   "spec": "D146 (5)",
+   "status": "pass",
+   "evidence": "pgTAP: 23503, the same code as a missing id"
+  },
+  {
+   "id": "AC-4",
+   "title": "transactions with its core columns",
+   "spec": "B Data, §15",
+   "status": "pass",
+   "evidence": "0013 migration"
+  },
+  {
+   "id": "AC-4s",
+   "title": "a transaction naming B’s rows, or a fraction",
+   "spec": "D146 (5)",
+   "status": "pass",
+   "evidence": "pgTAP: account, category, bank event 23503; amount 1.5 22P02"
+  },
+  {
+   "id": "AC-5",
+   "title": "user_settings own_names, expected_payday, setup_done_at",
+   "spec": "B Data",
+   "status": "pass",
+   "evidence": "0013 migration; FLOW-1 step 8 reads them"
+  },
+  {
+   "id": "AC-5s",
+   "title": "a payday that isn’t a day 1–31 or last-working",
+   "spec": "§7",
+   "status": "pass",
+   "evidence": "API: day 0, 32, 15.5, weekly, a string → 400"
+  },
+  {
+   "id": "AC-6",
+   "title": "the starting list, seeded at first run",
+   "spec": "§8, D33",
+   "status": "pass",
+   "evidence": "pgTAP results_eq on all 21 rows; FLOW-1 step 6: 21; FLOW-7 step 1: 18 + 3"
+  },
+  {
+   "id": "AC-6s",
+   "title": "seeded once, never twice",
+   "spec": "D146 (3)",
+   "status": "pass",
+   "evidence": "3 concurrent setup.start → 21; two concurrent seed_categories(): 21 and 0"
+  },
+  {
+   "id": "AC-7",
+   "title": "Unaccounted never picked by hand",
+   "spec": "§8, DW 3",
+   "status": "pass",
+   "evidence": "pgTAP 23514; probe P5 killed; picker excludes it; short first run offers no Unaccounted switch"
+  },
+  {
+   "id": "AC-7s",
+   "title": "an adjustment may use Unaccounted",
+   "spec": "§7",
+   "status": "pass",
+   "evidence": "adjustment row inserted as app_user (sen_qa): adjustment|100"
+  },
+  {
+   "id": "AC-8",
+   "title": "Sen’s three categories protected",
+   "spec": "§15, D146 (6)",
+   "status": "pass",
+   "evidence": "API: 409 system_category ×3, 409 income_flags"
+  },
+  {
+   "id": "AC-8s",
+   "title": "renaming Cash keeps its key",
+   "spec": "§15",
+   "status": "pass",
+   "evidence": "Cash → Tunai, system_key cash"
+  },
+  {
+   "id": "AC-9",
+   "title": "balance = opening + in − out, after opening_at",
+   "spec": "§7, DW 2",
+   "status": "pass",
+   "evidence": "pgTAP hand-checked 116950; API probe 10000 − 12000 + 3050 = 1050 with a row at opening_at + 1 µs and one at − 1 s"
+  },
+  {
+   "id": "AC-9s",
+   "title": "balances use amount, not my_share",
+   "spec": "§7",
+   "status": "pass",
+   "evidence": "API probe: out 12000 with my_share 4000 moved the balance by 12000 (no test guards it: finding 7)"
+  },
+  {
+   "id": "AC-10",
+   "title": "the total sums live tracked accounts only",
+   "spec": "§7",
+   "status": "pass",
+   "evidence": "pgTAP 134916 2; API total 6050 → 1050 after archiving Ryt"
+  },
+  {
+   "id": "AC-11",
+   "title": "views security_invoker; RLS through them",
+   "spec": "§15, NN RLS",
+   "status": "pass",
+   "evidence": "catalogue.sql; probe P6 caught; RLS matrix: B’s balances 0 to A, 0 with no user id"
+  },
+  {
+   "id": "AC-12",
+   "title": "RLS on every new table, two people",
+   "spec": "NN RLS, DW 4",
+   "status": "pass",
+   "evidence": "RLS matrix: A reads 0 of B’s rows in all 4 tables, updates 0, inserts as B refused"
+  },
+  {
+   "id": "AC-12s",
+   "title": "no user id, the admin",
+   "spec": "NN RLS, D52",
+   "status": "pass",
+   "evidence": "no user id: 0 everywhere; admin A: 0 of B’s rows; pooled connection: tx2 sees 0"
+  },
+  {
+   "id": "AC-13",
+   "title": "pgTAP and the catalogue cover every new table and view",
+   "spec": "DW 4",
+   "status": "pass",
+   "evidence": "catalogue.sql ok; P4, P6, P7 caught by it"
+  },
+  {
+   "id": "AC-14",
+   "title": "accounts need Capture",
+   "spec": "D146 (7)",
+   "status": "pass",
+   "evidence": "capture off: 403 capture_off on GET /accounts, /accounts/:id, add, edit, archive"
+  },
+  {
+   "id": "AC-14s",
+   "title": "another person’s account id",
+   "spec": "NN RLS",
+   "status": "pass",
+   "evidence": "404 not_found ×4, the same as a random id"
+  },
+  {
+   "id": "AC-15",
+   "title": "opening balances are integer sen from text",
+   "spec": "NN money",
+   "status": "pass",
+   "evidence": "FLOW-1: typed 128450 → RM1,284.50 → stored 128450"
+  },
+  {
+   "id": "AC-15s",
+   "title": "floats, text, 1e20, null refused",
+   "spec": "NN money",
+   "status": "pass",
+   "evidence": "API 400 { code, message, field: opening } for each; never a 500"
+  },
+  {
+   "id": "AC-16",
+   "title": "opening_at is the save; a correction keeps it",
+   "spec": "D146 (4)",
+   "status": "pass",
+   "evidence": "FLOW-6 step 3: opening 130000, opening_at unchanged"
+  },
+  {
+   "id": "AC-17",
+   "title": "every write is idempotent",
+   "spec": "NN dedupe",
+   "status": "fail",
+   "evidence": "FLOW-R: retry after a lost answer → 409 account_exists, 2 of 4 accounts (finding 2)"
+  },
+  {
+   "id": "AC-18",
+   "title": "categories: rename, add, archive, flags",
+   "spec": "B, §8",
+   "status": "pass",
+   "evidence": "FLOW-7 steps 2–5; API probes"
+  },
+  {
+   "id": "AC-18s",
+   "title": "blank, over-long, taken name; another’s id",
+   "spec": "routes",
+   "status": "pass",
+   "evidence": "400 field name; 409 name_taken field name; 404"
+  },
+  {
+   "id": "AC-19",
+   "title": "the offline copy carries the new kinds",
+   "spec": "B Data, D146 (9)",
+   "status": "pass",
+   "evidence": "ledger.test “the offline copy” (sweep, pass); capture off still carries accounts (finding 15)"
+  },
+  {
+   "id": "AC-20",
+   "title": "seven steps in order; Step 2 of 7 after sign-in",
+   "spec": "§9.5",
+   "status": "pass",
+   "evidence": "FLOW-1 steps 1–8"
+  },
+  {
+   "id": "AC-21",
+   "title": "closed partway, it reopens where it was",
+   "spec": "DW 1",
+   "status": "pass",
+   "evidence": "FLOW-2: step 4 after reload; step 5 with Ryt 500.00 after reload"
+  },
+  {
+   "id": "AC-21s",
+   "title": "the draft never leaks to the next person",
+   "spec": "NN real data",
+   "status": "pass",
+   "evidence": "FLOW-9: sen.firstRun null after sign-out; the next person sees nothing of 777.77"
+  },
+  {
+   "id": "AC-22",
+   "title": "accounts step: one per chosen app, nothing else",
+   "spec": "§7, D145",
+   "status": "pass",
+   "evidence": "FLOW-1 step 4: four fields named from the curated list, no Add"
+  },
+  {
+   "id": "AC-22s",
+   "title": "every balance asked for; 0 accepted",
+   "spec": "D146 (4)",
+   "status": "fail",
+   "evidence": "empty refused (FLOW-3) but 0 can’t be typed: \"0\", \"000\", \"0.00\" all leave \"\" (FLOW-3z, finding 1)"
+  },
+  {
+   "id": "AC-23",
+   "title": "a typed balance stored as typed",
+   "spec": "P §3",
+   "status": "pass",
+   "evidence": "FLOW-1 steps 5–6"
+  },
+  {
+   "id": "AC-24",
+   "title": "your name as the banks print it",
+   "spec": "§9.5, D17",
+   "status": "pass",
+   "evidence": "own_names {TAN WEI MING}"
+  },
+  {
+   "id": "AC-24s",
+   "title": "a blank name",
+   "spec": "P §7",
+   "status": "unreachable",
+   "evidence": "not run this run"
+  },
+  {
+   "id": "AC-25",
+   "title": "payday, last working day by default",
+   "spec": "§9.5, D14",
+   "status": "pass",
+   "evidence": "FLOW-1 step 8 last-working; FLOW-8 day 25"
+  },
+  {
+   "id": "AC-26",
+   "title": "finishing lands Home; the steps never come back",
+   "spec": "D26",
+   "status": "pass",
+   "evidence": "FLOW-1 step 8, FLOW-5"
+  },
+  {
+   "id": "AC-27",
+   "title": "who is sent to first run",
+   "spec": "D146 (2)",
+   "status": "pass",
+   "evidence": "(b) FLOW-10 sent; (c) FLOW-1 step 1 not sent; (a) needs the shell: not reachable in a browser"
+  },
+  {
+   "id": "AC-28",
+   "title": "access refused → Home says Capture is off",
+   "spec": "flows first-run",
+   "status": "unreachable",
+   "evidence": "Home is the skeleton on the server preview; not walked on the fake"
+  },
+  {
+   "id": "AC-29",
+   "title": "Home after first run: Spent since you started",
+   "spec": "flows first-run step 8",
+   "status": "pass",
+   "evidence": "CORE-first-run step 5 (fake); on the server Home is still the skeleton (finding 16)"
+  },
+  {
+   "id": "AC-30",
+   "title": "the walk in all six looks",
+   "spec": "DW 5",
+   "status": "pass",
+   "evidence": "e2e/first-run.spec.ts: six looks pass in the sweep"
+  },
+  {
+   "id": "AC-31",
+   "title": "accounts: total, balances, Elsewhere",
+   "spec": "screens accounts",
+   "status": "pass",
+   "evidence": "FLOW-6 step 1: RM1,809.40 = sum, In 4 accounts"
+  },
+  {
+   "id": "AC-31s",
+   "title": "without Capture there’s no accounts",
+   "spec": "D52",
+   "status": "pass",
+   "evidence": "FLOW-10 step 4: no Accounts row, 403 (More still asks: finding 14)"
+  },
+  {
+   "id": "AC-32",
+   "title": "account: opening, app, Edit, Archive with Undo",
+   "spec": "screens account",
+   "status": "pass",
+   "evidence": "FLOW-6 steps 2–5; FLOW-6x"
+  },
+  {
+   "id": "AC-33",
+   "title": "Settings → Categories; Unaccounted untouchable",
+   "spec": "B, §8",
+   "status": "pass",
+   "evidence": "FLOW-7"
+  },
+  {
+   "id": "AC-34",
+   "title": "Settings → You: names and payday",
+   "spec": "B",
+   "status": "pass",
+   "evidence": "FLOW-8"
+  },
+  {
+   "id": "AC-35",
+   "title": "no float in a money path of the diff",
+   "spec": "NN money",
+   "status": "pass",
+   "evidence": "grep of the diff: no parseFloat, toFixed, Number( on amounts"
+  },
+  {
+   "id": "AC-36",
+   "title": "no real financial data in fixtures or the seed",
+   "spec": "NN real data",
+   "status": "pass",
+   "evidence": "pnpm hygiene pass; seed people made up"
+  },
+  {
+   "id": "AC-37",
+   "title": "one set of UI patterns",
+   "spec": "NN patterns",
+   "status": "fail",
+   "evidence": "Finish waits with no words (finding 9); the rest uses the shared blocks"
+  },
+  {
+   "id": "AC-38",
+   "title": "the build ships no secret",
+   "spec": "NN secrets",
+   "status": "pass",
+   "evidence": "pnpm security pass (gitleaks); dist-production grep for keys and URLs: 0 files"
+  }
+ ],
+ "notTested": [
+  {
+   "what": "First run in the real shell on the Xiaomi: the redirect with capture in the shell, closing at step 4, notification access granted for real",
+   "why": "needs the phone; queued in docs/local.md (B08 steps 1–7, already there)"
+  },
+  {
+   "what": "The shell’s outbox v5 and offline copy (Kotlin)",
+   "why": "emulator tests run in CI only; no Kotlin breakage checks exist"
+  },
+  {
+   "what": "AC-24s a blank name, AC-28 Home’s Capture-is-off warning after skipping access",
+   "why": "not run this run; Home on the server preview is still the skeleton"
+  },
+  {
+   "what": "The eyes pass on the 10 changed screens",
+   "why": "this reviewer can’t start subagents here; the diff report exists for the main session to start it"
+  },
+  {
+   "what": "pnpm e2e in all six looks",
+   "why": "stopped after 175 of 1415 passed (about 2.75 h); re-run with E2E_LOOKS=minted,copper as CI does. The diff run covered all twelve look-and-mode pairs for trees, pixels and the scripted checks, and first-run.spec walks all six looks regardless"
+  }
+ ]
+}

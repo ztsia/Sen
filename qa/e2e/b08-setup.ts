@@ -19,6 +19,7 @@ export const PEOPLE = {
   nocap2: { id: '5e15e15e-0b08-4000-8000-0000000a0005', email: 'qa.nocap2@example.com', name: 'Nocap2' },
   other: { id: '5e15e15e-0b08-4000-8000-0000000a0006', email: 'qa.other@example.com', name: 'Other' },
   tz: { id: '5e15e15e-0b08-4000-8000-0000000a0007', email: 'qa.tz@example.com', name: 'Tz' },
+  zero: { id: '5e15e15e-0b08-4000-8000-0000000a0009', email: 'qa.zero@example.com', name: 'Zero' },
   offline: { id: '5e15e15e-0b08-4000-8000-0000000a0008', email: 'qa.offline@example.com', name: 'Offline' },
 } as const;
 const NOCAP = new Set(['nocap', 'nocap2']);
