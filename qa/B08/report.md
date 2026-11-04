@@ -109,3 +109,11 @@ Console flags ×3: Chromium preload warnings, noise. `step:first-run/18`: findin
 ## Not tested
 First run in the real shell (Xiaomi; `docs/local.md`); shell outbox v5 (CI emulator only); AC-24s and
 AC-28; the eyes pass (started by the main session); all-looks `pnpm e2e` to the end.
+
+## Eyes pass (`eyes.md`)
+13 changed screens and 37 filmstrips: 3 wrong, 33 look again, 14 fine.
+- **balance-check:** the TNG eWallet card shows Sen's figure with no word that GO+ is included; someone typing only the eWallet balance books the GO+ part as Unaccounted.
+- **first-run/18:** *Finish* only dims (~450 ms), with no words or spinner (escape E2's shape); the tab bar draws over the form, then Home's skeleton for 500 ms+. Same as finding 9.
+- **first-run/20:** right after first run, every account shows *Not checked*, a minute after its balance was typed.
+
+Payments 1,151 → 1,139: the main session checked; these are the monthly Ryt → GO+ own-transfer rows that D145 folded into the Ryt → TNG move, not spending.
