@@ -84,6 +84,7 @@ async function accountRows(db: Db, me: string): Promise<{ row: AccountRow; openi
       // balance checks arrive with B13
       checkedAt: null,
       app: r.notifierLabel,
+      package: r.notifierPackage,
     },
     opening: r.openingBalance,
     openingAt: r.openingAt,
