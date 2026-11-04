@@ -610,7 +610,8 @@ export const JOURNEYS: Record<string, Journey> = {
     await page.getByRole('group', { name: 'Ryt Bank' }).getByLabel('What the bank app shows').fill('14,600.87');
     await page.getByRole('button', { name: 'TNG eWallet matches' }).click();
     await expect(page.getByRole('group', { name: 'TNG eWallet' }).getByLabel('What the bank app shows')).toHaveValue(
-      '262.30',
+      // eWallet and GO+ together (D145)
+      '7,815.40',
     );
     await shot('typed');
     await page.getByRole('button', { name: 'Save', exact: true }).click();

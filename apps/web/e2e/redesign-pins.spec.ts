@@ -235,11 +235,11 @@ test('add expense: a zero amount and a missing category are refused, and the for
   const errors = watchErrors(page);
   await open(page, '/s/manual');
 
-  // a zero cannot be typed (D132: the digits read from the right, and leading zeros are not kept), so the
-  // field is empty and says so: the zero is still refused and the form stays open
+  // a typed zero reads 0.00 (D147 (1)), and a payment is above zero: refused in words, the form stays open
   await page.getByLabel('Amount').fill('0');
+  await expect(page.getByLabel('Amount')).toHaveValue('0.00');
   await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByText('Type the amount.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Type an amount above zero.', { exact: true })).toBeVisible();
 
   await page.getByLabel('Amount').fill('12.50');
   await page.getByRole('button', { name: 'Save' }).click();
