@@ -457,5 +457,6 @@ describe('the heavy-year scenario', () => {
     expect(db.receipts.length).toBeGreaterThanOrEqual(200);
     expect(new Set(db.txns.map((t) => t.id)).size).toBe(db.txns.length);
     expect(ms).toBeLessThan(1500);
-  });
+    // its own measure is the speed check; the test's limit only has to outlast a busy machine (QA B08 run 1, 11)
+  }, 20_000);
 });

@@ -79,7 +79,7 @@ async function signIn(email: string) {
 const s = { a: '', b: '' };
 const cmd = (who: 'a' | 'b', body: unknown) => call('/api/commands', { body, cookie: s[who] });
 /** The project's error shape, never a stack or a 500. */
-const shaped = (r: { status: number; body: any }) => {
+const shaped = (r: { status: number; body: { code?: unknown; message?: unknown } | null }) => {
   expect(r.status).toBeLessThan(500);
   expect(typeof r.body?.code).toBe('string');
   expect(typeof r.body?.message).toBe('string');

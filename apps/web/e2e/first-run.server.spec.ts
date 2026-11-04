@@ -1,9 +1,12 @@
 import { expect, test, type Page, type Route } from '@playwright/test';
 import type { AccountsView } from '@sen/core/views';
-import { FIRST_RUN } from './server.setup';
+import { FIRST_RUN, ownerSql } from './server.setup';
 
 // First run against the API and sen_test (B08, D146), where what it saves is real: who is held at it,
 // an empty account's RM0.00, and a save whose answer is lost (QA B08 run 1, findings 1, 2 and 4).
+
+// each sign-in asks for a code, and codes are rate-limited; the journeys after these start from none
+test.afterEach(() => ownerSql('truncate auth_rate_limit'));
 
 async function signIn(page: Page, email: string) {
   await page.goto('/s/sign-in');
@@ -20,8 +23,8 @@ const atStep = (page: Page, n: number, of = 7) =>
 /** From the apps step to the accounts step: the suggested apps chosen, access and Keep running skipped. */
 async function toAccounts(page: Page) {
   await atStep(page, 2);
-  const choose = page.getByRole('button', { name: /^Choose these \d+$/ });
-  if (await choose.count()) await choose.click();
+  // a fresh browser: nothing chosen yet, so the suggestion is always offered
+  await page.getByRole('button', { name: /^Choose these \d+$/ }).click();
   await expect(page.getByRole('switch', { name: /Ryt Bank/ })).toBeChecked();
   await page.getByRole('button', { name: 'Next' }).click();
   await atStep(page, 3);

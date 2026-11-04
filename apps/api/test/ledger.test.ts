@@ -173,10 +173,14 @@ describe('accounts', () => {
     const list = await call('/api/accounts', { cookie: s.me.cookie });
     expect(list.body).toMatchObject({
       total: 320050,
-      tracked: [{ id: ryt, name: 'Ryt Bank', kind: 'tracked', balance: 320050, app: 'Ryt Bank', checkedAt: null }],
+      tracked: [{ id: ryt, name: 'Ryt Bank', kind: 'tracked', balance: 320050, opening: 320050, app: 'Ryt Bank' }],
       elsewhere: [],
       gap: null,
+      archived: [],
     });
+    // the balance typed for it is its first check, until balance checks arrive (B13)
+    const row = (list.body as { tracked: { checkedAt: string }[] }).tracked[0]!;
+    expect(Date.parse(row.checkedAt)).not.toBeNaN();
   });
 
   it('an Elsewhere account has no app and no balance', async () => {
@@ -249,7 +253,10 @@ describe('accounts', () => {
 
   it('archiving frees the app for a new account, and the old one can’t come back over it', async () => {
     expect((await run(s.me.cookie, { type: 'account.archive', id: ryt, archived: true })).status).toBe(200);
-    expect((await call('/api/accounts', { cookie: s.me.cookie })).body?.tracked).toEqual([]);
+    const after = (await call('/api/accounts', { cookie: s.me.cookie })).body;
+    expect(after?.tracked).toEqual([]);
+    // listed as archived, to bring back (QA B08 run 1, 5)
+    expect(after?.archived).toEqual([{ id: ryt, name: 'Ryt Bank' }]);
     const fresh = randomUUID();
     expect(
       (await run(s.me.cookie, { type: 'account.add', id: fresh, name: 'Ryt', kind: 'tracked', app: RYT, opening: 1 }))

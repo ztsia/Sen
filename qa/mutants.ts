@@ -22,7 +22,8 @@ export const SUITES = {
   // pgTAP over every migration, then the API's tests and the route sweep, on a fresh sen_test
   db: ['pnpm', 'test:db'],
   // the web app's data layer: sign-in, the kept reads, the fake
-  web: ['pnpm', 'exec', 'vitest', 'run', '--project', 'web', 'apps/web/src/data'],
+  // and first run's pure rules (B08)
+  web: ['pnpm', 'exec', 'vitest', 'run', '--project', 'web', 'apps/web/src/data', 'apps/web/src/screens/outside'],
   // the lived-in deploy journeys (apps/web/e2e/lived.spec.ts): two builds, a service worker
   deploy: ['pnpm', '--filter', '@sen/web', 'exec', 'playwright', 'test', '-c', 'e2e/lived.config.ts', '-g', 'deploy'],
   // the web app's pure motion and haptics (B05 · Feel)
@@ -133,8 +134,8 @@ export const MUTANTS: Mutant[] = [
     id: 'kept-after-sign-out',
     breaks: 'the next person on the device sees the last one’s settings offline (QA B05 run 3, 30)',
     file: 'apps/web/src/data/api/backend.ts',
-    find: `  writeStored(KEPT, null);\n}`,
-    replace: `}`,
+    find: `  writeStored(KEPT, null);\n  // and first run's unsaved draft`,
+    replace: `  // and first run's unsaved draft`,
     suite: 'web',
   },
   {
@@ -450,7 +451,7 @@ export const MUTANTS: Mutant[] = [
     id: 'no-hint-after-change',
     breaks: 'a settings change no longer updates the person’s other open screens',
     file: 'apps/api/src/routes.ts',
-    find: `await c.var.svc.relay.hint(c.var.person.id, ['settings']);`,
+    find: `await c.var.svc.relay.hint(c.var.person.id, isLedgerCommand(cmd) ? ['ledger', 'settings'] : ['settings']);`,
     replace: ``,
     suite: 'db',
   },
@@ -751,5 +752,70 @@ export const MUTANTS: Mutant[] = [
     find: '.select({ at: max(e.createdAt) })',
     replace: '.select({ at: max(e.postedAt) })',
     suite: 'db',
+  },
+  // B08 (QA B08 run 1's probes)
+  {
+    id: 'balance-boundary',
+    breaks: 'a payment at the moment an account opened counts twice: once in the opening balance, once after',
+    file: 'packages/db/migrations/0014_b08_ledger_functions.sql',
+    find: 't.occurred_at > a.opening_at',
+    replace: 't.occurred_at >= a.opening_at',
+    suite: 'db',
+  },
+  {
+    id: 'balance-uses-share',
+    breaks: 'a split bill takes only the person’s share off the account that paid all of it',
+    file: 'packages/db/migrations/0014_b08_ledger_functions.sql',
+    find: "coalesce(sum(t.amount) FILTER (WHERE t.direction = 'out'), 0))::bigint AS balance",
+    replace: "coalesce(sum(coalesce(t.my_share, t.amount)) FILTER (WHERE t.direction = 'out'), 0))::bigint AS balance",
+    suite: 'db',
+  },
+  {
+    id: 'one-account-per-app',
+    breaks: 'an app gets a second live account, and its payments split between them (D145)',
+    file: 'packages/db/migrations/0013_b08_ledger.sql',
+    find: 'CREATE UNIQUE INDEX "accounts_one_per_app"',
+    replace: 'CREATE INDEX "accounts_one_per_app"',
+    suite: 'db',
+  },
+  {
+    id: 'unaccounted-by-hand',
+    breaks: 'a payment can be filed as Unaccounted by hand, which only a balance check may do',
+    file: 'packages/db/migrations/0014_b08_ledger_functions.sql',
+    find: "IF k = 'unaccounted' AND NEW.kind <> 'adjustment' THEN",
+    replace: 'IF false THEN',
+    suite: 'db',
+  },
+  {
+    id: 'accounts-without-capture',
+    breaks: 'someone without capture reads accounts, which are capture’s (§9.6)',
+    file: 'apps/api/src/ledger.ts',
+    find: "  r.get('/accounts', async (c) => {\n    needsCapture(c.var);",
+    replace: "  r.get('/accounts', async (c) => {",
+    suite: 'db',
+  },
+  {
+    id: 'first-run-draft-kept',
+    breaks: 'the next person on the phone finds the last one’s typed balances in first run',
+    file: 'apps/web/src/data/api/backend.ts',
+    find: '  writeStored(FIRST_RUN_KEY, null);\n}',
+    replace: '}',
+    suite: 'web',
+  },
+  {
+    id: 'first-run-for-everyone',
+    breaks: 'a browser holds a capture person at first run, whose steps only the phone can do (D146 (2))',
+    file: 'apps/web/src/screens/outside/logic.ts',
+    find: '  return !me.setupDone && (!me.capture || shell);',
+    replace: '  return !me.setupDone;',
+    suite: 'web',
+  },
+  {
+    id: 'zero-is-no-amount',
+    breaks: 'an empty account’s RM0.00 can’t be typed, so first run can’t be finished (QA B08 run 1, 1)',
+    file: 'packages/core/src/money.ts',
+    find: "  if (!digits) return all.length === 0 || all.length === 2 ? '' : '0.00';",
+    replace: "  if (!digits) return '';",
+    suite: 'unit',
   },
 ];
