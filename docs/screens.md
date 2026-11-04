@@ -391,7 +391,7 @@ Your email, then the 6-digit code (D13). An invitation's link lands here with th
 
 Full screen, one step per screen (D26, D86): sign in, choose your apps, notification access (with
 *Allow restricted settings* when the switch is greyed out, §6.2), *Keep Sen running* for your phone's
-brand, accounts with today's balances (one per chosen app, plus pots and stored credit), your name as
+brand, accounts with today's balances (one per chosen app, D145), your name as
 banks print it, expected payday. Without capture: sign in and categories (§9.6, D79).
 
 ### `payday`

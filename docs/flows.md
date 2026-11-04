@@ -48,7 +48,7 @@ The behaviour is in `spec_v2.md`; this file cites it. Made-up names and amounts 
    Review later (D87).
 4. **Keep Sen running:** the battery step every phone needs, then the brand's own steps; on the
    Xiaomi, Autostart, battery saver *No restrictions*, and the app locked in recents (D86).
-5. **Accounts:** one per chosen app, plus GO+ and any stored credit, each with today's balance (§7).
+5. **Accounts:** one per chosen app, each with today's total balance, pockets and GO+ included (§7, D145).
 6. **Your name as the banks print it**, such as `TAN WEI MING` (D17).
 7. **Expected payday:** the last working day (the default), or a day number (D14).
 8. `home`. The large figure reads *Spent since you started* until the first salary lands.

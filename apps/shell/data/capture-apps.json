@@ -1,12 +1,12 @@
 {
-  "$comment": "Malaysian banks and e-wallets the picker suggests, ticked, when installed (spec §6.2, D86). Each package was checked on Google Play (gl=MY) on the date below; its label is the Play listing's. accounts are the account names first run suggests for it (B08). kind: bank, ewallet or wallet (a card wallet that notifies alongside the bank's own app, D88). Add an app with its Play-checked package.",
+  "$comment": "Malaysian banks and e-wallets the picker suggests, ticked, when installed (spec §6.2, D86). Each package was checked on Google Play (gl=MY) on the date below; its label is the Play listing's. accounts holds the one account name first run suggests for it (B08, D145: one account per app). kind: bank, ewallet or wallet (a card wallet that notifies alongside the bank's own app, D88). Add an app with its Play-checked package.",
   "checked": "2026-10-09",
   "apps": [
     {
       "package": "my.com.tngdigital.ewallet",
       "label": "Touch 'n Go eWallet",
       "kind": "ewallet",
-      "accounts": ["TNG eWallet", "GO+"]
+      "accounts": ["TNG eWallet"]
     },
     { "package": "my.rytbank.app", "label": "Ryt Bank", "kind": "bank", "accounts": ["Ryt Main Account"] },
     { "package": "com.pbb.mypb", "label": "MyPB by Public Bank", "kind": "bank", "accounts": ["Public Bank"] },
@@ -15,7 +15,7 @@
       "package": "com.maybank2u.life",
       "label": "MAE by Maybank2u",
       "kind": "bank",
-      "accounts": ["Maybank", "MAE Wallet"]
+      "accounts": ["Maybank"]
     },
     { "package": "com.cimb.cimbocto", "label": "CIMB OCTO MY", "kind": "bank", "accounts": ["CIMB"] },
     { "package": "com.rhbgroup.rhbmobilebanking", "label": "RHB Mobile Banking", "kind": "bank", "accounts": ["RHB"] },

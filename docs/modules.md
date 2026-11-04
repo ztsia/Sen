@@ -258,7 +258,7 @@ Notifications become categorised transactions. **Daily use starts at the end of 
 - **Builds:**
   - `first-run` for the shell (D26, D86): sign in, apps, access, *Keep Sen running*, accounts with
     today's balances, your name, payday.
-  - Accounts: tracked, *Elsewhere*, pots and stored credit (D93), each with `opening_at`, plus
+  - Accounts: tracked, *Elsewhere* and stored credit (D93), one per app (D145), each with `opening_at`, plus
     `account_names` and the balance view.
   - Categories: the starting list with its flags and system keys (D33).
   - `accounts` and `account` made real, plus Settings → *Categories* and → *You*.
