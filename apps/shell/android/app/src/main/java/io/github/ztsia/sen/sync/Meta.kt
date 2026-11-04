@@ -12,4 +12,7 @@ object Meta {
 
     /** Whose outbox this is: the user id of the first session that synced it. */
     const val OWNER = "owner"
+
+    /** The person's own names as banks print them (D17), a JSON array of strings. */
+    const val OWN_NAMES = "own_names"
 }

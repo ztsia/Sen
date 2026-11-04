@@ -261,7 +261,37 @@ class SyncRun(private val context: Context, private val client: SyncClient = Syn
                         )
                     }
                     val version = body.optLong("version", since)
-                    outbox.setMeta(Meta.CHANGES_VERSION, version.toString())
+                    // the page's rows and its version together, so a crash can't keep one without the other
+                    // (an older server sends none of these keys: empty, and the names unchanged)
+                    outbox.mergeOfflineCopy(
+                        categories = objects(body.optJSONArray("categories")).map { c ->
+                            Outbox.Category(
+                                id = c.getString("id"),
+                                name = c.getString("name"),
+                                kind = c.getString("kind"),
+                                meal = c.optBoolean("meal"),
+                                beverage = c.optBoolean("beverage"),
+                                discretionary = c.optBoolean("discretionary"),
+                                system = if (c.isNull("system")) null else c.optString("system"),
+                                position = c.optInt("position"),
+                                archivedAt = if (c.isNull("archivedAt")) null else Iso.parse(c.optString("archivedAt")),
+                            )
+                        },
+                        accounts = objects(body.optJSONArray("accounts")).map { a ->
+                            Outbox.Account(
+                                id = a.getString("id"),
+                                name = a.getString("name"),
+                                kind = a.getString("kind"),
+                                packageName = if (a.isNull("package")) null else a.optString("package"),
+                                archivedAt = if (a.isNull("archivedAt")) null else Iso.parse(a.optString("archivedAt")),
+                            )
+                        },
+                        accountNames = objects(body.optJSONArray("accountNames")).map { n ->
+                            Outbox.AccountName(n.getString("id"), n.getString("package"), n.getString("label"), n.getString("accountId"))
+                        },
+                        ownNames = body.optJSONArray("ownNames")?.let { strings(it) },
+                        version = version,
+                    )
                     val more = body.optBoolean("more", false)
                     if (!more || version <= since) break
                     since = version

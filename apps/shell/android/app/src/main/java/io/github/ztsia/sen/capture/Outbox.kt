@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import io.github.ztsia.sen.core.ChannelRef
 import io.github.ztsia.sen.core.RawEvent
+import io.github.ztsia.sen.sync.Meta
 
 /**
  * The phone's SQLite outbox (spec §5, §6.2). Raw events are stored first and never changed; B07 syncs
@@ -48,6 +49,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
         addDropColumns(db)
         addMaybeOtp(db)
         addSync(db)
+        addOfflineCopy(db)
         db.execSQL(
             """
             CREATE TABLE channel_drops (
@@ -66,6 +68,52 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
         if (oldVersion < 3) addMaybeOtp(db)
         // 4: sync (B07). Every event already there, B02's soak included, is pending and goes up.
         if (oldVersion < 4) addSync(db)
+        // 5: the offline copy (B08): categories, accounts and names, for the template engine and the category prompt
+        if (oldVersion < 5) addOfflineCopy(db)
+    }
+
+    /**
+     * The offline copy (B08): what the server keeps for capture to read with no network. The server's
+     * rows always win and nothing on the phone writes them; archived ones are kept, marked. The person's
+     * own names are in `meta`, under [io.github.ztsia.sen.sync.Meta.OWN_NAMES].
+     */
+    private fun addOfflineCopy(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE categories (
+              id TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              kind TEXT NOT NULL,
+              meal INTEGER NOT NULL,
+              beverage INTEGER NOT NULL,
+              discretionary INTEGER NOT NULL,
+              system TEXT,
+              position INTEGER NOT NULL,
+              archived_at INTEGER
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            CREATE TABLE accounts (
+              id TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              kind TEXT NOT NULL,
+              package TEXT,
+              archived_at INTEGER
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            CREATE TABLE account_names (
+              id TEXT PRIMARY KEY,
+              package TEXT NOT NULL,
+              label TEXT NOT NULL,
+              account_id TEXT NOT NULL
+            )
+            """.trimIndent(),
+        )
     }
 
     /**
@@ -352,6 +400,104 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
         )
     }
 
+    // The offline copy (B08). Read-only on the phone: the server's pages are the only writer.
+
+    data class Category(
+        val id: String,
+        val name: String,
+        val kind: String,
+        val meal: Boolean,
+        val beverage: Boolean,
+        val discretionary: Boolean,
+        val system: String?,
+        val position: Int,
+        val archivedAt: Long?,
+    )
+
+    data class Account(val id: String, val name: String, val kind: String, val packageName: String?, val archivedAt: Long?)
+
+    data class AccountName(val id: String, val packageName: String, val label: String, val accountId: String)
+
+    /**
+     * One page of the offline copy and the version it brings, in one transaction: a crash can't leave a
+     * version without its rows. `ownNames` null means unchanged in this page; a list, even empty, replaces.
+     */
+    fun mergeOfflineCopy(
+        categories: List<Category>,
+        accounts: List<Account>,
+        accountNames: List<AccountName>,
+        ownNames: List<String>?,
+        version: Long,
+    ) {
+        writableDatabase.transaction {
+            categories.forEach {
+                execSQL(
+                    "INSERT OR REPLACE INTO categories (id, name, kind, meal, beverage, discretionary, system, position, archived_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    arrayOf<Any?>(it.id, it.name, it.kind, if (it.meal) 1 else 0, if (it.beverage) 1 else 0, if (it.discretionary) 1 else 0, it.system, it.position, it.archivedAt),
+                )
+            }
+            accounts.forEach {
+                execSQL(
+                    "INSERT OR REPLACE INTO accounts (id, name, kind, package, archived_at) VALUES (?, ?, ?, ?, ?)",
+                    arrayOf<Any?>(it.id, it.name, it.kind, it.packageName, it.archivedAt),
+                )
+            }
+            accountNames.forEach {
+                execSQL(
+                    "INSERT OR REPLACE INTO account_names (id, package, label, account_id) VALUES (?, ?, ?, ?)",
+                    arrayOf<Any?>(it.id, it.packageName, it.label, it.accountId),
+                )
+            }
+            if (ownNames != null) {
+                execSQL("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)", arrayOf<Any>(Meta.OWN_NAMES, org.json.JSONArray(ownNames).toString()))
+            }
+            execSQL("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)", arrayOf<Any>(Meta.CHANGES_VERSION, version.toString()))
+        }
+    }
+
+    /** By position, then name; archived ones only when asked for. */
+    fun categories(includeArchived: Boolean = false): List<Category> =
+        readableDatabase.rawQuery(
+            "SELECT id, name, kind, meal, beverage, discretionary, system, position, archived_at FROM categories" +
+                (if (includeArchived) "" else " WHERE archived_at IS NULL") + " ORDER BY position, name, id",
+            null,
+        ).use { c ->
+            buildList {
+                while (c.moveToNext()) {
+                    add(
+                        Category(
+                            c.getString(0), c.getString(1), c.getString(2), c.getInt(3) == 1, c.getInt(4) == 1, c.getInt(5) == 1,
+                            c.getString(6), c.getInt(7), if (c.isNull(8)) null else c.getLong(8),
+                        ),
+                    )
+                }
+            }
+        }
+
+    fun accounts(includeArchived: Boolean = false): List<Account> =
+        readableDatabase.rawQuery(
+            "SELECT id, name, kind, package, archived_at FROM accounts" + (if (includeArchived) "" else " WHERE archived_at IS NULL") + " ORDER BY name, id",
+            null,
+        ).use { c ->
+            buildList { while (c.moveToNext()) add(Account(c.getString(0), c.getString(1), c.getString(2), c.getString(3), if (c.isNull(4)) null else c.getLong(4))) }
+        }
+
+    fun accountNames(): List<AccountName> =
+        readableDatabase.rawQuery("SELECT id, package, label, account_id FROM account_names ORDER BY package, label, id", null).use { c ->
+            buildList { while (c.moveToNext()) add(AccountName(c.getString(0), c.getString(1), c.getString(2), c.getString(3))) }
+        }
+
+    /** The person's own names as banks print them (D17); empty before the first sync. */
+    fun ownNames(): List<String> {
+        val json = meta(Meta.OWN_NAMES) ?: return emptyList()
+        return try {
+            val a = org.json.JSONArray(json)
+            (0 until a.length()).map { a.getString(it) }
+        } catch (_: org.json.JSONException) {
+            emptyList()
+        }
+    }
+
     // The web app's writes (B07): each Command JSON as given, with the id it was made with.
 
     data class Command(val id: String, val body: String, val madeAt: Long, val syncedAt: Long?, val status: String?, val said: String?)
@@ -400,6 +546,9 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
             execSQL("DELETE FROM events")
             execSQL("DELETE FROM commands")
             execSQL("DELETE FROM capture_apps")
+            execSQL("DELETE FROM categories")
+            execSQL("DELETE FROM accounts")
+            execSQL("DELETE FROM account_names")
             execSQL("DELETE FROM meta")
         }
     }
@@ -429,7 +578,7 @@ class Outbox private constructor(context: Context) : SQLiteOpenHelper(context, N
 
     companion object {
         private const val NAME = "outbox.db"
-        private const val VERSION = 4
+        private const val VERSION = 5
         private const val PENDING = "synced_at IS NULL AND refused IS NULL"
         private const val DAY_MS = 86_400_000L
         private const val TEN_MIN_MS = 600_000L

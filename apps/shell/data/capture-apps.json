@@ -8,7 +8,7 @@
       "kind": "ewallet",
       "accounts": ["TNG eWallet"]
     },
-    { "package": "my.rytbank.app", "label": "Ryt Bank", "kind": "bank", "accounts": ["Ryt Main Account"] },
+    { "package": "my.rytbank.app", "label": "Ryt Bank", "kind": "bank", "accounts": ["Ryt Bank"] },
     { "package": "com.pbb.mypb", "label": "MyPB by Public Bank", "kind": "bank", "accounts": ["Public Bank"] },
     { "package": "com.grabtaxi.passenger", "label": "Grab", "kind": "ewallet", "accounts": ["GrabPay Wallet"] },
     {
