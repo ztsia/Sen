@@ -39,9 +39,52 @@ function previewPeople(): PreviewPerson[] {
       ownNames: s.you.bankNames,
       expectedPayday:
         payday.kind === 'day' ? String(payday.day) : payday.kind === 'last-working' ? 'last-working' : null,
+      setupDone: true,
+      accounts: db.accounts
+        .filter((a) => !a.archivedAt)
+        .map((a) => ({
+          id: a.id,
+          name: a.name,
+          kind: a.kind,
+          package: a.notifierPackage,
+          // the app's own name, as first run saves it
+          label: a.notifierPackage ? (APP_LABELS[a.notifierPackage] ?? a.name) : null,
+          opening: a.openingBalance,
+          openingAt: a.openingAt,
+        })),
+      categories: db.categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        kind: c.kind,
+        meal: c.isMeal,
+        beverage: c.isBeverage,
+        discretionary: c.isDiscretionary,
+        system: c.systemKey,
+      })),
+    },
+    // B08: someone just invited, before first run, to walk it on a preview (in the review shell)
+    {
+      id: '5e15e15e-0b08-4000-8000-00000000f125',
+      name: 'Mei Ling',
+      email: 'meiling@example.com',
+      admin: false,
+      features: { shell: true, capture: true, agent: true, splits: true, email: false, calendar: false, claims: false },
+      ownNames: [],
+      expectedPayday: 'last-working',
+      setupDone: false,
+      accounts: [],
+      categories: [],
     },
   ];
 }
+
+/** The apps' names on Play (apps/shell/data/capture-apps.json), as the shell hands them to first run. */
+const APP_LABELS: Record<string, string> = {
+  'my.com.tngdigital.ewallet': "Touch 'n Go eWallet",
+  'my.rytbank.app': 'Ryt Bank',
+  'com.pbb.mypb': 'MyPB by Public Bank',
+  'com.grabtaxi.passenger': 'Grab',
+};
 
 const lines: string[] = [];
 const log = (line: string) => {

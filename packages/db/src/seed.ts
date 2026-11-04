@@ -55,6 +55,32 @@ export interface PreviewPerson {
   ownNames: string[];
   /** `last-working`, a day `1`–`31`, or null (user_settings.expected_payday). */
   expectedPayday: string | null;
+  /** First run is finished (B08): someone who hasn't done it is sent to it. */
+  setupDone: boolean;
+  /** Their accounts and categories (B08), as the scenario has them; none before first run. */
+  accounts: PreviewAccount[];
+  categories: PreviewCategory[];
+}
+
+export interface PreviewAccount {
+  id: string;
+  name: string;
+  kind: 'tracked' | 'elsewhere';
+  package: string | null;
+  label: string | null;
+  /** Integer sen. */
+  opening: number;
+  openingAt: string;
+}
+
+export interface PreviewCategory {
+  id: string;
+  name: string;
+  kind: 'spend' | 'income';
+  meal: boolean;
+  beverage: boolean;
+  discretionary: boolean;
+  system: 'salary' | 'cash' | 'unaccounted' | null;
 }
 
 /**
@@ -77,10 +103,12 @@ export async function seedPreview(client: pg.ClientBase, people: PreviewPerson[]
         [p.id, p.admin, p.features],
       );
       await client.query(
-        `insert into user_settings (user_id, own_names, expected_payday) values ($1, $2, $3)
-         on conflict (user_id) do update set own_names = excluded.own_names, expected_payday = excluded.expected_payday, updated_at = now()`,
-        [p.id, p.ownNames, p.expectedPayday],
+        `insert into user_settings (user_id, own_names, expected_payday, setup_done_at) values ($1, $2, $3, $4)
+         on conflict (user_id) do update set own_names = excluded.own_names, expected_payday = excluded.expected_payday,
+           setup_done_at = excluded.setup_done_at, updated_at = now()`,
+        [p.id, p.ownNames, p.expectedPayday, p.setupDone ? new Date() : null],
       );
+      await seedLedger(client, p);
       if (p.features.capture) await seedCapture(client, p.id, new Date());
     }
     await client.query('commit');
@@ -88,6 +116,24 @@ export async function seedPreview(client: pg.ClientBase, people: PreviewPerson[]
     await client.query('rollback');
     throw e;
   }
+}
+
+/** A preview person's accounts and categories (B08), reset to the scenario on every deploy. */
+async function seedLedger(client: pg.ClientBase, p: PreviewPerson): Promise<void> {
+  for (const t of ['transactions', 'account_names', 'accounts', 'categories'])
+    await client.query(`delete from ${t} where user_id = $1`, [p.id]);
+  for (const a of p.accounts)
+    await client.query(
+      `insert into accounts (id, user_id, name, kind, notifier_package, notifier_label, opening_balance, opening_at)
+       values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [a.id, p.id, a.name, a.kind, a.package, a.label, a.opening, a.openingAt],
+    );
+  for (const [i, c] of p.categories.entries())
+    await client.query(
+      `insert into categories (id, user_id, name, kind, is_meal, is_beverage, is_discretionary, system_key, position)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [c.id, p.id, c.name, c.kind, c.meal, c.beverage, c.discretionary, c.system, i + 1],
+    );
 }
 
 /** The made-up notifications a preview's *Captured on this phone* shows (B07), masked as the listener stores them. */

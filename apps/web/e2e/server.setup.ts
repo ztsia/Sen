@@ -33,6 +33,10 @@ export default async function setup() {
     },
     ownNames: s.you.bankNames,
     expectedPayday: payday.kind === 'day' ? String(payday.day) : payday.kind === 'last-working' ? 'last-working' : null,
+    // first run done, so sign-in lands on Home (B08); the journey here is sign-in's, not the ledger's
+    setupDone: true,
+    accounts: [],
+    categories: [],
   };
   const client = new pg.Client({ connectionString: 'postgres://sen_owner@127.0.0.1:5432/sen_test' });
   await client.connect();

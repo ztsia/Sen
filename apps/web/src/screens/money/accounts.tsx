@@ -95,9 +95,12 @@ function Body({ v }: { v: AccountsView }) {
               <ItemContent className="min-w-0 gap-0.5">
                 <ItemTitle className="block w-full truncate text-base font-normal">{a.name}</ItemTitle>
                 <ItemDescription className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                  <Badge variant={a.checkedAt ? 'muted' : 'warning'}>
-                    {a.checkedAt ? `Checked ${shortDay(klDay(a.checkedAt))}` : 'Not checked'}
-                  </Badge>
+                  {/* a check is only asked for once balance checks exist (B13) */}
+                  {canOpen('balance-check') ? (
+                    <Badge variant={a.checkedAt ? 'muted' : 'warning'}>
+                      {a.checkedAt ? `Checked ${shortDay(klDay(a.checkedAt))}` : 'Not checked'}
+                    </Badge>
+                  ) : null}
                   {a.app && a.app !== a.name ? <span className="truncate">{a.app}</span> : null}
                 </ItemDescription>
               </ItemContent>
