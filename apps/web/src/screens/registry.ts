@@ -1,3 +1,5 @@
+import { DEV_TOOLS } from '@/lib/env';
+
 // Every screen in docs/screens.md, by its id, with where it sits and whether it's built (B01).
 // A `skeleton` screen shows "Not built yet" in production, and never shows data there (modules.md,
 // rule 6). A slice that makes a screen real changes its status here.
@@ -30,6 +32,12 @@ const BUILT = new Set([
   'settings/member',
   // B06: the last backup and R2's storage, from the server (admin), and the admin's checks
   'settings/data',
+  // B08
+  'first-run',
+  'accounts',
+  'account',
+  'settings/you',
+  'settings/categories',
 ]);
 
 const s = (id: string, title: string, kind: ScreenKind, tab: TabId | undefined, slice: string): ScreenDef => ({
@@ -92,7 +100,7 @@ export const SCREENS: ScreenDef[] = [
   s('settings/capture/running', 'Keep Sen running', 'pushed', 'more', 'B02'),
   s('settings/capture/captured', 'Captured on this phone', 'pushed', 'more', 'B02, B07; B10 replaces it'),
   s('settings/you', 'You', 'pushed', 'more', 'B08'),
-  s('settings/categories', 'Categories and rules', 'pushed', 'more', 'B12'),
+  s('settings/categories', 'Categories and rules', 'pushed', 'more', 'B08, B12'),
   s('settings/email', 'Receipts by email', 'pushed', 'more', 'B19'),
   s('settings/claims', 'Claims', 'pushed', 'more', 'B25'),
   s('settings/sen', 'Sen', 'pushed', 'more', 'B27'),
@@ -107,6 +115,12 @@ export const SCREENS: ScreenDef[] = [
 ];
 
 export const screenById = new Map(SCREENS.map((d) => [d.id, d]));
+
+/**
+ * Whether a button may lead to a screen (B08): one that's built, anywhere; a skeleton one only in
+ * previews, where the made-up data stands behind it. Production never offers a way into *Not built yet*.
+ */
+export const canOpen = (id: string) => screenById.get(id)?.status === 'real' || DEV_TOOLS;
 
 /** The tab bar shows on the tabs and the screens pushed from them, and hides during a task with an end (patterns.md §6). */
 export const showsTabBar = (d: ScreenDef | undefined) => !!d && (d.kind === 'tab' || d.kind === 'pushed');

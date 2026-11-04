@@ -52,19 +52,19 @@ const owned = (id: string) => ({ id, userId: USER });
 
 // --- accounts (§7) ---
 
-export type AcctKey = 'ryt' | 'pbb' | 'tng' | 'goplus' | 'grab' | 'maybank';
+// one account per app (D145): GO+ is part of the TNG account, and Ryt's pockets of its one account
+export type AcctKey = 'ryt' | 'pbb' | 'tng' | 'grab' | 'maybank';
 const ACCOUNTS: Record<AcctKey, [name: string, pkg: string | null, label: string | null, opening: string]> = {
   ryt: ['Ryt Bank', 'my.rytbank.app', 'Main Account', '3,200.00'],
   pbb: ['Public Bank', 'com.pbb.mypb', null, '6,400.00'],
-  tng: ['TNG eWallet', 'my.com.tngdigital.ewallet', null, '85.00'],
-  goplus: ['GO+', 'my.com.tngdigital.ewallet', 'GO+', '1,500.00'],
+  tng: ['TNG eWallet', 'my.com.tngdigital.ewallet', null, '1,585.00'],
   grab: ['GrabPay Wallet', 'com.grabtaxi.passenger', null, '40.00'],
   maybank: ['Maybank', null, null, '0.00'],
 };
 export const acctId = (k: AcctKey) => uid(`account:${k}`);
 export const OPENING_DAY = '2025-10-31';
 
-function accounts(openingDay: string, keys: AcctKey[] = ['ryt', 'pbb', 'tng', 'goplus', 'grab', 'maybank']): Account[] {
+function accounts(openingDay: string, keys: AcctKey[] = ['ryt', 'pbb', 'tng', 'grab', 'maybank']): Account[] {
   return keys.map((k) => {
     const [name, pkg, label, opening] = ACCOUNTS[k];
     return {
@@ -106,7 +106,8 @@ const SPEND: [name: string, meal: boolean, drink: boolean, disc: boolean][] = [
 const INCOME = ['Salary', 'Interest & returns', 'Other income'];
 export const catId = (name: string) => uid(`category:${name}`);
 
-function categories(): Category[] {
+/** The starting list (§8, D33), as `seed_categories()` makes it: the fake's `setup.start` uses it too. */
+export function categories(): Category[] {
   const system = (n: string): Category['systemKey'] =>
     n === 'Salary' ? 'salary' : n === 'Cash' ? 'cash' : n === 'Unaccounted' ? 'unaccounted' : null;
   return [
@@ -366,8 +367,7 @@ export function genCycle(
         }),
       );
       if (opts.ownTransfers) {
-        transfer(k('goplus'), d, '10:10', rm('500.00'), 'ryt', 'goplus').forEach(push);
-        transfer(k('tng'), d, '10:12', rm('550.00'), 'ryt', 'tng').forEach(push);
+        transfer(k('tng'), d, '10:12', rm('1,050.00'), 'ryt', 'tng').forEach(push);
         transfer(k('pbb'), d, '10:14', rm('400.00'), 'ryt', 'pbb').forEach(push);
       }
     }
@@ -440,7 +440,7 @@ export function genCycle(
           time: '06:00',
           merchant: 'GO+ DAILY EARNINGS',
           amount: between(r, '3.10', '5.90'),
-          acct: 'goplus',
+          acct: 'tng',
           kind: 'income',
           cat: 'Interest & returns',
         }),
@@ -704,6 +704,7 @@ function base(gen: Gen): Db {
     claims: true,
     agent: true,
     aiPausedUntil: null,
+    setupDone: true,
     openingDay: OPENING_DAY,
     accounts: accounts(OPENING_DAY),
     categories: categories(),

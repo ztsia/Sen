@@ -140,9 +140,10 @@ function accountRow(db: Db, a: Db['accounts'][number], bal: Map<string, number>)
     id: a.id,
     name: a.name,
     kind: a.kind,
-    balance: tracked ? (bal.get(a.id) ?? 0) : null,
+    balance: tracked ? (bal.get(a.id) ?? a.openingBalance) : null,
     checkedAt: tracked ? (checksOf(db, a.id)[0]?.asOf ?? null) : null,
-    app: tracked && a.notifierPackage ? (APP[a.notifierPackage] ?? null) : null,
+    app: tracked && a.notifierPackage ? (APP[a.notifierPackage] ?? a.notifierLabel) : null,
+    package: a.notifierPackage,
   };
 }
 

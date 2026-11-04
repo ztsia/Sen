@@ -18,6 +18,7 @@ export const SCENARIOS = [
   'capture-off',
   'cap',
   'year',
+  'new',
 ] as const;
 export type ScenarioId = (typeof SCENARIOS)[number];
 export const SCENARIO_NAMES: Record<ScenarioId, string> = {
@@ -29,6 +30,7 @@ export const SCENARIO_NAMES: Record<ScenarioId, string> = {
   'capture-off': 'Capture is off',
   cap: 'AI credit used up',
   year: 'A heavy year',
+  new: 'Before first run',
 };
 
 /** Keeps only what happened on or after the opening day, as if the app had just been set up then. */
@@ -89,7 +91,25 @@ export function buildScenario(id: ScenarioId, empty: boolean): Db {
       return db;
     case 'year':
       return db;
+    case 'new':
+      return beforeFirstRun();
   }
+}
+
+/**
+ * Just invited, before first run (B08): signed in and nothing else. No accounts, no names, and no
+ * categories until first run's `setup.start` seeds them. The skeleton's other screens read as empty.
+ */
+function beforeFirstRun(): Db {
+  const db = emptyDb();
+  db.setupDone = false;
+  db.accounts = [];
+  db.categories = [];
+  db.rules = [];
+  db.health = [];
+  db.settings.you = { bankNames: [], payday: { kind: 'last-working' }, qr: false };
+  db.settings.rules = [];
+  return db;
 }
 
 /** Payday, 30 Oct at 9:20 am: the salary has just landed and the Payday card is up (D60). */

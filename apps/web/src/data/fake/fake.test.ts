@@ -89,9 +89,9 @@ describe("Wei Ming's month", () => {
     expect(v.spendingOf(db, uniqlo)).toBe(rm('90.00'));
   });
 
-  it('shows a transfer as one row, Ryt → GO+', () => {
+  it('shows a transfer as one row, Ryt → TNG eWallet', () => {
     const rows = v.payments(db, env, { cycle: '2026-09-30' }).rows;
-    expect(rows.filter((r) => r.title === 'Ryt Bank → GO+')).toHaveLength(1);
+    expect(rows.filter((r) => r.title === 'Ryt Bank → TNG eWallet')).toHaveLength(1);
     expect(rows.some((r) => r.marks.includes('filled'))).toBe(true);
   });
 

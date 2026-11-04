@@ -1,11 +1,11 @@
 import type { Command, WriteResult } from '@sen/core/commands';
 import type { CaptureHealthView, CapturedView } from '@sen/core/sync';
-import type { MeView, SettingsCore, SettingsView } from '@sen/core/views';
+import type { AccountsView, AccountView, MeView, SettingsCore, SettingsView } from '@sen/core/views';
 import { toastDone, toastRetry, toastUndo } from '@/blocks/toast';
 import { readStored, writeStored } from '@/lib/storage';
 import { newId } from '@/lib/uid';
 import { OUTBOX_BRIDGE, hasBridge } from '@/shell/bridge';
-import type { Backend } from '../backend';
+import type { Backend, Choice } from '../backend';
 import { queryClient } from '../index';
 import { writeToOutbox } from '../outbox';
 import {
@@ -90,6 +90,22 @@ export function createApiBackend(rest: Backend | null): Backend {
   const self: Backend = {
     ...bind(fallback),
     me: () => kept('me', () => apiCall<MeView>('/me')),
+    // B08: accounts with their balances, and the categories
+    accountList: () => kept('account-list', () => apiCall<AccountsView>('/accounts')),
+    async account(id) {
+      try {
+        return await kept(`account:${id}`, () => apiCall<AccountView>(`/accounts/${encodeURIComponent(id)}`));
+      } catch (e) {
+        if (e instanceof ApiFailure && e.status === 404) return null;
+        throw e;
+      }
+    },
+    categories: (kind) => kept(`categories:${kind}`, () => apiCall<Choice[]>(`/categories?kind=${kind}`)),
+    async accounts() {
+      const v = await self.accountList();
+      // the one used last arrives with payments (B09)
+      return { accounts: v.tracked.map((a) => ({ id: a.id, label: a.name })), last: null };
+    },
     async settings(): Promise<SettingsView> {
       const core = await kept('settings', () => apiCall<SettingsCore>('/settings'));
       const view = rest ? { ...(await rest.settings()), ...core } : (core as SettingsView);
@@ -192,10 +208,18 @@ async function again(b: Backend, command: Command): Promise<void> {
   }
 }
 
-/** The commands the server carries from B05: *You*'s names and payday, an undo of them, and the admin's. */
+/**
+ * The commands the server carries: *You*'s names and payday and the admin's (B05); first run, accounts
+ * and categories (B08).
+ */
 function servedHere(cmd: Command): boolean {
   if (cmd.type === 'setting.set') return cmd.key === 'you.bankNames' || cmd.key === 'you.payday';
-  return cmd.type.startsWith('member.');
+  return (
+    cmd.type.startsWith('member.') ||
+    cmd.type.startsWith('setup.') ||
+    cmd.type.startsWith('account.') ||
+    cmd.type.startsWith('category.')
+  );
 }
 
 /** Every Backend method of `b`, so spreading it keeps them (a Proxy has no own keys to spread). */

@@ -567,6 +567,8 @@ export const AccountRow = z.object({
   checkedAt: Instant.nullable(),
   /** The app that feeds it: *Ryt Bank*. */
   app: z.string().nullable(),
+  /** That app's package (D145: one account per app), so first run can match each chosen app to its account. */
+  package: z.string().nullable(),
 });
 export type AccountRow = z.infer<typeof AccountRow>;
 

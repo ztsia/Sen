@@ -155,7 +155,8 @@ export function balances(db: Db): Map<string, number> {
   for (const t of live(db)) {
     if (!t.accountId || !m.has(t.accountId)) continue;
     const a = db.accounts.find((x) => x.id === t.accountId)!;
-    if (Date.parse(t.occurredAt) < Date.parse(a.openingAt)) continue;
+    // only what moved after the opening counts (§7): the opening balance already holds the moment itself
+    if (Date.parse(t.occurredAt) <= Date.parse(a.openingAt)) continue;
     m.set(t.accountId, m.get(t.accountId)! + (t.direction === 'in' ? t.amount : -t.amount));
   }
   return m;
@@ -457,12 +458,6 @@ function bankText(db: Db, t: Transaction): { app: string; title: string; text: s
         };
       return { app, title: 'Card payment completed 👍', text: `${amt} paid at ${name} using your Main Account.` };
     case 'my.com.tngdigital.ewallet':
-      if (a.notifierLabel === 'GO+')
-        return {
-          app,
-          title: 'Cash In Successful',
-          text: `You have successfully cashed in ${amt} into your GO+ account.`,
-        };
       if (t.direction === 'in')
         return {
           app,
@@ -927,6 +922,7 @@ export const me = (db: Db): MeView => ({
   claims: db.claims,
   agent: db.agent,
   aiPausedUntil: db.aiPausedUntil,
+  setupDone: db.setupDone,
 });
 
 /** Categories for a picker, most used first over the last 90 days (§6.8). */
