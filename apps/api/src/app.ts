@@ -18,6 +18,7 @@ import { noRelay, workerRelay, type Relay } from './jobs/relay';
 import { personJobRoutes, schedulerRoutes } from './jobs/routes';
 import { adminRoutes, personRoutes } from './routes';
 import { syncRoutes } from './sync/routes';
+import { ledgerRoutes } from './ledger';
 
 /** The largest request body the API reads, in bytes. */
 export const MAX_BODY = 256 * 1024;
@@ -238,6 +239,7 @@ export function createApp(deps: Deps) {
   api.route('/', personRoutes());
   api.route('/', personJobRoutes({ auth: deps.auth }));
   api.route('/', syncRoutes());
+  api.route('/', ledgerRoutes());
   api.route('/admin', adminRoutes());
   return { api, auth };
 }

@@ -165,6 +165,12 @@ beforeAll(async () => {
       job,
       `${job}:sweep`,
     ]);
+  // an account of the member's, so GET /accounts/:id answers its good request (B08)
+  await owner.query(
+    `insert into accounts (id, user_id, name, kind, notifier_package, notifier_label, opening_balance)
+     values ('00000000-0000-4000-8000-0000000000aa', $1, 'Ryt Bank', 'tracked', 'my.rytbank.app', 'Ryt Bank', 100)`,
+    [member.id],
+  );
   cookies.admin = await signIn(admin.email);
   cookies.member = await signIn(member.email);
   cookies.spare = await signIn(spare.email);
@@ -200,13 +206,21 @@ describe.each(ROUTES)('$method $path', (spec) => {
 
   it('answers its own request', async () => {
     if (spec.access === 'auth') return; // Better Auth's own answers are its tests'; the bad ones are ours
+    // a pattern (`/accounts/:id`) is called at the path its spec names
+    const path = callsOf(spec)[0]!;
     const res = await send({
       method: spec.method,
-      path: spec.path,
+      path,
       ...cred(),
       body: bodyFor(spec, spec.path),
     });
     holds(res, 'the good request');
+    if (path !== spec.path) {
+      // and another person's id is simply not there, to the admin too (D52)
+      const theirs = await send({ method: spec.method, path, cookie: cookies.admin, body: bodyFor(spec, path) });
+      holds(theirs, 'another person’s id');
+      expect(theirs.status).toBe(404);
+    }
     expect(res.status, res.text).toBeLessThan(300);
   });
 

@@ -23,6 +23,24 @@ function digitsToInt(digits: string): number {
 }
 
 /**
+ * Reads a Postgres `BIGINT` of sen, which the driver hands over as text (B08): whole digits with an
+ * optional minus, folded digit by digit, and refused beyond MAX_SEN. A number is taken only if it's
+ * already a safe integer. Anything else throws: a column that isn't whole sen is a bug, never rounded.
+ */
+export function senFromDb(value: string | number | bigint): number {
+  if (typeof value === 'number') {
+    if (Number.isSafeInteger(value) && Math.abs(value) <= MAX_SEN) return value;
+    throw new RangeError(`not whole sen: ${value}`);
+  }
+  const text = String(value);
+  const m = /^(-?)([0-9]{1,13})$/.exec(text);
+  if (!m) throw new RangeError(`not whole sen: ${text}`);
+  const n = digitsToInt(m[2]!);
+  if (n > MAX_SEN) throw new RangeError(`beyond MAX_SEN: ${text}`);
+  return m[1] ? -n : n;
+}
+
+/**
  * Parses typed text into sen. Accepts `12`, `12.5`, `12.50` and `1,284.50`: digits, optionally
  * grouped by commas in threes, and at most two decimals. Rejects three decimals, any sign, a bare
  * or trailing point, misplaced commas, leading zeros and anything else. Spaces around the text are

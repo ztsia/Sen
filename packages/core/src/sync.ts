@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { Command } from './commands';
-import { Id, Instant } from './schema';
+import { Id, Instant, Package } from './schema';
 
 /**
  * The outbox's sync (B07, spec §5, §6.2, §16 `/sync`): what the shell sends and what it gets back.
@@ -9,15 +9,6 @@ import { Id, Instant } from './schema';
  */
 
 const Text = (max: number) => z.string().max(max).nullable();
-/** An Android package name. */
-const Package = z
-  .string()
-  .min(1)
-  .max(255)
-  .refine((p) => {
-    const parts = p.split('.');
-    return parts.length >= 2 && /^[A-Za-z]/.test(p) && parts.every((x) => /^[A-Za-z0-9_]+$/.test(x));
-  }, 'an Android package name');
 
 /** A captured notification, raw and masked as the listener stored it (§6.2, D121). */
 export const SyncEvent = z.object({
@@ -132,6 +123,33 @@ export const SyncChanges = z.object({
   /** More changes wait: ask again from `version`. */
   more: z.boolean(),
   captureApps: z.array(SyncCaptureApp),
+  /** B08: what capture and the category prompt need offline (§5). Archived rows come down too, marked. */
+  categories: z.array(
+    z.object({
+      id: Id,
+      name: z.string(),
+      kind: z.enum(['spend', 'income']),
+      meal: z.boolean(),
+      beverage: z.boolean(),
+      discretionary: z.boolean(),
+      system: z.enum(['salary', 'cash', 'unaccounted']).nullable(),
+      position: z.int(),
+      archivedAt: Instant.nullable(),
+    }),
+  ),
+  accounts: z.array(
+    z.object({
+      id: Id,
+      name: z.string(),
+      kind: z.enum(['tracked', 'elsewhere']),
+      package: z.string().nullable(),
+      archivedAt: Instant.nullable(),
+    }),
+  ),
+  /** An `{account}` name an app prints, and the account it maps to (B09 reads it). */
+  accountNames: z.array(z.object({ id: Id, package: z.string(), label: z.string(), accountId: Id })),
+  /** Your names as banks print them (D17), when they changed in this page; null if they didn't. */
+  ownNames: z.array(z.string()).nullable(),
 });
 export type SyncChanges = z.infer<typeof SyncChanges>;
 

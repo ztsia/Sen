@@ -68,6 +68,15 @@ export const ROUTES: RouteSpec[] = [
   { method: 'POST', path: '/api/match', access: 'person', body: {} },
   { method: 'GET', path: '/api/capture/health', access: 'person' },
   { method: 'GET', path: '/api/captured', access: 'person' },
+  // B08: accounts with their balances, and the categories
+  { method: 'GET', path: '/api/accounts', access: 'person' },
+  {
+    method: 'GET',
+    path: '/api/accounts/:id',
+    access: 'person',
+    calls: ['/api/accounts/00000000-0000-4000-8000-0000000000aa'],
+  },
+  { method: 'GET', path: '/api/categories', access: 'person' },
 ];
 
 /**

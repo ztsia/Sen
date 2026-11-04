@@ -432,6 +432,8 @@ export const MeView = z.object({
   agent: z.boolean(),
   /** AI credit at zero: Sen and reading pause, everything else works (§9.6). */
   aiPausedUntil: Day.nullable(),
+  /** First run is finished (B08, D26): its steps never come back. */
+  setupDone: z.boolean(),
 });
 export type MeView = z.infer<typeof MeView>;
 
@@ -749,7 +751,21 @@ export const SettingsView = z.object({
     ]),
     qr: z.boolean(),
   }),
-  categories: z.array(z.object({ id: Id, name: z.string(), kind: z.enum(['spend', 'income']), rules: z.int() })),
+  categories: z.array(
+    z.object({
+      id: Id,
+      name: z.string(),
+      kind: z.enum(['spend', 'income']),
+      rules: z.int(),
+      /** The flags (§8): a meal, a drink when it's the whole payment, and discretionary. */
+      meal: z.boolean(),
+      beverage: z.boolean(),
+      discretionary: z.boolean(),
+      /** The three code relies on (§15): they can be renamed, never archived. */
+      system: z.enum(['salary', 'cash', 'unaccounted']).nullable(),
+      archived: z.boolean(),
+    }),
+  ),
   rules: z.array(
     z.object({
       id: Id,
@@ -815,7 +831,15 @@ export type SettingsView = z.infer<typeof SettingsView>;
  * backups (B06). The rest of SettingsView arrives with the slices that own its tables; until then a
  * preview fills it from the made-up scenario.
  */
-export const SettingsCore = SettingsView.pick({ email: true, admin: true, switches: true, you: true, data: true });
+export const SettingsCore = SettingsView.pick({
+  email: true,
+  admin: true,
+  switches: true,
+  you: true,
+  data: true,
+  // B08: the categories; their rules arrive with B12
+  categories: true,
+});
 export type SettingsCore = z.infer<typeof SettingsCore>;
 
 /** `GET /api/admin/members` (B05's read; B38's screens): people and their switches, never their money (D52). */

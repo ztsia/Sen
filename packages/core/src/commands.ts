@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Amount, Day, Id, Instant, Sen } from './schema';
+import { Amount, Day, Id, Instant, Package, Sen } from './schema';
 
 /** The currencies a subscription can be declared in by hand (D134): each has two decimals. */
 export const SUB_CURRENCIES = ['MYR', 'USD', 'SGD', 'EUR', 'GBP'] as const;
@@ -34,7 +34,42 @@ const DraftItem = z.object({
   categoryId: Id.nullable(),
 });
 
+/** A name as people type it: trimmed, never empty. */
+const Name = (max: number) => z.string().trim().min(1, 'Type a name.').max(max, `Keep it to ${max} characters.`);
+
 export const Command = z.discriminatedUnion('type', [
+  /**
+   * First run (B08, D26): `start` seeds the starting categories once (§8, D33); `finish` marks it done,
+   * so its steps never come back.
+   */
+  z.object({ type: z.literal('setup.start') }),
+  z.object({ type: z.literal('setup.finish') }),
+  /**
+   * An account (§7, D145): one per app, with today's balance typed as text and parsed into sen on the
+   * phone. Its opening moment is when the server saves it. An Elsewhere account has no app and no balance.
+   */
+  z.object({
+    type: z.literal('account.add'),
+    id: Id,
+    name: Name(60),
+    kind: z.enum(['tracked', 'elsewhere']),
+    app: z.object({ package: Package, label: Name(200) }).nullable(),
+    opening: Sen,
+  }),
+  /** A rename, or a corrected opening balance: the opening moment stays the one it was seen at. */
+  z.object({ type: z.literal('account.edit'), id: Id, name: Name(60).optional(), opening: Sen.optional() }),
+  z.object({ type: z.literal('account.archive'), id: Id, archived: z.boolean() }),
+  /** Settings → Categories (§8, D28): add, rename, the flags, archive. Kind and system key never change. */
+  z.object({ type: z.literal('category.add'), id: Id, name: Name(40), kind: z.enum(['spend', 'income']) }),
+  z.object({
+    type: z.literal('category.edit'),
+    id: Id,
+    name: Name(40).optional(),
+    meal: z.boolean().optional(),
+    beverage: z.boolean().optional(),
+    discretionary: z.boolean().optional(),
+  }),
+  z.object({ type: z.literal('category.archive'), id: Id, archived: z.boolean() }),
   /** A category for a payment; `rule` is *From now on*, which updates its merchant's rule (D25, D89). */
   z.object({ type: z.literal('txn.category'), id: Id, categoryId: Id, scope: z.enum(['once', 'rule']) }),
   /** Money in as income, a transfer from one of your accounts, or a refund of a purchase (D17, D21). */

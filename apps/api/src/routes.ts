@@ -8,6 +8,7 @@ import { audit } from './audit';
 import { NO_SWITCHES, type Env } from './context';
 import { ApiError, forbidden, notBuilt, parse, readJson } from './errors';
 import { backupFacts, R2_ALLOWANCE_BYTES, R2_WARN_BYTES } from './jobs/frames';
+import { isLedgerCommand, runLedgerCommand, settingsCategories } from './ledger';
 
 const Payday = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('last-working') }),
@@ -40,18 +41,34 @@ const BankNames = z
 export function personRoutes() {
   const r = new Hono<Env>();
 
-  r.get('/me', (c) => {
+  r.get('/me', async (c) => {
     const f = c.var.access.features;
-    const me: MeView = { capture: f.capture, claims: f.claims, agent: f.agent, aiPausedUntil: null };
+    const [s] = await c.var.db((db) =>
+      db
+        .select({ setupDoneAt: schema.userSettings.setupDoneAt })
+        .from(schema.userSettings)
+        .where(eq(schema.userSettings.userId, c.var.person.id)),
+    );
+    const me: MeView = {
+      capture: f.capture,
+      claims: f.claims,
+      agent: f.agent,
+      aiPausedUntil: null,
+      setupDone: !!s?.setupDoneAt,
+    };
     return c.json(me);
   });
 
   r.get('/settings', async (c) => {
     const { person, access } = c.var;
-    const { row, backups } = await c.var.db(async (db) => {
+    const { row, backups, categories } = await c.var.db(async (db) => {
       const [s] = await db.select().from(schema.userSettings).where(eq(schema.userSettings.userId, person.id));
       // the backups are the admin's (job_runs, B06); everyone else has none to see
-      return { row: s, backups: access.isAdmin ? await backupFacts(db, person.id, new Date()) : null };
+      return {
+        row: s,
+        backups: access.isAdmin ? await backupFacts(db, person.id, new Date()) : null,
+        categories: await settingsCategories(db, person.id),
+      };
     });
     const view: SettingsCore = {
       email: person.email,
@@ -63,20 +80,21 @@ export function personRoutes() {
         exportReady: false,
         storage: backups ? { used: backups.heldBytes, allowance: R2_ALLOWANCE_BYTES, warnAt: R2_WARN_BYTES } : null,
       },
+      categories,
     };
     return c.json(view);
   });
 
   /**
    * Every change, as a command (`@sen/core/commands`). B05 carries the commands whose tables exist:
-   * *You*'s names and payday. The admin's `member.*` refuse everyone else; the rest answer *not built*
+   * *You*'s names and payday; B08 the accounts, categories and first run's (ledger.ts). The admin's `member.*` refuse everyone else; the rest answer *not built*
    * until their slice.
    */
   r.post('/commands', async (c) => {
     const cmd = parse(Command, await readJson(c));
     const result = await runCommand(c.var, cmd);
-    // the person's other open screens reload their settings (D100)
-    await c.var.svc.relay.hint(c.var.person.id, ['settings']);
+    // the person's other open screens reload what changed (D100)
+    await c.var.svc.relay.hint(c.var.person.id, isLedgerCommand(cmd) ? ['ledger', 'settings'] : ['settings']);
     return c.json(result);
   });
 
@@ -92,6 +110,7 @@ export async function runCommand(v: Env['Variables'], cmd: Command): Promise<Wri
     if (!v.access.isAdmin) throw forbidden();
     throw notBuilt('B38');
   }
+  if (isLedgerCommand(cmd)) return runLedgerCommand(v, cmd);
   if (cmd.type !== 'setting.set') throw notBuilt('a later slice');
   return setYou(v, cmd.key, cmd.value);
 }

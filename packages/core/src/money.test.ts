@@ -11,6 +11,7 @@ import {
   pastedSen,
   percent,
   scaleSen,
+  senFromDb,
   senText,
   typedSen,
   spokenSen,
@@ -258,5 +259,21 @@ describe('typedSen: amounts typed as a bank app takes them (D132)', () => {
     expect(pastedSen('RM 1,284.50')).toBe('1,284.50');
     expect(pastedSen('Total: 12.50 paid')).toBe('12.50');
     expect(pastedSen('0')).toBe('');
+  });
+});
+
+describe('senFromDb (B08): a BIGINT of sen, as the driver hands it over', () => {
+  it('reads whole sen, either sign', () => {
+    expect(senFromDb('116950')).toBe(116950);
+    expect(senFromDb('-500')).toBe(-500);
+    expect(senFromDb('0')).toBe(0);
+    expect(senFromDb(42)).toBe(42);
+    expect(senFromDb(9_999_999_999_999n)).toBe(9_999_999_999_999);
+  });
+  it('refuses anything that isn’t whole sen, never rounding', () => {
+    for (const bad of ['1.5', '1e3', '', ' 1', '+1', '10000000000000', 'NaN'])
+      expect(() => senFromDb(bad), bad).toThrow(RangeError);
+    expect(() => senFromDb(1.5)).toThrow(RangeError);
+    expect(() => senFromDb(Number.MAX_SAFE_INTEGER)).toThrow(RangeError);
   });
 });
