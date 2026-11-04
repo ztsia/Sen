@@ -44,6 +44,9 @@ export function signInState(search: string, previews: boolean): 'expired' | null
 
 export const EXPIRED_ASK = 'Ask whoever runs your Sen for a new invitation. Sen can’t send one for you.';
 
+/** Where first run keeps its step and what's typed but not saved, on this phone (B08). */
+export const FIRST_RUN_KEY = 'sen.firstRun';
+
 export type StepId = 'sign-in' | 'apps' | 'access' | 'running' | 'accounts' | 'name' | 'payday' | 'categories';
 
 /** The steps a person sees: the shell's seven with capture (D26, D86), or sign in and categories without (D79). */

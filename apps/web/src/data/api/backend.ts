@@ -4,6 +4,7 @@ import type { AccountsView, AccountView, MeView, SettingsCore, SettingsView } fr
 import { toastDone, toastRetry, toastUndo } from '@/blocks/toast';
 import { readStored, writeStored } from '@/lib/storage';
 import { newId } from '@/lib/uid';
+import { FIRST_RUN_KEY } from '@/screens/outside/logic';
 import { OUTBOX_BRIDGE, hasBridge } from '@/shell/bridge';
 import type { Backend, Choice } from '../backend';
 import { queryClient } from '../index';
@@ -49,6 +50,8 @@ async function kept<T>(key: string, load: () => Promise<T>): Promise<T> {
 /** Forgets every kept answer: at sign-out, so the next person on this device sees nothing of them. */
 export function forgetKept() {
   writeStored(KEPT, null);
+  // and first run's unsaved draft: balances typed, a name, a payday (B08 security review)
+  writeStored(FIRST_RUN_KEY, null);
 }
 
 /**
@@ -62,7 +65,10 @@ export function keepFor(email: string) {
   } catch {
     who = undefined;
   }
-  if (who !== email) writeStored(KEPT, JSON.stringify({ [WHO]: email }));
+  if (who !== email) {
+    writeStored(KEPT, JSON.stringify({ [WHO]: email }));
+    writeStored(FIRST_RUN_KEY, null);
+  }
 }
 
 /** What a screen whose server isn't built yet gets: production shows *Not built yet* instead. */

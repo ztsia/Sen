@@ -24,6 +24,7 @@ import { categoryIcon, categoryTone } from '../icons';
 import { Loaded, useGo } from '../kit';
 import { SignInFlow } from './sign-in';
 import {
+  FIRST_RUN_KEY,
   parseDay,
   printedName,
   readDraft,
@@ -36,7 +37,7 @@ import {
 } from './logic';
 
 /** What first run keeps on this phone until it's finished: its step, and what's typed but not saved. */
-const KEY = 'sen.firstRun';
+const KEY = FIRST_RUN_KEY;
 
 const TITLES: Record<StepId, string> = {
   'sign-in': 'Sign in',
