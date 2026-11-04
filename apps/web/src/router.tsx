@@ -13,6 +13,7 @@ import { backend, queryClient } from './data';
 import { inShell } from './shell/bridge';
 import { onSignedOut } from './data/api/client';
 import { canTransition, routerTransition } from './frame/motion';
+import { firstRunFor } from './screens/outside/logic';
 
 // The routes: the four tab screens, Scan's task screen, every other screen by its id from
 // docs/screens.md under /s/<id>, and, in development and previews only, the gallery. TanStack Router,
@@ -41,7 +42,7 @@ declare module '@tanstack/react-router' {
 async function firstRunDue(): Promise<boolean> {
   try {
     const me = await queryClient.ensureQueryData({ queryKey: ['me'], queryFn: async () => (await backend()).me() });
-    return !me.setupDone && (!me.capture || inShell());
+    return firstRunFor(me, inShell());
   } catch {
     return false;
   }

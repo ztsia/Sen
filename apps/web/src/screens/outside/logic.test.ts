@@ -10,6 +10,7 @@ import {
   readDraft,
   signInState,
   stepsFor,
+  firstRunFor,
   suggestAccounts,
   withPrintedName,
   NO_DRAFT,
@@ -78,11 +79,22 @@ describe('first run (B08)', () => {
       app('com.pbb.mypb', 'MyPB', 'bank', ['Public Bank'], false),
       app('com.example.bank', 'Example Bank', 'bank', []),
     ];
-    const saved = [{ id: 'a1', package: 'my.rytbank.app', balance: 99 }];
-    const s = suggestAccounts(apps, saved, new Map([['a1', 320050]]));
+    // its computed balance has moved since (a payment counted); the step offers what was typed
+    const saved = [{ id: 'a1', package: 'my.rytbank.app', balance: 99, opening: 320050 }];
+    const s = suggestAccounts(apps, saved);
     expect(s.map((x) => x.name)).toEqual(['TNG eWallet', 'Ryt Bank', 'Example Bank']);
     expect(s[0]!.saved).toBeNull();
     expect(s[1]!.saved).toEqual({ id: 'a1', opening: 320050 });
+  });
+  it('holds an unfinished person at first run in the shell, or anywhere without capture (D146 (2))', () => {
+    expect(firstRunFor({ setupDone: false, capture: true }, true)).toBe(true);
+    expect(firstRunFor({ setupDone: false, capture: false }, false)).toBe(true);
+    expect(firstRunFor({ setupDone: false, capture: false }, true)).toBe(true);
+    // capture on in a plain browser: its steps are the phone's, so the browser isn't held
+    expect(firstRunFor({ setupDone: false, capture: true }, false)).toBe(false);
+    // finished: never
+    expect(firstRunFor({ setupDone: true, capture: true }, true)).toBe(false);
+    expect(firstRunFor({ setupDone: true, capture: false }, false)).toBe(false);
   });
   it('reads a kept draft, and a broken one starts afresh', () => {
     expect(readDraft(null)).toEqual(NO_DRAFT);

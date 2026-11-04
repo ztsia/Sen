@@ -96,8 +96,7 @@ export interface AccountSuggestion {
  */
 export function suggestAccounts(
   apps: readonly AppForAccount[],
-  accounts: readonly { id: string; package: string | null; balance: number | null }[],
-  openings: ReadonlyMap<string, number>,
+  accounts: readonly { id: string; package: string | null; opening: number | null }[],
 ): AccountSuggestion[] {
   return apps
     .filter((a) => a.chosen && a.kind !== 'wallet')
@@ -107,9 +106,34 @@ export function suggestAccounts(
         package: a.package,
         label: a.label,
         name: a.accounts[0] ?? a.label,
-        saved: have ? { id: have.id, opening: openings.get(have.id) ?? have.balance ?? 0 } : null,
+        // its opening, never its computed balance: what was typed, before any payment counted (QA B08 run 1, 19)
+        saved: have ? { id: have.id, opening: have.opening ?? 0 } : null,
       };
     });
+}
+
+/**
+ * What one app's account holds besides its main balance (D145), said beside the balance a person types,
+ * so they type the whole: an app the person can read two figures from.
+ */
+const HOLDS: Record<string, string> = {
+  'my.com.tngdigital.ewallet': 'eWallet and GO+ together',
+  'my.rytbank.app': 'Main account and pockets together',
+};
+
+/** The line under an account's balance field: the app it's from, and what it holds (QA B08 run 1, eyes). */
+export function accountHint(a: { package: string; label: string; name: string }): string | undefined {
+  const parts = [a.name === a.label ? null : `From ${a.label}`, HOLDS[a.package] ?? null].filter(Boolean);
+  return parts.length ? parts.join(' · ') : undefined;
+}
+
+/**
+ * Whether the router holds this person at first run (D146 (2)): until they finish it, in the shell with
+ * capture (where its steps can run), and anywhere without capture (its short version is a browser's too).
+ * Capture on in a plain browser isn't held: notification access and the apps are the phone's.
+ */
+export function firstRunFor(me: { setupDone: boolean; capture: boolean }, shell: boolean): boolean {
+  return !me.setupDone && (!me.capture || shell);
 }
 
 /** What first run keeps on this phone while it runs (B08): the step it's on and what's typed but not saved. */

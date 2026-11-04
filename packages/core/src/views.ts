@@ -564,6 +564,9 @@ export const AccountRow = z.object({
   kind: z.enum(['tracked', 'elsewhere']),
   /** Computed (§7); none for an elsewhere account. */
   balance: Sen.nullable(),
+  /** The balance typed when it was made, which Sen counts from; none for an elsewhere account. */
+  opening: Sen.nullable(),
+  /** The last balance check's time; until the first, when its opening balance was typed (QA B08 run 1, eyes 3). */
   checkedAt: Instant.nullable(),
   /** The app that feeds it: *Ryt Bank*. */
   app: z.string().nullable(),
@@ -578,6 +581,8 @@ export const AccountsView = z.object({
   elsewhere: z.array(AccountRow),
   /** What the last check found (§7). */
   gap: Sen.nullable(),
+  /** Archived ones, to bring back (QA B08 run 1, 5). */
+  archived: z.array(z.object({ id: Id, name: z.string() })),
 });
 export type AccountsView = z.infer<typeof AccountsView>;
 

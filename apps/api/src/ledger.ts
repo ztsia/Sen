@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Command, WriteResult } from '@sen/core/commands';
@@ -81,8 +81,9 @@ async function accountRows(db: Db, me: string): Promise<{ row: AccountRow; openi
       name: r.name,
       kind: r.kind,
       balance: r.kind === 'tracked' ? (byId.get(r.id) ?? r.openingBalance) : null,
-      // balance checks arrive with B13
-      checkedAt: null,
+      opening: r.kind === 'tracked' ? r.openingBalance : null,
+      // the opening balance was typed from the app, so it counts as the first check; later checks arrive with B13
+      checkedAt: r.kind === 'tracked' ? r.openingAt.toISOString() : null,
       app: r.notifierLabel,
       package: r.notifierPackage,
     },
@@ -115,7 +116,15 @@ export function ledgerRoutes() {
   r.get('/accounts', async (c) => {
     needsCapture(c.var);
     const me = c.var.person.id;
-    const rows = await c.var.db((db) => accountRows(db, me));
+    const a = schema.accounts;
+    const [rows, archived] = await c.var.db(async (db) => [
+      await accountRows(db, me),
+      await db
+        .select({ id: a.id, name: a.name })
+        .from(a)
+        .where(and(eq(a.userId, me), isNotNull(a.archivedAt)))
+        .orderBy(asc(a.name)),
+    ]);
     const tracked = rows.filter((x) => x.row.kind === 'tracked').map((x) => x.row);
     const view: AccountsView = {
       total: tracked.reduce((s, a) => s + (a.balance ?? 0), 0),
@@ -123,6 +132,7 @@ export function ledgerRoutes() {
       elsewhere: rows.filter((x) => x.row.kind === 'elsewhere').map((x) => x.row),
       // the gap a balance check found: B13
       gap: null,
+      archived,
     };
     return c.json(view);
   });

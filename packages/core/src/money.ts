@@ -132,15 +132,16 @@ const MAX_DIGITS = String(MAX_SEN).length;
  * What a money field shows after a keystroke, typed as a bank app takes it (D132): only the digits
  * count, each entering from the right (`1250` is `12.50`), always two decimals, so the dot, letters
  * and anything else are ignored and a digit past the most an amount can hold is dropped. Backspace
- * works by itself: `12.5` (the last digit deleted) reads `1.25`. `''` when there are no digits left.
+ * works by itself: `12.5` (the last digit deleted) reads `1.25`. A typed 0 is `0.00`; `''` when no
+ * digits are left, or backspace takes 0.00 down to `0.0`.
  * Text only, so the amount still reaches sen through parseSen.
  */
 export function typedSen(input: string): string {
-  const digits = input
-    .replace(/[^0-9]/g, '')
-    .replace(/^0+/, '')
-    .slice(0, MAX_DIGITS);
-  if (!digits) return '';
+  const all = input.replace(/[^0-9]/g, '');
+  const digits = all.replace(/^0+/, '').slice(0, MAX_DIGITS);
+  // zero is an amount too (an empty account, QA B08 run 1, 1): a 0 typed into the field is 0.00, and
+  // so is a 0 typed after it; `0.0`, backspace on 0.00, empties the field
+  if (!digits) return all.length === 0 || all.length === 2 ? '' : '0.00';
   const padded = digits.padStart(3, '0');
   return `${group(padded.slice(0, -2))}.${padded.slice(-2)}`;
 }
@@ -148,7 +149,7 @@ export function typedSen(input: string): string {
 /** Pasted text: an amount parseSen reads (`RM12.5`, `1,284.50`) stays that amount; otherwise its digits count, as typed. */
 export function pastedSen(input: string): string {
   const r = parseSen(input.replace(/^\s*RM\s*/i, ''));
-  return r.ok ? (r.sen === 0 ? '' : senText(r.sen)) : typedSen(input);
+  return r.ok ? senText(r.sen) : typedSen(input);
 }
 
 /** `RM1,284.50`, `+RM4,200.00`, `−RM12.90`. */

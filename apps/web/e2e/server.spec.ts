@@ -97,9 +97,8 @@ test('a session that ends while Sen is open leaves the person at sign-in, not on
   await ownerSql(
     `delete from auth_session where user_id = (select id from auth_user where email = 'weiming@example.com')`,
   );
-  // the next thing the person does that needs the server: open Settings, which reads from it
+  // the next thing the person does that needs the server: open More, which reads their accounts (B08)
   await page.getByRole('navigation', { name: 'Tabs' }).getByRole('link', { name: /^More/ }).click();
-  await page.getByRole('link', { name: /^Settings/ }).click();
   await expect(page).toHaveURL(/\/s\/sign-in/);
   await expect(page.getByLabel('Your email')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send the code' })).toBeVisible();

@@ -36,7 +36,8 @@ export const useAccounts = () => useRead(['accounts'], (b) => b.accounts());
 // B04
 export const useSplit = (id: string) => useRead(['split', id], (b) => b.split(id), !!id);
 export const useShared = () => useRead(['shared'], (b) => b.shared());
-export const useAccountList = () => useRead(['account-list'], (b) => b.accountList());
+/** `enabled: false` for someone without capture: accounts are capture's (§9.6), and the server refuses them. */
+export const useAccountList = (enabled = true) => useRead(['account-list'], (b) => b.accountList(), enabled);
 export const useAccount = (id: string) => useRead(['account', id], (b) => b.account(id), !!id);
 export const useBalanceCheck = () => useRead(['balance-check'], (b) => b.balanceCheck());
 export const useClaims = () => useRead(['claims'], (b) => b.claimList());

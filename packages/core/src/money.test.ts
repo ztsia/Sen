@@ -233,7 +233,14 @@ describe('typedSen: amounts typed as a bank app takes them (D132)', () => {
   it('takes no leading zeros, and gives nothing for no digits', () => {
     expect(typeKeys('0007')).toBe('0.07');
     expect(typedSen('')).toBe('');
-    expect(typedSen('0.00')).toBe('');
+    expect(typedSen('0.00')).toBe('0.00');
+  });
+
+  it('takes 0 as an amount: an empty account is RM0.00 (QA B08 run 1, 1)', () => {
+    expect(typeKeys('0')).toBe('0.00');
+    expect(typeKeys('00')).toBe('0.00');
+    expect(typeKeys('05')).toBe('0.05');
+    expect(parseSen(typeKeys('0'))).toEqual({ ok: true, sen: 0 });
   });
 
   it('drops the last digit on backspace', () => {
@@ -258,7 +265,7 @@ describe('typedSen: amounts typed as a bank app takes them (D132)', () => {
     expect(pastedSen('12.5')).toBe('12.50');
     expect(pastedSen('RM 1,284.50')).toBe('1,284.50');
     expect(pastedSen('Total: 12.50 paid')).toBe('12.50');
-    expect(pastedSen('0')).toBe('');
+    expect(pastedSen('0')).toBe('0.00');
   });
 });
 

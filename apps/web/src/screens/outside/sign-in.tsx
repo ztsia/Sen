@@ -5,7 +5,7 @@ import { Avatar } from '@/components/look/avatar';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
+import { Pending } from '@/blocks/pending';
 import { toastDone } from '@/blocks/toast';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
@@ -296,19 +296,5 @@ function CodeStep({
         </Button>
       </div>
     </form>
-  );
-}
-
-/**
- * A button's label while its request is on its way: a spinner and words saying what's happening, so a
- * slow server never looks like a tap that did nothing (qa/escapes.md E2).
- */
-function Pending({ on, label, children }: { on: boolean; label: string; children: React.ReactNode }) {
-  if (!on) return children;
-  return (
-    <>
-      <Spinner aria-hidden />
-      {label}
-    </>
   );
 }

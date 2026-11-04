@@ -598,7 +598,8 @@ export const JOURNEYS: Record<string, Journey> = {
     await go('/more');
     await page.getByText('Accounts', { exact: true }).click();
     await settled(page);
-    await expect(page.getByText('In 5 accounts')).toBeVisible();
+    // one account per app (D145): GO+ is part of TNG eWallet's
+    await expect(page.getByText('In 4 accounts')).toBeVisible();
     await shot('accounts');
     await page.getByRole('button', { name: 'Check balances' }).click();
     await expect(page).toHaveURL(/\/s\/balance-check/);

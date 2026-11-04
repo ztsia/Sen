@@ -8,6 +8,12 @@ type PreviewClient = Parameters<typeof seedPreview>[0] & {
   query(sql: string): Promise<unknown>;
 };
 
+/** First run's made-up people, before they've finished it. */
+export const FIRST_RUN = {
+  capture: { id: '5e15e15e-0b08-4000-8000-0000000e2e01', email: 'hana@example.com' },
+  noCapture: { id: '5e15e15e-0b08-4000-8000-0000000e2e02', email: 'aziz@example.com' },
+} as const;
+
 /** Seeds Wei Ming into sen_test, as db-deploy.ts does for a preview, before the API starts taking sign-ins. */
 export default async function setup() {
   // pg is @sen/db's dependency, not the web app's
@@ -38,12 +44,29 @@ export default async function setup() {
     accounts: [],
     categories: [],
   };
+  // first run's people (first-run.server.spec.ts): neither has finished it; one has capture, one hasn't
+  const unfinished = (id: string, name: string, email: string, capture: boolean): PreviewPerson => ({
+    id,
+    name,
+    email,
+    admin: false,
+    features: { shell: capture, capture, agent: false, splits: true, email: false, calendar: false, claims: false },
+    ownNames: [],
+    expectedPayday: null,
+    setupDone: false,
+    accounts: [],
+    categories: [],
+  });
   const client = new pg.Client({ connectionString: 'postgres://sen_owner@127.0.0.1:5432/sen_test' });
   await client.connect();
   try {
     // a run leaves codes with their tries used, rate-limit counts and sessions behind; start each from none
     await client.query('truncate auth_verification, auth_rate_limit, auth_session');
-    await seedPreview(client, [person]);
+    await seedPreview(client, [
+      person,
+      unfinished(FIRST_RUN.capture.id, 'Hana', FIRST_RUN.capture.email, true),
+      unfinished(FIRST_RUN.noCapture.id, 'Aziz', FIRST_RUN.noCapture.email, false),
+    ]);
   } finally {
     await client.end();
   }

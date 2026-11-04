@@ -1,4 +1,4 @@
-import { ScaleIcon, WalletIcon } from 'lucide-react';
+import { ScaleIcon, Undo2Icon, WalletIcon } from 'lucide-react';
 import type { AccountRow, AccountsView } from '@sen/core/views';
 import { Money } from '@/blocks/money';
 import { GroupCard } from '@/blocks/group';
@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
-import { useAccountList } from '@/data/hooks';
+import { useAccountList, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { shortDay } from '@/lib/dates';
@@ -54,12 +54,12 @@ export default function Accounts() {
 
 function Body({ v }: { v: AccountsView }) {
   const go = useGo();
-  if (!v.tracked.length)
+  if (!v.tracked.length && !v.archived.length)
     return (
       <EmptyState
         icon={WalletIcon}
         title="No accounts yet"
-        line="Your accounts appear here once first run has made them, one for each app you chose."
+        line="Each app you choose for Sen to read gets an account here, with the balance you type for it."
       />
     );
   return (
@@ -82,35 +82,37 @@ function Body({ v }: { v: AccountsView }) {
           </Button>
         </div>
       ) : null}
-      <GroupCard label="Tracked">
-        {v.tracked.map((a) => (
-          <Item
-            key={a.id}
-            asChild
-            size="sm"
-            className="min-h-14 w-full flex-nowrap gap-3 rounded-none py-2.5 text-left text-base"
-          >
-            <button type="button" onClick={() => go('account', { id: a.id })}>
-              <BankTile name={a.name} />
-              <ItemContent className="min-w-0 gap-0.5">
-                <ItemTitle className="block w-full truncate text-base font-normal">{a.name}</ItemTitle>
-                <ItemDescription className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                  {/* a check is only asked for once balance checks exist (B13) */}
-                  {canOpen('balance-check') ? (
-                    <Badge variant={a.checkedAt ? 'muted' : 'warning'}>
-                      {a.checkedAt ? `Checked ${shortDay(klDay(a.checkedAt))}` : 'Not checked'}
-                    </Badge>
-                  ) : null}
-                  {a.app && a.app !== a.name ? <span className="truncate">{a.app}</span> : null}
-                </ItemDescription>
-              </ItemContent>
-              <ItemActions className="max-w-[45%] shrink-0 justify-end text-right">
-                <Money sen={a.balance ?? 0} className="font-normal" />
-              </ItemActions>
-            </button>
-          </Item>
-        ))}
-      </GroupCard>
+      {v.tracked.length ? (
+        <GroupCard label="Tracked">
+          {v.tracked.map((a) => (
+            <Item
+              key={a.id}
+              asChild
+              size="sm"
+              className="min-h-14 w-full flex-nowrap gap-3 rounded-none py-2.5 text-left text-base"
+            >
+              <button type="button" onClick={() => go('account', { id: a.id })}>
+                <BankTile name={a.name} />
+                <ItemContent className="min-w-0 gap-0.5">
+                  <ItemTitle className="block w-full truncate text-base font-normal">{a.name}</ItemTitle>
+                  <ItemDescription className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                    {/* a check is only asked for once balance checks exist (B13) */}
+                    {canOpen('balance-check') ? (
+                      <Badge variant={a.checkedAt ? 'muted' : 'warning'}>
+                        {a.checkedAt ? `Checked ${shortDay(klDay(a.checkedAt))}` : 'Not checked'}
+                      </Badge>
+                    ) : null}
+                    {a.app && a.app !== a.name ? <span className="truncate">{a.app}</span> : null}
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions className="max-w-[45%] shrink-0 justify-end text-right">
+                  <Money sen={a.balance ?? 0} className="font-normal" />
+                </ItemActions>
+              </button>
+            </Item>
+          ))}
+        </GroupCard>
+      ) : null}
       {v.elsewhere.length ? (
         <section className="flex flex-col gap-2 px-4" aria-label="Elsewhere">
           <h2 className="px-1 text-sm font-medium text-muted-foreground">Elsewhere</h2>
@@ -127,6 +129,31 @@ function Body({ v }: { v: AccountsView }) {
           </Card>
         </section>
       ) : null}
+      <Archived rows={v.archived} />
     </div>
+  );
+}
+
+/** Archived accounts, each with *Bring back*, as Settings → Categories has (QA B08 run 1, 5). */
+function Archived({ rows }: { rows: AccountsView['archived'] }) {
+  const write = useWrite();
+  if (!rows.length) return null;
+  return (
+    <GroupCard label="Archived">
+      {rows.map((a) => (
+        <div key={a.id} className="flex min-h-14 items-center gap-3 px-4 py-2">
+          <span className="min-w-0 flex-1 truncate text-base text-muted-foreground">{a.name}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={`Bring back ${a.name}`}
+            onClick={() => void write({ type: 'account.archive', id: a.id, archived: false })}
+          >
+            <Undo2Icon aria-hidden="true" />
+            Bring back
+          </Button>
+        </div>
+      ))}
+    </GroupCard>
   );
 }

@@ -6,13 +6,14 @@ import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { checkAmount, MoneyInput } from '@/blocks/money-input';
 import { GroupCard, SwitchRow } from '@/blocks/group';
+import { Pending } from '@/blocks/pending';
 import { EmptyState, ListSkeleton, OfflineBanner } from '@/blocks/states';
 import { toastDone } from '@/blocks/toast';
 import CaptureAccess from '../capture/access';
 import CaptureApps from '../capture/apps';
 import { BridgeError, CaptureStep } from '../capture/common';
 import CaptureRunning from '../capture/running';
-import { runCommand, useAccountList, useCategories, useMe, useSettings, useWrite } from '@/data/hooks';
+import { runCommand, useAccountList, useMe, useSettings, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { useOnline } from '@/lib/online';
@@ -24,6 +25,7 @@ import { categoryIcon, categoryTone } from '../icons';
 import { Loaded, useGo } from '../kit';
 import { SignInFlow } from './sign-in';
 import {
+  accountHint,
   FIRST_RUN_KEY,
   parseDay,
   printedName,
@@ -123,7 +125,7 @@ function Steps({ capture }: { capture: boolean }) {
     <Frame
       title={TITLES[step]}
       count={{ at: i + 1, of: steps.length }}
-      offline={!online}
+      offline={online ? null : step === 'sign-in' ? 'You’re offline. Signing in needs a connection.' : 'You’re offline. What you’ve typed is kept; Next saves it once you’re back online.'}
       onBack={() => (i <= first ? window.history.back() : to(i - 1))}
     >
       {step === 'sign-in' ? (
@@ -181,7 +183,8 @@ function Frame({
 }: {
   title: string;
   count: { at: number; of: number } | null;
-  offline?: boolean;
+  /** What being offline means on this step, when it is. */
+  offline?: string | null;
   onBack: () => void;
   children: ReactNode;
 }) {
@@ -208,7 +211,8 @@ function Frame({
         </div>
       }
     >
-      {offline ? <OfflineBanner>You’re offline. Signing in needs a connection; the rest waits.</OfflineBanner> : null}
+      {/* what offline means on this step: sign-in waits, a step's typing is kept (QA B08 run 1, 10) */}
+      {offline ? <OfflineBanner>{offline}</OfflineBanner> : null}
       <div className="flex min-h-full flex-col">{children}</div>
     </Screen>
   );
@@ -261,8 +265,7 @@ function Accounts({
   return (
     <Loaded q={q} what="your accounts">
       {(v) => {
-        const openings = new Map([...v.tracked].map((a) => [a.id, a.balance ?? 0]));
-        const offered = suggestAccounts(list, v.tracked, openings);
+        const offered = suggestAccounts(list, v.tracked);
         // what's typed, or what's saved for an account already made (a step reopened)
         const text = (a: AccountSuggestion) => typed[a.package] ?? (a.saved ? senText(a.saved.opening) : '');
         const save = async () => {
@@ -294,6 +297,9 @@ function Accounts({
                 await runCommand({ type: 'account.edit', id: a.saved.id, opening: sen });
             }
           } catch (err) {
+            // a save whose answer was lost may have landed: reread the list, so Next again edits what's
+            // there rather than adding it twice (QA B08 run 1, 2)
+            await q.refetch();
             setSaving(false);
             toastDone(err instanceof Error ? err.message : 'Couldn’t save your accounts. Try again.');
             return;
@@ -305,7 +311,7 @@ function Accounts({
         return (
           <>
             <p className="px-4 pt-4 text-base text-pretty">
-              Type the balance each app shows today, pockets and GO+ included. Sen counts from here.
+              Type the balance each app shows today. Sen counts from here.
             </p>
             {offered.length ? (
               <div className="flex flex-col gap-5 px-4 pt-4">
@@ -313,7 +319,7 @@ function Accounts({
                   <MoneyInput
                     key={a.package}
                     label={a.name}
-                    hint={a.name === a.label ? undefined : a.label}
+                    hint={accountHint(a)}
                     value={text(a)}
                     error={errors[a.package]}
                     onChange={(t) => {
@@ -328,7 +334,9 @@ function Accounts({
             )}
             <Actions>
               <Button onClick={() => void save()} disabled={saving}>
-                {saving ? 'Saving…' : 'Next'}
+                <Pending on={saving} label="Saving…">
+                  Next
+                </Pending>
               </Button>
             </Actions>
           </>
@@ -500,7 +508,9 @@ function PaydayStep({
             </div>
             <Actions>
               <Button type="submit" disabled={busy}>
-                {last ? 'Finish' : 'Next'}
+                <Pending on={busy} label="Finishing…">
+                  {last ? 'Finish' : 'Next'}
+                </Pending>
               </Button>
             </Actions>
           </form>
@@ -522,44 +532,53 @@ function Categories({
   busy: boolean;
   onDone: (off: string[]) => Promise<void>;
 }) {
-  const q = useCategories('spend');
+  const q = useSettings();
   return (
     <Loaded q={q} what="the categories">
-      {(cats) => (
-        <>
-          <p className="px-4 pt-4 text-base text-pretty">
-            These describe your spending. Switch off any you won’t use; you can rename, add or switch them back in
-            Settings. You count by calendar month, and can set a payday later.
-          </p>
-          <div className="pt-3">
-            <GroupCard>
-              {cats.map((c) => (
-                <SwitchRow
-                  key={c.id}
-                  icon={categoryIcon(c.label)}
-                  tone={categoryTone(c.label)}
-                  title={c.label}
-                  checked={!off.has(c.id)}
-                  onCheckedChange={(on) => {
-                    const next = new Set(off);
-                    if (on) next.delete(c.id);
-                    else next.add(c.id);
-                    setOff(next);
-                  }}
-                />
-              ))}
-            </GroupCard>
-          </div>
-          <Actions>
-            <Button
-              onClick={() => void onDone([...off].filter((id) => cats.some((c) => c.id === id)))}
-              disabled={busy || !cats.length || cats.every((c) => off.has(c.id))}
-            >
-              Start using Sen
-            </Button>
-          </Actions>
-        </>
-      )}
+      {(st) => {
+        // Unaccounted is a balance check's alone; Cash is Sen's own, kept on (D146 (6), QA B08 run 1, 6)
+        const cats = st.categories.filter((c) => c.kind === 'spend' && !c.archived && c.system !== 'unaccounted');
+        const can = cats.filter((c) => !c.system);
+        return (
+          <>
+            <p className="px-4 pt-4 text-base text-pretty">
+              These describe your spending. Switch off any you won’t use; you can rename, add or switch them back in
+              Settings. You count by calendar month, and can set a payday later.
+            </p>
+            <div className="pt-3">
+              <GroupCard>
+                {cats.map((c) => (
+                  <SwitchRow
+                    key={c.id}
+                    icon={categoryIcon(c.name)}
+                    tone={categoryTone(c.name)}
+                    title={c.name}
+                    description={c.system ? 'Sen keeps this one: cash you spend lands here.' : undefined}
+                    disabled={!!c.system}
+                    checked={c.system ? true : !off.has(c.id)}
+                    onCheckedChange={(on) => {
+                      const next = new Set(off);
+                      if (on) next.delete(c.id);
+                      else next.add(c.id);
+                      setOff(next);
+                    }}
+                  />
+                ))}
+              </GroupCard>
+            </div>
+            <Actions>
+              <Button
+                onClick={() => void onDone([...off].filter((id) => can.some((c) => c.id === id)))}
+                disabled={busy || !can.length || can.every((c) => off.has(c.id))}
+              >
+                <Pending on={busy} label="Starting…">
+                  Start using Sen
+                </Pending>
+              </Button>
+            </Actions>
+          </>
+        );
+      }}
     </Loaded>
   );
 }

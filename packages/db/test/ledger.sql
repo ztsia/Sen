@@ -155,7 +155,7 @@ SELECT is(pg_temp.as_app(:c, $$DELETE FROM transactions WHERE id = '00000000-000
 --   8:59:59  out    RM50.00   before the opening: already in the RM1,000.00     not counted
 --   9:00:00  out    RM7.00    the opening moment itself: already in it           not counted
 --   9:00:01  in     RM200.00  just after                                         +200.00
---   10:00    out    RM30.50                                                      −30.50
+--   10:00    out    RM30.50   a split bill, Ben's share RM10.00: the account paid all −30.50
 --   11:00    out    RM99.00   tombstoned                                         not counted
 --   now      out    RM12.34   on another account                                 not here
 -- 1,000.00 + 200.00 − 30.50 = RM1,169.50
@@ -172,6 +172,9 @@ INSERT INTO transactions (id, user_id, account_id, occurred_at, direction, amoun
   (gen_random_uuid(), :b, '00000000-0000-4000-8000-0000000001b1', '2026-11-01 11:00:00+08', 'out', 9900, 'spend', 'manual', '2026-11-01 11:05:00+08'),
   (gen_random_uuid(), :b, '00000000-0000-4000-8000-0000000001b0', now(), 'out', 1234, 'spend', 'notification', NULL);
 UPDATE accounts SET archived_at = now() WHERE id = '00000000-0000-4000-8000-0000000001b3';
+-- a balance is what left the account, never the person's share of it (§7, QA B08 run 1, 7)
+UPDATE transactions SET my_share = 1000
+  WHERE account_id = '00000000-0000-4000-8000-0000000001b1' AND occurred_at = '2026-11-01 10:00:00+08';
 
 SELECT is(pg_temp.as_app(:b, $$SELECT format('%s %s %s', money_in, money_out, balance) FROM account_balances
   WHERE account_id = '00000000-0000-4000-8000-0000000001b1'$$),
