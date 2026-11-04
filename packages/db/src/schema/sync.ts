@@ -61,6 +61,8 @@ export const bankEvents = pgTable(
   },
   (t) => [
     uniqueIndex('bank_events_dedupe_key').on(t.userId, t.dedupeKey),
+    // what a transaction's (user_id, bank_event_id) refers to (B08), so it can only name its own person's event
+    uniqueIndex('bank_events_user_id').on(t.userId, t.id),
     // Captured on this phone, newest first; the watchdog's last event
     index('bank_events_user_posted_idx').on(t.userId, t.postedAt.desc()),
     check(
