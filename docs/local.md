@@ -69,6 +69,27 @@ follow on a phone, and commit.
      the week's compute hours (Q25), so the spec and `docs/cloud.md` can record them.
   B07's security check is the built-in review, done in the cloud (`qa/B07/security.md`, D144).
 
+- [ ] **B08 · First run, accounts and categories: on your phone** (after B08 merges and its release is
+  published; Obtainium picks it up). Have each bank app open beside you for its balance. In this order:
+  1. **Install the new release and open Sen.** It opens on first run at *Step 2 of 7* (you're already
+     signed in). If it opens on Home instead, tell the next session: first run is due only while it
+     hasn't been finished, in the app, with *Capture* on.
+  2. **Your apps** (TNG, Ryt, Public Bank, Grab are already chosen from the soak) → *Next*. **Notification
+     access** and **Keep Sen running** show as done or with their steps; *Next* on each.
+  3. **Close Sen at step 4:** in recents, tap its padlock off if it's locked, swipe it away, then open
+     Sen again. It should reopen at step 4 (done-when 1). Lock it in recents again afterwards.
+  4. **Your accounts:** one per app (D145). Type the **total** each app shows today: Ryt's Main plus its
+     pockets, TNG's eWallet plus GO+. 0 is fine for one that's empty. *Next*.
+  5. **Your name** as the banks print it, then **Expected payday**, then *Finish*. You land on Home.
+  6. **More → Accounts:** each account shows the balance you typed, and the total is their sum. Tap one:
+     its opening balance and the day it was taken. (Done-when 2.)
+  7. **More → Settings → Categories and rules:** the 18 spending and 3 money-in categories (D33). Rename
+     one and undo it, so you know the sheet works.
+  Captured payments still don't book until B09 and B10. When they do, payments from before you
+  finished step 4 count in spending but not in balances (§7). To try first run again on a preview
+  first: the review build (*Sen review*), sign in as `meiling@example.com`, code `123456`; it resets on
+  every preview deploy.
+
 - [ ] **Before the app launches: Claude Security's whole-codebase scan** (D144), once, at the laptop.
   Turn on *Dynamic workflows* in `/config`, start a session in `C:\Zhong Tai\Sen` on `main`, and ask
   *run Claude Security: scan the codebase at high effort; the cost is accepted*. Leave the checkout
