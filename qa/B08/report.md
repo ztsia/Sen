@@ -1,5 +1,7 @@
 # QA B08 · run 1
 
+Report, with screenshots: https://claude.ai/artifact/Pkj1my3wTFBwiM5qfvNnvv
+
 Written by the main session from the reviewer's final message (its harness blocked it from writing here).
 
 ```
