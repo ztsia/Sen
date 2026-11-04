@@ -18,11 +18,12 @@ report: https://claude.ai/artifact/A3BCeJcC4rGaRoEDGxXX5m
   browser), *Captured on this phone* from the server, and Home's capture warnings.
 - The mechanisms are **D143** (9 points).
 
-## Before the merge (the owner)
+## Before the merge
 
-1. **The security scan at the laptop** (`docs/local.md` → B07 item 6): a cloud session has no
-   Workflow tool. Fix every Critical and High on this branch before merging.
-2. Then merge. The Worker redeploys on merge (new realtime topic `capture`); migrations run on deploy.
+Nothing is left on B07's side. Its security check is the built-in review, which found nothing at High
+or Medium (`qa/B07/security.md`). **D144:** every slice gets that review; Claude Security's
+whole-codebase scan runs once, before launch (`docs/local.md`). The Worker redeploys on merge (new
+realtime topic `capture`); migrations run on deploy.
 
 ## After the merge (the owner)
 
@@ -54,4 +55,4 @@ open device question, finding 12, is answered there), *Sign out everywhere*, Q25
 
 ## Don't argue again
 
-- D129–D143. Deploys happen only by merge (D122). Only `setting.set` is a pending write today.
+- D129–D144. Deploys happen only by merge (D122). Only `setting.set` is a pending write today.

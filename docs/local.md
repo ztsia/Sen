@@ -67,12 +67,13 @@ follow on a phone, and commit.
      to sign in again the next time it opens.
   5. **After a week of real syncs:** open Neon's console → project `sen` → *Monitoring*, and send me
      the week's compute hours (Q25), so the spec and `docs/cloud.md` can record them.
-  6. **Before merging, at the laptop: B07's security scan of its changes.** The cloud session had no
-     Workflow tool, so it couldn't run it. Turn on *Dynamic workflows* in `/config`, start a session
-     in `C:\Zhong Tai\Sen` on `B07/sync`, and ask *run Claude Security: scan changes on this branch
-     against main at high effort; the cost is accepted*. Leave the checkout alone while it runs. The
-     session copies `CLAUDE-SECURITY-<time>/CLAUDE-SECURITY-RESULTS.md` to `qa/B07/security.md` and
-     fixes every Critical and High before the merge (B07 touches sign-in, sessions and `/sync`).
+  B07's security check is the built-in review, done in the cloud (`qa/B07/security.md`, D144).
+
+- [ ] **Before the app launches: Claude Security's whole-codebase scan** (D144), once, at the laptop.
+  Turn on *Dynamic workflows* in `/config`, start a session in `C:\Zhong Tai\Sen` on `main`, and ask
+  *run Claude Security: scan the codebase at high effort; the cost is accepted*. Leave the checkout
+  alone while it runs (it can take days across usage limits). The session copies its
+  `CLAUDE-SECURITY-RESULTS.md` into `qa/` and fixes every Critical and High before launch.
 
 - [ ] **Give the cloud environment the workflow plugin** (needed before the next cloud session).
       Cloud sessions don't install the plugins a repo enables, so without this a session has no
