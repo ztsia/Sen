@@ -34,8 +34,10 @@ open device question, finding 12, is answered there), *Sign out everywhere*, Q25
 
 1. B06's F1 and F2 still wait on the owner (the sign-in screen says *not invited* and *access
    paused*); the fix, if any, goes on `B06/jobs-realtime-backups`.
-2. **B08 · First run, accounts and categories.**
+2. **B08 · First run, accounts and categories.** It can start once #22 merges, before the owner's B07
+   phone checks (the owner's call, 4 Nov): a device bug they find gets a small branch of its own.
 3. Lessons for `ztsia/workflow` from B06's and B07's retros (`qa/B06/ledger.md`, `qa/B07/ledger.md`).
+   D144's change is ztsia/workflow#12 (plugin 1.2.0), waiting on the owner's merge.
 
 ## Follow-ups, not fixed in B07
 
