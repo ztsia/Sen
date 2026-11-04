@@ -76,3 +76,36 @@ CORE-first-run  `first-run`: sign in, choose your apps, notification access, Kee
                 accounts, name, payday, Home (flows.md *First run*)
 CORE-pay-new    `pay-new`: the category prompt for a new merchant, a category, a rule
 CORE-scan-after `scan-after`: scan, reading, confirm, Done, attached
+
+---
+
+## Run 2 (scoped, 4 Nov 2026)
+
+R2-FLOW-1 Access revoked, then restored                                      (sad → happy)
+          Entry  `/sync` heartbeats as the shell sends them; the morning job with a set clock;
+                 Home in a browser against the API (sen_test)
+          Steps  1. heartbeat access off  2. Home  3. two ticks  4. heartbeat back on  5. Home, tick
+          Ends   one push naming access; Home's *Capture is off*; then nothing
+          Covers R2-AC-1, R2-AC-1s, R2-AC-9
+
+R2-FLOW-2 The listener killed, access still on                                (sad)
+          Steps  1. daily heartbeats with the listener off, 23 h  2. tick  3. 25 h  4. tick  5. Home
+          Ends   one push at 25 h; words say the listener is off
+          Covers R2-AC-2, R2-AC-4
+
+R2-FLOW-3 Capture switched off for days, then on                              (sad)
+          Steps  1. capture off, heartbeats listener off for 3 days  2. switch on (the sync that
+                 tells the shell carries the last off heartbeat)  3. the next morning's tick
+          Ends   no push
+          Covers R2-AC-3
+
+R2-FLOW-4 Paging *Captured on this phone*                                     (sad)
+          Steps  1. 51 events at one ms  2. 3 events at sub-ms times around a page edge  3. cursors:
+                 malformed, old-style, over-long
+          Covers R2-AC-5, R2-AC-5s
+
+R2-FLOW-5 The phone's clock, ahead and behind                                 (sad)
+          Covers R2-AC-6
+
+R2-FLOW-6 Home's capture-off banner and the push stand-in (preview fake), and the Captured intro
+          Covers R2-AC-9, R2-AC-10

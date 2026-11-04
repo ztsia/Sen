@@ -16,7 +16,7 @@ export default defineConfig({
   },
   test: {
     root: at('../..'),
-    include: ['qa/B07/api-probes.probe.ts'],
+    include: ['qa/B07/api-probes*.probe.ts'],
     environment: 'node',
     fileParallelism: false,
     testTimeout: 30_000,

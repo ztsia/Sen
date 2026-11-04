@@ -211,3 +211,61 @@ AC-35 Every input has a dedupe key: events (dedupe key), commands and edits (the
 AC-36 No real financial data in the diff's fixtures and seeds (anonymised: made-up names, amounts).
 AC-37 The built app holds no secret or token.
 AC-38 One set of UI patterns: the new warnings and the *Captured* list use the shared blocks.
+
+---
+
+## Run 2 (scoped, 4 Nov 2026): capture's health and *Captured on this phone*'s paging
+
+Area: capture's health, from the shell's heartbeat to the watchdog's push and Home's warning
+(spec §6.2 *Health*), and the paging of `GET /captured`. Fixes re-checked: run 1's findings 1–6, and
+the eyes pass's `capture-off/3` and `settings/capture/captured`. Commits 683376e..b31cc31. Written by
+the resumed run 1 reviewer, after reading the fix commits, so these criteria are the fixes' own claims
+plus the sad paths they open.
+
+R2-AC-1  Access off, as the phone reports it
+         Given  capture on; the newest heartbeat says `access: false`
+         When   Home opens in a browser, and the morning job runs (twice that day)
+         Then   Home: *Capture is off*, with words saying the phone reports it; one push whose words
+                name access; one `alerts_sent` row
+R2-AC-1s Access back: a newer heartbeat with access and the listener connected → no warning, no push
+         Spec   §6.2 *Health*, B5, run 1 finding 1
+
+R2-AC-2  The listener off with access on, daily syncs still arriving
+         Then   no push at 23 h since the listener's last connected heartbeat; one push at 25 h; the
+                push's and Home's words say the listener is off, not that the phone went quiet
+         Spec   §6.2, flows.md `capture-off` 1
+
+R2-AC-3  No false alarm after a fix: Capture switched back on after days off, or access granted again
+         Given  heartbeats saying the listener is off for the days *Capture* was off
+         When   the switch comes back on, and the morning job runs before any payment arrives
+         Then   no push saying capture may be off, once the listener has in fact bound
+         Spec   §6.2, §9.6 (the switch), D98
+
+R2-AC-4  Each watchdog rule has a test that fails alone: the 24 h heartbeat rule (23 h vs 25 h, an
+         event an hour ago) and the 48 h event rule (47 h vs 49 h)
+         Spec   run 1 finding 2; the mutant `b07-heartbeat-window` is killed
+
+R2-AC-5  Paging holds every event: 51 events at one posted time → 51 across two pages; events with a
+         sub-millisecond posted time → none lost; a malformed cursor → 400 `{ code, message }`
+R2-AC-5s An old-style cursor (a bare instant), `_` tricks, an over-long cursor → 400, never a 500
+         Spec   run 1 finding 3, brief *The soak's events*
+
+R2-AC-6  The phone's clock can't silence or fake the watchdog
+         Then   events stamped a year ahead, 3 quiet days → one push; a phone clock 3 days behind,
+                with events arriving daily → no push
+         Spec   D143 (7), run 1 finding 4
+
+R2-AC-7  At most one push a day: two ticks in one KL day at different instants → one; the next day
+         → one more
+         Spec   brief *Health*, run 1 finding 5
+
+R2-AC-8  B07's breakage checks exist and are killed: every `b07-*` entry in `qa/mutants.ts`
+         Spec   D139, run 1 finding 6
+
+R2-AC-9  One fact, one wording: the push stand-in, the server's push and Home's banner say the same
+         thing for the same state, and the banner's date doesn't break mid-date
+         Spec   eyes `capture-off/3` (wrong), `home@capture-off` (look again)
+
+R2-AC-10 *Captured on this phone*'s intro says what the screen shows: amounts visible, other numbers
+         hidden; it makes no claim the screen contradicts
+         Spec   eyes `settings/capture/captured`, D121

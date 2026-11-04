@@ -1,1048 +1,509 @@
 {
   "module": "B07",
   "branch": "B07/sync",
-  "verdict": "fix first",
-  "generatedAt": "2026-11-03 23:43 UTC",
-  "phases": "1-6 (the eyes pass not run: no Agent tool in this session)",
-  "headline": "Sync holds: replays, retries, tombstones, edits, isolation and the Capture switch all behave, and nine of ten deliberate breaks went red. But the watchdog misses the case the brief tests it with (access revoked: no push for up to 48 h), and the suite’s own test of the 24-hour rule passes whichever rule fires.",
+  "verdict": "ship",
+  "generatedAt": "2026-11-04 00:09 UTC",
+  "phases": "scoped (run 2): capture’s health, heartbeat to push and Home; /captured’s paging",
+  "headline": "Both Majors are fixed and their guards have teeth (12 of 12 B07 breakage checks killed; all 19 of run 1’s probes pass). Five Minors remain in the area, one of them new with the fix: switching Capture back on can bring a false push before the shell syncs again.",
   "summary": {
-    "criteria": 48,
-    "pass": 44,
-    "fail": 2,
-    "unreachable": 2
+    "criteria": 12,
+    "pass": 7,
+    "fail": 5,
+    "unreachable": 0
   },
   "suites": {
     "typecheck": "clean",
-    "lint": "clean",
-    "unit": "471/471 pass",
-    "db": "pgTAP 340 pass; API 168 pass, 10 skipped (GET routes in the write sweep)",
-    "e2e": "1409 pass; lived 24/24; server 5/5",
-    "kotlin": "65/65 (re-run with --rerun-tasks)",
-    "security": "fail in the sweep (no gitleaks); pass with gitleaks 8.30.1 built from the Go proxy",
-    "mutants": "74/74 killed (none of them B07’s)",
-    "diff": "1 changed, 1 new, 0 check findings; 2 metrics flags (noise)",
-    "qaFlows": "7/7 specs, 21 steps pass"
+    "lint": "clean (after QA’s own run 2 files were fixed)",
+    "unit": "472/472",
+    "db": "pgTAP pass; API 173 pass, 10 skipped",
+    "mutants": "b07-*: 12/12 killed",
+    "probes": "run 1 19/19; run 2 3/7 (4 failures = findings 12, 13, 15, 16)",
+    "flows": "b07r2: 4/5 specs (R2-FLOW-6 step 1 = finding 14)"
   },
   "findings": [
     {
+      "id": 12,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Capture switched back on (or access granted again) after a day: a false “Capture may be off” push the next morning, until the shell syncs again",
+      "detail": "The fix counts the 24 hours from the listener’s own last connected heartbeat. But the shell sends no heartbeat when the listener connects: `CaptureListener.onListenerConnected` only logs locally, and `CaptureSwitch.apply(true)` rebinds after the batch’s heartbeat (saying the listener is off) has gone. So the server keeps reading “off since <days ago>” until the next sync (a payment, opening the app, or the daily work), and the morning job can push meanwhile. Inside the shell, Home can show the server’s “listener off since …” banner while the phone itself says it’s connected. In run 1 any heartbeat counted, so this is new with the fix. Server side run; the shell’s side read in the code, not run (no device). One fix: enqueue a sync from `onListenerConnected`.",
+      "repro": "pnpm exec vitest run --config qa/B07/vitest.probe.config.ts qa/B07/api-probes-run2.probe.ts -t \"Capture switched back on\"",
+      "evidence": "switched on 1 h ago, no connected heartbeat since: silent no-heartbeat; next-morning pushes 1; body «Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.»\nAssertionError: expected [ { …(2) } ] to have a length of +0 but got 1",
+      "spec": "R2-AC-3; §6.2 Health; §9.6",
+      "screenshots": []
+    },
+    {
+      "id": 13,
+      "severity": "Minor",
+      "status": "open",
+      "title": "The listener-off push says “Sen hasn’t heard from your phone for a day” although the phone synced an hour ago",
+      "detail": "`captureWatchdog` picks its words by `silent`; `no-heartbeat` now also means “the listener has been off for a day while syncs arrive”, and the push still says the phone went quiet. Home words the same state as “Sen’s listener on your phone has been off since …”. One fact, two wordings, which the eyes pass asked to end.",
+      "repro": "api-probes-run2 -t \"23 h: quiet\"",
+      "evidence": "listener off: at 23 h pushes 0; at 25 h pushes 1, silent no-heartbeat, listenerConnected false, lastListenAt 2026-11-02T23:08:23.741Z; push body «Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.»\nAssertionError: expected 'Sen hasn’t heard from your phone for …' not to match /hasn.t heard from your phone/",
+      "spec": "R2-AC-2, R2-AC-9; eyes home@capture-off",
+      "screenshots": [
+        "R2-FLOW-2-step-1-listener-off.png"
+      ]
+    },
+    {
+      "id": 14,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Home’s capture-off banner still breaks its date mid-date, and the widget says “Capture is off” where the banner and push say “may be off”",
+      "detail": "The eyes pass’s look-again on `home@capture-off`, not taken up by the fixes and not named in the ledger as left. At 390×844 the date “Fri, 16 Oct, 17:40” sits on two lines; the widget stand-in reads “Dark · Capture is off”.",
+      "repro": "qa/e2e: playwright test -c b07r2.config.ts -g \"R2-FLOW-6\"",
+      "evidence": "banner: \"Capture may be off\\nNo payment notifications since Fri, 16 Oct, 17:40.\\nFix\" date Fri, 16 Oct, 17:40 line tops [95,113]\nwidget words: [\"Capture may be off\",\"Dark · Capture is off\",\"Capture is off\"]",
+      "spec": "R2-AC-9; eyes home@capture-off",
+      "screenshots": [
+        "R2-FLOW-6-step-1-banner.png",
+        "R2-FLOW-6-step-3-widget.png"
+      ]
+    },
+    {
+      "id": 15,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Paging still loses events whose posted time has sub-millisecond precision",
+      "detail": "`/sync` accepts and stores microsecond instants, but the cursor carries `toISOString()`, milliseconds only, so rows between the cursor’s millisecond and the last row’s microsecond fall between pages. The shell sends milliseconds, so only a hand-made client reaches it. Truncating `posted_at` to milliseconds on insert, or a microsecond cursor, would close it.",
+      "repro": "api-probes-run2 -t \"microsecond\"",
+      "evidence": "microsecond postedAt accepted: 200 synced 51 refused []\nsub-ms: stored like 02:00:00.000150, 02:00:00.000149; pages 2; distinct seen 50 of 51\nAssertionError: expected 50 to be 51",
+      "spec": "R2-AC-5; run 1 #3",
+      "screenshots": []
+    },
+    {
+      "id": 16,
+      "severity": "Minor",
+      "status": "open",
+      "title": "A phone clock days behind fakes “No payment notifications for 2 days” while payments arrive daily",
+      "detail": "An event now counts at `least(posted_at, created_at)`, which trusts a phone clock that is behind. D143 (7) says the watchdog counts from the server’s clock; `created_at` alone would (an offline phone is caught by the heartbeat rule anyway). Run 1’s `max(posted_at)` had the same flaw, so it isn’t new; finding 4 fixed the clock-ahead half only.",
+      "repro": "api-probes-run2 -t \"3 days behind\"",
+      "evidence": "phone 3 days behind, a payment every day: lastEventAt 2026-10-31T22:08:23.982Z, silent no-events; pushes 1\nAssertionError: expected [ { …(2) } ] to have a length of +0 but got 1",
+      "spec": "R2-AC-6; D143 (7)",
+      "screenshots": []
+    },
+    {
       "id": 1,
       "severity": "Major",
-      "status": "open",
-      "title": "Revoking notification access (or the listener being killed) brings no “Capture may be off” push for up to 48 hours after the last payment",
-      "detail": "The shell syncs a heartbeat every day whatever the listener’s state (`SyncWorker.scheduleDaily`, `SyncRun.buildBatch` puts `listenerConnected` and `access` in it). The server’s watchdog (`captureHealth`, apps/api/src/sync/health.ts) reads only the heartbeat’s *time* and the last event’s time: a fresh heartbeat that says `access: false, listenerConnected: false` counts as healthy. So the push waits for the 48-hour no-event limit, counted from the last payment. The brief’s done-when 5 says the watchdog fires “on the phone by revoking access for a day”, and `docs/local.md` B07 step 3 tells the owner to expect the push “by the next morning”: with a payment the evening before, it won’t come. In a browser, Home shows nothing either: `captureWarning` uses the phone’s own view only in the shell, and ignores the server’s `access`/`listenerConnected` (read in the code, not run). Home inside the shell does say *Capture is off*.",
-      "repro": "pnpm exec vitest run --config qa/B07/vitest.probe.config.ts -t \"access revoked\" (after pnpm test:db): a payment 20 h ago, then a heartbeat with access:false and listenerConnected:false, then the watchdog 10 h later.",
-      "evidence": "access off, 30 h after the last payment: pushes 0; health {\"on\":true,\"lastBeatAt\":\"2026-11-03T23:19:17.558Z\",\"listenerConnected\":false,\"access\":false,\"lastEventAt\":\"2026-11-03T03:19:17.541Z\",\"silent\":null,\"morningAt\":null,\"schedulerLate\":false}\nAssertionError: expected [] to have a length of 1 but got +0",
-      "spec": "AC-20c; brief Done when 5; docs/local.md B07 step 3; flows.md capture-off 1; spec §6.2 Health",
+      "status": "fixed",
+      "title": "Revoking access brought no push for up to 48 h",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "access off, 30 h after the last payment: pushes 1; health {\"on\":true,\"lastBeatAt\":\"2026-11-04T00:00:21.258Z\",\"listenerConnected\":false,\"access\":false,\"lastListenAt\":\"2026-11-04T00:00:21.248Z\",\"lastEventAt\":\"2026-11-03T04:00:21.242Z\",\"silent\":\"no-access\",\"morningAt\":null,\"schedulerLate\":false}\naccess off: health.silent no-access; pushes 1; body «Your phone says Sen can’t read notifications. Open Sen to turn access back on.»",
+      "spec": "run 1",
       "screenshots": []
     },
     {
       "id": 2,
       "severity": "Major",
-      "status": "open",
-      "title": "The watchdog’s 24-hour heartbeat rule has no test with teeth: raising it to 72 hours leaves the suite green",
-      "detail": "sync.test.ts “pushes once a day when the listener has been quiet for a day” sets the heartbeat 25 h back, but the person’s events date from 1 Nov 2026, more than 48 h before the test runs, so the *no events* branch pushes the same title and the test passes whichever rule fires. It asserts only the title. Nothing else isolates the 24-hour rule, the one done-when 5 rests on.",
-      "repro": "In a worktree of HEAD: packages/core/src/sync.ts `HEARTBEAT_SILENT_MS = 24 * 3_600_000` → `72 * 3_600_000`; `pnpm test:db`.",
-      "evidence": "p10-heartbeat-window-3d | exit 0 | SURVIVED\nResult: PASS\n      Tests  168 passed | 10 skipped (178)",
-      "spec": "AC-20, §6.2 Health, B5; severity table: a test on a critical path that catches nothing",
+      "status": "fixed",
+      "title": "The 24-hour rule had no test with teeth",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "b07-heartbeat-window | db | killed",
+      "spec": "run 1",
       "screenshots": []
     },
     {
       "id": 3,
       "severity": "Minor",
-      "status": "open",
-      "title": "*Captured on this phone* loses events that share a posted time at a page boundary",
-      "detail": "`GET /captured` pages by `posted_at < before`, and `next` is the last row’s `posted_at`. Rows with the same `posted_at` as the page’s last row are skipped on the next page. 51 events posted in the same millisecond: page 1 has 50, page 2 none. Ryt posts the same notification twice (the `duplicate` pair rule exists for it), so ties are plausible. Keyset on `(posted_at, id)` would hold them.",
-      "repro": "pnpm exec vitest run --config qa/B07/vitest.probe.config.ts -t \"paging through 51\"",
-      "evidence": "ties: page 1 50, next 2026-10-10T02:00:00.000Z, page 2 0; distinct seen 50 of 51\nAssertionError: expected 50 to be 51",
-      "spec": "AC-30; brief *The soak’s events*",
+      "status": "fixed",
+      "title": "Paging lost events sharing a posted time",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "ties: page 1 50, next 2026-10-10T02:00:00.000Z_0548b17e-957f-5803-8bc6-48d9ace3d8d4, page 2 1; distinct seen 51 of 51 (the sub-millisecond case is #15)",
+      "spec": "run 1",
       "screenshots": []
     },
     {
       "id": 4,
       "severity": "Minor",
-      "status": "open",
-      "title": "The no-events watchdog trusts the phone’s clock: an event stamped in the future silences it",
-      "detail": "`captureHealth` takes the newest `bank_events.posted_at` and the heartbeat’s `lastBankEventAt`, both from the phone. D143 (7) says the watchdog counts from the server’s clock. A phone whose clock ran a year ahead once keeps *no events* quiet for that year. Taking `created_at` (server time) for events would follow D143.",
-      "repro": "pnpm exec vitest run --config qa/B07/vitest.probe.config.ts -t \"phone clock a year ahead\"",
-      "evidence": "future posted_at, 3 days without a real event: pushes 0\nAssertionError: expected [] to have a length of 1 but got +0",
-      "spec": "D143 (7), §6.2 Health",
+      "status": "fixed",
+      "title": "A phone clock ahead silenced the watchdog",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "future posted_at, 3 days without a real event: pushes 1 (the clock-behind case is #16)",
+      "spec": "run 1",
       "screenshots": []
     },
     {
       "id": 5,
       "severity": "Minor",
-      "status": "open",
-      "title": "The watchdog’s once-a-day guard isn’t held: keyed on the instant instead of the KL day, the suite stays green",
-      "detail": "The test ticks twice with the identical `now`, so an `alerts_sent` key per instant still dedupes there. Every real retry inside the morning window has a later `now`. The frame itself runs once a day (`tick-frame-reclaimed` is killed), so this is the second line of defence.",
-      "repro": "apps/api/src/jobs/frames.ts `capture_off:${ctx.day}` → `capture_off:${ctx.now.toISOString()}`; pnpm test:db",
-      "evidence": "p6-watchdog-key-per-instant | exit 0 | SURVIVED\nResult: PASS\n      Tests  168 passed | 10 skipped (178)",
-      "spec": "brief *Health* (at most once a day through alerts_sent)",
+      "status": "fixed",
+      "title": "The once-a-day guard wasn’t held",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "b07-watchdog-key-per-instant | db | killed; once a day: same day 1, after the next day 2",
+      "spec": "run 1",
       "screenshots": []
     },
     {
       "id": 6,
       "severity": "Minor",
-      "status": "open",
-      "title": "B07 added no breakage checks: all 74 in qa/mutants.ts are earlier slices’",
-      "detail": "The B06 retro asked for “each guard the decisions name, with a breakage check per guard, before the first QA run”. D143 names nine; none is in qa/mutants.ts. The probes below are ready as entries (file, find, replace, suite).",
-      "repro": "grep -n -i \"sync\\|bank_event\\|capture\\|outbox\\|heartbeat\" qa/mutants.ts",
-      "evidence": "qa-artifacts/B07_sync/mutants/index.md: “74 of 74 killed”, no B07 id; git diff --stat main...HEAD -- qa/mutants.ts: empty",
-      "spec": "D139; qa/B06/ledger.md retro",
+      "status": "fixed",
+      "title": "No B07 breakage checks",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "12 of 12 b07-* killed. The Kotlin `BatchPlan` check (run 1’s p7) isn’t among them: qa/mutants.ts has no Kotlin suite",
+      "spec": "run 1",
       "screenshots": []
     },
     {
-      "id": 7,
-      "severity": "Note",
-      "status": "open",
-      "title": "app_user can clear its own tombstone and back-date a heartbeat by direct SQL; only the API path guards them",
-      "detail": "`GRANT UPDATE (label, deleted_at) ON capture_apps` lets `UPDATE … SET deleted_at = NULL` revive a removed choice; the INSERT grant on `device_heartbeats` covers `created_at`. The API only writes through `sync_capture_app` and never passes `created_at`, so neither is reachable today. A later generic resource route over these tables would make them so.",
-      "repro": "psql sen_test, as app_user with app.user_id = B: UPDATE capture_apps SET deleted_at = NULL WHERE id = <B’s removed choice>",
-      "evidence": "B revive own tombstone by UPDATE: ok, 1 rows\nB heartbeat with own created_at: ok, 1 rows",
-      "spec": "§5 Sync can’t duplicate or undo; D143 (4), (7)",
+      "id": "eyes capture-off/3",
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "The push stand-in’s words disagreed with the banner",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "R2-FLOW-6 step 2: the stand-in reads \"No payment notifications for 2 days. Open Sen to check it can still read them.\", the server’s own words",
+      "spec": "run 1",
       "screenshots": []
     },
     {
-      "id": 8,
-      "severity": "Note",
-      "status": "open",
-      "title": "The pull-down version is one counter for everyone",
-      "detail": "`sync_version` is a single sequence. A person who notes their version before and after their own change can count everyone else’s chosen-app changes in between. It’s small, but it is a fact about other people that RLS otherwise hides.",
-      "repro": "api-probes “the version counter is shared by everyone”",
-      "evidence": "A's version jumped from 0 to 43 for A's one change: B's 5 changes are visible as a gap of 42",
-      "spec": "D52",
-      "screenshots": []
-    },
-    {
-      "id": 9,
-      "severity": "Note",
-      "status": "open",
-      "title": "A notification whose text is over 8,000 characters (or expanded text over 16,000) is refused for ever",
-      "detail": "The server answers `malformed` and the shell marks it refused, so it never reaches `bank_events`. Raw text is meant to be stored first (§6.2). No bank sends that much today.",
-      "repro": "api-probes “text of 8001”",
-      "evidence": "text of 8001: [{\"id\":\"8c059d9c-3120-5a58-9876-ee7ae521f330\",\"reason\":\"malformed\"}]",
-      "spec": "§6.2 Raw text is stored first",
-      "screenshots": []
-    },
-    {
-      "id": 10,
-      "severity": "Note",
-      "status": "open",
-      "title": "`pnpm security` failed in the sweep: no gitleaks binary on this VM",
-      "detail": "GitHub release downloads are refused here, but `go install github.com/zricethezav/gitleaks/v8@v8.30.1` through proxy.golang.org works. With that on PATH, `pnpm security` passes (376 commits, no leaks). Worth a row in docs/cloud.md.",
-      "repro": "GOBIN=<dir> go install github.com/zricethezav/gitleaks/v8@v8.30.1; PATH=<dir>:$PATH pnpm security",
-      "evidence": "first run: FAIL  secret scan (gitleaks, whole history)\nre-run: INF 376 commits scanned … no leaks found; PASS ×3, exit 0",
-      "spec": "docs/workflow/qa.md security checks",
-      "screenshots": []
-    },
-    {
-      "id": 11,
-      "severity": "Note",
-      "status": "open",
-      "title": "Metrics flags on review and settings/claims (settle) are noise; both screens break 1,000 ms on main too",
-      "detail": "Re-measured with the harness itself (metrics.spec, QA_RUNS=5, one worker) on both builds. Requests 0 and blocking similar on both. A MutationObserver on each build found the same last changes (the list and the tab badge, at about 1.2–1.5 s on both).",
-      "repro": "QA_SERVE=<side> QA_RUNS=5 QA_ONLY='[\"review\",\"settings/claims\",\"payments\",\"settings\"]' pnpm exec playwright test -c e2e/diff.config.ts --project metrics-<side> --workers 1 metrics.spec",
-      "evidence": "base review 1651 1479 1283 1216 1410 (median 1410) · head 2334 1551 1508 2275 1268 (median 1551)\nbase claims 2235 1628 1135 2121 1348 (median 1628) · head 1253 1131 1964 2173 1595 (median 1595)",
-      "spec": "qa/limits.ts; D139",
+      "id": "eyes settings/capture/captured",
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "The Captured intro said “numbers hidden” beside visible amounts",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "R2-FLOW-7: \"… kept for you only. Every number but the amounts is hidden.\"; no digit outside an amount on screen",
+      "spec": "run 1",
       "screenshots": []
     }
   ],
   "probes": [
     {
-      "broke": "p1: the server stops checking an event’s id against its person and key",
+      "broke": "HEARTBEAT_SILENT_MS 24 h → 72 h (b07-heartbeat-window)",
       "caught": true,
-      "note": "sync.test “refuses a bad event alone” went red"
+      "note": "survived in run 1; killed now"
     },
     {
-      "broke": "p2: the raw-text trigger ignores `text`",
+      "broke": "the alert key per instant (b07-watchdog-key-per-instant)",
       "caught": true,
-      "note": "pgTAP sync.sql: 1 of 46 failed"
+      "note": "survived in run 1; killed now"
     },
     {
-      "broke": "p3: a stale upsert clears the tombstone (still answering stale)",
+      "broke": "access-off ignored (b07-access-off-ignored)",
       "caught": true,
-      "note": "pgTAP: 6 of 46 failed"
+      "note": "killed"
     },
     {
-      "broke": "p4: Capture off no longer refuses events",
+      "broke": "/captured paging on posted_at alone (b07-captured-paging-ties)",
       "caught": true,
-      "note": "sync.test capture-off test red"
+      "note": "killed"
     },
     {
-      "broke": "p5: an edit re-applies after its id is in outbox_applied",
+      "broke": "the phone’s clock trusted (b07-phone-clock-trusted)",
       "caught": true,
-      "note": "sync.test “an edit applies once” red"
-    },
-    {
-      "broke": "p6: the watchdog’s alert key per instant, not per KL day",
-      "caught": false,
-      "note": "SURVIVED: 168 passed (finding 5)"
-    },
-    {
-      "broke": "p7: one oversized event blocks the outbox (BatchPlan takes 0)",
-      "caught": true,
-      "note": "Kotlin: 65 tests, 1 failed"
-    },
-    {
-      "broke": "p8: Not synced yet shows at 0 s (flicker)",
-      "caught": true,
-      "note": "pending.test “waits 5 s” red"
-    },
-    {
-      "broke": "p9: bearer accepts unsigned tokens",
-      "caught": true,
-      "note": "sync.test “an unsigned token” red"
-    },
-    {
-      "broke": "p10: the heartbeat limit 24 h → 72 h",
-      "caught": false,
-      "note": "SURVIVED: 168 passed (finding 2)"
+      "note": "killed"
     }
   ],
   "flows": [
     {
-      "id": "FLOW-1",
-      "title": "A captured event syncs once, through a retry and a replay",
-      "kind": "happy",
-      "actor": "the shell, as the owner",
-      "entry": "POST /api/sync",
+      "id": "R2-FLOW-1",
+      "title": "Access revoked, then restored",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "heartbeats in sen_test; Home on the server build",
       "covers": [
-        "AC-1",
-        "AC-4",
-        "AC-4s",
-        "AC-35"
+        "R2-AC-1",
+        "R2-AC-1s"
       ],
-      "spec": "§5, §6.5",
+      "spec": "§6.2",
       "status": "pass",
-      "ends": "1 row per event",
+      "ends": "push names access; Home says Capture is off, then nothing",
       "steps": [
         {
           "n": 1,
-          "action": "post the batch",
-          "assertion": "200",
-          "status": "pass"
+          "action": "The phone’s last sync said access is off; open Home",
+          "assertion": "Home: \"Capture is off\", \"Your phone says Sen can’t read your payment notifications.\", with Fix",
+          "status": "pass",
+          "screenshot": "R2-FLOW-1-step-1-access-off.png"
         },
         {
           "n": 2,
-          "action": "post it again",
-          "assertion": "no new row",
-          "status": "pass"
+          "action": "A newer heartbeat with access and the listener; reload Home",
+          "assertion": "no capture warning",
+          "status": "pass",
+          "screenshot": "R2-FLOW-1-step-2-access-back.png"
         },
         {
           "n": 3,
-          "action": "post it inside a new batch; five at once",
-          "assertion": "one row each, no 500",
+          "action": "two ticks in one day, then access back and the next day",
+          "assertion": "1 push, then 0",
           "status": "pass"
         }
       ]
     },
     {
-      "id": "FLOW-2",
-      "title": "A malformed and a mismatched item in one batch",
+      "id": "R2-FLOW-2",
+      "title": "The listener killed, access on",
       "kind": "sad",
-      "actor": "the shell, as the owner",
-      "entry": "POST /api/sync",
+      "actor": "owner",
+      "entry": "heartbeats; the morning job; Home",
       "covers": [
-        "AC-3",
-        "AC-10",
-        "AC-10s"
+        "R2-AC-2",
+        "R2-AC-4"
       ],
-      "spec": "D143 (1), (2)",
-      "status": "pass",
-      "ends": "good items stored, bad ones refused by id",
+      "spec": "§6.2",
+      "status": "fail",
+      "ends": "one push at 25 h, words true to the cause",
       "steps": [
         {
           "n": 1,
-          "action": "B sends A’s event id",
-          "assertion": "refused reason id",
+          "action": "23 h since the listener’s last heartbeat; tick",
+          "assertion": "no push",
           "status": "pass"
         },
         {
           "n": 2,
-          "action": "null, 7 and \"x\" as events",
-          "assertion": "200, each refused malformed",
-          "status": "pass"
+          "action": "25 h; tick",
+          "assertion": "1 push saying the listener is off",
+          "status": "fail"
         },
         {
           "n": 3,
-          "action": "not JSON, an array, 101 events",
+          "action": "The listener’s last connected heartbeat was 25 h ago; open Home",
+          "assertion": "Home: \"Capture may be off\", \"Sen’s listener on your phone has been off since …\"",
+          "status": "pass",
+          "screenshot": "R2-FLOW-2-step-1-listener-off.png"
+        }
+      ]
+    },
+    {
+      "id": "R2-FLOW-3",
+      "title": "Capture off for days, then on",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "heartbeats; the switch; the morning job",
+      "covers": [
+        "R2-AC-3"
+      ],
+      "spec": "§6.2",
+      "status": "fail",
+      "ends": "no push",
+      "steps": [
+        {
+          "n": 1,
+          "action": "heartbeats listener-off for 3 days, switch on, tick next morning",
+          "assertion": "no push",
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "id": "R2-FLOW-4",
+      "title": "Paging Captured on this phone",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "GET /api/captured",
+      "covers": [
+        "R2-AC-5",
+        "R2-AC-5s"
+      ],
+      "spec": "§6.2",
+      "status": "fail",
+      "ends": "every event reachable; bad cursors 400",
+      "steps": [
+        {
+          "n": 1,
+          "action": "51 events in one ms",
+          "assertion": "51 of 51",
+          "status": "pass"
+        },
+        {
+          "n": 2,
+          "action": "51 events microseconds apart in one ms",
+          "assertion": "51 of 51",
+          "status": "fail"
+        },
+        {
+          "n": 3,
+          "action": "malformed cursors",
           "assertion": "400 { code, message }",
           "status": "pass"
         }
       ]
     },
     {
-      "id": "FLOW-3",
-      "title": "Capture off, then on",
+      "id": "R2-FLOW-5",
+      "title": "The phone’s clock, ahead and behind",
       "kind": "sad",
-      "actor": "the shell, as the owner",
-      "entry": "POST /api/sync with capture off",
+      "actor": "owner",
+      "entry": "events with a skewed posted time",
       "covers": [
-        "AC-11",
-        "AC-11s",
-        "AC-12"
+        "R2-AC-6"
       ],
-      "spec": "§9.6",
-      "status": "pass",
-      "ends": "no event stored while off; the choice taken on the resend",
-      "steps": [
-        {
-          "n": 1,
-          "action": "mixed batch, capture off",
-          "assertion": "403 capture_off; 0 events, 0 apps, 0 heartbeats",
-          "status": "pass"
-        },
-        {
-          "n": 2,
-          "action": "resend without events",
-          "assertion": "200; 1 choice",
-          "status": "pass"
-        },
-        {
-          "n": 3,
-          "action": "shell off",
-          "assertion": "403 shell_off on /sync and /sync/changes",
-          "status": "pass"
-        }
-      ]
-    },
-    {
-      "id": "FLOW-4",
-      "title": "Choosing, removing and re-choosing an app, with a stale phone",
-      "kind": "sad",
-      "actor": "the shell, as the owner",
-      "entry": "/api/sync and /api/sync/changes",
-      "covers": [
-        "AC-7",
-        "AC-17",
-        "AC-18"
-      ],
-      "spec": "§15, D143 (4)",
-      "status": "pass",
-      "ends": "the tombstone stays; the pull shows it once",
-      "steps": [
-        {
-          "n": 1,
-          "action": "choose, then remove c1",
-          "assertion": "one tombstone",
-          "status": "pass"
-        },
-        {
-          "n": 2,
-          "action": "pull since v0",
-          "assertion": "one row, deletedAt set",
-          "status": "pass"
-        },
-        {
-          "n": 3,
-          "action": "pull again; stale re-send of c1",
-          "assertion": "nothing; 0 live",
-          "status": "pass"
-        }
-      ]
-    },
-    {
-      "id": "FLOW-5",
-      "title": "Person B’s sync never touches A’s rows",
-      "kind": "sad",
-      "actor": "the shell, as the owner",
-      "entry": "two signed-in people",
-      "covers": [
-        "AC-1s",
-        "AC-14",
-        "AC-17s",
-        "AC-30"
-      ],
-      "spec": "D52",
-      "status": "pass",
-      "ends": "two rows, one each; B sees only B’s",
-      "steps": [
-        {
-          "n": 1,
-          "action": "A syncs; B syncs the same text",
-          "assertion": "2 rows, different ids",
-          "status": "pass"
-        },
-        {
-          "n": 2,
-          "action": "B edits A’s event",
-          "assertion": "not_found; A’s unchanged",
-          "status": "pass"
-        },
-        {
-          "n": 3,
-          "action": "B lists Captured",
-          "assertion": "only B’s",
-          "status": "pass"
-        }
-      ]
-    },
-    {
-      "id": "FLOW-6",
-      "title": "The watchdog with a fake clock",
-      "kind": "sad",
-      "actor": "the shell, as the owner",
-      "entry": "captureWatchdog with a set clock",
-      "covers": [
-        "AC-19",
-        "AC-20",
-        "AC-20b",
-        "AC-20s",
-        "AC-20c"
-      ],
-      "spec": "§6.2, §18",
+      "spec": "§6.2",
       "status": "fail",
-      "ends": "one push for 25 h quiet; one when access is revoked",
+      "ends": "push when quiet, none while payments arrive",
       "steps": [
         {
           "n": 1,
-          "action": "25 h without a heartbeat, ticked twice",
-          "assertion": "1 push, 1 alerts_sent",
+          "action": "a year ahead, 3 quiet days",
+          "assertion": "1 push",
           "status": "pass"
         },
         {
           "n": 2,
-          "action": "access revoked, heartbeat says so, last payment 30 h ago",
-          "assertion": "1 push",
-          "status": "fail"
-        },
-        {
-          "n": 3,
-          "action": "an event stamped a year ahead, 3 days quiet",
-          "assertion": "1 push",
+          "action": "3 days behind, payments daily",
+          "assertion": "no push",
           "status": "fail"
         }
       ]
     },
     {
-      "id": "FLOW-7",
-      "title": "Home warns that capture may be off",
+      "id": "R2-FLOW-6",
+      "title": "One fact, one wording",
       "kind": "sad",
       "actor": "owner",
       "entry": "/?scenario=capture-off (preview fake)",
       "covers": [
-        "AC-23s",
-        "AC-38"
+        "R2-AC-9"
       ],
-      "spec": "screens.md home, flows.md capture-off",
-      "status": "pass",
-      "ends": "the warning bar above everything, Fix opens Settings → Capture",
+      "spec": "§6.2",
+      "status": "fail",
+      "ends": "banner, push and widget agree; the date on one line",
       "steps": [
         {
           "n": 1,
-          "action": "Open Home in the usual scenario",
-          "assertion": "no capture warning on Home",
-          "status": "pass",
-          "screenshot": "FLOW-7-step-1-home-healthy.png"
+          "action": "Open Home in the capture-off scenario",
+          "assertion": "the banner names payment notifications and a time; the date isn’t broken across lines",
+          "status": "fail",
+          "screenshot": "R2-FLOW-6-step-1-banner.png"
         },
         {
           "n": 2,
-          "action": "Open Home with capture silent (?scenario=capture-off)",
-          "assertion": "a warning bar at the top reads \"Capture may be off\" with Fix",
+          "action": "Dev panel → Surfaces: the capture push",
+          "assertion": "the push says what the server’s push says for this state",
           "status": "pass",
-          "screenshot": "FLOW-7-step-2-home-capture-off.png"
+          "screenshot": "R2-FLOW-6-step-2-push-stand-in.png"
         },
         {
           "n": 3,
-          "action": "Tap Fix",
-          "assertion": "Settings → Capture opens",
+          "action": "Dev panel → Widgets in the same state",
+          "assertion": "the widget’s words, beside the banner’s",
           "status": "pass",
-          "screenshot": "FLOW-7-step-3-fix-opens-capture.png"
+          "screenshot": "R2-FLOW-6-step-3-widget.png"
         }
       ]
     },
     {
-      "id": "FLOW-8",
-      "title": "A setting written in a browser: slow, refused, retried",
-      "kind": "sad",
-      "actor": "owner in a browser",
-      "entry": "Settings → You, against the API on sen_test",
+      "id": "R2-FLOW-7",
+      "title": "Captured on this phone’s intro",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/s/settings/capture/captured (preview fake)",
       "covers": [
-        "AC-28",
-        "AC-29"
+        "R2-AC-10"
       ],
-      "spec": "D100, B4, patterns §7",
+      "spec": "§6.2",
       "status": "pass",
-      "ends": "reverted on 500; Retry saves; the database holds it",
+      "ends": "the intro matches the rows",
       "steps": [
         {
           "n": 1,
-          "action": "Change the names; the request takes 7 s",
-          "assertion": "the new value shows at once, with no \"Not synced yet\" before 5 s",
+          "action": "Open Captured on this phone",
+          "assertion": "the intro says amounts show and other numbers are hidden, and the rows bear it out",
           "status": "pass",
-          "screenshot": "FLOW-8-step-1-slow-shows-at-once.png"
-        },
-        {
-          "n": 2,
-          "action": "Wait past 5 s",
-          "assertion": "\"Not synced yet\" shows by the field while the request is out",
-          "status": "pass",
-          "screenshot": "FLOW-8-step-2-slow-not-synced.png"
-        },
-        {
-          "n": 3,
-          "action": "The request answers",
-          "assertion": "the mark goes, the value stays, and the database has it",
-          "status": "pass",
-          "screenshot": "FLOW-8-step-3-slow-saved.png"
-        },
-        {
-          "n": 4,
-          "action": "Change the names; the API answers 500",
-          "assertion": "the field goes back to the stored value and the toast offers Retry with the server’s words",
-          "status": "pass",
-          "screenshot": "FLOW-8-step-4-refused-reverts.png"
-        },
-        {
-          "n": 5,
-          "action": "Tap Retry while the API still refuses",
-          "assertion": "still the stored value; a Retry is offered again and nothing says it saved",
-          "status": "pass",
-          "screenshot": "FLOW-8-step-5-retry-fails-again.png"
-        },
-        {
-          "n": 6,
-          "action": "Tap Retry with the API back",
-          "assertion": "Names saved; the field and the database hold the new value",
-          "status": "pass",
-          "screenshot": "FLOW-8-step-6-retry-saves.png"
-        }
-      ]
-    },
-    {
-      "id": "FLOW-9",
-      "title": "Captured on this phone, in two timezones",
-      "kind": "happy",
-      "actor": "owner",
-      "entry": "Settings → Capture → Captured on this phone (preview fake)",
-      "covers": [
-        "AC-30",
-        "AC-31"
-      ],
-      "spec": "brief",
-      "status": "pass",
-      "ends": "the same rows and times in KL and New York",
-      "steps": [
-        {
-          "n": 1,
-          "action": "Open Settings → Capture → Captured on this phone (browser in Asia/Kuala_Lumpur)",
-          "assertion": "the server’s events, newest first, with their raw text; times in KL",
-          "status": "pass",
-          "screenshot": "FLOW-9-step-1-captured-kl.png"
-        },
-        {
-          "n": 2,
-          "action": "Open Settings → Capture → Captured on this phone (browser in America/New_York)",
-          "assertion": "the server’s events, newest first, with their raw text; times in KL",
-          "status": "pass",
-          "screenshot": "FLOW-9-step-2-captured-ny.png"
-        }
-      ]
-    },
-    {
-      "id": "FLOW-10",
-      "title": "Sign out everywhere signs the shell out",
-      "kind": "sad",
-      "actor": "the shell, as the owner",
-      "entry": "a bearer and a browser session",
-      "covers": [
-        "AC-24",
-        "AC-25",
-        "AC-26"
-      ],
-      "spec": "B8",
-      "status": "pass",
-      "ends": "the bearer answers 401 after",
-      "steps": [
-        {
-          "n": 1,
-          "action": "bearer as stored, decoded, forged",
-          "assertion": "200, 200, 401",
-          "status": "pass"
-        },
-        {
-          "n": 2,
-          "action": "browser: revoke-sessions; bearer syncs",
-          "assertion": "401 signed_out",
-          "status": "pass"
-        }
-      ]
-    },
-    {
-      "id": "CORE-first-run",
-      "title": "First run (core)",
-      "kind": "happy",
-      "actor": "owner",
-      "entry": "dev panel → Choose a journey → first-run",
-      "covers": [],
-      "spec": "flows.md first-run",
-      "status": "pass",
-      "ends": "Home: Spent since you started",
-      "steps": [
-        {
-          "n": 1,
-          "action": "Email, then the 6-digit code.",
-          "assertion": "the journey bar shows its step",
-          "status": "pass",
-          "screenshot": "CORE-first-run-step-1-step-1.png"
-        },
-        {
-          "n": 2,
-          "action": "Choose your apps, give access, keep Sen running, set up accounts, your name and ",
-          "assertion": "the journey bar shows its step",
-          "status": "pass",
-          "screenshot": "CORE-first-run-step-2-step-2.png"
-        },
-        {
-          "n": 3,
-          "action": "Home reads Spent since you started until the first salary lands.",
-          "assertion": "Home: \"Spent since you started\"",
-          "status": "pass",
-          "screenshot": "CORE-first-run-step-3-step-3.png"
-        }
-      ]
-    },
-    {
-      "id": "CORE-pay-new",
-      "title": "Paying at a new merchant (core)",
-      "kind": "happy",
-      "actor": "owner",
-      "entry": "dev panel → A notification arrives",
-      "covers": [],
-      "spec": "flows.md pay-new",
-      "status": "pass",
-      "ends": "filed as Meals; out of Review",
-      "steps": [
-        {
-          "n": 1,
-          "action": "Dev panel → A notification arrives",
-          "assertion": "the category prompt names the payment",
-          "status": "pass",
-          "screenshot": "CORE-pay-new-step-1-prompt.png"
-        },
-        {
-          "n": 2,
-          "action": "Tap Meals",
-          "assertion": "the payment is filed and the prompt goes",
-          "status": "pass",
-          "screenshot": "CORE-pay-new-step-2-filed.png"
-        },
-        {
-          "n": 3,
-          "action": "Look at Review → Categories",
-          "assertion": "Roti Bakar 88 no longer waits for a category",
-          "status": "pass",
-          "screenshot": "CORE-pay-new-step-3-left-review.png"
-        }
-      ]
-    },
-    {
-      "id": "CORE-scan-after",
-      "title": "Scanning a receipt after paying (core)",
-      "kind": "happy",
-      "actor": "owner",
-      "entry": "Scan tab",
-      "covers": [],
-      "spec": "flows.md scan-after",
-      "status": "pass",
-      "ends": "Attached to RM64.13 on Ryt Bank",
-      "steps": [
-        {
-          "n": 1,
-          "action": "Tap Scan and choose a photo",
-          "assertion": "the crop step offers Use this",
-          "status": "pass",
-          "screenshot": "CORE-scan-after-step-1-crop.png"
-        },
-        {
-          "n": 2,
-          "action": "Use this",
-          "assertion": "confirm shows SATE KAJANG HJ SAMURI",
-          "status": "pass",
-          "screenshot": "CORE-scan-after-step-2-confirm.png"
-        },
-        {
-          "n": 3,
-          "action": "Tap More people twice",
-          "assertion": "RM21.38 a person",
-          "status": "pass",
-          "screenshot": "CORE-scan-after-step-3-three-people.png"
-        },
-        {
-          "n": 4,
-          "action": "Done",
-          "assertion": "the toast says Attached to RM64.13 on Ryt Bank",
-          "status": "pass",
-          "screenshot": "CORE-scan-after-step-4-attached.png"
+          "screenshot": "R2-FLOW-7-step-1-captured-intro.png"
         }
       ]
     }
   ],
   "criteria": [
     {
-      "id": "AC-1",
-      "title": "Event id derived the same in the API and the shell",
-      "spec": "§5, §15, D143 (1)",
+      "id": "R2-AC-1",
+      "title": "Access off: Home says Capture is off; one push naming access",
+      "spec": "§6.2, B5, run 1 #1",
       "status": "pass",
-      "evidence": "ids.test.ts and IdsTest.kt hold the same vectors (3cdaca7c-ddc1-583c-884e-4fd234d7d9e6, …); unit 471/471 and Kotlin 65/65 green, re-run with --rerun-tasks"
+      "evidence": "access off: health.silent no-access; pushes 1; body «Your phone says Sen can’t read notifications. Open Sen to turn access back on.» · R2-FLOW-1 step 1: Home \"Capture is off · Your phone says Sen can't read your payment notifications.\" with Fix"
     },
     {
-      "id": "AC-1s",
-      "title": "Two people, one dedupe key: two rows",
-      "spec": "D143 (1)",
-      "status": "pass",
-      "evidence": "B sends A's id: [{\"id\":\"23d64dad-f686-5ab7-b1fd-2b35d1a30de9\",\"reason\":\"id\"}]; then B’s own copy stored: 2 rows with that dedupe_key"
-    },
-    {
-      "id": "AC-2",
-      "title": "Transaction id from event id and index",
-      "spec": "brief Ids, §15",
-      "status": "pass",
-      "evidence": "txn vectors 3aadfde9… (0) and 5b69ef63… (1) in both languages"
-    },
-    {
-      "id": "AC-3",
-      "title": "Server recomputes dedupe key and id; mismatch refused per item",
-      "spec": "D143 (1)",
-      "status": "pass",
-      "evidence": "B sends A's id: [{\"id\":\"23d64dad-f686-5ab7-b1fd-2b35d1a30de9\",\"reason\":\"id\"}]; sync.test “refuses a bad event alone” (edited text → dedupe_key)"
-    },
-    {
-      "id": "AC-4",
-      "title": "The same event three ways is one row",
-      "spec": "§5, §6.5, B2",
-      "status": "pass",
-      "evidence": "dedupe: statuses 200,200,200; rows for e = 1; concurrent identical batches: statuses 200,200,200,200,200"
-    },
-    {
-      "id": "AC-4s",
-      "title": "Two identical payments, different `when`: two rows",
+      "id": "R2-AC-1s",
+      "title": "Access back: no warning, no push",
       "spec": "§6.2",
       "status": "pass",
-      "evidence": "2 rows with text “You paid RM5.00 to KEDAI MAJU” (api-probes)"
+      "evidence": "access off: health.silent no-access; pushes 1; body «Your phone says Sen can’t read notifications. Open Sen to turn access back on.» · R2-FLOW-1 step 2"
     },
     {
-      "id": "AC-5",
-      "title": "Length-prefixed fields: “ab”+“c” ≠ “a”+“bc”",
-      "spec": "§6.2, D115",
-      "status": "pass",
-      "evidence": "2 rows with notification_key k1 (api-probes)"
-    },
-    {
-      "id": "AC-6",
-      "title": "Raw columns immutable, owner included",
-      "spec": "brief, §6.2, B3",
-      "status": "pass",
-      "evidence": "pgTAP sync.sql: app_user error 42501, owner throws 42501 on text, posted_at, dedupe_key; probe p2 (trigger ignoring text) caught: 1 of 46 failed"
-    },
-    {
-      "id": "AC-6s",
-      "title": "Status columns stay writable",
-      "spec": "§6.2",
-      "status": "pass",
-      "evidence": "pgTAP “its status stays writable”"
-    },
-    {
-      "id": "AC-7",
-      "title": "A stale upsert never revives a tombstone",
-      "spec": "§5, §15, D143 (4), B3",
-      "status": "pass",
-      "evidence": "api-probes: stale re-send of c1 → 0 live rows; probe p3 caught (6 of 46 failed)"
-    },
-    {
-      "id": "AC-8",
-      "title": "A field edit changes only its fields",
-      "spec": "§5, B3",
-      "status": "pass",
-      "evidence": "pgTAP: linked_event_id and parsed kept after a status edit"
-    },
-    {
-      "id": "AC-9",
-      "title": "An edit applies once, by its id",
-      "spec": "D143 (3)",
-      "status": "pass",
-      "evidence": "edit replay: synced [\"20091b17-ba78-4f1b-b801-092da1e4a405\"]; status dismissed; ledger rows 1"
-    },
-    {
-      "id": "AC-10",
-      "title": "One malformed item refused alone",
-      "spec": "D143 (2)",
-      "status": "pass",
-      "evidence": "a null item: 200 {\"synced\":{\"events\":[],\"edits\":[],\"captureApps\":[],\"commands\":[]},\"refused\":{\"events\":[{\"id\":\"?\",\"reason\":\"malformed\"},{\"id\":\"?\",\"reason\":\"malformed\"},{\"id\":\"?\""
-    },
-    {
-      "id": "AC-10s",
-      "title": "Malformed body: 400 with the error shape",
-      "spec": "qa.md Routes",
-      "status": "pass",
-      "evidence": "not JSON: 400 {\"code\":\"invalid\",\"message\":\"That isn’t valid JSON.\"} · an array: 400 {\"code\":\"invalid\",\"message\":\"Invalid input: expected object, received array\"} · 101 events: 400 {\"code\":\"invalid\",\"message\":\"Too big: expected array to have <=100 items\",\"field\":\"events\"}"
-    },
-    {
-      "id": "AC-11",
-      "title": "Capture off: events refused capture_off, nothing stored; the rest taken on the resend",
-      "spec": "§9.6, D143 (6), B7",
-      "status": "pass",
-      "evidence": "capture off, mixed batch: 403 {\"code\":\"capture_off\",\"message\":\"Capture is off for you, so Sen keeps no notifications.\"}; capture_apps 0, heartbeats 0; resend without events: 200, capture_apps 1"
-    },
-    {
-      "id": "AC-11s",
-      "title": "Capture on: accepted",
-      "spec": "§9.6",
-      "status": "pass",
-      "evidence": "dedupe probes: 200, rows stored"
-    },
-    {
-      "id": "AC-12",
-      "title": "Shell off: refused, nothing written",
-      "spec": "D143 (6)",
-      "status": "pass",
-      "evidence": "stdout | qa/B07/api-probes.probe.ts > the Capture switch (AC-11, AC-12) > the shell off: /sync and /sync/changes refused, nothing written; heartbeats 0"
-    },
-    {
-      "id": "AC-13",
-      "title": "Signed out: 401 with the error shape",
-      "spec": "§5",
-      "status": "pass",
-      "evidence": "sync.test “an unsigned token, or none, is signed out” (suite green); /match signed out: 401 {\"code\":\"signed_out\"}"
-    },
-    {
-      "id": "AC-14",
-      "title": "B reads and writes none of A’s sync rows",
-      "spec": "non-negotiable, §15",
-      "status": "pass",
-      "evidence": "RLS matrix: B sees 1 row (0 not theirs) in each table; inserts as A 42501; updates of A’s rows touch 0 rows; moving a row to A 42501"
-    },
-    {
-      "id": "AC-15",
-      "title": "No user id: zero rows",
-      "spec": "§5",
-      "status": "pass",
-      "evidence": "RLS matrix: 0 in all four tables"
-    },
-    {
-      "id": "AC-16",
-      "title": "The admin sees no one’s chosen apps or events",
-      "spec": "§6.2, §9.6, D86",
-      "status": "pass",
-      "evidence": "admin members: status 200, mentions a package: false; RLS matrix admin column 0"
-    },
-    {
-      "id": "AC-17",
-      "title": "Changes since a version; then nothing",
-      "spec": "brief, §5",
-      "status": "pass",
-      "evidence": "stdout | qa/B07/api-probes.probe.ts > the offline copy (AC-17, AC-18) > changes since a version: a choice and a removal, then nothing; no one else’s"
-    },
-    {
-      "id": "AC-17s",
-      "title": "No one else’s choices come back",
-      "spec": "brief",
-      "status": "pass",
-      "evidence": "B chose the same package; A’s pull held only A’s row"
-    },
-    {
-      "id": "AC-18",
-      "title": "One live choice per app; re-choosing is a new row",
-      "spec": "§15, D143 (4)",
-      "status": "pass",
-      "evidence": "pgTAP “choosing it again adds a new row”, “still chosen once”"
-    },
-    {
-      "id": "AC-19",
-      "title": "Heartbeat on the server’s clock",
-      "spec": "§15, D143 (7)",
-      "status": "pass",
-      "evidence": "heartbeat with createdAt: 200; stored 2026-11-03T23:19:17.876Z"
-    },
-    {
-      "id": "AC-20",
-      "title": "24 h without a heartbeat: one push, one alerts_sent row",
-      "spec": "§6.2, §18, B5",
-      "status": "pass",
-      "evidence": "25 h quiet: pushes 1, alerts_sent 1, title Capture may be off (but see finding 2: the suite’s own test of this rule has no teeth)"
-    },
-    {
-      "id": "AC-20b",
-      "title": "48 h without an event: the push",
-      "spec": "§6.2",
-      "status": "pass",
-      "evidence": "sync.test “pushes when no event has come for 2 days” (suite green)"
-    },
-    {
-      "id": "AC-20s",
-      "title": "No push: capture off, or never synced",
-      "spec": "§6.2",
-      "status": "pass",
-      "evidence": "sync.test “stays quiet with Capture off, or with no shell ever synced”"
-    },
-    {
-      "id": "AC-20c",
-      "title": "Access revoked: the push comes by the next morning",
-      "spec": "B5, local.md B07 step 3, flows.md capture-off",
+      "id": "R2-AC-2",
+      "title": "Listener off with access on: 23 h quiet, 25 h one push, words true to the cause",
+      "spec": "§6.2, flows.md capture-off",
       "status": "fail",
-      "evidence": "access off, 30 h after the last payment: pushes 0; health {\"on\":true,\"lastBeatAt\":\"2026-11-03T23:19:17.558Z\",\"listenerConnected\":false,\"access\":false,\"lastEventAt\":\"2026-11-03T03:19:17.541Z\",\"silent\":null,\"morningAt\":null,\"schedulerLate\":false}"
+      "evidence": "listener off: at 23 h pushes 0; at 25 h pushes 1, silent no-heartbeat, listenerConnected false, lastListenAt 2026-11-02T23:08:23.741Z; push body «Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.»"
     },
     {
-      "id": "AC-21",
-      "title": "Each sync returns when the morning job last ran",
-      "spec": "brief, §18",
-      "status": "pass",
-      "evidence": "sync.test “capture’s health says when the morning job last ran”; SyncResult.morningAt"
-    },
-    {
-      "id": "AC-22",
-      "title": "The 26-hour check",
-      "spec": "§18, B6",
-      "status": "pass",
-      "evidence": "SchedulerCheckTest 5 cases (Kotlin 65/65); capture-warnings.test.ts scheduler cases. The notification the shell posts: emulator only (not run here)"
-    },
-    {
-      "id": "AC-23",
-      "title": "Home: Capture is off with Fix opening Android’s setting (shell)",
-      "spec": "screens.md home, flows.md capture-off",
-      "status": "unreachable",
-      "evidence": "inShell() is false in a browser; covered by capture-warnings.test.ts only. The server-side warning (Capture may be off + Fix) walked in FLOW-7"
-    },
-    {
-      "id": "AC-23s",
-      "title": "Capture healthy: no warning",
-      "spec": "screens.md",
-      "status": "pass",
-      "evidence": "FLOW-7 step 1"
-    },
-    {
-      "id": "AC-24",
-      "title": "Sign-in never hands page scripts the token",
-      "spec": "D143 (5)",
-      "status": "pass",
-      "evidence": "sync.test “signing in never hands page scripts the token” (suite green); probe p9 neighbour"
-    },
-    {
-      "id": "AC-25",
-      "title": "Bearer works; unsigned or forged refused",
-      "spec": "D143 (5)",
-      "status": "pass",
-      "evidence": "bearer: encoded 200, decoded 200, forged signature 401 {\"code\":\"signed_out\",\"message\":\"Sign in to Sen.\"}; probe p9 (requireSignature off) caught"
-    },
-    {
-      "id": "AC-26",
-      "title": "Sign out everywhere kills the shell’s bearer",
-      "spec": "brief, B8",
-      "status": "pass",
-      "evidence": "after Sign out everywhere: 401 {\"code\":\"signed_out\",\"message\":\"Sign in to Sen.\"}"
-    },
-    {
-      "id": "AC-27",
-      "title": "Another person on the phone empties the outbox first",
-      "spec": "D143 (8), D52",
-      "status": "unreachable",
-      "evidence": "Emulator test another_person_signing_in_never_sends_… ; CI Shell run 41684198747 at 683376e: emulator step success. Not run in this session (no KVM)"
-    },
-    {
-      "id": "AC-28",
-      "title": "A browser write is optimistic; reverts with Retry; Retry saves",
-      "spec": "brief, D100, B4",
-      "status": "pass",
-      "evidence": "FLOW-8 steps 4–6; database own_names = [\"QA REFUSED NAME\"] after Retry"
-    },
-    {
-      "id": "AC-29",
-      "title": "Not synced yet only after 5 s",
-      "spec": "patterns §7",
-      "status": "pass",
-      "evidence": "FLOW-8 steps 1–2: none at 2.5 s, shown before 7 s; probe p8 (0 s) caught"
-    },
-    {
-      "id": "AC-30",
-      "title": "Captured on this phone: the server’s events, newest first, every one reachable",
-      "spec": "brief",
+      "id": "R2-AC-3",
+      "title": "No false alarm after Capture is switched back on",
+      "spec": "§6.2, §9.6, D98",
       "status": "fail",
-      "evidence": "ties: page 1 50, next 2026-10-10T02:00:00.000Z, page 2 0; distinct seen 50 of 51. The list itself: FLOW-9 pass"
+      "evidence": "switched on 1 h ago, no connected heartbeat since: silent no-heartbeat; next-morning pushes 1; body «Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.»"
     },
     {
-      "id": "AC-31",
-      "title": "Captured times in KL whatever the browser zone",
-      "spec": "CLAUDE.md conventions",
+      "id": "R2-AC-4",
+      "title": "Each watchdog rule has a test that fails alone",
+      "spec": "run 1 #2",
       "status": "pass",
-      "evidence": "FLOW-9: America/New_York rows identical to Asia/Kuala_Lumpur"
+      "evidence": "mutant b07-heartbeat-window killed (12 of 12 b07-* killed); sync.test 23 h vs 25 h, 47 h vs 49 h"
     },
     {
-      "id": "AC-32",
-      "title": "/match: an empty frame, idempotent, 401 signed out",
-      "spec": "brief, §16",
-      "status": "pass",
-      "evidence": "match: 200 {\"matched\":0}, 200, signed out 401 {\"code\":\"signed_out\",\"message\":\"Sign in to Sen.\"}, extra 400 {\"code\":\"invalid\",\"message\":\"Unrecognized key: \\\"x\\\"\"}"
+      "id": "R2-AC-5",
+      "title": "Paging holds every event, ties and sub-ms times included",
+      "spec": "run 1 #3",
+      "status": "fail",
+      "evidence": "ties: page 1 50, next 2026-10-10T02:00:00.000Z_0548b17e-957f-5803-8bc6-48d9ace3d8d4, page 2 1; distinct seen 51 of 51 · but sub-ms: stored like 02:00:00.000150, 02:00:00.000149; pages 2; distinct seen 50 of 51"
     },
     {
-      "id": "AC-33",
-      "title": "No float on a money path",
-      "spec": "non-negotiable",
+      "id": "R2-AC-5s",
+      "title": "Bad cursors: 400 with the error shape",
+      "spec": "run 1 #3",
       "status": "pass",
-      "evidence": "diff grep: parseFloat|toFixed|Number(|toDouble|Float|::numeric → one Number() on a row count in a test"
+      "evidence": "abc, a bare instant, _x, notauuid, x_<uuid>, over-long, SQL text: all 400 {\"code\":\"invalid\",…}; an +08:00 instant is a valid cursor (200)"
     },
     {
-      "id": "AC-34",
-      "title": "RLS on every new table, the API role can’t bypass",
-      "spec": "non-negotiable",
-      "status": "pass",
-      "evidence": "four tables relrowsecurity=true; app_user bypassrls=false; no SECURITY DEFINER function reads them"
+      "id": "R2-AC-6",
+      "title": "The phone’s clock can’t silence or fake the watchdog",
+      "spec": "D143 (7), run 1 #4",
+      "status": "fail",
+      "evidence": "future posted_at, 3 days without a real event: pushes 1 (pass) · phone 3 days behind, a payment every day: lastEventAt 2026-10-31T22:08:23.982Z, silent no-events; pushes 1 (fail)"
     },
     {
-      "id": "AC-35",
-      "title": "Every input has a dedupe key",
-      "spec": "non-negotiable",
+      "id": "R2-AC-7",
+      "title": "At most one push a day",
+      "spec": "run 1 #5",
       "status": "pass",
-      "evidence": "events: dedupe key; edits/commands: outbox_applied by id; choices: their id; heartbeats: their id"
+      "evidence": "once a day: same day 1, after the next day 2; mutant b07-watchdog-key-per-instant killed"
     },
     {
-      "id": "AC-36",
-      "title": "No real financial data in fixtures",
-      "spec": "non-negotiable",
+      "id": "R2-AC-8",
+      "title": "B07’s breakage checks exist and are killed",
+      "spec": "D139, run 1 #6",
       "status": "pass",
-      "evidence": "seed and fake capture: made-up, masked (•-ELEVEN, ZUS COFFEE ••••); pnpm hygiene passed"
+      "evidence": "12 of 12 killed (qa-artifacts/B07_sync/run2/mutants/index.md); db unmutated 14 s, web 12 s"
     },
     {
-      "id": "AC-37",
-      "title": "No secret in the built app",
-      "spec": "non-negotiable",
-      "status": "pass",
-      "evidence": "grep dist-production, dist-qa for keys, postgres://, secrets, set-auth-token: none; gitleaks whole history: no leaks"
+      "id": "R2-AC-9",
+      "title": "One fact, one wording across push, banner and widget; the date on one line",
+      "spec": "eyes capture-off/3, home@capture-off",
+      "status": "fail",
+      "evidence": "push stand-in = the server’s no-events push (pass). banner: \"Capture may be off\\nNo payment notifications since Fri, 16 Oct, 17:40.\\nFix\" date Fri, 16 Oct, 17:40 line tops [95,113] · widget words: [\"Capture may be off\",\"Dark · Capture is off\",\"Capture is off\"] · the listener-off push says \"Sen hasn’t heard from your phone for a day\" where Home says \"Sen’s listener … has been off since\""
     },
     {
-      "id": "AC-38",
-      "title": "Shared patterns",
-      "spec": "patterns §7",
+      "id": "R2-AC-10",
+      "title": "Captured’s intro says what the screen shows",
+      "spec": "eyes settings/capture/captured, D121",
       "status": "pass",
-      "evidence": "HealthBar (warn-bg) for the warning; the Captured list uses the shared rows; diff checks: 0 findings"
+      "evidence": "R2-FLOW-7: \"4 notifications, newest first, kept for you only. Every number but the amounts is hidden.\"; lines with digits outside amounts: []"
     }
   ],
   "notTested": [
     {
-      "what": "The listener, WorkManager retries, Keystore, the outbox’s owner claim and the shell’s 26-hour notification on a phone or emulator",
-      "why": "No KVM here. CI’s Shell run 41684198747 at 683376e passed its emulator step; I didn’t run it"
+      "what": "Whether the shell’s listener is connected when the sync after Fix sends its heartbeat (the race behind #12), and the listener’s rebind after the Capture switch",
+      "why": "Needs a device; read in the code only. The owner’s phone check (docs/local.md B07 step 3) passes through it"
     },
     {
-      "what": "B02’s soak events landing in the hosted database; airplane-mode capture; Sign out everywhere on the phone; the watchdog push on the phone",
-      "why": "Need the owner’s phone and production; queued in docs/local.md (B07 steps 1–4)"
-    },
-    {
-      "what": "Q25, Neon’s compute after a week of real syncs",
-      "why": "Needs a week of production use (docs/local.md B07 step 5)"
-    },
-    {
-      "what": "Home’s “Capture is off” (the listener-off path) and its Fix opening Android’s setting",
-      "why": "Only inside the shell; capture-warnings.test.ts covers its logic"
-    },
-    {
-      "what": "“The next payment there asks nothing” in pay-new",
-      "why": "The simulator’s prompt is a fixed stand-in; the native prompt is B09/B10"
-    },
-    {
-      "what": "The eyes pass over the two changed screens",
-      "why": "This session has no Agent tool; the main session should spawn qa-eyes on qa-artifacts/B07_sync/diff/index.md"
-    },
-    {
-      "what": "Claude Security’s scan of the branch",
-      "why": "Queued for the laptop in docs/local.md (B07 step 6)"
+      "what": "The rest of B07 outside the area",
+      "why": "Scoped run; nothing in the fix commits reaches beyond capture’s health and /captured (no migration, RLS, shared UI or money change)"
     }
   ]
 }
