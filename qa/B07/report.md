@@ -1,5 +1,7 @@
 # QA · B07 · Sync and the outbox · run 2 (scoped)
 
+Report, with screenshots: https://claude.ai/artifact/A3BCeJcC4rGaRoEDGxXX5m
+
 Written by the main session from the reviewer's final message; the tool refuses report files from the
 subagent. Run 1 is `report-run1.md`.
 
