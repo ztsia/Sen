@@ -1,4 +1,5 @@
 import type { Command, WriteResult } from '@sen/core/commands';
+import type { CaptureHealthView, CapturedView } from '@sen/core/sync';
 import type {
   AccountsView,
   AccountView,
@@ -95,6 +96,11 @@ export interface Backend {
   matches(total: number, at: string): Promise<MatchChoice[]>;
   /** A captured payment that looks like this one: a warning that doesn't block (§6.5). */
   nearDuplicate(amount: number, at: string): Promise<string | null>;
+
+  /** *Captured on this phone* (B07): the server's `bank_events`, newest first; `before` is the last page's `next`. */
+  captured(before?: string): Promise<CapturedView>;
+  /** What Home warns of when capture or the morning job stops (B07, spec §18). */
+  captureHealth(): Promise<CaptureHealthView>;
 
   /** Every change, at once; the result says what happened and how to undo it (§6.7). */
   run(command: Command): Promise<WriteResult>;

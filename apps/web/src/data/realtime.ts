@@ -16,6 +16,7 @@ import { queryClient } from './index';
 export const TOPIC_QUERIES: Record<Topic, unknown[][]> = {
   settings: [['settings'], ['me']],
   jobs: [['settings']],
+  capture: [['captured'], ['capture-health']],
 };
 
 /** `off`: no relay here (a preview without one), or not started; `live`: connected; `down`: not connected, polling. */
@@ -54,6 +55,14 @@ export interface RealtimeDeps {
   open: (url: string) => Socket;
   now: () => Date;
   online: () => boolean;
+}
+
+const hintListeners = new Set<(topics: Topic[]) => void>();
+
+/** Called with the topics of every hint that arrives: the shell's outbox looks at its writes on a `settings` one (B07). */
+export function onHint(fn: (topics: Topic[]) => void): () => void {
+  hintListeners.add(fn);
+  return () => hintListeners.delete(fn);
 }
 
 const isTopic = (t: unknown): t is Topic => typeof t === 'string' && t in TOPIC_QUERIES;
@@ -199,6 +208,7 @@ export function createRealtime(deps: RealtimeDeps) {
       if (!h) return;
       const gap = lastSeq !== null && h.seq !== lastSeq + 1;
       lastSeq = h.seq;
+      for (const fn of hintListeners) fn(h.topics);
       if (gap) {
         void refreshAll();
         return;

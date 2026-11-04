@@ -8,6 +8,7 @@ import io.github.ztsia.sen.core.CaptureGate
 import io.github.ztsia.sen.core.Decision
 import io.github.ztsia.sen.core.DropReason
 import io.github.ztsia.sen.core.Posted
+import io.github.ztsia.sen.sync.SyncWorker
 import java.util.concurrent.Executors
 
 /**
@@ -49,7 +50,12 @@ object Capture {
                 // only a new event moves "last captured": a replay or a duplicate isn't news (B07's
                 // watchdog reads this time)
                 try {
-                    outbox.insert(d.event).also { new -> if (new) Heartbeat.event(context) }
+                    outbox.insert(d.event).also { new ->
+                        if (new) {
+                            Heartbeat.event(context)
+                            SyncWorker.enqueue(context)
+                        }
+                    }
                 } catch (e: Exception) {
                     // a storage failure (a full disk, say) mustn't kill the capture thread: log it, keep going
                     Heartbeat.dropped(context, posted, "unread")

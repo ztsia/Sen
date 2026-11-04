@@ -58,23 +58,28 @@ export function HealthBar({
   detail,
   fix,
   onFix,
+  className,
 }: {
   icon: ComponentType<{ className?: string }>;
   title: string;
   detail: string;
-  fix: string;
-  onFix: () => void;
+  className?: string;
+  /** The one button that fixes it: left out when nothing here can (the morning job runs on the server). */
+  fix?: string;
+  onFix?: () => void;
 }) {
   return (
-    <Alert variant="warning" className="flex items-center gap-3 [&>svg]:translate-y-0">
+    <Alert variant="warning" className={cn('flex items-center gap-3 [&>svg]:translate-y-0', className)}>
       <Icon className="size-5 shrink-0" />
       <div className="min-w-0 flex-1">
         <AlertTitle className="text-base font-semibold">{title}</AlertTitle>
         <AlertDescription>{detail}</AlertDescription>
       </div>
-      <Button size="sm" variant="warning" onClick={onFix}>
-        {fix}
-      </Button>
+      {fix && onFix ? (
+        <Button size="sm" variant="warning" onClick={onFix}>
+          {fix}
+        </Button>
+      ) : null}
     </Alert>
   );
 }

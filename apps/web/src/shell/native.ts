@@ -2,6 +2,7 @@ import { App } from '@capacitor/app';
 import { SystemBars, SystemBarsStyle } from '@capacitor/core';
 type Router = (typeof import('@/router'))['router'];
 import { resolveMode, useTheme } from '@/theme/store';
+import { startOutbox } from '@/data/outbox';
 import { inShell } from './bridge';
 import { onPushOpen } from './push';
 
@@ -22,6 +23,9 @@ export function backAction(path: string, sheetOpen: boolean, canGoBack: boolean)
 /** Wires the shell's back button and system bars to the web app. Does nothing in a browser. */
 export function initShell(router: Router) {
   if (!inShell()) return;
+
+  // writes made before the app closed that no sync has carried yet show again, and are watched (B07)
+  void startOutbox();
 
   // a tapped push opens the screen it names (shell/push.ts)
   onPushOpen(

@@ -123,6 +123,9 @@ dependencies {
     androidTestImplementation "androidx.test:rules:$androidxTestRunnerVersion"
     androidTestImplementation "androidx.test.uiautomator:uiautomator:$uiautomatorVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    // B07: a fake server that answers like /api/sync, and WorkManager's test driver for airplane mode
+    androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.12.0"
+    androidTestImplementation "androidx.work:work-testing:$workVersion"
     implementation project(':capacitor-cordova-android-plugins')
 }
 

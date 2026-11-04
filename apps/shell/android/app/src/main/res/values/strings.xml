@@ -10,4 +10,8 @@
     <string name="channel_tests_about">Sen\'s hidden tests, while the shell is being tried out</string>
     <string name="channel_moments">Live moments</string>
     <string name="channel_moments_about">A payment just made, a receipt being read: shown in the island on phones that have one</string>
+    <string name="channel_health">Sen\'s health</string>
+    <string name="channel_health_about">A warning when Sen\'s server stops doing its daily check</string>
+    <string name="health_late_title">Sen\'s daily check hasn\'t run</string>
+    <string name="health_late_text">The server\'s morning job last ran over a day ago. Your notifications are still kept on this phone.</string>
 </resources>

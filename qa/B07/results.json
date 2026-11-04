@@ -1,0 +1,509 @@
+{
+  "module": "B07",
+  "branch": "B07/sync",
+  "verdict": "ship",
+  "generatedAt": "2026-11-04 00:09 UTC",
+  "phases": "scoped (run 2): capture’s health, heartbeat to push and Home; /captured’s paging",
+  "headline": "Both Majors are fixed and their guards have teeth (12 of 12 B07 breakage checks killed; all 19 of run 1’s probes pass). Five Minors remain in the area, one of them new with the fix: switching Capture back on can bring a false push before the shell syncs again.",
+  "summary": {
+    "criteria": 12,
+    "pass": 7,
+    "fail": 5,
+    "unreachable": 0
+  },
+  "suites": {
+    "typecheck": "clean",
+    "lint": "clean (after QA’s own run 2 files were fixed)",
+    "unit": "472/472",
+    "db": "pgTAP pass; API 173 pass, 10 skipped",
+    "mutants": "b07-*: 12/12 killed",
+    "probes": "run 1 19/19; run 2 3/7 (4 failures = findings 12, 13, 15, 16)",
+    "flows": "b07r2: 4/5 specs (R2-FLOW-6 step 1 = finding 14)"
+  },
+  "findings": [
+    {
+      "id": 12,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Capture switched back on (or access granted again) after a day: a false “Capture may be off” push the next morning, until the shell syncs again",
+      "detail": "The fix counts the 24 hours from the listener’s own last connected heartbeat. But the shell sends no heartbeat when the listener connects: `CaptureListener.onListenerConnected` only logs locally, and `CaptureSwitch.apply(true)` rebinds after the batch’s heartbeat (saying the listener is off) has gone. So the server keeps reading “off since <days ago>” until the next sync (a payment, opening the app, or the daily work), and the morning job can push meanwhile. Inside the shell, Home can show the server’s “listener off since …” banner while the phone itself says it’s connected. In run 1 any heartbeat counted, so this is new with the fix. Server side run; the shell’s side read in the code, not run (no device). One fix: enqueue a sync from `onListenerConnected`.",
+      "repro": "pnpm exec vitest run --config qa/B07/vitest.probe.config.ts qa/B07/api-probes-run2.probe.ts -t \"Capture switched back on\"",
+      "evidence": "switched on 1 h ago, no connected heartbeat since: silent no-heartbeat; next-morning pushes 1; body «Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.»\nAssertionError: expected [ { …(2) } ] to have a length of +0 but got 1",
+      "spec": "R2-AC-3; §6.2 Health; §9.6",
+      "screenshots": []
+    },
+    {
+      "id": 13,
+      "severity": "Minor",
+      "status": "open",
+      "title": "The listener-off push says “Sen hasn’t heard from your phone for a day” although the phone synced an hour ago",
+      "detail": "`captureWatchdog` picks its words by `silent`; `no-heartbeat` now also means “the listener has been off for a day while syncs arrive”, and the push still says the phone went quiet. Home words the same state as “Sen’s listener on your phone has been off since …”. One fact, two wordings, which the eyes pass asked to end.",
+      "repro": "api-probes-run2 -t \"23 h: quiet\"",
+      "evidence": "listener off: at 23 h pushes 0; at 25 h pushes 1, silent no-heartbeat, listenerConnected false, lastListenAt 2026-11-02T23:08:23.741Z; push body «Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.»\nAssertionError: expected 'Sen hasn’t heard from your phone for …' not to match /hasn.t heard from your phone/",
+      "spec": "R2-AC-2, R2-AC-9; eyes home@capture-off",
+      "screenshots": [
+        "R2-FLOW-2-step-1-listener-off.png"
+      ]
+    },
+    {
+      "id": 14,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Home’s capture-off banner still breaks its date mid-date, and the widget says “Capture is off” where the banner and push say “may be off”",
+      "detail": "The eyes pass’s look-again on `home@capture-off`, not taken up by the fixes and not named in the ledger as left. At 390×844 the date “Fri, 16 Oct, 17:40” sits on two lines; the widget stand-in reads “Dark · Capture is off”.",
+      "repro": "qa/e2e: playwright test -c b07r2.config.ts -g \"R2-FLOW-6\"",
+      "evidence": "banner: \"Capture may be off\\nNo payment notifications since Fri, 16 Oct, 17:40.\\nFix\" date Fri, 16 Oct, 17:40 line tops [95,113]\nwidget words: [\"Capture may be off\",\"Dark · Capture is off\",\"Capture is off\"]",
+      "spec": "R2-AC-9; eyes home@capture-off",
+      "screenshots": [
+        "R2-FLOW-6-step-1-banner.png",
+        "R2-FLOW-6-step-3-widget.png"
+      ]
+    },
+    {
+      "id": 15,
+      "severity": "Minor",
+      "status": "open",
+      "title": "Paging still loses events whose posted time has sub-millisecond precision",
+      "detail": "`/sync` accepts and stores microsecond instants, but the cursor carries `toISOString()`, milliseconds only, so rows between the cursor’s millisecond and the last row’s microsecond fall between pages. The shell sends milliseconds, so only a hand-made client reaches it. Truncating `posted_at` to milliseconds on insert, or a microsecond cursor, would close it.",
+      "repro": "api-probes-run2 -t \"microsecond\"",
+      "evidence": "microsecond postedAt accepted: 200 synced 51 refused []\nsub-ms: stored like 02:00:00.000150, 02:00:00.000149; pages 2; distinct seen 50 of 51\nAssertionError: expected 50 to be 51",
+      "spec": "R2-AC-5; run 1 #3",
+      "screenshots": []
+    },
+    {
+      "id": 16,
+      "severity": "Minor",
+      "status": "open",
+      "title": "A phone clock days behind fakes “No payment notifications for 2 days” while payments arrive daily",
+      "detail": "An event now counts at `least(posted_at, created_at)`, which trusts a phone clock that is behind. D143 (7) says the watchdog counts from the server’s clock; `created_at` alone would (an offline phone is caught by the heartbeat rule anyway). Run 1’s `max(posted_at)` had the same flaw, so it isn’t new; finding 4 fixed the clock-ahead half only.",
+      "repro": "api-probes-run2 -t \"3 days behind\"",
+      "evidence": "phone 3 days behind, a payment every day: lastEventAt 2026-10-31T22:08:23.982Z, silent no-events; pushes 1\nAssertionError: expected [ { …(2) } ] to have a length of +0 but got 1",
+      "spec": "R2-AC-6; D143 (7)",
+      "screenshots": []
+    },
+    {
+      "id": 1,
+      "severity": "Major",
+      "status": "fixed",
+      "title": "Revoking access brought no push for up to 48 h",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "access off, 30 h after the last payment: pushes 1; health {\"on\":true,\"lastBeatAt\":\"2026-11-04T00:00:21.258Z\",\"listenerConnected\":false,\"access\":false,\"lastListenAt\":\"2026-11-04T00:00:21.248Z\",\"lastEventAt\":\"2026-11-03T04:00:21.242Z\",\"silent\":\"no-access\",\"morningAt\":null,\"schedulerLate\":false}\naccess off: health.silent no-access; pushes 1; body «Your phone says Sen can’t read notifications. Open Sen to turn access back on.»",
+      "spec": "run 1",
+      "screenshots": []
+    },
+    {
+      "id": 2,
+      "severity": "Major",
+      "status": "fixed",
+      "title": "The 24-hour rule had no test with teeth",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "b07-heartbeat-window | db | killed",
+      "spec": "run 1",
+      "screenshots": []
+    },
+    {
+      "id": 3,
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "Paging lost events sharing a posted time",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "ties: page 1 50, next 2026-10-10T02:00:00.000Z_0548b17e-957f-5803-8bc6-48d9ace3d8d4, page 2 1; distinct seen 51 of 51 (the sub-millisecond case is #15)",
+      "spec": "run 1",
+      "screenshots": []
+    },
+    {
+      "id": 4,
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "A phone clock ahead silenced the watchdog",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "future posted_at, 3 days without a real event: pushes 1 (the clock-behind case is #16)",
+      "spec": "run 1",
+      "screenshots": []
+    },
+    {
+      "id": 5,
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "The once-a-day guard wasn’t held",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "b07-watchdog-key-per-instant | db | killed; once a day: same day 1, after the next day 2",
+      "spec": "run 1",
+      "screenshots": []
+    },
+    {
+      "id": 6,
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "No B07 breakage checks",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "12 of 12 b07-* killed. The Kotlin `BatchPlan` check (run 1’s p7) isn’t among them: qa/mutants.ts has no Kotlin suite",
+      "spec": "run 1",
+      "screenshots": []
+    },
+    {
+      "id": "eyes capture-off/3",
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "The push stand-in’s words disagreed with the banner",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "R2-FLOW-6 step 2: the stand-in reads \"No payment notifications for 2 days. Open Sen to check it can still read them.\", the server’s own words",
+      "spec": "run 1",
+      "screenshots": []
+    },
+    {
+      "id": "eyes settings/capture/captured",
+      "severity": "Minor",
+      "status": "fixed",
+      "title": "The Captured intro said “numbers hidden” beside visible amounts",
+      "detail": "Re-checked in run 2 (scoped).",
+      "repro": "see evidence",
+      "evidence": "R2-FLOW-7: \"… kept for you only. Every number but the amounts is hidden.\"; no digit outside an amount on screen",
+      "spec": "run 1",
+      "screenshots": []
+    }
+  ],
+  "probes": [
+    {
+      "broke": "HEARTBEAT_SILENT_MS 24 h → 72 h (b07-heartbeat-window)",
+      "caught": true,
+      "note": "survived in run 1; killed now"
+    },
+    {
+      "broke": "the alert key per instant (b07-watchdog-key-per-instant)",
+      "caught": true,
+      "note": "survived in run 1; killed now"
+    },
+    {
+      "broke": "access-off ignored (b07-access-off-ignored)",
+      "caught": true,
+      "note": "killed"
+    },
+    {
+      "broke": "/captured paging on posted_at alone (b07-captured-paging-ties)",
+      "caught": true,
+      "note": "killed"
+    },
+    {
+      "broke": "the phone’s clock trusted (b07-phone-clock-trusted)",
+      "caught": true,
+      "note": "killed"
+    }
+  ],
+  "flows": [
+    {
+      "id": "R2-FLOW-1",
+      "title": "Access revoked, then restored",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "heartbeats in sen_test; Home on the server build",
+      "covers": [
+        "R2-AC-1",
+        "R2-AC-1s"
+      ],
+      "spec": "§6.2",
+      "status": "pass",
+      "ends": "push names access; Home says Capture is off, then nothing",
+      "steps": [
+        {
+          "n": 1,
+          "action": "The phone’s last sync said access is off; open Home",
+          "assertion": "Home: \"Capture is off\", \"Your phone says Sen can’t read your payment notifications.\", with Fix",
+          "status": "pass",
+          "screenshot": "R2-FLOW-1-step-1-access-off.png"
+        },
+        {
+          "n": 2,
+          "action": "A newer heartbeat with access and the listener; reload Home",
+          "assertion": "no capture warning",
+          "status": "pass",
+          "screenshot": "R2-FLOW-1-step-2-access-back.png"
+        },
+        {
+          "n": 3,
+          "action": "two ticks in one day, then access back and the next day",
+          "assertion": "1 push, then 0",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "id": "R2-FLOW-2",
+      "title": "The listener killed, access on",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "heartbeats; the morning job; Home",
+      "covers": [
+        "R2-AC-2",
+        "R2-AC-4"
+      ],
+      "spec": "§6.2",
+      "status": "fail",
+      "ends": "one push at 25 h, words true to the cause",
+      "steps": [
+        {
+          "n": 1,
+          "action": "23 h since the listener’s last heartbeat; tick",
+          "assertion": "no push",
+          "status": "pass"
+        },
+        {
+          "n": 2,
+          "action": "25 h; tick",
+          "assertion": "1 push saying the listener is off",
+          "status": "fail"
+        },
+        {
+          "n": 3,
+          "action": "The listener’s last connected heartbeat was 25 h ago; open Home",
+          "assertion": "Home: \"Capture may be off\", \"Sen’s listener on your phone has been off since …\"",
+          "status": "pass",
+          "screenshot": "R2-FLOW-2-step-1-listener-off.png"
+        }
+      ]
+    },
+    {
+      "id": "R2-FLOW-3",
+      "title": "Capture off for days, then on",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "heartbeats; the switch; the morning job",
+      "covers": [
+        "R2-AC-3"
+      ],
+      "spec": "§6.2",
+      "status": "fail",
+      "ends": "no push",
+      "steps": [
+        {
+          "n": 1,
+          "action": "heartbeats listener-off for 3 days, switch on, tick next morning",
+          "assertion": "no push",
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "id": "R2-FLOW-4",
+      "title": "Paging Captured on this phone",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "GET /api/captured",
+      "covers": [
+        "R2-AC-5",
+        "R2-AC-5s"
+      ],
+      "spec": "§6.2",
+      "status": "fail",
+      "ends": "every event reachable; bad cursors 400",
+      "steps": [
+        {
+          "n": 1,
+          "action": "51 events in one ms",
+          "assertion": "51 of 51",
+          "status": "pass"
+        },
+        {
+          "n": 2,
+          "action": "51 events microseconds apart in one ms",
+          "assertion": "51 of 51",
+          "status": "fail"
+        },
+        {
+          "n": 3,
+          "action": "malformed cursors",
+          "assertion": "400 { code, message }",
+          "status": "pass"
+        }
+      ]
+    },
+    {
+      "id": "R2-FLOW-5",
+      "title": "The phone’s clock, ahead and behind",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "events with a skewed posted time",
+      "covers": [
+        "R2-AC-6"
+      ],
+      "spec": "§6.2",
+      "status": "fail",
+      "ends": "push when quiet, none while payments arrive",
+      "steps": [
+        {
+          "n": 1,
+          "action": "a year ahead, 3 quiet days",
+          "assertion": "1 push",
+          "status": "pass"
+        },
+        {
+          "n": 2,
+          "action": "3 days behind, payments daily",
+          "assertion": "no push",
+          "status": "fail"
+        }
+      ]
+    },
+    {
+      "id": "R2-FLOW-6",
+      "title": "One fact, one wording",
+      "kind": "sad",
+      "actor": "owner",
+      "entry": "/?scenario=capture-off (preview fake)",
+      "covers": [
+        "R2-AC-9"
+      ],
+      "spec": "§6.2",
+      "status": "fail",
+      "ends": "banner, push and widget agree; the date on one line",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Home in the capture-off scenario",
+          "assertion": "the banner names payment notifications and a time; the date isn’t broken across lines",
+          "status": "fail",
+          "screenshot": "R2-FLOW-6-step-1-banner.png"
+        },
+        {
+          "n": 2,
+          "action": "Dev panel → Surfaces: the capture push",
+          "assertion": "the push says what the server’s push says for this state",
+          "status": "pass",
+          "screenshot": "R2-FLOW-6-step-2-push-stand-in.png"
+        },
+        {
+          "n": 3,
+          "action": "Dev panel → Widgets in the same state",
+          "assertion": "the widget’s words, beside the banner’s",
+          "status": "pass",
+          "screenshot": "R2-FLOW-6-step-3-widget.png"
+        }
+      ]
+    },
+    {
+      "id": "R2-FLOW-7",
+      "title": "Captured on this phone’s intro",
+      "kind": "happy",
+      "actor": "owner",
+      "entry": "/s/settings/capture/captured (preview fake)",
+      "covers": [
+        "R2-AC-10"
+      ],
+      "spec": "§6.2",
+      "status": "pass",
+      "ends": "the intro matches the rows",
+      "steps": [
+        {
+          "n": 1,
+          "action": "Open Captured on this phone",
+          "assertion": "the intro says amounts show and other numbers are hidden, and the rows bear it out",
+          "status": "pass",
+          "screenshot": "R2-FLOW-7-step-1-captured-intro.png"
+        }
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "R2-AC-1",
+      "title": "Access off: Home says Capture is off; one push naming access",
+      "spec": "§6.2, B5, run 1 #1",
+      "status": "pass",
+      "evidence": "access off: health.silent no-access; pushes 1; body «Your phone says Sen can’t read notifications. Open Sen to turn access back on.» · R2-FLOW-1 step 1: Home \"Capture is off · Your phone says Sen can't read your payment notifications.\" with Fix"
+    },
+    {
+      "id": "R2-AC-1s",
+      "title": "Access back: no warning, no push",
+      "spec": "§6.2",
+      "status": "pass",
+      "evidence": "access off: health.silent no-access; pushes 1; body «Your phone says Sen can’t read notifications. Open Sen to turn access back on.» · R2-FLOW-1 step 2"
+    },
+    {
+      "id": "R2-AC-2",
+      "title": "Listener off with access on: 23 h quiet, 25 h one push, words true to the cause",
+      "spec": "§6.2, flows.md capture-off",
+      "status": "fail",
+      "evidence": "listener off: at 23 h pushes 0; at 25 h pushes 1, silent no-heartbeat, listenerConnected false, lastListenAt 2026-11-02T23:08:23.741Z; push body «Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.»"
+    },
+    {
+      "id": "R2-AC-3",
+      "title": "No false alarm after Capture is switched back on",
+      "spec": "§6.2, §9.6, D98",
+      "status": "fail",
+      "evidence": "switched on 1 h ago, no connected heartbeat since: silent no-heartbeat; next-morning pushes 1; body «Sen hasn’t heard from your phone for a day. Open Sen to check it can still read notifications.»"
+    },
+    {
+      "id": "R2-AC-4",
+      "title": "Each watchdog rule has a test that fails alone",
+      "spec": "run 1 #2",
+      "status": "pass",
+      "evidence": "mutant b07-heartbeat-window killed (12 of 12 b07-* killed); sync.test 23 h vs 25 h, 47 h vs 49 h"
+    },
+    {
+      "id": "R2-AC-5",
+      "title": "Paging holds every event, ties and sub-ms times included",
+      "spec": "run 1 #3",
+      "status": "fail",
+      "evidence": "ties: page 1 50, next 2026-10-10T02:00:00.000Z_0548b17e-957f-5803-8bc6-48d9ace3d8d4, page 2 1; distinct seen 51 of 51 · but sub-ms: stored like 02:00:00.000150, 02:00:00.000149; pages 2; distinct seen 50 of 51"
+    },
+    {
+      "id": "R2-AC-5s",
+      "title": "Bad cursors: 400 with the error shape",
+      "spec": "run 1 #3",
+      "status": "pass",
+      "evidence": "abc, a bare instant, _x, notauuid, x_<uuid>, over-long, SQL text: all 400 {\"code\":\"invalid\",…}; an +08:00 instant is a valid cursor (200)"
+    },
+    {
+      "id": "R2-AC-6",
+      "title": "The phone’s clock can’t silence or fake the watchdog",
+      "spec": "D143 (7), run 1 #4",
+      "status": "fail",
+      "evidence": "future posted_at, 3 days without a real event: pushes 1 (pass) · phone 3 days behind, a payment every day: lastEventAt 2026-10-31T22:08:23.982Z, silent no-events; pushes 1 (fail)"
+    },
+    {
+      "id": "R2-AC-7",
+      "title": "At most one push a day",
+      "spec": "run 1 #5",
+      "status": "pass",
+      "evidence": "once a day: same day 1, after the next day 2; mutant b07-watchdog-key-per-instant killed"
+    },
+    {
+      "id": "R2-AC-8",
+      "title": "B07’s breakage checks exist and are killed",
+      "spec": "D139, run 1 #6",
+      "status": "pass",
+      "evidence": "12 of 12 killed (qa-artifacts/B07_sync/run2/mutants/index.md); db unmutated 14 s, web 12 s"
+    },
+    {
+      "id": "R2-AC-9",
+      "title": "One fact, one wording across push, banner and widget; the date on one line",
+      "spec": "eyes capture-off/3, home@capture-off",
+      "status": "fail",
+      "evidence": "push stand-in = the server’s no-events push (pass). banner: \"Capture may be off\\nNo payment notifications since Fri, 16 Oct, 17:40.\\nFix\" date Fri, 16 Oct, 17:40 line tops [95,113] · widget words: [\"Capture may be off\",\"Dark · Capture is off\",\"Capture is off\"] · the listener-off push says \"Sen hasn’t heard from your phone for a day\" where Home says \"Sen’s listener … has been off since\""
+    },
+    {
+      "id": "R2-AC-10",
+      "title": "Captured’s intro says what the screen shows",
+      "spec": "eyes settings/capture/captured, D121",
+      "status": "pass",
+      "evidence": "R2-FLOW-7: \"4 notifications, newest first, kept for you only. Every number but the amounts is hidden.\"; lines with digits outside amounts: []"
+    }
+  ],
+  "notTested": [
+    {
+      "what": "Whether the shell’s listener is connected when the sync after Fix sends its heartbeat (the race behind #12), and the listener’s rebind after the Capture switch",
+      "why": "Needs a device; read in the code only. The owner’s phone check (docs/local.md B07 step 3) passes through it"
+    },
+    {
+      "what": "The rest of B07 outside the area",
+      "why": "Scoped run; nothing in the fix commits reaches beyond capture’s health and /captured (no migration, RLS, shared UI or money change)"
+    }
+  ]
+}

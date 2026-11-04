@@ -18,6 +18,11 @@ when Sen took up the plugin.
 - **Security checks:** the sweep runs `pnpm security` (the dependency audit, the gitleaks scan of the
   whole history, and the security lint rules) and `pnpm hygiene`. A missing `gitleaks` binary is a
   failure to report, not a skip.
+- **The security scan (D144), instead of the skill's Claude Security scan per risky slice:** every
+  slice gets Claude Code's built-in security review of its diff (the `security-review` skill), run by
+  the main session alongside the reviewer, and saved to `qa/<slice>/security.md`. In a cloud clone,
+  first `git remote set-head origin main` (it needs `origin/HEAD`). Its High findings are Blockers,
+  Medium are Majors. Claude Security's whole-codebase scan runs once, before launch (`docs/local.md`).
 - **Retaking the report's screenshots:** serve the preview builds, then `playwright test` from
   `qa/e2e`, as `qa/e2e/playwright.config.ts`'s header says.
 - **A full run** is also due when a fix touches `apps/web/src/components/ui/`, a pattern in

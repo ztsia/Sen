@@ -74,18 +74,26 @@ export function personRoutes() {
    */
   r.post('/commands', async (c) => {
     const cmd = parse(Command, await readJson(c));
-    if (cmd.type.startsWith('member.')) {
-      if (!c.var.access.isAdmin) throw forbidden();
-      throw notBuilt('B38');
-    }
-    if (cmd.type !== 'setting.set') throw notBuilt('a later slice');
-    const result = await setYou(c.var, cmd.key, cmd.value);
+    const result = await runCommand(c.var, cmd);
     // the person's other open screens reload their settings (D100)
     await c.var.svc.relay.hint(c.var.person.id, ['settings']);
     return c.json(result);
   });
 
   return r;
+}
+
+/**
+ * One command, as its person: from `POST /commands` (a browser), or from the shell's outbox through
+ * `/sync`, which runs it inside the transaction that records its id (sync/routes.ts).
+ */
+export async function runCommand(v: Env['Variables'], cmd: Command): Promise<WriteResult> {
+  if (cmd.type.startsWith('member.')) {
+    if (!v.access.isAdmin) throw forbidden();
+    throw notBuilt('B38');
+  }
+  if (cmd.type !== 'setting.set') throw notBuilt('a later slice');
+  return setYou(v, cmd.key, cmd.value);
 }
 
 /** `setting.set` for *You* (D17, D79): saved with its audit entry, and answered with its undo. */

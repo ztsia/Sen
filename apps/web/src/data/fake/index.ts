@@ -13,6 +13,7 @@ import { sharedView, splitView } from './areas/splits';
 import { memoryView, researchView, senView, usageView } from './areas/sen';
 import { accountsView, accountView, balanceCheckView, claimsView, claimView, paydayView } from './areas/money';
 import { settingsView } from './areas/settings';
+import { captureHealthView, capturedView } from './capture';
 
 /**
  * The skeleton's backend (B03): the whole person in memory, in previews and the dev server only. It
@@ -241,6 +242,8 @@ export function createFake(initial: ScenarioId = 'wei-ming'): Backend & FakeCont
     research: () => read(researchView),
     usage: () => read(usageView),
     settings: () => read(settingsView),
+    captured: (before) => read((d) => capturedView(d, before)),
+    captureHealth: () => read(captureHealthView),
     payday: () => read(paydayView),
     categories: (kind) => read((d) => v.categoryChoices(d, kind)),
     accounts: () => read(v.accountChoices),

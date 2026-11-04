@@ -7,6 +7,11 @@ def swap = { RepositoryHandler repos ->
 }
 beforeSettings { s ->
   swap(s.pluginManagement.repositories)
+  // the plugin portal redirects a plugin's dependencies to Maven Central, so the mirror goes first
+  def plugins = s.pluginManagement.repositories
+  def first = plugins.maven { name = 'centralMirror'; url = mirror }
+  plugins.remove(first)
+  plugins.add(0, first)
   s.dependencyResolutionManagement.repositories.withType(MavenArtifactRepository).configureEach { r ->
     if (r.url.toString().startsWith('https://repo.maven.apache.org')) r.url = mirror
   }

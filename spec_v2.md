@@ -995,8 +995,10 @@ user_settings        user_id, own_names (text[]), expected_payday,
                      duitnow_qr_key (R2, nullable), email_code (unique, ≥128-bit random),
                      ess_sender (nullable: the address ESS mails from, D96),
                      island_just_paid (bool, default on), updated_at
-capture_apps         id, user_id, package, label, chosen_at   -- the apps you chose (D86)
-                     UNIQUE (user_id, package)
+capture_apps         id, user_id, package, label, chosen_at, deleted_at, version
+                     -- the apps you chose (D86); a removal is a tombstone, choosing
+                     -- again a new row (D143)
+                     UNIQUE (user_id, package) WHERE deleted_at IS NULL
 channel_rules        id, user_id, package, channel_id, action (drop), learned_from (jsonb),
                      created_at                  -- a promo channel, dropped natively (D87)
                      UNIQUE (user_id, package, channel_id)
@@ -1009,7 +1011,8 @@ calendar_events      id, user_id, source_kind, source_id, google_event_id, updat
                      UNIQUE (user_id, source_kind, source_id)
 
 bank_events          id, user_id, package, channel_id, notification_key, posted_at,
-                     notified_at (the app's `when`), title, text, big_text, dedupe_key,
+                     notified_at (the app's `when`), title, text, big_text, maybe_otp,
+                     dedupe_key,
                      parsed_by (uuid → parse_templates, nullable),
                      parse_status (parsed|ignored|skipped|unparsed|dismissed),
                      parsed (jsonb), linked_event_id (nullable: the partner a pair
@@ -1187,8 +1190,10 @@ ai_credit_entries    id, user_id, kind (welcome|grant|usage|refund|reversal),
 scheduled_jobs       id, user_id, kind, run_at, payload (jsonb), dedupe_key,
                      status (due|running|done|failed), attempts
                      UNIQUE (user_id, dedupe_key)  -- one-off jobs the tick runs (D99)
-device_heartbeats    id, user_id, listener_connected, last_bank_event_at,
-                     app_version, created_at
+device_heartbeats    id, user_id, listener_connected, access, last_bank_event_at,
+                     app_version, created_at         -- created_at is the server's clock
+outbox_applied       id, user_id, kind, applied_at    -- each command or edit the outbox
+                                                 -- sent, applied once by its id (D143)
 job_runs             id, user_id, job, ran_at, status, duration_ms,
                      error                       -- scheduled jobs and the GitHub Actions workflows
 alerts_sent          id, user_id, alert_key, sent_at

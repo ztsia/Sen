@@ -12,6 +12,8 @@ export const TOPICS = [
   'settings',
   /** The scheduler's runs and the backups (Settings → Data). */
   'jobs',
+  /** Captured events and capture's health (B07): Captured on this phone, Home's warnings. */
+  'capture',
 ] as const;
 export type Topic = (typeof TOPICS)[number];
 

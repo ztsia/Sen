@@ -151,7 +151,12 @@ beforeAll(async () => {
       'Sweep',
       p.email,
     ]);
-    await owner.query('insert into user_access (user_id, is_admin, features) values ($1, $2, $3)', [p.id, isAdmin, {}]);
+    // the shell and capture on, so /sync's good request is taken (B07)
+    await owner.query('insert into user_access (user_id, is_admin, features) values ($1, $2, $3)', [
+      p.id,
+      isAdmin,
+      { shell: true, capture: true },
+    ]);
   }
   // a morning run and a backup just now, so /health/jobs answers its good request with 200
   for (const job of ['morning', 'backup'])

@@ -198,6 +198,7 @@ export const CATALOGUE: Entry[] = [
   ...FIRST_RUN.map((step) => entry(`first-run@${step}`, '/s/first-run?scenario=before-salary', firstRunAt(step))),
   entry('shared@month', '/s/shared?scenario=month'),
   entry('accounts@month', '/s/accounts?scenario=month'),
+  entry('home@capture-off', '/?scenario=capture-off'),
   entry('accounts@capture-off', '/s/accounts?scenario=capture-off'),
   entry('claims@month', '/s/claims?scenario=month'),
   entry('settings@month', '/s/settings?scenario=month'),

@@ -13,6 +13,8 @@ import com.getcapacitor.WebViewListener
 import io.github.ztsia.sen.core.Origin
 import io.github.ztsia.sen.bridge.SenCapturePlugin
 import io.github.ztsia.sen.bridge.SenShellPlugin
+import io.github.ztsia.sen.sync.Session
+import io.github.ztsia.sen.sync.SyncWorker
 
 /**
  * The one activity: Capacitor's WebView showing the web app (spec §5). The launcher reaches it through
@@ -27,6 +29,8 @@ class MainActivity : BridgeActivity() {
         registerPlugin(SenShellPlugin::class.java)
         registerPlugin(SenCapturePlugin::class.java)
         config = ShellConfig.build(this)
+        // B07: the shell's login goes back into the WebView if it lost it, before the page loads
+        Session.restore(this)
         super.onCreate(savedInstanceState)
         val bridge = bridge ?: return
         bridge.setWebViewClient(SiteOnly(bridge))
@@ -41,6 +45,12 @@ class MainActivity : BridgeActivity() {
                 }
             },
         )
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Better Auth refreshes its cookie daily: take the new one, or sign out if the page did
+        if (Session.adopt(this)) SyncWorker.enqueue(this)
     }
 
     /**

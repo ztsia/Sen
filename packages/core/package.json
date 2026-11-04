@@ -11,7 +11,8 @@
     "./commands": "./src/commands.ts",
     "./cycles": "./src/cycles.ts",
     "./jobs": "./src/jobs.ts",
-    "./realtime": "./src/realtime.ts"
+    "./realtime": "./src/realtime.ts",
+    "./sync": "./src/sync.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

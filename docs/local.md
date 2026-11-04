@@ -53,6 +53,28 @@ follow on a phone, and commit.
          The session then copies `CLAUDE-SECURITY-<time>/CLAUDE-SECURITY-RESULTS.md` to
          `qa/B06/security.md` and fixes every Critical and High before the merge. Say in `docs/cloud.md`
          whether a cloud session could run it.
+- [ ] **B07 · Sync and the outbox: on your phone** (after B07 merges and its release is published;
+  Obtainium picks it up). In this order:
+  1. **Install the new release** and open Sen. Sign in once, in the app: the shell keeps that session
+     and syncs with it.
+  2. **Settings → Capture → *Captured on this phone*** should now list the soak's events from the
+     server, newest first. Any still on the phone show first, marked *Not synced yet*, and go within a
+     minute on Wi-Fi or data.
+  3. **The watchdog, for a day:** Android Settings → Notifications → *Device & app notifications* →
+     Sen → off. By the next morning (07:00–08:00) a push should say *Capture may be off*, and Home
+     shows *Capture is off* with *Fix*. Tap *Fix*, turn access back on.
+  4. **Sign out everywhere** from a browser (Settings → Account): the app on the phone should ask you
+     to sign in again the next time it opens.
+  5. **After a week of real syncs:** open Neon's console → project `sen` → *Monitoring*, and send me
+     the week's compute hours (Q25), so the spec and `docs/cloud.md` can record them.
+  B07's security check is the built-in review, done in the cloud (`qa/B07/security.md`, D144).
+
+- [ ] **Before the app launches: Claude Security's whole-codebase scan** (D144), once, at the laptop.
+  Turn on *Dynamic workflows* in `/config`, start a session in `C:\Zhong Tai\Sen` on `main`, and ask
+  *run Claude Security: scan the codebase at high effort; the cost is accepted*. Leave the checkout
+  alone while it runs (it can take days across usage limits). The session copies its
+  `CLAUDE-SECURITY-RESULTS.md` into `qa/` and fixes every Critical and High before launch.
+
 - [ ] **Give the cloud environment the workflow plugin** (needed before the next cloud session).
       Cloud sessions don't install the plugins a repo enables, so without this a session has no
       rules, no `workflow:` agents and no `qa`, `uiux` or `database` skill. On the phone: claude.ai/code
@@ -64,12 +86,11 @@ follow on a phone, and commit.
       plugin, `claude-security` and `security-guidance` (24 Oct). On any other machine, once:
       `claude plugin install claude-security@claude-plugins-official` and
       `claude plugin install security-guidance@claude-plugins-official`.
-- [ ] **Merge [ztsia/workflow#11](https://github.com/ztsia/workflow/pull/11)** (plugin 1.1.0, CI
-      green). It holds the four fixes found moving Sen to the plugin (24 Oct): the QA agents read
-      `docs/workflow/qa.md` themselves, *Who makes each fix* is back, `brief` ships in the plugin,
-      and docs name the plugin's scripts as `node "<workflow plugin>/scripts/<name>"`. Then move to
-      1.1.0: on the laptop, `claude plugin update workflow@ztsia`; in the cloud, edit any line of the
-      environment's setup script (a comment will do) and start a new session.
+- [ ] **Merge [ztsia/workflow#12](https://github.com/ztsia/workflow/pull/12)** (plugin 1.2.0, D144):
+      the `qa` and `security` skills run the built-in security review on every slice, and Claude
+      Security once, before launch. Then move to 1.2.0: on the laptop, `claude plugin update
+      workflow@ztsia`; in the cloud, edit any line of the environment's setup script (a comment will
+      do) and start a new session. Until then, Sen's `docs/workflow/qa.md` already says the same.
 - [ ] **Update Sen and Sen review on your phone once B05 · Feel merges.** Its haptics live in the
       shell (bridge 2), so the app needs the new APK; until then everything else works and haptics
       stay off. Obtainium → *Update all*, or *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* →

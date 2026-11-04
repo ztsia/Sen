@@ -13,12 +13,14 @@ import {
 import type { SettingsView } from '@sen/core/views';
 import { formatSen } from '@sen/core/money';
 import { GroupCard, NavRow, PersonAvatar } from '@/blocks/group';
+import { Marks } from '@/blocks/rows';
 import { ListSkeleton } from '@/blocks/states';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { useMe, useSettings } from '@/data/hooks';
+import { usePendingFor } from '@/data/pending';
 import { DEV_TOOLS } from '@/lib/env';
 import { dayLabel } from '@/lib/dates';
 import { LOOK_NAMES } from '@/looks/ids';
@@ -64,6 +66,7 @@ function Body({ v, me }: { v: SettingsView; me: { capture: boolean; claims: bool
   const mode = useMode();
   const captureHere = me.capture && (inShell() || DEV_TOOLS);
   const pd = v.you.payday;
+  const payday = usePendingFor('you.payday');
   const credit = v.sen.credit;
   const name = v.email.split('@')[0] ?? v.email;
   return (
@@ -105,6 +108,7 @@ function Body({ v, me }: { v: SettingsView; me: { capture: boolean; claims: bool
         <NavRow
           icon={UserRoundIcon}
           title="You"
+          description={payday.showNotSynced ? <Marks marks={['pending']} /> : undefined}
           value={PAYDAY[pd.kind](pd.kind === 'day' ? pd.day : undefined)}
           onOpen={() => go('settings/you')}
         />

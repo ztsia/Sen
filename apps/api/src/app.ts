@@ -17,6 +17,7 @@ import { fcmPusher, noPush, type Pusher } from './jobs/push';
 import { noRelay, workerRelay, type Relay } from './jobs/relay';
 import { personJobRoutes, schedulerRoutes } from './jobs/routes';
 import { adminRoutes, personRoutes } from './routes';
+import { syncRoutes } from './sync/routes';
 
 /** The largest request body the API reads, in bytes. */
 export const MAX_BODY = 256 * 1024;
@@ -201,6 +202,14 @@ export function createApp(deps: Deps) {
     // an unknown path under /auth: the error shape, as everywhere else (QA B05 run 2, 25)
     if (res.status === 404 && !res.headers.get('content-length') && !(await res.clone().text()))
       return c.json({ code: 'not_found', message: 'No such route.' }, 404);
+    // Better Auth's bearer plugin copies the session token into a header page scripts can read; the
+    // cookie stays HttpOnly only if it goes. The shell takes the token from its WebView's cookie (B07).
+    if (res.headers.has('set-auth-token')) {
+      const out = new Response(res.body, res);
+      out.headers.delete('set-auth-token');
+      out.headers.delete('access-control-expose-headers');
+      return out;
+    }
     return res;
   });
 
@@ -228,6 +237,7 @@ export function createApp(deps: Deps) {
 
   api.route('/', personRoutes());
   api.route('/', personJobRoutes({ auth: deps.auth }));
+  api.route('/', syncRoutes());
   api.route('/admin', adminRoutes());
   return { api, auth };
 }

@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { CalendarCheckIcon, ChevronRightIcon, CloudOffIcon, PartyPopperIcon, TriangleAlertIcon } from 'lucide-react';
+import { CalendarCheckIcon, ChevronRightIcon, CloudOffIcon, PartyPopperIcon } from 'lucide-react';
 import { formatSen, spokenSen } from '@sen/core/money';
 import type { HomeView } from '@sen/core/views';
+import { CaptureWarnings } from '@/blocks/capture-warnings';
 import { PaceSpark } from '@/blocks/charts';
 import { HeroFigure } from '@/blocks/hero';
 import { Money } from '@/blocks/money';
-import { HealthBar } from '@/blocks/status';
 import { IconTile } from '@/blocks/tile';
 import { Avatar } from '@/components/look/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -59,16 +59,7 @@ function HomeBody({ h }: { h: HomeView }) {
   return (
     <HomeMaterial payday={h.payday?.stage === 'card'} patina={f.income > 0 ? f.spent / f.income : 0}>
       <div className="flex flex-col gap-3 px-4 pt-1">
-        {h.health.map((w) => (
-          <HealthBar
-            key={w.key}
-            icon={TriangleAlertIcon}
-            title={w.title}
-            detail={w.detail}
-            fix={w.fix}
-            onFix={() => go('settings/capture')}
-          />
-        ))}
+        <CaptureWarnings />
 
         {h.payday?.stage === 'card' ? (
           <Card className="gap-3">

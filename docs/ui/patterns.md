@@ -299,7 +299,7 @@ in the chart accent, or the warning colour on a budget at risk.
 - **Settings row:** a `NavRow` or a `SwitchRow` in a `GroupCard` (above). A row that opens nothing
   is information and has no tile (the heartbeat's checks); a version row may hold a long-press (B02's
   hidden tests). On a disabled switch, the line under its label says why it can't be turned on.
-- **Raw notification row** (B02's *Captured on this phone* only, until B07 replaces it): the app and
+- **Raw notification row** (*Captured on this phone* only: B02's, then B07's from the server, until B10's *Skipped* replaces it): the app and
   the time on one line, then the title and the text as the app wrote them, selectable, line breaks
   kept, with every digit outside an amount masked as stored (D121); the screen's intro says so once. One that might hold
   a one-time code has a muted line under it: *Maybe a one-time code, so its numbers are hidden* (D116).

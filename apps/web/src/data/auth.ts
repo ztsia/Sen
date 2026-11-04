@@ -2,6 +2,8 @@ import { ApiFailure, apiCall } from './api/client';
 import { forgetKept, keepFor } from './api/backend';
 import { CODE_EXPIRED, CODE_OK } from '@/screens/outside/logic';
 import { startPush, stopPush } from '@/shell/push';
+import { sessionChanged } from '@/shell/session';
+import { clearPending } from './pending';
 import { startRealtime, stopRealtime } from './realtime';
 
 /** Who is signed in: Better Auth's session, as the screens need it. */
@@ -67,6 +69,8 @@ function load(): Promise<Session | null | 'unknown'> {
 /** Before the session ends: the live connection closes and push lets go of this phone, neither holding sign-out up. */
 async function letGo() {
   stopRealtime();
+  // writes still waiting in this app belong to the person signing out
+  clearPending();
   await Promise.race([stopPush(), new Promise((done) => setTimeout(done, 3000))]);
 }
 
@@ -103,6 +107,8 @@ export const apiAuth: Auth = {
       await apiCall('/auth/sign-in/email-otp', { body: { email, otp: code } });
       sessionP = null;
       reason = null;
+      // the shell keeps this session for sync (B07)
+      await sessionChanged();
       return 'ok';
     } catch (e) {
       const f = failure(e);
@@ -118,12 +124,14 @@ export const apiAuth: Auth = {
     forgetKept();
     await apiCall('/auth/sign-out', { body: {} });
     sessionP = Promise.resolve(null);
+    await sessionChanged();
   },
   async signOutEverywhere() {
     await letGo();
     forgetKept();
     await apiCall('/auth/revoke-sessions', { body: {} });
     sessionP = Promise.resolve(null);
+    await sessionChanged();
   },
 };
 
@@ -150,6 +158,9 @@ let reason: 'paused' | 'ended' | null = null;
 
 /** Why the app last sent someone to sign-in (QA B05 run 1, 10): kept until they sign in again. */
 export function noteSignedOutBecause(r: 'paused' | 'ended') {
+  // access being paused ends the session, and reads still on their way then come back 401: they are
+  // the same ending, and the person should still be told it was paused
+  if (r === 'ended' && reason === 'paused') return;
   reason = r;
 }
 export function signedOutReason(): 'paused' | 'ended' | null {
