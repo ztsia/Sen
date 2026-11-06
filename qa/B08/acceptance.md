@@ -291,3 +291,217 @@ AC-37 One set of UI patterns: first run's steps, Accounts, Account, Categories a
 
 AC-38 The build ships no secret
       Spec   NN secrets
+
+---
+
+# Run 2 (fresh full run, tier 3, 4 Nov): criteria written from the docs before the source
+
+Sources: `docs/briefs/B08-first-run-accounts.md`; `spec_v2.md` §7, §8, §9.5, §9.6, §15; D14, D16, D17,
+D26, D28, D33, D38, D79, D86, D93, D132, D145, D146, D147; `docs/flows.md` `first-run`; `docs/screens.md`
+`first-run`, `accounts`, `account`, Settings; `docs/ui/patterns.md` §3, §7. Run 1's criteria were not
+read before these were written. Each has its sad twin in the same entry (`Sad`).
+
+## Data (Postgres, `sen_test`)
+
+R2-AC-1  The accounts table holds the brief's columns, typed
+         Given  migration 0013+ applied
+         When   `\d accounts`
+         Then   `opening_balance` is `bigint`; `opening_at` and `archived_at` are `timestamptz`; `kind`
+                accepts only `tracked`/`elsewhere`; `notifier_package`/`notifier_label` nullable; `currency`
+         Sad    INSERT kind `savings` → check violation; opening_balance `12.5` → rejected (no rounding)
+         Spec   §15 accounts; brief *Data*; non-negotiable *integer sen*
+
+R2-AC-2  One live account per app (D145, D146 (6))
+         Given  user A has a live tracked account for `my.com.tngdigital.ewallet`
+         When   A inserts a second live account for the same package
+         Then   unique violation; 1 live row
+         Sad    after archiving the first, a new one for that package is accepted; user B may hold one for
+                the same package
+         Spec   D145, D146 (6)
+
+R2-AC-3  `account_names` maps one (package, label) to one of the person's own accounts
+         Given  A's row (pkg, 'Main Account') → A's account
+         When   the same row is inserted again
+         Then   unique violation (user_id, package, label)
+         Sad    A's row pointing at B's account id is rejected, with the same error as for a random uuid
+         Spec   §15 account_names; D146 (5)
+
+R2-AC-4  Categories table: kind, flags, system key; Sen's three can't be archived; Unaccounted flagless
+         Given  A's seeded categories
+         When   UPDATE Cash/Salary/Unaccounted SET archived_at = now()
+         Then   rejected (check); UPDATE Unaccounted SET is_discretionary = true → rejected
+         Sad    archiving Groceries succeeds; renaming Cash keeps system_key `cash`
+         Spec   §8, §15 categories, D146 (6), D147 (5)
+
+R2-AC-5  The starting list is exactly D33's
+         Given  a new person
+         When   first run starts (`setup.start`)
+         Then   21 categories: 18 spend (§8's table, in its names) + Salary, Interest & returns, Other income
+                (income); is_meal only Meals; is_beverage only Drinks & desserts; is_discretionary exactly
+                Drinks & desserts, Shopping, Entertainment, Gifts & treats, Travel; system_key salary/cash/
+                unaccounted on Salary/Cash/Unaccounted, null elsewhere
+         Sad    a second `setup.start` leaves 21 rows; someone who already has categories gets none seeded
+         Spec   §8, D33, D146 (3)
+
+R2-AC-6  Unaccounted can never be picked by hand
+         Given  A's Unaccounted category
+         When   a transaction of kind `spend` with Unaccounted's id is inserted / sent through any command
+         Then   rejected; Unaccounted absent from every category picker on screen
+         Sad    an `adjustment` with Unaccounted is accepted
+         Spec   §8 table, brief *Data*, D146 (6)
+
+R2-AC-7  Transactions exist with their core columns, money integer
+         When   `\d transactions`
+         Then   account_id, bank_event_id, occurred_at, direction (out|in), amount bigint, currency, kind,
+                merchant_raw, merchant_key, category_id, my_share bigint, source, status, created_at,
+                updated_at, deleted_at
+         Sad    direction `sideways`, kind `gift`, amount `1.5` each rejected
+         Spec   §15 transactions; brief
+
+R2-AC-8  The balance view: opening + in − out, strictly after opening_at, `amount` not `my_share`
+         Given  opening 100000 at T; in 5000 at T+1s; out 1250 at T+1h; out 999 at exactly T; out 700 at
+                T−1s; out 12000 with my_share 4000 at T+2h; out 300 at T+3h with deleted_at set
+         When   SELECT from the balance view
+         Then   100000 + 5000 − 1250 − 12000 = 91750
+         Sad    each excluded row (at T, before T, deleted) moves nothing; the view is security_invoker
+         Spec   §7 *Opening balance*, *Balance*; brief *the balance view*; D146 (4)
+
+R2-AC-9  The total is tracked live accounts only
+         Given  A has two tracked accounts (91750, 0) and one elsewhere account with transactions
+         Then   total = 91750; the elsewhere account shows no balance anywhere
+         Sad    an archived tracked account doesn't count in the total (or, if it does, the spec says so)
+         Spec   §7 *Elsewhere*, *Balance*
+
+R2-AC-10 RLS on every new table and view
+         Given  A's rows in accounts, account_names, categories, transactions, user_settings
+         When   read as B, as no user, as the admin, as the API role
+         Then   0 of A's rows each; INSERT as B with user_id = A rejected (WITH CHECK)
+         Sad    A reads all of A's own
+         Spec   non-negotiable RLS; D52; §15
+
+R2-AC-11 Cross-person references are impossible
+         When   B inserts a transaction naming A's account_id or A's category_id
+         Then   rejected, same error as for a random uuid
+         Spec   D146 (5)
+
+## API (`apps/api`, local, `sen_test`)
+
+R2-AC-12 `/accounts` lists the person's accounts with view balances; archived flagged
+         Then   each tracked live: name, app label, balance (sen, integer), opening balance, opening_at,
+                checked = opening_at (D147 (2)); elsewhere: no balance; archived: with `archived`
+         Sad    B's `/accounts/:A's id` → 404, same as a random uuid
+         Spec   brief *Screens made real*, D147 (2)(4)
+
+R2-AC-13 Accounts need the Capture switch (D146 (7))
+         Given  capture off   When  GET /accounts   Then  403 `{code:'capture_off'}`
+         Sad    capture on → 200
+
+R2-AC-14 Opening balance typed as text into sen
+         When   "1234.50" / "0"   Then  123450 / 0 stored, BIGINT
+         Sad    "12.345", "abc", "-5", "1e3", "99999999999999999999", a JSON number 12.5 → 4xx
+                `{code, message, field}`, never a 500, never a rounded value
+         Spec   non-negotiable *integer sen*, D146 (4)
+
+R2-AC-15 Correcting an opening balance keeps opening_at
+         Then   opening_at unchanged after an edit; balance moves by exactly the difference
+         Spec   D146 (4)
+
+R2-AC-16 Every write is idempotent (a dedupe key)
+         When   the same command (same id) is sent twice
+         Then   one row; the second returns success and changes nothing
+         Spec   non-negotiable *dedupe key*
+
+R2-AC-17 `/me` reports setup; finishing sets `setup_done_at`
+         Then   `setupDone` false → true after the last step; `user_settings.setup_done_at` not null
+         Sad    finishing twice leaves the first timestamp
+
+R2-AC-18 Names and payday validated
+         Then   own_names = {'TAN WEI MING'}; expected_payday 'last working day' or 1..31
+         Sad    payday 0, 32, 'abc'; a name 10 000 chars; a NUL → 4xx, not stored
+         Spec   §15 user_settings, D14, D17
+
+R2-AC-19 Category commands: rename, add, archive, flags; system ones refuse archive in words
+         Sad    archive Cash → 4xx with a message a person can read; add with kind 'x' → 4xx
+         Spec   §8, brief, D146 (6)
+
+R2-AC-20 The offline copy carries the ledger
+         Then   `/sync/changes` returns categories, accounts, account names and own names; paging by one
+                counter returns each row once across pages
+         Spec   brief *Added to the offline copy*, D146 (9)
+
+## First run (web app at 390×844, native steps simulated)
+
+R2-AC-21 Seven steps in order, *Step N of 7*; the tab bar hidden throughout
+         Spec   §9.5, screens.md *Rules* (tab bar hides during first-run)
+
+R2-AC-22 Who is sent to first run (D146 (2))
+         Then   not set up + shell + capture → first run; capture on in a plain browser → not sent;
+                set up → never sent; opening /first-run after setup lands on Home (steps never come back)
+         Spec   D26, D146 (2), §9.5
+
+R2-AC-23 Closed mid-way reopens at the same step, with what was typed
+         When   reload at step 4; reload at step 5 with a balance typed but not saved
+         Then   step 4 again; step 5 with the typed amount
+         Spec   brief *Done when* 1, flows *Closed mid-setup*, D146 (1)
+
+R2-AC-24 Accounts step: one per chosen app, nothing else
+         Given  chosen TNG, Ryt, Public Bank, Grab
+         Then   exactly 4 balance fields, named from the curated list; no *Add*; a card wallet (Google
+                Wallet) offers none; TNG's line says *eWallet and GO+ together*, Ryt's *Main account and
+                pockets together*
+         Sad    an empty field blocks Continue with words; 0 is accepted and shows RM0.00
+         Spec   D145, D146 (4), D147 (1)(3)
+
+R2-AC-25 Amounts typed like a bank app (D132, D147 (1))
+         When   1,2,5,0   Then  12.50; stored 1250
+         Sad    `.` and letters ignored; 0 → 0.00; backspace from 0.00 empties
+
+R2-AC-26 Name and payday saved
+         Then   own_names {'TAN WEI MING'}; payday defaults to the last working day; a day number saves
+         Sad    offline at step 6–7: they survive (outbox) and reach the server once on reconnect (D146 (8))
+
+R2-AC-27 Finishing lands on Home with the accounts' opening balances in the total
+         Then   Home's total balance = sum of typed balances; Accounts shows each opening balance
+         Spec   brief *Done when* 2
+
+R2-AC-28 Access refused → *Skip for now* → Home shows *Capture is off* with *Fix*
+         Spec   flows `first-run` *When it goes wrong*
+
+R2-AC-29 Without capture: the short first run (sign-in, categories, Cash locked on, no payday)
+         Spec   §9.6, D79, D147 (5)
+
+## Screens made real
+
+R2-AC-30 Accounts: the total; each tracked account with balance and last checked; Elsewhere without
+         balance; archived with *Bring back*; bringing one back over a newer live one refused in words
+         Spec   screens.md `accounts`, D147 (2)(4)
+
+R2-AC-31 Account: balance, opening balance, the feeding app, recent payments (an empty state now)
+         Spec   screens.md `account`
+
+R2-AC-32 Without capture there is no Accounts entry, and its URL doesn't show money
+         Spec   screens.md *A person sees only what they can use*
+
+R2-AC-33 Settings → Categories: rename, add, archive (with *Bring back*), flags; Unaccounted shown as not
+         pickable / not archivable; patterns' rows and forms
+R2-AC-34 Settings → You: names (capture only), expected payday
+R2-AC-35 Money as `RM1,284.50`; never a float on screen (`12.5`, `12.499999`)
+         Spec   patterns §3
+
+## Non-negotiables
+
+R2-AC-36 No float in any money path in the diff (`parseFloat`, `toFixed`, `Number(` on amounts)
+R2-AC-37 The preview seed and fixtures hold no real financial data
+R2-AC-38 The production bundle holds no secret
+R2-AC-39 The admin reads none of anyone's accounts, balances or categories
+R2-AC-40 Timezone: with the browser in another timezone, opening_at and dates show in KL time and the
+         balance doesn't move
+R2-AC-41 One set of UI patterns: first run's steps, Accounts, Account, Categories and You use the
+         shared rows, forms, empty and error states
+
+## Added after reading run 1's criteria (written after the source was read: weaker evidence)
+
+R2-AC-42 First run's draft never reaches the next person on the device: sign-out, or a different person
+         signing in, empties `sen.firstRun`   (run 1 AC-21s; B08 security review)
+R2-AC-43 Playwright walks `first-run` with the native steps simulated, in all six looks   (brief done-when 5)
+R2-AC-44 pgTAP and the catalogue check cover every new table and view   (brief done-when 4)

@@ -85,6 +85,10 @@ follow on a phone, and commit.
      its opening balance and the day it was taken. (Done-when 2.)
   7. **More → Settings → Categories and rules:** the 18 spending and 3 money-in categories (D33). Rename
      one and undo it, so you know the sheet works.
+  8. **(QA B08 run 2, needs the phone's outbox; try it on the review build as `meiling@example.com`):** at
+     step 6 turn on airplane mode, type your name, *Next*; turn airplane mode off, wait a few seconds,
+     *Finish*. Then Settings → *You* shows your name. In a browser the same steps lose the name, so only
+     the shell can show it survives (D146 (8)).
   Captured payments still don't book until B09 and B10. When they do, payments from before you
   finished step 4 count in spending but not in balances (§7). To try first run again on a preview
   first: the review build (*Sen review*), sign in as `meiling@example.com`, code `123456`; it resets on

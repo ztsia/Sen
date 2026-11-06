@@ -52,3 +52,22 @@ account belongs with B09's mapping of notifications to accounts, named in the ha
 refused by the database's checks where they matter; a negative opening stays possible for stored credit, D93); 16 (Home is B13's);
 17 and 18 (tests); the eyes pass's other *look again* notes outside B08's screens (sheets in B04's journeys, the Members toast,
 already a follow-up).
+
+## QA run 2: the metrics flags, cause and verdict
+
+From `node scripts/qa-diff.mjs` (8 confirmed flags, 333 standing). Each cause was measured (the probes are in
+`qa/e2e/b08r2-*.probe.mjs`, against the fake preview build at 390×844 with the CPU 4× slower, head on :4185 and
+main's build from the base worktree on :4186).
+
+| Flag | Cause, measured | Verdict |
+|---|---|---|
+| `screen:manual` console 2 vs 0 | Every message is Chromium's *A preload for … is found, but is not used because it is a cross-world service worker resource mismatch*, from opening a screen under a warm service worker. Three opens each: head 17, 0, 28; main 26, 5, 6. Not the slice | Accepted: harness noise. Follow-up for the tooling: don't count that warning |
+| `step:first-run/7` settle 230 vs 81 ms | The journey gained a reload at step 4 (done-when 1), so tap 7 is a different tap on each side; 230 ms is well inside the 1 s limit | Accepted |
+| `step:first-run/18` settle 1243 ms (no main number) | *Finish*. *Finishing…* shows at 56 ms (run 1's finding 9 fixed). CPU profile from tap to Home: first run is left at 286–307 ms, Home's figure is drawn at 786–879 ms, and the time is native rendering (`(program)` 879–887 ms) with JS under 100 ms. The rest is Home's own first draw | Accepted: answered at once, in words; Home is B13's |
+| `step:first-run/20` settle 1217 ms (no main number) | More → Accounts inside the journey: the Accounts screen's code is a lazy chunk (`accounts-*.js`, `can-open-*.js`, `undo-2-*.js`) fetched at ~231 ms, its card drawn at 613 ms; the remainder is the slide-in. Main loads its Accounts the same way | Accepted |
+| `step:balance-check/1` settle 1052 vs 525 ms | The same tap, More → Accounts. Main's number comes from a walk that then failed (`In 4 accounts` isn't on main). Measured directly, three each: head 599, 643, 625 ms to the total; main 542, 586, 564 ms | Accepted: about 10%, within noise of the ratio |
+| `step:balance-check/5` first change 136 ms (no main number) | *Save* on the skeleton balance check (B13's screen); the base walk stopped before it. The same class as main's 90 standing first-change items | Accepted; B13 builds the screen |
+| `api:GET /api/me` queries 10 vs 6 | One more `asPerson` transaction (begin, `set_config`, the `user_settings` select, commit) just to read `setup_done_at`: medians 6 → 10 queries, dbMs 3.5 → 5.35 locally | **Not accepted: QA run 2 finding 8.** Read it in the transaction the request already opens |
+| `api:GET /api/sync/changes` queries 14 vs 10 | The four new kinds the brief adds to the offline copy, one select each (categories, accounts, account names, your names), inside the same transaction | Accepted: the brief's own addition |
+
+Standing (main breaks the same limits): 333 numbers, already explained in earlier slices' ledgers; none is new to B08.

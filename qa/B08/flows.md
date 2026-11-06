@@ -109,3 +109,93 @@ FLOW-13 An app un-chosen after its account was saved                       (sad)
         Steps  back to step 2, Grab off, forward to step 5
         Ends   three fields; what happens to Grab's live account is recorded
         Covers §7 *Accounts follow the apps you chose*
+
+---
+
+# Run 2 (fresh full run, 4 Nov): flows from the docs
+
+All at 390×844, Chromium, Minted light, against the local API on `sen_test` unless marked *preview*
+(the fake backend). The shell's native steps are simulated as the dev panel allows.
+
+FLOW-R2-1  First run, the owner's whole way                                  (happy, core)
+           Actor  a new person with Shell + Capture, not set up (Mei Ling-like)
+           Entry  sign-in → code
+           Steps  1. lands at *Step 2 of 7* (apps)  2. choose TNG, Ryt, Public Bank, Grab
+                  3. access granted (simulated)  4. Keep Sen running → Continue
+                  5. balances: TNG 1,2,5,0 → RM12.50; Ryt 0 → RM0.00; Public Bank 345600 → RM3,456.00;
+                     Grab 999 → RM9.99  6. name TAN WEI MING  7. payday: last working day → Finish
+           Ends   Home; `user_settings.setup_done_at` set; 4 live accounts with opening 1250, 0, 345600,
+                  999; 21 categories; own_names {TAN WEI MING}; Accounts total RM3,478.49
+           Covers R2-AC-5, 17, 21, 24, 25, 26, 27   Spec §9.5, brief
+
+FLOW-R2-2  Closed at step 4, and at step 5 mid-typing                         (sad)
+           Steps  1. reach step 4, reload → step 4  2. step 5, type a balance, reload → step 5, amount kept
+           Ends   no duplicate accounts; continues to Home
+           Covers R2-AC-23
+
+FLOW-R2-3  An empty balance, then 0                                          (sad)
+           Steps  1. leave one balance empty → Continue  2. type 0
+           Ends   1: stays, says what's missing; 2: RM0.00 accepted, account stored with opening 0
+           Covers R2-AC-24, 25
+
+FLOW-R2-4  Steps never come back                                             (sad)
+           Steps  1. after finishing, open `/first-run` directly  2. reload Home
+           Ends   Home each time
+           Covers R2-AC-22
+
+FLOW-R2-5  Offline at the name step                                          (sad)
+           Steps  1. at step 6 go offline  2. type name, choose payday, Finish  3. back online
+           Ends   own_names saved exactly once; nothing lost
+           Covers R2-AC-26
+
+FLOW-R2-6  Accounts and Account                                              (happy)
+           Entry  More → Accounts
+           Steps  1. total and four accounts, each *checked* at its opening  2. open TNG
+           Ends   Account shows balance, opening balance, *Touch 'n Go* as its app, an empty payments state
+           Covers R2-AC-30, 31
+
+FLOW-R2-7  Archive an account, bring it back                                 (sad)
+           Steps  1. archive Grab  2. Bring back  3. archive, create a new Grab account (if possible),
+                  then Bring back the old one
+           Ends   2: live again; 3: refused in words
+           Covers R2-AC-2, 30
+
+FLOW-R2-8  Settings → Categories                                             (happy + sad)
+           Steps  1. rename Groceries → Market  2. add *Pets*  3. flag Pets discretionary  4. archive Pets,
+                  Bring back  5. try to archive Cash  6. look for Unaccounted in any picker
+           Ends   DB matches each step; Cash can't be archived; Unaccounted isn't pickable
+           Covers R2-AC-4, 6, 19, 33
+
+FLOW-R2-9  Settings → You                                                    (happy)
+           Steps  1. change name to add a second  2. payday → 25
+           Ends   own_names has both; expected_payday 25
+           Covers R2-AC-18, 34
+
+FLOW-R2-10 Without capture                                                   (sad)
+           Actor  a person with capture off
+           Ends   short first run (categories, Cash locked on); no Accounts in More; /accounts 403
+           Covers R2-AC-13, 29, 32
+
+FLOW-R2-11 In another timezone (America/New_York)                            (sad)
+           Ends   Accounts' dates and the total match the KL run
+           Covers R2-AC-40
+
+## Core journeys (D124), walked every run
+
+FLOW-R2-C1 `first-run`: FLOW-R2-1 above.
+FLOW-R2-C2 `pay-new`: in a preview, simulate a payment at a new merchant (ROTI BAKAR 88, RM9.50), answer the
+           category prompt; the payment takes the category and the next one there asks nothing.
+FLOW-R2-C3 `scan-after`: in a preview, Scan → reading → confirm → Done; it attaches to the payment.
+
+## Added after reading the source or run 1 (weaker evidence)
+
+FLOW-R2-5b Offline at the accounts step (run 1, finding 10)                (sad)
+           Steps  1. offline at step 5, type every balance, Next  2. back online, Next
+           Ends   1: stays at step 5, typing kept; 2: step 6 with four accounts, none twice
+           Covers R2-AC-16, R2-AC-24
+
+FLOW-R2-12 A category added in a browser before first run                  (sad)
+           Actor  a person with Capture, signed in from a plain browser, first run not done (D146 (2))
+           Steps  1. Settings → Categories  2. Add a category *Pets*  3. later, first run (/s/first-run)
+           Ends   first run still seeds D33's list with Cash, Unaccounted and Salary
+           Covers R2-AC-5   (written from the API probe that found `seed_categories()` seeds only for none)
