@@ -1,6 +1,6 @@
 # QA B08 · run 2 (fresh full run, tier 3)
 
-Report with screenshots: to be published by the main session from `qa-artifacts/B08/first-run-accounts/report.html`.
+Report with screenshots: https://claude.ai/artifact/Pkj1my3wTFBwiM5qfvNnvv (version 2; version 1 was run 1)
 
 ```
 VERDICT   fix first
