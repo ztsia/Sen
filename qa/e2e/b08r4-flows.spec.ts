@@ -383,12 +383,10 @@ test('R4-FLOW-4: access skipped: Home says capture is off, with a fix', async ({
   await page.getByRole('button', { name: 'Next' }).click();
   await atStep(page, 3);
   await shot(page, 'R4-FLOW-4-step-1-access');
-  test
-    .info()
-    .annotations.push({
-      type: 'access-step-text',
-      description: (await page.locator('main').innerText()).slice(0, 400),
-    });
+  test.info().annotations.push({
+    type: 'access-step-text',
+    description: (await page.locator('main').innerText()).slice(0, 400),
+  });
   await page.getByRole('button', { name: 'Skip for now' }).click();
   await atStep(page, 4);
   await page.getByRole('button', { name: 'Skip for now' }).click();
@@ -471,12 +469,10 @@ test.describe('a production build’s B08 screens, on the real API', () => {
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
     await page.waitForTimeout(800);
     await shot(page, 'R4-PROD-step-1-settings');
-    test
-      .info()
-      .annotations.push({
-        type: 'prod-settings-text',
-        description: (await page.locator('main').innerText()).slice(0, 500),
-      });
+    test.info().annotations.push({
+      type: 'prod-settings-text',
+      description: (await page.locator('main').innerText()).slice(0, 500),
+    });
     await page.goto('/s/settings/categories');
     await expect(page.getByRole('button', { name: /^Groceries,/ })).toBeVisible({ timeout: 10_000 });
     await shot(page, 'R4-PROD-step-2-categories');
@@ -486,12 +482,10 @@ test.describe('a production build’s B08 screens, on the real API', () => {
     await page.goto(`/s/account?id=${acct}`);
     await page.waitForTimeout(1500);
     await shot(page, 'R4-PROD-step-4-account');
-    test
-      .info()
-      .annotations.push({
-        type: 'prod-account-text',
-        description: (await page.locator('main').innerText()).slice(0, 400),
-      });
+    test.info().annotations.push({
+      type: 'prod-account-text',
+      description: (await page.locator('main').innerText()).slice(0, 400),
+    });
     test.info().annotations.push({ type: 'prod-page-errors', description: errors.join(' | ') || 'none' });
     expect(errors).toEqual([]);
   });
@@ -539,10 +533,8 @@ test('R4-FLOW-12: an archived app’s account: Not added yet and Archived at onc
   test
     .info()
     .annotations.push({ type: 'accounts-text', description: (await page.locator('main').innerText()).slice(0, 600) });
-  test
-    .info()
-    .annotations.push({
-      type: 'add-ryt-buttons',
-      description: String(await page.getByRole('button', { name: 'Add Ryt Bank' }).count()),
-    });
+  test.info().annotations.push({
+    type: 'add-ryt-buttons',
+    description: String(await page.getByRole('button', { name: 'Add Ryt Bank' }).count()),
+  });
 });

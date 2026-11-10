@@ -220,3 +220,49 @@ journeys pay-new, scan-after and first-run pass. **R4-FLOW-12 fails** (finding 3
 ## Security (D144)
 
 Re-run by the main session on QA runs 1–3's fixes: no High or Medium (`security.md`, *Re-review for QA run 4*).
+
+## Run 4, scoped (tier 2): the fixes re-checked (10 Nov)
+
+The same reviewer, resumed, on commits `23da7b6..0944abe`. Area: Accounts and adding an app's account (§7,
+screens.md *Accounts*, D145, D147 (4), D148), and the money field wherever an amount is typed while an error
+shows (patterns §2, §7). Written by the main session from the reviewer's message.
+
+```
+VERDICT   ship
+          85 criteria, 80 pass, 1 fail, 4 not reachable      no Blocker, no Major; 2 new Minor, 1 Note
+```
+
+| # | Status | Evidence |
+|---|---|---|
+| 1 | fixed | `b08r4-adjustment-refused` killed by pgTAP 32; `b08r4-trigger-ignores-kind` by 33 |
+| 2 | fixed | all three Capture mutants killed by *come with capture for their own person too* (`expected [ 200, undefined ] to deeply equal [ 403, 'capture_off' ]`) |
+| 3 | fixed (13 is new) | no *Add Ryt Bank*, no "In 0 accounts", no *Check balances*; *Bring back* restores "In 1 account · RM50.00" with `opening_at` unchanged; the old line put back is caught by the journey pin |
+| 4 | fixed | D149, spec §7 and §15, the schema comment; pgTAP pins it. No code reads `my_share` yet |
+| 5 | fixed | the CI step run locally: 88 trees re-recorded, `git diff --exit-code` 0; with the placeholder put back to `"0.00"`, exit 1, while the old catalogue check still passes 88/88 |
+| eyes: red amounts | fixed (14: untested) | the amount's computed colour is `--foreground` in every case: light `oklch(0.248 0.049 253.4)`, dark `oklch(0.931 0.01 247.9)`; manual entry's above-zero error, first run beside four errors, Accounts → *Add* |
+| 6 | open | not re-measured |
+
+### New findings
+
+| # | Severity | What breaks | Repro | Spec |
+|---|---|---|---|---|
+| 13 | Minor | With only archived accounts, Accounts is a bare *Archived* card: nothing says what to do | `qa/e2e/b08r4s-flows.spec.ts` › R4S-FLOW-1 | R4S-AC-2 (fails), patterns §7 *Empty* |
+| 14 | Minor | Nothing tests that an amount stays in the text colour while an error shows | remove ` text-foreground` from `money-input.tsx`: `pnpm test` and 200 catalogue and journey tests stay green | patterns §2 |
+| 15 | Note | Every invalid field draws its label and message in destructive red, which patterns §2 forbids for an error ("said in words, in the text colour"); project-wide, older than B08 | manual entry: label and message `oklch(0.5 0.182 29.5)` light, `oklch(0.745 0.127 25.8)` dark | patterns §2 |
+
+15 is the owner's call: fix the shared `Field` and `FieldError` (a full run), or let patterns §2 allow red for a
+field's error. Suggested breakage check once an e2e colour pin exists: `money-input-red-amount` (drop
+` text-foreground`); `mutants.mjs` has no e2e suite yet.
+
+### Probes
+
+The seven run-4 mutants: 7/7 caught. `NotAdded` ignoring archived accounts again: caught (`unexpected value "1"`).
+The placeholder back to `"0.00"` and re-recorded: caught (exit 1). The amount losing `text-foreground`: **not
+caught** (14).
+
+### Suites and flows
+
+Typecheck and lint clean, unit 483/483. `b08r4-flows` 14/14, `b08r4s-flows` 7/7. `api-probes-r4` 14/15 (note 9,
+the zero-width *Meals*, not fixed). One of two archived accounts plus a third app with no account shows *Add
+GrabPay Wallet* and *Bring back Ryt Bank* only; archived rows in `/api/accounts` carry their package, and only the
+person's own.

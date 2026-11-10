@@ -340,3 +340,21 @@ R4-PROD    A production build (SEN_ENV=production) on the real API              
            Ends   each opens with no page error; the short first run finishes
 R4-AC-28.s Bring back over a newer live account: refused in words
 R4-AC-41.s Sign out at step 5 with a balance typed: the next person starts at step 2, nothing typed
+
+# Run 4, scoped (tier 2, 10 Nov): flows for the fixes
+
+R4S-FLOW-1 The only account archived, then brought back                                (sad, happy)
+           Steps  1. Ryt chosen with its account; Account → Edit → *Archive this account*
+                  2. Accounts  3. *Bring back Ryt Bank*
+           Ends   2: no total, no *Check balances*, no *Add Ryt Bank*, *Bring back* shown
+                  3: "In 1 account", RM50.00, `opening_at` as before
+           Covers R4S-AC-1, -2, -2.s
+R4S-FLOW-2 One of two archived, and a third app chosen with no account                 (happy)
+           Steps  Ryt and TNG with accounts, Grab chosen with none; archive Ryt; Accounts
+           Ends   "In 1 account" (TNG); *Add GrabPay Wallet*; no *Add Ryt Bank*; *Bring back Ryt Bank*
+           Covers R4S-AC-1.s
+R4S-FLOW-3 Typed amounts while an error shows                                          (sad)
+           Steps  first run step 5: *Next* empty (four errors), type into Ryt; manual entry: type 0
+                  (*Type an amount above zero*); Accounts → *Add*: submit empty, then type
+           Ends   every typed amount's colour is the foreground's; labels and messages red; light and dark
+           Covers R4S-AC-4, -4.s

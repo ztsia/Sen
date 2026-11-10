@@ -1,13 +1,13 @@
 {
  "module": "B08",
  "branch": "B08/first-run-accounts",
- "verdict": "fix first",
- "generatedAt": "2026-11-10 11:45 UTC",
- "phases": "1-6",
- "headline": "B08 does what its brief and decisions ask: the data rules, RLS, balances, first run, D148 and the screens all hold when driven for real, and all 113 breakage checks die. Fix first: one criterion fails (my_share has no default), five of seven fresh probes on its guards survive, and Accounts goes wrong after an app's only account is archived. No Blocker, no Major; six Minors, six Notes. The eyes pass is still to run (no Agent tool here).",
+ "verdict": "ship",
+ "generatedAt": "2026-11-10 14:30 UTC",
+ "phases": "scoped (tier 2): area §7 Accounts, D145, D147 (4), D148, and the money field with an error showing (patterns §2, §7); commits 23da7b6..0944abe",
+ "headline": "Scoped re-check of run 4's fixes: findings 1–5 and the eyes item 'typed amounts drawn red' are fixed, each pinned except the colour. New: with only archived accounts, Accounts has no empty state (Minor, 13); the red-amount fix has no test (Minor, 14); field labels and messages are red against patterns §2, project-wide and older than B08 (Note, 15). Finding 6 stays open. No Blocker or Major: ship, with the Minors to weigh.",
  "summary": {
-  "criteria": 74,
-  "pass": 69,
+  "criteria": 85,
+  "pass": 80,
   "fail": 1,
   "unreachable": 4
  },
@@ -23,15 +23,21 @@
   "server": "7/7",
   "mutants": "113/113 killed",
   "kotlin core": "65/65 (up to date)",
-  "diff": "10 trees changed, 12 entries' pixels, 0 check findings, 1 unexplored (reading); 12 metrics flags"
+  "diff": "10 trees changed, 12 entries' pixels, 0 check findings, 1 unexplored (reading); 12 metrics flags",
+  "scoped typecheck": "clean",
+  "scoped lint": "clean (after QA's own spec's unused helper was removed)",
+  "scoped unit": "483/483",
+  "scoped mutants": "7/7 killed",
+  "scoped trees": "88 re-recorded, git diff 0",
+  "scoped flows": "b08r4: 14/14 (PROD after starting :5193); b08r4s: 7/7; api-probes-r4 14/15 (note 9)"
  },
  "findings": [
   {
    "id": 1,
    "severity": "Minor",
-   "status": "open",
+   "status": "fixed",
    "title": "No test holds the Unaccounted trigger's other half: an adjustment may book there, and can't later become a spend",
-   "detail": "Every suite stays green when the trigger refuses every Unaccounted row (so B13's balance check could never book its gap), and when it stops watching `kind` (so an adjustment in Unaccounted can be updated into a hand-picked spend). pgTAP only checks the refusals. The behaviour itself is right today (phase 4).",
+   "detail": "Every suite stays green when the trigger refuses every Unaccounted row (so B13's balance check could never book its gap), and when it stops watching `kind` (so an adjustment in Unaccounted can be updated into a hand-picked spend). pgTAP only checks the refusals. The behaviour itself is right today (phase 4).\n\nRun 4 scoped: fixed. mutant b08r4-adjustment-refused killed by pgTAP 32 'a balance check''s adjustment books to Unaccounted'; b08r4-trigger-ignores-kind killed by 33 'an adjustment in Unaccounted can''t be turned into a payment there'",
    "repro": "In 0014_b08_ledger_functions.sql: (a) `IF k = 'unaccounted' AND NEW.kind <> 'adjustment' THEN` → `IF k = 'unaccounted' THEN`; (b) `BEFORE INSERT OR UPDATE OF category_id, kind ON transactions` → `... OF category_id ON transactions`. Fresh DB, migrate, `pg_prove test/*.sql` (and `pnpm test:db`).",
    "evidence": "(a) All tests successful. Files=6, Tests=462 ... Result: PASS\n(b) All tests successful. Files=6, Tests=462 ... Result: PASS\nUnmutated, as app_user: adjustment/adjustment into Unaccounted → ok; UPDATE kind='spend' on it → error:23514 Unaccounted can't be picked: only a balance check books to it",
    "spec": "R4-AC-8.s, R4-AC-70, §7 Balance checks, §8, D146 (6)",
@@ -40,9 +46,9 @@
   {
    "id": 2,
    "severity": "Minor",
-   "status": "open",
+   "status": "fixed",
    "title": "The Capture guard on GET /accounts/:id, account.edit and account.archive is held by no test",
-   "detail": "D146 (7) puts accounts behind the Capture switch in the API too. Only GET /accounts and account.add are pinned (ledger.test 'come with capture'). Removing `needsCapture` from any of the other three leaves every suite green. RLS still keeps the rows the person's own, so nothing leaks between people.",
+   "detail": "D146 (7) puts accounts behind the Capture switch in the API too. Only GET /accounts and account.add are pinned (ledger.test 'come with capture'). Removing `needsCapture` from any of the other three leaves every suite green. RLS still keeps the rows the person's own, so nothing leaks between people.\n\nRun 4 scoped: fixed. b08r4-account-read/edit/archive-without-capture all killed by ledger.test 'come with capture for their own person too': expected [ 200, undefined ] to deeply equal [ 403, 'capture_off' ]",
    "repro": "Delete `needsCapture(c.var);` under `r.get('/accounts/:id'` (or `needsCapture(v);` under `case 'account.edit':` / `case 'account.archive':`) in apps/api/src/ledger.ts; `SEN_DB_TESTS=1 npx vitest run --project db apps/api/test/ledger.test.ts apps/api/test/sweep.test.ts`",
    "evidence": "GET /accounts/:id: Tests 202 passed | 13 skipped (215)\naccount.edit: Tests 110 passed | 13 skipped (123)\naccount.archive: Tests 110 passed | 13 skipped (123)",
    "spec": "R4-AC-20.s, R4-AC-71, D146 (7), §9.6",
@@ -51,9 +57,9 @@
   {
    "id": 3,
    "severity": "Minor",
-   "status": "open",
+   "status": "fixed",
    "title": "After archiving an app's only account, Accounts offers two ways back and says something untrue",
-   "detail": "Account → Edit → *Archive this account* on the only account. Accounts then shows 'In 0 accounts · RM0.00' with *Check balances*. It lists Ryt Bank under *Not added yet*, footed 'Apps you chose after first run. Each gets one account.' (Ryt was chosen at first run), and again under *Archived* with *Bring back*. Tapping *Add* makes a new account, after which *Bring back* is refused for good. `NotAdded` suggests from live tracked accounts only, so an archived app's account counts as missing.",
+   "detail": "Account → Edit → *Archive this account* on the only account. Accounts then shows 'In 0 accounts · RM0.00' with *Check balances*. It lists Ryt Bank under *Not added yet*, footed 'Apps you chose after first run. Each gets one account.' (Ryt was chosen at first run), and again under *Archived* with *Bring back*. Tapping *Add* makes a new account, after which *Bring back* is refused for good. `NotAdded` suggests from live tracked accounts only, so an archived app's account counts as missing.\n\nRun 4 scoped: fixed. R4S-FLOW-1: only Archived / Ryt Bank / Bring back; no Add Ryt Bank, no 'In 0 accounts', no Check balances; Bring back → 'In 1 account', RM50.00, opening_at unchanged. Probe (NotAdded ignores archived) caught by journeys 'an archived app’s account comes back with Bring back': unexpected value \"1\". But the archived-only screen has no empty state (finding 13)",
    "repro": "qa/e2e/b08r4-flows.spec.ts › R4-FLOW-12 (API on sen_qa4, dev server :5191)",
    "evidence": "accounts-text : In 0 accounts / RM0.00 / Check balances / Not added yet / R / Ryt Bank / Add / Apps you chose after first run. Each gets one account. / Archived / Ryt Bank / Bring back\nadd-ryt-buttons : 1",
    "spec": "R4-AC-28, D147 (4), D148, screens accounts",
@@ -64,9 +70,9 @@
   {
    "id": 4,
    "severity": "Minor",
-   "status": "open",
+   "status": "fixed",
    "title": "`transactions.my_share` defaults to NULL, not to `amount` as the spec says, and nothing records what NULL means",
-   "detail": "Spec §7 and §15: `my_share` defaults to `amount`. The column has no default: a spend inserted without a share stores NULL. Postgres can't default one column to another, so this needs either a trigger or a written convention ('NULL is the whole amount'). Every spending reader from B09 on must then coalesce. Neither the schema comment nor a decision says so. The balance view uses `amount`, so B08's figures are right.",
+   "detail": "Spec §7 and §15: `my_share` defaults to `amount`. The column has no default: a spend inserted without a share stores NULL. Postgres can't default one column to another, so this needs either a trigger or a written convention ('NULL is the whole amount'). Every spending reader from B09 on must then coalesce. Neither the schema comment nor a decision says so. The balance view uses `amount`, so B08's figures are right.\n\nRun 4 scoped: fixed. D149, spec §7 and §15, and the schema comment say NULL is the whole amount; pgTAP pins it; no code reads my_share yet",
    "repro": "As app_user: INSERT INTO transactions (..., amount, kind, source) VALUES (..., 123, 'spend', 'manual') RETURNING coalesce(my_share::text,'NULL')",
    "evidence": "AC13 my_share defaults to amount?:  NULL",
    "spec": "R4-AC-13, §7 Spending vs cash flow, §15",
@@ -75,9 +81,9 @@
   {
    "id": 5,
    "severity": "Minor",
-   "status": "open",
+   "status": "fixed",
    "title": "A stale accessibility tree passes CI: first-run@accounts still records the placeholder \"0.00\"",
-   "detail": "Run 3's fix made the accounts fields' placeholder empty (`placeholder=\"\"`). The committed `apps/web/e2e/trees/first-run-accounts.aria.yml` still says `/placeholder: \"0.00\"` on all four fields, and the sweep's catalogue (pnpm e2e) passed it in every look. The diff run rewrote the file (uncommitted, in the working tree). So the tree check doesn't hold a placeholder, beside the handoff's 'regex read as a prefix'.",
+   "detail": "Run 3's fix made the accounts fields' placeholder empty (`placeholder=\"\"`). The committed `apps/web/e2e/trees/first-run-accounts.aria.yml` still says `/placeholder: \"0.00\"` on all four fields, and the sweep's catalogue (pnpm e2e) passed it in every look. The diff run rewrote the file (uncommitted, in the working tree). So the tree check doesn't hold a placeholder, beside the handoff's 'regex read as a prefix'.\n\nRun 4 scoped: fixed. CI step 'The accessibility trees are as committed': run locally, 88 passed, git diff --exit-code 0. Probe: placeholder back to \"0.00\" → the re-recorded tree differs (exit 1) while the catalogue still passes 88/88",
    "repro": "git diff apps/web/e2e/trees/first-run-accounts.aria.yml after `node scripts/qa-diff.mjs`; `pnpm e2e` passes on HEAD",
    "evidence": "-      - /placeholder: \"0.00\"\n+      - /placeholder: \"\"   (×4: TNG eWallet, Ryt Bank, Public Bank, GrabPay Wallet)\ne2e: 1416 passed, 1 failed (capture-off, see note 7) — catalogue first-run@accounts passed",
    "spec": "R4-AC-72, D137 (trees)",
@@ -88,7 +94,7 @@
    "severity": "Minor",
    "status": "open",
    "title": "Still unexplained (run 3's finding 6): the harness times More → Accounts at about twice main, and my probes don't",
-   "detail": "Flags `step:balance-check/1` (settle 1101 ms median vs main 535), `step:first-run/20` (1314 ms, no main) and `step:balance-check/5` (Save back to Accounts, 1080 ms, no main: main's walk fails on '5 accounts') are the same screen opening. Measured outside the harness on the same dist-qa builds (service worker warm, CPU 4×, 150 ms/200 KB/s): time to 'In N accounts' and the last DOM change are equal, warm, cold or tapped at once. Head's tap loads 10 chunks against main's 2, all served by the service worker and finished within 192 ms of the tap on both sides (CDP Network.loadingFinished), with no DOM change after 600 ms. The filmstrip shows More unchanged for ~450 ms, then the slide and skeleton, with content by ~700 ms. The harness takes `last` from a mutation or a fetch in the tap's window, and what sets it here isn't recorded. Tooling ask: write which signal (mutation target or fetch URL) set each step's settle.",
+   "detail": "Flags `step:balance-check/1` (settle 1101 ms median vs main 535), `step:first-run/20` (1314 ms, no main) and `step:balance-check/5` (Save back to Accounts, 1080 ms, no main: main's walk fails on '5 accounts') are the same screen opening. Measured outside the harness on the same dist-qa builds (service worker warm, CPU 4×, 150 ms/200 KB/s): time to 'In N accounts' and the last DOM change are equal, warm, cold or tapped at once. Head's tap loads 10 chunks against main's 2, all served by the service worker and finished within 192 ms of the tap on both sides (CDP Network.loadingFinished), with no DOM change after 600 ms. The filmstrip shows More unchanged for ~450 ms, then the slide and skeleton, with content by ~700 ms. The harness takes `last` from a mutation or a fetch in the tap's window, and what sets it here isn't recorded. Tooling ask: write which signal (mutation target or fetch URL) set each step's settle.\n\nRun 4 scoped: not fixed (as the coordinator said); not re-measured.",
    "repro": "node qa/B08/accounts-tap.probe.mjs 5; node qa/B08/accounts-tap-cold.probe.mjs 4; node qa/B08/accounts-tap-soon.probe.mjs 3 (dist-qa builds served on :4175 main, :4176 head)",
    "evidence": "harness settle: head 1005 / 1101 / 1127 ms, main 599 / 535 / 467 ms\nprobe warm  — main 587/567 600/568 548/526 572/542 586/565; head 561/533 557/525 542/516 608/582 564/540 (ms to total / last DOM change)\nprobe cold  — main 585/558 553/529 573/545 571/548; head 554/528 590/555 615/589 604/554\nprobe soon  — main 514/481 477/454 497/477; head 570/525 467/442 520/464; late changes: none\ncdp loadingFinished after tap — main 171,171; head 169…182 (10)",
    "spec": "phase 4b; qa/limits.ts",
@@ -161,6 +167,58 @@
    "screenshots": [
     "R4-FLOW-4-step-2-home.png"
    ]
+  },
+  {
+   "id": 13,
+   "severity": "Minor",
+   "status": "open",
+   "title": "With only archived accounts, Accounts is a bare Archived card: no empty state says what to do",
+   "detail": "The fix hid the total and Check balances when nothing is tracked (right), but put nothing in their place. With an app's only account archived the screen reads 'Archived / Ryt Bank / Bring back' and nothing else, where patterns §7 *Empty* asks for an icon tile, a title, one line saying what will appear here, and the action. Production shows the same (Not added yet is preview-only there).",
+   "repro": "qa/e2e/b08r4s-flows.spec.ts › R4S-FLOW-1",
+   "evidence": "accounts-text : Archived / Ryt Bank / Bring back",
+   "spec": "R4S-AC-2, patterns §7 Empty, NN one set of UI patterns",
+   "screenshots": [
+    "R4S-FLOW-1-step-1-only-archived.png"
+   ]
+  },
+  {
+   "id": 14,
+   "severity": "Minor",
+   "status": "open",
+   "title": "Nothing tests that a typed amount stays in the text colour while an error shows",
+   "detail": "The eyes item's fix (`text-foreground` on MoneyInput's input) survives its own reversal: removing it, unit tests and every catalogue and journey entry for first run, manual and the Minted-light catalogue stay green. blocks.spec pins the alert title's colour, not the amount's. A pin like R4S-FLOW-3b (computed colour of the amount equals --foreground with 'Type an amount above zero.' showing) would hold it; a `web` (jsdom) mutant can't see computed colour.",
+   "repro": "In apps/web/src/blocks/money-input.tsx drop ` text-foreground` from the input's class; pnpm test; playwright e2e/catalogue.spec.ts e2e/journeys.spec.ts --project preview -g 'first-run|manual|in minted, light'",
+   "evidence": "200 passed (6.2m)",
+   "spec": "R4S-AC-4, patterns §2",
+   "screenshots": []
+  },
+  {
+   "id": 15,
+   "severity": "Note",
+   "status": "open",
+   "title": "Every invalid field draws its label and message in destructive red, which patterns §2 forbids for an error",
+   "detail": "Patterns §2: destructive is 'never for an amount or an error: an error is said in words, in the text colour'. The shared Field (`data-[invalid=true]:text-destructive`, FieldError `text-destructive`) has done so since before B08, on every form. The fix aligned only the amount. Changing Field is a shared-component change (a full run), or patterns §2 should say field errors may be red: a spec question for the owner.",
+   "repro": "R4S-FLOW-3b / 3c computed colours",
+   "evidence": "manual-light: label oklch(0.5 0.182 29.5) = destructive, message the same, amount oklch(0.248 0.049 253.4) = foreground; dark: label/message oklch(0.745 0.127 25.8) = destructive",
+   "spec": "patterns §2",
+   "screenshots": [
+    "R4S-FLOW-3-step-2-manual-zero-error-light.png"
+   ]
+  },
+  {
+   "id": 16,
+   "severity": "Minor",
+   "status": "fixed",
+   "title": "(eyes, run 4) Typed amounts drawn red while an error stands",
+   "detail": "Run 4 scoped: fixed. Computed colour of the amount equals --foreground with an error showing, light and dark (manual entry with 0, first run beside four errors, Accounts → Add).",
+   "repro": "qa/e2e/b08r4s-flows.spec.ts › R4S-FLOW-3a/3b/3c",
+   "evidence": "manual-light amount oklch(0.248 0.049 253.4) = foreground; manual-dark amount oklch(0.931 0.01 247.9) = foreground; first run TNG (empty, invalid) amount = foreground",
+   "spec": "patterns §2",
+   "screenshots": [
+    "R4S-FLOW-3-step-1-first-run-typed-beside-errors.png",
+    "R4S-FLOW-3-step-2-manual-zero-error-dark.png",
+    "R4S-FLOW-3-step-3-add-sheet-typed.png"
+   ]
   }
  ],
  "probes": [
@@ -198,6 +256,26 @@
    "broke": "account_names readable by everyone (select policy user_id is not null)",
    "caught": true,
    "note": "rls.sql Failed 6/317"
+  },
+  {
+   "broke": "(scoped) the seven run-4 breakage checks, via node scripts/mutants.mjs --only",
+   "caught": true,
+   "note": "7/7 killed"
+  },
+  {
+   "broke": "(scoped) NotAdded ignores archived accounts again",
+   "caught": true,
+   "note": "journeys 'an archived app’s account comes back with Bring back': Add Ryt Bank unexpected value \"1\""
+  },
+  {
+   "broke": "(scoped) first run's accounts placeholder back to \"0.00\", trees re-recorded",
+   "caught": true,
+   "note": "git diff --exit-code apps/web/e2e/trees → 1 (the new CI step)"
+  },
+  {
+   "broke": "(scoped) MoneyInput's amount loses text-foreground",
+   "caught": false,
+   "note": "finding 14"
   }
  ],
  "flows": [
@@ -591,14 +669,14 @@
     "R4-AC-28"
    ],
    "spec": "D147 (4), D148",
-   "status": "fail",
+   "status": "pass",
    "ends": "one way back for the app, in true words",
    "steps": [
     {
      "n": 1,
      "action": "Archive Ryt, open Accounts",
-     "assertion": "'In 0 accounts · RM0.00', Check balances, Ryt under Not added yet ('Apps you chose after first run') and under Archived",
-     "status": "fail",
+     "assertion": "Run 4 scoped: Archived / Ryt Bank / Bring back only; no Add Ryt Bank (0 buttons)",
+     "status": "pass",
      "screenshot": "R4-FLOW-12-step-1-archived-and-not-added.png"
     }
    ]
@@ -795,6 +873,103 @@
      "screenshot": "R4-FLOW-C3-step-3-attached.png"
     }
    ]
+  },
+  {
+   "id": "R4S-FLOW-1",
+   "title": "The only account archived, then brought back",
+   "kind": "sad",
+   "actor": "a person who finished",
+   "entry": "Account → Edit",
+   "covers": [
+    "R4S-AC-1",
+    "R4S-AC-2",
+    "R4S-AC-2.s"
+   ],
+   "spec": "D147 (4), D148",
+   "status": "fail",
+   "ends": "one way back; words where the total was; Bring back restores it",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Archive Ryt, open Accounts",
+     "assertion": "no Add Ryt Bank, no total, no Check balances (pass); no empty state (fail, finding 13)",
+     "status": "fail",
+     "screenshot": "R4S-FLOW-1-step-1-only-archived.png"
+    },
+    {
+     "n": 2,
+     "action": "Bring back Ryt Bank",
+     "assertion": "In 1 account; RM50.00; opening_at unchanged",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-1-step-2-brought-back.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-2",
+   "title": "One of two archived, a third app chosen with none",
+   "kind": "happy",
+   "actor": "a person who finished",
+   "entry": "/s/accounts",
+   "covers": [
+    "R4S-AC-1.s"
+   ],
+   "spec": "D148",
+   "status": "pass",
+   "ends": "Add only for Grab; Bring back for Ryt",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Accounts",
+     "assertion": "In 1 account, RM25.50; Add GrabPay Wallet; no Add Ryt Bank; Bring back Ryt Bank",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-2-step-1-one-archived-one-new.png"
+    }
+   ]
+  },
+  {
+   "id": "R4S-FLOW-3",
+   "title": "Typed amounts while an error shows",
+   "kind": "sad",
+   "actor": "anyone typing an amount",
+   "entry": "first run, manual entry, Accounts → Add",
+   "covers": [
+    "R4S-AC-4",
+    "R4S-AC-4.s"
+   ],
+   "spec": "patterns §2",
+   "status": "pass",
+   "ends": "every amount in the text colour, light and dark",
+   "steps": [
+    {
+     "n": 1,
+     "action": "First run: Next empty, type 12.3.4 into Ryt",
+     "assertion": "Ryt amount = foreground; TNG invalid, label destructive, amount foreground",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-3-step-1-first-run-typed-beside-errors.png"
+    },
+    {
+     "n": 2,
+     "action": "Manual: 0, Save (light)",
+     "assertion": "'Type an amount above zero.'; amount = foreground",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-3-step-2-manual-zero-error-light.png"
+    },
+    {
+     "n": 3,
+     "action": "Manual: 0, Save (dark)",
+     "assertion": "amount oklch(0.931 0.01 247.9) = foreground",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-3-step-2-manual-zero-error-dark.png"
+    },
+    {
+     "n": 4,
+     "action": "Accounts → Add: empty, then 1999",
+     "assertion": "error, then 19.99 in the foreground colour",
+     "status": "pass",
+     "screenshot": "R4S-FLOW-3-step-3-add-sheet-typed.png"
+    }
+   ]
   }
  ],
  "criteria": [
@@ -970,8 +1145,8 @@
    "id": "R4-AC-13",
    "title": "transactions core columns with checks; my_share defaults to amount",
    "spec": "§7, §15",
-   "status": "fail",
-   "evidence": "columns and checks present; my_share default is NULL, not amount (finding 4)"
+   "status": "pass",
+   "evidence": "columns and checks present; my_share default is NULL, not amount (finding 4) — scoped: D149 makes NULL the stated meaning; pgTAP pins it"
   },
   {
    "id": "R4-AC-13.s",
@@ -1315,6 +1490,83 @@
    "spec": "NN",
    "status": "pass",
    "evidence": "see R4-AC-54"
+  },
+  {
+   "id": "R4S-AC-1",
+   "title": "An archived app's account isn't offered as new",
+   "spec": "D147 (4), D148",
+   "status": "pass",
+   "evidence": "R4S-FLOW-1: Add Ryt Bank count 0; Bring back shown"
+  },
+  {
+   "id": "R4S-AC-1.s",
+   "title": "A chosen app with no account is still offered",
+   "spec": "D148",
+   "status": "pass",
+   "evidence": "R4S-FLOW-2: Add GrabPay Wallet"
+  },
+  {
+   "id": "R4S-AC-2",
+   "title": "No total or Check balances without a live account; words say what to do",
+   "spec": "patterns §7",
+   "status": "fail",
+   "evidence": "total and button gone; no empty state (finding 13)"
+  },
+  {
+   "id": "R4S-AC-2.s",
+   "title": "Bring back restores the total exactly",
+   "spec": "D147 (4)",
+   "status": "pass",
+   "evidence": "In 1 account, RM50.00, opening_at unchanged"
+  },
+  {
+   "id": "R4S-AC-3",
+   "title": "/accounts archived rows carry their package, only one's own",
+   "spec": "D52",
+   "status": "pass",
+   "evidence": "[{name: Ryt Bank, package: my.rytbank.app}] only"
+  },
+  {
+   "id": "R4S-AC-4",
+   "title": "A typed amount is in the text colour while an error shows",
+   "spec": "patterns §2",
+   "status": "pass",
+   "evidence": "amount = --foreground in first run, manual (light, dark), Accounts → Add"
+  },
+  {
+   "id": "R4S-AC-4.s",
+   "title": "An empty invalid field's text isn't red",
+   "spec": "patterns §2",
+   "status": "pass",
+   "evidence": "TNG empty+invalid: amount colour = foreground (labels/messages destructive: note 15)"
+  },
+  {
+   "id": "R4S-AC-5",
+   "title": "Finding 1 pinned",
+   "spec": "§7, §8",
+   "status": "pass",
+   "evidence": "2 pgTAP cases; both mutants killed"
+  },
+  {
+   "id": "R4S-AC-6",
+   "title": "Finding 2 pinned",
+   "spec": "D146 (7)",
+   "status": "pass",
+   "evidence": "3 mutants killed by the new ledger test"
+  },
+  {
+   "id": "R4S-AC-7",
+   "title": "NULL my_share's meaning written; no reader skips coalesce",
+   "spec": "D149",
+   "status": "pass",
+   "evidence": "spec §7/§15, D149, schema comment; 0 readers"
+  },
+  {
+   "id": "R4S-AC-8",
+   "title": "CI re-records the trees and fails on a difference",
+   "spec": "D137",
+   "status": "pass",
+   "evidence": "local run: diff 0; stale-placeholder probe: diff 1"
   }
  ],
  "notTested": [
@@ -1339,12 +1591,12 @@
    "why": "the API's 404 was seen; the screen with a foreign id wasn't walked"
   },
   {
-   "what": "The eyes pass (qa-eyes) on the 12 changed entries",
-   "why": "this reviewer has no Agent tool; the main session spawns it from the qa skill's template"
-  },
-  {
    "what": "Claude Code's security review of the diff (D144)",
    "why": "the main session's to run; qa/B08/security.md is from an earlier run"
+  },
+  {
+   "what": "Finding 6 (More → Accounts timing) re-measured",
+   "why": "not fixed, out of the scoped area's fixes"
   }
  ]
 }

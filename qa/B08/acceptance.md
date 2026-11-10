@@ -885,3 +885,28 @@ R4-AC-70  A balance check's adjustment into Unaccounted is accepted, and can't l
 R4-AC-71  Every capture-gated route and command (GET /accounts/:id, account.edit, account.archive) answers
           403 `capture_off` with Capture off, pinned by a test
 R4-AC-72  Each screen's committed accessibility tree matches what the screen renders (first-run@accounts)
+
+# Run 4, scoped (tier 2, 10 Nov): the fixes in 23da7b6..0944abe
+
+Area: Accounts and adding an app's account (§7, screens.md *Accounts*, D145, D147 (4), D148), and the money
+field wherever an amount is typed while an error shows (patterns.md §2, §7). Resumed reviewer: these
+criteria were written after reading the fix commits, so they're the criteria the fixes call for.
+
+R4S-AC-1  An app whose only account is archived isn't offered as new
+          When   the account is archived and the app is still chosen
+          Then   no *Add <app>* on Accounts; *Bring back <name>* is there
+R4S-AC-1.s A chosen app with no account at all, archived or live, is still offered
+          Then   *Add <app>* shows for it, beside an archived one's *Bring back*
+R4S-AC-2  With no live tracked account, Accounts shows no total and no *Check balances*
+          Then   no "In 0 accounts", no RM0.00 figure; what is there says what to do in words
+R4S-AC-2.s Bringing the account back restores the total exactly
+          Then   "In 1 account" and the opening balance as before; `opening_at` unchanged
+R4S-AC-3  `/accounts`'s archived rows carry their package; another person's archived rows aren't there
+R4S-AC-4  A typed amount is drawn in the text colour while an error shows: computed `color` of the amount
+          equals the field's `--foreground`, in light and dark; the label and message stay `--destructive`
+R4S-AC-4.s An empty field with an error shows its placeholder (if any) in its own muted colour, not red
+R4S-AC-5  (finding 1) pgTAP: an adjustment books to Unaccounted, and can't become a spend there
+R4S-AC-6  (finding 2) the three Capture checks each answer 403 `capture_off`, pinned by a test
+R4S-AC-7  (finding 4) the spec, a decision and the schema say what a NULL `my_share` means; no reader
+          of `my_share` skips the coalesce
+R4S-AC-8  (finding 5) CI re-records the trees and fails on any difference; a stale placeholder fails it

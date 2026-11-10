@@ -17,7 +17,7 @@ const phone = {
 
 export default defineConfig({
   testDir: '.',
-  testMatch: /b08r4-flows\.spec\.ts/,
+  testMatch: /b08r4s?-flows\.spec\.ts/,
   timeout: 120_000,
   workers: 1,
   fullyParallel: false,
