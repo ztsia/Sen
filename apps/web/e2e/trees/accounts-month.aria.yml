@@ -1,7 +1,7 @@
 - banner:
   - button "Back"
   - heading "Accounts" [level=1]
-- main: No accounts yet Each app you choose for Sen to read gets an account here, with the balance you type for it.
+- main: No accounts here Accounts come with Sen reading your bank notifications, which isn’t switched on for you.
 - navigation "Tabs":
   - link "Home":
     - /url: /

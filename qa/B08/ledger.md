@@ -100,3 +100,7 @@ Left, with reasons:
   discards an unchosen or blocked app in native code (D86), so no payment ever reaches it; 11
   and 12 are within the rules (12: a person without Capture has no accounts); 13, 15 and 16 are QA tooling,
   in the handoff's follow-ups; 14 is B13's Home.
+
+After the fixes: typecheck, lint, unit 483, `test:db` (pgTAP 462, API 199 + 13 skipped), `e2e:server` 7/7,
+the eight new breakage checks 8/8 killed, `pnpm e2e` 1414/1415. The one failure, `capture-off`'s click on the
+dev panel's *Widgets* while the panel re-rendered, passed 3/3 run alone (`--repeat-each 3`): load, not this slice.
