@@ -1021,3 +1021,38 @@ test.describe('D128', () => {
     await expect(page.getByRole('button', { name: /^Hui Min/ })).toHaveCount(0);
   });
 });
+
+test.describe('B08 after QA run 3', () => {
+  test('an app chosen after first run is added on Accounts with today’s balance (D148)', async ({ page }) => {
+    await open(page, '/s/accounts');
+    await page.evaluate(() =>
+      sessionStorage.setItem('sen.sim.chosen', JSON.stringify(['my.rytbank.app', 'com.example.coffee'])),
+    );
+    await open(page, '/s/accounts');
+    await expect(page.getByText('In 4 accounts')).toBeVisible();
+    // Ryt Bank has its account already; only the new app is offered
+    await expect(page.getByRole('button', { name: 'Add Ryt Bank' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Add A coffee app' }).click();
+    const sheet = dialog(page, 'Add A coffee app');
+    await sheet.getByRole('button', { name: 'Add account' }).click();
+    await expect(sheet.getByText('Type today’s balance, or 0.')).toBeVisible();
+    await sheet.getByLabel('Today’s balance').click();
+    await page.keyboard.type('4250');
+    await sheet.getByRole('button', { name: 'Add account' }).click();
+    await expect(toast(page)).toContainText('A coffee app added');
+    await expect(page.getByText('In 5 accounts')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^A coffee app .*RM 42\.50/ })).toBeVisible();
+    await expect(page.getByText('Not added yet')).toHaveCount(0);
+  });
+
+  test('a taken category name is said under Name, not in a toast (QA B08 run 3, 3)', async ({ page }) => {
+    await open(page, '/s/settings/categories');
+    await page.getByRole('button', { name: /^Groceries/ }).click();
+    const sheet = dialog(page, 'Groceries');
+    await sheet.getByLabel('Name').fill('meals');
+    await sheet.getByRole('button', { name: 'Save' }).click();
+    await expect(sheet.getByText('You already have a category with that name.')).toBeVisible();
+    await expect(sheet.getByLabel('Name')).toHaveAttribute('aria-invalid', 'true');
+    await expect(toast(page)).toHaveCount(0);
+  });
+});
