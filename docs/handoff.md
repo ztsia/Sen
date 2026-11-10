@@ -49,8 +49,10 @@
 - Stored credit without an app and *Elsewhere* accounts have no *Add* yet (D145 kept them; the brief
   didn't ask for the screen). B11 needs Elsewhere for transfers.
 - Whether an account can open below zero (QA B08 run 3, note 9): the API accepts it, the phone can't type it.
-- QA tooling: the tree check reads a regex as a prefix, so added text passes (QA B08 runs 2 and 3); the
-  console metric should ignore Chromium's *cross-world service worker* preload warning.
+- QA tooling: the console metric should ignore Chromium's *cross-world service worker* preload warning; the
+  harness should record which signal set each step's settle time (QA B08 run 4, 6: More → Accounts measures
+  twice main in the harness, equal in probes). The tree check's gap is closed: CI re-records the trees (run 4, 5).
+- Names accept zero-width characters, so *Me​als* sits beside *Meals* (QA B08 run 4, note 9).
 - QA tooling: the core journey's scan-after step waits for a 0.4–0.8 s screen and races it under load (QA
   B08 run 1, 12); it should wait for the step's outcome.
 - Earlier ones: B07 QA 14 and notes 7–9 (`qa/B07/ledger.md`); no Kotlin breakage checks; Members →
@@ -67,4 +69,4 @@
 
 ## Don't argue again
 
-- D129–D148. One account per app (D145). Deploys happen only by merge (D122).
+- D129–D149. One account per app (D145). Deploys happen only by merge (D122).

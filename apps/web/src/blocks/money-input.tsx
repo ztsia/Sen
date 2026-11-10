@@ -74,7 +74,8 @@ export function MoneyInput({
         <Input
           id={id}
           className={cn(
-            'num h-auto min-w-0 flex-1 border-0 bg-transparent px-0 text-4xl font-semibold shadow-none focus-visible:ring-0 dark:bg-transparent',
+            // the amount keeps the text colour while an error shows: red is never an amount (patterns §2; QA B08 run 4, eyes)
+            'num h-auto min-w-0 flex-1 border-0 bg-transparent px-0 text-4xl font-semibold text-foreground shadow-none focus-visible:ring-0 dark:bg-transparent',
           )}
           type="text"
           inputMode="numeric"

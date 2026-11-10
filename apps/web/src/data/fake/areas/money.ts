@@ -164,7 +164,9 @@ export function accountsView(db: Db): AccountsView {
       .filter((a) => a.kind === 'elsewhere')
       .map((a) => accountRow(db, a, bal)),
     gap: last ? leftUnseen(db, last) : null,
-    archived: db.accounts.filter((a) => a.archivedAt).map((a) => ({ id: a.id, name: a.name })),
+    archived: db.accounts
+      .filter((a) => a.archivedAt)
+      .map((a) => ({ id: a.id, name: a.name, package: a.notifierPackage })),
   };
 }
 

@@ -188,6 +188,7 @@ export const transactions = pgTable(
     merchantRaw: text('merchant_raw'),
     merchantKey: text('merchant_key'),
     categoryId: uuid('category_id'),
+    // NULL is the whole amount (D149): spending reads coalesce(my_share, amount)
     myShare: sen('my_share'),
     source: text('source', { enum: TXN_SOURCES }).notNull(),
     status: text('status', { enum: TXN_STATUSES }).notNull().default('done'),

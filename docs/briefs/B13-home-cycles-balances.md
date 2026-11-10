@@ -46,7 +46,7 @@ Home tells the truth.
   to go, the projection, and a late-salary warning from the morning job.
 
 ### The figures (SQL views, `security_invoker`)
-- **Spending this cycle** uses `my_share`, with refunds subtracted from their purchase in the
+- **Spending this cycle** uses `my_share` (`coalesce(my_share, amount)`, D149), with refunds subtracted from their purchase in the
   purchase's cycle (D21) and the shared-bill rule ready for B17. *Unaccounted* is the cycle's
   adjustments netted together.
 - **Left until payday** is income received this cycle minus spending this cycle.

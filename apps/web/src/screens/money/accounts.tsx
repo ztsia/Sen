@@ -86,7 +86,7 @@ function Body({ v }: { v: AccountsView }) {
   if (!v.tracked.length && !v.archived.length)
     return (
       <div className="flex flex-col gap-5 pt-2 pb-8">
-        <NotAdded tracked={[]} />
+        <NotAdded tracked={[]} archived={[]} />
         <EmptyState
           icon={WalletIcon}
           title="No accounts yet"
@@ -103,25 +103,30 @@ function Body({ v }: { v: AccountsView }) {
     <div className="flex flex-col gap-5 pt-2 pb-8">
       {/* capture stopped: these balances stop moving, so say so where they're read (QA B08 run 3, eyes) */}
       <CaptureWarnings className="mx-4 w-auto" />
-      <div className="flex flex-col gap-1 px-4">
-        <p className="text-sm text-muted-foreground">
-          In {v.tracked.length} {v.tracked.length === 1 ? 'account' : 'accounts'}
-        </p>
-        <Money sen={v.total} className="text-4xl font-semibold" />
-        {v.gap ? (
-          <p className="text-sm text-muted-foreground">
-            The last check found <Money sen={Math.abs(v.gap)} className="font-normal text-foreground" whole />{' '}
-            {v.gap > 0 ? 'that left without a notification' : 'that arrived without one'}, booked as Unaccounted.
-          </p>
-        ) : null}
-      </div>
-      {canOpen('balance-check') ? (
-        <div className="px-4">
-          <Button className="w-full" onClick={() => go('balance-check')}>
-            <ScaleIcon aria-hidden="true" />
-            Check balances
-          </Button>
-        </div>
+      {/* a total and a check only when there's an account to total and check (QA B08 run 4, 3) */}
+      {v.tracked.length ? (
+        <>
+          <div className="flex flex-col gap-1 px-4">
+            <p className="text-sm text-muted-foreground">
+              In {v.tracked.length} {v.tracked.length === 1 ? 'account' : 'accounts'}
+            </p>
+            <Money sen={v.total} className="text-4xl font-semibold" />
+            {v.gap ? (
+              <p className="text-sm text-muted-foreground">
+                The last check found <Money sen={Math.abs(v.gap)} className="font-normal text-foreground" whole />{' '}
+                {v.gap > 0 ? 'that left without a notification' : 'that arrived without one'}, booked as Unaccounted.
+              </p>
+            ) : null}
+          </div>
+          {canOpen('balance-check') ? (
+            <div className="px-4">
+              <Button className="w-full" onClick={() => go('balance-check')}>
+                <ScaleIcon aria-hidden="true" />
+                Check balances
+              </Button>
+            </div>
+          ) : null}
+        </>
       ) : null}
       {v.tracked.length ? (
         <GroupCard label="Tracked">
@@ -172,7 +177,7 @@ function Body({ v }: { v: AccountsView }) {
           </Card>
         </section>
       ) : null}
-      <NotAdded tracked={v.tracked} />
+      <NotAdded tracked={v.tracked} archived={v.archived} />
       <Archived rows={v.archived} />
     </div>
   );
@@ -184,13 +189,15 @@ const sourceLine = (a: AccountRow) =>
 
 /**
  * The apps chosen after first run with no account yet (D148): each is added here with the balance it
- * shows today, as first run asks, since only first run made accounts before.
+ * shows today, as first run asks, since only first run made accounts before. An app whose account is
+ * archived isn't one of them: *Bring back* is its way back, never a second account (QA B08 run 4, 3).
  */
-function NotAdded({ tracked }: { tracked: AccountRow[] }) {
+function NotAdded({ tracked, archived }: { tracked: AccountRow[]; archived: AccountsView['archived'] }) {
   const reachable = captureReachable();
   const apps = useBridge(() => (reachable ? SenCapture.apps() : Promise.resolve({ apps: [] })));
   const [adding, setAdding] = useState<AccountSuggestion | null>(null);
-  const missing = apps.data ? suggestAccounts(apps.data.apps, tracked).filter((a) => !a.saved) : [];
+  const had = [...tracked, ...archived.map((a) => ({ ...a, opening: null }))];
+  const missing = apps.data ? suggestAccounts(apps.data.apps, had).filter((a) => !a.saved) : [];
   if (!missing.length) return null;
   return (
     <>

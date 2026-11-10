@@ -453,7 +453,7 @@ Each item in *Needs you* names what clears it:
 
 **Spending vs cash flow**
 - `amount` is what actually moved. Balances use it.
-- `my_share` is what you bore, and defaults to `amount`. Spending uses it.
+- `my_share` is what you bore, and defaults to `amount`: stored empty (NULL), which means the whole amount, so correcting `amount` can't leave a stale share behind (D149). Spending uses `coalesce(my_share, amount)`.
 - **A bill you paid and didn't split** is all your spending: `my_share` = `amount`, whoever ate it. The items you tick say what you ate, for the meal average (D66).
 - **Money in from a person** is a **repayment** of a split share, **income** (such as a gift), or a **transfer** if it's from your own name (D17). Unclassified money in sits in *Review*.
 - **The shared-bill rule (D19).** A bill's spending is the smaller of `my_share` and `amount` − the repayments linked to it. *Owed to you* is `amount` − `my_share` − repaid, never below zero.
@@ -1036,7 +1036,7 @@ transactions         id, user_id, account_id, bank_event_id (nullable),
                      occurred_at, direction (out|in), amount, currency,
                      kind (spend|income|transfer|repayment|refund|adjustment),
                      merchant_raw, merchant_key, category_id,
-                     my_share (spend only; default = amount),
+                     my_share (spend only; NULL = the whole amount, D149),
                      note, no_receipt (bool, D90),
                      source (notification|receipt|manual|inferred|adjustment),
                      status (needs_attention|done|pending),

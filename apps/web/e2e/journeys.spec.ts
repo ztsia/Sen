@@ -1045,6 +1045,24 @@ test.describe('B08 after QA run 3', () => {
     await expect(page.getByText('Not added yet')).toHaveCount(0);
   });
 
+  test('an archived app’s account comes back with Bring back, not as a new app (QA B08 run 4, 3)', async ({ page }) => {
+    await open(page, '/s/accounts');
+    await page.evaluate(() =>
+      sessionStorage.setItem('sen.sim.chosen', JSON.stringify(['my.rytbank.app', 'com.example.coffee'])),
+    );
+    await open(page, '/s/accounts');
+    await page.getByRole('button', { name: /^Ryt Bank / }).click();
+    await page.getByRole('button', { name: 'Edit' }).click();
+    await dialog(page, 'Edit this account').getByRole('button', { name: 'Archive this account' }).click();
+    await expect(toast(page)).toContainText('Ryt Bank archived');
+    // archiving goes back to Accounts
+    await expect(page.getByText('In 3 accounts')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Bring back Ryt Bank' })).toBeVisible();
+    // the chosen apps have loaded: the new one is offered, the archived one isn't
+    await expect(page.getByRole('button', { name: 'Add A coffee app' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Add Ryt Bank' })).toHaveCount(0);
+  });
+
   test('a taken category name is said under Name, not in a toast (QA B08 run 3, 3)', async ({ page }) => {
     await open(page, '/s/settings/categories');
     await page.getByRole('button', { name: /^Groceries/ }).click();

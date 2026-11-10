@@ -582,7 +582,8 @@ export const AccountsView = z.object({
   /** What the last check found (§7). */
   gap: Sen.nullable(),
   /** Archived ones, to bring back (QA B08 run 1, 5). */
-  archived: z.array(z.object({ id: Id, name: z.string() })),
+  /** Archived accounts, with the app each was fed by, so that app isn't offered as new (QA B08 run 4, 3). */
+  archived: z.array(z.object({ id: Id, name: z.string(), package: z.string().nullable() })),
 });
 export type AccountsView = z.infer<typeof AccountsView>;
 

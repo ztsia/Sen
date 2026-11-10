@@ -136,3 +136,31 @@ Left, with reasons:
   data and skeleton screens on `main` (B11, B13).
 - **Notes 8 and 9:** only the API writes accounts and it refuses a non-integer; whether an opening can be below
   zero is the spec's open question, in the handoff.
+
+## QA run 4: the fixes (10 Nov)
+
+**Tier 2, scoped** (recorded per the `qa` skill). No migration, RLS, view or function changed: run 4's database
+findings are fixed with tests, and `my_share` with a written rule (D149). One area changed in behaviour,
+**Accounts** (spec §7, screens.md *Accounts*, D148): its view gained each archived account's app, and the screen
+uses it. The money field's colour is a style on a shared block with no behaviour change; it's in the scoped
+re-check's area rather than a reason for a third full run. The CI step is QA tooling.
+
+| # | Fix | Proof it's guarded |
+|---|---|---|
+| 1 | pgTAP: a balance check's adjustment books to Unaccounted; turning it into a payment there is refused | `b08r4-adjustment-refused` and `b08r4-trigger-ignores-kind`, both survived run 4: **killed** (`mutants.mjs --only`, 2 s each) |
+| 2 | `ledger.test.ts` › *come with capture for their own person too*: with capture off, the owner's own `GET /accounts/:id`, `account.edit` and `account.archive` are 403 `capture_off`, and the row is unchanged | `b08r4-account-{read,edit,archive}-without-capture`, all survived run 4: **killed** (13–16 s). Run 4's two caught probes kept too (`b08r4-account-exists-words`, `-names-select-open`): killed. 7/7 |
+| 3 | Accounts: an app whose account is archived isn't offered under *Not added yet* (*Bring back* is its way back); with no live account the total and *Check balances* are left out | Red: `journeys.spec.ts` › *an archived app's account comes back with Bring back* fails on the old screen (*Add Ryt Bank*: expected 0, received 1); green. `ledger.test.ts`: the archived list carries the app |
+| 4 | **D149:** `my_share` is stored empty unless split; NULL means the whole amount, and every spending reader takes `coalesce(my_share, amount)`. Spec §7 and §15, B13's brief, the schema's comment | pgTAP: *a payment's share is stored empty, meaning the whole amount* |
+| 5 | CI re-records every tree in full (`e2e:trees` now `--update-snapshots=all`) and fails on any change (`git diff --exit-code`): Playwright's own writer, so a placeholder or added text can't pass. A line-by-line matcher was tried first and dropped: recorded trees are Playwright's condensed form, not `ariaSnapshot()`'s | All 88 trees re-recorded in full came out byte for byte as committed. With run 3's stale `first-run-accounts` tree put back, the re-record rewrote it (a diff CI fails on) |
+| 6 | Not fixed: the harness's More → Accounts flag stays unexplained; run 4's probes measure head and main equal. Tooling ask kept in the handoff | — |
+| Eyes: typed amounts in red | `MoneyInput`'s amount keeps the text colour while its error shows (patterns §2) | Measured in the D148 sheet with its error showing: amount `lab(12.5 …)` (the text colour), label and error `lab(40.2 56.7 45.0)` (red) |
+
+Left, with reasons:
+- **Eyes, *or 0* nudging a made-up balance:** flows.md step 5 refuses a blank (D146 (4)); unchanged since run 3.
+- **Eyes, members/9's toast over a dialog:** on `main`, a follow-up in the handoff.
+- **Eyes, skeletons for data already on screen, sheets that cut out, first run's *Suggested* card jump:** the
+  frame's and patterns' shared transitions, not this slice's; follow-ups.
+- **Notes 7–12:** 7 a flaky dev-panel click; 8 (any package) and 11 (a numeric opening rounded) only the API
+  writes and it refuses both shapes it can; 9 zero-width characters stay a follow-up (one person's own list);
+  10 backspace from 0.0x emptying the field is D132's rule as written in `typedSen`; 12 is the skeleton's made-up
+  data on a preview.

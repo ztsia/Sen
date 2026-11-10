@@ -120,7 +120,7 @@ export function ledgerRoutes() {
     const [rows, archived] = await c.var.db(async (db) => [
       await accountRows(db, me),
       await db
-        .select({ id: a.id, name: a.name })
+        .select({ id: a.id, name: a.name, package: a.notifierPackage })
         .from(a)
         .where(and(eq(a.userId, me), isNotNull(a.archivedAt)))
         .orderBy(asc(a.name)),

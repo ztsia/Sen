@@ -148,6 +148,8 @@ SELECT is(pg_temp.as_app(:c, $$INSERT INTO transactions (id, user_id, account_id
   '1', 'a balance check''s adjustment books to Unaccounted');
 SELECT is(pg_temp.as_app(:c, $$UPDATE transactions SET kind = 'spend' WHERE id = '00000000-0000-4000-8000-0000000003c2' RETURNING 1$$),
   'error:23514', 'an adjustment in Unaccounted can''t be turned into a payment there');
+SELECT is((SELECT my_share FROM transactions WHERE id = '00000000-0000-4000-8000-0000000003c1'), NULL,
+  'a payment''s share is stored empty, meaning the whole amount (D149)');
 SELECT is(pg_temp.as_app(:c, $$UPDATE transactions SET my_share = 200 WHERE id = '00000000-0000-4000-8000-0000000003c1' RETURNING 1$$),
   'error:23514', 'your share is never more than what moved (D19)');
 SELECT is(pg_temp.as_app(:c, $$UPDATE transactions SET amount = '1.5' WHERE id = '00000000-0000-4000-8000-0000000003c1' RETURNING 1$$),

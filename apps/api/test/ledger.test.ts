@@ -256,7 +256,7 @@ describe('accounts', () => {
     const after = (await call('/api/accounts', { cookie: s.me.cookie })).body;
     expect(after?.tracked).toEqual([]);
     // listed as archived, to bring back (QA B08 run 1, 5)
-    expect(after?.archived).toEqual([{ id: ryt, name: 'Ryt Bank' }]);
+    expect(after?.archived).toEqual([{ id: ryt, name: 'Ryt Bank', package: 'my.rytbank.app' }]);
     const fresh = randomUUID();
     expect(
       (await run(s.me.cookie, { type: 'account.add', id: fresh, name: 'Ryt', kind: 'tracked', app: RYT, opening: 1 }))
