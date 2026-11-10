@@ -1,5 +1,7 @@
 # QA B08 · First run, accounts and categories: run 3 (fresh full run, 10 Nov)
 
+Published report: https://claude.ai/artifact/Pkj1my3wTFBwiM5qfvNnvv · Run 2: [report-run2.md](report-run2.md)
+
 ```
 VERDICT   fix first
           52 criteria, 49 pass, 1 fail, 2 not reachable
