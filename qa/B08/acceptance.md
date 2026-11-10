@@ -649,3 +649,239 @@ R3-AC-28  The admin reads nobody's accounts, balances or categories
 R3-AC-29  One set of UI patterns: the new screens use patterns.md's list row, form, empty/loading/
           error states
 R3-AC-30  The built bundle holds no secret
+
+# Run 4 (fresh full run, 10 Nov): criteria written from the docs before the source
+
+Written from the brief, `docs/modules.md` § B08, `spec_v2.md` §7, §8, §9.5, §9.6, §15; D14, D16, D17,
+D26, D28, D33, D38, D79, D86, D93, D132, D145–D148; `docs/screens.md` (`first-run`, `accounts`, `account`,
+Settings → You / Categories and rules, the rules every screen follows); `docs/flows.md` (`first-run`,
+`invited`, the core journeys); `docs/ui/patterns.md` §3, §7; `docs/workflow/qa.md`. Not read before
+writing: the source and the earlier runs' criteria (only their headings, for the file's format). IDs
+are `R4-AC-n`; each sad twin is `n.s`. Observables are row counts, stored values in sen, HTTP codes
+with `{ code, message, field? }`, and rendered strings at 390×844.
+
+## Data (Postgres: `sen_test` via `pnpm test:db`, then my own probes on it)
+
+R4-AC-1   Money columns are integer sen
+          When   `information_schema.columns` is read for `accounts.opening_balance`,
+                 `transactions.amount`, `transactions.my_share`
+          Then   each `data_type` is `bigint`
+R4-AC-1.s A fractional amount is never stored
+          When   the API role inserts `opening_balance = 10.5` (a numeric literal)
+          Then   it errors or is refused; no row holds a fractional value (bigint cannot)
+          Spec   NN money; §15
+
+R4-AC-2   Every new table has RLS enabled and forced, keyed on `user_id`
+          When   `pg_class.relrowsecurity` / `relforcerowsecurity` are read for `accounts`,
+                 `account_names`, `categories`, `transactions` (and `user_settings`)
+          Then   both are true, and each has a policy comparing `user_id` with the request's user id
+R4-AC-2.s A person with no user id set reads nothing
+          When   the API role queries each table and view with no user id set
+          Then   0 rows (or an error), never another person's rows
+          Spec   NN RLS; §15
+
+R4-AC-3   User B sees none of user A's rows, through any table or view
+          Given  A and B each with accounts, categories and transactions
+          When   B (as the API role) selects from every new table and `account_balances`, `balance_totals`
+          Then   0 of A's rows; B's own rows only
+R4-AC-3.s B can't write into A's world
+          When   B inserts a transaction naming A's `account_id` or `category_id`, or updates A's account
+          Then   refused (0 rows updated / FK or RLS error); and the error is the same whether A's id
+                 exists or is random (no existence oracle, D146 (5))
+          Spec   NN RLS; D52; D146 (5)
+
+R4-AC-4   Views are `security_invoker`
+          When   `pg_class.reloptions` is read for the balance views
+          Then   it contains `security_invoker=true`
+R4-AC-4.s Without it, the view would leak; a view read as B returns only B's balances (covered by AC-3)
+          Spec   §15 *Every view is created WITH (security_invoker = true)*
+
+R4-AC-5   The admin never reads anyone's money
+          When   the admin, as the API role with their own user id, reads `accounts`, `transactions`,
+                 `account_balances` for another person
+          Then   0 rows
+R4-AC-5.s No admin function returns accounts, balances or categories of another person
+          Spec   NN; D52; §9.6
+
+R4-AC-6   The starting categories are exactly the list (D33)
+          When   `seed_categories()` runs for a new person
+          Then   21 rows: 18 `spend` and 3 `income`, names exactly §8's table; flags exactly:
+                 Meals meal only; Drinks & desserts beverage + discretionary; Shopping, Entertainment,
+                 Gifts & treats, Travel discretionary; every other flag false; `system_key` = salary on
+                 Salary, cash on Cash, unaccounted on Unaccounted, null elsewhere
+R4-AC-6.s Seeding twice, or for someone who already has categories, adds nothing
+          When   `setup.start` / `seed_categories()` runs again, or for a person who added a category first
+          Then   still one row per name; no duplicate set (D146 (3)); a category added before first run
+                 joins the starting list rather than replacing it
+          Spec   §8; D33; D146 (3); B DW3
+
+R4-AC-7   Sen's own categories are never archived; Unaccounted carries no flags
+          When   `archived_at` is set on Salary, Cash or Unaccounted, or a flag set true on Unaccounted
+          Then   a check constraint (or the API) refuses it; the row is unchanged
+R4-AC-7.s An ordinary category archives and comes back
+          When   Shopping is archived, then brought back
+          Then   `archived_at` set, then null; its id is unchanged
+          Spec   §8; D146 (6)
+
+R4-AC-8   Unaccounted can't be picked by hand
+          When   a transaction with `kind = spend` (source manual or notification) is given Unaccounted's id
+          Then   refused by the database (trigger) and by the API
+R4-AC-8.s A balance check's adjustment may use it
+          When   `kind = adjustment`, `source = adjustment` with Unaccounted
+          Then   accepted
+          Spec   §8; §7 *Balance checks*; B DW3; D146 (6)
+
+R4-AC-9   One live account per app (D145)
+          When   a second live account with the same `notifier_package` is inserted for the same person
+          Then   unique violation; 1 live row
+R4-AC-9.s An archived account doesn't block a new one; two people may share a package
+          When   the first is archived, then a new live one is added; or B adds the same package
+          Then   accepted
+          Spec   D145; D146 (6)
+
+R4-AC-10  `accounts.kind` is tracked or elsewhere; `account_names` unique per (user, package, label)
+          When   kind 'savings' is inserted; or the same (package, label) twice
+          Then   both refused
+R4-AC-10.s An `account_names` row can't point at another person's account
+          Then   refused by the composite FK (D146 (5))
+          Spec   §15; D146 (5)
+
+R4-AC-11  The balance view: opening + in − out, only what moved strictly after `opening_at`
+          Given  opening RM100.00 at T; out 12.30 at T−1 µs; out 5.00 at T exactly; in 20.00 at T+1 µs;
+                 out 3.45 at T+1 day; out 7.00 at T+2 days with `deleted_at` set
+          Then   balance = 10000 + 2000 − 345 = 11655 sen
+R4-AC-11.s The boundary rows and a deleted row don't count; another person's rows don't count
+          Then   removing the T−1 µs, T and deleted rows changes nothing; B's identical rows move only B
+          Spec   §7 *Opening balance*, *Balance*; B DW2; D146 (4)
+
+R4-AC-12  The total is the sum of tracked, live accounts' balances
+          Then   `balance_totals` = Σ of tracked accounts' balances, in sen, exactly
+R4-AC-12.s An *Elsewhere* account's figure isn't in the total and isn't shown
+          Spec   §7 *Elsewhere*, *Balance*; screens `accounts`
+
+R4-AC-13  `transactions` holds its core columns with checks
+          Then   columns from the brief exist; `direction` ∈ out|in; `kind` ∈ spend|income|transfer|
+                 repayment|refund|adjustment; `source` ∈ notification|receipt|manual|inferred|adjustment;
+                 `status` ∈ needs_attention|done|pending; `my_share` defaults to `amount`
+R4-AC-13.s A bad enum value, or a negative amount, is refused
+          Spec   §15; B *Data*
+
+R4-AC-14  `user_settings` holds `own_names text[]` and `expected_payday` (last working day or a day number)
+          Then   a day number 1–31 or "last working day" is stored
+R4-AC-14.s Day 0, 32, or text is refused
+          Spec   §15; §7 *Pay cycles*; D14
+
+R4-AC-15  Two requests on one pooled connection never see each other's user id
+          Then   a second transaction on the same connection, with no user id set, reads 0 rows
+R4-AC-15.s After a failed (rolled-back) request, the user id doesn't linger either
+          Spec   docs/workflow/qa.md; §5
+
+## API (`apps/api`, local, `sen_test`)
+
+R4-AC-20  `/accounts` returns the person's accounts with balances from the view
+          Then   each account's balance in sen equals `account_balances`; its feeding app's label;
+                 opening balance; archived ones only with `archived`
+R4-AC-20.s With *Capture* off, `/accounts` answers 403 `{ code: "capture_off" }` (D146 (7))
+
+R4-AC-21  An opening balance is typed text parsed into sen
+          When   a setup/account command carries `"0"`, `"1284.50"`, `"12"` (or the shape the API takes)
+          Then   stored 0, 128450, 1200 sen
+R4-AC-21.s Empty, a float number, `"1.005"`, `"abc"`, a value past bigint, a NUL are refused
+          Then   400 `{ code, message, field }`, never 500, never a row
+          Spec   NN money; D132; D146 (4); D148
+
+R4-AC-22  Every write is idempotent by its key
+          When   the same account/category command (same id) is sent twice
+          Then   one row; the second changes nothing
+R4-AC-22.s Two different accounts for one app are refused in words (one per app)
+          Spec   NN dedupe; D145
+
+R4-AC-23  Correcting an opening balance keeps `opening_at`
+          Then   `opening_balance` changes; `opening_at` is unchanged (D146 (4))
+R4-AC-23.s Another person's account id: 404, same as a random id; nothing changes
+
+R4-AC-24  Categories: add, rename, archive, set flags
+          Then   each persists; `/categories` returns them
+R4-AC-24.s A taken name (case/space-insensitive), an empty name, Unaccounted's flags, archiving a
+          system category: refused with a field error
+          Spec   §8; B *Screens made real*
+
+R4-AC-25  `/me` says `setupDone`; finishing sets `setup_done_at` once
+          Then   false before; true after `setup.finish`; a second finish doesn't move the timestamp
+R4-AC-25.s Finishing before any account / names? — what the spec requires; an unauthenticated `/me` is 401
+
+R4-AC-26  `/sync/changes` carries accounts, account names, categories and own names, paged past one page
+          Then   every row arrives exactly once across pages
+R4-AC-26.s A row changed between pages isn't lost
+
+R4-AC-27  D148: an app chosen after first run can get its account
+          Given  a person who finished first run, then chose another app
+          Then   that app is listed under *Not added yet*; adding it with a typed balance makes one
+                 account, `opening_at` = save time; 0 counts
+R4-AC-27.s Empty balance refused; a second add for the same app refused; nothing made silently
+
+R4-AC-28  D147 (4): archived accounts are listed with *Bring back*
+R4-AC-28.s Bringing one back over a newer live account for the same app is refused in words
+
+## First run (web app at 390×844, native steps simulated)
+
+R4-AC-40  Who is sent to first run (D146 (2))
+          Then   signed in, unfinished, in the shell with Capture → `/first-run`, *Step 2 of 7*;
+                 unfinished without Capture → the short first run (categories); finished → Home
+R4-AC-40.s Capture in a plain browser isn't sent; a finished person typing `/first-run` lands Home
+
+R4-AC-41  Closed mid-setup reopens at the same step, with what was typed (B DW1)
+          Then   reload at step 4 shows step 4; a balance typed and not saved is still there
+R4-AC-41.s Signing out clears the draft; another person on the phone starts clean
+
+R4-AC-42  The accounts step: one field per chosen app, named from the curated list (D145)
+          Then   TNG's says *eWallet and GO+ together*, Ryt's *Main account and pockets together* (D147 (3));
+                 a card wallet gets no field; typed bank-style (1,2,5,0 → 12.50); typed 0 → RM0.00
+R4-AC-42.s An empty balance can't continue; the button says what's missing; nothing saved
+
+R4-AC-43  Names and payday
+          Then   `TAN WEI MING` stored in `own_names`; payday default *last working day*; a day number stored
+R4-AC-43.s A blank name? (what the spec allows); payday 0 / 32 not offered
+
+R4-AC-44  Finishing lands on Home and the steps never come back (D26)
+          Then   `setup_done_at` set; Home; Accounts lists each typed balance exactly
+R4-AC-44.s A failed save shows an error in words, keeps what was typed, and retries
+
+R4-AC-45  Access refused → *Skip for now*; Home shows *Capture is off* with *Fix*
+
+R4-AC-46  The short first run (no Capture): the categories, Cash locked on (D147 (5)); no payday question (D79)
+
+## Screens made real
+
+R4-AC-50  `accounts`: the total; each tracked account with its balance; *Elsewhere* without balance;
+          *Not added yet* with *Add* (D148); figures equal the view, `RM1,284.50` format (P §3)
+R4-AC-50.s With Capture off, no Accounts in More and the route doesn't open
+
+R4-AC-51  `account`: its balance, opening balance, the app that feeds it, checked at `opening_at` (D147 (2))
+R4-AC-51.s Another person's account id in the URL shows not-found, never their data
+
+R4-AC-52  Settings → Categories: rename, add, archive, flags; Unaccounted shown but not editable/pickable
+R4-AC-52.s A taken name is refused in words, the typed text kept
+
+R4-AC-53  Settings → You: names and payday persist across reload; names only with Capture
+
+R4-AC-54  Every new screen uses the shared blocks (list row, form, sheet, empty/loading/error) (NN, P §7)
+
+R4-AC-55  Timezone: with the browser in `America/New_York`, opening dates/balances don't move (conventions)
+
+## Non-negotiables touched
+
+R4-AC-60  No float money in the diff (`parseFloat`, `toFixed` on amounts, `Number(` on amount strings,
+          division outside the money module): 0 unsafe hits
+R4-AC-61  No secret in the built bundle; no real financial data in fixtures (`pnpm hygiene`, gitleaks)
+R4-AC-62  Every input has a dedupe key (AC-22)
+R4-AC-63  RLS on every table from its first migration (AC-2, AC-3)
+R4-AC-64  One navigation, one set of UI patterns (AC-54)
+
+## Run 4: added after reading the source (weaker evidence)
+
+R4-AC-70  A balance check's adjustment into Unaccounted is accepted, and can't later become a spend there
+          (the trigger fires on `kind` too): pinned by a test, so a change to the trigger goes red
+R4-AC-71  Every capture-gated route and command (GET /accounts/:id, account.edit, account.archive) answers
+          403 `capture_off` with Capture off, pinned by a test
+R4-AC-72  Each screen's committed accessibility tree matches what the screen renders (first-run@accounts)

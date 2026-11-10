@@ -2,984 +2,1349 @@
  "module": "B08",
  "branch": "B08/first-run-accounts",
  "verdict": "fix first",
- "generatedAt": "2026-11-10 06:40 UTC",
+ "generatedAt": "2026-11-10 11:45 UTC",
  "phases": "1-6",
- "headline": "The ledger, first run and the new screens hold up: RLS is tight, balances match hand-worked figures, and 112 of 113 breakage checks die. One Major: no test guards the offline copy's paging across tables. Six Minors (words, a field error in a toast, a placeholder, a stale tree, an unexplained flag, apps chosen after first run get no account).",
+ "headline": "B08 does what its brief and decisions ask: the data rules, RLS, balances, first run, D148 and the screens all hold when driven for real, and all 113 breakage checks die. Fix first: one criterion fails (my_share has no default), five of seven fresh probes on its guards survive, and Accounts goes wrong after an app's only account is archived. No Blocker, no Major; six Minors, six Notes. The eyes pass is still to run (no Agent tool here).",
  "summary": {
-  "criteria": 52,
-  "pass": 49,
+  "criteria": 74,
+  "pass": 69,
   "fail": 1,
-  "unreachable": 2
+  "unreachable": 4
  },
  "suites": {
-  "unit": "pass (exit 0)",
-  "typecheck": "clean",
+  "typecheck": "clean (19 s)",
   "lint": "clean",
-  "security": "PASS audit, gitleaks (no leaks), lint",
-  "db": "pgTAP 462 ok; API 199 pass, 13 skipped (runIf)",
-  "e2e": "1415/1415 pass",
+  "unit": "pass",
+  "security": "PASS: audit, gitleaks whole history, security lint",
+  "hygiene": "pass",
+  "db": "pgTAP 462/462; API 202 pass, 13 skipped (GET routes' body cases)",
+  "e2e": "1416 pass, 1 fail (capture-off; 3/3 alone)",
   "lived": "24/24",
   "server": "7/7",
-  "mutants": "112/113 killed",
-  "qa-e2e": "b08r3: 8 specs, 7 pass, 1 fails on finding 2"
+  "mutants": "113/113 killed",
+  "kotlin core": "65/65 (up to date)",
+  "diff": "10 trees changed, 12 entries' pixels, 0 check findings, 1 unexplored (reading); 12 metrics flags"
  },
  "findings": [
   {
    "id": 1,
-   "severity": "Major",
+   "severity": "Minor",
    "status": "open",
-   "title": "No test pages the offline copy past one page: a breakage there survives",
-   "detail": "`/sync/changes` pages across five tables by one counter (D146 (9)): a page ends at the 500th lowest version across all of them. Replacing that with the highest version seen (`const top = all.at(-1) ?? since`) skips, for good, every row of a table that had more than a page left: the phone's offline copy (categories for the category prompt, account names for B09) silently misses rows. No suite noticed. The code is right today: I paged a person with 600 categories, 2 accounts and 300 account names and got all 902 rows exactly once (v 672 more true, then v 1075 more false). The guard is what's missing: the only paging assertions check `more: false`.",
-   "repro": "node scripts/mutants.mjs --only b08r3-changes-page-skips",
-   "evidence": "b08r3-changes-page-skips: SURVIVED (13 s)\n... Test Files  5 passed (5)  Tests  199 passed | 13 skipped (212)\napps/api/test/ledger.test.ts:365  expect(down.body?.more).toBe(false);",
-   "spec": "D146 (9); §5",
+   "title": "No test holds the Unaccounted trigger's other half: an adjustment may book there, and can't later become a spend",
+   "detail": "Every suite stays green when the trigger refuses every Unaccounted row (so B13's balance check could never book its gap), and when it stops watching `kind` (so an adjustment in Unaccounted can be updated into a hand-picked spend). pgTAP only checks the refusals. The behaviour itself is right today (phase 4).",
+   "repro": "In 0014_b08_ledger_functions.sql: (a) `IF k = 'unaccounted' AND NEW.kind <> 'adjustment' THEN` → `IF k = 'unaccounted' THEN`; (b) `BEFORE INSERT OR UPDATE OF category_id, kind ON transactions` → `... OF category_id ON transactions`. Fresh DB, migrate, `pg_prove test/*.sql` (and `pnpm test:db`).",
+   "evidence": "(a) All tests successful. Files=6, Tests=462 ... Result: PASS\n(b) All tests successful. Files=6, Tests=462 ... Result: PASS\nUnmutated, as app_user: adjustment/adjustment into Unaccounted → ok; UPDATE kind='spend' on it → error:23514 Unaccounted can't be picked: only a balance check books to it",
+   "spec": "R4-AC-8.s, R4-AC-70, §7 Balance checks, §8, D146 (6)",
    "screenshots": []
   },
   {
    "id": 2,
    "severity": "Minor",
    "status": "open",
-   "title": "Accounts says “In 1 accounts”",
-   "detail": "With one tracked account the line over the total reads *In 1 accounts*. The common first-run case for a friend with one bank. `accounts.tsx`: `In {v.tracked.length} accounts`.",
-   "repro": "Sign in as a person with one account; open More → Accounts",
-   "evidence": "Locator: getByText('In 1 account', { exact: true }) — element(s) not found; screen shows 'In 1 accounts'",
-   "spec": "R3-AC-22; patterns.md (words)",
-   "screenshots": [
-    "R3-FLOW-5b-step-1-one-account.png"
-   ]
+   "title": "The Capture guard on GET /accounts/:id, account.edit and account.archive is held by no test",
+   "detail": "D146 (7) puts accounts behind the Capture switch in the API too. Only GET /accounts and account.add are pinned (ledger.test 'come with capture'). Removing `needsCapture` from any of the other three leaves every suite green. RLS still keeps the rows the person's own, so nothing leaks between people.",
+   "repro": "Delete `needsCapture(c.var);` under `r.get('/accounts/:id'` (or `needsCapture(v);` under `case 'account.edit':` / `case 'account.archive':`) in apps/api/src/ledger.ts; `SEN_DB_TESTS=1 npx vitest run --project db apps/api/test/ledger.test.ts apps/api/test/sweep.test.ts`",
+   "evidence": "GET /accounts/:id: Tests 202 passed | 13 skipped (215)\naccount.edit: Tests 110 passed | 13 skipped (123)\naccount.archive: Tests 110 passed | 13 skipped (123)",
+   "spec": "R4-AC-20.s, R4-AC-71, D146 (7), §9.6",
+   "screenshots": []
   },
   {
    "id": 3,
    "severity": "Minor",
    "status": "open",
-   "title": "A taken category name lands in a toast over the sheet, not under the Name field",
-   "detail": "Renaming (or adding) a category to a name in use: the API answers 409 `{code:name_taken, field:\"name\"}`, but the sheet shows nothing at the field; the words arrive as a toast that covers the *Discretionary* switch. patterns.md §7 *Forms*: a Field's message below it. The field isn't marked invalid, so a screen reader hears nothing at the field.",
-   "repro": "Settings → Categories → Groceries → rename to *Market*, Save; open Market → type *meals* → Save",
-   "evidence": "Toast 'You already have a category with that name.'; field-error elements with that text: 0",
-   "spec": "R3-AC-24.s, R3-AC-29; patterns.md §7",
+   "title": "After archiving an app's only account, Accounts offers two ways back and says something untrue",
+   "detail": "Account → Edit → *Archive this account* on the only account. Accounts then shows 'In 0 accounts · RM0.00' with *Check balances*. It lists Ryt Bank under *Not added yet*, footed 'Apps you chose after first run. Each gets one account.' (Ryt was chosen at first run), and again under *Archived* with *Bring back*. Tapping *Add* makes a new account, after which *Bring back* is refused for good. `NotAdded` suggests from live tracked accounts only, so an archived app's account counts as missing.",
+   "repro": "qa/e2e/b08r4-flows.spec.ts › R4-FLOW-12 (API on sen_qa4, dev server :5191)",
+   "evidence": "accounts-text : In 0 accounts / RM0.00 / Check balances / Not added yet / R / Ryt Bank / Add / Apps you chose after first run. Each gets one account. / Archived / Ryt Bank / Bring back\nadd-ryt-buttons : 1",
+   "spec": "R4-AC-28, D147 (4), D148, screens accounts",
    "screenshots": [
-    "R3-FLOW-6-step-3-taken-name.png"
+    "R4-FLOW-12-step-1-archived-and-not-added.png"
    ]
   },
   {
    "id": 4,
    "severity": "Minor",
    "status": "open",
-   "title": "First run's empty balances show “RM 0.00” beside “Type today’s balance, or 0.”",
-   "detail": "On the accounts step an empty field shows a large slate-grey *RM 0.00* placeholder. Tapping Next with nothing typed puts *Type today’s balance, or 0.* under each, while each already seems to say 0.00. A person with an empty GrabPay is told to type what they see. Run 1 fixed the same class on the name and payday fields (placeholders that read as values); this one stayed.",
-   "repro": "First run to step 5; tap Next with nothing typed",
-   "evidence": "4 × 'Type today’s balance, or 0.' under four fields each showing RM 0.00 (placeholder)",
-   "spec": "R3-AC-29; patterns.md §7; qa/B08/ledger.md run 1 eyes",
-   "screenshots": [
-    "R3-FLOW-3-step-1-empty-refused.png"
-   ]
+   "title": "`transactions.my_share` defaults to NULL, not to `amount` as the spec says, and nothing records what NULL means",
+   "detail": "Spec §7 and §15: `my_share` defaults to `amount`. The column has no default: a spend inserted without a share stores NULL. Postgres can't default one column to another, so this needs either a trigger or a written convention ('NULL is the whole amount'). Every spending reader from B09 on must then coalesce. Neither the schema comment nor a decision says so. The balance view uses `amount`, so B08's figures are right.",
+   "repro": "As app_user: INSERT INTO transactions (..., amount, kind, source) VALUES (..., 123, 'spend', 'manual') RETURNING coalesce(my_share::text,'NULL')",
+   "evidence": "AC13 my_share defaults to amount?:  NULL",
+   "spec": "R4-AC-13, §7 Spending vs cash flow, §15",
+   "screenshots": []
   },
   {
    "id": 5,
    "severity": "Minor",
    "status": "open",
-   "title": "balance-check's committed tree is stale; pnpm e2e passed over it",
-   "detail": "The diff run rewrote `apps/web/e2e/trees/balance-check.aria.yml`: the committed tree lacks D147 (3)'s *what it holds* lines (`Main account and pockets together`, `eWallet and GO+ together`). `pnpm e2e` passed 1415/1415 against it, so the tree match takes a regex as a prefix: text added after it goes unnoticed (run 2 saw the same with a dropped placeholder). The rewrite is left uncommitted for the parent.",
-   "repro": "git diff apps/web/e2e/trees/balance-check.aria.yml",
-   "evidence": "-        - paragraph: /Ryt Bank Sen has RM \\d+,\\d+\\.\\d+/\n+        - paragraph: /Ryt Bank Sen has RM \\d+,\\d+\\.\\d+ Main account and pockets together/",
-   "spec": "D137; CLAUDE.md e2e:trees",
+   "title": "A stale accessibility tree passes CI: first-run@accounts still records the placeholder \"0.00\"",
+   "detail": "Run 3's fix made the accounts fields' placeholder empty (`placeholder=\"\"`). The committed `apps/web/e2e/trees/first-run-accounts.aria.yml` still says `/placeholder: \"0.00\"` on all four fields, and the sweep's catalogue (pnpm e2e) passed it in every look. The diff run rewrote the file (uncommitted, in the working tree). So the tree check doesn't hold a placeholder, beside the handoff's 'regex read as a prefix'.",
+   "repro": "git diff apps/web/e2e/trees/first-run-accounts.aria.yml after `node scripts/qa-diff.mjs`; `pnpm e2e` passes on HEAD",
+   "evidence": "-      - /placeholder: \"0.00\"\n+      - /placeholder: \"\"   (×4: TNG eWallet, Ryt Bank, Public Bank, GrabPay Wallet)\ne2e: 1416 passed, 1 failed (capture-off, see note 7) — catalogue first-run@accounts passed",
+   "spec": "R4-AC-72, D137 (trees)",
    "screenshots": []
   },
   {
    "id": 6,
    "severity": "Minor",
    "status": "open",
-   "title": "More → Accounts settles 0.4 s later than main in the harness; the cause isn't found",
-   "detail": "Metrics flag step:balance-check/1 (and first-run/20, the same tap). Re-run in the harness, 3 each: head 816, 864, 869 ms; main 446, 468, 511 ms; the filmstrip shows the list skeleton for the whole second. Outside the harness, on the same two builds with the service worker, the CPU 4× slower and the same network: time to the total 524–586 ms on head, 550–706 ms on main, last DOM change 476–627 against 490–550 ms, no change after the content (4 runs each). So the harness sees something my probe doesn't. Unexplained flags are findings: what the harness counts after the content needs naming.",
-   "repro": "QA_SERVE=head|base … playwright test -c e2e/diff.config.ts e2e/journeys.spec.ts --project metrics-<side> -g balance-check --repeat-each 3; qa/e2e/b08r3-accounts-open.probe.mjs",
-   "evidence": "head step:balance-check/1 settleMs 816/864/869; base 446/468/511\nprobe head: content 579/536/565/666 ms; base 604/603/558/540 ms",
-   "spec": "D139; qa/limits.ts",
+   "title": "Still unexplained (run 3's finding 6): the harness times More → Accounts at about twice main, and my probes don't",
+   "detail": "Flags `step:balance-check/1` (settle 1101 ms median vs main 535), `step:first-run/20` (1314 ms, no main) and `step:balance-check/5` (Save back to Accounts, 1080 ms, no main: main's walk fails on '5 accounts') are the same screen opening. Measured outside the harness on the same dist-qa builds (service worker warm, CPU 4×, 150 ms/200 KB/s): time to 'In N accounts' and the last DOM change are equal, warm, cold or tapped at once. Head's tap loads 10 chunks against main's 2, all served by the service worker and finished within 192 ms of the tap on both sides (CDP Network.loadingFinished), with no DOM change after 600 ms. The filmstrip shows More unchanged for ~450 ms, then the slide and skeleton, with content by ~700 ms. The harness takes `last` from a mutation or a fetch in the tap's window, and what sets it here isn't recorded. Tooling ask: write which signal (mutation target or fetch URL) set each step's settle.",
+   "repro": "node qa/B08/accounts-tap.probe.mjs 5; node qa/B08/accounts-tap-cold.probe.mjs 4; node qa/B08/accounts-tap-soon.probe.mjs 3 (dist-qa builds served on :4175 main, :4176 head)",
+   "evidence": "harness settle: head 1005 / 1101 / 1127 ms, main 599 / 535 / 467 ms\nprobe warm  — main 587/567 600/568 548/526 572/542 586/565; head 561/533 557/525 542/516 608/582 564/540 (ms to total / last DOM change)\nprobe cold  — main 585/558 553/529 573/545 571/548; head 554/528 590/555 615/589 604/554\nprobe soon  — main 514/481 477/454 497/477; head 570/525 467/442 520/464; late changes: none\ncdp loadingFinished after tap — main 171,171; head 169…182 (10)",
+   "spec": "phase 4b; qa/limits.ts",
    "screenshots": []
   },
   {
    "id": 7,
-   "severity": "Minor",
+   "severity": "Note",
    "status": "open",
-   "title": "An app chosen after first run never gets an account, and there's no way to add one",
-   "detail": "D145: each chosen app feeds exactly one tracked account. Accounts are only made at first run's step 5 (`account.add` has no other caller). Choosing TNG, Public Bank and Grab later in Settings → Capture leaves the person with 1 account and no *Add* on Accounts. B09 will capture payments from those apps with no account to book them to. The spec is silent on when such an app's account is made: an open question for the owner, beside run 2's note 13 (un-chosen apps).",
-   "repro": "Finish first run with one app; Settings → Capture → apps → Choose these 4; open Accounts",
-   "evidence": "DB accounts for the person: 1; Accounts: 'In 1 accounts', add buttons: 0",
-   "spec": "D145; D86; §7",
-   "screenshots": [
-    "R3-FLOW-9-step-2-accounts-no-add.png"
-   ]
+   "title": "The capture-off journey failed once in the sweep (the dev panel's Widgets button detached), and passes 3 of 3 alone",
+   "detail": "Under load the click raced a re-render of the dev panel. It passed alone. The walk should wait for the panel to settle before clicking.",
+   "repro": "pnpm exec playwright test e2e/journeys.spec.ts --project preview -g capture-off --repeat-each 3",
+   "evidence": "sweep: ✘ 1276 [preview] › capture-off (1.0m) — locator.click … element is not stable … element was detached from the DOM\nalone: 3 passed (18.4s)",
+   "spec": "",
+   "screenshots": []
   },
   {
    "id": 8,
    "severity": "Note",
    "status": "open",
-   "title": "A numeric opening balance written straight to the database is rounded, not refused",
-   "detail": "`INSERT … opening_balance = 10.5` stores 11 (Postgres's assignment cast). Only the API writes accounts, and zod refuses non-integers, so nothing reaches it today; a CHECK can't catch it either. Recorded for the agent's tools later.",
-   "repro": "psql as app_user: insert into accounts(…, opening_balance) values (…, 10.5)",
-   "evidence": "select opening_balance … where name='Frac' → 11",
-   "spec": "CLAUDE.md money",
+   "title": "The API still makes an account for any package, a messaging app's included (run 2 note 10)",
+   "detail": "Accounts follow the apps you chose (D86, D145); the API doesn't check the package is one of them, or choosable.",
+   "repro": "QA_DB=sen_qa4 pnpm exec vitest run --config qa/B08/vitest.probe.config.ts (api-probes-r2 › messaging app)",
+   "evidence": "AssertionError: expected 200 to be greater than or equal to 400",
+   "spec": "D86, D145",
    "screenshots": []
   },
   {
    "id": 9,
    "severity": "Note",
    "status": "open",
-   "title": "The API accepts a negative opening balance",
-   "detail": "`account.add` with opening −500 → 200 (`Sen` allows ±MAX_SEN). The phone can't type a minus. Whether an account can open below zero (an overdraft) isn't in the spec: an open question.",
-   "repro": "POST /api/commands {type:account.add, …, opening:-500}",
-   "evidence": "{\"said\":\"Neg added\",…}  [200]",
-   "spec": "§7 Opening balance",
+   "title": "A zero-width space makes a second category that reads 'Meals'",
+   "detail": "`Name` refuses control and direction characters (run 3, note 11) but not U+200B/200C/200D/2060/FEFF, and `categories_live_name` compares lower(name). A pasted name could carry one.",
+   "repro": "category.add name 'Me\\u200bals'",
+   "evidence": "'Me\\u200bals': 200 {\"said\":\"Me​als added\",…}; live rows reading \"Meals\": 2",
+   "spec": "§8",
    "screenshots": []
   },
   {
    "id": 10,
    "severity": "Note",
    "status": "open",
-   "title": "A retried account.add with different content says it added the new name",
-   "detail": "Same id, a new name: answers *Changed added* while the row keeps *Grab* (correctly a no-op). The words describe what wasn't done.",
-   "repro": "account.add id d0…01 name Grab, then the same id with name Changed",
-   "evidence": "{\"said\":\"Changed added\",…} [200]; DB name Grab",
-   "spec": "§6.7 words",
+   "title": "Backspace from 0.01–0.09 empties a money field instead of showing 0.00",
+   "detail": "`typedSen` can't tell `0.0` from 0.00 apart from `0.0` from 0.05, so one backspace skips 0.00 (D132: backspace drops the last digit; D147 (1): only backspace from 0.00 empties).",
+   "repro": "typedSen('0.0') for a field that showed 0.05",
+   "evidence": "1.25 ⌫ → \"0.12\"; 0.12 ⌫ → \"0.01\"; 0.05 ⌫ → \"\"; 0.01 ⌫ → \"\"; 0.00 ⌫ → \"\"",
+   "spec": "D132, D147 (1)",
    "screenshots": []
   },
   {
    "id": 11,
    "severity": "Note",
    "status": "open",
-   "title": "A category name may hold a right-to-left override",
-   "detail": "`\\u202eslaeM` is saved and shows as *Meals* reversed in the person's own list. Self-only, no reach to others.",
-   "repro": "category.add name '\\u202eslaeM'",
-   "evidence": "{\"said\":\"‮slaeM added\",…} [200]",
-   "spec": "§8",
+   "title": "The database rounds a numeric opening balance (10.5 → 11); only the API's integer check stands in front (run 3 note 8)",
+   "detail": "No route can send one: zod refuses it (400 'expected int').",
+   "repro": "as app_user: INSERT INTO accounts (..., opening_balance) VALUES (..., 10.5) RETURNING opening_balance",
+   "evidence": "AC1.s opening 10.5: 11",
+   "spec": "NN money",
    "screenshots": []
+  },
+  {
+   "id": 12,
+   "severity": "Note",
+   "status": "open",
+   "title": "On a preview with the real API, Home shows the skeleton's made-up figures right after first run",
+   "detail": "By design (D146 (10)): previews show unbuilt screens on made-up data. But straight after typing RM7,684.50 of balances, Home says 'Total balance RM29,871.77'. Settings also says 'Categories and rules · 4 rules', counting the fake's rules. Production shows neither (R4-PROD: Settings 'Not built yet' for the unbuilt rows). Worth a line in the owner's phone steps.",
+   "repro": "R4-FLOW-4 on the :5191 dev server",
+   "evidence": "home-text : … Total balance / RM29,871.77 …",
+   "spec": "D146 (10)",
+   "screenshots": [
+    "R4-FLOW-4-step-2-home.png"
+   ]
   }
  ],
  "probes": [
   {
-   "broke": "account_balances counts deleted payments (deleted_at filter dropped)",
-   "caught": true,
-   "note": "db suite red (b08r3-balance-counts-deleted)"
-  },
-  {
-   "broke": "balance_totals counts archived accounts",
-   "caught": true,
-   "note": "db suite red (b08r3-total-counts-archived)"
-  },
-  {
-   "broke": "Shopping seeded without its discretionary flag",
-   "caught": true,
-   "note": "pgTAP red (b08r3-seed-flag-drift)"
-  },
-  {
-   "broke": "categories_system_kept_check removed (Cash archivable)",
-   "caught": true,
-   "note": "db suite red"
-  },
-  {
-   "broke": "accounts_own_insert WITH CHECK (true)",
-   "caught": true,
-   "note": "db suite red"
-  },
-  {
-   "broke": "an adjustment allowed into any category",
-   "caught": true,
-   "note": "db suite red"
-  },
-  {
-   "broke": "/accounts lists archived accounts",
-   "caught": true,
-   "note": "API tests red"
-  },
-  {
-   "broke": "account.add without the capture check",
-   "caught": true,
-   "note": "API tests red"
-  },
-  {
-   "broke": "/sync/changes page ends at the highest version seen",
+   "broke": "the Unaccounted trigger refuses every row, adjustments included (0014)",
    "caught": false,
-   "note": "SURVIVED: finding 1"
+   "note": "pgTAP 462/462 pass — finding 1; keep as mutant b08r4-adjustment-refused once a test exists"
   },
   {
-   "broke": "first run offers an account for an un-chosen app",
-   "caught": true,
-   "note": "web suite red"
+   "broke": "the Unaccounted trigger stops firing on kind changes (UPDATE OF category_id only)",
+   "caught": false,
+   "note": "pgTAP 462/462 pass — finding 1; mutant b08r4-trigger-ignores-kind"
   },
   {
-   "broke": "no short first run for people without capture",
+   "broke": "GET /accounts/:id without needsCapture",
+   "caught": false,
+   "note": "db suite 202 pass — finding 2"
+  },
+  {
+   "broke": "account.edit without needsCapture",
+   "caught": false,
+   "note": "ledger+sweep 110 pass — finding 2"
+  },
+  {
+   "broke": "account.archive without needsCapture",
+   "caught": false,
+   "note": "ledger+sweep 110 pass — finding 2"
+  },
+  {
+   "broke": "the 409 account_exists words dropped (generic 'exists')",
    "caught": true,
-   "note": "web suite red"
+   "note": "ledger.test: 2 failed, expected 'exists' to be 'account_exists'"
+  },
+  {
+   "broke": "account_names readable by everyone (select policy user_id is not null)",
+   "caught": true,
+   "note": "rls.sql Failed 6/317"
   }
  ],
  "flows": [
   {
-   "id": "R3-FLOW-1",
-   "title": "First run end to end (core)",
+   "id": "R4-FLOW-1",
+   "title": "First run on the phone, start to Home",
    "kind": "happy",
-   "actor": "a capture person",
-   "entry": "/s/first-run after sign-in",
+   "actor": "a person with Capture",
+   "entry": "/s/first-run, signed in on the local API",
    "covers": [
-    "R3-AC-7",
-    "R3-AC-17",
-    "R3-AC-18",
-    "R3-AC-20"
+    "R4-AC-40",
+    "R4-AC-42",
+    "R4-AC-43",
+    "R4-AC-44",
+    "R4-AC-50"
    ],
-   "spec": "§9.5; flows.md first-run",
+   "spec": "§9.5, flows first-run",
    "status": "pass",
-   "ends": "Home; 4 accounts with 123450/0/8500/640000 sen; own_names; payday; setup done; 21 categories",
+   "ends": "Home; Accounts lists each typed balance; total their sum",
    "steps": [
     {
      "n": 1,
-     "action": "Open first run",
-     "assertion": "Step 2 of 7, Choose these 4",
+     "action": "Choose these 4, then Grab off",
+     "assertion": "Ryt switch checked; Grab unchecked",
      "status": "pass",
-     "screenshot": "R3-FLOW-1-step-1-apps.png"
+     "screenshot": "R4-FLOW-1-step-1-apps.png"
     },
     {
      "n": 2,
-     "action": "Choose the 4 suggested apps, Next",
+     "action": "Next to access",
      "assertion": "Step 3 of 7",
      "status": "pass",
-     "screenshot": "R3-FLOW-1-step-2-access.png"
+     "screenshot": "R4-FLOW-1-step-2-access.png"
     },
     {
      "n": 3,
-     "action": "Type 1,234.50, 0, 85.00, 6,400.00; Next",
-     "assertion": "4 accounts in the DB at those sen",
+     "action": "Type 1,2,8,4,5,0 in Ryt, 0 in TNG, 6,400.00 in Public Bank",
+     "assertion": "fields read 1,284.50 / 0.00; 'eWallet and GO+ together' shown; no GrabPay field",
      "status": "pass",
-     "screenshot": "R3-FLOW-1-step-4-accounts-saved.png"
+     "screenshot": "R4-FLOW-1-step-3-balances-typed.png"
     },
     {
      "n": 4,
-     "action": "Type '  tan   wei ming '",
+     "action": "Name '  tan   wei ming '",
      "assertion": "'Sen will look for TAN WEI MING.'",
      "status": "pass",
-     "screenshot": "R3-FLOW-1-step-5-name.png"
+     "screenshot": "R4-FLOW-1-step-4-name.png"
     },
     {
      "n": 5,
-     "action": "A day number 32, Finish",
-     "assertion": "'Type a day from 1 to 31.'",
+     "action": "Payday",
+     "assertion": "'Last working day' checked",
      "status": "pass",
-     "screenshot": "R3-FLOW-1-step-6-payday-32-refused.png"
+     "screenshot": "R4-FLOW-1-step-5-payday.png"
     },
     {
      "n": 6,
-     "action": "Last working day, Finish",
-     "assertion": "Home's hero; user_settings set",
+     "action": "Finish",
+     "assertion": "Home hero; user_settings {TAN WEI MING}|last-working|true",
      "status": "pass",
-     "screenshot": "R3-FLOW-1-step-7-home.png"
+     "screenshot": "R4-FLOW-1-step-6-home.png"
     }
    ]
   },
   {
-   "id": "R3-FLOW-2",
-   "title": "Closed mid-setup",
+   "id": "R4-FLOW-2",
+   "title": "Closed at step 4, and mid-typing",
    "kind": "sad",
-   "actor": "a capture person",
-   "entry": "first run step 4 and 5",
+   "actor": "a person with Capture",
+   "entry": "first run",
    "covers": [
-    "R3-AC-19"
+    "R4-AC-41"
    ],
-   "spec": "D146 (1)",
+   "spec": "DW1, D146 (1)",
    "status": "pass",
-   "ends": "Reopens at the same step with what was typed",
+   "ends": "reopens at the same step with what was typed",
    "steps": [
     {
      "n": 1,
      "action": "Reload at step 4",
      "assertion": "Step 4 of 7",
      "status": "pass",
-     "screenshot": "R3-FLOW-2-step-1-reopened-at-4.png"
+     "screenshot": "R4-FLOW-2-step-1-reopened-at-4.png"
     },
     {
      "n": 2,
-     "action": "Type balances, reload",
-     "assertion": "1,234.50 and 0.00 still there",
+     "action": "Reload at step 5 after typing",
+     "assertion": "Ryt 1,284.50 and TNG 0.00 kept",
      "status": "pass",
-     "screenshot": "R3-FLOW-2-step-2-typing-kept.png"
+     "screenshot": "R4-FLOW-2-step-2-typing-kept.png"
     }
    ]
   },
   {
-   "id": "R3-FLOW-3",
-   "title": "Bad balances",
+   "id": "R4-FLOW-3",
+   "title": "An empty balance, then a lost save",
    "kind": "sad",
-   "actor": "a capture person",
-   "entry": "first run step 5",
+   "actor": "a person with Capture",
+   "entry": "step 5",
    "covers": [
-    "R3-AC-18.s"
+    "R4-AC-42.s",
+    "R4-AC-44.s"
    ],
-   "spec": "D132; D147",
+   "spec": "D146 (4), QA run 1, 2",
    "status": "pass",
-   "ends": "Nothing saved; words on screen",
+   "ends": "empty refused; a lost answer keeps the typing; retry saves each account once",
    "steps": [
     {
      "n": 1,
      "action": "Next with nothing typed",
      "assertion": "'Type today’s balance, or 0.'; 0 accounts",
      "status": "pass",
-     "screenshot": "R3-FLOW-3-step-1-empty-refused.png"
+     "screenshot": "R4-FLOW-3-step-1-empty-refused.png"
     },
     {
      "n": 2,
-     "action": "Type '-12a.3x45'",
-     "assertion": "field shows 123.45",
+     "action": "Next; the server takes Ryt and the answer is cut",
+     "assertion": "toast 'Sen can’t reach its server. Check the connection.'; still Step 5; Ryt 1,284.50",
      "status": "pass",
-     "screenshot": "R3-FLOW-3-step-2-letters-ignored.png"
+     "screenshot": "R4-FLOW-3-step-2-lost-save.png"
+    },
+    {
+     "n": 3,
+     "action": "Next again",
+     "assertion": "Step 6; accounts com.pbb.mypb=640000, tng=0, ryt=128450; count 3",
+     "status": "pass",
+     "screenshot": "R4-FLOW-3-step-3-saved-once.png"
     }
    ]
   },
   {
-   "id": "R3-FLOW-4",
-   "title": "Finished: first run never again",
+   "id": "R4-FLOW-4",
+   "title": "Access skipped",
    "kind": "sad",
-   "actor": "a finished person",
-   "entry": "/s/first-run",
+   "actor": "a person with Capture",
+   "entry": "step 3",
    "covers": [
-    "R3-AC-19.s"
+    "R4-AC-45"
    ],
-   "spec": "D26",
+   "spec": "flows first-run",
    "status": "pass",
-   "ends": "Home",
+   "ends": "first run finishes; Home's warning is the shell's (device check queued)",
    "steps": [
     {
      "n": 1,
-     "action": "Open /s/first-run",
-     "assertion": "URL leaves first-run; no step count",
+     "action": "At access, Skip for now",
+     "assertion": "'Off · Sen can’t read your bank notifications yet.'",
      "status": "pass",
-     "screenshot": "R3-FLOW-4-step-1-first-run-link-goes-home.png"
+     "screenshot": "R4-FLOW-4-step-1-access.png"
+    },
+    {
+     "n": 2,
+     "action": "Finish the rest",
+     "assertion": "Home; no warning in a browser (inShell false)",
+     "status": "pass",
+     "screenshot": "R4-FLOW-4-step-2-home.png"
     }
    ]
   },
   {
-   "id": "R3-FLOW-5",
+   "id": "R4-FLOW-5",
+   "title": "A finished person never sees first run again",
+   "kind": "sad",
+   "actor": "a person who finished",
+   "entry": "/s/first-run",
+   "covers": [
+    "R4-AC-40.s",
+    "R4-AC-44"
+   ],
+   "spec": "D26",
+   "status": "pass",
+   "ends": "Home each time",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open /s/first-run, reload",
+     "assertion": "URL not first-run; no 'Step n of'",
+     "status": "pass",
+     "screenshot": "R4-FLOW-5-step-1-first-run-link-goes-home.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-6",
+   "title": "The short first run, no Capture",
+   "kind": "happy",
+   "actor": "a person without Capture",
+   "entry": "sign-in",
+   "covers": [
+    "R4-AC-46",
+    "R4-AC-50.s"
+   ],
+   "spec": "§9.6, D79, D147 (5)",
+   "status": "pass",
+   "ends": "Home; Travel archived; no Accounts",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Held at Step 2 of 2",
+     "assertion": "Cash disabled and checked; no Unaccounted",
+     "status": "pass",
+     "screenshot": "R4-FLOW-6-step-1-categories.png"
+    },
+    {
+     "n": 2,
+     "action": "Travel off, Start using Sen",
+     "assertion": "Home; Travel archived; 20 live",
+     "status": "pass",
+     "screenshot": "R4-FLOW-6-step-2-home.png"
+    },
+    {
+     "n": 3,
+     "action": "More, then /s/accounts",
+     "assertion": "no Accounts in More; 'No accounts here'",
+     "status": "pass",
+     "screenshot": "R4-FLOW-6-step-3-no-accounts.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-7",
    "title": "Accounts and an account",
    "kind": "happy",
-   "actor": "a finished person",
+   "actor": "a person who finished",
    "entry": "/s/accounts",
    "covers": [
-    "R3-AC-22",
-    "R3-AC-23"
+    "R4-AC-50",
+    "R4-AC-51"
    ],
-   "spec": "screens.md accounts",
-   "status": "fail",
-   "ends": "Total, holds lines, opening; one account reads 'In 1 account'",
+   "spec": "screens accounts, account",
+   "status": "pass",
+   "ends": "figures match what was typed",
    "steps": [
     {
      "n": 1,
      "action": "Open Accounts",
-     "assertion": "In 4 accounts, RM7,719.50, both holds lines",
+     "assertion": "'In 3 accounts', RM7,684.50",
      "status": "pass",
-     "screenshot": "R3-FLOW-5-step-1-accounts.png"
+     "screenshot": "R4-FLOW-7-step-1-accounts.png"
     },
     {
      "n": 2,
-     "action": "Open Ryt Bank",
-     "assertion": "RM1,234.50",
+     "action": "Open TNG eWallet",
+     "assertion": "RM0.00; fed by Touch 'n Go eWallet",
      "status": "pass",
-     "screenshot": "R3-FLOW-5-step-2-account.png"
-    },
-    {
-     "n": 3,
-     "action": "A person with one account opens Accounts",
-     "assertion": "'In 1 account'",
-     "status": "fail",
-     "screenshot": "R3-FLOW-5b-step-1-one-account.png"
+     "screenshot": "R4-FLOW-7-step-2-account-tng.png"
     }
    ]
   },
   {
-   "id": "R3-FLOW-6",
-   "title": "Settings → Categories",
+   "id": "R4-FLOW-8",
+   "title": "An app chosen later (D148)",
    "kind": "happy",
-   "actor": "a finished person",
+   "actor": "a person who finished",
+   "entry": "Settings → Capture → apps",
+   "covers": [
+    "R4-AC-27",
+    "R4-AC-27.s"
+   ],
+   "spec": "D148",
+   "status": "pass",
+   "ends": "one account for Grab, RM0.00; Not added yet gone",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Choose Grab",
+     "assertion": "Grab switch checked",
+     "status": "pass",
+     "screenshot": "R4-FLOW-8-step-1-grab-chosen.png"
+    },
+    {
+     "n": 2,
+     "action": "Open Accounts",
+     "assertion": "'Not added yet' with GrabPay Wallet",
+     "status": "pass",
+     "screenshot": "R4-FLOW-8-step-2-not-added-yet.png"
+    },
+    {
+     "n": 3,
+     "action": "Add account with nothing typed",
+     "assertion": "'Type today’s balance, or 0.'; no grab row",
+     "status": "pass",
+     "screenshot": "R4-FLOW-8-step-3-empty-refused.png"
+    },
+    {
+     "n": 4,
+     "action": "Type 0, Add account",
+     "assertion": "sheet closes; com.grabtaxi.passenger=0; 'In 4 accounts'; RM7,684.50",
+     "status": "pass",
+     "screenshot": "R4-FLOW-8-step-4-added.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-9",
+   "title": "Categories in Settings",
+   "kind": "happy",
+   "actor": "a person who finished",
    "entry": "/s/settings/categories",
    "covers": [
-    "R3-AC-9",
-    "R3-AC-24"
+    "R4-AC-24",
+    "R4-AC-52",
+    "R4-AC-52.s"
    ],
    "spec": "§8",
    "status": "pass",
-   "ends": "DB matches; Cash kept; a taken name refused",
+   "ends": "rows match each step; Unaccounted not editable or pickable",
    "steps": [
     {
      "n": 1,
      "action": "Open",
      "assertion": "Groceries listed",
      "status": "pass",
-     "screenshot": "R3-FLOW-6-step-1-list.png"
+     "screenshot": "R4-FLOW-9-step-1-list.png"
     },
     {
      "n": 2,
-     "action": "Rename Groceries → Market",
-     "assertion": "1 row named Market",
+     "action": "Rename Groceries→Market, add Pets, add 'pets'",
+     "assertion": "error under Name; field keeps 'pets'; 1 row",
      "status": "pass",
-     "screenshot": "R3-FLOW-6-step-2-renamed.png"
+     "screenshot": "R4-FLOW-9-step-2-taken-name-in-field.png"
     },
     {
      "n": 3,
-     "action": "Rename Market → meals",
-     "assertion": "'You already have a category with that name.' (a toast, not the field)",
+     "action": "Pets discretionary, archive, bring back",
+     "assertion": "is_discretionary t; archived_at null",
      "status": "pass",
-     "screenshot": "R3-FLOW-6-step-3-taken-name.png"
+     "screenshot": "R4-FLOW-9-step-3-brought-back.png"
     },
     {
      "n": 4,
-     "action": "Add Pets",
-     "assertion": "1 live Pets",
+     "action": "Open Unaccounted",
+     "assertion": "0 switches; picker omits it",
      "status": "pass",
-     "screenshot": "R3-FLOW-6-step-4-added.png"
+     "screenshot": "R4-FLOW-9-step-4-unaccounted.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-10",
+   "title": "Settings → You",
+   "kind": "happy",
+   "actor": "a person who finished",
+   "entry": "/s/settings/you",
+   "covers": [
+    "R4-AC-53",
+    "R4-AC-14"
+   ],
+   "spec": "D17, D14",
+   "status": "pass",
+   "ends": "name and payday 25 kept after reload",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Add a second name, day 25, reload",
+     "assertion": "{TAN WEI MING, wei ming tan}|25; field reads 25",
+     "status": "pass",
+     "screenshot": "R4-FLOW-10-step-1-you-saved.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-11",
+   "title": "Another timezone",
+   "kind": "sad",
+   "actor": "a person who finished",
+   "entry": "Accounts in America/New_York",
+   "covers": [
+    "R4-AC-55"
+   ],
+   "spec": "conventions",
+   "status": "pass",
+   "ends": "same figures and KL dates",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Open Accounts and Ryt",
+     "assertion": "RM1,234.56; '10 Nov'; no '9 Nov'",
+     "status": "pass",
+     "screenshot": "R4-FLOW-11-step-1-account-in-new-york.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-FLOW-12",
+   "title": "An app's only account archived",
+   "kind": "sad",
+   "actor": "a person who finished",
+   "entry": "Account → Edit → Archive",
+   "covers": [
+    "R4-AC-28"
+   ],
+   "spec": "D147 (4), D148",
+   "status": "fail",
+   "ends": "one way back for the app, in true words",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Archive Ryt, open Accounts",
+     "assertion": "'In 0 accounts · RM0.00', Check balances, Ryt under Not added yet ('Apps you chose after first run') and under Archived",
+     "status": "fail",
+     "screenshot": "R4-FLOW-12-step-1-archived-and-not-added.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-AC-28.s",
+   "title": "Bring back over a newer live account",
+   "kind": "sad",
+   "actor": "a person who finished",
+   "entry": "/s/accounts",
+   "covers": [
+    "R4-AC-28.s"
+   ],
+   "spec": "D147 (4)",
+   "status": "pass",
+   "ends": "refused in words; one live row",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Bring back Ryt Bank old",
+     "assertion": "toast 'That app already has an account in Sen. Each app has one.'",
+     "status": "pass",
+     "screenshot": "R4-AC-28s-step-1-bring-back-refused.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-AC-41.s",
+   "title": "Sign out mid first run",
+   "kind": "sad",
+   "actor": "two people on one phone",
+   "entry": "step 5",
+   "covers": [
+    "R4-AC-41.s"
+   ],
+   "spec": "D146, security review",
+   "status": "pass",
+   "ends": "the next person starts clean",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Type 9,876.54, sign out, sign in as another",
+     "assertion": "sen.firstRun null; Step 2 of 7",
+     "status": "pass",
+     "screenshot": "R4-AC-41s-step-1-next-person-starts-clean.png"
+    }
+   ]
+  },
+  {
+   "id": "R4-PROD",
+   "title": "A production build on the real API",
+   "kind": "happy",
+   "actor": "a person who finished; one without Capture",
+   "entry": "SEN_ENV=production",
+   "covers": [
+    "R4-AC-50",
+    "R4-AC-51",
+    "R4-AC-46"
+   ],
+   "spec": "D146 (10)",
+   "status": "pass",
+   "ends": "each screen opens with no page error; the short first run finishes",
+   "steps": [
+    {
+     "n": 1,
+     "action": "Settings",
+     "assertion": "heading; no page error",
+     "status": "pass",
+     "screenshot": "R4-PROD-step-1-settings.png"
+    },
+    {
+     "n": 2,
+     "action": "Categories",
+     "assertion": "Groceries listed",
+     "status": "pass",
+     "screenshot": "R4-PROD-step-2-categories.png"
+    },
+    {
+     "n": 3,
+     "action": "Accounts",
+     "assertion": "RM1,284.50",
+     "status": "pass",
+     "screenshot": "R4-PROD-step-3-accounts.png"
+    },
+    {
+     "n": 4,
+     "action": "Account",
+     "assertion": "opening RM1,284.50 on 10 Nov",
+     "status": "pass",
+     "screenshot": "R4-PROD-step-4-account.png"
     },
     {
      "n": 5,
-     "action": "Flag Discretionary, Archive",
-     "assertion": "is_discretionary t; archived; Bring back Pets",
+     "action": "Short first run",
+     "assertion": "Step 2 of 2",
      "status": "pass",
-     "screenshot": "R3-FLOW-6-step-5-archived.png"
+     "screenshot": "R4-PROD-step-5-short-first-run.png"
     },
     {
      "n": 6,
-     "action": "Open Cash",
-     "assertion": "no Archive; says why",
+     "action": "Start using Sen",
+     "assertion": "Home; setup_done_at set",
      "status": "pass",
-     "screenshot": "R3-FLOW-6-step-6-cash-kept.png"
+     "screenshot": "R4-PROD-step-6-home.png"
     }
    ]
   },
   {
-   "id": "R3-FLOW-7",
-   "title": "Settings → You",
+   "id": "R4-FLOW-C1",
+   "title": "first-run (core), made-up backend",
    "kind": "happy",
-   "actor": "a finished person",
-   "entry": "/s/settings/you",
+   "actor": "Wei Ming",
+   "entry": "/s/first-run?scenario=new",
    "covers": [
-    "R3-AC-25"
+    "R4-AC-41"
    ],
-   "spec": "screens.md Settings",
+   "spec": "D124",
    "status": "pass",
-   "ends": "own_names two, payday 25",
+   "ends": "the sweep's journeys walk all seven steps (pass, 46.4 min run)",
    "steps": [
     {
      "n": 1,
-     "action": "Add a name, payday 25, reload",
-     "assertion": "DB {TAN WEI MING, WEI MING TAN}, day 25; field 25",
+     "action": "Open",
+     "assertion": "Step 1 of 7, sign in",
      "status": "pass",
-     "screenshot": "R3-FLOW-7-step-1-you-saved.png"
+     "screenshot": "R4-FLOW-C1-step-1-sign-in.png"
     }
    ]
   },
   {
-   "id": "R3-FLOW-8",
-   "title": "Short first run without capture",
+   "id": "R4-FLOW-C2",
+   "title": "pay-new (core)",
    "kind": "happy",
-   "actor": "an invited friend",
-   "entry": "sign-in",
-   "covers": [
-    "R3-AC-21"
-   ],
-   "spec": "D79; D147 (5)",
+   "actor": "Wei Ming",
+   "entry": "/review",
+   "covers": [],
+   "spec": "D124, §6.3",
    "status": "pass",
-   "ends": "Home; Travel archived; 20 live; no payday",
+   "ends": "Meals makes a rule; Undo puts it back",
    "steps": [
     {
      "n": 1,
-     "action": "Sign in",
-     "assertion": "held at Step 2 of 2; Cash disabled; no Unaccounted",
+     "action": "Review",
+     "assertion": "ROTI BAKAR 88 new-merchant row",
      "status": "pass",
-     "screenshot": "R3-FLOW-8-step-1-categories.png"
+     "screenshot": "R4-FLOW-C2-step-1-review.png"
     },
     {
      "n": 2,
-     "action": "Travel off, Start using Sen",
-     "assertion": "Home; Travel archived",
+     "action": "Tap Meals",
+     "assertion": "toast 'ROTI BAKAR 88 is Meals from now on'; row gone",
      "status": "pass",
-     "screenshot": "R3-FLOW-8-step-2-home.png"
+     "screenshot": "R4-FLOW-C2-step-2-answered.png"
+    },
+    {
+     "n": 3,
+     "action": "Undo",
+     "assertion": "row back",
+     "status": "pass",
+     "screenshot": "R4-FLOW-C2-step-3-undone.png"
     }
    ]
   },
   {
-   "id": "R3-FLOW-9",
-   "title": "An app chosen after first run",
-   "kind": "sad",
-   "actor": "a finished person",
-   "entry": "Settings → Capture → apps",
-   "covers": [
-    "D145"
-   ],
-   "spec": "§7; D145",
-   "status": "fail",
-   "ends": "each chosen app has an account, or a way to add one",
+   "id": "R4-FLOW-C3",
+   "title": "scan-after (core)",
+   "kind": "happy",
+   "actor": "Wei Ming",
+   "entry": "Scan tab",
+   "covers": [],
+   "spec": "D124, §6.4",
+   "status": "pass",
+   "ends": "Attached to RM64.13 on Ryt Bank",
    "steps": [
     {
      "n": 1,
-     "action": "Choose the 4 suggested apps",
-     "assertion": "4 switches on",
+     "action": "Scan, Use this",
+     "assertion": "confirm shows SATE KAJANG HJ SAMURI",
      "status": "pass",
-     "screenshot": "R3-FLOW-9-step-1-apps-chosen-later.png"
+     "screenshot": "R4-FLOW-C3-step-1-confirm.png"
     },
     {
      "n": 2,
-     "action": "Open Accounts",
-     "assertion": "still 1 account, no Add",
-     "status": "fail",
-     "screenshot": "R3-FLOW-9-step-2-accounts-no-add.png"
-    }
-   ]
-  },
-  {
-   "id": "R3-TZ",
-   "title": "Accounts' dates in Los Angeles",
-   "kind": "sad",
-   "actor": "a finished person",
-   "entry": "/s/accounts",
-   "covers": [
-    "R3-AC-23"
-   ],
-   "spec": "Conventions: KL days",
-   "status": "pass",
-   "ends": "10 Nov (KL), never 9 Nov",
-   "steps": [
-    {
-     "n": 1,
-     "action": "Open Ryt Bank with the browser in America/Los_Angeles",
-     "assertion": "10 Nov shown, no 9 Nov",
+     "action": "More people ×2",
+     "assertion": "RM21.38 a person",
      "status": "pass",
-     "screenshot": "R3-TZ-step-1-account-in-la.png"
-    }
-   ]
-  },
-  {
-   "id": "R3-AC-25.s",
-   "title": "You without capture",
-   "kind": "sad",
-   "actor": "an invited friend",
-   "entry": "/s/settings/you",
-   "covers": [
-    "R3-AC-25.s"
-   ],
-   "spec": "screens.md",
-   "status": "pass",
-   "ends": "no names; payday optional",
-   "steps": [
+     "screenshot": "R4-FLOW-C3-step-2-three-people.png"
+    },
     {
-     "n": 1,
-     "action": "Open You",
-     "assertion": "no names field; 'Without capture, a payday is optional.'",
+     "n": 3,
+     "action": "Done",
+     "assertion": "toast 'Attached to RM64.13 on Ryt Bank'",
      "status": "pass",
-     "screenshot": "R3-AC-25s-step-1-you-without-capture.png"
-    }
-   ]
-  },
-  {
-   "id": "CORE",
-   "title": "Core journeys first-run, pay-new, scan-after",
-   "kind": "happy",
-   "actor": "owner",
-   "entry": "pnpm e2e journeys (sweep)",
-   "covers": [
-    "D124"
-   ],
-   "spec": "flows.md",
-   "status": "pass",
-   "ends": "journeys.spec passes in the sweep (1415/1415)",
-   "steps": [
-    {
-     "n": 1,
-     "action": "first-run, walked in all six looks and in the journey",
-     "assertion": "pass in e2e",
-     "status": "pass",
-     "screenshot": "R3-FLOW-1-step-7-home.png"
+     "screenshot": "R4-FLOW-C3-step-3-attached.png"
     }
    ]
   }
  ],
  "criteria": [
   {
-   "id": "R3-AC-1",
-   "title": "Money columns are bigint",
-   "spec": "CLAUDE.md; §15",
+   "id": "R4-AC-1",
+   "title": "Money columns are bigint sen",
+   "spec": "§15, NN",
    "status": "pass",
-   "evidence": "accounts.opening_balance, transactions.amount, my_share: bigint (\\d)"
+   "evidence": "accounts.opening_balance, transactions.amount, my_share: bigint in 0013_b08_ledger.sql; MAX_SEN 9999999999999 stored and read back exactly"
   },
   {
-   "id": "R3-AC-1.s",
-   "title": "A fractional opening balance is refused",
-   "spec": "CLAUDE.md",
+   "id": "R4-AC-1.s",
+   "title": "A fractional amount is never stored",
+   "spec": "NN",
    "status": "pass",
-   "evidence": "API: opening 10.5 → 400 {code:invalid, message:'Invalid input: expected int, received number', field:opening}; '10.5' as text → DB 'invalid input syntax for type bigint'. Note 8: a numeric literal 10.5 written straight to the DB is stored as 11"
+   "evidence": "API: opening 10.5 → 400 {code:invalid, field:opening}. DB alone rounds a numeric 10.5 literal to 11 (Note)"
   },
   {
-   "id": "R3-AC-2",
+   "id": "R4-AC-2",
    "title": "RLS on every new table, keyed on user_id",
-   "spec": "CLAUDE.md; §15; D52",
+   "spec": "NN, §15",
    "status": "pass",
-   "evidence": "relrowsecurity t on accounts, account_names, categories, transactions, user_settings; own_select/insert/update policies on app.user_id. Not FORCEd, but the API's app_user isn't the owner (rolbypassrls f)"
+   "evidence": "relrowsecurity t on accounts, account_names, categories, transactions, user_settings; policies compare user_id with app.user_id; not FORCED (owner role only, the API runs as app_user, rolbypassrls f)"
   },
   {
-   "id": "R3-AC-2.s",
-   "title": "B reads none of A's rows; nobody set reads none; no insert in A's name",
-   "spec": "D52",
+   "id": "R4-AC-2.s",
+   "title": "No user id set reads nothing",
+   "spec": "NN",
    "status": "pass",
-   "evidence": "matrix: B sees 0 of A's in every table and both views; no user id: 0 everywhere; insert with A's user_id as B → 'new row violates row-level security policy'"
+   "evidence": "none=0 on every table and both views"
   },
   {
-   "id": "R3-AC-3",
+   "id": "R4-AC-3",
+   "title": "User B sees none of A's rows",
+   "spec": "NN, D52",
+   "status": "pass",
+   "evidence": "B=0 on accounts, account_names, categories, transactions, account_balances, balance_totals, user_settings"
+  },
+  {
+   "id": "R4-AC-3.s",
+   "title": "B can't write into A's world; no existence oracle",
+   "spec": "D146 (5)",
+   "status": "pass",
+   "evidence": "real and random account id both error:23503 (same FK); user_id A → 42501; UPDATE A's account → 0 rows"
+  },
+  {
+   "id": "R4-AC-4",
    "title": "Views are security_invoker",
    "spec": "§15",
    "status": "pass",
-   "evidence": "account_balances, balance_totals reloptions {security_invoker=true}"
+   "evidence": "catalogue check in pgTAP passes (0 problems); probe b08-balance-view-definer killed"
   },
   {
-   "id": "R3-AC-3.s",
-   "title": "B sees no A row through the views",
+   "id": "R4-AC-4.s",
+   "title": "Through a view, B reads only B's",
    "spec": "§15",
    "status": "pass",
-   "evidence": "account_balances as B: 1 row, 0 of A's; balance_totals: 1 row, 0 of A's"
+   "evidence": "account_balances/balance_totals as B: 0 of A's"
   },
   {
-   "id": "R3-AC-4",
-   "title": "Balance = opening + in − out, strictly after opening_at",
-   "spec": "§7; D146 (4)",
+   "id": "R4-AC-5",
+   "title": "The admin never reads anyone's money",
+   "spec": "NN, D52",
    "status": "pass",
-   "evidence": "hand-worked 10000 + 5000 − (2000 + 1) = 12999 (T and T−1s rows excluded, T+1µs counted); view: 12999"
+   "evidence": "admin column: 0 rows on every table and view"
   },
   {
-   "id": "R3-AC-4.s",
-   "title": "A deleted payment doesn't count; another person's payment can't name the account",
-   "spec": "§7; D146 (5)",
-   "status": "pass",
-   "evidence": "deleted RM3.33 excluded; B inserting a transaction on A's account → FK violation, 'Key is not present' (same words as a missing id)"
-  },
-  {
-   "id": "R3-AC-5",
-   "title": "The total sums live tracked accounts only",
-   "spec": "§7",
-   "status": "pass",
-   "evidence": "balance_totals A = 17999 (12999 + 5000), accounts = 2; Elsewhere absent from the view; archived 99000 excluded"
-  },
-  {
-   "id": "R3-AC-5.s",
-   "title": "No accounts: a total of 0, no error",
-   "spec": "§7",
-   "status": "pass",
-   "evidence": "admin GET /accounts → {total:0, tracked:[]} 200"
-  },
-  {
-   "id": "R3-AC-6",
-   "title": "One live account per app",
-   "spec": "D145; D146 (6)",
-   "status": "pass",
-   "evidence": "second my.rytbank.app for B → 'duplicate key value violates unique constraint accounts_one_per_app'; 4 parallel account.add for one app → 1 live account, 3 × 409 account_exists"
-  },
-  {
-   "id": "R3-AC-6.s",
-   "title": "Same app for two people; an archived account doesn't block",
-   "spec": "D145",
-   "status": "pass",
-   "evidence": "A and B both hold my.rytbank.app; F archived TNG then added a new TNG: 200"
-  },
-  {
-   "id": "R3-AC-7",
-   "title": "Categories seeded from the starting list",
-   "spec": "§8; D33",
-   "status": "pass",
-   "evidence": "18 spend + 3 income in §8's order; flags Meals+M, Drinks & desserts+B+D, Shopping/Entertainment/Gifts & treats/Travel +D; system keys cash, unaccounted, salary"
-  },
-  {
-   "id": "R3-AC-7.s",
-   "title": "Seeding again adds nothing",
-   "spec": "D146 (3)",
-   "status": "pass",
-   "evidence": "seed_categories() a second time → 0; 6 parallel setup.start + 2 category.add → 23 rows, 23 distinct names, 3 system"
-  },
-  {
-   "id": "R3-AC-8",
-   "title": "Unaccounted is never offered",
-   "spec": "§8",
-   "status": "pass",
-   "evidence": "GET /categories (spend) has no Unaccounted; first run's short list hides it; its sheet says 'Only balance checks book to it'"
-  },
-  {
-   "id": "R3-AC-8.s",
-   "title": "A non-adjustment booked to Unaccounted is refused by the database",
-   "spec": "§8; D146 (6)",
-   "status": "pass",
-   "evidence": "'Unaccounted can't be picked: only a balance check books to it' (23514)"
-  },
-  {
-   "id": "R3-AC-9",
-   "title": "Renaming a system category keeps its key",
-   "spec": "§15",
-   "status": "pass",
-   "evidence": "Cash → Tunai: system_key still cash"
-  },
-  {
-   "id": "R3-AC-9.s",
-   "title": "Archiving Salary/Cash is refused, in words",
-   "spec": "§15",
-   "status": "pass",
-   "evidence": "409 {code:system_category, message:'Sen needs this category, so it can’t be archived. You can rename it.'}"
-  },
-  {
-   "id": "R3-AC-10",
-   "title": "References carry user_id",
-   "spec": "D146 (5)",
-   "status": "pass",
-   "evidence": "account_names naming A's account as B → FK violation, same DETAIL for an existing and a missing id"
-  },
-  {
-   "id": "R3-AC-11",
-   "title": "GET /accounts: balances from the view, opening, app, archived",
-   "spec": "screens.md accounts",
-   "status": "pass",
-   "evidence": "A: total 17999, Ryt balance 12999 opening 10000, app 'Ryt Bank', archived [Old PBe]"
-  },
-  {
-   "id": "R3-AC-11.s",
-   "title": "Capture off → 403; B sees none",
-   "spec": "§9.6; D146 (7)",
-   "status": "pass",
-   "evidence": "no-capture E: 403 {code:capture_off}; B's list holds only B's; signed-out rows are the route sweep's (pass)"
-  },
-  {
-   "id": "R3-AC-12",
-   "title": "GET /accounts/:id: own → 200, another's → 404",
-   "spec": "D146 (5)",
-   "status": "pass",
-   "evidence": "B → A's id: 404 {code:not_found}, same as a missing id"
-  },
-  {
-   "id": "R3-AC-12.s",
-   "title": "A malformed id → 404, never 500",
-   "spec": "§16",
-   "status": "pass",
-   "evidence": "'../../me' and SQL text → 404 {code:not_found}"
-  },
-  {
-   "id": "R3-AC-13",
-   "title": "A corrected opening keeps opening_at",
-   "spec": "D146 (4)",
-   "status": "pass",
-   "evidence": "opening 100 → 250 a second later; opening_at unchanged (t)"
-  },
-  {
-   "id": "R3-AC-13.s",
-   "title": "Fractional, text, huge or missing openings refused with field",
-   "spec": "CLAUDE.md",
-   "status": "pass",
-   "evidence": "10.5, '1050', 99999999999999999, missing → 400 with field:opening. A negative (−500) is accepted: Note 9, an open question"
-  },
-  {
-   "id": "R3-AC-14",
-   "title": "The same command twice changes nothing",
-   "spec": "CLAUDE.md dedupe",
-   "status": "pass",
-   "evidence": "account.add same id twice: one row; category.add same id twice: one row"
-  },
-  {
-   "id": "R3-AC-14.s",
-   "title": "Two adds for one app with different ids → one account",
-   "spec": "D145",
-   "status": "pass",
-   "evidence": "409 account_exists; 1 live account"
-  },
-  {
-   "id": "R3-AC-15",
-   "title": "/me says setupDone after finish",
-   "spec": "D146 (1)",
-   "status": "pass",
-   "evidence": "before false, after setup.finish true"
-  },
-  {
-   "id": "R3-AC-15.s",
-   "title": "Finishing twice keeps the first time",
-   "spec": "D26",
-   "status": "pass",
-   "evidence": "setup_done_at 04:09:09.944997 both times"
-  },
-  {
-   "id": "R3-AC-16",
-   "title": "In the shell with capture, an unfinished person is sent to Step 2 of 7",
-   "spec": "D26; D146 (2)",
-   "status": "unreachable",
-   "evidence": "needs the shell (inShell() is Capacitor's); a browser reached first run only by its link, at Step 2 of 7"
-  },
-  {
-   "id": "R3-AC-16.s",
-   "title": "Capture in a plain browser isn't held; a finished person never sees it",
-   "spec": "D146 (2)",
-   "status": "pass",
-   "evidence": "FLOW-1 signed in with capture: not redirected; e2e:server 'with capture, a browser isn’t held' passes"
-  },
-  {
-   "id": "R3-AC-17",
-   "title": "One account per chosen app, named from the curated list",
-   "spec": "D145; §7",
-   "status": "pass",
-   "evidence": "4 apps chosen → 4 fields (TNG eWallet, Ryt Bank, Public Bank, GrabPay Wallet); Google Wallet none"
-  },
-  {
-   "id": "R3-AC-17.s",
-   "title": "An un-chosen app gets no account",
-   "spec": "D86",
-   "status": "pass",
-   "evidence": "breakage check b08r3-unchosen-app-account killed by the web suite"
-  },
-  {
-   "id": "R3-AC-18",
-   "title": "1,234.50 → 123450 sen; 0 → RM0.00 and allowed",
-   "spec": "D147 (1)",
-   "status": "pass",
-   "evidence": "DB: my.rytbank.app=123450, com.grabtaxi.passenger=0"
-  },
-  {
-   "id": "R3-AC-18.s",
-   "title": "Empty refused in words; letters and a minus never land",
-   "spec": "D132",
-   "status": "pass",
-   "evidence": "Next on empty: 'Type today’s balance, or 0.' × 4, 0 accounts; typing '-12a.3x45' shows 123.45"
-  },
-  {
-   "id": "R3-AC-19",
-   "title": "A reload reopens at the same step with what was typed",
-   "spec": "D146 (1)",
-   "status": "pass",
-   "evidence": "reload at step 4 → Step 4 of 7; reload mid-typing at step 5 keeps 1,234.50 and 0.00"
-  },
-  {
-   "id": "R3-AC-19.s",
-   "title": "Finished: a link to first run goes Home",
-   "spec": "D26",
-   "status": "pass",
-   "evidence": "/s/first-run → Home, no 'Step n of'"
-  },
-  {
-   "id": "R3-AC-20",
-   "title": "Name stored as printed; payday default last working day",
-   "spec": "D17; D14",
-   "status": "pass",
-   "evidence": "own_names {\"TAN WEI MING\"} from '  tan   wei ming '; expected_payday last-working; setup_done_at set"
-  },
-  {
-   "id": "R3-AC-20.s",
-   "title": "Payday 32 refused",
-   "spec": "D14",
-   "status": "pass",
-   "evidence": "'Type a day from 1 to 31.'"
-  },
-  {
-   "id": "R3-AC-21",
-   "title": "Short first run: categories, Cash locked, no payday",
-   "spec": "D79; D147 (5)",
-   "status": "pass",
-   "evidence": "Step 2 of 2; Cash disabled; Unaccounted absent; Travel off → archived; 20 live; expected_payday null"
-  },
-  {
-   "id": "R3-AC-22",
-   "title": "Accounts: total, balances, what each figure holds, archived with Bring back",
-   "spec": "D147 (3), (4)",
-   "status": "pass",
-   "evidence": "In 4 accounts RM7,719.50; 'Main account and pockets together', 'eWallet and GO+ together'. One account reads 'In 1 accounts': finding 2"
-  },
-  {
-   "id": "R3-AC-22.s",
-   "title": "Empty and error states",
-   "spec": "patterns.md §7",
-   "status": "unreachable",
-   "evidence": "not walked in this run (the catalogue's accounts@month and @capture-off pass in the sweep)"
-  },
-  {
-   "id": "R3-AC-23",
-   "title": "Account: balance, opening, app, checked = opening",
-   "spec": "D147 (2)",
-   "status": "pass",
-   "evidence": "RM1,234.50; Opening RM1,234.50 on 10 Nov; Fed by Ryt Bank; Last checked 10 Nov; in Los Angeles time too"
-  },
-  {
-   "id": "R3-AC-24",
-   "title": "Categories: rename, add, flag, archive persist",
-   "spec": "§8",
-   "status": "pass",
-   "evidence": "DB: Market 1; Pets added, is_discretionary t, archived t; after reload Market shown"
-  },
-  {
-   "id": "R3-AC-24.s",
-   "title": "A taken name refused in words; Cash not archivable",
-   "spec": "§8",
-   "status": "pass",
-   "evidence": "'You already have a category with that name.' (as a toast: finding 3); Cash shows no Archive"
-  },
-  {
-   "id": "R3-AC-25",
-   "title": "You: names and payday persist",
-   "spec": "screens.md Settings",
-   "status": "pass",
-   "evidence": "own_names {TAN WEI MING, WEI MING TAN}, expected_payday day 25, kept on reload"
-  },
-  {
-   "id": "R3-AC-25.s",
-   "title": "Without capture, no names; payday optional",
-   "spec": "screens.md; D79",
-   "status": "pass",
-   "evidence": "names field absent; 'Without capture, a payday is optional.'"
-  },
-  {
-   "id": "R3-AC-26",
-   "title": "No float in money",
-   "spec": "CLAUDE.md",
-   "status": "pass",
-   "evidence": "grep of the diff: Number( only in tests on small DB integers"
-  },
-  {
-   "id": "R3-AC-27",
-   "title": "Every input has a dedupe key",
-   "spec": "CLAUDE.md",
-   "status": "pass",
-   "evidence": "account.add/category.add by client id: retries no-op; the API's 'ledger command from the outbox applies once' passes"
-  },
-  {
-   "id": "R3-AC-28",
-   "title": "The admin reads nobody's ledger",
+   "id": "R4-AC-5.s",
+   "title": "No admin function reaches the ledger",
    "spec": "D52",
    "status": "pass",
-   "evidence": "admin: 0 rows in every table and view; GET /accounts empty; /sync/changes empty"
+   "evidence": "0013/0014 define no SECURITY DEFINER function; seed_categories is SECURITY INVOKER"
   },
   {
-   "id": "R3-AC-29",
-   "title": "One set of UI patterns",
-   "spec": "CLAUDE.md; patterns.md",
-   "status": "fail",
-   "evidence": "a taken category name shows in a toast over the sheet, not under its field (finding 3); empty balances show RM 0.00 placeholders beside 'or 0' (finding 4)"
-  },
-  {
-   "id": "R3-AC-30",
-   "title": "No secret in the built bundle",
-   "spec": "CLAUDE.md",
+   "id": "R4-AC-6",
+   "title": "The starting categories are exactly §8's",
+   "spec": "§8, D33",
    "status": "pass",
-   "evidence": "grep of a production build for keys, postgres://, the local secret, private keys: none"
+   "evidence": "seed_categories() → 21 (18 spend, 3 income); flags and system keys per pgTAP results_eq; mutant b08r3-seed-flag-drift killed"
+  },
+  {
+   "id": "R4-AC-6.s",
+   "title": "Seeding again adds nothing; a category added first joins",
+   "spec": "D146 (3)",
+   "status": "pass",
+   "evidence": "second seed 0; run 2 probe 'a category added before setup.start' passes"
+  },
+  {
+   "id": "R4-AC-7",
+   "title": "Sen's three never archived; Unaccounted flagless",
+   "spec": "§8, D146 (6)",
+   "status": "pass",
+   "evidence": "archive Cash → 23514 categories_system_kept_check"
+  },
+  {
+   "id": "R4-AC-7.s",
+   "title": "An ordinary category archives and comes back",
+   "spec": "§8",
+   "status": "pass",
+   "evidence": "Shopping archive ok; FLOW-9 Pets archived then brought back (archived_at null)"
+  },
+  {
+   "id": "R4-AC-8",
+   "title": "Unaccounted can't be picked by hand",
+   "spec": "§8, DW3",
+   "status": "pass",
+   "evidence": "spend in Unaccounted → 23514; picker never offers it"
+  },
+  {
+   "id": "R4-AC-8.s",
+   "title": "A balance check's adjustment may use it",
+   "spec": "§7",
+   "status": "pass",
+   "evidence": "adjustment/adjustment into Unaccounted → ok; UPDATE kind='spend' → 23514. Untested by any suite (finding 1)"
+  },
+  {
+   "id": "R4-AC-9",
+   "title": "One live account per app",
+   "spec": "D145",
+   "status": "pass",
+   "evidence": "second live Ryt → 23505 accounts_one_per_app"
+  },
+  {
+   "id": "R4-AC-9.s",
+   "title": "Archived frees the app; two people share a package",
+   "spec": "D145",
+   "status": "pass",
+   "evidence": "B's Ryt insert ok; FLOW-8/12 add after archive"
+  },
+  {
+   "id": "R4-AC-10",
+   "title": "kind tracked|elsewhere; account_names unique",
+   "spec": "§15",
+   "status": "pass",
+   "evidence": "kind 'savings' → 23514 accounts_kind_check"
+  },
+  {
+   "id": "R4-AC-10.s",
+   "title": "account_names can't point at another's account",
+   "spec": "D146 (5)",
+   "status": "pass",
+   "evidence": "→ 23503 composite FK"
+  },
+  {
+   "id": "R4-AC-11",
+   "title": "Balance = opening + in − out, strictly after opening_at",
+   "spec": "§7, DW2",
+   "status": "pass",
+   "evidence": "hand-worked 10000 + 2000 − 345 = 11655; view says 11655"
+  },
+  {
+   "id": "R4-AC-11.s",
+   "title": "Boundary rows, deleted rows, others' rows don't count",
+   "spec": "§7",
+   "status": "pass",
+   "evidence": "T−1µs 1230, T 500, deleted 700 excluded; split bill counts amount 3050 not share (TNG 5050−3050 = 2000)"
+  },
+  {
+   "id": "R4-AC-12",
+   "title": "Total = Σ tracked live balances",
+   "spec": "§7",
+   "status": "pass",
+   "evidence": "balance_totals 13655 = 11655 + 2000"
+  },
+  {
+   "id": "R4-AC-12.s",
+   "title": "Elsewhere isn't in the total or shown",
+   "spec": "§7",
+   "status": "pass",
+   "evidence": "Maybank (elsewhere) absent from account_balances; Accounts shows 'No balance'"
+  },
+  {
+   "id": "R4-AC-13",
+   "title": "transactions core columns with checks; my_share defaults to amount",
+   "spec": "§7, §15",
+   "status": "fail",
+   "evidence": "columns and checks present; my_share default is NULL, not amount (finding 4)"
+  },
+  {
+   "id": "R4-AC-13.s",
+   "title": "Bad enum or negative amount refused",
+   "spec": "§15",
+   "status": "pass",
+   "evidence": "amount −5 → 23514 transactions_amount_check"
+  },
+  {
+   "id": "R4-AC-14",
+   "title": "own_names text[], expected_payday last-working or 1–31",
+   "spec": "§15, D14",
+   "status": "pass",
+   "evidence": "31 accepted; FLOW-10 {TAN WEI MING, wei ming tan} | 25"
+  },
+  {
+   "id": "R4-AC-14.s",
+   "title": "Day 0, 32 refused",
+   "spec": "D14",
+   "status": "pass",
+   "evidence": "0 and 32 → 23514 user_settings_expected_payday_check"
+  },
+  {
+   "id": "R4-AC-15",
+   "title": "No user id carried across a pooled connection",
+   "spec": "qa.md",
+   "status": "pass",
+   "evidence": "next transaction on the same session: 0 accounts, setting ''"
+  },
+  {
+   "id": "R4-AC-15.s",
+   "title": "Nor after a rolled-back request",
+   "spec": "qa.md",
+   "status": "pass",
+   "evidence": "after an erroring transaction: 0 accounts"
+  },
+  {
+   "id": "R4-AC-20",
+   "title": "/accounts balances from the view",
+   "spec": "§7",
+   "status": "pass",
+   "evidence": "/accounts total 9999999999999 = row; FLOW-7 RM7,684.50 = 128450 + 0 + 640000"
+  },
+  {
+   "id": "R4-AC-20.s",
+   "title": "Capture off → 403 capture_off",
+   "spec": "D146 (7)",
+   "status": "pass",
+   "evidence": "/accounts 403 capture_off (run 4 probe); untested on /accounts/:id, edit, archive (finding 2)"
+  },
+  {
+   "id": "R4-AC-21",
+   "title": "Typed text into sen",
+   "spec": "NN, D132",
+   "status": "pass",
+   "evidence": "FLOW-1: 1,2,8,4,5,0 → 1,284.50 → 128450; 0 → 0.00 → 0"
+  },
+  {
+   "id": "R4-AC-21.s",
+   "title": "Empty, float, text, past bigint refused",
+   "spec": "NN",
+   "status": "pass",
+   "evidence": "10.5, \"1000\", 1e13, null, true → 400 shaped, no row"
+  },
+  {
+   "id": "R4-AC-22",
+   "title": "Writes idempotent by key",
+   "spec": "NN dedupe",
+   "status": "pass",
+   "evidence": "category.archive twice: version 434→434; account.edit twice: version 436→436, opening_at kept"
+  },
+  {
+   "id": "R4-AC-22.s",
+   "title": "A second account for one app refused in words",
+   "spec": "D145",
+   "status": "pass",
+   "evidence": "409 account_exists 'That app already has an account in Sen. Each app has one.'"
+  },
+  {
+   "id": "R4-AC-23",
+   "title": "Correcting an opening keeps opening_at",
+   "spec": "D146 (4)",
+   "status": "pass",
+   "evidence": "opening_at unchanged after edit (probe); GRANT excludes opening_at"
+  },
+  {
+   "id": "R4-AC-23.s",
+   "title": "Another person's id is 404 like a random one",
+   "spec": "D146 (5)",
+   "status": "pass",
+   "evidence": "run 1 probe 'edit, archive and read of A's account as B are 404' passes"
+  },
+  {
+   "id": "R4-AC-24",
+   "title": "Categories add, rename, archive, flags",
+   "spec": "§8",
+   "status": "pass",
+   "evidence": "FLOW-9: Market, Pets, discretionary t, archive, bring back"
+  },
+  {
+   "id": "R4-AC-24.s",
+   "title": "Taken, empty, too long, system refused",
+   "spec": "§8",
+   "status": "pass",
+   "evidence": "'pets' 409 name_taken field name; '   ' 400; 41 chars 400; income 'Meals' 409. A zero-width space slips past (Note)"
+  },
+  {
+   "id": "R4-AC-25",
+   "title": "/me setupDone; finish once",
+   "spec": "D146 (1)",
+   "status": "pass",
+   "evidence": "setupDone true after finish (capture off too); first-run.server spec; mutant b08-finish-overwrites killed"
+  },
+  {
+   "id": "R4-AC-25.s",
+   "title": "Signed out /me refused",
+   "spec": "§16",
+   "status": "pass",
+   "evidence": "GET /api/me signed out → {code:signed_out}; route sweep's signed-out case passes"
+  },
+  {
+   "id": "R4-AC-26",
+   "title": "Offline copy carries the ledger past one page",
+   "spec": "§5",
+   "status": "pass",
+   "evidence": "ledger.test 'past one page' passes; mutant b08r3-changes-page-skips killed"
+  },
+  {
+   "id": "R4-AC-26.s",
+   "title": "A row changed between pages isn't lost",
+   "spec": "§5",
+   "status": "unreachable",
+   "evidence": "not run by me"
+  },
+  {
+   "id": "R4-AC-27",
+   "title": "D148: an app chosen later gets its account",
+   "spec": "D148",
+   "status": "pass",
+   "evidence": "FLOW-8: Grab chosen → Not added yet → 0 → com.grabtaxi.passenger=0, In 4 accounts"
+  },
+  {
+   "id": "R4-AC-27.s",
+   "title": "Empty refused; nothing made silently",
+   "spec": "D148",
+   "status": "pass",
+   "evidence": "empty → 'Type today’s balance, or 0.'; no grab row until typed"
+  },
+  {
+   "id": "R4-AC-28",
+   "title": "Archived accounts listed with Bring back",
+   "spec": "D147 (4)",
+   "status": "pass",
+   "evidence": "R4-AC-28.s and FLOW-12 screenshots"
+  },
+  {
+   "id": "R4-AC-28.s",
+   "title": "Bring back over a newer live account refused in words",
+   "spec": "D147 (4)",
+   "status": "pass",
+   "evidence": "toast 'That app already has an account in Sen. Each app has one.'; 1 live row"
+  },
+  {
+   "id": "R4-AC-40",
+   "title": "Who is sent to first run",
+   "spec": "D146 (2)",
+   "status": "unreachable",
+   "evidence": "without capture → held at Step 2 of 2 (pass, FLOW-6); the shell-with-capture branch needs inShell(): not reachable in Chromium"
+  },
+  {
+   "id": "R4-AC-40.s",
+   "title": "Capture in a browser not held; finished → Home",
+   "spec": "D146 (2), D26",
+   "status": "pass",
+   "evidence": "FLOW-5: /s/first-run → Home, reload, no 'Step n of'"
+  },
+  {
+   "id": "R4-AC-41",
+   "title": "Closed mid-setup reopens with what was typed",
+   "spec": "DW1",
+   "status": "pass",
+   "evidence": "FLOW-2: reload at 4 → Step 4 of 7; 1,284.50 and 0.00 kept"
+  },
+  {
+   "id": "R4-AC-41.s",
+   "title": "Sign out clears the draft",
+   "spec": "D146 security",
+   "status": "pass",
+   "evidence": "sen.firstRun null after sign-out; next person at Step 2"
+  },
+  {
+   "id": "R4-AC-42",
+   "title": "One field per chosen app, curated names, what it holds",
+   "spec": "D145, D147 (3)",
+   "status": "pass",
+   "evidence": "TNG 'eWallet and GO+ together', Ryt 'Main account and pockets together'; no Grab (unchosen), no Google Wallet"
+  },
+  {
+   "id": "R4-AC-42.s",
+   "title": "Empty can't continue",
+   "spec": "D146 (4)",
+   "status": "pass",
+   "evidence": "'Type today’s balance, or 0.'; 0 accounts"
+  },
+  {
+   "id": "R4-AC-43",
+   "title": "Names and payday stored",
+   "spec": "D17, D14",
+   "status": "pass",
+   "evidence": "{\"TAN WEI MING\"}|last-working|true"
+  },
+  {
+   "id": "R4-AC-43.s",
+   "title": "Blank name, day 32 refused",
+   "spec": "D14",
+   "status": "pass",
+   "evidence": "journeys walk: 'Type your name as your bank prints it.', 'Type a day from 1 to 31.'"
+  },
+  {
+   "id": "R4-AC-44",
+   "title": "Finish lands Home; steps never return",
+   "spec": "D26",
+   "status": "pass",
+   "evidence": "setup_done_at set; Home hero; Accounts figures exact"
+  },
+  {
+   "id": "R4-AC-44.s",
+   "title": "A lost save keeps what was typed and saves once on retry",
+   "spec": "B, QA run 1",
+   "status": "pass",
+   "evidence": "answer cut after the server took Ryt: toast, values kept, retry → 3 accounts, not 4"
+  },
+  {
+   "id": "R4-AC-45",
+   "title": "Access skipped → Home 'Capture is off' with Fix",
+   "spec": "flows first-run",
+   "status": "unreachable",
+   "evidence": "the warning comes from the shell's own status; inShell() false in Chromium. Queued in docs/local.md step 9"
+  },
+  {
+   "id": "R4-AC-46",
+   "title": "Short first run: Cash locked on, no payday",
+   "spec": "D79, D147 (5)",
+   "status": "pass",
+   "evidence": "Cash disabled+checked; Unaccounted absent; Travel off → archived; 20 live; payday null"
+  },
+  {
+   "id": "R4-AC-50",
+   "title": "accounts screen",
+   "spec": "screens accounts",
+   "status": "pass",
+   "evidence": "FLOW-7, FLOW-8 screenshots; RM format per patterns §3"
+  },
+  {
+   "id": "R4-AC-50.s",
+   "title": "Without capture no Accounts",
+   "spec": "§9.6",
+   "status": "pass",
+   "evidence": "More has no Accounts; /s/accounts 'No accounts here'"
+  },
+  {
+   "id": "R4-AC-51",
+   "title": "account screen",
+   "spec": "screens account",
+   "status": "pass",
+   "evidence": "TNG: RM0.00, opening RM0.00 on 10 Nov, fed by Touch 'n Go eWallet, last checked 10 Nov"
+  },
+  {
+   "id": "R4-AC-51.s",
+   "title": "Another person's id in the URL shows not-found",
+   "spec": "D52",
+   "status": "unreachable",
+   "evidence": "API 404 seen in probes; the screen with a foreign id not walked"
+  },
+  {
+   "id": "R4-AC-52",
+   "title": "Settings → Categories",
+   "spec": "§8",
+   "status": "pass",
+   "evidence": "FLOW-9; Unaccounted sheet shows 0 switches"
+  },
+  {
+   "id": "R4-AC-52.s",
+   "title": "Taken name in words, typed text kept",
+   "spec": "QA run 3, 3",
+   "status": "pass",
+   "evidence": "field-error 'You already have a category with that name.', field keeps 'pets'"
+  },
+  {
+   "id": "R4-AC-53",
+   "title": "Settings → You persists",
+   "spec": "D17, D14",
+   "status": "pass",
+   "evidence": "FLOW-10 after reload: day 25"
+  },
+  {
+   "id": "R4-AC-54",
+   "title": "Shared blocks only",
+   "spec": "NN, patterns",
+   "status": "pass",
+   "evidence": "GroupCard, Sheet, MoneyInput, EmptyState, Pending; the archived-only Accounts state is wrong in words (finding 3)"
+  },
+  {
+   "id": "R4-AC-55",
+   "title": "Another timezone moves nothing",
+   "spec": "conventions",
+   "status": "pass",
+   "evidence": "America/New_York: RM1,234.56, '10 Nov', no '9 Nov'"
+  },
+  {
+   "id": "R4-AC-60",
+   "title": "No float money in the diff",
+   "spec": "NN",
+   "status": "pass",
+   "evidence": "0 hits outside tests; the 3 in tests are row counts / whole-sen assertions"
+  },
+  {
+   "id": "R4-AC-61",
+   "title": "No secret in the bundle; no real data",
+   "spec": "NN",
+   "status": "pass",
+   "evidence": "pnpm security PASS (audit, gitleaks history, lint); hygiene PASS; dist-qa grep 0 hits"
+  },
+  {
+   "id": "R4-AC-62",
+   "title": "Every input has a dedupe key",
+   "spec": "NN",
+   "status": "pass",
+   "evidence": "see R4-AC-22"
+  },
+  {
+   "id": "R4-AC-63",
+   "title": "RLS from the first migration",
+   "spec": "NN",
+   "status": "pass",
+   "evidence": "see R4-AC-2, -3"
+  },
+  {
+   "id": "R4-AC-64",
+   "title": "One navigation, one set of patterns",
+   "spec": "NN",
+   "status": "pass",
+   "evidence": "see R4-AC-54"
   }
  ],
  "notTested": [
   {
-   "what": "First run inside the shell (who is held, the native steps for real)",
-   "why": "needs the phone; the browser walks the simulator; docs/local.md B08 phone steps already queue it"
+   "what": "First run held in the shell for someone with Capture (D146 (2))",
+   "why": "inShell() is Capacitor's; Chromium can't be the shell. logic.test covers firstRunFor; the owner's phone step 1 covers it"
   },
   {
-   "what": "The shell's offline copy (Outbox v5) and its androidTest",
-   "why": "no emulator in a cloud session; CI runs them"
+   "what": "Home's 'Capture is off' after access is skipped",
+   "why": "comes from the shell's own status; queued in docs/local.md (B08 step 9)"
   },
   {
-   "what": "The eyes pass",
-   "why": "this session has no Agent tool: the main session spawns qa-eyes on qa-artifacts/B08_first-run-accounts/diff/index.md (10 trees and 12 entries' pixels changed)"
+   "what": "The shell's outbox v5 offline copy on a device",
+   "why": "emulator tests compile; CI runs them; not run here (no emulator)"
   },
   {
-   "what": "Claude Security / the built-in security review",
-   "why": "the main session's (D144)"
+   "what": "A row changed between two pages of /sync/changes",
+   "why": "not run by me (R4-AC-26.s)"
   },
   {
-   "what": "Kotlin core tests",
-   "why": "B08 didn't change apps/shell/core against origin/main"
+   "what": "Another person's account id typed into the account screen's URL",
+   "why": "the API's 404 was seen; the screen with a foreign id wasn't walked"
+  },
+  {
+   "what": "The eyes pass (qa-eyes) on the 12 changed entries",
+   "why": "this reviewer has no Agent tool; the main session spawns it from the qa skill's template"
+  },
+  {
+   "what": "Claude Code's security review of the diff (D144)",
+   "why": "the main session's to run; qa/B08/security.md is from an earlier run"
   }
  ]
 }

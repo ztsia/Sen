@@ -253,3 +253,90 @@ R3-FLOW-8  The invited friend's short first run (no capture)                   (
 R3-FLOW-9   `first-run` (= R3-FLOW-1, plus the e2e journey spec)
 R3-FLOW-10  `pay-new` (dev simulator: a new merchant's prompt, a category, a rule) — in the e2e journeys
 R3-FLOW-11  `scan-after` — in the e2e journeys
+
+# Run 4 (fresh full run, 10 Nov): flows from the docs, before the source
+
+At 390×844 in Chromium, Minted light. Native steps through the dev panel's simulator. IDs `R4-FLOW-n`.
+
+R4-FLOW-1  First run on the phone, start to Home                                   (happy, core)
+           Entry  a signed-in person before first run, shell with Capture (`?scenario=new` in a preview;
+                  Mei Ling on the local API)
+           Steps  1. *Step 2 of 7*: apps ticked (TNG, Ryt, Public Bank, Grab)  2. access: simulate granted
+                  3. Keep Sen running  4. accounts: one field per app, TNG says *eWallet and GO+ together*;
+                  type 1,2,8,4,5,0 → RM1,284.50; type 0 → RM0.00  5. name `TAN WEI MING`
+                  6. payday: last working day  7. finish
+           Ends   Home; Accounts lists each balance exactly; the total is their sum
+           Covers R4-AC-40, 42, 43, 44, 50   Spec §9.5; flows `first-run`
+
+R4-FLOW-2  Closed at step 4, reopened                                              (sad)
+           Steps  1. reach step 4  2. reload  3. reach step 5, type a balance, reload
+           Ends   step 4 shown after the first reload; step 5's typed balance kept after the second
+           Covers R4-AC-41   Spec B DW1; D146 (1)
+
+R4-FLOW-3  An empty balance, then a lost save                                      (sad)
+           Steps  1. leave one balance empty, tap continue  2. fill it; the save fails (server down/offline)
+           Ends   1: says what's missing, stays  2: error in words, what was typed kept; retry saves once
+           Covers R4-AC-42.s, 44.s
+
+R4-FLOW-4  Access refused                                                          (sad)
+           Steps  1. at access, *Skip for now*  2. finish the rest
+           Ends   Home shows *Capture is off* with *Fix*; the access step never comes back
+           Covers R4-AC-45   Spec flows `first-run` *When it goes wrong*
+
+R4-FLOW-5  A finished person never sees first run again                            (sad)
+           Steps  1. finish  2. go to `/first-run`  3. reload
+           Ends   Home each time
+           Covers R4-AC-40.s, 44   Spec D26
+
+R4-FLOW-6  The short first run, no Capture                                         (happy)
+           Entry  a person without Capture
+           Steps  categories (Cash locked on), switch one off, finish
+           Ends   Home with no balances; no Accounts in More; the switched-off category archived
+           Covers R4-AC-46, 50.s   Spec §9.6; D79; D147 (5)
+
+R4-FLOW-7  Accounts and an account                                                 (happy)
+           Steps  1. More → Accounts  2. open TNG
+           Ends   balance, opening balance, *From Touch 'n Go*, checked at opening; figures match the view
+           Covers R4-AC-50, 51
+
+R4-FLOW-8  An app chosen later (D148)                                              (happy + sad)
+           Steps  1. Settings → Capture → apps: choose another app  2. Accounts: it's under *Not added yet*
+                  3. *Add* with empty balance → refused  4. type 0 → RM0.00, save
+           Ends   one account for it, RM0.00, listed with the others; *Not added yet* gone
+           Covers R4-AC-27   Spec D148
+
+R4-FLOW-9  Categories in Settings                                                  (happy + sad)
+           Steps  1. rename Groceries to Market  2. add *Pets*  3. add *pets* again → refused in words
+                  4. set *Pets* discretionary  5. archive *Pets*, bring it back  6. try Unaccounted
+           Ends   rows match each step in `categories`; Unaccounted can't be edited or picked
+           Covers R4-AC-24, 52   Spec §8
+
+R4-FLOW-10 Settings → You                                                          (happy)
+           Steps  change name to add `WEI MING TAN`, payday to day 25, reload
+           Ends   both kept after reload; `user_settings` holds them
+           Covers R4-AC-53
+
+R4-FLOW-11 Another timezone                                                        (sad)
+           Steps  the browser in America/New_York; open Accounts and an account
+           Ends   same balances and opening date as in KL
+           Covers R4-AC-55
+
+## Core journeys (D124), walked every run
+
+R4-FLOW-C1 `first-run`: R4-FLOW-1.
+R4-FLOW-C2 `pay-new`: simulate *RM9.50 · ROTI BAKAR 88*; the prompt; tap a category. Ends: the payment
+           has it, a rule exists, a second payment there asks nothing. (Transactions are B09's; on a
+           preview this runs on the skeleton's fake.)
+R4-FLOW-C3 `scan-after`: Scan tab → confirm → *Done* → *Attached to …* with *Undo* (skeleton's fake).
+
+## Added after reading the source (weaker evidence: written knowing the code)
+
+R4-FLOW-12 An app's only account archived                                          (sad)
+           Steps  Account → Edit → *Archive this account*; open Accounts
+           Ends   one way back for the app, in words that are true
+           Covers R4-AC-28, D147 (4), D148
+R4-PROD    A production build (SEN_ENV=production) on the real API                 (happy)
+           Steps  Settings, Categories, Accounts, an account; the short first run
+           Ends   each opens with no page error; the short first run finishes
+R4-AC-28.s Bring back over a newer live account: refused in words
+R4-AC-41.s Sign out at step 5 with a balance typed: the next person starts at step 2, nothing typed

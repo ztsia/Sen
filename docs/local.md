@@ -89,6 +89,10 @@ follow on a phone, and commit.
      step 6 turn on airplane mode, type your name, *Next*; turn airplane mode off, wait a few seconds,
      *Finish*. Then Settings → *You* shows your name. In a browser the same steps lose the name, so only
      the shell can show it survives (D146 (8)).
+  9. **(QA B08 run 4, needs the shell: a browser can't show it):** on the review build as
+     `meiling@example.com`, at step 3 leave notification access off and tap *Skip for now*, then finish.
+     Home shows *Capture is off* with *Fix* (flows.md `first-run`, *Access refused*); *Fix* opens Android's
+     notification access. Turn it on and come back: the warning goes.
   Captured payments still don't book until B09 and B10. When they do, payments from before you
   finished step 4 count in spending but not in balances (§7). To try first run again on a preview
   first: the review build (*Sen review*), sign in as `meiling@example.com`, code `123456`; it resets on
