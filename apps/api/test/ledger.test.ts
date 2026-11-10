@@ -410,3 +410,54 @@ describe('a category added before first run (QA B08 run 2, finding 1)', () => {
     expect(meals.status).toBe(409);
   });
 });
+
+describe('the offline copy past one page (QA B08 run 3, finding 1)', () => {
+  it('brings every row exactly once when one table fills a page and another follows it', async () => {
+    const pager = { id: randomUUID(), email: `ledger-pager-${randomUUID()}@example.com` };
+    ours.push(pager.id);
+    await owner.query('insert into auth_user (id, name, email, email_verified) values ($1, $2, $3, true)', [
+      pager.id,
+      'Pager',
+      pager.email,
+    ]);
+    await owner.query('insert into user_access (user_id, is_admin, features) values ($1, false, $2)', [pager.id, ON]);
+    // 600 categories first, so their versions all come before the names'; then one account and 300 names
+    await owner.query(
+      "insert into categories (id, user_id, name, kind, position) select gen_random_uuid(), $1, 'C' || g, 'spend', g from generate_series(1, 600) g",
+      [pager.id],
+    );
+    const acct = randomUUID();
+    await owner.query(
+      "insert into accounts (id, user_id, name, kind, notifier_package, notifier_label) values ($1, $2, 'Ryt Bank', 'tracked', $3, $4)",
+      [acct, pager.id, RYT.package, RYT.label],
+    );
+    await owner.query(
+      "insert into account_names (id, user_id, package, label, account_id) select gen_random_uuid(), $1, $2, 'N' || g, $3 from generate_series(1, 300) g",
+      [pager.id, RYT.package, acct],
+    );
+    const { token } = await signIn(pager.email);
+    const seen = { categories: [] as string[], accounts: [] as string[], accountNames: [] as string[] };
+    let since = 0;
+    let pages = 0;
+    for (;;) {
+      const r = await call(`/api/sync/changes?since=${since}`, { bearer: token, origin: null });
+      expect(r.status).toBe(200);
+      for (const k of ['categories', 'accounts', 'accountNames'] as const)
+        seen[k].push(...(r.body?.[k] as { id: string }[]).map((x) => x.id));
+      pages++;
+      expect(r.body?.version).toBeGreaterThan(since);
+      since = r.body?.version as number;
+      if (!r.body?.more) break;
+      expect(pages).toBeLessThan(10);
+    }
+    expect(pages).toBe(2);
+    for (const [k, n] of [
+      ['categories', 600],
+      ['accounts', 1],
+      ['accountNames', 300],
+    ] as const) {
+      expect(seen[k]).toHaveLength(n);
+      expect(new Set(seen[k]).size).toBe(n);
+    }
+  });
+});
