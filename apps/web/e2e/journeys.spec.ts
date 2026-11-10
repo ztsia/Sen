@@ -814,6 +814,8 @@ export const JOURNEYS: Record<string, Journey> = {
     await shot('the push');
     await push.getByRole('button', { name: /^Open Home/ }).click();
     await expect(dialog(page, 'Native stand-ins')).toHaveCount(0);
+    // its navigation waits out the stand-in's sheet; the dev panel opened before it lands is closed by it
+    await expect(page.locator('html[data-stand-in-waiting]')).toHaveCount(0);
     await expect(page.getByText('Capture may be off')).toBeVisible();
     await shot('home, capture is off');
     // every widget goes dark with Fix
