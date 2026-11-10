@@ -13,9 +13,11 @@
   **Fixed** after the owner's go, as one tier-3 batch (a shared block's prop and `@sen/core`'s `Name`):
   `qa/B08/ledger.md` § *QA run 3: the fixes*. **D148** (the session's call on the owner's *Go*, open to
   overturn): an app chosen after first run gets its account on Accounts, under *Not added yet*.
-- **QA run 4** (`qa/B08/report.md`, eyes `eyes.md`, security re-review in `security.md`; same link, version 4):
-  *fix first*, no Blocker or Major, 6 Minor, 6 Notes, eyes 1 *wrong* (from main). **Waiting for the owner's go**
-  (they asked to stop after each QA run). More → Accounts' timing flag is still unexplained (finding 6).
+- **QA run 4** (`qa/B08/report.md`; same link, version 5): *fix first*, 6 Minor, 6 Notes. **Fixed** as tier 2
+  (`ledger.md` § *QA run 4: the fixes*; D149, `my_share` NULL is the whole amount), and re-checked by the same
+  reviewer, scoped: **ship**, 2 new Minor (13: only archived accounts leaves Accounts with no empty state; 14: no
+  test holds the amount's colour) and note 15 (every invalid field's label and message are red, against patterns
+  §2: the owner's call). **Waiting for the owner's go** before the PR. Finding 6 (More → Accounts timing) open.
 - **D145 (the owner, 4 Nov): one account per app.** Ryt's Main and its pockets are one account, TNG's eWallet
   and GO+ are one. No second account under an app, no *Add a pot*.
 - **Database:** migrations 0013–0014 (`accounts`, `account_names`, `categories`, `transactions`, views
