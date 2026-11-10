@@ -199,3 +199,57 @@ FLOW-R2-12 A category added in a browser before first run                  (sad)
            Steps  1. Settings → Categories  2. Add a category *Pets*  3. later, first run (/s/first-run)
            Ends   first run still seeds D33's list with Cash, Unaccounted and Salary
            Covers R2-AC-5   (written from the API probe that found `seed_categories()` seeds only for none)
+
+---
+
+# Run 3 (fresh full run, 10 Nov): flows from the docs, before the source
+
+R3-FLOW-1  First run end to end in the shell (owner)                           (happy, core)
+           Entry  sign in as a person who hasn't finished, shell + Capture
+           Steps  1. Step 2 of 7: apps ticked  2. access (simulated grant)  3. Keep Sen running
+                  4. accounts: one per chosen app, type balances (one "1,234.50", one "0")
+                  5. name TAN WEI MING  6. payday default  7. Home
+           Ends   Home; DB: one account per app with 123450 / 0 sen, own_names set, payday set,
+                  21 categories, setup_done_at set; Accounts shows the balances typed
+           Covers R3-AC-7, 15–20, 22
+
+R3-FLOW-2  Closed mid-setup                                                    (sad)
+           Steps  reach step 4 (Keep Sen running), reload; reach step 5, type a balance, reload
+           Ends   reopens at step 4, then at step 5 with the balance still typed
+           Covers R3-AC-19
+
+R3-FLOW-3  Bad balances                                                        (sad)
+           Steps  type "abc", "12.345", "-5", empty; press Next
+           Ends   no account saved; words on screen; Next blocked
+           Covers R3-AC-18.s
+
+R3-FLOW-4  A finished person never sees first run again                        (sad)
+           Steps  after FLOW-1, open /first-run directly; reload Home
+           Ends   Home, not first run
+           Covers R3-AC-16, 19.s
+
+R3-FLOW-5  Accounts and an account                                             (happy)
+           Steps  open Accounts; open one; back
+           Ends   total = sum of tracked; opening balance and the app shown; checked = opening
+           Covers R3-AC-22, 23
+
+R3-FLOW-6  Settings → Categories                                               (happy + sad)
+           Steps  rename Groceries → "Market"; add "Pets"; flag Pets discretionary; archive Pets;
+                  try to archive Cash; try a duplicate name; reload
+           Ends   DB matches; Cash not archivable; duplicate refused in words
+           Covers R3-AC-9, 24
+
+R3-FLOW-7  Settings → You                                                      (happy)
+           Steps  add a second name; set payday to 25; reload
+           Ends   user_settings own_names has both, expected_payday 25
+           Covers R3-AC-25
+
+R3-FLOW-8  The invited friend's short first run (no capture)                   (happy)
+           Steps  sign in; categories with Cash locked on; switch one off; finish
+           Ends   Home; no payday question; switched-off category archived
+           Covers R3-AC-21
+
+## Core journeys (D124), walked every run
+R3-FLOW-9   `first-run` (= R3-FLOW-1, plus the e2e journey spec)
+R3-FLOW-10  `pay-new` (dev simulator: a new merchant's prompt, a category, a rule) — in the e2e journeys
+R3-FLOW-11  `scan-after` — in the e2e journeys

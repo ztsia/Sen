@@ -505,3 +505,147 @@ R2-AC-42 First run's draft never reaches the next person on the device: sign-out
          signing in, empties `sen.firstRun`   (run 1 AC-21s; B08 security review)
 R2-AC-43 Playwright walks `first-run` with the native steps simulated, in all six looks   (brief done-when 5)
 R2-AC-44 pgTAP and the catalogue check cover every new table and view   (brief done-when 4)
+
+---
+
+# Run 3 (fresh full run, 10 Nov): criteria written from the docs before the source
+
+Written from `spec_v2.md` §7, §8, §9.5, §9.6, §15; D14, D17, D26, D33, D79, D86, D93, D145–D147;
+`docs/screens.md` (`first-run`, `accounts`, `account`, Settings → You / Categories and rules);
+`docs/flows.md` `first-run` (core); the brief. Not read before writing: the source, and the earlier
+runs' criteria. IDs are `R3-AC-n`; each sad twin is `n.s`.
+
+## Data (`sen_test` / my own `sen_qa`)
+
+R3-AC-1   Money columns are integer sen
+          Given  the migrated schema
+          When   `information_schema.columns` is read for `accounts.opening_balance`,
+                 `transactions.amount`, `transactions.my_share`
+          Then   each is `bigint`
+R3-AC-1.s A fractional opening balance is refused
+          When   `INSERT … opening_balance = 10.5` (as the API role, as a person)
+          Then   an error (or it's coerced only by an explicit cast nobody makes); never stored as 10.5
+          Spec   CLAUDE.md non-negotiable; §15
+
+R3-AC-2   RLS on every new table, forced, keyed on user_id
+          Then   `accounts`, `account_names`, `categories`, `transactions`, `user_settings` have
+                 `relrowsecurity` and `relforcerowsecurity` true and a policy comparing user_id
+R3-AC-2.s User B reads none of A's rows through any table or view (`account_balances`,
+          `balance_totals`), with no user id set reads 0 rows, and can't insert a row with A's user_id
+          Spec   CLAUDE.md; §15; D52
+
+R3-AC-3   Views are security_invoker
+          Then   `account_balances` and `balance_totals` have `security_invoker=true` in reloptions
+R3-AC-3.s As B, `select * from account_balances` returns no A row
+          Spec   §15
+
+R3-AC-4   Balance = opening + in − out, after opening_at only
+          Given  an account opening RM100.00 at T; transactions in RM50.00 at T+1s, out RM20.00 at
+                 T+1s, out RM7.00 at T−1s, in RM1000.00 at exactly T
+          Then   the balance is 13000 sen (10000 + 5000 − 2000), the T and T−1s rows not counted
+R3-AC-4.s A deleted (`deleted_at` set) transaction after T doesn't count; another person's
+          transaction naming this account is impossible (FK or RLS refuses)
+          Spec   §7 *Opening balance*, *Balance*; brief Done-when 2; D146(4)
+
+R3-AC-5   The total sums tracked accounts only
+          Given  two tracked accounts (13000, 5000) and one elsewhere and one archived
+          Then   `balance_totals` = 18000; elsewhere shows no balance (§7)
+R3-AC-5.s A person with no accounts gets a total of 0 or no row, never an error
+          Spec   §7 *Elsewhere*, *Balance*
+
+R3-AC-6   One live account per app
+          When   a second live account with the same `notifier_package` is inserted for one person
+          Then   it's refused (unique violation)
+R3-AC-6.s The same package for two different people is allowed; an archived account doesn't block a
+          new one
+          Spec   D145, D146(6)
+
+R3-AC-7   Categories seeded once from the starting list
+          Given  a person after first run's start
+          Then   exactly 18 spend categories with the names of §8, and 3 income (Salary, Interest &
+                 returns, Other income); flags: Meals is_meal; Drinks & desserts is_beverage +
+                 is_discretionary; Shopping, Entertainment, Gifts & treats, Travel is_discretionary;
+                 nothing else flagged; system keys salary, cash, unaccounted on Salary, Cash,
+                 Unaccounted
+R3-AC-7.s Starting first run again (retry) adds nothing: still 21 rows; a person who already has
+          categories gets none added
+          Spec   §8; D33; D146(3)
+
+R3-AC-8   Unaccounted can't be picked by hand
+          Then   Unaccounted isn't offered in any category picker (Settings → Categories lists it
+                 read-only or not at all); the API refuses a manual transaction / rule on it
+R3-AC-8.s A transaction of kind ≠ adjustment booked to Unaccounted is refused by the database
+          Spec   §8; brief Done-when 3; D146(6)
+
+R3-AC-9   System categories are never archived; renaming one breaks nothing
+          When   Cash is renamed "Tunai"
+          Then   its system_key is still `cash`
+R3-AC-9.s Archiving Salary/Cash/Unaccounted is refused (API error shape, and the DB check)
+
+R3-AC-10  Composite user_id references
+          When   B inserts a transaction with A's account_id, or an account_name naming A's account
+          Then   refused (FK failure), with no signal whether the id exists
+          Spec   D146(5)
+
+## API (`apps/api`, local)
+
+R3-AC-11  GET /accounts lists the person's accounts with balance from the view, opening balance and
+          opening_at, feeding app, and `archived` ones separately
+R3-AC-11.s Signed out → 401 `{code,message}`; capture off → 403 `capture_off` (D146(7)); B gets none
+          of A's
+R3-AC-12  GET /accounts/:id for one's own account → the account; another's id → 404 (not 403)
+R3-AC-12.s A malformed id → 400/404 structured, never 500
+R3-AC-13  Opening balance correction keeps `opening_at` (D146(4))
+R3-AC-13.s A negative, fractional ("12.345"), non-numeric, or huge (> 2^53) opening balance is
+          refused with `{code,message,field}`
+R3-AC-14  Every write is idempotent: the same command (same id) twice changes nothing — one account,
+          one category
+R3-AC-14.s Two first-run "add account" calls for the same app (different ids) → one live account,
+          the second is refused or upserts
+R3-AC-15  /me says `setupDone` after first run finishes; before, false
+R3-AC-15.s Finishing twice changes `setup_done_at` once (or keeps the first)
+
+## First run (web, 390×844, native steps simulated)
+
+R3-AC-16  A signed-in person in the shell with Capture who hasn't finished is sent to first run at
+          *Step 2 of 7*; a finished person never sees it again (D26, D146(2))
+R3-AC-16.s A person with Capture in a plain browser isn't sent to first run (D146(2))
+R3-AC-17  The accounts step offers exactly one account per chosen app, named from the curated list,
+          and nothing else (no *Add a pot*, no Elsewhere) (D145, §7)
+R3-AC-17.s Un-ticking an app in step 2 removes its account from step 5; a card wallet (Google
+          Wallet) gets no account
+R3-AC-18  A balance typed "1,234.50" is stored as 123450 sen; "0" is RM0.00 and allowed (D147(1))
+R3-AC-18.s Empty balance blocks *Next* with words; "12.345", "abc", "-5" are refused in words; no
+          float at any step
+R3-AC-19  Reload at each step reopens at the same step with what was typed (D146(1))
+R3-AC-19.s After finishing, a reload goes Home, not back into first run; steps never come back (D26)
+R3-AC-20  The name step stores own_names = {'TAN WEI MING'}; the payday step stores the last working
+          day by default, or a day number 1–31
+R3-AC-20.s Payday 0 or 32 refused; an empty name is allowed or refused in words, never a crash
+R3-AC-21  The short first run (no capture) is sign in and categories, any switchable off except
+          Sen's own (Cash locked on, D147(5)); no payday question (D79)
+
+## Screens made real
+
+R3-AC-22  Accounts shows the total and each tracked account's balance from the view, its line saying
+          what the one figure holds (*eWallet and GO+ together*), archived ones with *Bring back*
+          (D147(3),(4))
+R3-AC-22.s Empty state per patterns when no accounts; error state when the API fails
+R3-AC-23  Account shows balance, opening balance, the app that feeds it; `checkedAt` = opening_at
+          (D147(2))
+R3-AC-24  Settings → Categories: rename, add, archive, set flags — each persists across reload and is
+          in the DB
+R3-AC-24.s Duplicate name, empty name, over-long name refused in words; Unaccounted's flags locked
+R3-AC-25  Settings → You: names and expected payday persist (row in user_settings)
+R3-AC-25.s Without capture, names aren't shown (screens.md: names capture only)
+
+## Non-negotiables touched
+
+R3-AC-26  No float in money: grep of the diff for parseFloat/toFixed/Number( on amounts → none in
+          money paths
+R3-AC-27  Every input has a dedupe key: first-run writes carry client ids; a replayed outbox
+          `setting.set` is a no-op
+R3-AC-28  The admin reads nobody's accounts, balances or categories
+R3-AC-29  One set of UI patterns: the new screens use patterns.md's list row, form, empty/loading/
+          error states
+R3-AC-30  The built bundle holds no secret
