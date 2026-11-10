@@ -391,3 +391,22 @@ describe('the offline copy (§5)', () => {
     expect(await count('select count(*) n from categories where user_id = $1 and id = $2', [me.id, id])).toBe(1);
   });
 });
+
+describe('a category added before first run (QA B08 run 2, finding 1)', () => {
+  it('joins the starting list, with Sen’s own three, and first run seeds nothing twice', async () => {
+    const pets = randomUUID();
+    expect((await run(s.other.cookie, { type: 'category.add', id: pets, name: 'Pets', kind: 'spend' })).status).toBe(
+      200,
+    );
+    expect((await run(s.other.cookie, { type: 'setup.start' })).status).toBe(200);
+    const rows = (
+      await owner.query('select name, system_key from categories where user_id = $1 order by position', [other.id])
+    ).rows as { name: string; system_key: string | null }[];
+    expect(rows).toHaveLength(22);
+    expect(rows.at(-1)?.name).toBe('Pets');
+    expect(rows.filter((r) => r.system_key).map((r) => r.system_key)).toEqual(['cash', 'unaccounted', 'salary']);
+    // a starting name is the starting one, not a second
+    const meals = await run(s.other.cookie, { type: 'category.add', id: randomUUID(), name: 'Meals', kind: 'spend' });
+    expect(meals.status).toBe(409);
+  });
+});

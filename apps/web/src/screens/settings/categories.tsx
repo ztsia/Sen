@@ -106,7 +106,7 @@ function CategoryGrid({ categories, onOpen }: { categories: Cat[]; onOpen: (id: 
       <EmptyState
         icon={LayoutGridIcon}
         title="No categories yet"
-        line="Categories show here once your first payment is in."
+        line="Sen’s starting list comes with first run. One you add now joins it."
       />
     );
   const live = categories.filter((c) => !c.archived);

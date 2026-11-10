@@ -9,13 +9,17 @@ import type { AreaApply } from './ctx';
 
 const live = (db: Db) => db.categories.filter((c) => !c.archivedAt);
 
+/** seed_categories(): the starting list for a person with no categories yet; whether it made one. */
+function seed(db: Db): boolean {
+  if (db.categories.length) return false;
+  db.categories = startingList().map((c) => ({ ...c, userId: db.userId }));
+  return true;
+}
+
 export const applyLedger: AreaApply = (db, cmd) => {
   switch (cmd.type) {
-    case 'setup.start': {
-      if (db.categories.length) return { said: 'Setup continues', touched: [] };
-      db.categories = startingList().map((c) => ({ ...c, userId: db.userId }));
-      return { said: 'Your categories are ready', touched: [] };
-    }
+    case 'setup.start':
+      return { said: seed(db) ? 'Your categories are ready' : 'Setup continues', touched: [] };
     case 'setup.finish':
       db.setupDone = true;
       return { said: 'You’re all set', touched: [] };
@@ -63,6 +67,7 @@ export const applyLedger: AreaApply = (db, cmd) => {
 
     case 'category.add': {
       if (db.categories.some((c) => c.id === cmd.id)) return { said: `${cmd.name} added`, touched: [] };
+      seed(db);
       if (live(db).some((c) => c.name.toLowerCase() === cmd.name.toLowerCase()))
         throw new Error('You already have a category with that name.');
       db.categories.push({

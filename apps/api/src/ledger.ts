@@ -187,23 +187,22 @@ export function ledgerRoutes() {
 
 // --- commands ------------------------------------------------------------------------------------
 
+/** The starting list (§8, D33) for a person who has no categories yet, audited; how many it made. */
+async function seedCategories(db: Db, me: string): Promise<number> {
+  const r = await db.execute<{ n: number }>(sql`select seed_categories() as n`);
+  const n = r.rows[0]?.n ?? 0;
+  if (n)
+    await audit(db, { userId: me, entity: 'categories', entityId: me, action: 'seed', after: { n }, actor: 'system' });
+  return n;
+}
+
 /** One ledger command, as its person, with its audit entry and its undo. */
 export async function runLedgerCommand(v: Vars, cmd: LedgerCommand): Promise<WriteResult> {
   const me = v.person.id;
   switch (cmd.type) {
     case 'setup.start':
       return v.db(async (db) => {
-        const r = await db.execute<{ n: number }>(sql`select seed_categories() as n`);
-        const n = r.rows[0]?.n ?? 0;
-        if (n)
-          await audit(db, {
-            userId: me,
-            entity: 'categories',
-            entityId: me,
-            action: 'seed',
-            after: { n },
-            actor: 'system',
-          });
+        const n = await seedCategories(db, me);
         return { said: n ? 'Your categories are ready' : 'Setup continues', undo: null };
       });
 
@@ -339,6 +338,9 @@ export async function runLedgerCommand(v: Vars, cmd: LedgerCommand): Promise<Wri
     case 'category.add':
       return guarded(() =>
         v.db(async (db) => {
+          // a category added before first run comes after the starting list, never instead of it
+          // (QA B08 run 2, finding 1): Sen's own three must exist for B10 and B13
+          await seedCategories(db, me);
           const c = schema.categories;
           const [row] = await db
             .insert(c)
