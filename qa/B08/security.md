@@ -36,3 +36,21 @@ false-positive filter's bar (confidence 8 of 10), so none is reported.
   not saved, the name, the payday) isn't tied to a person and isn't cleared at sign-out, so on a shared
   device the next person to sign in mid-first-run would see the last one's half-typed balances. Fixed
   on the branch: `forgetSession()` clears it (see `qa/B08/ledger.md`).
+
+## Re-review for QA run 4 (10 Nov, at `627048c`)
+
+D144's review of what changed since `8731661` in `apps/api/src`, `packages/core/src` and the migrations (QA runs
+1–3's fixes; no migration changed). **No High or Medium.**
+
+- **The access middleware** now reads `setup_done_at` with the access row: one `LEFT JOIN user_settings` on
+  `user_id`, inside `asPerson`, so RLS still bounds it; the value only feeds `/me`'s `setupDone` and the
+  first-run redirect, which is routing, not a permission.
+- **`GET /accounts`'s archived list:** parameterised, filtered by `(user_id = me)` under RLS, behind
+  `needsCapture`; returns id and name only.
+- **`account.add` on a retried id:** the name it answers with is read by `(me, id)` under RLS, so a conflict on
+  an id someone else holds can't reveal their account's name.
+- **`category.add`** calls `seed_categories()` first: `SECURITY INVOKER`, pinned `search_path`, refuses with no
+  person set (unchanged).
+- **`Name`** now refuses control and bidi-override characters: hardening, not a hole closed. Zero-width
+  characters still pass (QA run 4, note 9): a look-alike name in one person's own list, no cross-person reach.
+- **Money:** `typedSen` and `pastedSen` change text formatting only; amounts still reach sen through `parseSen`.
