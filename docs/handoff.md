@@ -8,8 +8,13 @@
   https://claude.ai/artifact/Pkj1my3wTFBwiM5qfvNnvv, version 2): *fix first*, 1 Major (a category added before
   first run stopped the starting list), 7 Minor, 8 Notes, 2 eyes *wrong*. **Fixed** after the owner's go, as one
   tier-3 batch (the access middleware and the frame changed): `qa/B08/ledger.md` § *QA run 2: the fixes*.
-- **QA run 3** is next: a fresh full run. The owner asked to stop after each QA run and wait for their go
-  before fixing or opening the PR.
+- **QA run 3** (`qa/B08/report.md`, eyes `qa/B08/eyes.md`, run 2's eyes now `eyes-run2.md`; same link, version 3):
+  *fix first*, 1 Major (no test paged the offline copy past one page), 6 Minor, 4 Notes, eyes 0 *wrong*.
+  **Fixed** after the owner's go, as one tier-3 batch (a shared block's prop and `@sen/core`'s `Name`):
+  `qa/B08/ledger.md` § *QA run 3: the fixes*. **D148** (the session's call on the owner's *Go*, open to
+  overturn): an app chosen after first run gets its account on Accounts, under *Not added yet*.
+- **QA run 4** is next: a fresh full run. The owner asked to stop after each QA run and wait for their go
+  before fixing or opening the PR. Run 3's flag on More → Accounts is still unexplained (finding 6).
 - **D145 (the owner, 4 Nov): one account per app.** Ryt's Main and its pockets are one account, TNG's eWallet
   and GO+ are one. No second account under an app, no *Add a pot*.
 - **Database:** migrations 0013–0014 (`accounts`, `account_names`, `categories`, `transactions`, views
@@ -25,7 +30,8 @@
 
 ## What to do next
 
-1. QA run 3 (fresh `qa-reviewer`, thin prompt). Commit its record, start its eyes pass, publish, report to the
+1. QA run 4 (fresh `qa-reviewer`, thin prompt; rename `report.md` to `report-run3.md` and `eyes.md` to
+   `eyes-run3.md` first). Commit its record, start its eyes pass, publish, report to the
    owner, and wait for their go.
 2. Then the retro at the bottom of `qa/B08/ledger.md`, `usage.mjs --log B08`, the PR *B08 · First run, accounts
    and categories*, and CLAUDE.md's Built/Next line.
@@ -41,6 +47,9 @@
   account, D145). B09 also decides what happens to an app's account when the app is un-chosen (QA B08 note 13).
 - Stored credit without an app and *Elsewhere* accounts have no *Add* yet (D145 kept them; the brief
   didn't ask for the screen). B11 needs Elsewhere for transfers.
+- Whether an account can open below zero (QA B08 run 3, note 9): the API accepts it, the phone can't type it.
+- QA tooling: the tree check reads a regex as a prefix, so added text passes (QA B08 runs 2 and 3); the
+  console metric should ignore Chromium's *cross-world service worker* preload warning.
 - QA tooling: the core journey's scan-after step waits for a 0.4–0.8 s screen and races it under load (QA
   B08 run 1, 12); it should wait for the step's outcome.
 - Earlier ones: B07 QA 14 and notes 7–9 (`qa/B07/ledger.md`); no Kotlin breakage checks; Members →
@@ -57,4 +66,4 @@
 
 ## Don't argue again
 
-- D129–D147. One account per app (D145). Deploys happen only by merge (D122).
+- D129–D148. One account per app (D145). Deploys happen only by merge (D122).

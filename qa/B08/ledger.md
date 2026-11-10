@@ -104,3 +104,35 @@ Left, with reasons:
 After the fixes: typecheck, lint, unit 483, `test:db` (pgTAP 462, API 199 + 13 skipped), `e2e:server` 7/7,
 the eight new breakage checks 8/8 killed, `pnpm e2e` 1414/1415. The one failure, `capture-off`'s click on the
 dev panel's *Widgets* while the panel re-rendered, passed 3/3 run alone (`--repeat-each 3`): load, not this slice.
+
+## QA run 3: the fixes (10 Nov)
+
+**The batch is tier 3, so run 4 is a fresh full run.** `MoneyInput`, a shared building block, gains a
+`placeholder` prop (its default unchanged), and every named command's `Name` in `@sen/core/commands` now refuses
+control and direction characters; Accounts gains a feature (D148). When unsure, a tier up. Commits
+`d2f84e9`..HEAD. The run's metrics verdicts are the reviewer's, in `report.md` § Metrics verdicts.
+
+| # | Fix | Proof it's guarded |
+|---|---|---|
+| 1 (Major) | `ledger.test.ts` › *the offline copy past one page*: 600 categories, then an account and 300 names, paged to the end; every row arrives exactly once, in two pages | Breakage check `b08r3-changes-page-skips`: survived in run 3, **killed** now (`mutants.mjs --only`, 13 s) |
+| 2 | *In 1 account* | Run 4 |
+| 3 | A taken name is said under Name: Categories' rename and add read the error's `field` (the API's, and the made-up backend's now too) instead of toasting it | Red: `journeys.spec.ts` › *a taken category name is said under Name* fails on the old screen (*element(s) not found*); green |
+| 4 | First run's balance fields are empty, not a grey 0.00 (`placeholder=""`) | Run 4's eyes |
+| 5 | The stale `balance-check` tree was committed with run 3's record. The tree check reading a regex as a prefix is QA tooling: follow-up in the handoff | — |
+| 6 | Not fixed, not explained: the harness's More → Accounts (816–869 ms against main's 446–511) disagrees with the reviewer's own probe (equal). Run 4 measures it again on these changes, which touch Accounts | Run 4 |
+| 7 | **D148:** Accounts lists each chosen app with no account under *Not added yet*, with *Add*, asking today's balance as first run does | `journeys.spec.ts` › *an app chosen after first run is added on Accounts*: empty refused, then RM42.50 added, *In 5 accounts*, the section gone |
+| Note 10 | A retried `account.add` says the name it was saved under | Red: `ledger.test.ts` › *a retried add says the name it was saved under* (*Received "New Bank added"*); green |
+| Note 11 | Names refuse control characters and direction overrides (U+202E and kin), 400 on `name` | Red: *refuses a name that would show reversed* (*expected 200 to be 400*); green |
+| Eyes: accounts | Every row has one line, the app then what its figure holds: *From TNG eWallet · eWallet and GO+ together* | Trees re-recorded |
+| Eyes: accounts@capture-off | Capture's warning (Home's block) sits above the total, where the balances are read | Trees re-recorded |
+| Eyes: settings/categories | *Add a category* sits above both groups | Trees re-recorded |
+| Eyes: balance-check/5 | Walked: after *Save*, Home's total moved by the difference (RM29,871.77 → RM29,870.90) and the gap reads RM0.87 | No change needed |
+| Format | QA's B08 specs and probes formatted: CI's `format:check` failed on them | `pnpm format:check` clean |
+
+Left, with reasons:
+- **Eyes, first run's accounts step (bring back *set it later*):** flows.md step 5 asks each account for today's
+  balance (D146 (4)), so a blank stays refused. The grey 0.00 that contradicted the error is gone (finding 4).
+- **Eyes, account's dates, an own-account transfer shown as income, balance-check's 0.00 placeholder:** the made-up
+  data and skeleton screens on `main` (B11, B13).
+- **Notes 8 and 9:** only the API writes accounts and it refuses a non-integer; whether an opening can be below
+  zero is the spec's open question, in the handoff.
