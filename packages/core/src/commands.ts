@@ -35,7 +35,16 @@ const DraftItem = z.object({
 });
 
 /** A name as people type it: trimmed, never empty. */
-const Name = (max: number) => z.string().trim().min(1, 'Type a name.').max(max, `Keep it to ${max} characters.`);
+/** Control characters and direction overrides, which would show a name reversed or broken (QA B08 run 3, note 11). */
+// eslint-disable-next-line no-control-regex -- control characters are what it refuses
+const UNSHOWABLE = /[\u0000-\u001f\u007f\u200e\u200f\u202a-\u202e\u2066-\u2069]/;
+const Name = (max: number) =>
+  z
+    .string()
+    .trim()
+    .min(1, 'Type a name.')
+    .max(max, `Keep it to ${max} characters.`)
+    .refine((t) => !UNSHOWABLE.test(t), 'Use letters, numbers and punctuation.');
 
 export const Command = z.discriminatedUnion('type', [
   /**

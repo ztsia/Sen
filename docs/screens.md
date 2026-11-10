@@ -343,7 +343,8 @@ each; its note (D90); *View photo*, or the email in a sandboxed view for a body-
 ### `accounts`, `account`, `balance-check`
 
 Capture only. `accounts`: the total; each tracked account with its balance and when it was last
-checked; *Elsewhere* accounts, without balances (§7); *Check balances*. `account`: its balance,
+checked; *Elsewhere* accounts, without balances (§7); *Not added yet*, each chosen app with no account and
+*Add*, asking for today's balance (D148); *Check balances*. `account`: its balance,
 opening balance, the app that feeds it, its recent payments and its checks. `balance-check`: each
 account's balance beside a box for the bank's figure, with *Matches* (D18); *Save* books each
 difference as *Unaccounted* (§7). It's also step 2 of `payday`.

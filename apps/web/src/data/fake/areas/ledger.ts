@@ -69,7 +69,7 @@ export const applyLedger: AreaApply = (db, cmd) => {
       if (db.categories.some((c) => c.id === cmd.id)) return { said: `${cmd.name} added`, touched: [] };
       seed(db);
       if (live(db).some((c) => c.name.toLowerCase() === cmd.name.toLowerCase()))
-        throw new Error('You already have a category with that name.');
+        throw Object.assign(new Error('You already have a category with that name.'), { field: 'name' });
       db.categories.push({
         id: cmd.id,
         userId: db.userId,
@@ -94,7 +94,7 @@ export const applyLedger: AreaApply = (db, cmd) => {
         cmd.name !== undefined &&
         live(db).some((x) => x.id !== c.id && x.name.toLowerCase() === cmd.name!.toLowerCase())
       )
-        throw new Error('You already have a category with that name.');
+        throw Object.assign(new Error('You already have a category with that name.'), { field: 'name' });
       const renamed = cmd.name !== undefined && cmd.name !== c.name;
       if (cmd.name !== undefined) c.name = cmd.name;
       if (cmd.meal !== undefined) c.isMeal = cmd.meal;
@@ -108,7 +108,7 @@ export const applyLedger: AreaApply = (db, cmd) => {
       if (cmd.archived && c.systemKey)
         throw new Error('Sen needs this category, so it can’t be archived. You can rename it.');
       if (!cmd.archived && live(db).some((x) => x.id !== c.id && x.name.toLowerCase() === c.name.toLowerCase()))
-        throw new Error('You already have a category with that name.');
+        throw Object.assign(new Error('You already have a category with that name.'), { field: 'name' });
       c.archivedAt = cmd.archived ? nowIso() : null;
       return { said: cmd.archived ? `${c.name} archived` : `${c.name} is back`, touched: [] };
     }

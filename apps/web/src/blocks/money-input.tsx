@@ -30,6 +30,8 @@ interface MoneyInputProps {
   onEnter?: () => void;
   /** The currency shown before the amount: `RM` unless it's another currency's (a subscription's, D134). */
   prefix?: string;
+  /** What an empty field shows: `0.00`, unless a balance is asked for and 0 would read as typed (QA B08 run 3, 4). */
+  placeholder?: string;
 }
 
 /**
@@ -56,6 +58,7 @@ export function MoneyInput({
   autoFocus,
   onEnter,
   prefix = 'RM',
+  placeholder = '0.00',
 }: MoneyInputProps) {
   const id = useId();
   const [blurError, setBlurError] = useState<string | undefined>();
@@ -78,7 +81,7 @@ export function MoneyInput({
           enterKeyHint="done"
           autoComplete="off"
           spellCheck={false}
-          placeholder="0.00"
+          placeholder={placeholder}
           // a form's own text (`1284.50`, from an amount it already had) shows as typing would show it
           value={typedSen(value)}
           autoFocus={autoFocus}

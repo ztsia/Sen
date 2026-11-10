@@ -1,7 +1,12 @@
-import { ScaleIcon, Undo2Icon, WalletIcon } from 'lucide-react';
+import { useState } from 'react';
+import { PlusIcon, ScaleIcon, Undo2Icon, WalletIcon } from 'lucide-react';
 import type { AccountRow, AccountsView } from '@sen/core/views';
+import { CaptureWarnings } from '@/blocks/capture-warnings';
 import { Money } from '@/blocks/money';
+import { checkAmount, MoneyInput } from '@/blocks/money-input';
 import { GroupCard } from '@/blocks/group';
+import { Pending } from '@/blocks/pending';
+import { Sheet } from '@/blocks/sheet';
 import { EmptyState } from '@/blocks/states';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,9 +16,12 @@ import { useAccountList, useMe, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { shortDay } from '@/lib/dates';
+import { newId } from '@/lib/uid';
+import { SenCapture, captureReachable } from '@/shell/bridge';
+import { useBridge } from '@/shell/use-bridge';
 import { klDay } from '@sen/core/cycles';
 import { canOpen } from '../can-open';
-import { HOLDS } from '../outside/logic';
+import { accountHint, HOLDS, suggestAccounts, type AccountSuggestion } from '../outside/logic';
 import { Loaded, useGo } from '../kit';
 
 /** *Checked 1 Oct · Ryt Bank*: when it was last checked and the app that feeds it. */
@@ -77,21 +85,28 @@ function Body({ v }: { v: AccountsView }) {
   const go = useGo();
   if (!v.tracked.length && !v.archived.length)
     return (
-      <EmptyState
-        icon={WalletIcon}
-        title="No accounts yet"
-        line="Each app you choose for Sen to read gets an account here, with the balance you type for it."
-        action={
-          canOpen('settings/capture/apps')
-            ? { label: 'Choose apps', onSelect: () => go('settings/capture/apps') }
-            : undefined
-        }
-      />
+      <div className="flex flex-col gap-5 pt-2 pb-8">
+        <NotAdded tracked={[]} />
+        <EmptyState
+          icon={WalletIcon}
+          title="No accounts yet"
+          line="Each app you choose for Sen to read gets an account here, with the balance you type for it."
+          action={
+            canOpen('settings/capture/apps')
+              ? { label: 'Choose apps', onSelect: () => go('settings/capture/apps') }
+              : undefined
+          }
+        />
+      </div>
     );
   return (
     <div className="flex flex-col gap-5 pt-2 pb-8">
+      {/* capture stopped: these balances stop moving, so say so where they're read (QA B08 run 3, eyes) */}
+      <CaptureWarnings className="mx-4 w-auto" />
       <div className="flex flex-col gap-1 px-4">
-        <p className="text-sm text-muted-foreground">In {v.tracked.length} accounts</p>
+        <p className="text-sm text-muted-foreground">
+          In {v.tracked.length} {v.tracked.length === 1 ? 'account' : 'accounts'}
+        </p>
         <Money sen={v.total} className="text-4xl font-semibold" />
         {v.gap ? (
           <p className="text-sm text-muted-foreground">
@@ -128,10 +143,9 @@ function Body({ v }: { v: AccountsView }) {
                         {a.checkedAt ? `Checked ${shortDay(klDay(a.checkedAt))}` : 'Not checked'}
                       </Badge>
                     ) : null}
-                    {a.app && a.app !== a.name ? <span className="truncate">{a.app}</span> : null}
-                    {/* one account per app (D145): what its figure holds, so it's checked whole */}
-                    {/* its own line, wrapped, never cut: the words make the figure checkable (QA B08 run 2, 3) */}
-                    {a.package && HOLDS[a.package] ? <span className="basis-full">{HOLDS[a.package]}</span> : null}
+                    {/* one line, the same on every row: the app it's from, then what its one figure holds
+                        (D145), wrapped, never cut (QA B08 run 2, 3; run 3, eyes) */}
+                    {sourceLine(a) ? <span className="basis-full">{sourceLine(a)}</span> : null}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions className="max-w-[45%] shrink-0 justify-end text-right">
@@ -158,8 +172,104 @@ function Body({ v }: { v: AccountsView }) {
           </Card>
         </section>
       ) : null}
+      <NotAdded tracked={v.tracked} />
       <Archived rows={v.archived} />
     </div>
+  );
+}
+
+/** *From Touch 'n Go eWallet · eWallet and GO+ together*: the app that feeds it, and what its figure holds. */
+const sourceLine = (a: AccountRow) =>
+  [a.app ? `From ${a.app}` : null, a.package ? (HOLDS[a.package] ?? null) : null].filter(Boolean).join(' · ');
+
+/**
+ * The apps chosen after first run with no account yet (D148): each is added here with the balance it
+ * shows today, as first run asks, since only first run made accounts before.
+ */
+function NotAdded({ tracked }: { tracked: AccountRow[] }) {
+  const reachable = captureReachable();
+  const apps = useBridge(() => (reachable ? SenCapture.apps() : Promise.resolve({ apps: [] })));
+  const [adding, setAdding] = useState<AccountSuggestion | null>(null);
+  const missing = apps.data ? suggestAccounts(apps.data.apps, tracked).filter((a) => !a.saved) : [];
+  if (!missing.length) return null;
+  return (
+    <>
+      <GroupCard label="Not added yet" footer="Apps you chose after first run. Each gets one account.">
+        {missing.map((a) => (
+          <div key={a.package} className="flex min-h-14 items-center gap-3 px-4 py-2">
+            <BankTile name={a.name} />
+            <span className="min-w-0 flex-1 truncate text-base">{a.name}</span>
+            <Button variant="ghost" size="sm" aria-label={`Add ${a.name}`} onClick={() => setAdding(a)}>
+              <PlusIcon aria-hidden="true" />
+              Add
+            </Button>
+          </div>
+        ))}
+      </GroupCard>
+      <AddSheet key={adding?.package ?? 'none'} app={adding} onClose={() => setAdding(null)} />
+    </>
+  );
+}
+
+/** Today's balance for one app's account, asked as first run asks it: empty is refused, 0 counts. */
+function AddSheet({ app, onClose }: { app: AccountSuggestion | null; onClose: () => void }) {
+  const write = useWrite();
+  // one id per sheet, so a save whose answer was lost and is tapped again is the same account
+  const [id] = useState(newId);
+  const [text, setText] = useState('');
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    if (!app) return;
+    const c = checkAmount(text);
+    if (!text.trim()) return setError('Type today’s balance, or 0.');
+    if (c.error !== undefined) return setError(c.error);
+    setBusy(true);
+    const r = await write({
+      type: 'account.add',
+      id,
+      name: app.name,
+      kind: 'tracked',
+      app: { package: app.package, label: app.label },
+      opening: c.sen,
+    });
+    setBusy(false);
+    if (r && !r.failed) onClose();
+  };
+  return (
+    <Sheet
+      open={!!app}
+      onOpenChange={(o) => !o && onClose()}
+      title={app ? `Add ${app.name}` : 'Add an account'}
+      description="Type the balance the app shows today. Sen counts from here."
+    >
+      <form
+        className="flex flex-col gap-4 pt-2 pb-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!busy) void save();
+        }}
+      >
+        {app ? (
+          <MoneyInput
+            label="Today’s balance"
+            hint={accountHint(app)}
+            placeholder=""
+            value={text}
+            error={error}
+            onChange={(t) => {
+              setText(t);
+              setError(undefined);
+            }}
+          />
+        ) : null}
+        <Button type="submit" aria-disabled={busy || undefined}>
+          <Pending on={busy} label="Saving…">
+            Add account
+          </Pending>
+        </Button>
+      </form>
+    </Sheet>
   );
 }
 

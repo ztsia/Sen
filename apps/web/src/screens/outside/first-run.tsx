@@ -340,6 +340,8 @@ function Accounts({
                     key={a.package}
                     label={a.name}
                     hint={accountHint(a)}
+                    // empty looks empty: a grey 0.00 read as typed beside *Type today's balance, or 0*
+                    placeholder=""
                     value={text(a)}
                     error={errors[a.package]}
                     onChange={(t) => {

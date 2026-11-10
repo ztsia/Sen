@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { useSettings, useWrite } from '@/data/hooks';
+import type { Command } from '@sen/core/commands';
+import { toastDone, toastUndo } from '@/blocks/toast';
+import { runCommand, useSettings, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { readableName } from '@/lib/names';
@@ -33,6 +35,26 @@ const NAME_MAX = 40;
 /** A typed name, trimmed: the words to show when it can't be saved, or null when it can. */
 const nameError = (text: string) =>
   text.trim() === '' ? 'Type a name.' : text.trim().length > NAME_MAX ? `Keep it to ${NAME_MAX} characters.` : null;
+
+/**
+ * A rename or an add. A taken name is said under the Name field, where it's put right, not in a toast
+ * over the sheet: the server names the field it refuses (QA B08 run 3, 3).
+ */
+async function writeNamed(cmd: Command, onName: (message: string) => void) {
+  try {
+    const r = await runCommand(cmd);
+    if (!r.failed) {
+      if (r.canUndo) toastUndo(r.said, r.undo);
+      else toastDone(r.said);
+    }
+    return r;
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'That didn’t save. Try again.';
+    if ((e as { field?: unknown }).field === 'name') onName(message);
+    else toastDone(message);
+    return null;
+  }
+}
 type Rule = { id: string; merchant: string; category: string; hawker: boolean; setBy: 'user' | 'agent' };
 
 /**
@@ -68,13 +90,14 @@ function Body({ categories, rules }: { categories: Cat[]; rules: Rule[] }) {
       />
       {tab === 'categories' ? (
         <>
-          <CategoryGrid categories={categories} onOpen={setOpenId} />
+          {/* above both groups, so it reads as for either, not as the income group's (QA B08 run 3, eyes) */}
           <div className="px-4">
             <Button variant="outline" className="w-full" onClick={() => setAdding(true)}>
               <PlusIcon aria-hidden="true" />
               Add a category
             </Button>
           </div>
+          <CategoryGrid categories={categories} onOpen={setOpenId} />
         </>
       ) : (
         <RuleList rules={rules} />
@@ -173,7 +196,7 @@ function CategoryDetail({ cat, rules, onClose }: { cat: Cat; rules: Rule[]; onCl
     if (e) return;
     const next = name.trim();
     if (next === cat.name) return;
-    await write({ type: 'category.edit', id: cat.id, name: next });
+    await writeNamed({ type: 'category.edit', id: cat.id, name: next }, setError);
   };
   return (
     <div className="flex flex-col gap-4 pb-2">
@@ -261,7 +284,6 @@ function CategoryDetail({ cat, rules, onClose }: { cat: Cat; rules: Rule[]; onCl
 }
 
 function AddSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const write = useWrite();
   const [name, setName] = useState('');
   const [kind, setKind] = useState<'spend' | 'income'>('spend');
   const [error, setError] = useState<string | null>(null);
@@ -271,7 +293,7 @@ function AddSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boo
     setError(e);
     if (e) return;
     setBusy(true);
-    const r = await write({ type: 'category.add', id: newId(), name: name.trim(), kind });
+    const r = await writeNamed({ type: 'category.add', id: newId(), name: name.trim(), kind }, setError);
     setBusy(false);
     if (r) {
       setName('');

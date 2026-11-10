@@ -461,3 +461,39 @@ describe('the offline copy past one page (QA B08 run 3, finding 1)', () => {
     }
   });
 });
+
+describe('names (QA B08 run 3, notes 10 and 11)', () => {
+  it('a retried add says the name it was saved under', async () => {
+    const id = randomUUID();
+    const first = await run(s.me.cookie, {
+      type: 'account.add',
+      id,
+      name: 'Old Bank',
+      kind: 'elsewhere',
+      app: null,
+      opening: 0,
+    });
+    expect(first.status).toBe(200);
+    const again = await run(s.me.cookie, {
+      type: 'account.add',
+      id,
+      name: 'New Bank',
+      kind: 'elsewhere',
+      app: null,
+      opening: 0,
+    });
+    expect(again.body?.said).toBe('Old Bank added');
+    expect((await owner.query('select name from accounts where id = $1', [id])).rows[0].name).toBe('Old Bank');
+  });
+
+  it('refuses a name that would show reversed', async () => {
+    const r = await run(s.me.cookie, {
+      type: 'category.add',
+      id: randomUUID(),
+      name: 'Pets' + String.fromCharCode(0x202e) + 'fed',
+      kind: 'spend',
+    });
+    expect(r.status).toBe(400);
+    expect(r.body?.field).toBe('name');
+  });
+});

@@ -244,7 +244,14 @@ export async function runLedgerCommand(v: Vars, cmd: LedgerCommand): Promise<Wri
             .onConflictDoNothing({ target: [a.userId, a.id] })
             .returning();
           const undo: Command = { type: 'account.archive', id: cmd.id, archived: true };
-          if (!row) return { said: `${cmd.name} added`, undo };
+          if (!row) {
+            // a retry says the name it was saved under, not one sent with it (QA B08 run 3, note 10)
+            const [had] = await db
+              .select({ name: a.name })
+              .from(a)
+              .where(and(eq(a.userId, me), eq(a.id, cmd.id)));
+            return { said: `${had?.name ?? cmd.name} added`, undo };
+          }
           await audit(db, {
             userId: me,
             entity: 'accounts',
