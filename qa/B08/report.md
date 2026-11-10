@@ -202,3 +202,21 @@ journeys pay-new, scan-after and first-run pass. **R4-FLOW-12 fails** (finding 3
 - Outbox v5's offline copy on a device: no emulator here; CI runs its emulator tests.
 - A row changed between two pages of `/sync/changes`: not run.
 - The account screen with another person's id in the URL: the API answered 404; the screen wasn't walked.
+
+## Eyes pass (main session's spawn, `eyes.md`)
+
+13 changed entries and 32 filmstrips: **wrong 1**, look again 29, fine 15.
+
+- **13 · Minor (eyes *wrong*, standing on `main`):** film `members…/9`, an old *Undone* toast is drawn over the
+  *Remove Hui Min?* dialog. Not this slice; the handoff already lists Members → *Remove*'s toast as a main
+  follow-up.
+- The slice's own *look again* points, worst first: first run's accounts step and D148's sheet draw a typed
+  amount in red, and a blank field's *Type today's balance, or 0* (four errors at once) nudges a made-up
+  balance; *Checked 31 Oct* on typed balances argues with *The last check found RM42.10* (the made-up data's
+  dates); *From Ryt Bank* repeats the row's name; Accounts without Capture is a dead end with no button; the
+  *Suggested* card on first run's apps step shows and vanishes, jumping the list about 60 px; screens opened from
+  More show a skeleton for data already on screen; D148's sheet cuts out rather than falling.
+
+## Security (D144)
+
+Re-run by the main session on QA runs 1–3's fixes: no High or Medium (`security.md`, *Re-review for QA run 4*).
