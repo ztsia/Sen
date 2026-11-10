@@ -5,11 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 // *Use this*, with the CPU slowed 4× as the metrics run does, on main (:4175) and this branch (:4176).
 const OUT = '../../qa-artifacts/B08_first-run-accounts/measure.jsonl';
 const SIDES = { main: 'http://localhost:4175', head: 'http://localhost:4176' };
-const SCREENS = [
-  '/s/receipt?id=RECEIPT',
-  '/s/sign-in',
-  '/s/settings/capture/access?scenario=capture-off',
-];
+const SCREENS = ['/s/receipt?id=RECEIPT', '/s/sign-in', '/s/settings/capture/access?scenario=capture-off'];
 
 async function slow(page: Page) {
   const cdp = await page.context().newCDPSession(page);
@@ -70,7 +66,9 @@ test.describe('warm, as the metrics run', () => {
   test.use({ serviceWorkers: 'allow' });
   async function warm(page: Page, origin: string) {
     await page.goto(`${origin}/`);
-    await page.waitForFunction(() => !!navigator.serviceWorker?.controller, undefined, { timeout: 20_000 }).catch(() => {});
+    await page
+      .waitForFunction(() => !!navigator.serviceWorker?.controller, undefined, { timeout: 20_000 })
+      .catch(() => {});
     await page.evaluate(() => {
       localStorage.clear();
       sessionStorage.clear();
@@ -78,7 +76,12 @@ test.describe('warm, as the metrics run', () => {
     const cdp = await page.context().newCDPSession(page);
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
     await cdp.send('Network.enable');
-    await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 200_000, uploadThroughput: 93_750 });
+    await cdp.send('Network.emulateNetworkConditions', {
+      offline: false,
+      latency: 150,
+      downloadThroughput: 200_000,
+      uploadThroughput: 93_750,
+    });
   }
   for (const [side, origin] of Object.entries(SIDES)) {
     for (const path of SCREENS)
@@ -92,7 +95,10 @@ test.describe('warm, as the metrics run', () => {
         page.on('pageerror', (e) => msgs.push(`pageerror: ${String(e).slice(0, 300)}`));
         await page.goto(`${origin}${path.replace('RECEIPT', uid('receipt:nasi-kandar'))}`);
         await page.waitForTimeout(6000);
-        fs.appendFileSync(OUT, JSON.stringify({ warm: true, side, path, count: msgs.length, msgs: [...new Set(msgs)] }) + '\n');
+        fs.appendFileSync(
+          OUT,
+          JSON.stringify({ warm: true, side, path, count: msgs.length, msgs: [...new Set(msgs)] }) + '\n',
+        );
       });
     test(`warm scan-after, ${side}`, async ({ page }) => {
       await warm(page, origin);

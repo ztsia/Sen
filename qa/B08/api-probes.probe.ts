@@ -86,7 +86,11 @@ const shaped = (r: { status: number; body: { code?: unknown; message?: unknown }
   expect(JSON.stringify(r.body)).not.toMatch(/at .*\.ts:\d+|stack/i);
 };
 const rows = async (t: string, id: string) =>
-  (await owner.query(`select * from ${t} where user_id = $1 ${t === "user_settings" ? "" : "order by created_at"}`, [id])).rows;
+  (
+    await owner.query(`select * from ${t} where user_id = $1 ${t === 'user_settings' ? '' : 'order by created_at'}`, [
+      id,
+    ])
+  ).rows;
 const tng = { package: 'my.com.tngdigital.ewallet', label: "Touch 'n Go eWallet" };
 const add = (o: Partial<{ id: string; name: string; opening: unknown; app: unknown; kind: string }> = {}) => ({
   type: 'account.add',
@@ -98,10 +102,21 @@ const add = (o: Partial<{ id: string; name: string; opening: unknown; app: unkno
 });
 
 beforeAll(async () => {
-  for (const k of ['codesPerEmail', 'codesPerEmailDay', 'codesPerIpDay', 'codesPerDay', 'codesPerIp', 'lookupsPerIp'] as const)
+  for (const k of [
+    'codesPerEmail',
+    'codesPerEmailDay',
+    'codesPerIpDay',
+    'codesPerDay',
+    'codesPerIp',
+    'lookupsPerIp',
+  ] as const)
     LIMITS[k].max = 1000;
   for (const p of [a, b]) {
-    await owner.query('insert into auth_user (id, name, email, email_verified) values ($1, $2, $3, true)', [p.id, 'QA', p.email]);
+    await owner.query('insert into auth_user (id, name, email, email_verified) values ($1, $2, $3, true)', [
+      p.id,
+      'QA',
+      p.email,
+    ]);
     await owner.query('insert into user_access (user_id, is_admin, features) values ($1, false, $2)', [p.id, ON]);
   }
   s.a = await signIn(a.email);
@@ -145,7 +160,9 @@ describe('account.add: the opening balance', () => {
     });
   it('a negative opening balance', async () => {
     const r = await cmd('a', add({ opening: -500 }));
-    note(`opening -500: ${r.status} ${JSON.stringify(r.body)}; stored ${(await rows('accounts', a.id)).map((x) => x.opening_balance)}`);
+    note(
+      `opening -500: ${r.status} ${JSON.stringify(r.body)}; stored ${(await rows('accounts', a.id)).map((x) => x.opening_balance)}`,
+    );
   });
   it('a missing opening', async () => {
     const c = add() as Record<string, unknown>;
@@ -319,7 +336,11 @@ describe('You: names and payday', () => {
     });
   it('a name of 2 000 characters, and a name with SQL', async () => {
     const r1 = await cmd('a', { type: 'setting.set', key: 'you.bankNames', value: 'A'.repeat(2000) });
-    const r2 = await cmd('a', { type: 'setting.set', key: 'you.bankNames', value: "TAN'; DROP TABLE user_settings;--" });
+    const r2 = await cmd('a', {
+      type: 'setting.set',
+      key: 'you.bankNames',
+      value: "TAN'; DROP TABLE user_settings;--",
+    });
     const st = (await rows('user_settings', a.id))[0];
     note(`names: 2000-char ${r1.status}; SQL ${r2.status}; stored ${JSON.stringify(st?.own_names)}`);
   });
@@ -357,7 +378,10 @@ describe('the balance on /accounts', () => {
     const t = randomUUID();
     const r = randomUUID();
     await cmd('a', add({ id: t, opening: 10000 }));
-    await cmd('a', add({ id: r, name: 'Ryt Bank', app: { package: 'my.rytbank.app', label: 'Ryt Bank' }, opening: 5000 }));
+    await cmd(
+      'a',
+      add({ id: r, name: 'Ryt Bank', app: { package: 'my.rytbank.app', label: 'Ryt Bank' }, opening: 5000 }),
+    );
     const ins = (when: string, dir: string, amt: number, share: number | null) =>
       owner.query(
         `insert into transactions (id, user_id, account_id, occurred_at, direction, amount, kind, source, my_share) values ($1,$2,$3,(select opening_at from accounts where id = $3 and user_id = $2) ${when},$4,$5,$6,'manual',$7)`,
@@ -369,7 +393,9 @@ describe('the balance on /accounts', () => {
     await ins(`+ interval '1 day'`, 'in', 3050, null);
     const v = await call('/api/accounts', { cookie: s.a });
     const tn = v.body.tracked.find((x: { id: string }) => x.id === t);
-    note(`TNG balance ${tn.balance} (want 10000 − 12000 + 3050 = 1050); total ${v.body.total} (want 1050 + 5000 = 6050)`);
+    note(
+      `TNG balance ${tn.balance} (want 10000 − 12000 + 3050 = 1050); total ${v.body.total} (want 1050 + 5000 = 6050)`,
+    );
     expect(tn.balance).toBe(1050);
     expect(v.body.total).toBe(6050);
     await cmd('a', { type: 'account.archive', id: r, archived: true });

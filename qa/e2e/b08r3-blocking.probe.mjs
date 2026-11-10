@@ -6,10 +6,18 @@ const browser = await chromium.launch();
 for (const base of process.argv.slice(2)) {
   const sums = [];
   for (let run = 0; run < 5; run++) {
-    const ctx = await browser.newContext({ ...devices['Pixel 7'], viewport: { width: 390, height: 844 }, serviceWorkers: 'allow', baseURL: base });
+    const ctx = await browser.newContext({
+      ...devices['Pixel 7'],
+      viewport: { width: 390, height: 844 },
+      serviceWorkers: 'allow',
+      baseURL: base,
+    });
     await ctx.addInitScript(() => {
       window.__lt = [];
-      new PerformanceObserver((l) => l.getEntries().forEach((e) => window.__lt.push(Math.round(e.duration)))).observe({ type: 'longtask', buffered: true });
+      new PerformanceObserver((l) => l.getEntries().forEach((e) => window.__lt.push(Math.round(e.duration)))).observe({
+        type: 'longtask',
+        buffered: true,
+      });
     });
     const warm = await ctx.newPage();
     await warm.goto('/?look=minted&mode=light');

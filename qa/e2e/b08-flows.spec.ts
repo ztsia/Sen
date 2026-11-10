@@ -32,7 +32,10 @@ async function step(
   }
   await page.waitForTimeout(250);
   await page.screenshot({ path: `${SHOTS}/${file}.png` }).catch(() => undefined);
-  fs.appendFileSync(STEPS, JSON.stringify({ flow, n, action, assertion, status, screenshot: `${file}.png`, err }) + '\n');
+  fs.appendFileSync(
+    STEPS,
+    JSON.stringify({ flow, n, action, assertion, status, screenshot: `${file}.png`, err }) + '\n',
+  );
   if (status === 'fail') throw new Error(`${flow} step ${n}: ${err}`);
 }
 
@@ -117,17 +120,33 @@ test('FLOW-1 first run, start to finish, saves every step', async ({ page }) => 
     await page.getByRole('button', { name: 'Next' }).click();
     await atStep(page, 3);
   });
-  await step(page, 'FLOW-1', 3, 'access-skipped', 'Skip notification access', 'Step 4 of 7: Keep Sen running', async () => {
-    await page.getByRole('button', { name: 'Skip for now' }).click();
-    await atStep(page, 4);
-    await expect(page.getByRole('heading', { name: 'Keep Sen running' })).toBeVisible();
-  });
-  await step(page, 'FLOW-1', 4, 'accounts', 'Skip Keep Sen running', 'Step 5: four balance fields, no Add', async () => {
-    await page.getByRole('button', { name: 'Skip for now' }).click();
-    await atStep(page, 5);
-    for (const name of Object.keys(BAL)) await expect(page.getByLabel(name, { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: /add/i })).toHaveCount(0);
-  });
+  await step(
+    page,
+    'FLOW-1',
+    3,
+    'access-skipped',
+    'Skip notification access',
+    'Step 4 of 7: Keep Sen running',
+    async () => {
+      await page.getByRole('button', { name: 'Skip for now' }).click();
+      await atStep(page, 4);
+      await expect(page.getByRole('heading', { name: 'Keep Sen running' })).toBeVisible();
+    },
+  );
+  await step(
+    page,
+    'FLOW-1',
+    4,
+    'accounts',
+    'Skip Keep Sen running',
+    'Step 5: four balance fields, no Add',
+    async () => {
+      await page.getByRole('button', { name: 'Skip for now' }).click();
+      await atStep(page, 5);
+      for (const name of Object.keys(BAL)) await expect(page.getByLabel(name, { exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: /add/i })).toHaveCount(0);
+    },
+  );
   await step(page, 'FLOW-1', 5, 'typed', 'Type TNG as digits 128450, the rest', 'TNG reads 1,284.50', async () => {
     const tng = page.getByLabel('TNG eWallet', { exact: true });
     await tng.click();
@@ -153,24 +172,43 @@ test('FLOW-1 first run, start to finish, saves every step', async ({ page }) => 
     await page.getByRole('button', { name: 'Next' }).click();
     await atStep(page, 7);
     await expect
-      .poll(async () => (await sql<{ n: string[] }>('select own_names n from user_settings where user_id=$1', [uid('ming')]))[0]?.n)
+      .poll(
+        async () =>
+          (await sql<{ n: string[] }>('select own_names n from user_settings where user_id=$1', [uid('ming')]))[0]?.n,
+      )
       .toEqual(['TAN WEI MING']);
   });
-  await step(page, 'FLOW-1', 8, 'payday', 'Payday: the default, Finish', 'Home; setup_done_at set; payday last-working', async () => {
-    await expect(page.getByRole('radio', { name: 'Last working day' })).toHaveAttribute('aria-checked', 'true');
-    await page.getByRole('button', { name: 'Finish' }).click();
-    await expect(page).toHaveURL(/4179\/(\?.*)?$/, { timeout: 10_000 });
-    const s = await sql<{ d: Date | null; p: string | null }>(
-      'select setup_done_at d, expected_payday p from user_settings where user_id=$1',
-      [uid('ming')],
-    );
-    expect(s[0]!.d).not.toBeNull();
-    expect(s[0]!.p).toBe('last-working');
-  });
-  await step(page, 'FLOW-1', 9, 'home', 'Look at Home', 'Home shows (its figures are the skeleton’s until Home is built)', async () => {
-    await expect(page.getByTestId('hero')).toBeVisible();
-    console.log('FLOW-1 Home text:', (await page.getByRole('main').innerText()).replace(/\s+/g, ' ').slice(0, 300));
-  });
+  await step(
+    page,
+    'FLOW-1',
+    8,
+    'payday',
+    'Payday: the default, Finish',
+    'Home; setup_done_at set; payday last-working',
+    async () => {
+      await expect(page.getByRole('radio', { name: 'Last working day' })).toHaveAttribute('aria-checked', 'true');
+      await page.getByRole('button', { name: 'Finish' }).click();
+      await expect(page).toHaveURL(/4179\/(\?.*)?$/, { timeout: 10_000 });
+      const s = await sql<{ d: Date | null; p: string | null }>(
+        'select setup_done_at d, expected_payday p from user_settings where user_id=$1',
+        [uid('ming')],
+      );
+      expect(s[0]!.d).not.toBeNull();
+      expect(s[0]!.p).toBe('last-working');
+    },
+  );
+  await step(
+    page,
+    'FLOW-1',
+    9,
+    'home',
+    'Look at Home',
+    'Home shows (its figures are the skeleton’s until Home is built)',
+    async () => {
+      await expect(page.getByTestId('hero')).toBeVisible();
+      console.log('FLOW-1 Home text:', (await page.getByRole('main').innerText()).replace(/\s+/g, ' ').slice(0, 300));
+    },
+  );
   await step(page, 'FLOW-5', 1, 'reload', 'Reload Home', 'still Home, never a first-run step', async () => {
     await page.reload();
     await expect(page.getByTestId('hero')).toBeVisible();
@@ -184,50 +222,84 @@ test('FLOW-1 first run, start to finish, saves every step', async ({ page }) => 
     await expect(page.getByRole('main')).toContainText('RM1,284.50');
     await expect(page.getByRole('main')).toContainText('In 4 accounts');
   });
-  await step(page, 'FLOW-6', 2, 'account', 'Open TNG eWallet', 'opening balance RM1,284.50, fed by its app', async () => {
-    await page.getByRole('button', { name: /TNG eWallet/ }).click();
-    await expect(page.getByText('Opening balance')).toBeVisible();
-    await expect(page.getByRole('main')).toContainText('RM1,284.50');
-    await expect(page.getByRole('main')).toContainText('Fed by');
-  });
+  await step(
+    page,
+    'FLOW-6',
+    2,
+    'account',
+    'Open TNG eWallet',
+    'opening balance RM1,284.50, fed by its app',
+    async () => {
+      await page.getByRole('button', { name: /TNG eWallet/ }).click();
+      await expect(page.getByText('Opening balance')).toBeVisible();
+      await expect(page.getByRole('main')).toContainText('RM1,284.50');
+      await expect(page.getByRole('main')).toContainText('Fed by');
+    },
+  );
   const before = (await accountsOf('ming')).find((r) => r.name === 'TNG eWallet')!;
-  await step(page, 'FLOW-6', 3, 'edit', 'Edit → opening 1,300.00 → Save', 'stored 130000; opening_at unchanged', async () => {
-    await page.getByRole('button', { name: 'Edit' }).click();
-    const f = page.getByLabel('Opening balance');
-    // tap first, as a person does: a fill while the sheet still opens appends (FLOW-6y)
-    await f.click();
-    await page.keyboard.press('Control+A');
-    await page.keyboard.type('130000');
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByRole('main')).toContainText('RM1,300.00');
-    const after = (await accountsOf('ming')).find((r) => r.name === 'TNG eWallet')!;
-    expect(after.opening_balance).toBe('130000');
-    expect(after.opening_at.toISOString()).toBe(before.opening_at.toISOString());
-  });
-  await step(page, 'FLOW-6', 4, 'archived', 'Edit → Archive this account', 'back on Accounts, TNG gone, Undo offered', async () => {
-    await page.getByRole('button', { name: 'Edit' }).click();
-    await page.getByRole('button', { name: 'Archive this account' }).click();
-    await expect(page).toHaveURL(/\/s\/accounts/);
-    await expect(page.locator('[data-sonner-toast]')).toContainText(/archived/i);
-    await expect(page.getByRole('main').getByRole('button', { name: /TNG eWallet/ })).toHaveCount(0);
-  });
+  await step(
+    page,
+    'FLOW-6',
+    3,
+    'edit',
+    'Edit → opening 1,300.00 → Save',
+    'stored 130000; opening_at unchanged',
+    async () => {
+      await page.getByRole('button', { name: 'Edit' }).click();
+      const f = page.getByLabel('Opening balance');
+      // tap first, as a person does: a fill while the sheet still opens appends (FLOW-6y)
+      await f.click();
+      await page.keyboard.press('Control+A');
+      await page.keyboard.type('130000');
+      await page.getByRole('button', { name: 'Save' }).click();
+      await expect(page.getByRole('main')).toContainText('RM1,300.00');
+      const after = (await accountsOf('ming')).find((r) => r.name === 'TNG eWallet')!;
+      expect(after.opening_balance).toBe('130000');
+      expect(after.opening_at.toISOString()).toBe(before.opening_at.toISOString());
+    },
+  );
+  await step(
+    page,
+    'FLOW-6',
+    4,
+    'archived',
+    'Edit → Archive this account',
+    'back on Accounts, TNG gone, Undo offered',
+    async () => {
+      await page.getByRole('button', { name: 'Edit' }).click();
+      await page.getByRole('button', { name: 'Archive this account' }).click();
+      await expect(page).toHaveURL(/\/s\/accounts/);
+      await expect(page.locator('[data-sonner-toast]')).toContainText(/archived/i);
+      await expect(page.getByRole('main').getByRole('button', { name: /TNG eWallet/ })).toHaveCount(0);
+    },
+  );
   await step(page, 'FLOW-6', 5, 'undone', 'Undo', 'TNG back on Accounts, archived_at null', async () => {
     await page.locator('[data-sonner-toast]').getByRole('button', { name: 'Undo' }).click();
     await expect(page.getByRole('main').getByRole('button', { name: /TNG eWallet/ })).toBeVisible();
     const r = (await accountsOf('ming')).find((x) => x.name === 'TNG eWallet')!;
     expect(r.archived_at).toBeNull();
   });
-  await step(page, 'FLOW-6', 6, 'archived-gone', 'Archive again, let the toast go', 'is there any way back on Accounts?', async () => {
-    await page.getByRole('button', { name: /TNG eWallet/ }).click();
-    await page.getByRole('button', { name: 'Edit' }).click();
-    await page.getByRole('button', { name: 'Archive this account' }).click();
-    await expect(page).toHaveURL(/\/s\/accounts/);
-    await page.waitForTimeout(7000);
-    await page.reload();
-    await expect(page.getByRole('main')).toContainText('In 3 accounts');
-    // a way back: an Archived section, Bring back, or Add
-    await expect(page.getByRole('main').getByText(/Archived|Bring back|Add an account/)).toBeVisible({ timeout: 2000 });
-  });
+  await step(
+    page,
+    'FLOW-6',
+    6,
+    'archived-gone',
+    'Archive again, let the toast go',
+    'is there any way back on Accounts?',
+    async () => {
+      await page.getByRole('button', { name: /TNG eWallet/ }).click();
+      await page.getByRole('button', { name: 'Edit' }).click();
+      await page.getByRole('button', { name: 'Archive this account' }).click();
+      await expect(page).toHaveURL(/\/s\/accounts/);
+      await page.waitForTimeout(7000);
+      await page.reload();
+      await expect(page.getByRole('main')).toContainText('In 3 accounts');
+      // a way back: an Archived section, Bring back, or Add
+      await expect(page.getByRole('main').getByText(/Archived|Bring back|Add an account/)).toBeVisible({
+        timeout: 2000,
+      });
+    },
+  );
 });
 
 test('FLOW-6b bring TNG back by SQL so the rest has four', async () => {
@@ -236,29 +308,58 @@ test('FLOW-6b bring TNG back by SQL so the rest has four', async () => {
 
 test('FLOW-7 Settings → Categories: rename, add, flags, archive; Unaccounted locked', async ({ page }) => {
   await signIn(page, 'ming');
-  await step(page, 'FLOW-7', 1, 'list', 'Open Settings → Categories', 'the 18 spending and 3 income categories', async () => {
-    await page.goto(`${SERVER}/s/settings/categories`);
-    const spend = page.getByRole('region', { name: 'Spending categories' });
-    await expect(spend.getByRole('button')).toHaveCount(18);
-    await expect(page.getByRole('region', { name: 'Income categories' }).getByRole('button')).toHaveCount(3);
-  });
+  await step(
+    page,
+    'FLOW-7',
+    1,
+    'list',
+    'Open Settings → Categories',
+    'the 18 spending and 3 income categories',
+    async () => {
+      await page.goto(`${SERVER}/s/settings/categories`);
+      const spend = page.getByRole('region', { name: 'Spending categories' });
+      await expect(spend.getByRole('button')).toHaveCount(18);
+      await expect(page.getByRole('region', { name: 'Income categories' }).getByRole('button')).toHaveCount(3);
+    },
+  );
   await step(page, 'FLOW-7', 2, 'renamed', 'Groceries → Groceries & market', 'the row is renamed', async () => {
     await page.getByRole('button', { name: /^Groceries,/ }).click();
     await page.getByLabel('Name').fill('Groceries & market');
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect.poll(async () => (await sql<{ n: string }>("select count(*) n from categories where user_id=$1 and name='Groceries & market'", [uid('ming')]))[0]!.n).toBe('1');
+    await expect
+      .poll(
+        async () =>
+          (
+            await sql<{ n: string }>(
+              "select count(*) n from categories where user_id=$1 and name='Groceries & market'",
+              [uid('ming')],
+            )
+          )[0]!.n,
+      )
+      .toBe('1');
     await page.keyboard.press('Escape');
   });
   await step(page, 'FLOW-7', 3, 'added', 'Add a category: Pets', 'Pets is in the spending grid', async () => {
     await page.getByRole('button', { name: 'Add a category' }).click();
     await page.getByLabel('Name').fill('Pets');
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByRole('region', { name: 'Spending categories' }).getByRole('button', { name: /^Pets,/ })).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Spending categories' }).getByRole('button', { name: /^Pets,/ }),
+    ).toBeVisible();
   });
   await step(page, 'FLOW-7', 4, 'flag', 'Pets → Discretionary on', 'is_discretionary true', async () => {
     await page.getByRole('button', { name: /^Pets,/ }).click();
     await page.getByRole('switch', { name: 'Discretionary' }).click();
-    await expect.poll(async () => (await sql<{ d: boolean }>("select is_discretionary d from categories where user_id=$1 and name='Pets'", [uid('ming')]))[0]!.d).toBe(true);
+    await expect
+      .poll(
+        async () =>
+          (
+            await sql<{ d: boolean }>("select is_discretionary d from categories where user_id=$1 and name='Pets'", [
+              uid('ming'),
+            ])
+          )[0]!.d,
+      )
+      .toBe(true);
   });
   await step(page, 'FLOW-7', 5, 'archived', 'Archive Pets', 'Pets under Archived, with Bring back', async () => {
     await page.getByRole('button', { name: 'Archive' }).click();
@@ -294,7 +395,17 @@ test('FLOW-8 Settings → You: a second name and payday 25, kept after reload', 
     const day = page.getByLabel('Day of the month');
     await day.fill('25');
     await day.blur();
-    await expect.poll(async () => (await sql<{ n: string[]; p: string }>('select own_names n, expected_payday p from user_settings where user_id=$1', [uid('ming')]))[0]).toEqual({ n: ['TAN WEI MING', 'TAN W M'], p: '25' });
+    await expect
+      .poll(
+        async () =>
+          (
+            await sql<{ n: string[]; p: string }>(
+              'select own_names n, expected_payday p from user_settings where user_id=$1',
+              [uid('ming')],
+            )
+          )[0],
+      )
+      .toEqual({ n: ['TAN WEI MING', 'TAN W M'], p: '25' });
   });
   await step(page, 'FLOW-8', 3, 'reloaded', 'Reload', 'both kept', async () => {
     await page.reload();
@@ -320,14 +431,22 @@ test('FLOW-2 closed at step 4 and at step 5 reopens where it was, with what was 
     await atStep(page, 5);
     await expect(page.getByLabel('Ryt Bank', { exact: true })).toHaveValue(/500\.00/);
   });
-  await step(page, 'FLOW-3', 1, 'empty', 'Leave TNG empty, Next', 'stays on 5, says what is missing, nothing saved', async () => {
-    await fillBalances(page, 'TNG eWallet');
-    await page.getByLabel('TNG eWallet', { exact: true }).fill('');
-    await page.getByRole('button', { name: 'Next' }).click();
-    await atStep(page, 5);
-    await expect(page.getByText('Type today’s balance, or 0.')).toHaveCount(1);
-    expect((await accountsOf('reload')).length).toBe(0);
-  });
+  await step(
+    page,
+    'FLOW-3',
+    1,
+    'empty',
+    'Leave TNG empty, Next',
+    'stays on 5, says what is missing, nothing saved',
+    async () => {
+      await fillBalances(page, 'TNG eWallet');
+      await page.getByLabel('TNG eWallet', { exact: true }).fill('');
+      await page.getByRole('button', { name: 'Next' }).click();
+      await atStep(page, 5);
+      await expect(page.getByText('Type today’s balance, or 0.')).toHaveCount(1);
+      expect((await accountsOf('reload')).length).toBe(0);
+    },
+  );
   await step(page, 'FLOW-3', 2, 'filled', 'TNG 2.00, Next', 'step 6; four accounts', async () => {
     await page.getByLabel('TNG eWallet', { exact: true }).fill('2.00');
     await page.getByRole('button', { name: 'Next' }).click();
@@ -350,20 +469,31 @@ test('FLOW-3z a balance of RM0.00 can be typed, and first run goes on', async ({
   await toStep(page, 5);
   await fillBalances(page, 'GrabPay Wallet');
   const grab = page.getByLabel('GrabPay Wallet', { exact: true });
-  await step(page, 'FLOW-3z', 1, 'typed-zero', 'Type 0 on the number pad into GrabPay Wallet', 'the field holds 0.00', async () => {
-    await grab.click();
-    await page.keyboard.type('0');
-    console.log('FLOW-3z after typing 0:', JSON.stringify(await grab.inputValue()));
-    await page.keyboard.type('00');
-    console.log('FLOW-3z after typing 000:', JSON.stringify(await grab.inputValue()));
-    await grab.fill('0.00');
-    console.log('FLOW-3z after fill 0.00:', JSON.stringify(await grab.inputValue()));
-    await expect(grab).toHaveValue(/^0\.00$/);
-  });
+  await step(
+    page,
+    'FLOW-3z',
+    1,
+    'typed-zero',
+    'Type 0 on the number pad into GrabPay Wallet',
+    'the field holds 0.00',
+    async () => {
+      await grab.click();
+      await page.keyboard.type('0');
+      console.log('FLOW-3z after typing 0:', JSON.stringify(await grab.inputValue()));
+      await page.keyboard.type('00');
+      console.log('FLOW-3z after typing 000:', JSON.stringify(await grab.inputValue()));
+      await grab.fill('0.00');
+      console.log('FLOW-3z after fill 0.00:', JSON.stringify(await grab.inputValue()));
+      await expect(grab).toHaveValue(/^0\.00$/);
+    },
+  );
   await step(page, 'FLOW-3z', 2, 'next', 'Next', 'step 6; GrabPay Wallet opened at 0', async () => {
     await page.getByRole('button', { name: 'Next' }).click();
     await page.waitForTimeout(800);
-    console.log('FLOW-3z errors shown:', JSON.stringify(await page.locator('[data-slot="field-error"]').allInnerTexts()));
+    console.log(
+      'FLOW-3z errors shown:',
+      JSON.stringify(await page.locator('[data-slot="field-error"]').allInnerTexts()),
+    );
     await atStep(page, 6);
     const r = await accountsOf('zero');
     expect(r.find((x) => x.name === 'GrabPay Wallet')?.opening_balance).toBe('0');
@@ -376,16 +506,30 @@ test('FLOW-12 offline at step 5: what Next says, and what is kept', async ({ pag
   await page.goto(`${SERVER}/s/first-run`);
   await toStep(page, 5);
   await fillBalances(page);
-  await step(page, 'FLOW-12', 1, 'offline-next', 'Go offline, tap Next', 'still step 5, a plain-words error, balances kept', async () => {
-    await context.setOffline(true);
-    await page.waitForTimeout(500);
-    console.log('FLOW-12 banner:', await page.getByRole('main').innerText().then((t) => t.slice(0, 200)));
-    await page.getByRole('button', { name: 'Next' }).click();
-    await page.waitForTimeout(2000);
-    console.log('FLOW-12 toast:', JSON.stringify(await page.locator('[data-sonner-toast]').allInnerTexts()));
-    await atStep(page, 5);
-    await expect(page.getByLabel('Ryt Bank', { exact: true })).toHaveValue(/500\.00/);
-  });
+  await step(
+    page,
+    'FLOW-12',
+    1,
+    'offline-next',
+    'Go offline, tap Next',
+    'still step 5, a plain-words error, balances kept',
+    async () => {
+      await context.setOffline(true);
+      await page.waitForTimeout(500);
+      console.log(
+        'FLOW-12 banner:',
+        await page
+          .getByRole('main')
+          .innerText()
+          .then((t) => t.slice(0, 200)),
+      );
+      await page.getByRole('button', { name: 'Next' }).click();
+      await page.waitForTimeout(2000);
+      console.log('FLOW-12 toast:', JSON.stringify(await page.locator('[data-sonner-toast]').allInnerTexts()));
+      await atStep(page, 5);
+      await expect(page.getByLabel('Ryt Bank', { exact: true })).toHaveValue(/500\.00/);
+    },
+  );
   await step(page, 'FLOW-12', 2, 'online-next', 'Back online, Next', 'step 6, four accounts', async () => {
     await context.setOffline(false);
     await page.waitForTimeout(1000);
@@ -393,24 +537,32 @@ test('FLOW-12 offline at step 5: what Next says, and what is kept', async ({ pag
     await atStep(page, 6);
     expect((await accountsOf('offline')).length).toBe(4);
   });
-  await step(page, 'FLOW-13', 1, 'unchosen', 'Back to step 2, switch Grab off, forward to step 5', 'three fields; is Grab’s account still live?', async () => {
-    for (const n of [5, 4, 3, 2]) {
-      await page.getByRole('button', { name: 'Back' }).click();
-      await atStep(page, n);
-    }
-    const grab = page.getByRole('switch', { name: /Grab/ }).first();
-    if (await grab.isChecked()) await grab.click();
-    await page.waitForTimeout(400);
-    await page.getByRole('button', { name: 'Next' }).click();
-    await atStep(page, 3);
-    await page.getByRole('button', { name: 'Skip for now' }).click();
-    await atStep(page, 4);
-    await page.getByRole('button', { name: 'Skip for now' }).click();
-    await atStep(page, 5);
-    await expect(page.getByLabel('GrabPay Wallet', { exact: true })).toHaveCount(0);
-    const live = (await accountsOf('offline')).filter((r) => !r.archived_at).map((r) => r.name);
-    console.log('FLOW-13 live accounts after un-choosing Grab:', JSON.stringify(live));
-  });
+  await step(
+    page,
+    'FLOW-13',
+    1,
+    'unchosen',
+    'Back to step 2, switch Grab off, forward to step 5',
+    'three fields; is Grab’s account still live?',
+    async () => {
+      for (const n of [5, 4, 3, 2]) {
+        await page.getByRole('button', { name: 'Back' }).click();
+        await atStep(page, n);
+      }
+      const grab = page.getByRole('switch', { name: /Grab/ }).first();
+      if (await grab.isChecked()) await grab.click();
+      await page.waitForTimeout(400);
+      await page.getByRole('button', { name: 'Next' }).click();
+      await atStep(page, 3);
+      await page.getByRole('button', { name: 'Skip for now' }).click();
+      await atStep(page, 4);
+      await page.getByRole('button', { name: 'Skip for now' }).click();
+      await atStep(page, 5);
+      await expect(page.getByLabel('GrabPay Wallet', { exact: true })).toHaveCount(0);
+      const live = (await accountsOf('offline')).filter((r) => !r.archived_at).map((r) => r.name);
+      console.log('FLOW-13 live accounts after un-choosing Grab:', JSON.stringify(live));
+    },
+  );
 });
 
 // ── FLOW-R: a dropped answer while saving the accounts (the dedupe rule) ────────────────────────────
@@ -433,12 +585,20 @@ test('FLOW-R a lost answer mid-save: Next again saves the rest, no error, one ac
     return route.continue();
   };
   await page.route('**/api/commands', lose);
-  await step(page, 'FLOW-R', 1, 'lost', 'Next; the 2nd account.add is saved but its answer lost', 'an error, still step 5', async () => {
-    await page.getByRole('button', { name: 'Next' }).click();
-    await page.waitForTimeout(1500);
-    await atStep(page, 5);
-    expect((await accountsOf('retry')).length).toBe(2);
-  });
+  await step(
+    page,
+    'FLOW-R',
+    1,
+    'lost',
+    'Next; the 2nd account.add is saved but its answer lost',
+    'an error, still step 5',
+    async () => {
+      await page.getByRole('button', { name: 'Next' }).click();
+      await page.waitForTimeout(1500);
+      await atStep(page, 5);
+      expect((await accountsOf('retry')).length).toBe(2);
+    },
+  );
   await page.unroute('**/api/commands', lose);
   const said: string[] = [];
   page.on('response', async (r) => {
@@ -470,35 +630,62 @@ test('FLOW-9 the next person sees none of the last one’s typed balances', asyn
     await expect(page).toHaveURL(/sign-in/, { timeout: 10_000 });
     expect(await page.evaluate(() => localStorage.getItem('sen.firstRun'))).toBeNull();
   });
-  await step(page, 'FLOW-9', 2, 'other', 'Another person signs in, opens first run', 'step 2, nothing of 777.77', async () => {
-    await signIn(page, 'other');
-    await page.goto(`${SERVER}/s/first-run`);
-    await atStep(page, 2);
-    expect(await page.evaluate(() => localStorage.getItem('sen.firstRun') ?? '')).not.toContain('777');
-    await toStep(page, 5);
-    await expect(page.getByLabel('Ryt Bank', { exact: true })).not.toHaveValue(/777/);
-  });
+  await step(
+    page,
+    'FLOW-9',
+    2,
+    'other',
+    'Another person signs in, opens first run',
+    'step 2, nothing of 777.77',
+    async () => {
+      await signIn(page, 'other');
+      await page.goto(`${SERVER}/s/first-run`);
+      await atStep(page, 2);
+      expect(await page.evaluate(() => localStorage.getItem('sen.firstRun') ?? '')).not.toContain('777');
+      await toStep(page, 5);
+      await expect(page.getByLabel('Ryt Bank', { exact: true })).not.toHaveValue(/777/);
+    },
+  );
 });
 
 // ── FLOW-10: without capture ────────────────────────────────────────────────────────────────────────
 test('FLOW-10 without capture: the short first run, no accounts', async ({ page }) => {
-  await step(page, 'FLOW-10', 1, 'sent', 'Sign in without capture', 'sent to first run: Step 2 of 2, Your categories', async () => {
-    await signIn(page, 'nocap2');
-    await expect(page).toHaveURL(/\/s\/first-run/);
-    await atStep(page, 2, 2);
-    await expect(page.getByRole('heading', { name: 'Your categories' })).toBeVisible();
-  });
+  await step(
+    page,
+    'FLOW-10',
+    1,
+    'sent',
+    'Sign in without capture',
+    'sent to first run: Step 2 of 2, Your categories',
+    async () => {
+      await signIn(page, 'nocap2');
+      await expect(page).toHaveURL(/\/s\/first-run/);
+      await atStep(page, 2, 2);
+      await expect(page.getByRole('heading', { name: 'Your categories' })).toBeVisible();
+    },
+  );
   await step(page, 'FLOW-10', 2, 'list', 'Look at the list', '17 spending categories, no Unaccounted', async () => {
     await expect(page.getByRole('switch')).toHaveCount(17);
     await expect(page.getByRole('switch', { name: 'Unaccounted' })).toHaveCount(0);
   });
-  await step(page, 'FLOW-10', 3, 'done', 'Switch off Travel, Start using Sen', 'Home; Travel archived; setup done', async () => {
-    await page.getByRole('switch', { name: 'Travel' }).click();
-    await page.getByRole('button', { name: 'Start using Sen' }).click();
-    await expect(page).toHaveURL(/4179\/(\?.*)?$/, { timeout: 10_000 });
-    const t = await sql<{ a: Date | null }>("select archived_at a from categories where user_id=$1 and name='Travel'", [uid('nocap2')]);
-    expect(t[0]!.a).not.toBeNull();
-  });
+  await step(
+    page,
+    'FLOW-10',
+    3,
+    'done',
+    'Switch off Travel, Start using Sen',
+    'Home; Travel archived; setup done',
+    async () => {
+      await page.getByRole('switch', { name: 'Travel' }).click();
+      await page.getByRole('button', { name: 'Start using Sen' }).click();
+      await expect(page).toHaveURL(/4179\/(\?.*)?$/, { timeout: 10_000 });
+      const t = await sql<{ a: Date | null }>(
+        "select archived_at a from categories where user_id=$1 and name='Travel'",
+        [uid('nocap2')],
+      );
+      expect(t[0]!.a).not.toBeNull();
+    },
+  );
   await step(page, 'FLOW-10', 4, 'no-accounts', 'More; /api/accounts', 'no Accounts row; 403 capture_off', async () => {
     const asked: string[] = [];
     page.on('response', (r) => {
@@ -524,19 +711,33 @@ test('FLOW-10s without capture: switching off Cash in the short first run', asyn
   await atStep(page, 2, 2);
   await step(page, 'FLOW-10s', 1, 'cash-offered', 'Look for Cash', 'is Cash offered as a switch?', async () => {
     console.log('Cash switch count:', await page.getByRole('switch', { name: 'Cash' }).count());
-    console.log('Cash switch disabled:', await page.getByRole('switch', { name: 'Cash' }).isDisabled().catch(() => 'n/a'));
+    console.log(
+      'Cash switch disabled:',
+      await page
+        .getByRole('switch', { name: 'Cash' })
+        .isDisabled()
+        .catch(() => 'n/a'),
+    );
   });
-  await step(page, 'FLOW-10s', 2, 'cash-off', 'Switch off Cash and Groceries, Start using Sen', 'Home, Groceries archived', async () => {
-    const cash = page.getByRole('switch', { name: 'Cash' });
-    if (await cash.isEnabled()) await cash.click();
-    await page.getByRole('switch', { name: 'Groceries' }).click();
-    await page.getByRole('button', { name: 'Start using Sen' }).click();
-    await page.waitForTimeout(2000);
-    console.log('FLOW-10s responses:', JSON.stringify(said));
-    console.log('FLOW-10s toast:', await page.locator('[data-sonner-toast]').allInnerTexts());
-    console.log('FLOW-10s url:', page.url());
-    await expect(page).toHaveURL(/4179\/(\?.*)?$/);
-  });
+  await step(
+    page,
+    'FLOW-10s',
+    2,
+    'cash-off',
+    'Switch off Cash and Groceries, Start using Sen',
+    'Home, Groceries archived',
+    async () => {
+      const cash = page.getByRole('switch', { name: 'Cash' });
+      if (await cash.isEnabled()) await cash.click();
+      await page.getByRole('switch', { name: 'Groceries' }).click();
+      await page.getByRole('button', { name: 'Start using Sen' }).click();
+      await page.waitForTimeout(2000);
+      console.log('FLOW-10s responses:', JSON.stringify(said));
+      console.log('FLOW-10s toast:', await page.locator('[data-sonner-toast]').allInnerTexts());
+      console.log('FLOW-10s url:', page.url());
+      await expect(page).toHaveURL(/4179\/(\?.*)?$/);
+    },
+  );
 });
 
 // ── the core journeys (D124), in the preview's fake ─────────────────────────────────────────────────
@@ -562,10 +763,18 @@ test('CORE-first-run on the fake: scenario=new, start to finish', async ({ page 
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await atStep(page, 2);
   });
-  await step(page, 'CORE-first-run', 2, 'accounts', 'Apps, access, running', 'Step 5: four balance fields', async () => {
-    await toStep(page, 5);
-    for (const name of Object.keys(BAL)) await expect(page.getByLabel(name, { exact: true })).toBeVisible();
-  });
+  await step(
+    page,
+    'CORE-first-run',
+    2,
+    'accounts',
+    'Apps, access, running',
+    'Step 5: four balance fields',
+    async () => {
+      await toStep(page, 5);
+      for (const name of Object.keys(BAL)) await expect(page.getByLabel(name, { exact: true })).toBeVisible();
+    },
+  );
   await step(page, 'CORE-first-run', 3, 'name', 'Type the balances, Next', 'Step 6', async () => {
     await fillBalances(page);
     await page.getByRole('button', { name: 'Next' }).click();
@@ -590,13 +799,21 @@ test('CORE-first-run on the fake: scenario=new, start to finish', async ({ page 
 
 test('CORE-pay-new: the prompt files a new merchant', async ({ page }) => {
   await openFake(page, '/review');
-  await step(page, 'CORE-pay-new', 1, 'prompt', 'Dev panel → A notification arrives', 'the prompt names RM9.50 · ROTI BAKAR 88', async () => {
-    await page.getByRole('button', { name: 'Dev panel' }).click();
-    await page.getByRole('button', { name: 'A notification arrives' }).click();
-    const prompt = promptCard(page);
-    await expect(prompt).toContainText('ROTI BAKAR 88');
-    await expect(prompt).toContainText('RM9.50');
-  });
+  await step(
+    page,
+    'CORE-pay-new',
+    1,
+    'prompt',
+    'Dev panel → A notification arrives',
+    'the prompt names RM9.50 · ROTI BAKAR 88',
+    async () => {
+      await page.getByRole('button', { name: 'Dev panel' }).click();
+      await page.getByRole('button', { name: 'A notification arrives' }).click();
+      const prompt = promptCard(page);
+      await expect(prompt).toContainText('ROTI BAKAR 88');
+      await expect(prompt).toContainText('RM9.50');
+    },
+  );
   await step(page, 'CORE-pay-new', 2, 'filed', 'Tap Meals', 'the payment is filed, the prompt goes', async () => {
     const prompt = promptCard(page);
     await prompt.getByRole('button', { name: 'Meals', exact: true }).click();
@@ -637,11 +854,19 @@ test.describe('away from KL', () => {
   test.use({ timezoneId: 'America/Los_Angeles' });
   test('FLOW-11 the opening date reads in KL whatever the phone’s zone', async ({ page }) => {
     await openFake(page, '/s/accounts');
-    await step(page, 'FLOW-11', 1, 'la-accounts', 'Accounts in Los Angeles time', 'the same total as in KL', async () => {
-      const text = await page.getByRole('main').innerText();
-      fs.writeFileSync(`${ROOT}/tz-la.txt`, text);
-      await expect(page.getByRole('main')).toContainText('RM');
-    });
+    await step(
+      page,
+      'FLOW-11',
+      1,
+      'la-accounts',
+      'Accounts in Los Angeles time',
+      'the same total as in KL',
+      async () => {
+        const text = await page.getByRole('main').innerText();
+        fs.writeFileSync(`${ROOT}/tz-la.txt`, text);
+        await expect(page.getByRole('main')).toContainText('RM');
+      },
+    );
   });
 });
 test('FLOW-11 KL twin', async ({ page }) => {
@@ -665,24 +890,48 @@ test('FLOW-6x edit the opening balance: select all and type, or delete and type'
   await page.getByRole('button', { name: /TNG eWallet/ }).click();
   await page.getByRole('button', { name: 'Edit' }).click();
   const f = page.getByLabel('Opening balance');
-  await step(page, 'FLOW-6x', 1, 'select-all', 'Tap the field, Select all, type 130000', 'the field reads 1,300.00', async () => {
-    await f.click();
-    await page.keyboard.press('Control+A');
-    await page.keyboard.type('130000');
-    console.log('FLOW-6x after select all + type:', JSON.stringify(await f.inputValue()));
-    await expect(f).toHaveValue('1,300.00');
-  });
-  await step(page, 'FLOW-6x', 2, 'delete-type', 'Delete every digit, type 130000', 'the field reads 1,300.00', async () => {
-    await f.click();
-    for (let i = 0; i < 14; i++) await page.keyboard.press('Backspace');
-    await page.keyboard.type('130000');
-    console.log('FLOW-6x after delete + type:', JSON.stringify(await f.inputValue()));
-    await expect(f).toHaveValue('1,300.00');
-  });
-  await step(page, 'FLOW-6x', 3, 'fill', 'Playwright fill("1,300.00") over the old amount', 'records what fill gives', async () => {
-    await f.fill('1,300.00');
-    console.log('FLOW-6x after fill:', JSON.stringify(await f.inputValue()));
-  });
+  await step(
+    page,
+    'FLOW-6x',
+    1,
+    'select-all',
+    'Tap the field, Select all, type 130000',
+    'the field reads 1,300.00',
+    async () => {
+      await f.click();
+      await page.keyboard.press('Control+A');
+      await page.keyboard.type('130000');
+      console.log('FLOW-6x after select all + type:', JSON.stringify(await f.inputValue()));
+      await expect(f).toHaveValue('1,300.00');
+    },
+  );
+  await step(
+    page,
+    'FLOW-6x',
+    2,
+    'delete-type',
+    'Delete every digit, type 130000',
+    'the field reads 1,300.00',
+    async () => {
+      await f.click();
+      for (let i = 0; i < 14; i++) await page.keyboard.press('Backspace');
+      await page.keyboard.type('130000');
+      console.log('FLOW-6x after delete + type:', JSON.stringify(await f.inputValue()));
+      await expect(f).toHaveValue('1,300.00');
+    },
+  );
+  await step(
+    page,
+    'FLOW-6x',
+    3,
+    'fill',
+    'Playwright fill("1,300.00") over the old amount',
+    'records what fill gives',
+    async () => {
+      await f.fill('1,300.00');
+      console.log('FLOW-6x after fill:', JSON.stringify(await f.inputValue()));
+    },
+  );
 });
 
 test('FLOW-6y fill right as the edit sheet opens (a test-only path)', async ({ page }) => {
@@ -698,5 +947,8 @@ test('FLOW-6y fill right as the edit sheet opens (a test-only path)', async ({ p
   const f = page.getByLabel('Opening balance');
   await f.fill('1,300.00');
   console.log('FLOW-6y fill at open:', JSON.stringify(await f.inputValue()));
-  console.log('FLOW-6y focused element:', await page.evaluate(() => document.activeElement?.id + ' ' + (document.activeElement as HTMLInputElement)?.value));
+  console.log(
+    'FLOW-6y focused element:',
+    await page.evaluate(() => document.activeElement?.id + ' ' + (document.activeElement as HTMLInputElement)?.value),
+  );
 });

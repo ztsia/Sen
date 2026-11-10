@@ -922,12 +922,14 @@ export const MUTANTS: Mutant[] = [
     breaks: 'a person can create an account in someone else’s name (RLS WITH CHECK; QA B08 run 3 probe)',
     file: 'packages/db/migrations/0013_b08_ledger.sql',
     find: `CREATE POLICY "accounts_own_insert" ON "accounts" AS PERMISSIVE FOR INSERT TO "app_user" WITH CHECK ("accounts"."user_id" = (select nullif(current_setting('app.user_id', true), '')::uuid));`,
-    replace: 'CREATE POLICY "accounts_own_insert" ON "accounts" AS PERMISSIVE FOR INSERT TO "app_user" WITH CHECK (true);',
+    replace:
+      'CREATE POLICY "accounts_own_insert" ON "accounts" AS PERMISSIVE FOR INSERT TO "app_user" WITH CHECK (true);',
     suite: 'db',
   },
   {
     id: 'b08r3-adjustment-anywhere',
-    breaks: 'a balance check’s adjustment can be booked to any category, so the gap hides in spending (§7; QA B08 run 3 probe)',
+    breaks:
+      'a balance check’s adjustment can be booked to any category, so the gap hides in spending (§7; QA B08 run 3 probe)',
     file: 'packages/db/migrations/0014_b08_ledger_functions.sql',
     find: "  IF NEW.kind = 'adjustment' AND k IS DISTINCT FROM 'unaccounted' THEN",
     replace: '  IF false THEN',
@@ -951,7 +953,8 @@ export const MUTANTS: Mutant[] = [
   },
   {
     id: 'b08r3-changes-page-skips',
-    breaks: 'the offline copy’s page ends at the highest version seen, so rows past a page in another table are skipped for good (QA B08 run 3 probe)',
+    breaks:
+      'the offline copy’s page ends at the highest version seen, so rows past a page in another table are skipped for good (QA B08 run 3 probe)',
     file: 'apps/api/src/sync/routes.ts',
     find: '    const top = more ? all[CHANGES_PAGE - 1]! : (all.at(-1) ?? since);',
     replace: '    const top = all.at(-1) ?? since;',
@@ -967,7 +970,8 @@ export const MUTANTS: Mutant[] = [
   },
   {
     id: 'b08r3-no-short-first-run',
-    breaks: 'someone without capture is never sent to the short first run, so their categories are never seeded (D79, D146 (2); QA B08 run 3 probe)',
+    breaks:
+      'someone without capture is never sent to the short first run, so their categories are never seeded (D79, D146 (2); QA B08 run 3 probe)',
     file: 'apps/web/src/screens/outside/logic.ts',
     find: '  return !me.setupDone && (!me.capture || shell);',
     replace: '  return !me.setupDone && shell;',

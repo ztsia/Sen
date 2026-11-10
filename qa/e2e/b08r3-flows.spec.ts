@@ -5,7 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 // QA B08 run 3: the run-3 flows of qa/B08/flows.md, at 390×844, against the API on QA's own database
 // (sen_qa). Each step asserts, then screenshots into qa-artifacts/<branch>/screens. See b08r3.config.ts.
 
-const SHOTS = new URL("../../qa-artifacts/B08_first-run-accounts/screens", import.meta.url).pathname;
+const SHOTS = new URL('../../qa-artifacts/B08_first-run-accounts/screens', import.meta.url).pathname;
 const DB = process.env.QA_DB ?? 'sen_qa';
 const sql = (q: string) =>
   execFileSync('psql', ['-X', '-At', '-v', 'ON_ERROR_STOP=1', `postgres://sen_owner@127.0.0.1:5432/${DB}`, '-c', q], {
@@ -119,7 +119,13 @@ test('R3-FLOW-1/2/3/4/5: first run end to end, closed mid-way, bad balances, nev
   await expect(page.getByTestId('hero')).toBeVisible();
   await shot(page, 'R3-FLOW-1-step-7-home');
   await expect
-    .poll(() => sql(`select own_names::text||'|'||coalesce(expected_payday::text,'null')||'|'||(setup_done_at is not null) from user_settings where user_id='${p.id}'`), { timeout: 10_000 })
+    .poll(
+      () =>
+        sql(
+          `select own_names::text||'|'||coalesce(expected_payday::text,'null')||'|'||(setup_done_at is not null) from user_settings where user_id='${p.id}'`,
+        ),
+      { timeout: 10_000 },
+    )
     .toMatch(/^\{"TAN WEI MING"\}\|.*last-working.*\|true$/);
 
   // R3-FLOW-4: finished, the steps never come back
@@ -182,13 +188,19 @@ test('R3-FLOW-6: Settings → Categories: rename, add, a taken name, archive, Se
   await page.getByRole('button', { name: 'Add a category' }).click();
   await page.getByLabel('Name').fill('Pets');
   await page.getByRole('button', { name: /^Add/ }).last().click();
-  await expect.poll(() => sql(`select count(*) from categories where user_id='${p.id}' and name='Pets' and archived_at is null`)).toBe('1');
+  await expect
+    .poll(() => sql(`select count(*) from categories where user_id='${p.id}' and name='Pets' and archived_at is null`))
+    .toBe('1');
   await shot(page, 'R3-FLOW-6-step-4-added');
   await page.getByRole('button', { name: /^Pets,/ }).click();
   await page.getByRole('switch', { name: /Discretionary/ }).click();
-  await expect.poll(() => sql(`select is_discretionary from categories where user_id='${p.id}' and name='Pets'`)).toBe('t');
+  await expect
+    .poll(() => sql(`select is_discretionary from categories where user_id='${p.id}' and name='Pets'`))
+    .toBe('t');
   await page.getByRole('button', { name: 'Archive' }).click();
-  await expect.poll(() => sql(`select archived_at is not null from categories where user_id='${p.id}' and name='Pets'`)).toBe('t');
+  await expect
+    .poll(() => sql(`select archived_at is not null from categories where user_id='${p.id}' and name='Pets'`))
+    .toBe('t');
   await expect(page.getByRole('button', { name: 'Bring back Pets' })).toBeVisible();
   await shot(page, 'R3-FLOW-6-step-5-archived');
   // Cash: no Archive, says why
@@ -213,7 +225,9 @@ test('R3-FLOW-7: Settings → You: a second name and payday 25 persist', async (
   await page.getByLabel('Day of the month').fill('25');
   await page.getByLabel('Day of the month').press('Enter');
   await expect
-    .poll(() => sql(`select own_names::text||'|'||expected_payday::text from user_settings where user_id='${p.id}'`), { timeout: 10_000 })
+    .poll(() => sql(`select own_names::text||'|'||expected_payday::text from user_settings where user_id='${p.id}'`), {
+      timeout: 10_000,
+    })
     .toMatch(/^\{"TAN WEI MING","WEI MING TAN"\}\|.*25/);
   await page.reload();
   await expect(page.getByLabel('Day of the month')).toHaveValue('25');
