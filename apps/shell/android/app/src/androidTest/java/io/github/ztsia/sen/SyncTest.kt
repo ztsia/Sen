@@ -436,6 +436,13 @@ class SyncTest {
     private fun healthNotification() =
         ctx.getSystemService(NotificationManager::class.java).activeNotifications.firstOrNull { it.id == SchedulerCheck.NOTIFICATION_ID }
 
+    /** Android takes a cancel asynchronously, so a gone notification is waited for, not read once (CI, B08's PR). */
+    private fun noHealthNotification(): Any? {
+        val until = System.currentTimeMillis() + 3_000
+        while (healthNotification() != null && System.currentTimeMillis() < until) Thread.sleep(50)
+        return healthNotification()
+    }
+
     @Test
     fun a_morning_job_over_26_hours_old_posts_one_warning_a_day_and_clears_when_it_runs() {
         Device.sh("pm grant ${ctx.packageName} android.permission.POST_NOTIFICATIONS")
@@ -444,7 +451,7 @@ class SyncTest {
         try {
             // exactly 26 hours: not late, nothing posted
             SchedulerCheck.check(ctx, now - 26 * h, now)
-            assertNull(healthNotification())
+            assertNull(noHealthNotification())
 
             SchedulerCheck.check(ctx, now - 27 * h, now)
             val n = healthNotification()
@@ -455,13 +462,13 @@ class SyncTest {
             // the same day: not posted again (dismissed, it stays dismissed)
             ctx.getSystemService(NotificationManager::class.java).cancel(SchedulerCheck.NOTIFICATION_ID)
             SchedulerCheck.check(ctx, now - 28 * h, now + h)
-            assertNull(healthNotification())
+            assertNull(noHealthNotification())
 
             // the next day: again; then the job runs and the warning goes
             SchedulerCheck.check(ctx, now - 28 * h, now + 24 * h)
             assertNotNull(healthNotification())
             SchedulerCheck.check(ctx, now + 23 * h, now + 25 * h)
-            assertNull(healthNotification())
+            assertNull(noHealthNotification())
         } finally {
             ctx.getSystemService(NotificationManager::class.java).cancel(SchedulerCheck.NOTIFICATION_ID)
         }

@@ -94,7 +94,8 @@ jobs:
   # The database (B05): every migration on a fresh Postgres, the pgTAP tests (RLS for two people, the
   # catalogue check), then the API's tests against it. A local Postgres in the runner, never Neon.
   db:
-    runs-on: ubuntu-latest
+    # 24.04, not ubuntu-latest: 26.04's archive has no postgresql-16 (10 Nov)
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -114,7 +115,8 @@ jobs:
       - run: pnpm --filter @sen/web e2e:server
 
   e2e:
-    runs-on: ubuntu-latest
+    # 24.04, not ubuntu-latest: Playwright 1.56 has no Chromium for 26.04 (10 Nov)
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
