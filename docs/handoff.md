@@ -1,14 +1,15 @@
 # Handoff
 
-## Where things stand (4 Nov)
+## Where things stand (10 Nov)
 
 **B08 · First run, accounts and categories** is built on `B08/first-run-accounts`. No PR yet. B07 merged (#22).
-- **QA run 1** (`qa/B08/report.md`, published: https://claude.ai/artifact/Pkj1my3wTFBwiM5qfvNnvv; eyes in
-  `qa/B08/eyes.md`): *fix first*, 4 Major, 8 Minor, 7 Notes. **All fixed** after the owner's go, as one tier-3
-  batch (the money module changed): `qa/B08/ledger.md` § *QA run 1: the fixes* has each one and its proof.
-  The choices they needed are **D147**.
-- **QA run 2** is next: a fresh full run (tier 3). The owner asked to stop after each QA run and wait for their
-  go before fixing or opening the PR.
+- **QA run 1** (`qa/B08/report-run1.md`, eyes `qa/B08/eyes-run1.md`): 4 Major, all fixed (D147).
+- **QA run 2** (`qa/B08/report-run2.md`, eyes `qa/B08/eyes.md`; published at the same link,
+  https://claude.ai/artifact/Pkj1my3wTFBwiM5qfvNnvv, version 2): *fix first*, 1 Major (a category added before
+  first run stopped the starting list), 7 Minor, 8 Notes, 2 eyes *wrong*. **Fixed** after the owner's go, as one
+  tier-3 batch (the access middleware and the frame changed): `qa/B08/ledger.md` § *QA run 2: the fixes*.
+- **QA run 3** is next: a fresh full run. The owner asked to stop after each QA run and wait for their go
+  before fixing or opening the PR.
 - **D145 (the owner, 4 Nov): one account per app.** Ryt's Main and its pockets are one account, TNG's eWallet
   and GO+ are one. No second account under an app, no *Add a pot*.
 - **Database:** migrations 0013–0014 (`accounts`, `account_names`, `categories`, `transactions`, views
@@ -19,11 +20,12 @@
 - **Web:** first run saves as it goes; the router's rule is `firstRunFor` (`screens/outside/logic.ts`).
   Accounts, Account, Settings → Categories and → You are real. `?scenario=new` is before first run.
 - **Preview seed:** Wei Ming finished; **Mei Ling** (`meiling@example.com`, code 123456) hasn't.
-- **CI's `e2e:server`** now walks first run (`e2e/first-run.server.spec.ts`): the redirect, RM0.00, a lost save.
+- **CI's `e2e:server`** now walks first run (`e2e/first-run.server.spec.ts`): the redirect, RM0.00, a lost save,
+  and a finished person sent Home.
 
 ## What to do next
 
-1. QA run 2 (fresh `qa-reviewer`, thin prompt). Commit its record, start its eyes pass, publish, report to the
+1. QA run 3 (fresh `qa-reviewer`, thin prompt). Commit its record, start its eyes pass, publish, report to the
    owner, and wait for their go.
 2. Then the retro at the bottom of `qa/B08/ledger.md`, `usage.mjs --log B08`, the PR *B08 · First run, accounts
    and categories*, and CLAUDE.md's Built/Next line.
