@@ -46,7 +46,7 @@ export const useSen = (from: string) => useRead(['sen', from], (b) => b.sen(from
 export const useMemory = () => useRead(['memory'], (b) => b.memory());
 export const useResearch = () => useRead(['research'], (b) => b.research());
 export const useUsage = () => useRead(['usage'], (b) => b.usage());
-export const useSettings = () => useRead(['settings'], (b) => b.settings());
+export const useSettings = (enabled = true) => useRead(['settings'], (b) => b.settings(), enabled);
 export const usePayday = () => useRead(['payday'], (b) => b.payday());
 // B07
 export const useCaptured = () => useRead(['captured'], (b) => b.captured());

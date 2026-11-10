@@ -71,3 +71,32 @@ main's build from the base worktree on :4186).
 | `api:GET /api/sync/changes` queries 14 vs 10 | The four new kinds the brief adds to the offline copy, one select each (categories, accounts, account names, your names), inside the same transaction | Accepted: the brief's own addition |
 
 Standing (main breaks the same limits): 333 numbers, already explained in earlier slices' ledgers; none is new to B08.
+
+## QA run 2: the fixes (10 Nov)
+
+**The batch is tier 3, so run 3 is a fresh full run.** Finding 8's fix changes the access middleware every
+signed-in request passes through (auth), and finding 6's the frame every screen sits in. Commits
+`854096f`..`2494013`.
+
+| # | Fix | Proof it's guarded |
+|---|---|---|
+| 1 | `category.add` seeds the starting list first, in its own transaction, so a category added before first run joins the list and Sen's Cash, Unaccounted and Salary always exist; the made-up backend does the same. Settings' empty state no longer says categories come with the first payment | Red: `ledger.test.ts` › *a category added before first run* fails on the old `ledger.ts` (*expected [Pets] to have a length of 22 but got 1*); green 16/16. Breakage check `seed-before-add` killed |
+| 2 | Account's Checks card says *None since the opening balance on 5 Nov* when the opening is the last check (D147 (2)) | Trees re-recorded; run 3's eyes |
+| 3 | Accounts: the holds line has its own line and wraps, never cut | Trees re-recorded; run 3's eyes |
+| 4 | First run, finished on Sen's server, sends a link to it Home with `replace`. The made-up backend keeps every scenario's first run open for review (the catalogue walks it on Wei Ming) | Red: `first-run.server.spec.ts:54` fails on the old screen (*Received …/s/first-run*); green 2/2 |
+| 5 | Accounts reads /me first: without Capture it says *Accounts come with Sen reading your bank notifications, which isn't switched on for you*, and never asks the server | Run 3 |
+| 6 | The frame leaves its offline banner off on first run, which says what offline means on each step itself | Run 3 |
+| 7 | Not fixed: QA tooling, `scan-after` misses a 0.4–0.8 s screen with three workers, on `main` too. Follow-up in the handoff | — |
+| 8 | `setupDone` is read with the access row (a left join on `user_settings`), so /me runs no second transaction | `test:db` 199 passed; run 3's metrics |
+| Eyes: balance-check | Each card says what its one figure holds (`BalanceCheckView` rows carry `package`); Save shows *Saving…* | Run 3's eyes |
+| Eyes: first run's skeletons | `Steps` starts the Settings and Accounts reads at once, so later steps open with their form | Run 3's filmstrips |
+| Eyes: accounts empty | *Choose apps* opens Settings → Capture → Apps where it's built | Run 3 |
+| Probes | QA's seven probes kept as breakage checks, with `seed-before-add` | `mutants.mjs --only` the eight: 8/8 killed |
+
+Left, with reasons:
+- **Eyes, first run's accounts step (blanks go red):** flows.md step 5 asks each account for today's balance,
+  so a blank is refused; the error says *or 0*, for an empty wallet.
+- **Notes 9–16:** 9 is the phone's (phone step 8); 10 (an account for any package) books nothing: the listener
+  discards an unchosen or blocked app in native code (D86), so no payment ever reaches it; 11
+  and 12 are within the rules (12: a person without Capture has no accounts); 13, 15 and 16 are QA tooling,
+  in the handoff's follow-ups; 14 is B13's Home.

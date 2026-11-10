@@ -92,9 +92,6 @@ const loadDraft = () => readDraft(readStored(KEY));
 function Steps({ capture }: { capture: boolean }) {
   const go = useGo();
   const online = useOnline();
-  // the later steps' reads start now, so each step opens with its form, not a skeleton (QA B08 run 2 eyes)
-  useSettings();
-  useAccountList(capture);
   const steps = stepsFor(capture);
   // on Sen's server, the router sends only the signed-in here: sign-in is behind them
   const first = __SEN_BACKEND__ === 'api' ? 1 : 0;
@@ -111,6 +108,10 @@ function Steps({ capture }: { capture: boolean }) {
   const step = steps[i]!;
   const last = i === steps.length - 1;
   const to = (n: number) => setDraft({ step: steps[n]! });
+  // once signed in, the later steps' reads start at once, so each step opens with its form, not a
+  // skeleton (QA B08 run 2 eyes)
+  useSettings(step !== 'sign-in');
+  useAccountList(capture && step !== 'sign-in');
   // the starting categories, once (§8, D33): a retry seeds nothing more
   const started = useRef(false);
   useEffect(() => {
