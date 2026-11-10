@@ -293,6 +293,23 @@ describe('accounts', () => {
       await owner.query('update user_access set features = $2 where user_id = $1', [other.id, ON]);
     }
   });
+
+  it('come with capture for their own person too: one account read, edited or archived (QA B08 run 4, 2)', async () => {
+    const before = (await owner.query('select name, archived_at from accounts where id = $1', [ryt])).rows[0];
+    await owner.query('update user_access set features = $2 where user_id = $1', [me.id, { ...ON, capture: false }]);
+    try {
+      const read = await call(`/api/accounts/${ryt}`, { cookie: s.me.cookie });
+      expect([read.status, read.body?.code]).toEqual([403, 'capture_off']);
+      const edit = await run(s.me.cookie, { type: 'account.edit', id: ryt, name: 'Renamed' });
+      expect([edit.status, edit.body?.code]).toEqual([403, 'capture_off']);
+      const archive = await run(s.me.cookie, { type: 'account.archive', id: ryt, archived: !before.archived_at });
+      expect([archive.status, archive.body?.code]).toEqual([403, 'capture_off']);
+      const [row] = (await owner.query('select name, archived_at from accounts where id = $1', [ryt])).rows;
+      expect(row).toEqual(before);
+    } finally {
+      await owner.query('update user_access set features = $2 where user_id = $1', [me.id, ON]);
+    }
+  });
 });
 
 describe('categories', () => {

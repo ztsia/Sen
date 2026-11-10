@@ -141,6 +141,13 @@ SELECT is(pg_temp.as_app(:c, $$INSERT INTO transactions (id, user_id, account_id
 SELECT is(pg_temp.as_app(:c, $$UPDATE transactions SET category_id = (SELECT id FROM categories WHERE system_key = 'unaccounted')
   WHERE id = '00000000-0000-4000-8000-0000000003c1' RETURNING 1$$),
   'error:23514', 'a payment can''t be moved into Unaccounted');
+-- the other half (QA B08 run 4, finding 1): a balance check's adjustment does book there, and stays one
+SELECT is(pg_temp.as_app(:c, $$INSERT INTO transactions (id, user_id, account_id, category_id, occurred_at, direction, amount, kind, source)
+  SELECT '00000000-0000-4000-8000-0000000003c2', user_id, '00000000-0000-4000-8000-0000000001c1', id, now() - interval '1 year', 'out', 100, 'adjustment', 'adjustment'
+  FROM categories WHERE system_key = 'unaccounted' RETURNING 1$$),
+  '1', 'a balance check''s adjustment books to Unaccounted');
+SELECT is(pg_temp.as_app(:c, $$UPDATE transactions SET kind = 'spend' WHERE id = '00000000-0000-4000-8000-0000000003c2' RETURNING 1$$),
+  'error:23514', 'an adjustment in Unaccounted can''t be turned into a payment there');
 SELECT is(pg_temp.as_app(:c, $$UPDATE transactions SET my_share = 200 WHERE id = '00000000-0000-4000-8000-0000000003c1' RETURNING 1$$),
   'error:23514', 'your share is never more than what moved (D19)');
 SELECT is(pg_temp.as_app(:c, $$UPDATE transactions SET amount = '1.5' WHERE id = '00000000-0000-4000-8000-0000000003c1' RETURNING 1$$),
