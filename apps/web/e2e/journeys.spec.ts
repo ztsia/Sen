@@ -1063,6 +1063,33 @@ test.describe('B08 after QA run 3', () => {
     await expect(page.getByRole('button', { name: 'Add Ryt Bank' })).toHaveCount(0);
   });
 
+  test('a typed amount keeps the text colour while its field shows an error (QA B08 run 4, scoped 14)', async ({
+    page,
+  }) => {
+    await open(page, '/s/accounts');
+    await page.evaluate(() => sessionStorage.setItem('sen.sim.chosen', JSON.stringify(['com.example.coffee'])));
+    await open(page, '/s/accounts');
+    await page.getByRole('button', { name: 'Add A coffee app' }).click();
+    const sheet = dialog(page, 'Add A coffee app');
+    await sheet.getByRole('button', { name: 'Add account' }).click();
+    const amount = sheet.getByLabel('Today’s balance');
+    await expect(amount).toHaveAttribute('aria-invalid', 'true');
+    // the field's label and message may be red (D150); the amount never is (patterns §2)
+    const colours = await amount.evaluate((el) => {
+      const probe = (token: string) => {
+        const s = document.createElement('span');
+        s.style.color = `var(${token})`;
+        el.parentElement!.append(s);
+        const c = getComputedStyle(s).color;
+        s.remove();
+        return c;
+      };
+      return { amount: getComputedStyle(el).color, foreground: probe('--foreground'), red: probe('--destructive') };
+    });
+    expect(colours.amount).toBe(colours.foreground);
+    expect(colours.amount).not.toBe(colours.red);
+  });
+
   test('a taken category name is said under Name, not in a toast (QA B08 run 3, 3)', async ({ page }) => {
     await open(page, '/s/settings/categories');
     await page.getByRole('button', { name: /^Groceries/ }).click();

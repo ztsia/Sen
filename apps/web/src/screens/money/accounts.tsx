@@ -83,20 +83,26 @@ function NoCapture() {
 
 function Body({ v }: { v: AccountsView }) {
   const go = useGo();
-  if (!v.tracked.length && !v.archived.length)
+  // none in use: say what to do, above any archived ones to bring back (QA B08 run 4, scoped 13)
+  if (!v.tracked.length && !v.elsewhere.length)
     return (
       <div className="flex flex-col gap-5 pt-2 pb-8">
-        <NotAdded tracked={[]} archived={[]} />
+        <NotAdded tracked={[]} archived={v.archived} />
         <EmptyState
           icon={WalletIcon}
-          title="No accounts yet"
-          line="Each app you choose for Sen to read gets an account here, with the balance you type for it."
+          title={v.archived.length ? 'No accounts in use' : 'No accounts yet'}
+          line={
+            v.archived.length
+              ? 'Bring an archived account back below, or choose apps for Sen to read.'
+              : 'Each app you choose for Sen to read gets an account here, with the balance you type for it.'
+          }
           action={
             canOpen('settings/capture/apps')
               ? { label: 'Choose apps', onSelect: () => go('settings/capture/apps') }
               : undefined
           }
         />
+        <Archived rows={v.archived} />
       </div>
     );
   return (

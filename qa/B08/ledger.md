@@ -164,3 +164,42 @@ Left, with reasons:
   writes and it refuses both shapes it can; 9 zero-width characters stay a follow-up (one person's own list);
   10 backspace from 0.0x emptying the field is D132's rule as written in `typedSen`; 12 is the skeleton's made-up
   data on a preview.
+
+## QA run 4, scoped: the fixes (10 Nov)
+
+**Tier 1 each:** one source file plus its test, or a doc. On the owner's *Go*, which took the session's
+recommendation for note 15.
+
+| # | Fix | Proof it's guarded |
+|---|---|---|
+| 13 | With no account in use (none tracked, none elsewhere), Accounts leads with an empty state, *No accounts in use* / *Bring an archived account back below, or choose apps for Sen to read.*, with *Choose apps*, above the archived ones | Red: `accounts.server.spec.ts` › *with every account archived* fails on the old screen (*element(s) not found*); green. CI's `e2e:server` runs it, on the real API |
+| 14 | The amount's colour is pinned: in the D148 sheet with its error showing, the amount's computed colour is `--foreground`, not `--destructive` | Red: `journeys.spec.ts` › *a typed amount keeps the text colour* with ` text-foreground` removed (*Expected lab(12.5 …) Received lab(40.2 …)*); green |
+| Note 15 | **D150 (the owner):** a wrong field's label and message may be red; the amount in it never is. patterns §2 amended | Doc |
+
+Trees: all 88 re-recorded, unchanged. `e2e:server` 8/8, the B08 journeys 5/5, typecheck, lint and format clean.
+
+## Retro
+
+**What QA found late, round after round, and why.**
+- Four full runs and one scoped re-check. Every run found something real, and the findings shrank each round: 4
+  Majors, then 1, then 1 (a test gap), then none. What kept coming back was the *edges of a new idea*: D145's one
+  account per app and D148's adding later each made states the brief didn't list (an account added before first
+  run, an app chosen after it, an app whose account is archived). The criteria are written from the docs, so each
+  new decision's edges were first tested in the run after it.
+- Test teeth were the other repeat: runs 3 and 4 each found guards whose removal no suite noticed (the offline
+  copy's paging; the Unaccounted trigger's other half; three Capture checks). Each was a rule written once in SQL
+  or a route and tested from one side only.
+- The tree check passed stale trees in runs 2–4: Playwright matches a recorded tree loosely.
+
+**What cost the most.** About $265 by API prices for this session (`usage.mjs`): the main session $97 over
+700 turns, and the QA reviewers $149 over five runs (run 2's restart after a usage limit alone $40). The eyes
+passes were $3.70–5.40 each. Waiting across usage limits made runs long, not costly.
+
+**What changed because of it.**
+- CI re-records every accessibility tree in full and fails on any difference (`ci.yml`, *The accessibility trees
+  are as committed*; `e2e:trees` is `--update-snapshots=all`), so a stale tree can't pass again.
+- 20 breakage checks added to `qa/mutants.ts` across runs 3 and 4 (`b08r3-*`, `b08r4-*`), each killed.
+- patterns §2 now says what every field already did (D150), so the eyes pass stops flagging it.
+- For `ztsia/workflow` (queued, below): a decision made mid-slice should add its states to the brief's *Done
+  when* the same day, so the next QA run's criteria cover them; and the harness should record which signal set
+  each tap's settle time (finding 6 stayed unexplained across two runs).

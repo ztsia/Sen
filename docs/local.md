@@ -120,6 +120,13 @@ follow on a phone, and commit.
       Security once, before launch. Then move to 1.2.0: on the laptop, `claude plugin update
       workflow@ztsia`; in the cloud, edit any line of the environment's setup script (a comment will
       do) and start a new session. Until then, Sen's `docs/workflow/qa.md` already says the same.
+- [ ] **Lessons from B08 for `ztsia/workflow`** (a session with that repository attached, as a PR to the
+      plugin; `qa/B08/ledger.md` § *Retro*): (1) the `brief` or `qa` skill: a decision made mid-slice adds its
+      states to the brief's *Done when* the same day, so the next QA run's criteria cover them; (2) the `qa`
+      skill: a rule written in SQL or a route is tested from both sides (what it refuses and what it lets
+      through), the gap behind three of B08's surviving breakage checks; (3) the qa-diff harness: record which
+      signal (a DOM change or a fetch) set each tap's settle time; (4) the trees: re-record in full and diff in CI
+      rather than trust `toMatchAriaSnapshot`'s loose match (done in Sen's `ci.yml`).
 - [ ] **Update Sen and Sen review on your phone once B05 · Feel merges.** Its haptics live in the
       shell (bridge 2), so the app needs the new APK; until then everything else works and haptics
       stay off. Obtainium → *Update all*, or *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* →
