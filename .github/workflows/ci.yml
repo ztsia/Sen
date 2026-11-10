@@ -142,7 +142,9 @@ jobs:
       - name: The accessibility trees are as committed
         run: |
           pnpm --filter @sen/web e2e:trees
-          git diff --exit-code -- apps/web/e2e/trees || { echo "::error::A screen changed and its tree wasn't re-recorded: pnpm --filter @sen/web e2e:trees, then commit apps/web/e2e/trees"; exit 1; }
+          # Payments is virtualised: how many rows fit depends on the runner's fonts, one row more here than in a
+          # cloud session, so its two trees keep only Playwright's own match above (B08's PR)
+          git diff --exit-code -- apps/web/e2e/trees ':!apps/web/e2e/trees/payments.aria.yml' ':!apps/web/e2e/trees/payments-offline.aria.yml' || { echo "::error::A screen changed and its tree wasn't re-recorded: pnpm --filter @sen/web e2e:trees, then commit apps/web/e2e/trees"; exit 1; }
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
