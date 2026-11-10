@@ -13,8 +13,9 @@
   **Fixed** after the owner's go, as one tier-3 batch (a shared block's prop and `@sen/core`'s `Name`):
   `qa/B08/ledger.md` § *QA run 3: the fixes*. **D148** (the session's call on the owner's *Go*, open to
   overturn): an app chosen after first run gets its account on Accounts, under *Not added yet*.
-- **QA run 4** is next: a fresh full run. The owner asked to stop after each QA run and wait for their go
-  before fixing or opening the PR. Run 3's flag on More → Accounts is still unexplained (finding 6).
+- **QA run 4** (`qa/B08/report.md`, eyes `eyes.md`, security re-review in `security.md`; same link, version 4):
+  *fix first*, no Blocker or Major, 6 Minor, 6 Notes, eyes 1 *wrong* (from main). **Waiting for the owner's go**
+  (they asked to stop after each QA run). More → Accounts' timing flag is still unexplained (finding 6).
 - **D145 (the owner, 4 Nov): one account per app.** Ryt's Main and its pockets are one account, TNG's eWallet
   and GO+ are one. No second account under an app, no *Add a pot*.
 - **Database:** migrations 0013–0014 (`accounts`, `account_names`, `categories`, `transactions`, views
@@ -30,9 +31,9 @@
 
 ## What to do next
 
-1. QA run 4 (fresh `qa-reviewer`, thin prompt; rename `report.md` to `report-run3.md` and `eyes.md` to
-   `eyes-run3.md` first). Commit its record, start its eyes pass, publish, report to the
-   owner, and wait for their go.
+1. On the owner's go: run 4's fixes by tier (findings 1–5 at least: tests for the Unaccounted trigger's other
+   half and the three Capture checks, plus their `b08r4-*` breakage checks; Accounts after an archived app's
+   only account; `my_share`'s rule; the tree check holding placeholders), recorded in `qa/B08/ledger.md`.
 2. Then the retro at the bottom of `qa/B08/ledger.md`, `usage.mjs --log B08`, the PR *B08 · First run, accounts
    and categories*, and CLAUDE.md's Built/Next line.
 3. Still open from before: B06's F1 and F2 (the owner's call); lessons for `ztsia/workflow` from B06–B08.
