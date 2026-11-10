@@ -3,6 +3,7 @@ import { CheckIcon, WalletIcon } from 'lucide-react';
 import { moneyParts } from '@sen/core/money';
 import type { BalanceCheckView } from '@sen/core/views';
 import { Money } from '@/blocks/money';
+import { Pending } from '@/blocks/pending';
 import { checkAmount, MoneyInput } from '@/blocks/money-input';
 import { EmptyState } from '@/blocks/states';
 import { IconTile } from '@/blocks/tile';
@@ -10,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useWrite } from '@/data/hooks';
+import { HOLDS } from '../outside/logic';
 
 /** A balance as the text a person would type (`1,284.50`), for *Matches*. parseSen reads it back. */
 const typed = (sen: number) => {
@@ -88,6 +90,10 @@ export function BalanceForm({ v, onSaved, extra }: { v: BalanceCheckView; onSave
                       <span className="text-sm text-muted-foreground">
                         Sen has <Money sen={r.computed} className="font-normal text-foreground" />
                       </span>
+                      {/* what the one figure holds, so it's checked whole (D147 (3); QA B08 run 2 eyes) */}
+                      {r.package && HOLDS[r.package] ? (
+                        <span className="text-sm text-muted-foreground">{HOLDS[r.package]}</span>
+                      ) : null}
                     </p>
                   </div>
                   <MoneyInput
@@ -144,7 +150,9 @@ export function BalanceForm({ v, onSaved, extra }: { v: BalanceCheckView; onSave
         <div className="flex gap-2">
           {extra}
           <Button type="submit" className="flex-1" disabled={saving}>
-            Save
+            <Pending on={saving} label="Saving…">
+              Save
+            </Pending>
           </Button>
         </div>
       </div>

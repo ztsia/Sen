@@ -49,6 +49,10 @@ test('without capture, an unfinished person is held at first run, in a browser t
   await expect(page).not.toHaveURL(/first-run/, { timeout: 10_000 });
   await page.goto('/s/settings');
   await expect(page).toHaveURL(/\/s\/settings/);
+  // finished, its steps don't come back: a link to them goes Home (§9.5, D26; QA B08 run 2, 4)
+  await page.goto('/s/first-run');
+  await expect(page).not.toHaveURL(/first-run/, { timeout: 10_000 });
+  await expect(page.getByText(/Step \d of/)).toHaveCount(0);
 });
 
 test('with capture, a browser isn’t held at first run, and its accounts step takes RM0.00 and a lost answer', async ({

@@ -43,18 +43,12 @@ export function personRoutes() {
 
   r.get('/me', async (c) => {
     const f = c.var.access.features;
-    const [s] = await c.var.db((db) =>
-      db
-        .select({ setupDoneAt: schema.userSettings.setupDoneAt })
-        .from(schema.userSettings)
-        .where(eq(schema.userSettings.userId, c.var.person.id)),
-    );
     const me: MeView = {
       capture: f.capture,
       claims: f.claims,
       agent: f.agent,
       aiPausedUntil: null,
-      setupDone: !!s?.setupDoneAt,
+      setupDone: c.var.access.setupDone,
     };
     return c.json(me);
   });

@@ -192,7 +192,7 @@ export function balanceCheckView(db: Db): BalanceCheckView {
   return {
     rows: live(db)
       .filter((a) => a.kind === 'tracked')
-      .map((a) => ({ id: a.id, name: a.name, computed: bal.get(a.id) ?? 0 })),
+      .map((a) => ({ id: a.id, name: a.name, computed: bal.get(a.id) ?? 0, package: a.notifierPackage ?? null })),
   };
 }
 

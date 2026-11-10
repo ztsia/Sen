@@ -97,7 +97,8 @@ function PersonShell({ screen }: { screen: ScreenDef | undefined }) {
           !tabs && 'safe-bottom',
         )}
       >
-        {online ? null : screen?.id === 'sign-in' ? (
+        {/* first run says what offline means on each of its steps itself: one banner, not two (QA B08 run 2, 6) */}
+        {online || screen?.id === 'first-run' ? null : screen?.id === 'sign-in' ? (
           <OfflineBanner>You’re offline. Signing in needs a connection.</OfflineBanner>
         ) : (
           <OfflineBanner />

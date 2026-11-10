@@ -72,9 +72,19 @@ export default function FirstRun() {
         </Frame>
       }
     >
-      {(m) => <Steps capture={m.capture} />}
+      {(m) => (m.setupDone && __SEN_BACKEND__ === 'api' ? <Finished /> : <Steps capture={m.capture} />)}
     </Loaded>
   );
+}
+
+/**
+ * Finished on Sen's server: the steps don't come back (§9.5, D26; QA B08 run 2, 4), so a link here
+ * goes Home. The made-up backend keeps every scenario's first run open, for review.
+ */
+function Finished() {
+  const go = useGo();
+  useEffect(() => go('home', {}, { replace: true }), [go]);
+  return null;
 }
 
 const loadDraft = () => readDraft(readStored(KEY));
@@ -82,6 +92,9 @@ const loadDraft = () => readDraft(readStored(KEY));
 function Steps({ capture }: { capture: boolean }) {
   const go = useGo();
   const online = useOnline();
+  // the later steps' reads start now, so each step opens with its form, not a skeleton (QA B08 run 2 eyes)
+  useSettings();
+  useAccountList(capture);
   const steps = stepsFor(capture);
   // on Sen's server, the router sends only the signed-in here: sign-in is behind them
   const first = __SEN_BACKEND__ === 'api' ? 1 : 0;

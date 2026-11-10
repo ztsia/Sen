@@ -137,7 +137,10 @@ function Body({ v }: { v: AccountView }) {
             />
           ))
         ) : (
-          <p className="px-4 py-3 text-muted-foreground">Not checked yet.</p>
+          // the opening balance is the first check (D147 (2)), so the card agrees with *Last checked*
+          <p className="px-4 py-3 text-muted-foreground">
+            {a.checkedAt ? `None since the opening balance on ${shortDay(klDay(v.openingAt))}.` : 'Not checked yet.'}
+          </p>
         )}
       </GroupCard>
       <EditSheet v={v} open={editing} onOpenChange={setEditing} />

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
-import { useAccountList, useWrite } from '@/data/hooks';
+import { useAccountList, useMe, useWrite } from '@/data/hooks';
 import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { shortDay } from '@/lib/dates';
@@ -43,13 +43,33 @@ function BankTile({ name }: { name: string }) {
  * without balances, and *Check balances*.
  */
 export default function Accounts() {
-  const q = useAccountList();
+  const me = useMe();
   return (
     <Screen bar={<AppBar title="Accounts" />}>
-      <Loaded q={q} what="your accounts">
-        {(v) => <Body v={v} />}
+      <Loaded q={me} what="your accounts">
+        {(m) => (m.capture ? <List /> : <NoCapture />)}
       </Loaded>
     </Screen>
+  );
+}
+
+function List() {
+  const q = useAccountList();
+  return (
+    <Loaded q={q} what="your accounts">
+      {(v) => <Body v={v} />}
+    </Loaded>
+  );
+}
+
+/** Without Capture the server holds no balances for them (§9.6): say why, not *check your connection*. */
+function NoCapture() {
+  return (
+    <EmptyState
+      icon={WalletIcon}
+      title="No accounts here"
+      line="Accounts come with Sen reading your bank notifications, which isn’t switched on for you."
+    />
   );
 }
 
@@ -61,6 +81,11 @@ function Body({ v }: { v: AccountsView }) {
         icon={WalletIcon}
         title="No accounts yet"
         line="Each app you choose for Sen to read gets an account here, with the balance you type for it."
+        action={
+          canOpen('settings/capture/apps')
+            ? { label: 'Choose apps', onSelect: () => go('settings/capture/apps') }
+            : undefined
+        }
       />
     );
   return (
@@ -105,7 +130,8 @@ function Body({ v }: { v: AccountsView }) {
                     ) : null}
                     {a.app && a.app !== a.name ? <span className="truncate">{a.app}</span> : null}
                     {/* one account per app (D145): what its figure holds, so it's checked whole */}
-                    {a.package && HOLDS[a.package] ? <span className="truncate">{HOLDS[a.package]}</span> : null}
+                    {/* its own line, wrapped, never cut: the words make the figure checkable (QA B08 run 2, 3) */}
+                    {a.package && HOLDS[a.package] ? <span className="basis-full">{HOLDS[a.package]}</span> : null}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions className="max-w-[45%] shrink-0 justify-end text-right">

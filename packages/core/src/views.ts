@@ -597,7 +597,15 @@ export type AccountView = z.infer<typeof AccountView>;
 
 /** Each tracked account's computed balance, beside a box for the bank's figure (D18). */
 export const BalanceCheckView = z.object({
-  rows: z.array(z.object({ id: Id, name: z.string(), computed: Sen })),
+  rows: z.array(
+    z.object({
+      id: Id,
+      name: z.string(),
+      computed: Sen,
+      /** The app that feeds it: its figure may hold more than one balance (D145, D147 (3)). */
+      package: z.string().nullable(),
+    }),
+  ),
 });
 export type BalanceCheckView = z.infer<typeof BalanceCheckView>;
 
