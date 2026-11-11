@@ -25,6 +25,7 @@ phases are still the risks to retire, and the table at the end shows where each 
 | | **3 · Capture to ledger** | |
 | B07 | Sync and the outbox | [B07](briefs/B07-sync.md) |
 | B08 | First run, accounts and categories | [B08](briefs/B08-first-run-accounts.md) |
+| B08 | Charts on shadcn's Chart (D151) | [B08](briefs/B08-charts.md) |
 | B09 | The template engine | [B09](briefs/B09-template-engine.md) |
 | B10 | New wording: drafting and booking | [B10](briefs/B10-drafting.md) |
 | B11 | One payment, one transaction | [B11](briefs/B11-pairs-transfers.md) |
@@ -63,6 +64,13 @@ phases are still the risks to retire, and the table at the end shows where each 
 | B38 | Members, invitations and AI credit | [B38](briefs/B38-members-credit.md) |
 | B39 | The PWA | [B39](briefs/B39-pwa.md) |
 | B40 | Integrations: lunchbot (P9), only if the pool still runs | [B40](briefs/B40-integrations.md) |
+
+**Waiting on the owner's go** (D151), not slices yet: no session starts one alone.
+- **The polish pass.** A Fable subagent at `xhigh` audits every screen and component and writes a
+  polish plan for each; it never edits. The main session turns the plans into units for Haiku and
+  Sonnet builders.
+- **Sen's chat on AI Elements**, against references the owner will share.
+- **Sen re-specced** (spec §12), with the owner.
 
 ## How the cut was made
 
@@ -263,6 +271,13 @@ Notifications become categorised transactions. **Daily use starts at the end of 
   - Categories: the starting list with its flags and system keys (D33).
   - `accounts` and `account` made real, plus Settings → *Categories* and → *You*.
 - **Done when:** you finish first run on the phone, and each account shows its opening balance.
+
+### B08 · Charts on shadcn's Chart (D151)
+- **Builds:** every chart in `blocks/charts.tsx`, and the goal ring, moved onto shadcn's Chart and
+  Recharts; the meters onto `Progress`; the spending calendar stays hand-drawn. Recharts in its own
+  chunk. The first slice built as a plan in units.
+- **Done when:** every screen reads as before in all twelve look-and-mode pairs, the first screen's
+  code didn't grow, and QA's full run says ship.
 
 ### B09 · The template engine
 - **Builds:**

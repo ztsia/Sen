@@ -34,7 +34,8 @@ a brief each (`S3`, D111). The spec's later revisions are D85–D110.
 owner's phone is still to run), B03 and B04 (the walking skeleton, its review and the redesign,
 D130), B05 (the server, database and sign-in; then QA tooling and Feel, D139, D140), B06 (jobs, realtime
 and backups), B07 (sync and the outbox), B08 (first run, accounts and categories; one account per app, D145).
-**Next:** B09.
+**Next:** B08 · Charts (`docs/briefs/B08-charts.md`, D151), then B09. A polish pass, Sen's chat on AI
+Elements and a re-spec of Sen wait for the owner's go (`docs/modules.md`).
 Each slice waits only for the owner's merge; `docs/handoff.md` says where things stand now.
 
 
@@ -74,7 +75,7 @@ Each slice waits only for the owner's merge; `docs/handoff.md` says where things
 |---|---|
 | App | A **Capacitor** shell for Android around a **web app** (React, TypeScript, Vite), hosted on Vercel (D42) |
 | Native pieces | Kotlin, in the shell: the notification listener, parsing, the category prompt, the outbox and sync, the scanner, share-to-app, push, widgets |
-| UI | shadcn/ui on Tailwind v4, with this app's own design (D43) |
+| UI | shadcn/ui (Radix base, D151) on Tailwind v4, with this app's own design (D43); charts on shadcn's Chart and Recharts |
 | Client state | TanStack Query and Zustand |
 | Offline queue | The shell's SQLite outbox |
 | Backend | One Hono API on Vercel Functions, Neon Postgres (Drizzle), Better Auth with emailed codes (D54) |

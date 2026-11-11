@@ -11,3 +11,7 @@ what's true of Sen only, and wins where they differ.
   cost (17 Oct).
 - **In a cloud session, subagents can't start their own,** whatever their tools list (B05 · Feel). The
   main session starts what an agent would delegate, such as `workflow:qa-eyes` for the reviewer.
+- **A slice's plan is `docs/plans/<slice>.md`** (D151), written by the main session before it builds
+  anything: the units, each with its outcome, owned files, what it copies, its checks and its model,
+  with the foundations and seams marked as the main session's. A builder's answered question is added
+  to it. The handoff points at it.
