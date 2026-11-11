@@ -6,7 +6,8 @@ looks, D75–D150), and the polish happens inside it.
 
 1. **Audit (this folder).** Fable auditors at `xhigh`, one per area (seven), look at every screen and the
    components it's built from, and each writes a polish plan, `docs/polish/<area>.md`. They never
-   edit code.
+   edit code, and never take screenshots: the screens are captured beforehand by script, and any
+   further view an auditor needs goes into its `requests.md`, captured in one batch by a Haiku agent.
 2. **Units.** The main session reads the plans, settles anything marked *needs the owner*, and turns
    the plans into builder units (Haiku or Sonnet) in `docs/plans/polish.md`: shared fixes (a
    component, a block, the frame) first, then screens.
