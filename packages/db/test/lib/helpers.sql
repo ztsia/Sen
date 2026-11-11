@@ -161,5 +161,18 @@ BEGIN
   INSERT INTO device_heartbeats (id, user_id, listener_connected, access, app_version) VALUES
     (gen_random_uuid(), a, true, true, '0.7.0'), (gen_random_uuid(), b, true, true, '0.7.0');
   INSERT INTO outbox_applied (id, user_id, kind) VALUES (gen_random_uuid(), a, 'command'), (gen_random_uuid(), b, 'command');
+  -- B08
+  INSERT INTO accounts (id, user_id, name, kind, notifier_package, notifier_label, opening_balance, opening_at) VALUES
+    ('00000000-0000-4000-8000-0000000001a0', a, 'TNG eWallet', 'tracked', 'my.com.tngdigital.ewallet', 'Touch ''n Go eWallet', 10000, now() - interval '1 day'),
+    ('00000000-0000-4000-8000-0000000001b0', b, 'TNG eWallet', 'tracked', 'my.com.tngdigital.ewallet', 'Touch ''n Go eWallet', 20000, now() - interval '1 day');
+  INSERT INTO account_names (id, user_id, package, label, account_id) VALUES
+    (gen_random_uuid(), a, 'my.com.tngdigital.ewallet', 'eWallet', '00000000-0000-4000-8000-0000000001a0'),
+    (gen_random_uuid(), b, 'my.com.tngdigital.ewallet', 'eWallet', '00000000-0000-4000-8000-0000000001b0');
+  INSERT INTO categories (id, user_id, name, kind, is_meal) VALUES
+    ('00000000-0000-4000-8000-0000000002a0', a, 'Meals', 'spend', true),
+    ('00000000-0000-4000-8000-0000000002b0', b, 'Meals', 'spend', true);
+  INSERT INTO transactions (id, user_id, account_id, bank_event_id, occurred_at, direction, amount, kind, category_id, source) VALUES
+    (gen_random_uuid(), a, '00000000-0000-4000-8000-0000000001a0', '00000000-0000-5000-8000-0000000000ea', now(), 'out', 1250, 'spend', '00000000-0000-4000-8000-0000000002a0', 'notification'),
+    (gen_random_uuid(), b, '00000000-0000-4000-8000-0000000001b0', '00000000-0000-5000-8000-0000000000eb', now(), 'out', 800, 'spend', '00000000-0000-4000-8000-0000000002b0', 'notification');
 END
 $$;

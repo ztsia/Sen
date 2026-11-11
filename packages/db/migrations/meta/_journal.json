@@ -92,6 +92,20 @@
       "when": 1793720156457,
       "tag": "0012_b07_sync_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793777227676,
+      "tag": "0013_b08_ledger",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793777238127,
+      "tag": "0014_b08_ledger_functions",
+      "breakpoints": true
     }
   ]
 }

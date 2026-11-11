@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, getTableColumns } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import type pg from 'pg';
@@ -18,6 +18,7 @@ import { noRelay, workerRelay, type Relay } from './jobs/relay';
 import { personJobRoutes, schedulerRoutes } from './jobs/routes';
 import { adminRoutes, personRoutes } from './routes';
 import { syncRoutes } from './sync/routes';
+import { ledgerRoutes } from './ledger';
 
 /** The largest request body the API reads, in bytes. */
 export const MAX_BODY = 256 * 1024;
@@ -220,7 +221,11 @@ export function createApp(deps: Deps) {
     const person = { id: session.user.id, email: session.user.email, name: session.user.name };
     const db: Env['Variables']['db'] = (fn) => asPerson(deps.app, person.id, fn);
     const row = await db(async (tx) => {
-      const [a] = await tx.select().from(schema.userAccess).where(eq(schema.userAccess.userId, person.id));
+      const [a] = await tx
+        .select({ ...getTableColumns(schema.userAccess), setupDoneAt: schema.userSettings.setupDoneAt })
+        .from(schema.userAccess)
+        .leftJoin(schema.userSettings, eq(schema.userSettings.userId, schema.userAccess.userId))
+        .where(eq(schema.userAccess.userId, person.id));
       return a;
     });
     if (row?.suspendedAt) throw suspended();
@@ -229,6 +234,7 @@ export function createApp(deps: Deps) {
       isAdmin: row?.isAdmin ?? false,
       features: { ...NO_SWITCHES, ...(row?.features as Partial<MemberSwitches> | undefined) },
       suspended: false,
+      setupDone: !!row?.setupDoneAt,
     });
     c.set('db', db);
     c.set('svc', { push: deps.push, relay: deps.relay });
@@ -238,6 +244,7 @@ export function createApp(deps: Deps) {
   api.route('/', personRoutes());
   api.route('/', personJobRoutes({ auth: deps.auth }));
   api.route('/', syncRoutes());
+  api.route('/', ledgerRoutes());
   api.route('/admin', adminRoutes());
   return { api, auth };
 }

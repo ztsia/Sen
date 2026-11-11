@@ -42,3 +42,4 @@ The same pointer brief, run on both models, each in its own worktree:
 | 25 Oct | B06 | `88d31755` | $48.06 | 2× workflow:implementer on sonnet-5-5 $3.61; 1× workflow:qa-reviewer on opus-5-5 $0.39 | $52.07 | opus 93%, sonnet 7% |
 | 25 Oct | B06 | `5be7393e` | $32.48 | 3× workflow:qa-eyes on opus-5-5 $6.31; 3× workflow:implementer on haiku-5-5 $0.19; 3× workflow:qa-reviewer on opus-5-5 $70.93 | $109.9 | opus 100%, haiku 0% |
 | 4 Nov | B07 | `f6e09d61` | $29 | 1× workflow:qa-reviewer on opus-5-5 $24.08; 1× workflow:qa-eyes on opus-5-5 $1.52; 2× workflow:implementer on sonnet-5-5 $11.11 | $65.7 | opus 83%, sonnet 17% |
+| 10 Nov | B08 | `de3ee421` | $97.33 | 2× workflow:implementer on sonnet-5-5 $0.99; 5× workflow:qa-reviewer on opus-5-5 $149.12; 4× workflow:qa-eyes on opus-5-5 $17.19; 1× general-purpose on opus-5-5 $1.11 | $265.75 | opus 100%, sonnet 0% |

@@ -15,6 +15,7 @@ import io.github.ztsia.sen.capture.InstalledApps
 import io.github.ztsia.sen.capture.Outbox
 import io.github.ztsia.sen.core.DedupeKey
 import io.github.ztsia.sen.core.Ids
+import io.github.ztsia.sen.core.Iso
 import io.github.ztsia.sen.core.RawEvent
 import io.github.ztsia.sen.sync.CaptureSwitch
 import io.github.ztsia.sen.sync.Meta
@@ -322,6 +323,76 @@ class SyncTest {
         assertEquals("0", server.changesAsked.first().substringAfter("since="))
     }
 
+    private fun category(id: String, name: String, position: Int, archivedAt: String? = null) =
+        JSONObject().put("id", id).put("name", name).put("kind", "spend").put("meal", name == "Food").put("beverage", false)
+            .put("discretionary", true).put("system", JSONObject.NULL).put("position", position).put("archivedAt", archivedAt ?: JSONObject.NULL)
+
+    private val catFood = "cccccccc-0000-4000-8000-000000000001"
+    private val catOld = "cccccccc-0000-4000-8000-000000000002"
+    private val acct = "dddddddd-0000-4000-8000-000000000001"
+
+    @Test
+    fun a_pull_stores_the_offline_copy_and_leaves_archived_categories_out_by_default() {
+        server.serverVersion = 3
+        server.serverCategories = listOf(category(catOld, "Old", 1, "2026-10-02T00:00:00.000Z"), category(catFood, "Food", 2))
+        server.serverAccounts = listOf(
+            JSONObject().put("id", acct).put("name", "Wallet").put("kind", "tracked").put("package", "my.com.tngdigital.ewallet").put("archivedAt", JSONObject.NULL),
+        )
+        server.serverAccountNames = listOf(JSONObject().put("id", "eeeeeeee-0000-4000-8000-000000000001").put("package", "my.com.tngdigital.ewallet").put("label", "TNG Wallet").put("accountId", acct))
+        server.serverOwnNames = listOf("TAN WEI MING")
+        assertEquals(SyncRun.Outcome.DONE, sync())
+        val box = Outbox.get(ctx)
+        assertEquals(listOf("Food"), box.categories().map { it.name })
+        assertTrue(box.categories().single().meal)
+        val all = box.categories(includeArchived = true)
+        assertEquals(listOf("Old", "Food"), all.map { it.name })
+        assertEquals(Iso.parse("2026-10-02T00:00:00.000Z"), all.first().archivedAt)
+        assertNull(all.last().archivedAt)
+        assertEquals(listOf("Wallet"), box.accounts().map { it.name })
+        assertEquals("my.com.tngdigital.ewallet", box.accounts().single().packageName)
+        assertEquals(acct, box.accountNames().single().accountId)
+        assertEquals(listOf("TAN WEI MING"), box.ownNames())
+        assertEquals("3", box.meta(Meta.CHANGES_VERSION))
+    }
+
+    @Test
+    fun a_later_page_replaces_a_renamed_category_and_null_own_names_leave_the_stored_ones() {
+        server.serverVersion = 1
+        server.serverCategories = listOf(category(catFood, "Food", 1))
+        server.serverOwnNames = listOf("TAN WEI MING")
+        sync()
+        server.serverVersion = 2
+        server.serverCategories = listOf(category(catFood, "Meals", 1))
+        server.serverOwnNames = null
+        sync()
+        val box = Outbox.get(ctx)
+        assertEquals(listOf("Meals"), box.categories().map { it.name })
+        assertEquals(listOf("TAN WEI MING"), box.ownNames())
+        assertEquals("1", server.changesAsked.last().substringAfter("since="))
+        // an array, even an empty one, replaces
+        server.serverVersion = 3
+        server.serverOwnNames = emptyList()
+        sync()
+        assertEquals(emptyList<String>(), box.ownNames())
+    }
+
+    @Test
+    fun forgetting_the_person_empties_the_offline_copy() {
+        server.serverVersion = 1
+        server.serverCategories = listOf(category(catFood, "Food", 1))
+        server.serverAccounts = listOf(JSONObject().put("id", acct).put("name", "Wallet").put("kind", "elsewhere").put("package", JSONObject.NULL).put("archivedAt", JSONObject.NULL))
+        server.serverAccountNames = listOf(JSONObject().put("id", "eeeeeeee-0000-4000-8000-000000000001").put("package", "p").put("label", "L").put("accountId", acct))
+        server.serverOwnNames = listOf("TAN WEI MING")
+        sync()
+        val box = Outbox.get(ctx)
+        assertEquals(1, box.categories().size)
+        box.forgetPerson()
+        assertTrue(box.categories(includeArchived = true).isEmpty())
+        assertTrue(box.accounts(includeArchived = true).isEmpty())
+        assertTrue(box.accountNames().isEmpty())
+        assertTrue(box.ownNames().isEmpty())
+    }
+
     @Test
     fun a_choice_made_on_the_phone_is_sent_as_a_row_and_a_tombstone() {
         val installed = InstalledApps.list(ctx, icons = false).firstOrNull { it.blocked == null }
@@ -365,6 +436,13 @@ class SyncTest {
     private fun healthNotification() =
         ctx.getSystemService(NotificationManager::class.java).activeNotifications.firstOrNull { it.id == SchedulerCheck.NOTIFICATION_ID }
 
+    /** Android takes a cancel asynchronously, so a gone notification is waited for, not read once (CI, B08's PR). */
+    private fun noHealthNotification(): Any? {
+        val until = System.currentTimeMillis() + 3_000
+        while (healthNotification() != null && System.currentTimeMillis() < until) Thread.sleep(50)
+        return healthNotification()
+    }
+
     @Test
     fun a_morning_job_over_26_hours_old_posts_one_warning_a_day_and_clears_when_it_runs() {
         Device.sh("pm grant ${ctx.packageName} android.permission.POST_NOTIFICATIONS")
@@ -373,7 +451,7 @@ class SyncTest {
         try {
             // exactly 26 hours: not late, nothing posted
             SchedulerCheck.check(ctx, now - 26 * h, now)
-            assertNull(healthNotification())
+            assertNull(noHealthNotification())
 
             SchedulerCheck.check(ctx, now - 27 * h, now)
             val n = healthNotification()
@@ -384,13 +462,13 @@ class SyncTest {
             // the same day: not posted again (dismissed, it stays dismissed)
             ctx.getSystemService(NotificationManager::class.java).cancel(SchedulerCheck.NOTIFICATION_ID)
             SchedulerCheck.check(ctx, now - 28 * h, now + h)
-            assertNull(healthNotification())
+            assertNull(noHealthNotification())
 
             // the next day: again; then the job runs and the warning goes
             SchedulerCheck.check(ctx, now - 28 * h, now + 24 * h)
             assertNotNull(healthNotification())
             SchedulerCheck.check(ctx, now + 23 * h, now + 25 * h)
-            assertNull(healthNotification())
+            assertNull(noHealthNotification())
         } finally {
             ctx.getSystemService(NotificationManager::class.java).cancel(SchedulerCheck.NOTIFICATION_ID)
         }

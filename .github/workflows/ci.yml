@@ -94,7 +94,8 @@ jobs:
   # The database (B05): every migration on a fresh Postgres, the pgTAP tests (RLS for two people, the
   # catalogue check), then the API's tests against it. A local Postgres in the runner, never Neon.
   db:
-    runs-on: ubuntu-latest
+    # 24.04, not ubuntu-latest: 26.04's archive has no postgresql-16 (10 Nov)
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -114,7 +115,8 @@ jobs:
       - run: pnpm --filter @sen/web e2e:server
 
   e2e:
-    runs-on: ubuntu-latest
+    # 24.04, not ubuntu-latest: Playwright 1.56 has no Chromium for 26.04 (10 Nov)
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
@@ -135,6 +137,14 @@ jobs:
       # a dropped or slow connection, large text, a small phone, a year of data (D139). Its report goes
       # into the same folder, as playwright-report/lived.
       - run: pnpm --filter @sen/web e2e:lived
+      # Playwright's tree match is loose (a /…/ matches part of the text; a /placeholder isn't compared), so
+      # a stale tree passes above. Re-recorded in full, the trees must come out as committed (QA B08 run 4, 5).
+      - name: The accessibility trees are as committed
+        run: |
+          pnpm --filter @sen/web e2e:trees
+          # Payments is virtualised: how many rows fit depends on the runner's fonts, one row more here than in a
+          # cloud session, so its two trees keep only Playwright's own match above (B08's PR)
+          git diff --exit-code -- apps/web/e2e/trees ':!apps/web/e2e/trees/payments.aria.yml' ':!apps/web/e2e/trees/payments-offline.aria.yml' || { echo "::error::A screen changed and its tree wasn't re-recorded: pnpm --filter @sen/web e2e:trees, then commit apps/web/e2e/trees"; exit 1; }
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

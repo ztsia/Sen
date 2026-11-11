@@ -182,6 +182,7 @@ describe('sign-in by emailed code (D13, D52)', () => {
       claims: false,
       agent: true,
       aiPausedUntil: null,
+      setupDone: false,
     });
     const s = await call('/api/settings', { cookie });
     expect(s.body).toMatchObject({

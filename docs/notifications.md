@@ -34,7 +34,8 @@ When a new sample shows a format that isn't here, add it and update the status t
 | Grab ride | — | — | — | ❓ |
 | GrabPay top-up | ❓ | ❓ | ❓ | ❓ |
 | Salary credit | — | — | ❓ | — |
-| Interest or returns | ❓ GO+ | ❓ | — | — |
+| Interest or returns | ❓ GO+ | none, per the owner (4 Nov) | — | — |
+| Move between Main and a pocket | — | none, per the owner (4 Nov) | — | — |
 | Refund | ❓ | ❓ | ❓ | ❓ |
 | Promo | ❓ | ❓ | ❓ | ❓ |
 | OTP or TAC | ❓ | ❓ | ❓ | ❓ |
@@ -73,7 +74,10 @@ RM38.15 paid at Petron using your Main Account.
 - **`{date}`:** day/month/year with no zero padding. `5/10/2026` is 5 October.
 - **`{time}`:** 12-hour clock with `AM` or `PM`, to the minute. `(GMT+8)` is literal.
 - **`{account}`:** the paying account's name in the app, such as `Main Account`. It only appears on
-  money out.
+  money out. Every name maps to the one Ryt account (D145).
+- **Pockets:** Ryt sends nothing when money moves between Main and a pocket, and nothing for
+  interest (the owner, 4 Nov). So Main and its pockets are one account (D145), and interest shows
+  at the balance check.
 - No balance and no reference number.
 - **Card payments** carry no date or time in the text, so use the post time. `{merchant}` is the name
   the card network prints, in mixed case, not capitals. The titles end in an emoji, which is part
@@ -113,7 +117,8 @@ You have successfully cashed in RM25.00 into your GO+ account.
   cash-in writes `RM25.00`.
 - No time in the text, so use the notification's post time.
 - No balance and no reference number.
-- **GO+ is a separate pot inside the same app**, so one package feeds two accounts. The text names
+- **GO+ is part of the TNG account (D145)**: its *Cash In* stays inside the app, so it's an `ignore`
+  template, and GO+ returns show at the balance check. The text names
   GO+ whenever it's involved. It doesn't say where a cash-in draws from. In the sample it came
   straight after a top-up from Ryt, which suggests the eWallet balance.
 

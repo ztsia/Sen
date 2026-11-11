@@ -2,6 +2,8 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { uid } from '../src/data/fake/ids';
 import { acctId } from '../src/data/fake/scenario';
 
+import { FIRST_RUN, walkFirstRun } from './first-run';
+
 // The catalogue (D137): every screen in screens/registry.ts, opened on Wei Ming's month at the
 // scenario's NOW, by a path or, for a sheet, a path and the taps that open it; plus the states and
 // scenario variants that change what a screen shows. An entry's accessibility tree is committed, its
@@ -91,26 +93,6 @@ const confirmScreen = async (page: Page) => {
 };
 
 /** First run's seven steps are not in the address: each is reached by completing the one before. */
-const FIRST_RUN = ['code', 'apps', 'access', 'running', 'accounts', 'name', 'payday'] as const;
-const firstRunAt = (step: (typeof FIRST_RUN)[number]) => async (page: Page) => {
-  await page.getByLabel('Your email').fill('wei.ming@example.com');
-  await page.getByRole('button', { name: 'Send the code' }).click();
-  if (step === 'code') {
-    await expect(page.getByLabel('6-digit code')).toBeVisible();
-    return;
-  }
-  await page.getByLabel('6-digit code').fill('123456');
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  for (const s of FIRST_RUN.slice(1)) {
-    await expect(page.getByText(/^Step \d of 7$/)).toBeVisible();
-    // each step slides in; the next tap waits for it
-    await page.waitForTimeout(300);
-    if (s === step) return;
-    if (s === 'name') await page.getByLabel('Your name').fill('wei ming');
-    await page.getByRole('button', { name: s === 'payday' ? 'Finish' : /^Next$/ }).click();
-  }
-};
-
 export const CATALOGUE: Entry[] = [
   // the five tabs (D68)
   entry('home', '/'),
@@ -195,7 +177,9 @@ export const CATALOGUE: Entry[] = [
   entry('claim@evidence-missing', `/s/claim?id=${uid('claim:parking:2026-09')}`),
   entry('sign-in@invited', '/s/sign-in?email=hui.min@example.com'),
   entry('first-run@without-capture', '/s/first-run?scenario=month'),
-  ...FIRST_RUN.map((step) => entry(`first-run@${step}`, '/s/first-run?scenario=before-salary', firstRunAt(step))),
+  ...FIRST_RUN.map((step) =>
+    entry(`first-run@${step}`, '/s/first-run?scenario=new', (page) => walkFirstRun(page, step)),
+  ),
   entry('shared@month', '/s/shared?scenario=month'),
   entry('accounts@month', '/s/accounts?scenario=month'),
   entry('home@capture-off', '/?scenario=capture-off'),

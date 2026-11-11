@@ -8,6 +8,7 @@
   - paragraph: /Computed from your notifications since \d+ Oct\. Not the bank's own figure\./
   - button "Check"
   - button "Payments"
+  - button "Edit"
   - button "Ask Sen"
   - term: Opening balance
   - definition: /RM \d+,\d+\.\d+ on \d+ Oct/

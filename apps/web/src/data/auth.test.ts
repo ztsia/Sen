@@ -81,6 +81,29 @@ describe('the kept reads', () => {
     expect(localStorage.getItem('sen.api.kept')).toBeNull();
   });
 
+  // first run's draft (balances typed, the name, payday) goes too, so the next person never sees it
+  // (B08 security review, low)
+  it('take first run’s unsaved draft with them', async () => {
+    vi.resetModules();
+    const { forgetSession } = await import('./auth');
+    localStorage.setItem(
+      'sen.firstRun',
+      JSON.stringify({ step: 'accounts', balances: { 'my.rytbank.app': '3,200.50' } }),
+    );
+    forgetSession();
+    expect(localStorage.getItem('sen.firstRun')).toBeNull();
+  });
+
+  it('take first run’s draft when someone else signs in', async () => {
+    vi.resetModules();
+    localStorage.setItem('sen.api.kept', JSON.stringify({ __who: 'a@example.com' }));
+    localStorage.setItem('sen.firstRun', JSON.stringify({ step: 'name', name: 'A' }));
+    vi.stubGlobal('fetch', answer(200, { user: { email: 'b@example.com', name: 'B' } }));
+    const { apiAuth: fresh } = await import('./auth');
+    await fresh.session();
+    expect(localStorage.getItem('sen.firstRun')).toBeNull();
+  });
+
   // a session revoked elsewhere shows up as nobody signed in, not a 401 (security scan, F4)
   it('are forgotten when the server says nobody is signed in', async () => {
     vi.resetModules();

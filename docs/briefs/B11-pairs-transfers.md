@@ -60,7 +60,7 @@ Money in is classified as income, a transfer or a refund.
   - the first time, *Review* asks *Where did it come from?*, offering your accounts and *Elsewhere*
   - the real side replaces the filled-in one if it arrives
 - **Money to your own name that no tracked account receives** went *Elsewhere*. Sen asks once.
-- **Moves inside one app,** such as eWallet → GO+, are transfers by their `internal` template.
+- **Moves inside one app,** such as eWallet → GO+, stay inside one account and are ignored (D145).
 
 ### Money in
 - ***Review* asks money in that isn't a transfer:** *Income*, *Transfer*, or *Refund of…*, listing

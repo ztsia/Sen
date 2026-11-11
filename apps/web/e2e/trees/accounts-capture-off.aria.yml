@@ -2,22 +2,23 @@
   - button "Back"
   - heading "Accounts" [level=1]
 - main:
-  - paragraph: In 5 accounts
+  - alert:
+    - text: /Capture may be off No payment notifications since Fri, \d+ Oct, \d+:\d+\./
+    - button "Fix"
+  - paragraph: In 4 accounts
   - text: /RM \d+,\d+\.\d+/
   - paragraph: /The last check found RM \d+\.\d+ that left without a notification, booked as Unaccounted\./
   - button "Check balances"
   - region "Tracked":
     - heading "Tracked" [level=2]
-    - button /Ryt Bank Checked 1 Oct RM \d+,\d+\.\d+/:
-      - paragraph: Checked 1 Oct
-    - button /Public Bank Not checked MyPB RM \d+,\d+\.\d+/:
-      - paragraph: Not checked MyPB
-    - button /TNG eWallet Not checked RM \d+\.\d+/:
-      - paragraph: Not checked
-    - button /GO\+ Not checked TNG eWallet RM \d+,\d+\.\d+/:
-      - paragraph: Not checked TNG eWallet
-    - button /GrabPay Wallet Not checked Grab RM \d+\.\d+/:
-      - paragraph: Not checked Grab
+    - button /Ryt Bank Checked 1 Oct From Ryt Bank · Main account and pockets together RM \d+,\d+\.\d+/:
+      - paragraph: Checked 1 Oct From Ryt Bank · Main account and pockets together
+    - button /Public Bank Checked \d+ Oct From MyPB RM \d+,\d+\.\d+/:
+      - paragraph: /Checked \d+ Oct From MyPB/
+    - button /TNG eWallet Checked \d+ Oct From TNG eWallet · eWallet and GO\+ together RM \d+,\d+\.\d+/:
+      - paragraph: /Checked \d+ Oct From TNG eWallet · eWallet and GO\+ together/
+    - button /GrabPay Wallet Checked \d+ Oct From Grab RM \d+\.\d+/:
+      - paragraph: /Checked \d+ Oct From Grab/
   - region "Elsewhere":
     - heading "Elsewhere" [level=2]
     - paragraph: Kept elsewhere, so Sen shows no balance for them.

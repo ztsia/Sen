@@ -99,7 +99,11 @@ export const userSettings = pgTable(
       .notNull()
       .default(sql`'{}'::text[]`),
     expectedPayday: text('expected_payday'),
+    /** When first run finished (B08, D26): its steps never come back after. */
+    setupDoneAt: at('setup_done_at'),
     updatedAt: at('updated_at').notNull().defaultNow(),
+    /** The offline copy's order (B08): your names go down to the phone (§5). */
+    version: bigint('version', { mode: 'number' }).notNull().default(0),
   },
   (t) => [
     check('user_settings_expected_payday_check', sql`${t.expectedPayday} ~ '^(last-working|[1-9]|[12][0-9]|3[01])$'`),

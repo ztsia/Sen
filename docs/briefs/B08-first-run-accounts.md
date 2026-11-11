@@ -62,8 +62,8 @@ fixtures, ready for B09 to book the first transactions.
   3. notification access, with *Allow restricted settings* when greyed out; capture starts here,
      and anything seen waits in the outbox
   4. *Keep Sen running*, for this phone's brand
-  5. accounts: one suggested per chosen app (from the curated list's suggestions), *Add a pot*
-     (GO+) and stored credit (D93), each with today's balance typed as text into sen; `opening_at`
+  5. accounts: one per chosen app (D145, from the curated list's name), each with today's total
+     balance typed as text into sen; `opening_at`
      is when it's saved
   6. your name, as the banks print it (`TAN WEI MING` in examples)
   7. expected payday

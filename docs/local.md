@@ -69,6 +69,35 @@ follow on a phone, and commit.
      the week's compute hours (Q25), so the spec and `docs/cloud.md` can record them.
   B07's security check is the built-in review, done in the cloud (`qa/B07/security.md`, D144).
 
+- [ ] **B08 · First run, accounts and categories: on your phone** (after B08 merges and its release is
+  published; Obtainium picks it up). Have each bank app open beside you for its balance. In this order:
+  1. **Install the new release and open Sen.** It opens on first run at *Step 2 of 7* (you're already
+     signed in). If it opens on Home instead, tell the next session: first run is due only while it
+     hasn't been finished, in the app, with *Capture* on.
+  2. **Your apps** (TNG, Ryt, Public Bank, Grab are already chosen from the soak) → *Next*. **Notification
+     access** and **Keep Sen running** show as done or with their steps; *Next* on each.
+  3. **Close Sen at step 4:** in recents, tap its padlock off if it's locked, swipe it away, then open
+     Sen again. It should reopen at step 4 (done-when 1). Lock it in recents again afterwards.
+  4. **Your accounts:** one per app (D145). Type the **total** each app shows today: Ryt's Main plus its
+     pockets, TNG's eWallet plus GO+. 0 is fine for one that's empty. *Next*.
+  5. **Your name** as the banks print it, then **Expected payday**, then *Finish*. You land on Home.
+  6. **More → Accounts:** each account shows the balance you typed, and the total is their sum. Tap one:
+     its opening balance and the day it was taken. (Done-when 2.)
+  7. **More → Settings → Categories and rules:** the 18 spending and 3 money-in categories (D33). Rename
+     one and undo it, so you know the sheet works.
+  8. **(QA B08 run 2, needs the phone's outbox; try it on the review build as `meiling@example.com`):** at
+     step 6 turn on airplane mode, type your name, *Next*; turn airplane mode off, wait a few seconds,
+     *Finish*. Then Settings → *You* shows your name. In a browser the same steps lose the name, so only
+     the shell can show it survives (D146 (8)).
+  9. **(QA B08 run 4, needs the shell: a browser can't show it):** on the review build as
+     `meiling@example.com`, at step 3 leave notification access off and tap *Skip for now*, then finish.
+     Home shows *Capture is off* with *Fix* (flows.md `first-run`, *Access refused*); *Fix* opens Android's
+     notification access. Turn it on and come back: the warning goes.
+  Captured payments still don't book until B09 and B10. When they do, payments from before you
+  finished step 4 count in spending but not in balances (§7). To try first run again on a preview
+  first: the review build (*Sen review*), sign in as `meiling@example.com`, code `123456`; it resets on
+  every preview deploy.
+
 - [ ] **Before the app launches: Claude Security's whole-codebase scan** (D144), once, at the laptop.
   Turn on *Dynamic workflows* in `/config`, start a session in `C:\Zhong Tai\Sen` on `main`, and ask
   *run Claude Security: scan the codebase at high effort; the cost is accepted*. Leave the checkout
@@ -91,6 +120,13 @@ follow on a phone, and commit.
       Security once, before launch. Then move to 1.2.0: on the laptop, `claude plugin update
       workflow@ztsia`; in the cloud, edit any line of the environment's setup script (a comment will
       do) and start a new session. Until then, Sen's `docs/workflow/qa.md` already says the same.
+- [ ] **Lessons from B08 for `ztsia/workflow`** (a session with that repository attached, as a PR to the
+      plugin; `qa/B08/ledger.md` § *Retro*): (1) the `brief` or `qa` skill: a decision made mid-slice adds its
+      states to the brief's *Done when* the same day, so the next QA run's criteria cover them; (2) the `qa`
+      skill: a rule written in SQL or a route is tested from both sides (what it refuses and what it lets
+      through), the gap behind three of B08's surviving breakage checks; (3) the qa-diff harness: record which
+      signal (a DOM change or a fetch) set each tap's settle time; (4) the trees: re-record in full and diff in CI
+      rather than trust `toMatchAriaSnapshot`'s loose match (done in Sen's `ci.yml`).
 - [ ] **Update Sen and Sen review on your phone once B05 · Feel merges.** Its haptics live in the
       shell (bridge 2), so the app needs the new APK; until then everything else works and haptics
       stay off. Obtainium → *Update all*, or *ztsia/Sen* → *Releases* → the newest *Sen 0.2.N* →

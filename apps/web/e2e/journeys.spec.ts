@@ -7,6 +7,7 @@ import { SETTLE_MS } from '../src/lib/tap-guard';
 import { stepMetrics } from './metrics';
 import { uid } from '../src/data/fake/ids';
 import { JOURNEYS as GUIDED } from '../src/dev/journeys';
+import { atStep, BALANCES, TOTAL } from './first-run';
 
 // B03 done-when 1: each journey the five tabs carry (docs/flows.md) clicks through on the made-up
 // data, at 390×844, with a screenshot per step. Each is walked once, in Minted, light (helpers.ts's
@@ -334,9 +335,10 @@ export const JOURNEYS: Record<string, Journey> = {
 
   // ---- B04 (flows.md): the journeys whose screens B04 built ----
 
-  // first-run (core, D124): the shell's seven steps, from the email to Home, before any salary
+  // first-run (core, D124, B08): the shell's seven steps, from the email to Home. Each step saves as it
+  // goes: closing at step 4 reopens at step 4 (done-when 1), and typed balances survive a reload
   'first-run': async (page, shot, go) => {
-    await go('/s/first-run?scenario=before-salary');
+    await go('/s/first-run?scenario=new');
     await expect(page.getByRole('heading', { name: 'Sign in to Sen' })).toBeVisible();
     await shot('email');
     await page.getByLabel('Your email').fill('wei.ming@example.com');
@@ -349,45 +351,74 @@ export const JOURNEYS: Record<string, Journey> = {
     await shot('code expired');
     await page.getByLabel('6-digit code').fill('123456');
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-    await expect(page.getByText('Step 2 of 7')).toBeVisible();
+    await atStep(page, 2);
     await expect(page.getByText('Sen found 4 banks and e-wallets on this phone.')).toBeVisible();
+    await page.getByRole('button', { name: 'Choose these 4' }).click();
     await shot('your apps');
     await page.getByRole('button', { name: 'Next' }).click();
-    await expect(page.getByText('Step 3 of 7')).toBeVisible();
+    await atStep(page, 3);
     await expect(page.getByText('Sen can’t read your bank notifications yet.')).toBeVisible();
     await shot('notification access');
     await page.getByRole('button', { name: 'Skip for now' }).click();
-    await expect(page.getByText('Step 4 of 7')).toBeVisible();
+    await atStep(page, 4);
     await shot('keep Sen running');
+    // closed at step 4, it reopens at step 4 (done-when 1)
+    await page.reload();
+    await atStep(page, 4);
     await page.getByRole('button', { name: 'Skip for now' }).click();
-    await expect(page.getByText('Step 5 of 7')).toBeVisible();
+    await atStep(page, 5);
+    // one account per chosen app (D145): Google Wallet holds no money of its own, so it has none
+    await expect(page.getByRole('textbox')).toHaveCount(4);
+    await expect(page.getByLabel('Google Wallet')).toHaveCount(0);
+    // every balance is asked for: 0 is a balance, blank isn't
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.getByText('Type today’s balance, or 0.')).toHaveCount(4);
     // an amount is typed as digits only (D132): the dot and the second one are ignored, so 12.3.4 reads 12.34
-    await page.getByLabel('Ryt Bank').fill('12.3.4');
-    await expect(page.getByLabel('Ryt Bank')).toHaveValue('12.34');
-    await page.getByLabel('Ryt Bank').fill('1,200.50');
+    await page.getByLabel('Ryt Bank', { exact: true }).fill('12.3.4');
+    await expect(page.getByLabel('Ryt Bank', { exact: true })).toHaveValue('12.34');
+    await page.getByLabel('Ryt Bank', { exact: true }).clear();
+    for (const [name, text] of Object.entries(BALANCES)) await page.getByLabel(name, { exact: true }).fill(text);
+    // what's typed survives a reload before it's saved
+    await page.reload();
+    await atStep(page, 5);
+    await expect(page.getByLabel('Ryt Bank', { exact: true })).toHaveValue('3,200.50');
     await shot('your accounts');
     await page.getByRole('button', { name: 'Next' }).click();
-    await expect(page.getByText('Step 6 of 7')).toBeVisible();
+    await atStep(page, 6);
     await page.getByRole('button', { name: 'Next' }).click();
     await expect(page.getByText('Type your name as your bank prints it.')).toBeVisible();
     await page.getByLabel('Your name').fill('tan wei  ming');
     await expect(page.getByText('Sen will look for TAN WEI MING.')).toBeVisible();
     await shot('your name');
     await page.getByRole('button', { name: 'Next' }).click();
-    await expect(page.getByText('Step 7 of 7')).toBeVisible();
+    await atStep(page, 7);
     await page.getByRole('radio', { name: 'A day number' }).click();
     await page.getByRole('button', { name: 'Finish' }).click();
     await expect(page.getByText('Type a day from 1 to 31.')).toBeVisible();
     await page.getByLabel('Day of the month').fill('28');
     await shot('expected payday');
-    // back keeps the steps' order
+    // back keeps the steps' order, and the accounts as saved
     await page.getByRole('button', { name: 'Back' }).click();
-    await expect(page.getByText('Step 6 of 7')).toBeVisible();
+    await atStep(page, 6);
+    await page.getByRole('button', { name: 'Back' }).click();
+    await atStep(page, 5);
+    await expect(page.getByLabel('Public Bank', { exact: true })).toHaveValue('6,400.00');
     await page.getByRole('button', { name: 'Next' }).click();
+    await atStep(page, 6);
+    await page.getByRole('button', { name: 'Next' }).click();
+    await atStep(page, 7);
     await page.getByRole('button', { name: 'Finish' }).click();
     await expect(page).toHaveURL(/\/$|\/\?/);
     await expect(page.getByTestId('hero')).toContainText('Spent since you started');
     await shot('home, before the first salary');
+    // each account shows its opening balance (done-when 2), and the total is what was typed
+    // (in the app, not a fresh page: a fresh page would start the made-up data again)
+    await page.getByRole('link', { name: 'More' }).click();
+    await page.getByRole('link', { name: /^Accounts/ }).click();
+    await expect(page.getByText('In 4 accounts')).toBeVisible();
+    await expect(page.getByText(TOTAL)).toBeVisible();
+    await expect(page.getByText('RM3,200.50')).toBeVisible();
+    await shot('accounts');
   },
 
   // invited: the invitation's link opens sign-in with the email filled in; the short first run follows
@@ -567,7 +598,8 @@ export const JOURNEYS: Record<string, Journey> = {
     await go('/more');
     await page.getByText('Accounts', { exact: true }).click();
     await settled(page);
-    await expect(page.getByText('In 5 accounts')).toBeVisible();
+    // one account per app (D145): GO+ is part of TNG eWallet's
+    await expect(page.getByText('In 4 accounts')).toBeVisible();
     await shot('accounts');
     await page.getByRole('button', { name: 'Check balances' }).click();
     await expect(page).toHaveURL(/\/s\/balance-check/);
@@ -578,7 +610,8 @@ export const JOURNEYS: Record<string, Journey> = {
     await page.getByRole('group', { name: 'Ryt Bank' }).getByLabel('What the bank app shows').fill('14,600.87');
     await page.getByRole('button', { name: 'TNG eWallet matches' }).click();
     await expect(page.getByRole('group', { name: 'TNG eWallet' }).getByLabel('What the bank app shows')).toHaveValue(
-      '262.30',
+      // eWallet and GO+ together (D145)
+      '7,815.40',
     );
     await shot('typed');
     await page.getByRole('button', { name: 'Save', exact: true }).click();
@@ -781,6 +814,8 @@ export const JOURNEYS: Record<string, Journey> = {
     await shot('the push');
     await push.getByRole('button', { name: /^Open Home/ }).click();
     await expect(dialog(page, 'Native stand-ins')).toHaveCount(0);
+    // its navigation waits out the stand-in's sheet; the dev panel opened before it lands is closed by it
+    await expect(page.locator('html[data-stand-in-waiting]')).toHaveCount(0);
     await expect(page.getByText('Capture may be off')).toBeVisible();
     await shot('home, capture is off');
     // every widget goes dark with Fix
@@ -986,5 +1021,85 @@ test.describe('D128', () => {
     await dialog(page, 'Remove Hui Min?').getByRole('button', { name: 'Export their data first' }).click();
     await expect(toast(page)).toContainText('export goes to');
     await expect(page.getByRole('button', { name: /^Hui Min/ })).toHaveCount(0);
+  });
+});
+
+test.describe('B08 after QA run 3', () => {
+  test('an app chosen after first run is added on Accounts with today’s balance (D148)', async ({ page }) => {
+    await open(page, '/s/accounts');
+    await page.evaluate(() =>
+      sessionStorage.setItem('sen.sim.chosen', JSON.stringify(['my.rytbank.app', 'com.example.coffee'])),
+    );
+    await open(page, '/s/accounts');
+    await expect(page.getByText('In 4 accounts')).toBeVisible();
+    // Ryt Bank has its account already; only the new app is offered
+    await expect(page.getByRole('button', { name: 'Add Ryt Bank' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Add A coffee app' }).click();
+    const sheet = dialog(page, 'Add A coffee app');
+    await sheet.getByRole('button', { name: 'Add account' }).click();
+    await expect(sheet.getByText('Type today’s balance, or 0.')).toBeVisible();
+    await sheet.getByLabel('Today’s balance').click();
+    await page.keyboard.type('4250');
+    await sheet.getByRole('button', { name: 'Add account' }).click();
+    await expect(toast(page)).toContainText('A coffee app added');
+    await expect(page.getByText('In 5 accounts')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^A coffee app .*RM 42\.50/ })).toBeVisible();
+    await expect(page.getByText('Not added yet')).toHaveCount(0);
+  });
+
+  test('an archived app’s account comes back with Bring back, not as a new app (QA B08 run 4, 3)', async ({ page }) => {
+    await open(page, '/s/accounts');
+    await page.evaluate(() =>
+      sessionStorage.setItem('sen.sim.chosen', JSON.stringify(['my.rytbank.app', 'com.example.coffee'])),
+    );
+    await open(page, '/s/accounts');
+    await page.getByRole('button', { name: /^Ryt Bank / }).click();
+    await page.getByRole('button', { name: 'Edit' }).click();
+    await dialog(page, 'Edit this account').getByRole('button', { name: 'Archive this account' }).click();
+    await expect(toast(page)).toContainText('Ryt Bank archived');
+    // archiving goes back to Accounts
+    await expect(page.getByText('In 3 accounts')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Bring back Ryt Bank' })).toBeVisible();
+    // the chosen apps have loaded: the new one is offered, the archived one isn't
+    await expect(page.getByRole('button', { name: 'Add A coffee app' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Add Ryt Bank' })).toHaveCount(0);
+  });
+
+  test('a typed amount keeps the text colour while its field shows an error (QA B08 run 4, scoped 14)', async ({
+    page,
+  }) => {
+    await open(page, '/s/accounts');
+    await page.evaluate(() => sessionStorage.setItem('sen.sim.chosen', JSON.stringify(['com.example.coffee'])));
+    await open(page, '/s/accounts');
+    await page.getByRole('button', { name: 'Add A coffee app' }).click();
+    const sheet = dialog(page, 'Add A coffee app');
+    await sheet.getByRole('button', { name: 'Add account' }).click();
+    const amount = sheet.getByLabel('Today’s balance');
+    await expect(amount).toHaveAttribute('aria-invalid', 'true');
+    // the field's label and message may be red (D150); the amount never is (patterns §2)
+    const colours = await amount.evaluate((el) => {
+      const probe = (token: string) => {
+        const s = document.createElement('span');
+        s.style.color = `var(${token})`;
+        el.parentElement!.append(s);
+        const c = getComputedStyle(s).color;
+        s.remove();
+        return c;
+      };
+      return { amount: getComputedStyle(el).color, foreground: probe('--foreground'), red: probe('--destructive') };
+    });
+    expect(colours.amount).toBe(colours.foreground);
+    expect(colours.amount).not.toBe(colours.red);
+  });
+
+  test('a taken category name is said under Name, not in a toast (QA B08 run 3, 3)', async ({ page }) => {
+    await open(page, '/s/settings/categories');
+    await page.getByRole('button', { name: /^Groceries/ }).click();
+    const sheet = dialog(page, 'Groceries');
+    await sheet.getByLabel('Name').fill('meals');
+    await sheet.getByRole('button', { name: 'Save' }).click();
+    await expect(sheet.getByText('You already have a category with that name.')).toBeVisible();
+    await expect(sheet.getByLabel('Name')).toHaveAttribute('aria-invalid', 'true');
+    await expect(toast(page)).toHaveCount(0);
   });
 });

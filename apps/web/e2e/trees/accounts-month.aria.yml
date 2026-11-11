@@ -1,7 +1,7 @@
 - banner:
   - button "Back"
   - heading "Accounts" [level=1]
-- main: No accounts yet Your accounts and their balances show here once Sen is reading your bank apps.
+- main: No accounts here Accounts come with Sen reading your bank notifications, which isn’t switched on for you.
 - navigation "Tabs":
   - link "Home":
     - /url: /

@@ -235,6 +235,14 @@ export const B04_SCREENS: [name: string, path: string][] = [
 ];
 
 async function clean(page: Page, name: string) {
+  // content arriving where a skeleton was fades in (kit.tsx, Loaded); contrast measured mid-fade is too
+  // low, as a slow runner caught (B08's PR). A loop (a skeleton's pulse) never ends, so only finite ones count
+  await page.waitForFunction(
+    () =>
+      document.getAnimations().every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity),
+    null,
+    { timeout: 10_000 },
+  );
   const report = await axe(page);
   expect(report, `${name}:\n${report.join('\n')}`).toEqual([]);
   const small = await smallTargets(page);

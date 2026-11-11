@@ -6,7 +6,7 @@
   - list:
     - listitem:
       - group "Ryt Bank":
-        - paragraph: /Ryt Bank Sen has RM \d+,\d+\.\d+/
+        - paragraph: /Ryt Bank Sen has RM \d+,\d+\.\d+ Main account and pockets together/
         - group:
           - text: What the bank app shows
           - textbox "What the bank app shows":
@@ -22,20 +22,12 @@
         - button "Public Bank matches"
     - listitem:
       - group "TNG eWallet":
-        - paragraph: /TNG eWallet Sen has RM \d+\.\d+/
+        - paragraph: /TNG eWallet Sen has RM \d+,\d+\.\d+ eWallet and GO\+ together/
         - group:
           - text: What the bank app shows
           - textbox "What the bank app shows":
             - /placeholder: "0.00"
         - button "TNG eWallet matches"
-    - listitem:
-      - group "GO+":
-        - paragraph: /GO\+ Sen has RM \d+,\d+\.\d+/
-        - group:
-          - text: What the bank app shows
-          - textbox "What the bank app shows":
-            - /placeholder: "0.00"
-        - button "GO+ matches"
     - listitem:
       - group "GrabPay Wallet":
         - paragraph: /GrabPay Wallet Sen has RM \d+\.\d+/

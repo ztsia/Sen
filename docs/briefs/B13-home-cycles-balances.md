@@ -46,7 +46,7 @@ Home tells the truth.
   to go, the projection, and a late-salary warning from the morning job.
 
 ### The figures (SQL views, `security_invoker`)
-- **Spending this cycle** uses `my_share`, with refunds subtracted from their purchase in the
+- **Spending this cycle** uses `my_share` (`coalesce(my_share, amount)`, D149), with refunds subtracted from their purchase in the
   purchase's cycle (D21) and the shared-bill rule ready for B17. *Unaccounted* is the cycle's
   adjustments netted together.
 - **Left until payday** is income received this cycle minus spending this cycle.
@@ -75,6 +75,10 @@ Home tells the truth.
 ### Balance checks (D18)
 - ***Review* asks** weekly for the first four weeks from first run, then on each payday.
 - **`balance-check`:** each tracked account's computed balance beside a box, and *Matches*.
+  Under each account, what its one figure holds (D145), from `HOLDS` in `screens/outside/logic.ts`: *eWallet and GO+
+  together* for TNG, *Main account and pockets together* for Ryt, as first run and Accounts say. Without it a
+  person types the eWallet alone and books GO+ as Unaccounted (QA B08 run 1, eyes). The opening balance typed at
+  first run is each account's first check until a real one exists (`checkedAt`, B08).
 - ***Save*** books each difference as an `adjustment` in *Unaccounted*, dated at the check
   (`balance_checks`). Unaccounted money in is never income.
 - **The gap shows** on Home, and *Last checked* on `accounts`.

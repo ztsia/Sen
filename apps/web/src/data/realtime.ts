@@ -17,6 +17,7 @@ export const TOPIC_QUERIES: Record<Topic, unknown[][]> = {
   settings: [['settings'], ['me']],
   jobs: [['settings']],
   capture: [['captured'], ['capture-health']],
+  ledger: [['account-list'], ['account'], ['accounts'], ['categories'], ['settings'], ['me']],
 };
 
 /** `off`: no relay here (a preview without one), or not started; `live`: connected; `down`: not connected, polling. */

@@ -234,7 +234,7 @@ These held up and apply unchanged:
 - **Dedupe key:** a hash of package + the notification's key + `when` + text, where text is the title, the text and the expanded text, each field length-prefixed so no content can collide (D115). When the listener reconnects, Android hands it the notifications still showing, with all four unchanged, so a replay is a no-op. Two identical payments still differ in `when`. P1 checks how each app updates a notification, because an update may get a new `when`.
 - **Parsing is by templates (D15, D87).** A template is the bank's wording with typed blanks, such as `You've sent RM{amount} to {name} on {date}, {time} (GMT+8) using your {account}.` Code compiles it into an exact pattern, so the same text always gives the same result, on the phone and offline.
   - **Blanks:** `{amount}`, `{name}` (a person), `{merchant}`, `{service}` (such as GrabFood), `{date}`, `{time}`, `{account}`, `{reference}`, `{balance}` and `{any}`. Each has a fixed pattern, and a drafted template can't add new ones.
-  - **Each template says what the event is:** money out (`out`), money in (`in`), a move between two tracked accounts (`internal`, such as eWallet → GO+), a `hold` that a charge will follow, `context` for a nearby payment, or `ignore`, with its reason: an alert, a promo or a status message.
+  - **Each template says what the event is:** money out (`out`), money in (`in`), a move between two tracked accounts (`internal`; a move inside one app, such as eWallet → GO+, is `ignore` since D145), a `hold` that a charge will follow, `context` for a nearby payment, or `ignore`, with its reason: an alert, a promo or a status message.
   - **A template belongs to one person and one app (D87):** `UNIQUE (user_id, package, skeleton_hash)`, where the skeleton is the title and text normalised (Unicode NFC, straight apostrophes, collapsed spaces, each blank as its token). Its id is a UUIDv5 of the three, so the phone and the server derive the same id. A reworded notification is a new row; the old one stays, to re-read old events.
   - **Context:** some charges name no merchant. Grab's charge doesn't, but its *group order has arrived* notification, posted the same minute, names the restaurant. A `context_for` pair rule (below) fills in the merchant or service of a payment within 10 minutes, from the same app or another. A charge that names no merchant waits for its context, up to those 10 minutes, before it prompts; with none, it prompts with what it has.
   - **No templates ship with the app (D87).** Everyone, the owner included, starts from nothing, and templates live in the database and sync to the phone. `docs/notifications.md`'s samples are the drafter's test in CI: each must produce its documented template.
@@ -267,7 +267,7 @@ These held up and apply unchanged:
 
 ### 6.3 From event to transaction
 
-- Each parsed event creates a transaction (`source = notification`). Money to or from your own name, and moves inside one app such as eWallet → GO+, become transfers (§7).
+- Each parsed event creates a transaction (`source = notification`). Money to or from your own name becomes a transfer (§7); a move inside one app changes nothing (D145).
 - **Known merchant** (a merchant rule exists): the category is applied silently, and the payment is done. There's no review step (D24).
 - **New merchant:** the app posts its own notification, such as *"RM12.90 · ZUS COFFEE"*. Android allows three buttons on a notification: the two best guesses and *Scan receipt*. Tapping the notification itself opens the full choice in the app.
   - **The two best guesses come from a cheap model, the first time only (D112).** Online, the shell syncs the payment at once, and the server asks a cheap-tier model for the two likeliest of your own categories, given the merchant's name, the amount and the time of day; the prompt waits at most 5 seconds for them. Offline, or without an answer in time, or with no AI credit, code guesses from your own history: the categories you chose most for payments of a similar amount at a similar time of day over 90 days, then your most used. The notification and the island keep the buttons they were posted with, so nothing moves under your thumb; if the model answers late, its guesses replace history's in that payment's *Review* row. A guess is only a button: your tap makes the rule, and the model never sets a category. Your choice creates the merchant rule, so that merchant never asks again. On a phone with an island (§9.1, D101), the same choice shows there for 10 minutes, then stays as this notification.
@@ -421,13 +421,13 @@ Each item in *Needs you* names what clears it:
 
 ## 7. Accounts, balances and transfers
 
-**Accounts (D16).** Public Bank, Ryt Bank (*Main Account*), TNG eWallet and GO+ are **tracked**: each has an opening balance, a computed balance and balance checks. GO+ is its own account, so money moving between it and the eWallet is a transfer.
+**Accounts (D16, D145).** Public Bank, Ryt Bank, TNG eWallet and GrabPay are **tracked**: each has an opening balance, a computed balance and balance checks. **One account per app (D145):** each holds everything its app shows, so Ryt's Main Account and its pockets are one account, and TNG's eWallet and GO+ are one.
 - **GrabPay Wallet is tracked too (D38).** It pays for Grab. You top it up with the Public Bank debit card, so a top-up is a transfer from Public Bank, and each Grab charge is spending.
 - **Opening balance:** the balance each app shows when you add the account, as of that moment (`opening_at`). The app can't see notifications from before it was installed, so nothing earlier counts. A balance counts only money that moved after its `opening_at`, so nothing captured while you set up is counted twice; spending counts every payment.
-- **One app can feed two accounts.** TNG's notifications name GO+ whenever it's involved; anything else from TNG is the eWallet. Ryt names the paying account on money out (`docs/notifications.md`).
+- **A move inside one app changes no balance (D145).** Ryt doesn't notify a move between Main and a pocket, and TNG's *Cash In* to GO+ stays inside the TNG account, so its notification is ignored. Neither notifies interest or GO+ returns; they show at the balance check.
 - **Elsewhere:** an account of yours the app doesn't watch, such as another bank. Money moved there is a transfer, not spending, and its balance isn't shown.
 - **Stored credit is a tracked account (D93):** ZUS Balance, a Starbucks card and similar get an account each. A top-up is a transfer into it, and each purchase from it is spending. If the app notifies, you choose it in the app list (§6.2) and its purchases are captured like a wallet's; if not, a receipt or manual entry records each one. Bonus credit shows up at that account's balance check.
-- **Accounts follow the apps you chose (D86).** First run offers one account per chosen app, plus *Add a pot* (for GO+); an `{account}` name Sen hasn't seen before asks once which account it is.
+- **Accounts follow the apps you chose (D86, D145).** First run offers one account per chosen app, named from the curated list, and nothing else; stored credit without an app and *Elsewhere* accounts are added later on *Accounts*. Every `{account}` name an app prints (Ryt's *Main Account*) maps to that app's account (`account_names`).
 
 **Cash and the physical TNG card aren't tracked (D16).** Money going into them counts as spent at that moment:
 - An **ATM withdrawal** is spending in a *Cash* category. Cash is seldom used, so cash purchases aren't logged.
@@ -449,11 +449,11 @@ Each item in *Needs you* names what clears it:
 - **Pairing:** when both sides appear, they become one transfer. In every sample they arrived within the same minute, so the window is 30 minutes.
 - **A missing side:** Public Bank doesn't seem to notify money leaving it (§21 Q16), so a transfer out of it shows up only as money arriving in Ryt or TNG. The app fills in the other account from the transfer rule it learned last time, and asks the first time. The filled-in side is marked `source = inferred`, and if the real side turns up later, it replaces the filled-in one.
 - **Money to your own name that no tracked account receives** went *elsewhere*. The app asks once which account, and the transfer rule remembers.
-- **Moves inside one app**, such as eWallet → GO+, are transfers by their template (§6.2).
+- **Moves inside one app**, such as eWallet → GO+, aren't transfers: they stay inside one account and are ignored (D145).
 
 **Spending vs cash flow**
 - `amount` is what actually moved. Balances use it.
-- `my_share` is what you bore, and defaults to `amount`. Spending uses it.
+- `my_share` is what you bore, and defaults to `amount`: stored empty (NULL), which means the whole amount, so correcting `amount` can't leave a stale share behind (D149). Spending uses `coalesce(my_share, amount)`.
 - **A bill you paid and didn't split** is all your spending: `my_share` = `amount`, whoever ate it. The items you tick say what you ate, for the meal average (D66).
 - **Money in from a person** is a **repayment** of a split share, **income** (such as a gift), or a **transfer** if it's from your own name (D17). Unclassified money in sits in *Review*.
 - **The shared-bill rule (D19).** A bill's spending is the smaller of `my_share` and `amount` − the repayments linked to it. *Owed to you* is `amount` − `my_share` − repaid, never below zero.
@@ -622,7 +622,7 @@ A step-by-step setup at first launch, in this order:
 2. **Choose your apps (D86):** the banks and e-wallets Sen listens to, suggested from the curated list, with *More* (§6.2).
 3. **Notification access**, granted in Android's settings. If the switch is greyed out, the app opens its own info page first, so you can choose *Allow restricted settings* (§6.2).
 4. **Keep Sen running:** the battery step every phone needs, then your brand's steps (§6.2). Each step opens the right settings page.
-5. **Accounts:** one per chosen app, plus pots such as GO+, and stored credit (D93), each with the balance its app shows right now (§7).
+5. **Accounts:** one per chosen app (D145), each with the total balance its app shows right now, pockets and GO+ included (§7).
 6. **Your name as the banks print it**, for spotting transfers between your own accounts (D17).
 7. **Expected payday:** the last working day of the month by default (D14).
 
@@ -1036,7 +1036,7 @@ transactions         id, user_id, account_id, bank_event_id (nullable),
                      occurred_at, direction (out|in), amount, currency,
                      kind (spend|income|transfer|repayment|refund|adjustment),
                      merchant_raw, merchant_key, category_id,
-                     my_share (spend only; default = amount),
+                     my_share (spend only; NULL = the whole amount, D149),
                      note, no_receipt (bool, D90),
                      source (notification|receipt|manual|inferred|adjustment),
                      status (needs_attention|done|pending),

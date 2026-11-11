@@ -208,7 +208,12 @@ export function syncRoutes() {
     return c.json(result);
   });
 
-  /** What the phone keeps offline, changed since a version (§5). Today, the chosen apps. */
+  /**
+   * What the phone keeps offline, changed since a version (§5): the chosen apps (B07), and the
+   * categories, accounts, the names apps print for them and your names (B08). Every row takes the next
+   * number of one counter, so a page is the lowest versions across all of them: each table gives at most
+   * a page's worth, and the page keeps the lowest of those, so nothing is skipped.
+   */
   r.get('/sync/changes', async (c) => {
     if (!c.var.access.features.shell)
       throw new ApiError(403, 'shell_off', 'The Sen app is off for you. Ask the admin.');
@@ -216,26 +221,86 @@ export function syncRoutes() {
       z.coerce.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
       c.req.query('since') ?? '0',
     );
-    const t = schema.captureApps;
-    const rows = await c.var.db((db) =>
-      db
-        .select()
-        .from(t)
-        .where(and(eq(t.userId, c.var.person.id), gt(t.version, since)))
-        .orderBy(asc(t.version))
-        .limit(CHANGES_PAGE + 1),
-    );
-    const page = rows.slice(0, CHANGES_PAGE);
+    const me = c.var.person.id;
+    const { apps, cats, accts, names, you } = await c.var.db(async (db) => {
+      const ca = schema.captureApps;
+      const cg = schema.categories;
+      const ac = schema.accounts;
+      const an = schema.accountNames;
+      const us = schema.userSettings;
+      const n = CHANGES_PAGE + 1;
+      return {
+        apps: await db
+          .select()
+          .from(ca)
+          .where(and(eq(ca.userId, me), gt(ca.version, since)))
+          .orderBy(asc(ca.version))
+          .limit(n),
+        cats: await db
+          .select()
+          .from(cg)
+          .where(and(eq(cg.userId, me), gt(cg.version, since)))
+          .orderBy(asc(cg.version))
+          .limit(n),
+        accts: await db
+          .select()
+          .from(ac)
+          .where(and(eq(ac.userId, me), gt(ac.version, since)))
+          .orderBy(asc(ac.version))
+          .limit(n),
+        names: await db
+          .select()
+          .from(an)
+          .where(and(eq(an.userId, me), gt(an.version, since)))
+          .orderBy(asc(an.version))
+          .limit(n),
+        you: await db
+          .select()
+          .from(us)
+          .where(and(eq(us.userId, me), gt(us.version, since))),
+      };
+    });
+    // the page: the lowest CHANGES_PAGE versions across every table
+    const all = [...apps, ...cats, ...accts, ...names, ...you].map((x) => x.version).sort((a, b) => a - b);
+    const more = all.length > CHANGES_PAGE;
+    const top = more ? all[CHANGES_PAGE - 1]! : (all.at(-1) ?? since);
+    const inPage = <T extends { version: number }>(rows: T[]) => rows.filter((x) => x.version <= top);
+    const settings = inPage(you)[0];
     const out: SyncChanges = {
-      version: page.at(-1)?.version ?? since,
-      more: rows.length > CHANGES_PAGE,
-      captureApps: page.map((a) => ({
+      version: top,
+      more,
+      captureApps: inPage(apps).map((a) => ({
         id: a.id,
         package: a.package,
         label: a.label,
         chosenAt: a.chosenAt.toISOString(),
         deletedAt: a.deletedAt?.toISOString() ?? null,
       })),
+      categories: inPage(cats).map((x) => ({
+        id: x.id,
+        name: x.name,
+        kind: x.kind,
+        meal: x.isMeal,
+        beverage: x.isBeverage,
+        discretionary: x.isDiscretionary,
+        system: x.systemKey,
+        position: x.position,
+        archivedAt: x.archivedAt?.toISOString() ?? null,
+      })),
+      accounts: inPage(accts).map((x) => ({
+        id: x.id,
+        name: x.name,
+        kind: x.kind,
+        package: x.notifierPackage,
+        archivedAt: x.archivedAt?.toISOString() ?? null,
+      })),
+      accountNames: inPage(names).map((x) => ({
+        id: x.id,
+        package: x.package,
+        label: x.label,
+        accountId: x.accountId,
+      })),
+      ownNames: settings ? settings.ownNames : null,
     };
     return c.json(out);
   });

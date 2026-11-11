@@ -140,15 +140,18 @@ function accountRow(db: Db, a: Db['accounts'][number], bal: Map<string, number>)
     id: a.id,
     name: a.name,
     kind: a.kind,
-    balance: tracked ? (bal.get(a.id) ?? 0) : null,
-    checkedAt: tracked ? (checksOf(db, a.id)[0]?.asOf ?? null) : null,
-    app: tracked && a.notifierPackage ? (APP[a.notifierPackage] ?? null) : null,
+    balance: tracked ? (bal.get(a.id) ?? a.openingBalance) : null,
+    opening: tracked ? a.openingBalance : null,
+    // until its first check, the opening balance typed from the app is the last one checked
+    checkedAt: tracked ? (checksOf(db, a.id)[0]?.asOf ?? a.openingAt) : null,
+    app: tracked && a.notifierPackage ? (APP[a.notifierPackage] ?? a.notifierLabel) : null,
+    package: a.notifierPackage,
   };
 }
 
 export function accountsView(db: Db): AccountsView {
   // no capture, no accounts (D52, D79)
-  if (!db.capture) return { total: 0, tracked: [], elsewhere: [], gap: null };
+  if (!db.capture) return { total: 0, tracked: [], elsewhere: [], gap: null, archived: [] };
   const bal = balances(db);
   const tracked = live(db)
     .filter((a) => a.kind === 'tracked')
@@ -161,6 +164,9 @@ export function accountsView(db: Db): AccountsView {
       .filter((a) => a.kind === 'elsewhere')
       .map((a) => accountRow(db, a, bal)),
     gap: last ? leftUnseen(db, last) : null,
+    archived: db.accounts
+      .filter((a) => a.archivedAt)
+      .map((a) => ({ id: a.id, name: a.name, package: a.notifierPackage })),
   };
 }
 
@@ -188,7 +194,7 @@ export function balanceCheckView(db: Db): BalanceCheckView {
   return {
     rows: live(db)
       .filter((a) => a.kind === 'tracked')
-      .map((a) => ({ id: a.id, name: a.name, computed: bal.get(a.id) ?? 0 })),
+      .map((a) => ({ id: a.id, name: a.name, computed: bal.get(a.id) ?? 0, package: a.notifierPackage ?? null })),
   };
 }
 

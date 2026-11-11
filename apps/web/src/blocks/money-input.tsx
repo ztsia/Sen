@@ -30,6 +30,8 @@ interface MoneyInputProps {
   onEnter?: () => void;
   /** The currency shown before the amount: `RM` unless it's another currency's (a subscription's, D134). */
   prefix?: string;
+  /** What an empty field shows: `0.00`, unless a balance is asked for and 0 would read as typed (QA B08 run 3, 4). */
+  placeholder?: string;
 }
 
 /**
@@ -56,6 +58,7 @@ export function MoneyInput({
   autoFocus,
   onEnter,
   prefix = 'RM',
+  placeholder = '0.00',
 }: MoneyInputProps) {
   const id = useId();
   const [blurError, setBlurError] = useState<string | undefined>();
@@ -71,14 +74,15 @@ export function MoneyInput({
         <Input
           id={id}
           className={cn(
-            'num h-auto min-w-0 flex-1 border-0 bg-transparent px-0 text-4xl font-semibold shadow-none focus-visible:ring-0 dark:bg-transparent',
+            // the amount keeps the text colour while an error shows: red is never an amount (patterns §2; QA B08 run 4, eyes)
+            'num h-auto min-w-0 flex-1 border-0 bg-transparent px-0 text-4xl font-semibold text-foreground shadow-none focus-visible:ring-0 dark:bg-transparent',
           )}
           type="text"
           inputMode="numeric"
           enterKeyHint="done"
           autoComplete="off"
           spellCheck={false}
-          placeholder="0.00"
+          placeholder={placeholder}
           // a form's own text (`1284.50`, from an amount it already had) shows as typing would show it
           value={typedSen(value)}
           autoFocus={autoFocus}

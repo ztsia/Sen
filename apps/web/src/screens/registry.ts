@@ -30,6 +30,12 @@ const BUILT = new Set([
   'settings/member',
   // B06: the last backup and R2's storage, from the server (admin), and the admin's checks
   'settings/data',
+  // B08
+  'first-run',
+  'accounts',
+  'account',
+  'settings/you',
+  'settings/categories',
 ]);
 
 const s = (id: string, title: string, kind: ScreenKind, tab: TabId | undefined, slice: string): ScreenDef => ({
@@ -92,7 +98,7 @@ export const SCREENS: ScreenDef[] = [
   s('settings/capture/running', 'Keep Sen running', 'pushed', 'more', 'B02'),
   s('settings/capture/captured', 'Captured on this phone', 'pushed', 'more', 'B02, B07; B10 replaces it'),
   s('settings/you', 'You', 'pushed', 'more', 'B08'),
-  s('settings/categories', 'Categories and rules', 'pushed', 'more', 'B12'),
+  s('settings/categories', 'Categories and rules', 'pushed', 'more', 'B08, B12'),
   s('settings/email', 'Receipts by email', 'pushed', 'more', 'B19'),
   s('settings/claims', 'Claims', 'pushed', 'more', 'B25'),
   s('settings/sen', 'Sen', 'pushed', 'more', 'B27'),

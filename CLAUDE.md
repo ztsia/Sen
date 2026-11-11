@@ -32,7 +32,9 @@ a brief each (`S3`, D111). The spec's later revisions are D85–D110.
 
 **Built:** B01 (design system and the six looks), B02 (the shell and the listener; its week on the
 owner's phone is still to run), B03 and B04 (the walking skeleton, its review and the redesign,
-D130), B05 (the server, database and sign-in; then QA tooling and Feel, D139, D140). **Next:** B06.
+D130), B05 (the server, database and sign-in; then QA tooling and Feel, D139, D140), B06 (jobs, realtime
+and backups), B07 (sync and the outbox), B08 (first run, accounts and categories; one account per app, D145).
+**Next:** B09.
 Each slice waits only for the owner's merge; `docs/handoff.md` says where things stand now.
 
 

@@ -6,9 +6,8 @@
   - paragraph: Banks print your name in capitals on a transfer. Sen uses it to tell a move between your own accounts from a payment to someone else.
   - group:
     - text: Your name
-    - textbox "Your name":
-      - /placeholder: TAN WEI MING
-    - paragraph: You can add other spellings later in Settings.
+    - textbox "Your name": tan wei ming
+    - paragraph: Sen will look for TAN WEI MING.
   - button "Next"
 - region "Notifications alt+T"
 - button "Dev panel"

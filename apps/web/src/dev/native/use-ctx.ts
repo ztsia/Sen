@@ -17,8 +17,25 @@ export function afterSheets(fn: () => void) {
     n.setSheet(null);
     ui.setSenOpen(false);
     ui.setScanMoreOpen(false);
-    setTimeout(fn, 450);
+    waiting(1);
+    setTimeout(() => {
+      fn();
+      // a frame later, once the navigation has drawn
+      requestAnimationFrame(() => waiting(-1));
+    }, 450);
   } else fn();
+}
+
+/**
+ * `<html data-stand-in-waiting>` while a stand-in's tap waits out a sheet's exit, so a test opens the
+ * next sheet after the navigation, not into it (B08's PR: the dev panel opened, then the late
+ * navigation closed it).
+ */
+let pending = 0;
+function waiting(by: number) {
+  pending += by;
+  if (pending > 0) document.documentElement.dataset.standInWaiting = '';
+  else delete document.documentElement.dataset.standInWaiting;
 }
 
 /** What a stand-in's tap can do, wired to the app: the router, the data layer and the dev panel's switches. */

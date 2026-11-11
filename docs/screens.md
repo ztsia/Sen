@@ -343,7 +343,8 @@ each; its note (D90); *View photo*, or the email in a sandboxed view for a body-
 ### `accounts`, `account`, `balance-check`
 
 Capture only. `accounts`: the total; each tracked account with its balance and when it was last
-checked; *Elsewhere* accounts, without balances (§7); *Check balances*. `account`: its balance,
+checked; *Elsewhere* accounts, without balances (§7); *Not added yet*, each chosen app with no account and
+*Add*, asking for today's balance (D148); *Check balances*. `account`: its balance,
 opening balance, the app that feeds it, its recent payments and its checks. `balance-check`: each
 account's balance beside a box for the bank's figure, with *Matches* (D18); *Save* books each
 difference as *Unaccounted* (§7). It's also step 2 of `payday`.
@@ -391,7 +392,7 @@ Your email, then the 6-digit code (D13). An invitation's link lands here with th
 
 Full screen, one step per screen (D26, D86): sign in, choose your apps, notification access (with
 *Allow restricted settings* when the switch is greyed out, §6.2), *Keep Sen running* for your phone's
-brand, accounts with today's balances (one per chosen app, plus pots and stored credit), your name as
+brand, accounts with today's balances (one per chosen app, D145), your name as
 banks print it, expected payday. Without capture: sign in and categories (§9.6, D79).
 
 ### `payday`

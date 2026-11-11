@@ -22,6 +22,15 @@ export const Instant = z.iso.datetime({ offset: true });
 /** A calendar day in Kuala Lumpur, `2026-10-18`. */
 export const Day = z.iso.date();
 export const Currency = z.string().length(3);
+/** An Android package name. */
+export const Package = z
+  .string()
+  .min(1)
+  .max(255)
+  .refine((p) => {
+    const parts = p.split('.');
+    return parts.length >= 2 && /^[A-Za-z]/.test(p) && parts.every((x) => /^[A-Za-z0-9_]+$/.test(x));
+  }, 'an Android package name');
 
 const owned = { id: Id, userId: Id };
 

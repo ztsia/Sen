@@ -30,7 +30,8 @@ export default function More() {
 function MoreRows({ capture, claims }: { capture: boolean; claims: boolean }) {
   const payments = usePayments({}).data;
   const shared = useShared().data;
-  const accounts = useAccountList().data;
+  // only asked for with capture: without it the server refuses, and the row isn't shown (QA B08 run 1, 14)
+  const accounts = useAccountList(capture).data;
   const claimList = useClaims().data;
   const open = shared?.rows.filter((r) => r.open).length;
   const toSubmit = claimList?.claims.filter((c) => c.status === 'to_submit').length;

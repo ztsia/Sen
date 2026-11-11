@@ -67,8 +67,9 @@ dark, saved as `theme.css` (OKLCH) and `tokens.json` (hex) in `directions/assets
 | Icons | `icon`, plus `--icon-stroke`, `--icon-cap`, `--icon-join` | §5 |
 | Warning band | `warn-bg`, `warn-fg` | The health bar (§7) and its fix button, through the alert's and button's `warning` variant |
 
-`destructive` is for actions that remove something, never for an amount or an error: an error is
-said in words, in the text colour. The money tokens keep their one meaning (§3), so a status card's
+`destructive` is for actions that remove something, and for a form field that's wrong: its label and the
+message saying what's wrong (D150). Never for an amount, even in a field that's wrong, and never for an error
+anywhere else: a screen's or a sheet's error is said in words, in the text colour. The money tokens keep their one meaning (§3), so a status card's
 *Final* or *Waiting* is in the text colours, and only a warning takes `money-warning`. A look's
 `extra` variables are never used by a shared component.
 

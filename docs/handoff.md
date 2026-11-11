@@ -1,60 +1,62 @@
 # Handoff
 
-## Where things stand (4 Nov)
+## Where things stand (10 Nov)
 
-**B07 · Sync and the outbox** is done on `B07/sync`, and its PR is open. QA is at **ship**: run 1
-found two Majors in the watchdog, both fixed, and the scoped run 2 confirmed. Record in `qa/B07/`;
-report: https://claude.ai/artifact/A3BCeJcC4rGaRoEDGxXX5m
-- **Database:** `bank_events`, `capture_apps` (tombstones, `sync_version`), `device_heartbeats`,
-  `outbox_applied`. Migrations 0011 and 0012; pgTAP in `packages/db/test/sync.sql`.
-- **API:** `/sync`, `/sync/changes`, `/match` (empty until B11), `/capture/health`, `/captured`
-  (paged on posted time and id); a bearer session for the shell; the watchdog in the morning frame.
-  The watchdog reads what each heartbeat says: access off warns at once; the 24 h count from the
-  listener's own last heartbeat; events count on the server's clock.
-- **Shell:** outbox v4, WorkManager sync, the session in the Keystore, the *Capture* switch, the
-  26-hour notice, bridge 4. The outbox belongs to its first person; another's sign-in empties it. The
-  listener syncs when it connects. CI's emulator tests pass.
-- **Web:** pending writes for `setting.set` (the outbox in the shell; optimistic with *Retry* in a
-  browser), *Captured on this phone* from the server, and Home's capture warnings.
-- The mechanisms are **D143** (9 points).
-
-## Before the merge
-
-Nothing is left on B07's side. Its security check is the built-in review, which found nothing at High
-or Medium (`qa/B07/security.md`). **D144:** every slice gets that review; Claude Security's
-whole-codebase scan runs once, before launch (`docs/local.md`). The Worker redeploys on merge (new
-realtime topic `capture`); migrations run on deploy.
-
-## After the merge (the owner)
-
-`docs/local.md` → B07 steps 1–5: install, *Captured on this phone*, the watchdog for a day (QA's
-open device question, finding 12, is answered there), *Sign out everywhere*, Q25 after a week.
+**B08 · First run, accounts and categories** is finished on `B08/first-run-accounts`, with its PR open to
+`main`, waiting for the owner's merge. B07 merged (#22).
+- **QA:** four full runs and a scoped re-check (`qa/B08/report.md`; earlier runs `report-run1..3.md`; eyes
+  `eyes.md`; published at https://claude.ai/artifact/Pkj1my3wTFBwiM5qfvNnvv, version 5). Last verdict **ship**;
+  its findings 13 and 14 are fixed (`qa/B08/ledger.md`, which ends with the retro). Security review (D144):
+  no High or Medium (`qa/B08/security.md`).
+- **Decisions this slice:** D145 (the owner: one account per app; Ryt's pockets and TNG's GO+ are part of their
+  app's account), D146 (B08's mechanisms), D147 (QA run 1's calls), D148 (an app chosen after first run gets its
+  account on Accounts, *Not added yet*), D149 (`my_share` NULL is the whole amount), D150 (the owner: a wrong
+  field's label and message may be red, never the amount).
+- **Database:** migrations 0013–0014 (`accounts`, `account_names`, `categories`, `transactions`, views
+  `account_balances`, `balance_totals`, `user_settings.setup_done_at`); pgTAP `packages/db/test/ledger.sql`.
+- **API:** `/accounts`, `/accounts/:id`, `/categories`, `/me`'s `setupDone`, the `setup.*`, `account.*`,
+  `category.*` commands (`apps/api/src/ledger.ts`); `/sync/changes` carries the ledger.
+- **Shell:** outbox v5 keeps the offline copy. **Web:** first run saves as it goes; Accounts, Account,
+  Settings → Categories and → You are real. `?scenario=new` is before first run.
+- **CI:** `e2e:server` walks first run and Accounts; a new step re-records every accessibility tree and fails on
+  any difference (`toMatchAriaSnapshot` alone passed stale trees).
+- **Preview seed:** Wei Ming finished; Mei Ling (`meiling@example.com`, code 123456) hasn't.
 
 ## What to do next
 
-1. B06's F1 and F2 still wait on the owner (the sign-in screen says *not invited* and *access
-   paused*); the fix, if any, goes on `B06/jobs-realtime-backups`.
-2. **B08 · First run, accounts and categories.** It can start once #22 merges, before the owner's B07
-   phone checks (the owner's call, 4 Nov): a device bug they find gets a small branch of its own.
-3. Lessons for `ztsia/workflow` from B06's and B07's retros (`qa/B06/ledger.md`, `qa/B07/ledger.md`).
-   D144's change is ztsia/workflow#12 (plugin 1.2.0), waiting on the owner's merge.
+1. If the owner asks for changes on the PR, make them on `B08/first-run-accounts`.
+2. After the merge: **B09 · Template engine** (`docs/briefs/B09-template-engine.md`), branch
+   `B09/template-engine` from `main`. B09 maps `{account}` names (all to the app's one account, D145) and decides
+   what happens to an app's account when the app is un-chosen (QA B08 note 13).
+3. Still open from before: B06's F1 and F2 (the owner's call).
 
-## Follow-ups, not fixed in B07
+## Open with the owner
 
-- B07 QA 14: Home's `HealthBar` wraps its date; the widget stand-in says *Capture is off* where the
-  push says *may be off*. B07 QA notes 7 (tombstone and heartbeat time writable by direct SQL), 8
-  (global version counter), 9 (over-long notifications refused): `qa/B07/ledger.md`.
-- `qa/mutants.ts` has no Kotlin suite, so the shell's `BatchPlan` has no breakage check.
-- **Major, on main:** Members → *Remove*: the *Undone* toast covers *Export their data first*.
-  The slow Undo in Sen's sheet (eyes `proposal/3`) is main's too.
+- The phone steps for B08 are in `docs/local.md` (steps 1–9), and the B08 lessons for `ztsia/workflow`.
+
+## Follow-ups, not in B08
+
+- Stored credit without an app and *Elsewhere* accounts have no *Add* yet (D145 kept them); B11 needs Elsewhere.
+- Whether an account can open below zero (QA B08 run 3, note 9): the API accepts it, the phone can't type it.
+- Names accept zero-width characters, so *Me​als* sits beside *Meals* (QA B08 run 4, note 9).
+- QA tooling: the console metric should ignore Chromium's *cross-world service worker* warning; the harness
+  should record which signal set each step's settle time (QA B08 run 4, 6: More → Accounts measures twice main in
+  the harness, equal in probes); the core journey's scan-after step races a 0.4–0.8 s screen (run 1, 12);
+  `mutants.mjs` has no e2e suite, so colour and layout breakage checks can't be listed.
+- Shared transitions the eyes pass flagged (B08 run 4): skeletons for data already on screen, sheets that cut
+  out, first run's *Suggested* card jumping the list; Members → *Remove*'s toast over its dialog (on `main`).
+- Earlier ones: B07 QA 14 and notes 7–9 (`qa/B07/ledger.md`); no Kotlin breakage checks.
 
 ## Environment notes
 
-- `scripts/gradle-maven-mirror.gradle` goes in `~/.gradle/init.d/`; gitleaks builds from the Go proxy
-  (`docs/cloud.md`). Playwright may need a symlinked headless-shell; never `playwright install`.
+- Playwright wants `chromium_headless_shell-1194`; this VM has 1243. Make
+  `/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux` → `…-1243/chrome-headless-shell-linux64`
+  plus a `headless_shell` link to `chrome-headless-shell` in it. Never `playwright install`.
+- Android: `bash scripts/android-sdk.sh`, `ANDROID_HOME=/opt/android-sdk`; the androidTest variant is
+  `e2e` (`:app:compileE2eAndroidTestKotlin`).
 - The web app must not value-import `@sen/core/views`, `sync` or `commands`: zod trips the CSP.
-- A QA reviewer in a cloud session can't write `report.md`; the main session writes it.
+- The workflow plugin here is 1.1.0; main's is 1.2.0 (see `docs/local.md`).
 
 ## Don't argue again
 
-- D129–D144. Deploys happen only by merge (D122). Only `setting.set` is a pending write today.
+- D129–D150. One account per app (D145). Deploys happen only by merge (D122).

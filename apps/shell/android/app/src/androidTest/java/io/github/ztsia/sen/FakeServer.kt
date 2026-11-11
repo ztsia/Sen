@@ -32,6 +32,15 @@ class FakeServer(var userId: String) {
     /** Changes `/api/sync/changes` answers: capture apps as the server holds them. */
     @Volatile var serverApps: List<JSONObject> = emptyList()
 
+    /** B08's offline copy as the server holds it; `serverOwnNames` null is "unchanged in this page". */
+    @Volatile var serverCategories: List<JSONObject> = emptyList()
+    @Volatile var serverAccounts: List<JSONObject> = emptyList()
+    @Volatile var serverAccountNames: List<JSONObject> = emptyList()
+    @Volatile var serverOwnNames: List<String>? = null
+
+    /** The version the changes answer carries; by default the number of capture apps. */
+    @Volatile var serverVersion: Long? = null
+
     /** Every event id the server holds. */
     val held: MutableSet<String> = java.util.Collections.synchronizedSet(LinkedHashSet())
 
@@ -60,7 +69,14 @@ class FakeServer(var userId: String) {
                             changesAsked += path
                             json(
                                 200,
-                                JSONObject().put("version", serverApps.size.toLong()).put("more", false).put("captureApps", JSONArray(serverApps)),
+                                JSONObject()
+                                    .put("version", serverVersion ?: serverApps.size.toLong())
+                                    .put("more", false)
+                                    .put("captureApps", JSONArray(serverApps))
+                                    .put("categories", JSONArray(serverCategories))
+                                    .put("accounts", JSONArray(serverAccounts))
+                                    .put("accountNames", JSONArray(serverAccountNames))
+                                    .put("ownNames", serverOwnNames?.let { JSONArray(it) } ?: JSONObject.NULL),
                             )
                         }
                         else -> MockResponse().setResponseCode(404)

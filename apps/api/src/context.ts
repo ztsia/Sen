@@ -15,6 +15,8 @@ export interface Access {
   isAdmin: boolean;
   features: MemberSwitches;
   suspended: boolean;
+  /** First run is finished (D146 (1)): read with the access row, so /me costs no second transaction. */
+  setupDone: boolean;
 }
 
 /** What every signed-in route has: who, what they may use, and a way to run as them. */

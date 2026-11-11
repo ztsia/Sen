@@ -5,6 +5,7 @@
   - radiogroup "Show":
     - radio "Categories" [checked]
     - radio "Rules"
+  - button "Add a category"
   - region "Spending categories":
     - heading "Spending categories" [level=2]
     - list:

@@ -9,8 +9,11 @@ import { ListSkeleton } from './blocks/states';
 import { Screen } from './frame/screen';
 import { screenById } from './screens/registry';
 import { auth, forgetSession, noteSignedOutBecause } from './data/auth';
+import { backend, queryClient } from './data';
+import { inShell } from './shell/bridge';
 import { onSignedOut } from './data/api/client';
 import { canTransition, routerTransition } from './frame/motion';
+import { firstRunFor } from './screens/outside/logic';
 
 // The routes: the four tab screens, Scan's task screen, every other screen by its id from
 // docs/screens.md under /s/<id>, and, in development and previews only, the gallery. TanStack Router,
@@ -29,6 +32,22 @@ declare module '@tanstack/react-router' {
 // A path that matches nothing, or a screen that throws, keeps the frame and offers a way home
 // (patterns.md §7, Error), never the router's own page. If the frame itself throws, its error shows in
 // a column of its own, below the status bar like the frame's.
+/**
+ * First run comes first until it's finished (B08, D26): in the shell for someone with capture, and
+ * anywhere for someone without it. Someone with capture in a plain browser isn't sent: its steps need
+ * the phone, and finishing a short version there would keep them from ever coming back on it (B38
+ * settles the browser's first run). Read from `/me` once and kept, so a navigation doesn't wait on it;
+ * offline, the last answer counts, and with none, nobody is held at first run.
+ */
+async function firstRunDue(): Promise<boolean> {
+  try {
+    const me = await queryClient.ensureQueryData({ queryKey: ['me'], queryFn: async () => (await backend()).me() });
+    return firstRunFor(me, inShell());
+  } catch {
+    return false;
+  }
+}
+
 /** What a person reaches signed out: signing in, and a friend's split link (D47). */
 const OPEN = new Set(['/s/sign-in', '/s/split-public', '/dev/gallery']);
 
@@ -38,6 +57,8 @@ const rootRoute = createRootRoute({
   beforeLoad: async ({ location }) => {
     if (__SEN_BACKEND__ !== 'api' || OPEN.has(location.pathname)) return;
     if (await auth.signedOut()) throw redirect({ to: '/s/$', params: { _splat: 'sign-in' }, replace: true });
+    if (location.pathname !== '/s/first-run' && (await firstRunDue()))
+      throw redirect({ to: '/s/$', params: { _splat: 'first-run' }, replace: true });
   },
   component: AppShell,
   notFoundComponent: () => <Lost kind="missing" />,

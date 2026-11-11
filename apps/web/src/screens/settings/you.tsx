@@ -12,6 +12,7 @@ import { AppBar } from '@/frame/app-bar';
 import { Screen } from '@/frame/screen';
 import { useMe, useSettings, useWrite } from '@/data/hooks';
 import { usePendingFor } from '@/data/pending';
+import { DEV_TOOLS } from '@/lib/env';
 import { Loaded } from '../kit';
 
 type PaydayKind = 'last-working' | 'day' | 'none';
@@ -168,15 +169,18 @@ function Body({
           Sen counts each cycle from it. {capture ? '' : 'Without capture, a payday is optional.'}
         </p>
       </section>
-      <GroupCard label="Sharing">
-        <SwitchRow
-          icon={QrCodeIcon}
-          title="DuitNow QR"
-          description="Friends who owe you a split see it once you’ve paid."
-          checked={qr}
-          onCheckedChange={(on) => void write({ type: 'setting.set', key: 'you.qr', value: on })}
-        />
-      </GroupCard>
+      {/* the DuitNow QR arrives with B18: until then only previews show it, on made-up data */}
+      {DEV_TOOLS ? (
+        <GroupCard label="Sharing">
+          <SwitchRow
+            icon={QrCodeIcon}
+            title="DuitNow QR"
+            description="Friends who owe you a split see it once you’ve paid."
+            checked={qr}
+            onCheckedChange={(on) => void write({ type: 'setting.set', key: 'you.qr', value: on })}
+          />
+        </GroupCard>
+      ) : null}
     </div>
   );
 }

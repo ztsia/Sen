@@ -89,9 +89,9 @@ describe("Wei Ming's month", () => {
     expect(v.spendingOf(db, uniqlo)).toBe(rm('90.00'));
   });
 
-  it('shows a transfer as one row, Ryt → GO+', () => {
+  it('shows a transfer as one row, Ryt → TNG eWallet', () => {
     const rows = v.payments(db, env, { cycle: '2026-09-30' }).rows;
-    expect(rows.filter((r) => r.title === 'Ryt Bank → GO+')).toHaveLength(1);
+    expect(rows.filter((r) => r.title === 'Ryt Bank → TNG eWallet')).toHaveLength(1);
     expect(rows.some((r) => r.marks.includes('filled'))).toBe(true);
   });
 
@@ -446,8 +446,8 @@ describe('QA B03 run 3', () => {
 describe('the heavy-year scenario', () => {
   it('leaves Wei Ming byte for byte as it was', () => {
     const hash = createHash('sha256').update(JSON.stringify(weiMing())).digest('hex');
-    // changes only when Wei Ming's data does: B06 added Settings → Data's storage
-    expect(hash).toBe('55cd5c80561d7c78cbce7e0cee938fa38c96fc742700c43f29ae01dab86608e8');
+    // changes only when Wei Ming's data does: B08 folded GO+ into the TNG account (D145) and set setupDone
+    expect(hash).toBe('be210ee0fcf2cc9a6b90c5c013383e801872629ee60b4daf55924978cb6bbef6');
   });
   it('has a year of every captured payment, built quickly', () => {
     const t0 = performance.now();
@@ -457,5 +457,6 @@ describe('the heavy-year scenario', () => {
     expect(db.receipts.length).toBeGreaterThanOrEqual(200);
     expect(new Set(db.txns.map((t) => t.id)).size).toBe(db.txns.length);
     expect(ms).toBeLessThan(1500);
-  });
+    // its own measure is the speed check; the test's limit only has to outlast a busy machine (QA B08 run 1, 11)
+  }, 20_000);
 });

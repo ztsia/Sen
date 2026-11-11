@@ -14,6 +14,8 @@ export const TOPICS = [
   'jobs',
   /** Captured events and capture's health (B07): Captured on this phone, Home's warnings. */
   'capture',
+  /** Accounts, balances and categories (B08). */
+  'ledger',
 ] as const;
 export type Topic = (typeof TOPICS)[number];
 

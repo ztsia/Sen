@@ -5,17 +5,14 @@
 - main:
   - paragraph: Sen reads notifications only from the apps you choose here.
   - group: How it works
-  - paragraph: Suggested
-  - paragraph: Sen found 4 banks and e-wallets on this phone.
-  - button "Choose these 4"
   - region "Banks and e-wallets":
     - heading "Banks and e-wallets" [level=2]
     - text: Touch 'n Go eWallet
-    - switch "Touch 'n Go eWallet"
-    - switch "Ryt Bank"
+    - switch "Touch 'n Go eWallet" [checked]
+    - switch "Ryt Bank" [checked]
     - text: MyPB by Public Bank
-    - switch "MyPB by Public Bank"
-    - switch "Grab"
+    - switch "MyPB by Public Bank" [checked]
+    - switch "Grab" [checked]
     - switch "Google Wallet"
   - group:
     - text: Search every app

@@ -40,16 +40,12 @@ const MADE_UP_RULES: { merchant: string; category: string; hawker: boolean; setB
 ];
 
 export function seedSettings(db: Db): SettingsState {
-  const categories = db.categories
-    .filter((c) => !c.archivedAt)
-    .map((c) => ({ id: c.id, name: c.name, kind: c.kind, rules: 0 }));
   // only the made-up rules are kept here; the scenario's own are read live from db.rules (settingsView)
   const rules = MADE_UP_RULES.map((r) => ({ id: uid(`rule:${r.merchant}`), ...r }));
   return {
     ...blankSettings(),
     ...seedAdmin(db),
     you: { bankNames: ['TAN WEI MING', 'WEI MING TAN'], payday: { kind: 'last-working' }, qr: true },
-    categories,
     rules,
     receiptsByEmail: { address: 'weiming.7f3k@in.sen-my.app', code: '428913', received: 3 },
     data: {
@@ -74,7 +70,18 @@ export function settingsView(db: Db): SettingsView {
   }));
   const made = s.rules.filter((x) => !db.rules.some((r) => r.id === x.id));
   const rules = [...fromDb, ...made];
-  const categories = s.categories.map((c) => ({ ...c, rules: rules.filter((r) => r.category === c.name).length }));
+  // the categories are read live too, flags and all (B08)
+  const categories = db.categories.map((c) => ({
+    id: c.id,
+    name: c.name,
+    kind: c.kind,
+    rules: rules.filter((r) => r.category === c.name).length,
+    meal: c.isMeal,
+    beverage: c.isBeverage,
+    discretionary: c.isDiscretionary,
+    system: c.systemKey,
+    archived: c.archivedAt !== null,
+  }));
   return {
     ...s,
     categories,

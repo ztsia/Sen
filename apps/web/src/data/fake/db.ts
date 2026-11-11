@@ -37,6 +37,8 @@ export interface Db {
   agent: boolean;
   /** AI credit at zero: Sen and receipt reading pause until this day (§9.6). */
   aiPausedUntil: string | null;
+  /** First run is finished (B08, D26). */
+  setupDone: boolean;
   /** Without capture, a payday is optional; the skeleton's month scenario has none (D79). */
   openingDay: string;
   accounts: Account[];

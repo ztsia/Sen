@@ -488,10 +488,11 @@ function AddItem({ onAdd }: { onAdd: (description: string, amount: number) => vo
     const r = checkAmount(amount);
     const e = {
       description: description.trim() ? undefined : 'Say what it is.',
-      amount: r.error,
+      // a typed 0 is RM0.00 now (QA B08 run 1, 1); a payment is above zero, as the manual form says
+      amount: r.error ?? (r.sen === 0 ? 'Type an amount above zero.' : undefined),
     };
     setErrors(e);
-    if (e.description || r.error !== undefined) return;
+    if (e.description || e.amount !== undefined || r.error !== undefined) return;
     onAdd(description.trim(), r.sen);
     setDescription('');
     setAmount('');

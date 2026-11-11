@@ -146,22 +146,25 @@ export function SwitchRow({
   const id = useId();
   const about = description ? `${id}-about` : undefined;
   return (
-    <Item
-      size="sm"
-      className={cn('relative min-h-14 flex-nowrap gap-3 rounded-none py-0 pr-2 text-base', disabled && 'opacity-70')}
-    >
+    <Item size="sm" className="relative min-h-14 flex-nowrap gap-3 rounded-none py-0 pr-2 text-base">
+      {/* a disabled row dims its mark and name, never the line saying why: that stays readable (B08) */}
       {media ? (
         <span
-          className="size-8 shrink-0 overflow-hidden rounded-[calc(var(--radius-card,16px)*0.6)]"
+          className={cn(
+            'size-8 shrink-0 overflow-hidden rounded-[calc(var(--radius-card,16px)*0.6)]',
+            disabled && 'opacity-70',
+          )}
           aria-hidden="true"
         >
           {media}
         </span>
       ) : icon ? (
-        <IconTile icon={icon} tone={tone} />
+        <span className={cn('contents', disabled && '[&>*]:opacity-70')}>
+          <IconTile icon={icon} tone={tone} />
+        </span>
       ) : null}
       <ItemContent className="min-w-0 gap-0.5 py-2.5">
-        <label htmlFor={id} className="wrap-anywhere after:absolute after:inset-0">
+        <label htmlFor={id} className={cn('wrap-anywhere after:absolute after:inset-0', disabled && 'opacity-70')}>
           {title}
         </label>
         {description ? (

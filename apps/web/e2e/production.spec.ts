@@ -185,7 +185,8 @@ test('the production build holds none of the made-up scenario', async () => {
 });
 
 // B04 done-when 2: the screens B04 built say Not built yet in production too, with no made-up figure,
-// no dev panel, no stand-ins, and Sen's sheet holding nothing of the conversation.
+// no dev panel, no stand-ins, and Sen's sheet holding nothing of the conversation. Those a later slice
+// made real leave the list: B08's Accounts, Account, Settings → You and → Categories, and first run.
 const B04 = [
   '/s/shared',
   '/s/split',
@@ -193,21 +194,16 @@ const B04 = [
   '/s/agent/memory',
   '/s/agent/research',
   '/s/agent/usage',
-  '/s/accounts',
-  '/s/account',
   '/s/balance-check',
   '/s/payday',
   '/s/claims',
   '/s/claim',
   '/s/settings',
   '/s/settings/appearance',
-  '/s/settings/you',
-  '/s/settings/categories',
   '/s/settings/email',
   '/s/settings/claims',
   '/s/settings/sen',
   '/s/settings/members',
-  '/s/first-run',
   '/s/new-look',
 ];
 
