@@ -23,11 +23,15 @@ slices are built: **D151**. Written on branch `ccr-0a86f474-pcz1jx` (no PR yet);
 3. Then **B09 · Template engine** (`docs/briefs/B09-template-engine.md`). It maps `{account}` names (all
    to the app's one account, D145) and decides what happens to an app's account when it's un-chosen.
 
-## Waiting on the owner's go (don't start)
+## Waiting on the owner's go (don't start), and the audit under way
 
-- **The polish pass:** a Fable subagent at `xhigh` audits every screen and component and writes a polish
-  plan per screen and component. It never edits. This session then briefs Haiku and Sonnet builders from
-  the plans.
+- **The polish pass, audit started (owner's go, 11 Nov):** seven Fable auditors at `xhigh`, one per area
+  (`docs/polish/README.md`), each writing `docs/polish/<area>.md`; they never edit or take screenshots.
+  Captures were made by script (catalogue in Minted, tabs in all looks, the gallery) and sliced to phone
+  height in the session's scratchpad. Their view requests go to `own/<area>/requests.md`, for one Haiku
+  batch. Next: merge the seven plans (shared fixes once, at the component level), bring the owner the
+  *Needs the owner* list, then write `docs/plans/polish.md`. Building waits for the owner's go. If the
+  scratchpad is gone, re-capture with `E2E_CATALOGUE=shots E2E_SHOTS=<dir>` on `e2e/catalogue.spec.ts`.
 - **Sen's chat on AI Elements**, against benchmark references the owner will share.
 - **A re-spec of Sen** (spec §12), with the owner.
 
