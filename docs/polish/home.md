@@ -14,8 +14,6 @@ its card with empty margins, Sen's note is cut mid-word, the quiet row's *Gap* d
 means, and a few of the looks' decorations collide with the cards. None of it is wrong in data; it
 reads unfinished.
 
-(Findings are added below in priority order as the audit goes; the list is renumbered at the end.)
-
 ## Findings
 
 ### 1. Home: the cards are see-through outlines, so the look's drawing runs through them
@@ -113,7 +111,7 @@ reads unfinished.
   size (`text-base`) in the text colour, the delta as `Money` medium: *RM273.53 more than last cycle by
   this day* (or *The same as…*, or *Your first cycle: nothing to compare with yet*). Under the chart,
   `text-sm` muted: *Spent RM3,873.53 this cycle*, amount in normal weight. The chevron stays on the
-  first line. The legend stays last (finding 15).
+  first line. The legend stays last (finding 18).
 - Files: `apps/web/src/screens/home/home.tsx`
 - Priority: P2
 - Shared: none
@@ -268,20 +266,7 @@ reads unfinished.
 - Shared: none
 - Builder: Haiku, S
 
-### 15. Home pace legend: under the takeaway in five looks, beside it in Line
-- Seen: `home--line-*`: *— This cycle — Last* sits to the right of the takeaway on the same line;
-  in the other five looks it's on its own line underneath.
-- Why it matters: patterns §1, layout never varies between looks. Line's narrower font lets
-  `flex-wrap justify-between` fit both on one line.
-- Change (screen): make the takeaway and legend a column (`flex-col items-start gap-1`), so the
-  legend is always its own line. (If B08 · Charts adds direct labels at the lines' ends, the legend
-  can go.)
-- Files: `apps/web/src/screens/home/home.tsx`
-- Priority: P3
-- Shared: none
-- Builder: Haiku, XS
-
-### 16. new-look: the card isn't over the new Home, so you choose a look without seeing it
+### 15. new-look: the card isn't over the new Home, so you choose a look without seeing it
 - Seen: `new-look--minted-*`: a plain screen with Sen's new avatar, *Sen has a new look for this
   quarter*, *Instrument*, the switch, and the buttons. Nothing shows what Home, the figure or the tab
   bar now look like; most of the screen is empty.
@@ -299,7 +284,7 @@ reads unfinished.
 - Shared: B14's reveal builds on this frame
 - Builder: Sonnet, M
 
-### 17. new-look: a focus ring on *Keep it* that a finger never asked for
+### 16. new-look: a focus ring on *Keep it* that a finger never asked for
 - Seen: `new-look--minted-light` and `-dark`: *Keep it* has a thick grey ring around it on arrival.
 - Why it matters: patterns §10, focus rings show for keyboard use only. On a phone the ring reads
   as a stuck or pressed button. §9 wants focus on *Keep it* for TalkBack, which doesn't need the ring.
@@ -312,20 +297,7 @@ reads unfinished.
 - Shared: any other screen that moves focus on arrival (sign-in's code field) should do the same
 - Builder: Haiku, XS
 
-### 18. new-look: a hand-made switch row whose line repeats its label
-- Seen: `new-look--minted-*`: *Change each quarter* / *A new look every quarter.*, a bare label row,
-  not in a card, unlike every other switch in the app.
-- Why it matters: patterns §7, an on/off setting is a `SwitchRow` in a `GroupCard`. The line should
-  say what the switch changes, not restate it.
-- Change (screen): use `SwitchRow` inside a `GroupCard` (no tile: it's this moment's only setting,
-  so pass no icon if `SwitchRow` allows it; otherwise `CalendarSyncIcon`). Line when on: *Off keeps
-  the look you choose here.* When off, the existing *Stays on {name} or the one you keep.*
-- Files: `apps/web/src/screens/outside/new-look.tsx`
-- Priority: P3
-- Shared: Settings → Appearance has the same switch; use the same lines there
-- Builder: Haiku, XS
-
-### 19. cycle: three boxes that don't read as the sum they are
+### 17. cycle: three boxes that don't read as the sum they are
 - Seen: `cycle--minted-light`, `-dark`: *Income received +RM5,804.80* and *Spending RM3,873.53*
   side by side, *Left until payday RM1,931.27* below in a tinted box.
 - Why it matters: the sheet answers "how is it worked out?". Income − spending = left is the
@@ -341,6 +313,32 @@ reads unfinished.
 - Builder: Haiku, S
 - Needs the owner: patterns §7's table names `StatTiles` for *the cycle*. This swaps it for rows in a
   `GroupCard` on this sheet only.
+
+### 18. Home pace legend: under the takeaway in five looks, beside it in Line
+- Seen: `home--line-*`: *— This cycle — Last* sits to the right of the takeaway on the same line;
+  in the other five looks it's on its own line underneath.
+- Why it matters: patterns §1, layout never varies between looks. Line's narrower font lets
+  `flex-wrap justify-between` fit both on one line.
+- Change (screen): make the takeaway and legend a column (`flex-col items-start gap-1`), so the
+  legend is always its own line. (If B08 · Charts adds direct labels at the lines' ends, the legend
+  can go.)
+- Files: `apps/web/src/screens/home/home.tsx`
+- Priority: P3
+- Shared: none
+- Builder: Haiku, XS
+
+### 19. new-look: a hand-made switch row whose line repeats its label
+- Seen: `new-look--minted-*`: *Change each quarter* / *A new look every quarter.*, a bare label row,
+  not in a card, unlike every other switch in the app.
+- Why it matters: patterns §7, an on/off setting is a `SwitchRow` in a `GroupCard`. The line should
+  say what the switch changes, not restate it.
+- Change (screen): use `SwitchRow` inside a `GroupCard` (no tile: it's this moment's only setting,
+  so pass no icon if `SwitchRow` allows it; otherwise `CalendarSyncIcon`). Line when on: *Off keeps
+  the look you choose here.* When off, the existing *Stays on {name} or the one you keep.*
+- Files: `apps/web/src/screens/outside/new-look.tsx`
+- Priority: P3
+- Shared: Settings → Appearance has the same switch; use the same lines there
+- Builder: Haiku, XS
 
 ### 20. cycle: the estimate is to the sen, and wears a destination's tile
 - Seen: `cycle--minted-*`: a card with a trend-up `IconTile` and *An estimate: at this pace, about
@@ -457,3 +455,40 @@ reads unfinished.
 - Shared: every screen's load error
 - Builder: Haiku, XS
 
+## Not yet seen
+
+Asked for in captures (`own/home/requests.md`): Home with the Payday card, Home counting by month and
+before the first salary, the loading skeleton, `cycle` by month, and `payday`'s steps 2 to 4 (the
+balance check, the look-back and the plan). Findings 12 and 13 are read from the code for steps 3
+and 4; anything those captures show is added here.
+
+## Keep
+
+- **The figure in each look.** Minted's engraved Caslon, Instrument's dot matrix on its black
+  card, Firefly's lit digits, Line's ink with raised sen, Mercury's quicksilver, Copper's struck
+  coin: each is the same number, read out the same, and each is the best thing on the screen. Don't
+  shrink it, box it, or put anything beside it.
+- **Each look's strip** under the figure (ticks, dots, the thermometer, the coin row): it says how
+  much of the cycle has gone at a glance, and it's the one place a look's motion lives on Home.
+- **Home's order and restraint**: the figure, pace, Sen's note, the quiet row, and nothing else. At
+  most four figures (spec §9.2). Sen's note giving way when something asks you to act.
+- **The words.** *Left until payday*, *12 days to go*, *RM273.53 more than last cycle by this day*,
+  *Your first cycle: nothing to compare with yet*, *Couldn't load Home. Check your connection, then
+  try again. Nothing you've added is lost.*, the offline banner's *What you add is kept and syncs
+  when you're back.*, the payday claims' *Done* status with what happened and how. Plain, calm, true.
+- **Spending in the text colour, money in with `+` and green** (the cycle sheet's *+RM5,804.80*):
+  nothing alarming without a reason.
+- **The capture warning's shape**: what's wrong in words, when it started, and one *Fix*.
+- **The payday flow's frame**: *Step 1 of 4*, *Skip* top right, a segmented progress bar, one main
+  button in the footer in thumb reach, no tab bar.
+- **The cycle sheet's estimate is labelled as one**, with what it assumes.
+- **new-look's** *Keep it* as the one main button, *Go back* below it, and the Settings line.
+
+## Needs the owner
+
+1. **The cycle sheet as a worked sum** (finding 17): rows in a `GroupCard` instead of `StatTiles`,
+   which patterns §7 names for the cycle.
+2. **An estimate in whole ringgit** (finding 20): *about RM740* instead of *about RM740.53*, against
+   patterns §3's *always two decimals*.
+3. **The health band's colour** (finding 22): `warn-bg` and `warn-fg` are red in all six looks; amber
+   would read as *check this*, not *danger*. Patterns §2's warning band.
