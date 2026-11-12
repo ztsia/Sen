@@ -1,7 +1,8 @@
 # Settings: polish plan
 
 Area: `settings` and every `settings/…` (catalogue ids in `apps/web/e2e/catalogue.ts`). Audited from
-the 390×844 captures in every look for the hub and Minted light and dark for each sub-screen, against
+the 390×844 captures in every look for the hub and Minted light and dark for each sub-screen, plus
+the Rules tab, the category sheet and the invite sheet (`own/settings/`), against
 `docs/ui/patterns.md`, `docs/workflow/uiux.md`, the uiux phone checklist and `qa/escapes.md`.
 
 Reading the plan: findings are in priority order. *Shared* says which other screens the same fix
@@ -101,7 +102,7 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
   one control* (patterns §7, Rows), and a broken email address is the "cut off" the eyes pass flags.
 - Change (`screens/settings/claims.tsx`):
   - Schemes: each scheme is a `NavRow` whose `onOpen` is `askSen(editScheme(c.name))`, with
-    `trailing={<SenMark />}` and no chevron (`kind="action"`, #8). Drop the *Edit* button. The row
+    `trailing={<SenMark />}` and no chevron (`kind="action"`, #9). Drop the *Edit* button. The row
     keeps its D135 avatar, the description gets the full width.
   - ESS row 1: title *ESS*, badge *Signed in* (or *Not signed in* with its *Sign in to ESS* button as
     now), then ⋯. No repeated words.
@@ -115,7 +116,7 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
     them after it), so nothing but rows sits in the card.
 - Files: `apps/web/src/screens/settings/claims.tsx`, `apps/web/src/screens/settings/parts.tsx`
 - Priority: P1
-- Shared: the divider half is #9
+- Shared: the divider half is #10
 - Builder: Sonnet, M
 
 ### 5. Your apps: app icons are clipped and their initials sit off-centre
@@ -150,7 +151,24 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Shared: none (only the hub uses `LookSwatch`)
 - Builder: Haiku, S
 
-### 7. NavRow: the title wraps to two lines before its value does
+### 7. Sheet: scrolled content runs over the description line
+- Seen: `own/settings/invite-sheet-scrolled-end--viewport.png`: scrolled up, the switches' text draws
+  over *They get an email with a link… never their money.*, two lines of text on top of each other.
+  `own/settings/category-sheet-scrolled-end--viewport.png`: the content slides up under *A spending
+  category* with no edge, so *Name* sits glued to it. Minted light.
+- Why it matters: overlapping text looks broken, in the sheet where you hand a friend access.
+- Change: in `blocks/sheet.tsx`, the description belongs to the fixed header: move `DrawerDescription`
+  inside the header `div`, under the title (wrap title and description in a `flex min-w-0 flex-1
+  flex-col gap-0.5` column; the close button stays at the right of the title line), so the
+  `border-b` sits under both. The scroll area then starts below the border and clips
+  (`overflow-y-auto`, check `.scroll-area` sets it). With no description, nothing changes.
+- Files: `apps/web/src/blocks/sheet.tsx`
+- Priority: P1
+- Shared: every sheet with a description (txn, review, categories, members, claims, Sen settings).
+  Belongs with `components.md`.
+- Builder: Sonnet, S
+
+### 8. NavRow: the title wraps to two lines before its value does
 - Seen: `settings--minted-light--p1.png` (and Minted dark, Copper, Mercury, Firefly, Instrument):
   *Export and backups* breaks into two lines beside *Backed up Sat, / 17 Oct*, which also breaks.
   Firefly (`settings--firefly-*--p1.png`): *0 apps · not / listening* breaks while *Capture* has room
@@ -174,7 +192,7 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
   Coordinate with `components.md`. Re-run `e2e:lived` (200 %, 360×640) after.
 - Builder: Sonnet, M
 
-### 8. NavRow: a chevron on rows that act at once, so a tap does something unexpected
+### 9. NavRow: a chevron on rows that act at once, so a tap does something unexpected
 - Seen: `settings_account--minted-light--p1.png`: *Sign out*, *Sign out everywhere* and *Delete
   account* each end in a chevron, the same chevron as rows that open a screen. *Sign out* signs you
   out on the spot.
@@ -190,7 +208,7 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Shared: any action row in Settings and More
 - Builder: Sonnet, S
 
-### 9. GroupCard: row dividers are invisible except where a row is wrapped
+### 10. GroupCard: row dividers are invisible except where a row is wrapped
 - Seen: every Settings card. The hub's rows (`settings--minted-light--p1.png`) have no dividers; the
   Claims ESS card has dividers under only the rows wrapped in a `<div>`; `settings/capture/captured`'s
   raw rows (built differently) have full-width dividers.
@@ -215,7 +233,7 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
   patterns §8's "a separator is between them" changes instead, and the Claims and captured screens
   lose theirs.
 
-### 10. Capture: three red tiles say "broken", and the status has no way to fix it
+### 11. Capture: three red tiles say "broken", and the status has no way to fix it
 - Seen: `settings_capture--minted-light--p1.png`, dark: the card says *Not listening* in amber, then
   every setup row has a red-pink tile (`warn` tone): the same tile Account uses for *Sign out
   everywhere* and *Delete account*. The tile flips to the accent when a step is done, so colour is
@@ -235,10 +253,10 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
     label, keep the row in its own `GroupCard`.
 - Files: `apps/web/src/screens/capture/capture.tsx`
 - Priority: P2
-- Shared: none; the `warn` tile on Account's destructive rows goes with #14 (Account)
+- Shared: none; the `warn` tile on Account's destructive rows goes with #15 (Account)
 - Builder: Sonnet, S
 
-### 11. Notification access: two filled buttons compete, and the fallback reads as the main path
+### 12. Notification access: two filled buttons compete, and the fallback reads as the main path
 - Seen: `settings_capture_access--minted-light--p1.png` (and dark, and `@capture-off`): the screen's
   main action *Open settings* is a full-width filled button at the bottom, and in the middle the
   greyed-out how-to's *Open Sen's app info* is a second filled primary. In dark both are pale filled
@@ -254,22 +272,22 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
     *It changes nothing else.* to keep one line (§7.7).
 - Files: `apps/web/src/blocks/steps.tsx`, `apps/web/src/screens/capture/access.tsx`
 - Priority: P2
-- Shared: `Keep Sen running` if it shows `Steps` under its own main action (it does: #12)
+- Shared: `Keep Sen running` if it shows `Steps` under its own main action (it does: #13)
 - Builder: Haiku, S
 
-### 12. Keep Sen running: two filled buttons, as on Notification access
+### 13. Keep Sen running: two filled buttons, as on Notification access
 - Seen: `settings_capture_running--minted-light--p1.png`, dark: *Allow* (filled, 48 px) in the
   status card and *Open Autostart* (filled, the next step's) in the Xiaomi steps.
 - Why it matters: one main action (D130 rule 1). *Allow* is the step every phone needs.
-- Change: use #11's `<Steps quiet>` here. Also: the group label *Every phone* above the status
+- Change: use #12's `<Steps quiet>` here. Also: the group label *Every phone* above the status
   card adds nothing (drop it, keep *Your Xiaomi*), and the footnote *Sen is tried on a Xiaomi
   first.* → *Sen is tested on Xiaomi first.*
 - Files: `apps/web/src/screens/capture/running.tsx`
 - Priority: P2
-- Shared: #11
+- Shared: #12
 - Builder: Haiku, S
 
-### 13. Segmented: in dark, the chosen option barely shows
+### 14. Segmented: in dark, the chosen option barely shows
 - Seen: `settings_appearance--minted-dark--p1.png`: *Dark* is chosen, drawn as a pill a shade
   darker than the track; *System* and *Light* look the same weight. In light it's a clear white pill.
 - Why it matters: the mode is the first choice on Appearance; a person can't see which is on.
@@ -282,19 +300,19 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Shared: every `Segmented`: Categories and rules, Open and Settled, the payday rule if it uses one
 - Builder: Haiku, S
 
-### 14. Account: actions with chevrons, a tiled fact, and the email buried second
+### 15. Account: actions with chevrons, a tiled fact, and the email buried second
 - Seen: `settings_account--minted-light--p1.png`, dark. *About · Version* comes first, with an info
   tile though it opens nothing (in a browser it shows *simulated · sim* in previews). *Email* is a
   fact without a tile, so its label starts 88 px left of the rows under it. *Sign out*, *Sign out
-  everywhere* and *Delete account* have chevrons (#8). Both lower rows are red, and *Delete account*
+  everywhere* and *Delete account* have chevrons (#9). Both lower rows are red, and *Delete account*
   only toasts *Deleting an account arrives with accounts. Nothing was deleted.*
 - Why it matters: Account is where you check who you're signed in as; that should lead. A red row
   that does nothing is a dead end and makes the screen feel unfinished (and *Delete account* isn't
   in screens.md's Account: *Your email, Sign out, Sign out everywhere*).
 - Change (`screens/account.tsx`):
   - Order: the identity first, the same card as the hub's top card (avatar, name, email, *Admin*;
-    #15) without a chevron, as information. Then the actions `GroupCard` (no label): *Sign out*,
-    *Sign out everywhere*, `kind="action"` (#8). Then *About* last: *Version* without a tile
+    #16) without a chevron, as information. Then the actions `GroupCard` (no label): *Sign out*,
+    *Sign out everywhere*, `kind="action"` (#9). Then *About* last: *Version* without a tile
     (`icon` removed; the long-press stays on the row).
   - *Sign out everywhere* is not `destructive` (it removes nothing; patterns §2, D150): neutral tile,
     text colour. The confirm dialog stays.
@@ -302,10 +320,10 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Files: `apps/web/src/screens/account.tsx`; reuse the hub's account card by moving it into
   `settings/parts.tsx` as `AccountCard({ v, onOpen? })`
 - Priority: P2
-- Shared: the hub (#15)
+- Shared: the hub (#16)
 - Builder: Sonnet, S
 
-### 15. Settings hub: the profile card shows an email handle as a name
+### 16. Settings hub: the profile card shows an email handle as a name
 - Seen: `settings--*--p1.png`, every look: the top card says **weiming** in lower case, semibold,
   then *weiming@example.com* under it. The first word anyone reads on Settings is a
   machine-made handle; for a friend whose address is `tan.ml88@…` it would say *tan.ml88*.
@@ -318,12 +336,12 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
   Keep the *Admin* badge after the title.
 - Files: `apps/web/src/screens/settings/settings.tsx` (`Body`, the account `Card`)
 - Priority: P2
-- Shared: the Account screen's header (#14)
+- Shared: the Account screen's header (#15)
 - Builder: Haiku, S
 - Needs the owner: only if he'd rather have a display name of its own; there's no field for one
   in `SettingsView` today, and this plan doesn't add one.
 
-### 16. Receipts by email: the code that arrived sits below four steps, and copy is two styles
+### 17. Receipts by email: the code that arrived sits below four steps, and copy is two styles
 - Seen: `settings_email--minted-light--p1.png`, dark. A code has arrived (*428913*), which is the
   one thing to do now, but it's under *Confirmation*, below a four-step how-to whose step 3 says
   "it shows below". The address copies with a bare icon button; the code copies with a labelled
@@ -347,14 +365,14 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Shared: none
 - Builder: Sonnet, S
 
-### 17. Data: the same backup is *Sat, 17 Oct* on the hub and *Yesterday, 03:00* inside
+### 18. Data: the same backup is *Sat, 17 Oct* on the hub and *Yesterday, 03:00* inside
 - Seen: `settings--minted-light--p1.png` (*Backed up Sat, 17 Oct*) against
   `settings_data--minted-light--p1.png` (*Last backup · Yesterday, 03:00*). The hub's row is
   called *Export and backups*; the screen it opens is titled *Data*.
 - Why it matters: two different-looking answers to "when was my data last backed up" make a person
   double-check. The tapped name should be the title that greets you.
 - Change: the hub uses `momentLabel`'s day part, the same relative wording (*Yesterday*, *Today*,
-  else *Sat, 17 Oct*); with #7 the value is that date alone. Title the screen *Export and backups*
+  else *Sat, 17 Oct*); with #8 the value is that date alone. Title the screen *Export and backups*
   (`AppBar title`), matching the row; the registry's name too.
 - Files: `apps/web/src/screens/settings/settings.tsx`, `apps/web/src/screens/settings/data.tsx`,
   `apps/web/src/screens/registry.ts`
@@ -362,7 +380,7 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Shared: none
 - Builder: Haiku, S
 
-### 18. Sen: an optional connection is the loudest button, and *@cap* shows nothing
+### 19. Sen: an optional connection is the loudest button, and *@cap* shows nothing
 - Seen: `settings_sen--minted-light--p1.png`, dark: *Google Calendar* is a row with a filled
   primary *Connect* inside it, which squeezes its line into three short lines; it's the strongest
   thing on the screen though the line says you don't need it. The hub writes the estimate
@@ -388,7 +406,7 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Shared: none
 - Builder: Sonnet, S
 
-### 19. You: three big empty choice cards for the payday rule
+### 20. You: three big empty choice cards for the payday rule
 - Seen: `settings_you--minted-light--p1.png`, dark: *Last working day*, *A day*, *Not set* as three
   full-width 56 px cards with nothing but their name; the chosen one ringed. The names textarea
   shows a desktop resize grip in its corner.
@@ -408,7 +426,7 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Shared: first run's payday step if it uses the same cards
 - Builder: Sonnet, S
 
-### 20. Members as a non-admin: *Invite* is still offered
+### 21. Members as a non-admin: *Invite* is still offered
 - Seen: `settings_members_month--minted-light--p1.png`, dark: *Admin only — Only the admin sees
   Members.*, and top right, *+ Invite*, which opens the invite sheet.
 - Why it matters: an action the person can't use, on the screen that just said they can't. A dead
@@ -421,7 +439,63 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Shared: none
 - Builder: Haiku, S
 
-### 21. Categories and rules: the grid tiles are a one-off card, and the add button leads
+### 22. Rules: the switch looks like it turns the rule off
+- Seen: `own/settings/rules-tab--viewport.png`, `rules-tab-dark--viewport.png`: each row reads *When
+  the payee has "Dapur Bibi Delivery" → Meals*, with a switch beside it. The switch actually means
+  *is a hawker*, said only at the end of the grey line (*Sen's suggestion, confirmed · Not a hawker*).
+  Titles wrap to two lines and the source wraps oddly (*Sen's suggestion, / confirmed · …*).
+- Why it matters: anyone would read the switch as "rule on/off" and flip it to stop a rule. Words
+  and switch must agree (patterns §7: a row says its state; a `SwitchRow`'s title is what it turns on).
+- Change (`RuleList` in `screens/settings/categories.tsx`):
+  - Title: the merchant, through `readableName` (*Dapur Bibi Delivery*).
+  - Line: *→ Meals · From your answer* (or *· Sen's suggestion*); drop *A hawker / Not a hawker*
+    from the line (the switch says it).
+  - Give `SwitchRow` an optional `switchLabel?: string`, drawn as a `text-xs text-muted-foreground`
+    caption beside the switch (left of it, `ItemActions` gap 2); use `switchLabel="Hawker"` here.
+    Keep `name` for the accessible label.
+  - The intro line stays; group label *Merchant rules* stays.
+- Files: `apps/web/src/screens/settings/categories.tsx`, `apps/web/src/blocks/group.tsx`
+- Priority: P2
+- Shared: none
+- Builder: Sonnet, S
+
+### 23. Category sheet: a big *Save* splits the sheet, and the flags card is inset twice
+- Seen: `own/settings/category-sheet--viewport.png`, `--scrolled-end--viewport.png`: *Name*, then a
+  full-width filled *Save*, then *Counts as* whose card sits 16 px narrower on each side than the
+  field above it (the card's own `px-4` inside the sheet's). The flags save at once; the name waits
+  for *Save*. The rules are two loose lines of text (*When the payee has "Warung Pak Hamid"*).
+- Why it matters: two save models in one sheet, and a main button in the middle of a settings sheet
+  that isn't its point. Edges that don't line up read as unfinished.
+- Change (`CategoryDetail` in `screens/settings/categories.tsx`):
+  - The name saves like You's names: on blur and on Enter (`enterKeyHint="done"`), with the toast's
+    *Undo*; errors stay under the field. Remove the *Save* button.
+  - *Counts as*: `GroupCard className="-mx-4"` (as the invite sheet does), so its card lines up with
+    the field. Better, give `GroupCard` an `inset={false}` prop that drops its `px-4`, and use it in
+    both sheets.
+  - Rules: a `GroupCard label="Rules"` of information rows (`NavRow` without `onOpen`, title the
+    merchant through `readableName`), or the existing muted line when there are none.
+- Files: `apps/web/src/screens/settings/categories.tsx`, `apps/web/src/blocks/group.tsx`
+- Priority: P2
+- Shared: the invite sheet (#24) for the `GroupCard` inset
+- Builder: Sonnet, S
+
+### 24. Invite sheet: two screens of form in a sheet
+- Seen: `own/settings/invite-sheet--viewport.png`, `--scrolled-end--viewport.png`: email, *They will
+  use*, five switches, *Welcome credit* at figure size, *Unlimited*, *Monthly allowance* at figure size,
+  then *Send invitation*: about two phone-heights inside an 85 % sheet.
+- Why it matters: patterns §7.8, a sheet holds a choice or a short form; long things get a screen.
+  Every one of those settings is already on the member's own screen, where they can be changed the
+  moment the invite exists.
+- Change (`InviteSheet` in `screens/settings/members.tsx`): keep *Their email*, *They will use* and
+  *Send invitation*; the switches and credit go out of the sheet and take `DEFAULTS`, `WELCOME` and
+  `ALLOWANCE`. Say so in one line under *They will use*: *They start with RM10.00 credit and RM2.00 a
+  month; change it on their page.* (computed with `formatSen` from the constants). After sending,
+  open the new member's screen (`go('settings/member', { id })`) so the admin can adjust at once.
+- Files: `apps/web/src/screens/settings/members.tsx`
+- Priority: P2
+- Shared: none
+- Builder: Sonnet, S
+### 25. Categories and rules: the grid tiles are a one-off card, and the add button leads
 - Seen: `settings_categories--minted-light--p1.png`, `--p2.png`, dark. The category tiles are
   `bg-card` with no border, unlike every other card on Settings (which have one); in Minted light
   they float as pale blobs. *Spending categories* sits 8 px left of where every other group label
@@ -441,18 +515,18 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Shared: none
 - Builder: Haiku, S
 
-### 22. Capture: the hub's Capture row hides the problem behind a count
+### 26. Capture: the hub's Capture row hides the problem behind a count
 - Seen: `settings--*--p1.png`: *Capture · 0 apps · not listening* in muted secondary, the same
   weight as *4 rules*. When capture is broken, it's the most important line on Settings.
 - Change: in `CaptureRow` (`screens/settings/settings.tsx`), when the listener isn't listening, the
   value is a `Badge variant="warning"` reading the state (*Not listening*, *Waiting for Android*);
-  when listening, the plain value *4 apps*. (Pairs with #7's shorter value.)
+  when listening, the plain value *4 apps*. (Pairs with #8's shorter value.)
 - Files: `apps/web/src/screens/settings/settings.tsx`
 - Priority: P3
 - Shared: none
 - Builder: Haiku, S
 
-### 23. Your apps: a search heading in another style, and *More* says nothing
+### 27. Your apps: a search heading in another style, and *More* says nothing
 - Seen: `settings_capture_apps--minted-light--p1.png`: *Search every app* is a field label in the
   text colour at the screen's edge, between two group labels in muted secondary 8 px further in.
   The second group is labelled *More*.
@@ -464,7 +538,7 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Shared: first run's apps step
 - Builder: Haiku, S
 
-### 24. Neutral icon tiles all but vanish in dark
+### 28. Neutral icon tiles all but vanish in dark
 - Seen: `settings--minted-dark--p1.png`, `settings--copper-dark--p1.png`,
   `settings--mercury-dark--p1.png`: the 32 px tiles behind *Capture*, *You*, *Claims* are `bg-muted`
   on a card of nearly the same lightness, so only the glyph shows and the rows lose their left
@@ -477,12 +551,12 @@ reaches; fixes at the block level (`blocks/group.tsx`, `blocks/tile.tsx`) also b
 - Shared: every `IconTile` with the neutral tone (More, Accounts, every hub)
 - Builder: Haiku, S
 
-### 25. One person, two avatar colours; and *Sept* among three-letter months
+### 29. One person, two avatar colours; and *Sept* among three-letter months
 - Seen: Hui Min's avatar is gold on her Settings hub (`settings_month--minted-light--p1.png`, from
   the handle *huimin*) and lavender on Members (`settings_members--…`, from *Hui Min*). The avatar's
   tint hashes whatever string it's given. Claims shows *Wed, 30 Sept* while every other date says
   *17 Oct*: `en-MY` formats September as *Sept*.
-- Change: #15 gives the hub the person's name, which fixes the first where a name exists; also have
+- Change: #16 gives the hub the person's name, which fixes the first where a name exists; also have
   `PersonAvatar` take an optional `seed` (the member id or email) so the tint follows the person, not
   the spelling, and pass the email in both places. In `lib/dates.ts`, after formatting, replace
   `Sept` with `Sep` (one helper used by every formatter there).
@@ -517,15 +591,15 @@ What's already right, and must survive the polish:
   *An estimate from the tokens used*).
 - **Disabled switches explain themselves** in the line under the label.
 - **Check rows on Data** that act without a chevron and say *Sending…* with a spinner while they
-  wait: the model for #8's `kind="action"`.
+  wait: the model for #9's `kind="action"`.
 
 ## Needs the owner
 
-1. **#9 Row dividers.** Patterns §8 says full-width rows have a separator between them, but today
+1. **#10 Row dividers.** Patterns §8 says full-width rows have a separator between them, but today
    almost none show (an `Item` styling bug), and the hub reads calm without them. Make them show,
    inset, everywhere (this plan's default), or drop them everywhere and change §8?
-2. **#15 / #14 Who you are.** The profile card and the Account header use the first of *your names as
+2. **#16 / #15 Who you are.** The profile card and the Account header use the first of *your names as
    banks print them* (*Tan Wei Ming*), else the email alone. Fine, or does he want a display name of
    its own (a new field)?
-3. **#14 Delete account.** It isn't in screens.md's Account and does nothing yet: hide it until it
+3. **#15 Delete account.** It isn't in screens.md's Account and does nothing yet: hide it until it
    works (this plan), or keep it visible with its *not yet* toast?
