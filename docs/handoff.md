@@ -25,13 +25,12 @@ slices are built: **D151**. Written on branch `ccr-0a86f474-pcz1jx` (no PR yet);
 
 ## Waiting on the owner's go (don't start), and the audit under way
 
-- **The polish pass, audit started (owner's go, 11 Nov):** seven Fable auditors at `xhigh`, one per area
-  (`docs/polish/README.md`), each writing `docs/polish/<area>.md`; they never edit or take screenshots.
-  Captures were made by script (catalogue in Minted, tabs in all looks, the gallery) and sliced to phone
-  height in the session's scratchpad. Their view requests go to `own/<area>/requests.md`, for one Haiku
-  batch. Next: merge the seven plans (shared fixes once, at the component level), bring the owner the
-  *Needs the owner* list, then write `docs/plans/polish.md`. Building waits for the owner's go. If the
-  scratchpad is gone, re-capture with `E2E_CATALOGUE=shots E2E_SHOTS=<dir>` on `e2e/catalogue.spec.ts`.
+- **The polish pass: audit done (12 Nov), waiting on the owner.** Seven plans in `docs/polish/` (187
+  findings; shared fixes once in `components.md`), and the owner's 15 calls with recommendations in
+  `docs/polish/decisions.md`. Next, on the owner's answers: write `docs/plans/polish.md` (shared units
+  first, then screens, each with files, checks, model). Don't build until the owner says go. The
+  auditors ran on Fable, then Opus after a usage limit (the owner accepted Opus); captures by script and
+  Haiku, never the auditors.
 - **Sen's chat on AI Elements**, against benchmark references the owner will share.
 - **A re-spec of Sen** (spec §12), with the owner.
 
