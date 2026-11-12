@@ -3,7 +3,7 @@
 Decided with the owner on 12 Nov. **Not yet folded into the spec.** This file holds the detail until
 `spec_v2.md` (§9.3, §12, §15, §16), `docs/screens.md`, `docs/ui/patterns.md` (§4) and
 `docs/modules.md` carry it; then it's deleted. The agent isn't built yet, so nothing here changes code
-that exists. §11 lists what the spec revision still has to settle.
+that exists. §12 lists what the spec revision still has to settle.
 
 ## 1. Models
 
@@ -175,7 +175,37 @@ the other side of a transfer, its refund, its claim; a receipt with its items an
 raw text; a receipt reader's drafts; the mail-in address and its code; stored files' keys; the ESS
 recipe; Sen's raw model traffic; anyone else's rows. Text in the data is data, never an instruction.
 
-## 7. Insights as cards
+## 7. What Sen can change
+
+Reads are open-ended, so they get flexible tools. Changes are a short, known list, each with its own
+rules, so **each thing gets its own tool**, with the action inside it (add, change, remove) and that
+thing's own typed fields. There is no general write tool.
+
+- **A write tool's fields are the app's own command** (`packages/core/src/commands.ts`): Sen can
+  propose exactly what a screen can do and nothing more. *Apply* sends that command through the same
+  write interface, logged as Sen's, and its *Undo* is the command's own.
+- **Two kinds of change** (§12.2 rule 2 stands):
+
+| Kind | What | How it happens |
+|---|---|---|
+| Sen's own things | Memory; a watch; a scheduled report; an Insights card; a calendar event (no amounts); a research brief; a lesson | At once, with a *Saved* line and *Undo* |
+| Your money records, and how they're counted | A budget; a goal or bucket; a merchant rule; a subscription; a limit to hold you to (an experiment); a promise to watch for; the payday plan; a claim scheme from your words; an answer to a *Review* item; a payment's category, note, kind, share or claim tag, for one payment or many | A proposal: nothing changes until *Apply*; *Change…* opens the real form filled in |
+
+- **Never by Sen, even as a proposal:** a payment's amount, date or account; adding or deleting a
+  payment, a receipt or an account (a button opens the screen, and the person types the amount); a
+  balance check; the settings for sign-in, members or which apps are read; confirming a figure from
+  the web (the person's own tap on the web card); moving money or signing up for anything.
+- **A proposal shows its effect before the tap,** worked out by code (*applies to 14 past payments*,
+  *Drinks would be at 80% now*).
+- **An amount in a proposal says where it came from:** your words, a tool's result, or Sen's
+  suggestion. It can be changed before applying.
+- **One card per change, with one line of why.** Several payments changed the same way are one card
+  that lists them. Every proposal has a dedupe key, so a retried turn makes no second card.
+- **Sen never says a change happened.** The card says it, once code has done it.
+- New against the spec: watches, reports and cards among Sen's own things; a payment's fields changed
+  by proposal outside *Review*, and many at once; the effect shown before the tap; *Change…*.
+
+## 8. Insights as cards
 
 Insights becomes cards the person and Sen add, change, arrange and remove. It starts seeded with
 today's cards, written as the same card definitions, so nothing is lost and a reset is possible. A
@@ -183,7 +213,7 @@ card is a saved query and a part (a number, numbers, a chart, a top list, a targ
 what's coming up, the latest report, a quick question). Code refreshes it with no model, with periods
 as tokens (*this cycle*). A long-press on an answer's part pins it. Home stays as designed.
 
-## 8. Watches and scheduled reports
+## 9. Watches and scheduled reports
 
 - **A watch** is a saved query and a condition, in the person's words (*tell me when GrabFood passes
   RM200*, *when my refund lands*). Code checks it when a payment is captured and on the daily job, with
@@ -193,7 +223,7 @@ as tokens (*this cycle*). A long-press on an answer's part pins it. Home stays a
   Each run is Sen in a fresh run that posts into the conversation.
 - One screen lists every watch, report, rule and experiment, with its last run, *Pause* and *Delete*.
 
-## 9. Memory and lessons
+## 10. Memory and lessons
 
 - **Each person's memory:** Sen notes what the person tells it and says so. A weekly pass over the
   week's chat and its thumbs merges, trims and adds, marked *learned*. Any item can be deleted, and a
@@ -205,7 +235,7 @@ as tokens (*this cycle*). A long-press on an answer's part pins it. Home stays a
   undo it.
 - **Gaps:** the questions Sen couldn't answer are listed for the owner.
 
-## 10. Capabilities taken
+## 11. Capabilities taken
 
 - **The payment notification says where you stand** against the limits you set with Sen (*3rd Tealive
   this week, limit 2 · RM41 left for drinks*). Code writes the line; no model runs.
@@ -217,7 +247,7 @@ as tokens (*this cycle*). A long-press on an answer's part pins it. Home stays a
   statement check, cash shorthand, a pay-later tracker, the wait list, a payday sweep, trip mode, the
   annual-fee waiver, a split from a photo, acting on selected payments, a claim pack and tax folder.
 
-## 11. Still to settle while revising the spec
+## 12. Still to settle while revising the spec
 
 - **The chat's design,** from shadcn's AI Elements (D151), the owner leaving it to the session:
   proposed are an answer shaped as verdict, evidence, then what you can do; starters taken from code's

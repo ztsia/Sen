@@ -16,7 +16,7 @@ B08 merged (#23). Two decisions since, on branch `ccr-0a86f474-pcz1jx` (no PR ye
 ## What to do next
 
 1. **Carry on the re-spec with the owner,** who continues it in a new session. Read `docs/respec.md`
-   first: §1–10 are decided, §11 is what's still to settle. Ask what else they want before writing.
+   first: §1–11 are decided, §12 is what's still to settle. Ask what else they want before writing.
    It's a design conversation: short messages, multiple choice, a recommendation each time.
 2. **Then fold it into the contract:** `spec_v2.md` (§9.3, §12, §15, §16), `docs/screens.md`,
    `docs/ui/patterns.md` §4, `docs/modules.md` and the briefs it touches (B08 · Charts' first), and
