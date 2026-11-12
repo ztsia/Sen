@@ -42,8 +42,11 @@ polish audit and a re-spec discussion with the owner, both below. No code has ch
   - Insights becomes cards the person and Sen add, change and arrange, seeded with today's.
   - Also in: watches and scheduled reports, an Excel tool, memory with a weekly tidy and shared
     lessons, answers in the language asked.
-  - Open: which further capabilities to take (a numbered list was offered), whether shared lessons
-    may change Sen's skills behind a test gate, and six series colours per look.
+  - Further capabilities taken so far: the payment notification says where you stand against your
+    limits; a warning when a wallet is about to run dry. Item prices from receipts: liked, its use
+    being weighed. The rest of the offered list is out unless the owner says otherwise.
+  - Open: whether shared lessons may change Sen's skills behind a test gate, six series colours per
+    look, and whether a table and a list of records are one tool with two looks (recommended).
 
 ## Open with the owner
 
