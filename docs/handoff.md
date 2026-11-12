@@ -48,10 +48,15 @@ polish audit and a re-spec discussion with the owner, both below. No code has ch
     limits; a warning when a wallet is about to run dry. Item prices from receipts: liked, its use
     being weighed. The rest of the offered list is out unless the owner says otherwise.
   - Sen may read anything of the person's own in the database and dig to item level (*what did I eat
-    last month, which cost most*). Offered, awaiting a yes: Sen writes read-only queries over
-    prepared views (one per kind of thing, already joined, money in whole sen), run as the person
-    under RLS, one `SELECT`, a time limit and a row cap; never sign-in data, tokens, account numbers
-    or raw notification text; changes stay proposals. A bigger `calc`; no sandboxed Python.
+    last month, which cost most*). The owner leans to tools, made flexible, over Sen writing SQL.
+    Recommended, awaiting the owner's own reference to compare: one `query` tool over a described
+    data model (a dataset, filters, a period resolved by code in KL time or pay cycles, grouping,
+    measures, sort, top-N per group, running total, share, compare with the last period); code
+    builds the SQL, run as the person under RLS; results stay on the server by reference with a
+    preview for Sen. The same saved query serves pins, watches, reports and charts. Never sign-in
+    data, tokens, account numbers or raw notification text; changes stay proposals. Unanswerable
+    questions are logged and the model grows; free SQL only later if that list calls for it. A
+    bigger `calc`; no sandboxed Python.
   - Open: whether a number Sen writes in a table is marked *not checked* when code can't trace it
     (recommended, D108); shared lessons changing Sen's skills behind a test gate; six series colours
     per look.
