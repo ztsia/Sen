@@ -1,38 +1,49 @@
 # Handoff
 
-## Where things stand (11 Nov)
+## Where things stand (12 Nov)
 
-B08 merged (#23). Between slices, the owner and a design session settled the UI's foundations and how
-slices are built: **D151**. Written on branch `ccr-0a86f474-pcz1jx` (no PR yet); the plugin's half on
-`ztsia/workflow`, branch `workflow/plan-then-delegate` (1.3.0, no PR yet).
-- **Radix stays.** React Aria was weighed (a shadcn base since July 2026) and not adopted.
-- **Charts:** shadcn's Chart → plain Recharts in `ChartContainer` → hand-drawn only where Recharts can't
-  (the spending calendar). One-value meters are `Progress`. The built charts move over in **B08 · Charts**
-  (`docs/briefs/B08-charts.md`), before B09. Recharts is about 110 KB gzipped (measured), so its own chunk.
-- **Sen's chat** starts from shadcn's AI Elements when it's reworked (`docs/workflow/uiux.md`).
-- **Plan first, build the seams, delegate the rest:** a slice opens with `docs/plans/<slice>.md`, units
-  with owned files and a model each; the main session builds only foundations and seams; a Haiku unit
-  aims under about 100k tokens of context. **No advisor** (session-wide only, can't be per agent, checked
-  in the docs and the 2.1.322 binary): builders ask the main session, answered in the same conversation.
+B08 merged (#23). **D151** (11 Nov) settled the UI's foundations and how slices are built: Radix
+stays; charts on shadcn's Chart, then Recharts, then hand-drawn; Sen's chat from AI Elements; a slice
+opens with `docs/plans/<slice>.md` and the main session builds only foundations and seams; no advisor
+(builders ask the main session). It's on branch `ccr-0a86f474-pcz1jx` (no PR yet); the plugin's half
+is on `ztsia/workflow`, branch `workflow/plan-then-delegate` (1.3.0, no PR yet). Since then: the
+polish audit and a re-spec discussion with the owner, both below. No code has changed.
 
 ## What to do next
 
-1. If the owner asks: PRs for this branch (to `main`) and for `workflow/plan-then-delegate`.
-2. **B08 · Charts**, branch `B08/charts` from `main` (after this branch merges). Write the plan first
-   (`docs/plans/B08-charts.md`), build unit 1 (the seam) yourself, then brief units 2–5 in parallel.
-3. Then **B09 · Template engine** (`docs/briefs/B09-template-engine.md`). It maps `{account}` names (all
-   to the app's one account, D145) and decides what happens to an app's account when it's un-chosen.
+1. Carry on the re-spec with the owner (below). When it settles, record the decision (D152 on) and
+   revise the spec, `docs/screens.md`, `docs/ui/patterns.md` and the slice map.
+2. If the owner asks: PRs for this branch (to `main`) and for `workflow/plan-then-delegate`.
+3. **B08 · Charts** (`docs/briefs/B08-charts.md`), branch `B08/charts` from `main`. Its brief predates
+   the re-spec: check it against the chart list the re-spec settles, then write
+   `docs/plans/B08-charts.md`, build the seam, brief the rest.
+4. Then **B09 · Template engine** (`docs/briefs/B09-template-engine.md`): it maps `{account}` names
+   (all to the app's one account, D145) and decides what happens to an un-chosen app's account.
 
-## Waiting on the owner's go (don't start), and the audit under way
+## Waiting on the owner (don't build)
 
-- **The polish pass: audit done (12 Nov), waiting on the owner.** Seven plans in `docs/polish/` (187
-  findings; shared fixes once in `components.md`), and the owner's 15 calls with recommendations in
-  `docs/polish/decisions.md`. Next, on the owner's answers: write `docs/plans/polish.md` (shared units
-  first, then screens, each with files, checks, model). Don't build until the owner says go. The
-  auditors ran on Fable, then Opus after a usage limit (the owner accepted Opus); captures by script and
-  Haiku, never the auditors.
-- **Sen's chat on AI Elements**, against benchmark references the owner will share.
-- **A re-spec of Sen** (spec §12), with the owner.
+- **The polish pass: audit done.** Seven plans in `docs/polish/` (187 findings; shared fixes once in
+  `components.md`) and the owner's 15 calls with recommendations in `docs/polish/decisions.md`,
+  unanswered. The re-spec will overtake a few (amount styling, the goal ring, Insights' cards). Then
+  `docs/plans/polish.md`: shared units first, then screens.
+- **The re-spec of Sen's agent, chat and Insights: under discussion, nothing in the spec yet.** The
+  owner's calls so far (12 Nov):
+  - The chat runs on Claude Haiku. Research is one generic tool (Gemini with Google Search) that may
+    search anything; each research skill is a goal for it. A ledger figure in a search is rounded by
+    code, never blocked. A model picker is undecided (recommended: none).
+  - One conversation, each call well under 100k tokens (Haiku's price step). No RAG: durable
+    knowledge lives in the tables behind Sen's tools; dated notes of past chat and a search cover
+    the rest.
+  - Answers are typed parts (text, steps, chart, table, figures, records, question, proposal,
+    button, follow-ups, web findings, file, playground, checklist, coming up, compare, saved,
+    notice). A part takes its figures only by reference to a tool result; a figure taps through to
+    its records.
+  - Charts on shadcn's Chart and Recharts, interactive, one component for Sen's tool and the screens.
+  - Insights becomes cards the person and Sen add, change and arrange, seeded with today's.
+  - Also in: watches and scheduled reports, an Excel tool, memory with a weekly tidy and shared
+    lessons, answers in the language asked.
+  - Open: which further capabilities to take (a numbered list was offered), whether shared lessons
+    may change Sen's skills behind a test gate, and six series colours per look.
 
 ## Open with the owner
 
