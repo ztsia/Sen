@@ -47,10 +47,14 @@ polish audit and a re-spec discussion with the owner, both below. No code has ch
   - Further capabilities taken so far: the payment notification says where you stand against your
     limits; a warning when a wallet is about to run dry. Item prices from receipts: liked, its use
     being weighed. The rest of the offered list is out unless the owner says otherwise.
-  - Open: how Sen computes beyond its fixed tools (recommended: one general query tool in a fixed
-    shape and a bigger `calc`, no sandboxed Python, no raw SQL); whether a number Sen writes in a
-    table is marked *not checked* when code can't trace it (recommended, D108); shared lessons
-    changing Sen's skills behind a test gate; six series colours per look.
+  - Sen may read anything of the person's own in the database and dig to item level (*what did I eat
+    last month, which cost most*). Offered, awaiting a yes: Sen writes read-only queries over
+    prepared views (one per kind of thing, already joined, money in whole sen), run as the person
+    under RLS, one `SELECT`, a time limit and a row cap; never sign-in data, tokens, account numbers
+    or raw notification text; changes stay proposals. A bigger `calc`; no sandboxed Python.
+  - Open: whether a number Sen writes in a table is marked *not checked* when code can't trace it
+    (recommended, D108); shared lessons changing Sen's skills behind a test gate; six series colours
+    per look.
 
 ## Open with the owner
 
