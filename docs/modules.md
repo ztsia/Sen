@@ -69,8 +69,8 @@ phases are still the risks to retire, and the table at the end shows where each 
 - **The polish pass.** A Fable subagent at `xhigh` audits every screen and component and writes a
   polish plan for each; it never edits. The main session turns the plans into units for Haiku and
   Sonnet builders.
-- **Sen's chat on AI Elements**, against references the owner will share.
-- **Sen re-specced** (spec §12), with the owner.
+- **Sen's agent, chat and Insights, re-specified** (D152). Decided in `docs/respec.md`; folding it
+  into the spec, the screens and this map comes next, and its slices are cut then.
 
 ## How the cut was made
 

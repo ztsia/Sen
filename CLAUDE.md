@@ -34,8 +34,9 @@ a brief each (`S3`, D111). The spec's later revisions are D85–D110.
 owner's phone is still to run), B03 and B04 (the walking skeleton, its review and the redesign,
 D130), B05 (the server, database and sign-in; then QA tooling and Feel, D139, D140), B06 (jobs, realtime
 and backups), B07 (sync and the outbox), B08 (first run, accounts and categories; one account per app, D145).
-**Next:** B08 · Charts (`docs/briefs/B08-charts.md`, D151), then B09. A polish pass, Sen's chat on AI
-Elements and a re-spec of Sen wait for the owner's go (`docs/modules.md`).
+**Next:** the re-spec of Sen's agent, chat and Insights (D152) is decided in `docs/respec.md` and
+still to be folded into the spec; then B08 · Charts (`docs/briefs/B08-charts.md`, D151), then B09. A
+polish pass waits for the owner's go (`docs/modules.md`).
 Each slice waits only for the owner's merge; `docs/handoff.md` says where things stand now.
 
 

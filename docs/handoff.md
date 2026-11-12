@@ -2,71 +2,37 @@
 
 ## Where things stand (12 Nov)
 
-B08 merged (#23). **D151** (11 Nov) settled the UI's foundations and how slices are built: Radix
-stays; charts on shadcn's Chart, then Recharts, then hand-drawn; Sen's chat from AI Elements; a slice
-opens with `docs/plans/<slice>.md` and the main session builds only foundations and seams; no advisor
-(builders ask the main session). It's on branch `ccr-0a86f474-pcz1jx` (no PR yet); the plugin's half
-is on `ztsia/workflow`, branch `workflow/plan-then-delegate` (1.3.0, no PR yet). Since then: the
-polish audit and a re-spec discussion with the owner, both below. No code has changed.
+B08 merged (#23). Two decisions since, on branch `ccr-0a86f474-pcz1jx` (no PR yet). No code changed.
+
+- **D151** (11 Nov): Radix stays; charts on shadcn's Chart, then Recharts, then hand-drawn; Sen's chat
+  from AI Elements; a slice opens with `docs/plans/<slice>.md` and the main session builds only
+  foundations and seams; no advisor. The plugin's half is on `ztsia/workflow`, branch
+  `workflow/plan-then-delegate` (1.3.0, no PR yet).
+- **D152** (12 Nov): Sen's agent, chat and Insights, re-specified with the owner. **Its detail is in
+  `docs/respec.md`, not yet in the spec.**
+- **The polish audit is done:** seven plans in `docs/polish/` (187 findings), and the owner's 15 calls
+  with recommendations in `docs/polish/decisions.md`, unanswered.
 
 ## What to do next
 
-1. Carry on the re-spec with the owner (below). When it settles, record the decision (D152 on) and
-   revise the spec, `docs/screens.md`, `docs/ui/patterns.md` and the slice map.
-2. If the owner asks: PRs for this branch (to `main`) and for `workflow/plan-then-delegate`.
-3. **B08 · Charts** (`docs/briefs/B08-charts.md`), branch `B08/charts` from `main`. Its brief predates
-   the re-spec: check it against the chart list the re-spec settles, then write
-   `docs/plans/B08-charts.md`, build the seam, brief the rest.
-4. Then **B09 · Template engine** (`docs/briefs/B09-template-engine.md`): it maps `{account}` names
+1. **Carry on the re-spec with the owner,** who continues it in a new session. Read `docs/respec.md`
+   first: §1–10 are decided, §11 is what's still to settle. Ask what else they want before writing.
+   It's a design conversation: short messages, multiple choice, a recommendation each time.
+2. **Then fold it into the contract:** `spec_v2.md` (§9.3, §12, §15, §16), `docs/screens.md`,
+   `docs/ui/patterns.md` §4, `docs/modules.md` and the briefs it touches (B08 · Charts' first), and
+   delete `docs/respec.md`. Sen's chat is designed from shadcn's AI Elements (`docs/workflow/uiux.md`).
+3. If the owner asks: PRs for this branch (to `main`) and for `workflow/plan-then-delegate`.
+4. **B08 · Charts** (`docs/briefs/B08-charts.md`), branch `B08/charts` from `main`, once its brief
+   matches `docs/respec.md` §5: write `docs/plans/B08-charts.md`, build the seam, brief the rest.
+5. Then **B09 · Template engine** (`docs/briefs/B09-template-engine.md`): it maps `{account}` names
    (all to the app's one account, D145) and decides what happens to an un-chosen app's account.
 
 ## Waiting on the owner (don't build)
 
-- **The polish pass: audit done.** Seven plans in `docs/polish/` (187 findings; shared fixes once in
-  `components.md`) and the owner's 15 calls with recommendations in `docs/polish/decisions.md`,
-  unanswered. The re-spec will overtake a few (amount styling, the goal ring, Insights' cards). Then
-  `docs/plans/polish.md`: shared units first, then screens.
-- **The re-spec of Sen's agent, chat and Insights: under discussion, nothing in the spec yet.** The
-  owner's calls so far (12 Nov):
-  - The chat runs on Claude Haiku. Research is one generic tool (Gemini with Google Search) that may
-    search anything; each research skill is a goal for it. A ledger figure in a search is rounded by
-    code, never blocked. A model picker is undecided (recommended: none).
-  - One conversation, each call well under 100k tokens (Haiku's price step). No RAG: durable
-    knowledge lives in the tables behind Sen's tools; dated notes of past chat and a search cover
-    the rest.
-  - Answers are typed parts (text, steps, chart, table, figures, question, proposal, button,
-    follow-ups, web findings, file, playground, checklist, coming up, compare, saved, notice). A part
-    takes its figures by reference to a tool result; a figure taps through to its records.
-  - A table is a plain grid, with no totals unless Sen asks: each cell is a value from a tool result,
-    a formula code works out, or a number or text Sen writes; a row or cell that is a record opens
-    that record's page. It replaces a separate list of records.
-  - Charts on shadcn's Chart and Recharts, interactive, one component for Sen's tool and the screens.
-  - Insights becomes cards the person and Sen add, change and arrange, seeded with today's.
-  - Also in: watches and scheduled reports, an Excel tool, memory with a weekly tidy and shared
-    lessons, answers in the language asked.
-  - Further capabilities taken so far: the payment notification says where you stand against your
-    limits; a warning when a wallet is about to run dry. Item prices from receipts: liked, its use
-    being weighed. The rest of the offered list is out unless the owner says otherwise.
-  - Sen may read anything of the person's own in the database and dig to item level (*what did I eat
-    last month, which cost most*). The owner chose tools made flexible over Sen writing SQL (12 Nov):
-    a described data model, and code builds every query, run as the person under RLS. Its shape,
-    recommended:
-    - Three tools: totals (a dataset, filters, a period, up to two groupings, a measure; top-N with
-      *Other*, running total, share, against the last period), rows (fields, filters, sort, limit),
-      and one record with its lines and links (a payment's receipt items, split, refund).
-    - Code resolves periods in KL time and pay cycles. Each number is a flow (summed over a period)
-      or a balance (its value at a date). A trend has a row for every period, zeros included; top-N
-      keeps the same groups in every period; a percentage change comes from code.
-    - Only confirmed records count unless asked; receipt items nobody confirmed are not served.
-      Every result carries its as-of time and notes Sen must pass on (capture was off, how many
-      payments have receipts), and row ids so a table row opens its record.
-    - Results stay on the server by reference with a preview for Sen; the same saved query serves
-      pins, watches, reports and charts. Never sign-in data, tokens, account numbers or raw
-      notification text; changes stay proposals. Unanswerable questions are logged and the model
-      grows; free SQL only later if that list calls for it. A bigger `calc`; no sandboxed Python.
-  - Open: whether a number Sen writes in a table is marked *not checked* when code can't trace it
-    (recommended, D108); shared lessons changing Sen's skills behind a test gate; six series colours
-    per look.
+- **The polish pass:** the 15 calls. The re-spec overtakes a few (amount styling, the goal ring,
+  Insights' cards), so answer them after it. Then `docs/plans/polish.md`: shared units first, then
+  screens, built by Haiku and Sonnet builders on the owner's go.
+- **Nothing from D152 is built** until the spec carries it and its slices are mapped.
 
 ## Open with the owner
 
@@ -94,4 +60,6 @@ polish audit and a re-spec discussion with the owner, both below. No code has ch
 
 ## Don't argue again
 
-- D129–D151. Radix stays; charts in D151's order; no advisor. Deploys happen only by merge (D122).
+- D129–D152. Radix stays; charts in D151's order; no advisor. Sen's chat is on Haiku, one
+  conversation, no RAG; Sen reads data through its tools, never SQL of its own, and no Python.
+  Deploys happen only by merge (D122).
