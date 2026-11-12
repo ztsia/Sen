@@ -48,15 +48,22 @@ polish audit and a re-spec discussion with the owner, both below. No code has ch
     limits; a warning when a wallet is about to run dry. Item prices from receipts: liked, its use
     being weighed. The rest of the offered list is out unless the owner says otherwise.
   - Sen may read anything of the person's own in the database and dig to item level (*what did I eat
-    last month, which cost most*). The owner leans to tools, made flexible, over Sen writing SQL.
-    Recommended, awaiting the owner's own reference to compare: one `query` tool over a described
-    data model (a dataset, filters, a period resolved by code in KL time or pay cycles, grouping,
-    measures, sort, top-N per group, running total, share, compare with the last period); code
-    builds the SQL, run as the person under RLS; results stay on the server by reference with a
-    preview for Sen. The same saved query serves pins, watches, reports and charts. Never sign-in
-    data, tokens, account numbers or raw notification text; changes stay proposals. Unanswerable
-    questions are logged and the model grows; free SQL only later if that list calls for it. A
-    bigger `calc`; no sandboxed Python.
+    last month, which cost most*). The owner chose tools made flexible over Sen writing SQL (12 Nov):
+    a described data model, and code builds every query, run as the person under RLS. Its shape,
+    recommended:
+    - Three tools: totals (a dataset, filters, a period, up to two groupings, a measure; top-N with
+      *Other*, running total, share, against the last period), rows (fields, filters, sort, limit),
+      and one record with its lines and links (a payment's receipt items, split, refund).
+    - Code resolves periods in KL time and pay cycles. Each number is a flow (summed over a period)
+      or a balance (its value at a date). A trend has a row for every period, zeros included; top-N
+      keeps the same groups in every period; a percentage change comes from code.
+    - Only confirmed records count unless asked; receipt items nobody confirmed are not served.
+      Every result carries its as-of time and notes Sen must pass on (capture was off, how many
+      payments have receipts), and row ids so a table row opens its record.
+    - Results stay on the server by reference with a preview for Sen; the same saved query serves
+      pins, watches, reports and charts. Never sign-in data, tokens, account numbers or raw
+      notification text; changes stay proposals. Unanswerable questions are logged and the model
+      grows; free SQL only later if that list calls for it. A bigger `calc`; no sandboxed Python.
   - Open: whether a number Sen writes in a table is marked *not checked* when code can't trace it
     (recommended, D108); shared lessons changing Sen's skills behind a test gate; six series colours
     per look.
