@@ -103,7 +103,10 @@ reads unfinished.
 ### 5. Home pace card: it leads with the total, but the spec's figure is the pace
 - Seen: `home--minted-light` and all looks: the card's first line is *Spent **RM3,873.53** this
   cycle*, with the amount at body size and bold; the answer to "am I on track?", *RM273.53 more than
-  last cycle by this day*, is muted secondary text under the chart.
+  last cycle by this day*, is muted secondary text under the chart. Counting by month and before the
+  first salary it's worse: the card's first line repeats the large figure word for word (`own/home/home-month`:
+  *Spent this month RM628.60*, then *Spent RM628.60 this month*; `own/home/home-before-salary`: *Spent
+  since you started RM1,450.03*, then *Spent RM1,450.03 this cycle*).
 - Why it matters: spec §9.2 figure 2 is *"Spent this cycle vs the same day of the last cycle. Pace,
   not total."* The screen shows the total first and the pace as a footnote, so the eye lands on a
   number that doesn't say whether it's good or bad. The figure above already answers "how much".
@@ -111,7 +114,10 @@ reads unfinished.
   size (`text-base`) in the text colour, the delta as `Money` medium: *RM273.53 more than last cycle by
   this day* (or *The same as…*, or *Your first cycle: nothing to compare with yet*). Under the chart,
   `text-sm` muted: *Spent RM3,873.53 this cycle*, amount in normal weight. The chevron stays on the
-  first line. The legend stays last (finding 18).
+  first line. The legend stays last (finding 19). When the large figure is already the spending
+  (`figure.kind` is `month` or `since-start`), drop the *Spent …* line from the card altogether: the
+  figure says it. Before the first salary, the figure's sub line reads *12 days to payday* rather than
+  *12 days to go*, since the figure above it isn't *left until payday*.
 - Files: `apps/web/src/screens/home/home.tsx`
 - Priority: P2
 - Shared: none
@@ -174,11 +180,13 @@ reads unfinished.
 - Why it matters: a new person's first Home should say what happens next. Patterns §7: an empty
   state says what will appear and offers the action that fills it; an empty card isn't drawn
   (Insights' rule, which fits here).
-- Change (screen): when `h.pace.spent === 0`, render the pace card without the chart and legend, as
+- Change (screen): when `h.pace.spent === 0` and there's no last cycle (`h.pace.delta === null`), render the pace card without the chart and legend, as
   one line in the same card: an `IconTile` (`ReceiptIcon`, neutral) only if it's tappable (it still
   opens `payments`, so yes), title *Nothing spent yet this cycle*, line (`text-sm` muted) *Payments
   show up here as your bank apps tell Sen about them.* Use `NavRow`'s layout inside the card. No new
-  button: Scan is one tab away.
+  button: Scan is one tab away. Not on payday itself: there spending is RM0.00 too, but last cycle's
+  line and *RM18.80 less than last cycle by this day* still answer the question (`own/home/home-payday-card`),
+  so the chart stays.
 - Files: `apps/web/src/screens/home/home.tsx`
 - Priority: P2
 - Shared: none
@@ -218,9 +226,12 @@ reads unfinished.
 
 ### 12. payday steps: amounts in muted grey and tiles on rows you can't open
 - Seen: `payday--minted-light`, `payday--minted-dark`: *Phone bill RM88.00*, *Parking RM64.00*, each with
-  the same hand-and-coins tile, amounts in muted secondary grey, no chevron. In the code, the
-  look-back's three reasons and the plan's moves are built the same way (`NavRow` with
-  `value={formatSen(…)}`).
+  the same hand-and-coins tile, amounts in muted secondary grey, no chevron. Steps 3 and 4 are built
+  the same way: `own/home/payday-look-back` (three bar-chart tiles, *RM96.00*, *RM210.00*, *RM140.00* in
+  grey, and a lightbulb tile on *GrabFood at most 3 times a week*), `own/home/payday-plan` (three
+  identical calendar tiles, two piggy banks, a wallet; every amount grey). The plan's answer, *Left to
+  spend · Until your next payday RM2,839.00*, is the last grey row on the screen, at the same weight
+  as *Phone and internet*.
 - Why it matters: patterns §7.3, information never gets an icon tile (a tile says "you can go
   here"); §3, spending is the plain text colour and an amount goes through `Money` (tabular, read out
   as money). Grey amounts read as disabled or not counted. Two identical tiles add nothing.
@@ -230,14 +241,18 @@ reads unfinished.
   text colour: add `className="text-foreground"` when `value` isn't a string, or a `money` prop; and
   make the doc comment true in code: without `onOpen` or `press`, don't render the tile even if `icon`
   is passed. Before that last change, list every `NavRow` call site without `onOpen`/`press` that
-  passes `icon`, and say in the PR which ones change.
+  passes `icon`, and say in the PR which ones change. In the look-back, drop the lightbulb `IconTile`
+  from the experiment card too. In the plan, show *Left to spend* as the step's answer: its row's
+  amount `font-semibold` (still the text colour), or the *Left to spend* group drawn as a single
+  `StatTiles` entry with `emphasis`, so the eye ends on it.
 - Files: `apps/web/src/screens/money/payday.tsx`, `apps/web/src/blocks/group.tsx`
 - Priority: P2
 - Shared: any other screen with information `NavRow`s that pass an icon or an amount as a string
 - Builder: Sonnet, S
 
 ### 13. payday claims: *Undo* floats under the list, out of line with it
-- Seen: `payday--minted-*`: a ghost *Undo* button below the claims card, its icon indented about 18 px
+- Seen: `payday--minted-*` (steps 2 to 4 have no inline *Undo*: a skipped step's *Undo* is the
+  toast's, `own/home/payday-look-back`, which is right): a ghost *Undo* button below the claims card, its icon indented about 18 px
   from the card's left edge, alone in the middle of the screen.
 - Why it matters: it isn't clear what *Undo* undoes until you read up. It belongs to the *Done*
   status, and every other edge on the screen is at 16 px.
@@ -314,7 +329,23 @@ reads unfinished.
 - Needs the owner: patterns §7's table names `StatTiles` for *the cycle*. This swaps it for rows in a
   `GroupCard` on this sheet only.
 
-### 18. Home pace legend: under the takeaway in five looks, beside it in Line
+### 18. cycle by month: *Last month* is the whole month, against this month so far
+- Seen: `own/home/cycle-month`: *Spent this month RM628.60* (tinted) beside *Last month RM1,033.40*,
+  with 14 days of October to go. Home behind it says *RM134.40 less than last month by this day*.
+- Why it matters: a part month set beside a whole one looks like spending fell by 40 %. Home's pace
+  compares like with like, by this day; the sheet that's meant to explain it doesn't (trust).
+- Change (screen and view): label the second tile *All of last month*, and add a third, *Last month by
+  this day* (RM763.00 in this scenario: the figure Home's delta already uses), so the sheet shows the
+  comparison Home makes. That needs a `lastByNow` sen on the cycle view for the month basis, filled by
+  the fake and the API. If the view field can't be added in this pass, ship the label alone. (If
+  finding 17's rows are approved, these become rows too.)
+- Files: `apps/web/src/screens/home/cycle-sheet.tsx`, `packages/core/src/views.ts`,
+  `apps/web/src/data/fake/`, the API's cycle route
+- Priority: P2
+- Shared: none
+- Builder: Haiku, XS for the label; Sonnet, S for the third figure
+
+### 19. Home pace legend: under the takeaway in five looks, beside it in Line
 - Seen: `home--line-*`: *— This cycle — Last* sits to the right of the takeaway on the same line;
   in the other five looks it's on its own line underneath.
 - Why it matters: patterns §1, layout never varies between looks. Line's narrower font lets
@@ -327,7 +358,7 @@ reads unfinished.
 - Shared: none
 - Builder: Haiku, XS
 
-### 19. new-look: a hand-made switch row whose line repeats its label
+### 20. new-look: a hand-made switch row whose line repeats its label
 - Seen: `new-look--minted-*`: *Change each quarter* / *A new look every quarter.*, a bare label row,
   not in a card, unlike every other switch in the app.
 - Why it matters: patterns §7, an on/off setting is a `SwitchRow` in a `GroupCard`. The line should
@@ -340,7 +371,7 @@ reads unfinished.
 - Shared: Settings → Appearance has the same switch; use the same lines there
 - Builder: Haiku, XS
 
-### 20. cycle: the estimate is to the sen, and wears a destination's tile
+### 21. cycle: the estimate is to the sen, and wears a destination's tile
 - Seen: `cycle--minted-*`: a card with a trend-up `IconTile` and *An estimate: at this pace, about
   RM740.53 left on payday. It assumes you keep spending as you have so far.*
 - Why it matters: "about RM740.53" claims a precision no estimate has. The tile says "tap to go
@@ -358,7 +389,7 @@ reads unfinished.
 - Builder: Haiku, S
 - Needs the owner: patterns §3, *always two decimals*. Whole ringgit for an estimate only.
 
-### 21. Home Sen's note: cut mid-word, then a link on a line of its own
+### 22. Home Sen's note: cut mid-word, then a link on a line of its own
 - Seen: all looks: *…with 12 days to g…* (Minted), *…12 day…* (Firefly), then *More* in the accent on
   a third line. Every other card on Home says it opens with a chevron.
 - Why it matters: clipping inside a word looks like a fault; *More* costs a line on a screen that's
@@ -372,7 +403,7 @@ reads unfinished.
 - Shared: none
 - Builder: Haiku, XS
 
-### 22. Capture warning: the date breaks across lines, and the band reads as an alarm
+### 23. Capture warning: the date breaks across lines, and the band reads as an alarm
 - Seen: `home_capture-off--minted-*`: *No payment notifications since Fri, 16 / Oct, 17:40.*,
   broken between *16* and *Oct*. The band is pink with a red title and a dark red *Fix*.
 - Why it matters: a date split over two lines is hard to read. *May be off* is a maybe, but it's
@@ -388,7 +419,7 @@ reads unfinished.
 - Needs the owner: the band's colour. `warn-bg`/`warn-fg` are red in all six looks (patterns §2's
   warning band). An amber band, in `money-warning`'s hue, would say *check this* rather than *danger*.
 
-### 23. payday: the step's title is as big as the screen's
+### 24. payday: the step's title is as big as the screen's
 - Seen: `payday--minted-*`: *Payday* (title, 22 px) in the app bar, then *Step 1 of 4 · Skip*, the
   progress bar, and *Your claims* also at 22 px semibold, 12 px under the bar.
 - Why it matters: D129, a heading is bigger than what it heads; two titles at one size stacked make
@@ -401,7 +432,7 @@ reads unfinished.
 - Shared: none
 - Builder: Haiku, XS
 
-### 24. The figure's currency is hard to read in two looks' dark mode
+### 25. The figure's currency is hard to read in two looks' dark mode
 - Seen: `home--firefly-dark`: *RM* drawn in faint fireflies, barely there next to the bright digits;
   `home--copper-dark`: *RM* in dark copper on the dark surface.
 - Why it matters: patterns §8, large text at least 3:1. The currency is part of the amount.
@@ -414,7 +445,7 @@ reads unfinished.
 - Shared: the widgets and Settings → Appearance previews that draw the figure
 - Builder: Sonnet, S
 
-### 25. Minted's microprint sits on the balance card's edge like a stray line
+### 26. Minted's microprint sits on the balance card's edge like a stray line
 - Seen: `home--minted-*`, `home_empty--*`, `home_offline--*`, `home_capture-off--*`: *EVERY SEN
   COUNTED • …* in 4 px type, 4 px above the quiet row's border, closer to that card than to the card
   above.
@@ -429,7 +460,7 @@ reads unfinished.
 - Shared: none
 - Builder: Sonnet, S
 
-### 26. Line draws a second figure: a double rule under *Total balance*
+### 27. Line draws a second figure: a double rule under *Total balance*
 - Seen: `home--line-light`, `-dark`: *RM29,871.77* has a double underline; the gap beside it doesn't.
 - Why it matters: patterns §3, the large figure is the only figure a look draws in its own
   material. The rule also makes the quiet row's two amounts look unequal, and the left one look like
@@ -441,7 +472,7 @@ reads unfinished.
 - Shared: none
 - Builder: Haiku, XS
 
-### 27. Home error: the way out is small and at the top
+### 28. Home error: the way out is small and at the top
 - Seen: `home_error--minted-*`: *Couldn't load Home* in a card at the top, *Try again* as a small
   outline button; the rest of the screen empty.
 - Why it matters: it's the only thing to do on the screen, so it's this screen's main action
@@ -455,12 +486,49 @@ reads unfinished.
 - Shared: every screen's load error
 - Builder: Haiku, XS
 
-## Not yet seen
+### 29. Home payday card: the foil seal is cut off by the card's edge
+- Seen: `own/home/home-payday-card`, `-dark`: Minted's seal sits half outside the card's top right,
+  sliced by the card's border and overlapping the end of *Take two minutes to start*.
+- Why it matters: the one celebratory moment on Home, and its ornament looks misplaced.
+- Change (look drawing, `frontend-design` only): place the seal wholly inside the card, top right,
+  clear of the text (the card's content gets `pr-16` while the seal shows, or the seal sits beside
+  the *Payday* heading at 40 px).
+- Files: `packages/looks/src/minted/look.css` (`.seal`), `apps/web/src/screens/home/home.tsx` (the payday card's padding)
+- Priority: P3
+- Shared: none
+- Builder: Sonnet, XS
 
-Asked for in captures (`own/home/requests.md`): Home with the Payday card, Home counting by month and
-before the first salary, the loading skeleton, `cycle` by month, and `payday`'s steps 2 to 4 (the
-balance check, the look-back and the plan). Findings 12 and 13 are read from the code for steps 3
-and 4; anything those captures show is added here.
+### 30. Home loading: the skeleton is shorter than the screen it becomes
+- Seen: `own/home/home-loading`: the figure's block is 64 px high and the two card blocks 64 and 80;
+  the real figure is about 90 px and the pace card about 160, so everything below jumps down when
+  Home arrives.
+- Why it matters: patterns §7, a skeleton shaped like the content, so nothing jumps.
+- Change (screen): in `HomeSkeleton`, the figure `h-24 w-64`, the sub line `h-4 w-28`, the strip
+  `h-6`, the pace card `h-40 rounded-[var(--radius-card)]`, the quiet row `h-[72px]` with the same radius,
+  and the column's gap the same as Home's (finding 10). Hold the two at 390×844 and check the cards'
+  tops land within a few pixels.
+- Files: `apps/web/src/screens/home/home.tsx` (`HomeSkeleton`)
+- Priority: P3
+- Shared: none
+- Builder: Haiku, XS
+
+## Also seen in the extra captures
+
+From `own/home/` (captured on request; not in the shared catalogue):
+- **Home with the Payday card** (`home-payday-card`, `-dark`): the card is a real `Card` with *Start*
+  at 48 px, the one main action; good. It's the only `Card` on Home, next to the outlined boxes,
+  which is finding 1 again. Its seal: finding 29.
+- **Home by month and before the first salary** (`home-month`, `home-before-salary`): the pace card
+  repeats the figure (added to finding 5). Without capture there's no quiet row, as the spec says.
+- **Loading** (`home-loading`): finding 30.
+- **`cycle` by month** (`cycle-month`): finding 18.
+- **`payday` steps 3 and 4** (`payday-look-back`, `payday-plan`): confirm finding 12, now from the
+  screens; the step headings at title size confirm finding 24. The *Skipped. It waits in Review ·
+  Undo* toast sits right on the footer's top border, touching *Next*: the toast offset is the
+  components plan's to judge.
+- **`payday` step 2** (`payday-balance`): the balance check's form, which `records.md` owns. One note
+  for it: every account's field starts at a grey *RM 0.00* in figure size, which reads like a zero
+  balance next to *Sen has RM20,450.87*.
 
 ## Keep
 
@@ -488,7 +556,7 @@ and 4; anything those captures show is added here.
 
 1. **The cycle sheet as a worked sum** (finding 17): rows in a `GroupCard` instead of `StatTiles`,
    which patterns §7 names for the cycle.
-2. **An estimate in whole ringgit** (finding 20): *about RM740* instead of *about RM740.53*, against
+2. **An estimate in whole ringgit** (finding 21): *about RM740* instead of *about RM740.53*, against
    patterns §3's *always two decimals*.
-3. **The health band's colour** (finding 22): `warn-bg` and `warn-fg` are red in all six looks; amber
+3. **The health band's colour** (finding 23): `warn-bg` and `warn-fg` are red in all six looks; amber
    would read as *check this*, not *danger*. Patterns §2's warning band.

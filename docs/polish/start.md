@@ -3,11 +3,12 @@
 Screens: `sign-in` (and `@invited`), `first-run` and its steps (`@code`, `@apps`, `@access`,
 `@running`, `@accounts`, `@name`, `@payday`, `@without-capture`), `more`, `agent/memory`,
 `agent/research`, `agent/usage` (and `@cap`). Audited from the captures in Minted light and dark, and
-the other five looks where they were captured (`first-run` step 1, `more`). The dev panel's handle at
-the left edge is dev-only, so it isn't a finding. The captures are full-page, so a sticky footer shows
-where the page ends: first run's `Actions` footer is `sticky bottom-0` in code, and *Skip for now*
-cut off at the fold in `first-run_running--*--p1.png` is the capture, not a bug (view 5 in
-`own/start/requests.md` checks it on a phone-height viewport).
+the other five looks where they were captured (`first-run` step 1, `more`), plus six extra views in
+`scratchpad/polish/own/start/` (the apps step before choosing, the categories step, payday with a
+day number, the two sign-in errors, and the running step at phone height). The dev panel's handle
+at the left edge is dev-only, so it isn't a finding. The catalogue's slices are cut from tall
+captures, so a sticky footer shows where the page ends there; the phone-height views show first
+run's footer does stay pinned (finding 5 is about how it sits).
 
 **What this area feels like now.** The bones are good: one thing per step, honest words, a progress
 bar, status cards that say *Off* or *Not done* with an icon. What makes it "a bit not so nice" is
@@ -89,7 +90,10 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
   48 px filled pill, larger than the step buttons under it (*Open Autostart*, 40) and as big as
   *Next* at the bottom. With *Open Autostart* filled too, there are three filled buttons.
 - Why it matters: D129: a button sits at the level of the text beside it; the rest are `size="sm"`.
-  The same goes for *Choose these 4* inside the *Suggested* card on the apps step (view 1 requested).
+  The same goes for *Choose these 4* inside the *Suggested* card on the apps step:
+  `apps-suggested--viewport.png` shows it at 48 px, filled, a hand's width above the pinned 48 px
+  *Next*, so the first thing on the step is two main buttons. `running-viewport--viewport.png`
+  shows *Allow*, *Open Autostart* and *Next* all filled on one phone-height screen.
 - Change: give the `StatusCard` action buttons `size="sm"`: *Allow* in `running.tsx`, *Choose these
   N* in `apps.tsx`. With finding 3's footer rule, the step's bottom shows *Skip for now* until the
   battery step is done, then *Next*.
@@ -98,7 +102,50 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: Settings → Capture → running and apps
 - Builder: Haiku, XS
 
-### 5. First run · your accounts: four large figures stacked, with weak grouping
+### 5. First run's pinned footer (and capture's `BottomAction`): rows show through below it, with no edge above it
+- Seen: `apps-suggested--viewport.png`: under the pinned *Next*, the top of the *A shopping app* row
+  shows in a strip about 24 px tall at the bottom of the screen. `categories--viewport.png`: the same
+  with *Personal care* under *Start using Sen*. `running-viewport--viewport.png`: the footnote
+  (*Steps from dontkillmyapp.com…*) is cut mid-line by the footer's top edge, which has no edge or
+  fade, so it looks clipped rather than scrolled under.
+- Why it matters: content peeking out under the main button looks broken, on the screens where a
+  new person decides whether Sen is well made. The cause: `Screen`'s `<main>` has `pb-6`, and
+  `position: sticky` stops at the scroll container's padding, so `bottom-0` leaves that 24 px strip
+  for rows to scroll through. `bg-background/95` with a blur also lets text read through the bar.
+- Change: (a) in first run's `Frame`, pass `className="pb-0"` to `Screen` (`cn` merges it over
+  `pb-6`); in `CaptureScreen`, pass `pb-0` too when not `bare`, since `BottomAction` is pinned the
+  same way. (b) In `Actions` (first run) and `BottomAction` (capture), make the bar solid
+  (`bg-background`, drop `/95` and `backdrop-blur-sm`), add the safe-area inset to its bottom padding
+  (`pb-[calc(1rem+var(--safe-area-inset-bottom,0px))]`), and give it a soft edge above: `relative`
+  plus `before:pointer-events-none before:absolute before:inset-x-0 before:-top-4 before:h-4
+  before:bg-linear-to-t before:from-background before:to-transparent`. No hairline: patterns §7 has
+  no full-bleed dividers.
+- Files: `apps/web/src/screens/outside/first-run.tsx` (`Frame`, `Actions`),
+  `apps/web/src/screens/capture/common.tsx` (`CaptureScreen`, `BottomAction`)
+- Priority: P2
+- Shared: Settings → Capture's screens; any other screen with a sticky bottom action should take the
+  same bar (worth a shared `StickyActions` block in the components plan)
+- Builder: Sonnet, S
+
+### 6. Field (shared): a wrong field turns what you typed red too
+- Seen: `sign-in-errors-uninvited--viewport.png`: the label, the border, the message *and the typed
+  email* are red. `sign-in-errors-wrong-code--viewport.png`: the six typed digits are large and red,
+  the most alarming thing on the screen.
+- Why it matters: D150 and patterns §2: `destructive` marks a wrong field's label and its message,
+  never more. Red typed text makes a small slip look like an alarm, and on a code it's a big red
+  number. `MoneyInput` already overrides it for amounts (QA B08 run 4), which shows the rule is
+  meant; the base component should hold it.
+- Change: in `Field`'s `fieldVariants`, remove `data-[invalid=true]:text-destructive` from the
+  wrapper, and add `group-data-[invalid=true]/field:text-destructive` to `FieldLabel` (`FieldError`
+  is already destructive; check it). The input keeps its red border from `aria-invalid`. Then remove
+  the now-unneeded `text-foreground` override from `MoneyInput`'s input, or leave it; either is fine.
+  Look at sign-in's two errors, the name step's error and the payday day error after.
+- Files: `apps/web/src/components/ui/field.tsx` (update its `// Sen:` note)
+- Priority: P2
+- Shared: every form with a `Field`
+- Builder: Haiku, XS
+
+### 7. First run · your accounts: four large figures stacked, with weak grouping
 - Seen: `first-run_accounts--minted-light--p1.png` and dark: four amount fields at the figure size
   (`text-4xl`), one under another, each with its name above and a hint below the underline. The hint
   (*Main account and pockets together*) sits about as close to the next account's name as to its own
@@ -119,7 +166,7 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: Settings → accounts' opening balances, if they list several amounts
 - Builder: Sonnet, M
 
-### 6. More (and Review, Insights): a Back arrow on a tab root
+### 8. More (and Review, Insights): a Back arrow on a tab root
 - Seen: every `more--*-p1.png`, all six looks: ← *More*. The tab bar shows *More* active, yet the bar
   offers Back.
 - Why it matters: patterns §6: the tab screens are roots; back on one goes Home and back on Home
@@ -136,20 +183,23 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: Review and Insights (tell the Home and Review auditors' units, so it's done once)
 - Builder: Haiku, S
 
-### 7. First run · expected payday: a plain toggle where patterns asks for choice cards
+### 9. First run · expected payday: a plain toggle where patterns asks for choice cards
 - Seen: `first-run_payday--minted-light--p1.png` and dark: a four-line paragraph, then a two-part
   outline toggle (*Last working day* · *A day number*) with no icon and nothing under it. Nothing says
   what the choice means in dates.
 - Why it matters: patterns §7's table names `ChoiceCards` for *the payday rule*, and Settings → You
   already uses them (`settings/you.tsx`) with the words *Last working day* · *A day*, so the same
-  question looks and reads differently in two places. The toggle's height is set by `className`
+  question looks and reads differently in two places. With *A day number* chosen
+  (`payday-day--viewport.png`), an empty full-width field appears for a two-digit number, with no
+  example in it and no card around it, unlike Settings' (`max-w-32`, placeholder *25*). The toggle's height is set by `className`
   (`h-12`), which `docs/workflow/uiux.md` forbids. Rule 7: one line of intro.
 - Change: replace the `ToggleGroup` with `ChoiceCards<'last' | 'day'>` with `columns={1}`, options
   *Last working day* and *A day*, the same words as Settings. Give *Last working day* a `description`
   computed by code: *Next: Fri 28 Nov* (from `lastWorkingDay()` in `packages/core/src/cycles.ts` on
   today's KL day, rolled to next month if today is past it, formatted as the app's short date). When
   *A day* is chosen, show the existing *Day of the month* field under the cards, inside a `Card
-  className="px-4"` as Settings does. Cut the intro to one line, *When does your salary usually
+  className="px-4"`, with `className="num max-w-32"`, `placeholder="25"` and `enterKeyHint="done"`,
+  exactly as Settings does. Cut the intro to one line, *When does your salary usually
   arrive?*, and move the rest under the cards as one `text-sm text-muted-foreground` line: *Only for
   estimates, such as days to payday. Your cycle starts when the money lands.*
 - Files: `apps/web/src/screens/outside/first-run.tsx` (`PaydayStep`)
@@ -157,7 +207,7 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: none (Settings already right)
 - Builder: Sonnet, S
 
-### 8. Switch (shared): *off* looks heavier than *on*
+### 10. Switch (shared): *off* looks heavier than *on*
 - Seen: `first-run_apps--minted-light--p1.png`: *Google Wallet*, *A shopping app*, *A coffee app* are
   off, and their thumb is the darkest thing in the row (near-black on a pale track); the on switches
   are a navy track with a white thumb. In dark it inverts (white thumb on a dark track when off).
@@ -173,7 +223,7 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: every `SwitchRow`: Settings, first run's categories, rules
 - Builder: Haiku, S
 
-### 9. First run · step 1: *Sign in* said three times, and a Back that goes nowhere
+### 11. First run · step 1: *Sign in* said three times, and a Back that goes nowhere
 - Seen: `first-run--minted-light--p1.png` (and every look): the bar says *Sign in*, then Sen's avatar,
   then the heading *Sign in to Sen*, then the field. The Back arrow sits on the very first step.
 - Why it matters: the heading repeats the title right above it (rule 7, explain once). On a fresh
@@ -185,12 +235,12 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
   optional (`onBack={null}` or a `noBack` prop) and pass it when `i <= first`; keep the title's left
   edge where it is (`pl-3` in place of the button) so it doesn't jump between steps.
 - Files: `apps/web/src/screens/outside/sign-in.tsx`, `apps/web/src/screens/outside/first-run.tsx`,
-  `apps/web/src/frame/app-bar.tsx` (same change as finding 6 can serve both)
+  `apps/web/src/frame/app-bar.tsx` (same change as finding 8 can serve both)
 - Priority: P2
 - Shared: none
 - Builder: Haiku, S
 
-### 10. Sign-in · the code step: two full-width secondary buttons, and the code sits left of centre
+### 12. Sign-in · the code step: two full-width secondary buttons, and the code sits left of centre
 - Seen: `first-run_code--minted-light--p1.png` and dark: under *Sign in* (48, filled) come *Send a
   new code* as a full-width outline button and *Use a different email* as a ghost button, stacked.
   The placeholder dashes (and typed digits) sit about 6 px left of the field's centre.
@@ -206,7 +256,7 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: `sign-in` and first run step 1, which share this flow
 - Builder: Haiku, S
 
-### 11. Usage · at the cap: the pause reads as a quiet note
+### 13. Usage · at the cap: the pause reads as a quiet note
 - Seen: `agent_usage_cap--minted-light--p1.png` and dark: a plain card with one muted line, *Sen is
   paused until 1 Nov; everything else works.*, no icon, then the same tiles and chart as normally.
 - Why it matters: this is the most important thing on the screen when it shows, and it's drawn in
@@ -222,7 +272,7 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: `settings/sen@cap`, if it shows the same line (check `screens/settings/sen.tsx`)
 - Builder: Haiku, S
 
-### 12. First run · apps: labels that don't match, a name that clashes, and blocked apps mixed in
+### 14. First run · apps: labels that don't match, a name that clashes, and blocked apps mixed in
 - Seen: `first-run_apps--minted-light--p1.png` and `--p2.png`: *Banks and e-wallets* and *More* are
   muted group labels; between them *Search every app* is a field label in the text colour at the
   page's edge, so three headings use two styles. *More* is also the name of a tab. Under it, the
@@ -243,7 +293,7 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: Settings → Capture → apps (the same screen)
 - Builder: Sonnet, S
 
-### 13. What Sen remembers: a separate card per note, each with the same brain tile
+### 15. What Sen remembers: a separate card per note, each with the same brain tile
 - Seen: `agent_memory--minted-light--p1.png` and dark: four floating cards, each led by an identical
   brain tile in a tinted square, the note, *Noted 14 Oct*, and a trash button.
 - Why it matters: patterns §7 rule 2 (rows sit in one `GroupCard`) and rule 3 (information never
@@ -259,7 +309,7 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: none
 - Builder: Haiku, S
 
-### 14. More: two rows say a bare number
+### 16. More: two rows say a bare number
 - Seen: every `more--*-p1.png`: *Payments 1,139* and *Accounts 4*, beside *3 open* and *2 to
   submit*.
 - Why it matters: patterns §7 rule 5 (a row says its state, as *4 apps · listening*). A bare
@@ -273,12 +323,12 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: none
 - Builder: Haiku, XS
 
-### 15. Research: cards that look tappable but open nothing, and the badges' weight upside down
+### 17. Research: cards that look tappable but open nothing, and the badges' weight upside down
 - Seen: `agent_research--minted-light--p1.png` and dark: three floating cards, each a question,
   *3 findings · 18 Oct*, and a badge. *Confirmed* is a filled badge, *Draft* an outline one.
 - Why it matters: a card on its own reads as something to tap; these do nothing, so the first tap
   looks ignored. The badge that needs the person (*Draft*: confirm its figures) is the quieter one.
-- Change: draw the briefs as rows in one `GroupCard`, as finding 13, so they read as a list of
+- Change: draw the briefs as rows in one `GroupCard`, as finding 15, so they read as a list of
   facts. Swap the badge weights: *Draft* uses `variant="accent"`, *Confirmed* `variant="muted"`.
 - Files: `apps/web/src/screens/sen/research.tsx`
 - Priority: P3
@@ -287,9 +337,9 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Needs the owner: whether a brief should open (into Sen's chat at that draft, where it's confirmed).
   `screens.md` gives research no detail, so this plan keeps them as information.
 
-### 16. First run: body-size paragraphs where patterns allows one line
+### 18. First run: body-size paragraphs where patterns allows one line
 - Seen: `first-run_payday--*` (four lines), `first-run_name--*` (three lines), the categories step's
-  intro (three sentences, in code), all at `text-base` in the text colour; meanwhile
+  intro (three lines of body text above the list, `categories--viewport.png`), all at `text-base` in the text colour; meanwhile
   `agent_memory--*` and `agent_research--*` use `text-sm` muted for their intro.
 - Why it matters: rule 7 (one line of intro). Long body paragraphs are what made E1 feel dense, and
   two intro styles make sibling screens differ.
@@ -297,13 +347,13 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
   *Banks print your name in capitals. Sen uses it to spot moves between your own accounts.* Accounts:
   keep its line. Categories: *Switch off any you won't use. You can change them later in Settings.*
   (keep *You count by calendar month, and can set a payday later.* as the card's footer line through
-  `GroupCard`'s `footer`). Payday: finding 7. Apps: keep, it's already one line.
+  `GroupCard`'s `footer`). Payday: finding 9. Apps: keep, it's already one line.
 - Files: `apps/web/src/screens/outside/first-run.tsx`, `apps/web/src/screens/capture/apps.tsx`
 - Priority: P3
 - Shared: none
 - Builder: Haiku, S
 
-### 17. Steps (shared): the words of a button to tap aren't set apart
+### 19. Steps (shared): the words of a button to tap aren't set apart
 - Seen: `first-run_access--*`: *Tap the menu (⋮) at the top right, then Allow restricted settings,
   and confirm.*; `first-run_running--*`: *Battery saver: choose No restrictions.* The words the
   person must find on Android's screen run on in the sentence.
@@ -318,7 +368,7 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: Gmail and ESS setup steps, which use `Steps`
 - Builder: Haiku, S
 
-### 18. Keep Sen running: an icon that doesn't read, and a footnote for developers
+### 20. Keep Sen running: an icon that doesn't read, and a footnote for developers
 - Seen: `first-run_running--minted-light--p1.png`: the *Not done* icon (`BatteryWarningIcon` at
   16 px with Minted's butt caps) reads as *[!]·*, not a battery. The footnote says *Sen is tried on a
   Xiaomi first.*
@@ -331,7 +381,7 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: Settings → Capture → running
 - Builder: Haiku, XS
 
-### 19. StatTiles and IconTile (shared, for the components plan): the emphasised tile looks pressed, and neutral tiles vanish in some dark looks
+### 21. StatTiles and IconTile (shared, for the components plan): the emphasised tile looks pressed, and neutral tiles vanish in some dark looks
 - Seen: `agent_usage--minted-light--p1.png`: *Used this month* is a filled, bordered tile beside a
   white card, so it reads as a selected button rather than the main figure. `more--copper-dark`,
   `more--mercury-dark`, `more--instrument-dark`: the neutral `IconTile` squares are barely visible
@@ -347,7 +397,7 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - Shared: every screen with `StatTiles` or a neutral `IconTile`
 - Builder: Sonnet, S
 
-### 20. Inputs (shared, for the components plan): an auto-focused field always wears a heavy double ring
+### 22. Inputs (shared, for the components plan): an auto-focused field always wears a heavy double ring
 - Seen: `sign-in--minted-light--p1.png`, `first-run_name--*`, every look's `first-run--*-p1.png`: the
   focused field shows its border plus a wide soft ring, the heaviest thing on the screen before
   anything is typed. In Line it's a bright blue that isn't Line's ink.
@@ -375,7 +425,7 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
 - **Status cards with an icon and a word** (*Off*, *Not done*) in the warning colour, and the
   plain words under them.
 - **Honest reasons on apps that can't be chosen** (*Your SMS app can't be chosen: it carries TACs*):
-  keep the words when they move to their own group (finding 12).
+  keep the words when they move to their own group (finding 14).
 - **The form sits high on sign-in** with the space below: with the keyboard up, the field and *Send
   the code* stay visible. Don't push the button to the bottom of this screen.
 - **More's rows that say their state** (*3 open*, *2 to submit*), its two calm groups, and Settings
@@ -385,12 +435,18 @@ long body-size paragraphs where one line would do. Most fixes are in shared part
   each part, as patterns §4 asks.
 - **What Sen remembers' promise**: *It never keeps an amount, and forgetting one takes it away*, and
   forgetting at once with Undo.
+- **The categories step's list** (`categories--viewport.png`): each category's icon on its tinted
+  tile (`categoryTone`), neighbours in different hues, in one card. It's the best-looking list in
+  this area; only its intro needs shortening (finding 18).
+- **Sign-in's error words**: *Sen is invitation-only. Ask whoever runs your Sen for an invitation.*
+  and *That's not the right code. Check the email and try again.* say what happened and what to do,
+  under the field. Only their colour spreads too far (finding 6).
 - **The avatar on sign-in in every look**: it's the one place a new person meets Sen, and each look's
   mark sits well in its circle.
 
 ## Needs the owner
 
-1. **Research briefs** (finding 15): should tapping a brief open Sen's chat at that draft?
+1. **Research briefs** (finding 17): should tapping a brief open Sen's chat at that draft?
    `screens.md` gives research no detail screen, so the plan keeps briefs as information.
 
 Everything else here stays inside `patterns.md` and D75–D151. Finding 3's footer (*Skip for now*
