@@ -34,10 +34,12 @@ polish audit and a re-spec discussion with the owner, both below. No code has ch
   - One conversation, each call well under 100k tokens (Haiku's price step). No RAG: durable
     knowledge lives in the tables behind Sen's tools; dated notes of past chat and a search cover
     the rest.
-  - Answers are typed parts (text, steps, chart, table, figures, records, question, proposal,
-    button, follow-ups, web findings, file, playground, checklist, coming up, compare, saved,
-    notice). A part takes its figures only by reference to a tool result; a figure taps through to
-    its records.
+  - Answers are typed parts (text, steps, chart, table, figures, question, proposal, button,
+    follow-ups, web findings, file, playground, checklist, coming up, compare, saved, notice). A part
+    takes its figures by reference to a tool result; a figure taps through to its records.
+  - A table is a plain grid, with no totals unless Sen asks: each cell is a value from a tool result,
+    a formula code works out, or a number or text Sen writes; a row or cell that is a record opens
+    that record's page. It replaces a separate list of records.
   - Charts on shadcn's Chart and Recharts, interactive, one component for Sen's tool and the screens.
   - Insights becomes cards the person and Sen add, change and arrange, seeded with today's.
   - Also in: watches and scheduled reports, an Excel tool, memory with a weekly tidy and shared
@@ -45,8 +47,10 @@ polish audit and a re-spec discussion with the owner, both below. No code has ch
   - Further capabilities taken so far: the payment notification says where you stand against your
     limits; a warning when a wallet is about to run dry. Item prices from receipts: liked, its use
     being weighed. The rest of the offered list is out unless the owner says otherwise.
-  - Open: whether shared lessons may change Sen's skills behind a test gate, six series colours per
-    look, and whether a table and a list of records are one tool with two looks (recommended).
+  - Open: how Sen computes beyond its fixed tools (recommended: one general query tool in a fixed
+    shape and a bigger `calc`, no sandboxed Python, no raw SQL); whether a number Sen writes in a
+    table is marked *not checked* when code can't trace it (recommended, D108); shared lessons
+    changing Sen's skills behind a test gate; six series colours per look.
 
 ## Open with the owner
 
