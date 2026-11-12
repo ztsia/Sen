@@ -98,6 +98,19 @@ the screens and journeys in `docs/screens.md` and `docs/flows.md`.
 - Nothing loops except a loading indicator and Sen's avatar; both stop for reduced motion.
 - Sen's replies stream as they're written; its drafts and estimates are labelled as Sen's, never shown
   as fact (`CLAUDE.md`: models draft, the owner confirms).
+- **Radix is the base library** (D151). Don't add a component from another base, and don't adopt React
+  Aria without the owner.
+- **Charts** (D151, patterns §4): shadcn's Chart (`components/ui/chart.tsx`, already customised: Sen's
+  `[data-mode='dark']`, values formatted as sen) around Recharts, then plain Recharts inside
+  `ChartContainer`, then hand-drawn only where Recharts can't draw (the spending calendar, with a
+  comment saying why). The chart blocks in `blocks/charts.tsx` hold the token config; a screen never
+  names a colour. Recharts stays in its own chunk, out of the first screen's code, and a chart's box
+  has its size before the chunk arrives. Animation is off: a chart shows its data as it is. A one-value
+  meter (a budget, a goal's bar, a ranked row's share) is the customised `Progress`.
+- **Sen's chat** starts from shadcn's AI Elements (D151): *Message*, *Prompt Input*, *Chat*,
+  *Suggestion* for `ask_user`, *Confirmation* for proposal cards, *Tool*, *Sources* and *Inline
+  Citation* for research. Each is copied into `components/ui/` with a `// Sen:` note and composed into
+  blocks like any shadcn component. Not *Model Selector*, *Terminal*, *File Tree* or *Reasoning*.
 - Some of these rules are adapted from
   [ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) (MIT,
   `THIRD_PARTY_NOTICES.md`).
