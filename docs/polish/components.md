@@ -8,10 +8,9 @@ dark, the code, and patterns §7–§8, D129, D130, D139, D140.
 
 Screenshots are in
 `/tmp/claude-0/-home-user-Sen/ef258ec9-34b0-5a50-902b-5fd480731a8c/scratchpad/polish/slices/`
-(`<entry>--<look>-<mode>--p<n>.png`). Motion is judged from the code. The views a still can't show
-(a toast, a sheet closing, the four rough spots mid-motion) are requested in
-`…/scratchpad/polish/own/components/requests.md`; their findings are written from the code and are
-to be checked against those captures before building.
+(`<entry>--<look>-<mode>--p<n>.png`). Motion is judged from the code and from films at 50 ms
+steps in `…/scratchpad/polish/own/components/` (`<name>--t<ms>.png`, about 30–50 ms late), with
+stills of the toast, the dialog and three sheets (`<name>--still.png`).
 
 **One fix, one place.** Where a screen plan found the same thing, the fix is written here once, at
 the component, and the screen plan's finding is named (*review 4* means `review.md` finding 4). A
@@ -48,44 +47,64 @@ with a look at `/dev/gallery` in Minted light, Copper dark and Line light (uiux'
   first run's accounts step
 - Builder: Haiku, S
 
-### 2. Loading: a skeleton replaces a list already on screen
-- Seen (code; capture *payments-filter* requested): `usePayments(filters)` reads under
-  `['payments', filters]`, so every filter chip and every letter typed in Payments' search is a new
-  query with no data: `payments.tsx` gets `rows === null` and swaps the person's list for
-  `ListSkeleton rows={8}`, then fades the new list in. The same in every hook whose parameter the
-  screen changes in place: `useCycle(id)`, `useInsights(cycle)`, `useBudgets(cycle)`,
-  `useYear(year)`, `useMatches(total, at)`, `useNearDuplicate(amount, at)`; `Loaded`
-  (`screens/kit.tsx`) shows the skeleton on `q.isPending`, which a new key is. The capture screens
-  (`capture.tsx`, `apps.tsx`, `running.tsx`, `access.tsx`) read the shell through `useBridge`,
-  which keeps nothing, so they open on a skeleton on every visit.
-- Why it matters: the person's own payments flash away and back on each tap, which reads as data
-  lost or a reload, and moves the list under the finger. Patterns §7: a skeleton is for content
-  not there yet; §8: a skeleton fades into its content, never the reverse. The last QA eyes pass
-  named it.
-- Change (data layer and kit, shared):
-  1. `data/hooks.ts`, `useRead`: add a fourth argument `keep = true`, and when it's true pass
-     `placeholderData: keepPreviousData` (from `@tanstack/react-query`) to `useQuery`, so a new key
-     keeps the last data on screen until its own arrives. Pass `keep = false` from the hooks whose
-     id names a different record (`useTxn`, `useReceipt`, `useSplit`, `useAccount`, `useClaim`,
-     `useGoal`, `useDraft`, `useSen`), which must never show the last record.
-  2. `screens/kit.tsx`, `Loaded`: the skeleton stays for `isPending` only; while
-     `q.isPlaceholderData`, render the children inside a wrapper with `aria-busy="true"`, and no
-     `fade-in-kids` (that's only for content replacing a real skeleton).
-  3. `screens/more/payments.tsx`: the skeleton shows only when there are no rows and
-     `!query.isPlaceholderData`; with placeholder rows the list stays, and the count line above it
-     reads *Searching…* (muted) until the data lands.
-  4. `shell/use-bridge.ts`: take a `key` as the first argument
-     (`useBridge('capture-status', () => SenCapture.status())`), keep each key's last result in a
-     module-level `Map`, start `data` from it, and keep it on screen while `reload` runs. Update the
-     callers in `screens/capture/`. A capture screen then shows a skeleton only on its first visit
-     in a session.
-- Files: `apps/web/src/data/hooks.ts`, `apps/web/src/screens/kit.tsx`,
+### 2. Loading: a new screen slides in as a bar-less list skeleton, over data already on screen
+- Seen (films `push-back`, `scan-more-manual`; code): the first time a screen opens, its code chunk
+  isn't loaded, and `ScreenFor`'s `Suspense` fallback in `router.tsx` is `<Screen bar={null}>
+  <ListSkeleton /></Screen>`. Opening *Sate Kajang Hj Samuri* from Payments, the screen that slides
+  in is grey circles and bars with no app bar, held from 50 ms to past 300 ms, before the detail
+  arrives; the payment's merchant and amount were on the row a moment before, and the shared amount
+  (row → figure, patterns §8) can't play because there is no figure to grow into
+  (push-back--t50…t300). *Add manually* does the same: a list skeleton for about 250 ms where a form
+  will be (scan-more-manual--t50…t200). Going back is right: the list slides back and the amount
+  flies into its row (push-back-back--t100). Payments itself keeps its list while a search loads
+  (its own `last` ref), but the count line already says *1,139 payments match* over the unfiltered
+  list until the new rows land (payments-filter-search--t200). The capture screens read the shell
+  through `useBridge`, which keeps nothing, so they open on a skeleton on every visit (code).
+- Why it matters: every first tap into a detail, a form or a setting shows a page with no title
+  that looks like a different screen, then swaps; it's the "skeleton over data" the last QA eyes
+  pass named. Patterns §7: a skeleton is *shaped like the content*; §8, the shared amount.
+- Change:
+  1. Load screen code before it's needed. In `screens/real.ts` (and `skeleton.ts`), keep each
+     screen's `() => import(...)` loader in a map next to its `lazy` component and export
+     `preloadScreen(id)`. Call it on `pointerdown` from the places that open screens: `useGo`
+     (`screens/kit.tsx`) gets a `preload(id)` it returns alongside, `ListRow` and `NavRow` take an
+     optional `preload` callback fired on `onPointerDown`; then, once Home has painted, preload the
+     chunks of the screens one tap from each tab (`txn`, `payments`, `manual`, `settings`, the
+     More rows) in `requestIdleCallback`. Check `node scripts/qa-diff.mjs --metrics-only`: the
+     first screen's bytes must not grow (the preloads come after it).
+  2. Make the fallback the screen's shape. `ScreenFor`'s fallback becomes
+     `<Screen bar={<AppBar title={screen.title} />}>{fallbackFor(screen)}</Screen>`, where the
+     registry gives each screen a `shape: 'list' | 'detail' | 'form' | 'hub'`, and
+     `blocks/states.tsx` gains `DetailSkeleton` (a `HeaderCard`-shaped card: a 48 px tile, a title
+     bar, a `h-10 w-40` figure bar, a meta bar; then four 44 px circles; then a two-column facts card)
+     and `FormSkeleton` (a label bar, a `h-12` field, three times, and a `h-12` button bar at the
+     bottom). `hub` uses `ListSkeleton card` (finding 20).
+  3. On `txn`, show what the row already knew: `useTxn(id)` gets `placeholderData` from the
+     payments query's cached row with that id (merchant, amount, time, category, account), and
+     `txn.tsx` renders the `HeaderCard` from it while the rest of the page shows its skeleton. The
+     figure is there during the slide, so the shared amount plays on first open too.
+  4. `data/hooks.ts`, `useRead`: a fourth argument `keep = true` passes `placeholderData:
+     keepPreviousData`, so any screen that changes a query's parameter in place (cycle, insights'
+     cycle, budgets, year, matches, near duplicate) keeps its content as Payments does, without its
+     own ref; `keep = false` for hooks whose id names another record (`useTxn` aside from step 3,
+     `useReceipt`, `useSplit`, `useAccount`, `useClaim`, `useGoal`, `useDraft`, `useSen`).
+     `Loaded` (`screens/kit.tsx`) renders children with `aria-busy="true"` and no fade while
+     `q.isPlaceholderData`.
+  5. Payments' count line: while `query.isPlaceholderData` or `query.isFetching` with a changed
+     filter, read *Searching…* in muted text, never a count that belongs to the old list.
+  6. `shell/use-bridge.ts`: take a `key` first (`useBridge('capture-status', () =>
+     SenCapture.status())`), keep each key's last result in a module-level `Map`, start from it and
+     keep it on screen while `reload` runs; update the callers in `screens/capture/`.
+- Files: `apps/web/src/router.tsx`, `apps/web/src/screens/real.ts`, `apps/web/src/screens/registry.ts`,
+  `apps/web/src/screens/kit.tsx`, `apps/web/src/blocks/states.tsx`, `apps/web/src/blocks/rows.tsx`,
+  `apps/web/src/blocks/group.tsx`, `apps/web/src/data/hooks.ts`, `apps/web/src/screens/more/txn.tsx`,
   `apps/web/src/screens/more/payments.tsx`, `apps/web/src/shell/use-bridge.ts`,
   `apps/web/src/screens/capture/*.tsx`
 - Priority: P1
-- Shared: `payments`, `cycle`, `insights`, `budgets`, `insights/year`, `confirm`, `manual`,
-  `settings/capture` and its steps, first run's capture steps
-- Builder: Sonnet, M
+- Shared: the first open of every pushed screen (`txn`, `manual`, `account`, `split`, every
+  `settings/…`, every More row); `cycle`, `insights`, `budgets`, `insights/year`, `confirm`,
+  `manual`; the capture screens
+- Builder: Sonnet, L (steps 1–3 one unit; 4–6 a second)
 
 ### 3. GroupCard: the rows inside lost their dividers
 - Seen: in More, Settings and the gallery's groups (more--minted-light--p1, settings--minted-light--p1,
@@ -168,7 +187,9 @@ with a look at `/dev/gallery` in Minted light, Copper dark and Line light (uiux'
 
 ### 6. Switch: off reads heavier than on, and as on in dark
 - Seen: the off thumb is a large `bg-foreground` disc; in Minted dark the *on* switch is a pale track
-  with a dark thumb, the off one close to it (gallery--minted-dark--p3, p5).
+  with a dark thumb, the off one close to it (gallery--minted-dark--p3, p5). In Minted light the
+  five off switches on *Your apps* are five dark discs, louder than the one switched on
+  (apps-suggested--still, apps-suggested-switch--t400).
 - Why it matters: a switch must say on or off at a glance. *settings 1*, *start 8* (one fix).
 - Change (component, `components/ui/switch.tsx`, as *settings 1* writes it): off is an outlined
   track (`before:bg-muted before:border-2 before:border-muted-foreground/60`) with a small muted
@@ -197,59 +218,62 @@ with a look at `/dev/gallery` in Minted light, Copper dark and Line light (uiux'
 - Builder: Haiku, XS
 
 ### 8. Sheets: a sheet that leads to another screen cuts out instead of falling
-- Seen (code; capture *scan-more-manual* requested): a sheet's choice that opens a screen closes
-  the sheet and navigates in the same tick: `ScanMoreSheet`'s *Add manually* and `SenMenu` in
-  `frame/sheets.tsx`, and screen sheets whose rows `go(...)`. The navigation runs a view transition;
-  the open `Drawer` is portalled outside `.screen-region`, so it's in the root snapshot, which
-  `motion.css` doesn't animate: sheet and scrim vanish in one frame while the screen crossfades.
-- Why it matters: patterns §8, *a sheet rises from the bottom and falls back*. Named by the last QA
-  eyes pass.
+- Seen (films `member-remove`, `sheet`, `scan-more-manual`): a sheet closed on its own falls and its
+  scrim fades over about 200 ms, as it should (sheet--t0…t200). But a sheet whose choice also
+  navigates vanishes in one frame: Members → *Remove*, the sheet is full at t0 and gone at t100
+  while Member slides away (member-remove--t0, t100). The cause is in the code: the choice closes
+  the sheet and navigates in the same tick, the router runs a view transition, and the open
+  `Drawer` is portalled outside `.screen-region`, so it's in the root snapshot, which `motion.css`
+  doesn't animate. The same code path runs in `ScanMoreSheet` (*Add manually*), `SenMenu` and screen
+  sheets whose rows `go(...)`.
+- Why it matters: patterns §8, *a sheet rises from the bottom and falls back*; one thing moving
+  at a time. Named by the last QA eyes pass.
 - Change (block):
   1. `blocks/sheet.tsx`: add `onClosed?: () => void` to `SheetProps`, wired to vaul's
      `onAnimationEnd={(open) => { if (!open) onClosed?.() }}` on `Drawer`.
   2. Export `useCloseThen(setOpen)` from the same file: `closeThen(fn)` stores `fn`, calls
-     `setOpen(false)`, and the sheet's `onClosed` runs it once. Under reduced motion
+     `setOpen(false)`, and the sheet's `onClosed` runs it once; under reduced motion
      (`reducedMotionNow()`) it runs `fn` at once. The caller passes the hook's `onClosed` to its
      `Sheet`.
-  3. Use it wherever a sheet's choice navigates: `ScanMoreSheet` and `SenMenu`, then each screen
-     sheet that calls `go(...)` or `navigate(...)` from a row (grep the importers of `blocks/sheet`).
-     Keep `replace: true` where it is: `useBackClose` has popped the sheet's step by then, so the
-     replace lands on the screen's own step. Check back from the new screen returns to the screen
-     the sheet was on.
-- Files: `apps/web/src/blocks/sheet.tsx`, `apps/web/src/frame/sheets.tsx`, the navigating sheets in
-  `apps/web/src/screens/`
+  3. Use it wherever a sheet's choice navigates: `member.tsx`'s `confirmRemove` becomes
+     `closeThen(() => { back(); void write(...).then((r) => r && toastDone(...)) })`, so the sheet
+     falls, Members slides back, then *Removed Hui Min* rises over Members (the toast's timing in the
+     film, about 400 ms, on Members, is already right and stays). Then `ScanMoreSheet` and `SenMenu`
+     in `frame/sheets.tsx`, and each screen sheet that calls `go(...)` or `navigate(...)` from a row
+     (grep the importers of `blocks/sheet`). Keep `replace: true` where it is: `useBackClose` has
+     popped the sheet's step by then, so the replace lands on the screen's own step. Check back from
+     the new screen returns to the screen the sheet was on.
+- Files: `apps/web/src/blocks/sheet.tsx`, `apps/web/src/frame/sheets.tsx`,
+  `apps/web/src/screens/settings/member.tsx`, the navigating sheets in `apps/web/src/screens/`
 - Priority: P2
-- Shared: Scan's long-press (every tab screen), Sen's ⋯ menu, payments' filter, category and cycle
-  sheets, split sheets, Members
+- Shared: Members, Scan's long-press (every tab screen), Sen's ⋯ menu, category and cycle sheets,
+  split sheets
 - Builder: Sonnet, M
 
-### 9. A toast raised as an overlay closes lands on top of it (Members → Remove)
-- Seen (code; capture *member-remove* requested): `confirmRemove` in `screens/settings/member.tsx`
-  calls `setRemove(false)`, then `goBack(router)`, then writes and toasts *Removed Hui Min* as soon
-  as the write resolves. The sheet's `useBackClose` pops its history step in the same tick as
-  `goBack`, so two pops race; the fake answers within a frame, so Sonner's toast (its own z-index,
-  above everything) appears on the sheet while it falls and the screen slides back.
-- Why it matters: three things move at once and the toast's words sit on a sheet that's leaving.
-  Patterns §7: the toast says what happened once it's done; §8: one motion explains one change.
-  Named by the last QA eyes pass.
+### 9. Toasts: *Undo* is a 24 px button in sonner's style, and a dialog's toast lands on the dialog
+- Seen (stills `toast`, `toast-copper-dark`): *Attached to RM58.30 on Ryt* sits in a plain card
+  with 13 px text, and *Undo* is sonner's default action: a small filled block about 24 px tall
+  with 12 px text, dark in Minted light and grey in Copper dark, unlike any button in Sen. Code:
+  `DestructiveDialog` (`blocks/dialog.tsx`) runs `onConfirm` from the action's click, so a delete's
+  toast and list motion start while the dialog is still fading out over them; that's the old QA
+  note's *toast over its dialog* (the Members sheet's own toast now arrives on time, finding 8).
+- Why it matters: *Undo* is the app's safety net for every change (patterns §7, *undo instead of
+  confirm*); it must be easy to hit (§8, 48 px targets) and look like Sen. A toast on a closing
+  dialog says *done* over the question that asked.
 - Change:
-  1. `member.tsx`, with finding 8's hook: `confirmRemove = (exportFirst) => closeThen(() => {
-     back(); void write(...).then((r) => r && toastDone(...)) })`. Order: the sheet falls, Members
-     slides back, the toast rises over Members, where the row has already gone. (*settings 3* moves
-     *Remove* into the app bar's ⋯; the confirm sheet and this order stay.)
-  2. `blocks/toast.ts`, `show()`: if a closing overlay is still in the document
-     (`[data-vaul-drawer][data-state=closed]`, `[role=alertdialog][data-state=closed]`), wait for it
-     to go before calling `toast(...)`: check on each `requestAnimationFrame`, at most 400 ms. Any
-     caller that toasts from a closing sheet or dialog then waits by itself.
-  3. `blocks/dialog.tsx`, `DestructiveDialog`: run `onConfirm` after the dialog has closed (keep a
-     ref set by the action's click and call it from `AlertDialogContent`'s `onCloseAutoFocus`), so
-     a delete's toast and list motion start on the screen, not behind the dialog.
-- Files: `apps/web/src/screens/settings/member.tsx`, `apps/web/src/blocks/toast.ts`,
-  `apps/web/src/blocks/dialog.tsx`
+  1. `components/ui/sonner.tsx`: `toastOptions.classNames` adds
+     `title: 'text-base'`, and `actionButton:` Sen's chip button classes, written out (sonner's
+     action isn't a `Button`): `'relative tap min-h-8! rounded-[var(--radius-btn,999px)]! px-3!
+     text-label! font-semibold! bg-transparent! text-primary!'`; dark the same (the text colour is
+     the token). The toast keeps `--normal-bg` etc. Update the `// Sen:` note.
+  2. `blocks/dialog.tsx`, `DestructiveDialog`: the action's click sets a ref and closes; call
+     `onConfirm` from `AlertDialogContent`'s `onCloseAutoFocus` when the ref is set, so the change
+     and its toast start on the screen once the dialog is gone.
+- Files: `apps/web/src/components/ui/sonner.tsx`, `apps/web/src/blocks/dialog.tsx`
 - Priority: P2
-- Shared: every change confirmed in a sheet or dialog that toasts: delete forever, remove a
-  member, revoke an invite, leave a split
-- Builder: Sonnet, S
+- Shared: every toast with *Undo* or *Retry* (Review, txn, splits, rules), the update toast's
+  *Update*; every dialog (`account`'s delete, claims)
+- Builder: Haiku, S
 
 ### 10. StepPager: the last step's name is cut off under *1 of 5*
 - Seen: Insights' step row ends *Subscriptions · Goa* against *1 of 5* (insights--minted-light--p1,
@@ -303,10 +327,12 @@ with a look at `/dev/gallery` in Minted light, Copper dark and Line light (uiux'
 - Builder: Haiku, XS
 
 ### 13. First run, *Your apps*: the *Suggested* card vanishes and the list jumps under the finger
-- Seen (code; capture *apps-suggested* requested): in `screens/capture/apps.tsx` the `StatusCard`
-  *Sen found 4 banks and e-wallets on this phone* renders only while `chosen.size === 0`. The first
-  switch flipped, or *Choose these 4*, removes about 150 px above the list in one frame, so the row
-  just touched jumps up and the next tap lands on another app.
+- Seen (still `apps-suggested`, films `apps-suggested-switch`, `apps-suggested-choose`): before the
+  tap the *Suggested* card sits above *Banks and e-wallets*; by the first frame after flipping
+  *Touch 'n Go eWallet*, or after *Choose these 4*, the card is gone and the whole list has moved up
+  about 130 px (*Banks and e-wallets* from under the card to just below *How it works*). In
+  `screens/capture/apps.tsx` the card renders only while `chosen.size === 0`. The next tap lands on
+  a different app.
 - Why it matters: a list that moves under a tap is how the wrong thing gets chosen. Patterns §8: a
   row removed slides out and the rows below close the gap. Named by the last QA eyes pass.
 - Change: keep the card for the life of the step and change it in place. Remember the suggestion
@@ -342,8 +368,8 @@ with a look at `/dev/gallery` in Minted light, Copper dark and Line light (uiux'
   without ← bends that wording (§6's back rule is unchanged).
 
 ### 15. Scan's long-press sheet: hand-made rows with round icons, and no main choice
-- Seen (code): `ScanMoreSheet` builds its three choices from bare `Item`s with a round
-  `ItemMedia`, unlike every other list of choices (`NavRow` with a square `IconTile`), and the
+- Seen (still `scan-more-manual`): `ScanMoreSheet` builds its three choices from bare `Item`s with
+  a round `ItemMedia`, unlike every other list of choices (`NavRow` with a square `IconTile`), and the
   three are equal though *Scan* is the usual one. Its words differ from the Scan screen's (*Add
   manually* here, *Add by hand* there).
 - Why it matters: patterns §7, `NavRow` is *a sheet's choices*; one main action. *review 16*,
@@ -447,8 +473,8 @@ with a look at `/dev/gallery` in Minted light, Copper dark and Line light (uiux'
 - Builder: Haiku, S
 
 ### 21. Sheet: a heavy grab handle
-- Seen (code; capture *sheet* requested): the handle is shadcn's 100×8 px pill (`drawer.tsx`), and
-  the title row sits close under it.
+- Seen (stills `sheet`, `member-remove`, `scan-more-manual`): the handle is shadcn's 100 px pill
+  (`drawer.tsx`), a heavy grey bar over every sheet's title, which sits close under it.
 - Why it matters: a calm sheet; Android's own handle is 32×4.
 - Change (component, `components/ui/drawer.tsx`): the handle `mt-2 h-1 w-9 rounded-full
   bg-muted-foreground/40`; add the `// Sen:` note on line 1. In `blocks/sheet.tsx` the title row
@@ -509,13 +535,6 @@ with a look at `/dev/gallery` in Minted light, Copper dark and Line light (uiux'
 - Priority: as in `home.md`
 - Builder: Sonnet
 
-## Waiting on captures
-
-The motion findings (2, 8, 9, 13) and 21 are written from the code. Before building, hold them
-against the captures in `requests.md` (*payments-filter*, *scan-more-manual*, *member-remove*,
-*apps-suggested*, *sheet*); also *toast*, *dialog* and *push-back* to check the toast's material,
-the dialog, and the shared amount on a push, which no still shows.
-
 ## Keep
 
 - **The motion system** (`frame/motion.ts`, `styles/motion.css`): one 200 ms push on Material's
@@ -523,7 +542,8 @@ the dialog, and the shared amount on a push, which no still shows.
   way history goes, only the screen region moves so the tab bar plays its look's `switch` live,
   names set only while a transition runs, the shared amount from row to figure, `useChangeMotion`
   starting when data arrives (never around the write), and `useSheetResize`'s guard against its own
-  animation. Fixes 8 and 9 sit on top of it; nothing in it changes.
+  animation. Going back from a payment, the amount flies into its row as designed
+  (push-back-back--t100). Fixes 2, 8 and 9 sit on top of it; nothing in it changes.
 - **The ripple** (`frame/press.ts`): on `pointerdown`, from the finger, the pressed thing's own
   colour, cancelled at once by a scroll, a tint under reduced motion; no `active:` tints anywhere.
 - **The size levels** (D129) in `app.css` and `button.tsx`: 48 / 40 / 32 drawn sizes with the `tap`
@@ -539,8 +559,11 @@ the dialog, and the shared amount on a push, which no still shows.
   apart, and the toaster's offsets that keep Undo clear of Sen's button and the tab bar.
 - **Each look's tab bar, figure and avatar**: they make the six looks feel different while
   everything else stays put. Fix 22 only moves the scan button's flow, not its drawing.
-- **Sheets' back handling** (`useBackClose`), the drawer's `repositionInputs={false}`, and toasts
-  tappable over a sheet.
+- **Sheets' back handling** (`useBackClose`), the drawer's `repositionInputs={false}`, toasts
+  tappable over a sheet, and a sheet's own close: it falls with its scrim in about 200 ms (film
+  `sheet`).
+- **`DestructiveDialog`'s shape** (still `dialog`): a short question, one line of consequence,
+  *Delete forever* in `destructive` over *Keep it*, both full width.
 
 ## Needs the owner
 
