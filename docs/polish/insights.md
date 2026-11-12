@@ -31,7 +31,10 @@ production.
   (`subscriptions`), *RM1 , 237 . 95* inline in a sentence (`goals`). The same amount written as
   plain text in the same card is tight: the takeaway's *RM3,873.53*, the fact *RM1,237.95 over 6
   cycles*. So one card shows two typesettings of money. The other five looks are tight
-  (`insights--copper-*`, `--instrument-*`, `--mercury-*`).
+  (`insights--copper-*`, `--instrument-*`, `--mercury-*`). The budget sheet's amount field shows it
+  too, at its largest: *RM 1 , 200 . 00* (`own/insights/budgets-sheet--viewport.png`). Line shows a
+  milder version, a gap before the comma in *RM1 ,237.95* (`own/insights/goal-line--viewport.png`),
+  so check Line's UI font (Alegreya Sans) after the fix as well.
 - Why it matters: amounts are the main content. Spaced punctuation reads like code, or like a
   broken font, and mixing two settings of the same figure on one card undermines trust in the
   figures (patterns §3: one format everywhere). It's the single biggest "not nice" in the area,
@@ -59,7 +62,8 @@ production.
   `apps/web/src/blocks/charts.tsx`, `apps/web/src/screens/insights/goals.tsx`,
   `apps/web/src/screens/insights/subscriptions.tsx`
 - Priority: P1
-- Shared: every screen that shows money (Home, Review, payments, accounts, splits, claims). Likely also
+- Shared: every screen that shows money (Home, Review, payments, accounts, splits, claims), and
+  `MoneyInput` (`blocks/money-input.tsx`: give its digits the same separator spans). Likely also
   raised in `components.md`: build it once.
 - Builder: Sonnet, M (the check comes first, then a small block change and a sweep of `num` spans)
 
@@ -105,14 +109,38 @@ production.
      in the row's `onScroll`, and set a `data-end` attribute the class keys on). Fade the leading
      edge the same way once it's scrolled away from the start.
   2. Give the counter its own room: `pl-2` on the `1 of 5` span, so a fade never runs into it.
-  3. With finding 5's shorter list of steps, check at 390 px in all six looks that the fade, not a
+  3. With finding 6's shorter list of steps, check at 390 px in all six looks that the fade, not a
      hard cut, is what shows.
 - Files: `apps/web/src/blocks/steps.tsx`
 - Priority: P1
 - Shared: any `StepPager` (patterns names it for Insights; check `/dev/gallery`).
 - Builder: Haiku, S
 
-### 4. Every question card: the answer is the quietest thing on it
+### 4. `insights`: shorter steps scroll into a blank screen before *The year*
+- Seen: `own/insights/insights-step3--viewport-bottom.png`, `-step4-…`, `-step5-…` (Minted light).
+  On *Subscriptions* (two cards) and *Goals* (one card), scrolling down past the cards shows a
+  whole phone-height of empty background, then *The year* row on its own. On *Year*, the same after
+  the top-merchants card. Step 2 (`-step2-…-bottom`) is nearly as tall as step 1, so it leaves only
+  a small gap.
+- Why it matters: it looks broken. A person scrolls into nothing and wonders whether something failed
+  to load, and *The year* is pushed out of reach on the shortest steps. The cause is the pager: the
+  pages sit side by side in one flex row (`StepPager`'s track), so the row is as tall as its tallest
+  page, the *On track* step with four cards.
+- Change (block, `StepPager` in `blocks/steps.tsx`): make the track as tall as the page being shown.
+  1. Give each panel `self-start` (so a panel is its own height, not the row's).
+  2. Measure the shown panel with a `ResizeObserver` on that panel (never on the track, which would
+     feed itself: the uiux skill's *a ResizeObserver that animates the element it observes*), and
+     set the track's `style.height` to the panel's height, with `overflow-y: clip` on the track.
+  3. When `at` changes, set the new height at once under reduced motion; otherwise transition
+     `height` 200 ms on `--motion-ease` (patterns §8). The neighbour page is clipped to the current
+     height while a swipe is in progress, and grows when it settles: that's fine.
+  4. Check every step at 390×844: *The year* sits 12 px under the last card on each.
+- Files: `apps/web/src/blocks/steps.tsx`
+- Priority: P1
+- Shared: any `StepPager`
+- Builder: Sonnet, M
+
+### 5. Every question card: the answer is the quietest thing on it
 - Seen: `insights--minted-light--p1/p2.png`, `insights_year--*`. Each card's heading (*Am I on
   track?*) is 15 px, the same size as body text. The takeaway, the actual answer (*You've spent
   RM3,873.53 so far, RM273.53 more than last cycle by this day…*), is 13 px muted grey under the chart.
@@ -131,7 +159,14 @@ production.
   3. Keep *Ask Sen about this* as it is (ghost, `size="sm"`): once the answer is body text in the
      text colour, the button falls back to second place by itself.
   4. `CardFooter` gap: `gap-1` → `gap-2`, so the answer and the button don't touch.
-  5. Leave the order (question, chart, answer, Ask Sen) as D73 and patterns §4 have it. Putting the
+  5. The *Open budgets*, *Open subscriptions* and *Open goals* buttons
+     (`own/insights/insights-step2--viewport.png`, `-step3-`, `-step4-`) sit inside the chart area, so
+     each card has a button, then its answer, then a second button. Give `ChartCard` an optional
+     `open?: { label: string; onOpen: () => void }`, drawn in the footer under the takeaway, in one
+     row with *Ask Sen about this* (`flex flex-wrap gap-2`; *Open …* `variant="outline" size="sm"`
+     with its chevron, first). Move the three cards' buttons into it (`budgetsCard`, `renewsCard`,
+     `goalsCard` in `insights.tsx`).
+  6. Leave the order (question, chart, answer, Ask Sen) as D73 and patterns §4 have it. Putting the
      answer straight under the question is better again on a phone; see *Needs the owner*.
 - Files: `apps/web/src/blocks/charts.tsx`
 - Priority: P2 (first among them)
@@ -139,7 +174,7 @@ production.
   `ChartCard` (check).
 - Builder: Haiku, S
 
-### 5. `insights`: the steps aren't D73's groups, and two of them have the wrong names
+### 6. `insights`: the steps aren't D73's groups, and two of them have the wrong names
 - Seen: the steps read *On track · Budgets · Subscriptions · Goals · Year* (`insights--line-light`
   shows all five). In the code (`insights.tsx`, `groups`), *Budgets* also holds the three food cards
   (meal, experiment, eating out), and *Year* holds *Am I saving more*, *Can I trust these numbers*
@@ -164,7 +199,7 @@ production.
 - Shared: none
 - Builder: Haiku, S
 
-### 6. `budgets`: rows break in different places, repeat their group, and don't look tappable
+### 7. `budgets`: rows break in different places, repeat their group, and don't look tappable
 - Seen: `budgets--minted-light--p1.png`. *Meals* and *Shopping* put the amount on the name's line;
   *Drinks & desserts* is too long, so its *RM73.50 of RM150.00* drops to a line of its own and the
   row is a line taller than its neighbours. Each row under *On track* says *On track* again. Rows
@@ -189,10 +224,12 @@ production.
 - Files: `apps/web/src/blocks/charts.tsx`, `apps/web/src/screens/insights/budgets.tsx`
 - Priority: P2
 - Shared: the *Which budgets are at risk?* card on `insights` uses `BudgetMeter` too (its own *The
-  line on each bar…* note can then go).
+  line on each bar…* note can then go). In Line (`own/insights/budgets-line--viewport.png`) every row
+  happens to fit on one line, since Line's type is narrower: the uneven rows are a Minted (and large
+  text) problem, but the fix is for all looks.
 - Builder: Sonnet, M
 
-### 7. *When does the money leak?*: days numbered from the cycle's start, with no weekdays
+### 8. *When does the money leak?*: days numbered from the cycle's start, with no weekdays
 - Seen: `insights--minted-light--p2.png`. The calendar numbers its squares 1–30, but the cycle runs
   30 Sept – 29 Oct, so square *4* is 3 October. There's no weekday row, so the takeaway, *Most of
   your treats and extras land on Saturdays*, can't be checked on the chart. The grid stops at 276 px,
@@ -215,7 +252,7 @@ production.
 - Shared: none
 - Builder: Sonnet, M
 
-### 8. *Where did it go?*: names wrap, bars are squeezed, and the chip row is unexplained
+### 9. *Where did it go?*: names wrap, bars are squeezed, and the chip row is unexplained
 - Seen: `insights--minted-light--p1/p2.png`. *Phone & internet* wraps to two lines in a 34 px row
   (Minted, Instrument, Firefly, Mercury, Copper), so it crowds the row above. The name column and the
   amount column take two thirds of the width, leaving the bars about 110 px, so the differences
@@ -239,7 +276,7 @@ production.
 - Shared: none
 - Builder: Haiku, S for 2; part 1 goes with B08 · Charts
 
-### 9. `subscriptions`: the screen's figure is small, in a tile that looks like a field
+### 10. `subscriptions`: the screen's figure is small, in a tile that looks like a field
 - Seen: `subscriptions--minted-light--p1.png`. *Committed each month RM141.90* sits alone in a
   full-width tinted, bordered tile, the figure at 17 px. It reads like a filled-in input, and the
   screen's primary number is barely bigger than the names below it.
@@ -257,7 +294,7 @@ production.
 - Shared: none (if `components.md` raises the size of `StatTiles`' figure, this tile gets it too)
 - Builder: Haiku, S
 
-### 10. `subscriptions`: each card has a lopsided foot, and its second line is as loud as its name
+### 11. `subscriptions`: each card has a lopsided foot, and its second line is as loud as its name
 - Seen: `subscriptions--minted-light--p1.png`, dark too. Under each *3 matched · 1 expected* row
   there's about 16 px of empty card, against 4 px above it, so every card looks unfinished at the
   bottom. *Next renewal 20 Oct* is in the full text colour, so name and date compete. The cards are
@@ -275,7 +312,7 @@ production.
 - Shared: none
 - Builder: Haiku, S
 
-### 11. `goals`: each row is three wrapping lines of grey
+### 12. `goals`: each row is three wrapping lines of grey
 - Seen: `goals--minted-light--p1.png`. *RM2,950.00 of RM6,000.00 · in / Ryt Bank* breaks mid-phrase;
   *Needs RM610.00 a cycle to be done / by 15 Mar* wraps again; each row is four or five lines of
   13 px muted text with a single amount picked out. Nothing says whether a goal will make it, which is
@@ -296,7 +333,7 @@ production.
 - Shared: none
 - Builder: Sonnet, M (1 and 2 alone are Haiku, S)
 
-### 12. `goal`: says the same things twice, and pads the header with *A goal*
+### 13. `goal`: says the same things twice, and pads the header with *A goal*
 - Seen: `goal--minted-light--p1.png`. *49%* in the ring and again in *of RM6,000.00 · 49% saved*;
   *RM6,000.00* in the header and again as the *Target* fact; the header's source line reads *A
   goal*. The fact grid has five facts, so *Kept in* and *Median surplus* each sit alone on a row with
@@ -319,7 +356,7 @@ production.
 - Shared: none
 - Builder: Haiku, S
 
-### 13. `insights/year`: October is half a month drawn like a whole one, and *Jan* is said twice
+### 14. `insights/year`: October is half a month drawn like a whole one, and *Jan* is said twice
 - Seen: `insights_year--minted-light--p1.png`. Ten bars, October the accent and visibly lower than
   most, but October isn't over (today is in the cycle), so it reads as a good month. No median line
   to judge the months against. The tile *Heaviest month: Jan* repeats the takeaway right above it
@@ -340,7 +377,45 @@ production.
 - Shared: none
 - Builder: Haiku, S (the outline bar goes with B08)
 
-### 14. `insights@empty`: no way forward, and a picker with nothing to pick
+### 15. Bars over time: the *Median* and *Limit* labels sit on the bars, crossed by their own line
+- Seen: `own/insights/insights-step5--viewport.png`: *Median RM1,237.95* is written over the April
+  bar with the dashed line running through the words; *Median RM41.00* the same in *Can I trust
+  these numbers?*. `-step2--viewport-bottom.png`: *Limit 3 a week* over the Week 1 bar, struck
+  through. (In that capture a tooltip, *Week 1 · Times 5*, was left open by the capture's tap: not a
+  finding.)
+- Why it matters: the label is the only thing naming the line (patterns §4: text is never the only
+  reading, but the line's name must be readable), and words with a line through them read as
+  crossed out: *Median RM1,237.95* looks cancelled.
+- Change (block, `ColumnBars` in `blocks/charts.tsx`): drop the `label` from the `ReferenceLine`.
+  Under the chart, draw a one-line key: a 16 px dashed line in `muted-foreground` (an inline SVG,
+  `strokeDasharray="4 4"`, 2 px) and the reference's label, `text-xs text-muted-foreground`, in a
+  `flex items-center gap-1.5`, `aria-hidden` (the hidden table already gives the numbers). Change
+  the chart's top margin from 20 to 8, since nothing is drawn above the bars now. B08 · Charts keeps
+  the key when it moves the chart.
+- Files: `apps/web/src/blocks/charts.tsx`
+- Priority: P2
+- Shared: *Am I keeping my experiment?*, *Am I saving more than before?*, *Can I trust these
+  numbers?*, and `insights/year` once finding 14 adds its median
+- Builder: Haiku, S
+
+### 16. *Can I trust these numbers?*: says *this cycle* under a bar labelled *Sep*
+- Seen: `own/insights/insights-step5--viewport.png`. The last bar, in the accent, is labelled *Sep*;
+  the takeaway says *RM53.40 this cycle couldn't be matched to a payment; the middle cycle is…*.
+  The cycle running now is October (30 Sept – 29 Oct), which the cycle row says right above. *Am I
+  saving more* gets it right (*September left RM1,379.20*), because it names the cycle.
+- Why it matters: a figure tied to the wrong period is a trust problem; *the middle cycle* is jargon
+  for the median, which the line on the chart calls *Median*.
+- Change (screen, `trustCard` in `insights.tsx`): name the cycle the figure belongs to, from
+  `last.label`, as `savingCard` does: *In September's cycle, RM53.40 couldn't be matched to a payment;
+  the median is RM41.00.* Every payment matched: *Every payment in September's cycle is accounted
+  for.* Check the bar labels and takeaways on both cards say the same cycle name, and that it's the
+  cycle's own name (the one the cycle sheet lists), not the month it began in.
+- Files: `apps/web/src/screens/insights/insights.tsx`
+- Priority: P2
+- Shared: none
+- Builder: Haiku, S
+
+### 17. `insights@empty`: no way forward, and a picker with nothing to pick
 - Seen: `insights_empty--*`. *No insights yet / Your first insights show once you've a few payments.*
   No button. Above it the cycle row still offers a chevron, though there's one cycle.
 - Why it matters: an empty state has an icon, a title, one line and the action that fills it
@@ -354,7 +429,7 @@ production.
 - Shared: none
 - Builder: Haiku, S
 
-### 15. `insights`: the cycle row's title wraps, and carries its state in brackets
+### 18. `insights`: the cycle row's title wraps, and carries its state in brackets
 - Seen: `insights--firefly-light--p1.png` and dark: *October (this / cycle)* wraps to two lines
   beside *30 Sept – 29 Oct*. In the other looks it just fits.
 - Why it matters: a `NavRow` says its state on the right (patterns §7.5); a bracketed aside in a title
@@ -362,12 +437,15 @@ production.
 - Change (screen, `insights.tsx` picker `NavRow`): `title={v.cycle.label}` (*October*),
   `description={`${shortDay(start)} – ${shortDay(end)}`}`, `value={v.cycle.current ? (basis === 'pay'
   ? 'This cycle' : 'This month') : undefined}`. The row stays one line high in every look.
+  The sheet it opens (`own/insights/insights-cycle-sheet--viewport.png`) is titled *Look at*, which
+  reads as half a sentence: title it *Cycle*, keep its line *Pick the cycle the cards below are
+  about.*, and in each row say *This cycle* (or *This month*) in place of the trailing *· now*.
 - Files: `apps/web/src/screens/insights/insights.tsx`
 - Priority: P3
 - Shared: none
 - Builder: Haiku, S
 
-### 16. `insights`: the loading skeleton isn't the screen's shape
+### 19. `insights`: the loading skeleton isn't the screen's shape
 - Seen: source (`InsightsSkeleton`): a 56 px bar, then two blocks. The screen has the cycle row, the
   step row of chips, then cards; the chip row appears from nowhere when the data lands.
 - Why it matters: a skeleton is shaped like the content, so nothing jumps (patterns §7 *Loading*).
@@ -378,7 +456,7 @@ production.
 - Shared: none
 - Builder: Haiku, S
 
-### 17. App bar: *Add* sits 8 px from the edge, the cards 16
+### 20. App bar: *Add* sits 8 px from the edge, the cards 16
 - Seen: `budgets`, `subscriptions`, `goals` (Minted, both modes): the outlined *Add* pill's right edge
   is 8 px from the screen's edge; every card below is 16 px in. The back arrow is fine (its icon sits
   at the gutter).
@@ -390,13 +468,41 @@ production.
 - Shared: every screen with an app-bar action. Likely also in `components.md`: build once.
 - Builder: Haiku, S
 
-## Waiting on captures
+### 21. Insights cards: a merchant in capitals, and a converted amount shown as exact
+- Seen: `own/insights/insights-step5--viewport-bottom.png`: *GRABFOOD: 9 times, RM244.80 in all.*
+  `own/insights/insights-step3--viewport.png`, *What renews soon?*: *Claude Pro · 20 Oct RM85.10*,
+  though Claude Pro is charged in US dollars and `subscriptions` says *≈ RM85.10*.
+- Why it matters: names sent in capitals are shown in title case (patterns §2, *Names as people read
+  them*); an amount converted at a rate is an estimate and is marked as one everywhere it shows (the
+  same subscription is *≈* on its own screen).
+- Change (screen, `insights.tsx`): in `merchantsCard`, pass each label through `readableName` (the
+  helper `screens` already use for payees), in the takeaway and in `RankedBars`' rows. In
+  `renewsCard`, prefix `≈ ` to a renewal's amount when it isn't in ringgit: this needs the renewal's
+  currency on `InsightsView['renews'].next[]` (`packages/core/src/views.ts`, the fake and the API's
+  view) if it isn't there yet.
+- Files: `apps/web/src/screens/insights/insights.tsx`, `packages/core/src/views.ts`, its fake and API view
+- Priority: P3
+- Shared: none
+- Builder: Haiku, S for the name; Sonnet, S for the currency
 
-Requested in `scratchpad/polish/own/insights/requests.md`: steps 2–5 of the pager, the cycle sheet, a
-subscription's opened history, the budget sheet, and `budgets` and `goal` in Line light. Findings
-from them are added above when they arrive. In particular, the pager's pages sit in one horizontal
-track, so every page is as tall as the tallest one: a short page (*Goals*, one card) may leave a
-screen of empty space above *The year*.
+## What the extra captures showed
+
+Captured at my request, in `scratchpad/polish/own/insights/`:
+- **Pager steps 2–5** (`insights-step2…5--viewport` and `--viewport-bottom`): the blank screen above
+  *The year* on short steps (finding 4); median and limit labels crossed by their lines (15); a
+  cycle name mismatch on the trust card (16); a merchant in capitals and an unmarked conversion (21);
+  the *Open …* buttons sitting inside the chart area (finding 5, item 5). The budgets, goals,
+  food and commitments cards otherwise follow the patterns: meters in the accent, parts in
+  `chart-1`–`chart-3` in a fixed order with a legend, warnings with icons and words.
+- **The cycle sheet**: a clean list of cycles with a tick on the chosen one; only its title and the
+  *· now* need words (finding 18).
+- **A subscription's history, opened**: tidy. A status icon and word, the date, *RM85.10 of RM85.10*.
+  Nothing to change beyond finding 11.
+- **The budget sheet**: right shape (title, one line, the amount large, *Save*); its amount shows
+  Minted's gaps at their largest (finding 1).
+- **`budgets` and `goal` in Line light**: Line's rules in place of cards work; every budget row fits
+  on one line in Line's narrower type; the goal's status card loses its box and still reads. Line
+  shows a milder form of finding 1 (*RM1 ,237.95*).
 
 ## Keep
 
@@ -423,7 +529,7 @@ screen of empty space above *The year*.
 
 1. **Answer first on each question card** (D73, patterns §4 list *a question, a chart, a one-line
    takeaway*). Putting the takeaway straight under the question, then the chart, then *Ask Sen*, lets
-   a person read every answer by scrolling, with charts as the proof. Finding 4 works without it.
+   a person read every answer by scrolling, with charts as the proof. Finding 5 works without it.
 2. **A back arrow on the Insights tab** (patterns §7 *App bar*: back on every screen but Home). On a
    tab root it makes Insights look like a pushed screen. Android's own apps show no back arrow on a
    root tab; the back gesture already goes Home (§6). This reaches every tab root, so it's a frame
