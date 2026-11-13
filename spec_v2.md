@@ -1007,7 +1007,7 @@ The checks that trigger a message are deterministic SQL; the agent only writes t
 
 **The owner chooses every job's model from the admin account,** with no release and no change to Vercel's environment. `ai/models.ts` holds only the defaults Sen ships with, the list of jobs and the list of providers.
 
-- **Admin → *Models* lists each job:** Sen's chat, the researcher, each reader (receipts, templates, email, chat files), the topic writer, the review sorter, background runs, the lesson folder. Each has a provider, a model, an effort, a fallback model for a turn the first refuses or fails, and the model's price per million tokens (input, cached input, output), which AI credit charges by (D98). A known model's price is filled in; a new one's is typed.
+- **Admin → *Models* lists each job that exists in code** (a job appears when its slice is built): Sen's chat, the researcher, each reader (receipts, templates, email, chat files), the topic writer, the review sorter, background runs, the lesson folder. Each has a provider, a model, an effort, a fallback model for a turn the first refuses or fails, and the model's price per million tokens (input, cached input, output), which AI credit charges by (D98). A known model's price is filled in; a new one's is typed.
 - **It takes effect on the next call.** Each change is a new row in `model_settings`, written only through the admin's functions; the API reads the live row for a job at each call. The rows are the log: who, when, and what it replaced.
 - **The model comes from the provider's own list, or is typed,** so a new generation can be chosen the day it's out. **Effort is one scale** that code maps to each provider's own setting, offering only the levels that model has.
 - **Providers are a fixed list in code:** Anthropic, Google (Vertex) and OpenAI. Each is offered only once its data terms pass the bar (a paid API, no training on the data, zero retention, D34) and its key is in Vercel's environment, set once. A fourth provider is a code change on purpose: an address typed in admin could send every member's money data to any server, which the admin must never be able to do (D52).
@@ -1343,7 +1343,8 @@ agent_chats          id, user_id, started_at, last_message_at, closed_at (nullab
 agent_messages       id (made in the app), user_id, chat_id, role, parts (jsonb: the typed
                      parts of §12.3, in no provider's format, so cards redraw), run_id,
                      replaces_id (nullable: an edited question's earlier version),
-                     created_at                  -- a retried send is a no-op
+                     thumb (up|down, nullable: your mark on an answer, read by the weekly
+                     tidy, §12.9), created_at    -- a retried send is a no-op
 agent_files          id, user_id, message_id, storage_key (R2), content_hash, mime,
                      text (nullable: read_file's result, kept once read), created_at
                      -- files sent in the chat (D109), and files Sen made (§12.3)

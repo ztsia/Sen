@@ -276,8 +276,8 @@ title (the question), the figure or a one-line takeaway computed by code, its ch
 **Does:**
 - **Arrange.** A long-press on a card starts arranging in place: each card shows a handle, *Wide* or
   *Small*, and *Remove*, with *Done* in thumb reach. The tab row gains *Add tab*, and a tab's own menu
-  has *Rename*, *Move* and *Remove*. Every move also has a tap path. At most eight tabs, and twelve
-  cards in a tab.
+  has *Rename*, *Move* and *Remove*. Removing a tab removes its cards with it, at once, with *Undo*.
+  Every move also has a tap path. At most eight tabs, and twelve cards in a tab.
 - **Add.** A card arrives from Sen's chat (*Pin to Insights* on an answer's part, or by asking Sen),
   with a *New* mark until it's opened and a toast with *Undo*. A new card goes to the tab you're on.
 - **Reset** (the screen's menu) brings back the first four tabs and their cards, after a dialog.

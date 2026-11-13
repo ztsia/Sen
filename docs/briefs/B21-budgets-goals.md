@@ -1,6 +1,6 @@
 # B21 · Budgets, goals and buckets
 
-**Stage 5 · Insights and plans** · after: B20 · next: B22
+**Stage 5 · Insights and plans** · after: B20 · Insights, arranged · next: B22
 
 ## Goal
 

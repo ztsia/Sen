@@ -464,7 +464,7 @@ Where the money went, on a month of real data.
 ### B20 · Insights, arranged (D153)
 - **Builds:** arranging in place (move, *Wide* or *Small*, *Remove*), with a tap path for each;
   adding, renaming, moving and removing a tab; the limits (eight tabs, twelve cards); *Reset*; a card
-  added by definition, which Sen and *Pin to Insights* use from B27.
+  added by definition, the seam *Pin to Insights* (B27 · Sen's chat) and `set_card` (B28) use.
 - **Done when:** the owner rearranges Insights on the phone, and *Reset* brings the first four back.
 
 ### B21 · Budgets, goals and buckets

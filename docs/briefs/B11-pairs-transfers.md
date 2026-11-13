@@ -1,6 +1,6 @@
 # B11 · One payment, one transaction
 
-**Stage 3 · Capture to ledger** · after: B10 · next: B12
+**Stage 3 · Capture to ledger** · after: B10 · Models in admin · next: B12
 
 ## Goal
 
