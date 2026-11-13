@@ -14,6 +14,18 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 - **The polish audit is done:** seven plans in `docs/polish/` (187 findings). Of the owner's 15 calls
   in `docs/polish/decisions.md`, the re-spec answered three (6, 7, 12); twelve wait.
 
+## This session (13 Nov, branch `claude/bottom-sheet-redesign-9uv3is`): the overlays and the design pages
+
+- **Every overlay is inventoried and shot** (51: 45 sheets, 3 menus, 2 dialogs, Sen's full sheet):
+  `docs/ui/overlays/` and its page (`docs/ui/README.md`). The page carries a proposed verdict on each:
+  31 stay sheets (redrawn), 4 become menu items, 1 inline, 1 a dialog, 6 screens, 3 stand-ins left.
+  **The owner hasn't approved the verdicts.** Widening the anchored menu beyond chat messages amends
+  patterns §7 and needs a decision.
+- **Proposed, not yet recorded as a decision:** the design pages run on Fable at `high`, not `xhigh`
+  (the owner's idea; amends D154), each brief with a render, look and fix loop; and a fourth page,
+  the overlays (sheet anatomy, menu, dialog), drawn first, then Sen's chat, Insights, *Models*.
+- Polish findings the overlay redesign absorbs: components 8, 15, 21; home 17 (call 8).
+
 ## What to do next
 
 1. If the owner asks: a PR for this branch, and one for `workflow/plan-then-delegate` (plugin 1.3.0,

@@ -1,0 +1,215 @@
+<title>Sen's overlays today</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: a verdict summary, then one band per verdict, each a grid of phone thumbnails that open at full size. */
+:root {
+  --bg: #f3f5f8; --surface: #ffffff; --fg: #16202e; --muted: #5a6779; --line: #d9dfe8;
+  --accent: #1f3a5f;
+  --keep: #1f6f54; --keep-bg: #e0f1ea;
+  --menu: #7a4c0b; --menu-bg: #f8ecd4;
+  --inline: #5b3f9b; --inline-bg: #ebe5f8;
+  --dialog: #a3312b; --dialog-bg: #f9e3e1;
+  --screen: #1f5a8f; --screen-bg: #dfecf8;
+  --none: #5a6779; --none-bg: #e6eaf0;
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10151d; --surface: #19212c; --fg: #e8edf4; --muted: #9aa7b8; --line: #2c3746;
+  --accent: #9cc0ee;
+  --keep: #7fd6b4; --keep-bg: #173a2f;
+  --menu: #f0c577; --menu-bg: #40300f;
+  --inline: #c3adf5; --inline-bg: #30264d;
+  --dialog: #f3a09a; --dialog-bg: #4a1f1c;
+  --screen: #9cc8f2; --screen-bg: #1a3550;
+  --none: #9aa7b8; --none-bg: #252f3c;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #10151d; --surface: #19212c; --fg: #e8edf4; --muted: #9aa7b8; --line: #2c3746;
+  --accent: #9cc0ee;
+  --keep: #7fd6b4; --keep-bg: #173a2f;
+  --menu: #f0c577; --menu-bg: #40300f;
+  --inline: #c3adf5; --inline-bg: #30264d;
+  --dialog: #f3a09a; --dialog-bg: #4a1f1c;
+  --screen: #9cc8f2; --screen-bg: #1a3550;
+  --none: #9aa7b8; --none-bg: #252f3c;
+  color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 36px; }
+h1, h2 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; }
+h1 { font-size: 30px; line-height: 1.15; }
+h2 { font-size: 21px; }
+p { margin: 0; max-width: 65ch; }
+.lede { color: var(--muted); margin-top: 8px; }
+header { display: flex; flex-direction: column; gap: 4px; }
+.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.tally a { text-decoration: none; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.tally a:focus-visible, .card button:focus-visible, .close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tally b { font: 600 26px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.tally span { font-size: 13px; color: var(--muted); }
+.chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.v-keep { color: var(--keep); background: var(--keep-bg); }
+.v-menu { color: var(--menu); background: var(--menu-bg); }
+.v-inline { color: var(--inline); background: var(--inline-bg); }
+.v-dialog { color: var(--dialog); background: var(--dialog-bg); }
+.v-screen { color: var(--screen); background: var(--screen-bg); }
+.v-none { color: var(--none); background: var(--none-bg); }
+section { display: flex; flex-direction: column; gap: 14px; }
+.sec-head { display: flex; flex-direction: column; gap: 6px; }
+.sec-head div { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.sec-head p { color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.card button { all: unset; cursor: zoom-in; display: block; aspect-ratio: 390 / 844; background: var(--none-bg); }
+.card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.card .none { height: 100%; display: grid; place-items: center; text-align: center; padding: 12px; font-size: 12px; color: var(--muted); }
+.card .txt { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.card h3 { margin: 0; font: 600 14px/1.3 var(--body); overflow-wrap: anywhere; }
+.card .from { font-size: 12px; color: var(--muted); }
+.card .why { font-size: 13px; }
+.card .was { align-self: flex-start; margin-top: 2px; }
+.rules { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.rules ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; max-width: 70ch; }
+dialog { border: 0; padding: 0; background: transparent; max-width: min(94vw, 440px); max-height: 94vh; }
+dialog::backdrop { background: rgba(8, 12, 18, .8); }
+dialog img { display: block; max-height: 86vh; width: auto; max-width: 100%; margin: 0 auto; border-radius: 14px; }
+.close { all: unset; cursor: pointer; display: block; margin: 10px auto 0; padding: 8px 18px; border-radius: 999px; background: var(--surface); color: var(--fg); font-weight: 600; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Sen's overlays today</h1>
+    <p class="lede">Every bottom sheet, menu and dialog in the app, shot open at phone size on 13 Nov (Minted, light), with a proposed verdict on each. Tap a picture to see it at full size. Nothing here is built or decided yet.</p>
+  </header>
+
+  <nav class="tally" id="tally" aria-label="Verdicts"></nav>
+
+  <div class="rules">
+    <h2>What's wrong with the sheet itself</h2>
+    <ol>
+      <li><b>Three layers of chrome before any content:</b> a 100 px grab bar, a title row with a ✕, and a rule under it. Every sheet spends its first 90 px on them.</li>
+      <li><b>No shared inside.</b> Choices appear as edge-to-edge text rows, icon rows with chevrons, stacked buttons and chips, depending on who built the sheet. A chevron here means <i>opens a screen</i> elsewhere.</li>
+      <li><b>Categories lose their tiles.</b> The picker is 17 lines of plain text, while Add expense shows the same categories as a grid of coloured tiles.</li>
+      <li><b>Sheets for one or two choices.</b> <i>Mark this as…</i> can hold a single row. <i>Who paid?</i> holds two.</li>
+      <li><b>Chains.</b> Payment's ⋯ menu opens a sheet that opens another step: three surfaces for one action.</li>
+      <li><b>Long forms squeezed in.</b> Four sheets hit the 80% cap and scroll, with the browser's own <i>mm/dd/yyyy</i> date box inside.</li>
+    </ol>
+  </div>
+
+  <div id="sections"></div>
+</div>
+
+<dialog id="zoom" aria-label="Full size">
+  <img id="zoom-img" alt="">
+  <button class="close" id="zoom-close" type="button">Close</button>
+</dialog>
+
+<script>
+const VERDICTS = {
+  keep:   { label: 'Stays a sheet', head: 'Stays a bottom sheet, redrawn', note: 'A long list of choices, or a short form with the keyboard. These keep the sheet and get the new anatomy: a small handle, a title, one of three bodies (pick, form, read), and the main button pinned at the bottom.' },
+  menu:   { label: 'Menu', head: 'A menu beside what was tapped', note: 'Two to five actions on one thing. Three are menus already; four sheets would join them, and two of those disappear into the menu that opens them.' },
+  inline: { label: 'Inline', head: 'Inline on the screen, no overlay', note: 'A few fixed choices that fit on the form itself.' },
+  dialog: { label: 'Dialog', head: 'A centred dialog', note: 'Destructive and can\'t be undone, which is already the rule. Two are dialogs today; one sheet should be.' },
+  screen: { label: 'Own screen', head: 'A screen of its own', note: 'Long forms and photos. Patterns already say long things get a screen; these grew past it.' },
+  none:   { label: 'Left alone', head: 'Stand-ins, left alone', note: 'Placeholders for things built in later slices, and the hidden test sheet. Not worth redrawing now.' },
+};
+// id, title, opened from, verdict, why, kind today (when it differs from a sheet), no shot
+const ITEMS = [
+  ['sen-chat', 'Sen', 'Any tab: Ask Sen', 'keep', 'Full height. Redrawn on its own design page, next.'],
+  ['home-cycle', 'This cycle', 'Home: the hero figure', 'keep', 'Read-only. Rows that add up instead of tiles (your polish call 8).'],
+  ['review-category', 'Which category?', 'Review: Other…', 'keep', 'One picker, as a grid of category tiles with the current one marked.'],
+  ['txn-category', 'Which category?', 'Payment: Category', 'keep', 'The same picker.'],
+  ['confirm-category', 'Category for the whole receipt', 'Confirm: Category', 'keep', 'The same picker.'],
+  ['txn-category-scope', 'Just this one?', 'Payment: after picking a category', 'keep', 'Stays as the picker\'s second step, in the same sheet.'],
+  ['review-attach-picker', 'Attach to which payment?', 'Review: a waiting receipt', 'keep', 'One payment picker, tall, with search. Today it shows the first 30 and nothing else.'],
+  ['review-refund-picker', 'A refund of which payment?', 'Review: money in', 'keep', 'The same payment picker.'],
+  ['txn-mark-refund', 'A refund of which payment?', 'Payment: ⋯, Mark as…, Refund of…', 'keep', 'The same payment picker, opened straight from the menu.'],
+  ['confirm-match', 'Which payment is this?', 'Confirm: Done, when several payments match', 'keep', 'The same payment picker, short.', '', true],
+  ['payments-filter-cycle', 'Which cycle?', 'Payments: All cycles', 'keep', 'A pick list. All three filters stay the same kind of surface.'],
+  ['payments-filter-account', 'Which account?', 'Payments: Any account', 'keep', 'Short enough for a menu, but kept a sheet so the three filter chips behave alike.'],
+  ['payments-filter-category', 'Which category?', 'Payments: Any category', 'keep', 'The category grid, with Any category first.'],
+  ['insights-cycle-picker', 'Look at', 'Insights: the cycle row', 'keep', 'The same cycle list as Payments\' filter. Insights\' own page may move it.'],
+  ['confirm-item', 'Fix this item', 'Confirm: an item', 'keep', 'A short form. Remove this item moves out of the button stack.'],
+  ['confirm-note', 'Add a note', 'Confirm: Add a note', 'keep', 'A short form.'],
+  ['txn-note', 'Add a note', 'Payment: Note', 'keep', 'A short form.'],
+  ['receipt-note', 'Edit the note', 'Receipt: Note', 'keep', 'A short form.'],
+  ['confirm-split-who', 'Who paid?', 'Confirm: Split', 'keep', 'One split sheet with three steps and a way back inside it, the two-way choices as large choice cards.'],
+  ['confirm-split-how', 'How do you split it?', 'Confirm: Split, I paid', 'keep', 'Step two of the same sheet.'],
+  ['confirm-split-mine', 'Tick what you had', 'Confirm: Split, Just my part', 'keep', 'Step three of the same sheet.'],
+  ['split-name', 'Who had this?', 'Shared bill: Someone else…', 'keep', 'A short form.'],
+  ['split-share', 'Share this bill', 'Shared bill: Share', 'keep', 'Read-only, with one action.'],
+  ['accounts-add', 'Add an account', 'Accounts: Add', 'keep', 'A short form.'],
+  ['account-edit', 'Edit this account', 'Account: Edit', 'keep', 'A short form. Archive moves out from under Save.'],
+  ['budgets-add', 'Add a budget', 'Budgets: Add', 'keep', 'A short form.'],
+  ['budgets-edit', 'Meals (a budget)', 'Budgets: a budget', 'keep', 'A short form. Gets a real Remove instead of “type 0”.'],
+  ['categories-add', 'Add a category', 'Categories: Add a category', 'keep', 'A short form.'],
+  ['claims-sender', 'ESS email address', 'Claims: ESS email address', 'keep', 'A short form.'],
+  ['captured-heartbeat', 'Heartbeat', 'Captured on this phone: the heart', 'keep', 'Read-only.'],
+  ['capture-running-guide', 'The full guide', 'Keep Sen running: The full guide', 'keep', 'Read-only.'],
+
+  ['sen-menu', 'Sen\'s ⋯ menu', 'Sen\'s sheet: ⋯', 'menu', 'Already a menu.', 'menu'],
+  ['txn-more-menu', 'Payment\'s ⋯ menu', 'Payment: More', 'menu', 'Already a menu. Takes in the two sheets below.', 'menu'],
+  ['claims-ess-menu', 'ESS ⋯ menu', 'Claims: ESS ⋯', 'menu', 'Already a menu.', 'menu'],
+  ['scan-more', 'Add a payment', 'Tab bar: long-press Scan', 'menu', 'Three actions from a long-press: a menu rising from the Scan button itself.'],
+  ['txn-mark-kind', 'Mark this as… (money out)', 'Payment: ⋯, Mark as…', 'menu', 'A sheet holding one row. Becomes Mark as transfer in the ⋯ menu.'],
+  ['txn-mark-kind-money-in', 'Mark this as… (money in)', 'Payment: ⋯, Mark as…', 'menu', 'Three rows. Become three items in the ⋯ menu; Refund of… opens the payment picker.'],
+  ['txn-no-receipt', 'No receipt?', 'Payment: ⋯, No receipt…', 'menu', 'Two rows. Enter the items becomes a menu item; Just a note is already the Note row on the screen.'],
+
+  ['manual-paid-from', 'Paid from', 'Add expense: Paid from', 'inline', 'Four accounts fit as chips on the form, as Add a goal already does for Kept in.'],
+
+  ['member-remove', 'Remove Hui Min?', 'Member: Remove', 'dialog', 'Deletes their data and can\'t be undone. Today it\'s a sheet.'],
+  ['claims-forget-dialog', 'Forget your ESS password?', 'Claims: ESS ⋯, Forget password', 'dialog', 'Already a dialog.', 'dialog'],
+  ['settings-account-signout-everywhere', 'Sign out everywhere?', 'Account: Sign out everywhere', 'dialog', 'Already a dialog.', 'dialog', true],
+
+  ['goals-add', 'Add a goal', 'Goals: Add', 'screen', 'Four fields and a date; it scrolls at the cap.'],
+  ['subscriptions-add', 'Add a subscription', 'Subscriptions: Add', 'screen', 'Four fields and a date, at the cap.'],
+  ['members-invite', 'Invite someone', 'Members: Invite', 'screen', 'An email, a choice and six switches; it scrolls.'],
+  ['categories-detail', 'Meals (a category)', 'Categories: a category', 'screen', 'A name, three switches and its rules; it scrolls.'],
+  ['receipt-photo', 'The receipt\'s photo', 'Receipt: View photo', 'screen', 'A photo wants the whole screen and a pinch to zoom.'],
+  ['confirm-photo', 'Receipt photo', 'Confirm: View photo', 'screen', 'The same photo viewer.'],
+
+  ['claims-signin', 'Sign in to ESS', 'Claims: Sign in to ESS', 'none', 'A stand-in; the shell has its own screen for this.'],
+  ['settings-sen-calendar', 'Connect Google Calendar', 'Settings, Sen: Connect', 'none', 'A stand-in until the calendar slice.'],
+  ['account-tests', 'Tests', 'Account: long-press Version', 'none', 'Hidden, for trying the shell.'],
+];
+const WAS = { menu: 'a menu today', dialog: 'a dialog today' };
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const tally = document.getElementById('tally'), sections = document.getElementById('sections');
+sections.style.cssText = 'display:flex;flex-direction:column;gap:36px';
+const zoom = document.getElementById('zoom'), zoomImg = document.getElementById('zoom-img');
+document.getElementById('zoom-close').addEventListener('click', () => zoom.close());
+zoom.addEventListener('click', (e) => { if (e.target === zoom) zoom.close(); });
+
+for (const [key, v] of Object.entries(VERDICTS)) {
+  const items = ITEMS.filter((i) => i[3] === key);
+  const moved = items.filter((i) => !i[5] && key !== 'keep' && key !== 'none').length;
+  const a = el('a'); a.href = '#' + key;
+  a.append(el('b', '', String(items.length)), el('span', '', v.label + (moved && moved !== items.length ? ' (' + moved + ' new)' : '')));
+  tally.append(a);
+
+  const sec = el('section'); sec.id = key;
+  const head = el('div', 'sec-head'), row = el('div');
+  row.append(el('h2', '', v.head), el('span', 'chip v-' + key, items.length + (items.length === 1 ? ' overlay' : ' overlays')));
+  head.append(row, el('p', '', v.note));
+  const grid = el('div', 'grid');
+  for (const [id, title, from, , why, was, noShot] of items) {
+    const card = el('article', 'card');
+    const btn = el('button'); btn.type = 'button';
+    if (noShot) { btn.disabled = true; btn.style.cursor = 'default'; btn.append(el('div', 'none', 'Not shot: the made-up month has no case that opens it')); }
+    else {
+      const img = el('img'); img.src = 'shots/' + id + '.jpg'; img.alt = title + ', open'; img.loading = 'lazy';
+      btn.append(img); btn.setAttribute('aria-label', 'Show ' + title + ' at full size');
+      btn.addEventListener('click', () => { zoomImg.src = img.src; zoomImg.alt = img.alt; zoom.showModal(); });
+    }
+    const txt = el('div', 'txt');
+    txt.append(el('h3', '', title), el('div', 'from', from), el('div', 'why', why));
+    if (was) txt.append(el('span', 'chip v-none was', WAS[was]));
+    card.append(btn, txt); grid.append(card);
+  }
+  sec.append(head, grid); sections.append(sec);
+}
+</script>
