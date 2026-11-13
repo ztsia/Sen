@@ -361,9 +361,15 @@ still has *Undo*. `screens/more/txn.tsx` is the reference.
   avatar and *Looking at: Home*.
 - **Dialogs** only for something destructive that can't be undone. Everything else acts at once and
   offers *Undo*.
-- **A floating menu** (D153) is for a message in Sen's chat only: a long-press lifts the message, dims
-  the rest, and opens the menu beside it, above or below as room allows; a tap outside or back closes
-  it. It's never a bottom sheet, and TalkBack offers its items as actions.
+- **A menu** (D155) opens beside what was tapped and holds two to five actions on one thing: a ⋯
+  button's, or Scan's long-press. Never a form or a long list. A tap outside or back closes it.
+- **On a message in Sen's chat** (D153) the menu floats: a long-press lifts the message, dims the
+  rest, and opens it beside the message, above or below as room allows. It's never a bottom sheet, and
+  TalkBack offers its items as actions.
+- **Which one** (D155): a long list of choices, a short form or a read-only detail is a sheet, and its
+  steps stay inside it, never a sheet over a sheet; two or three fixed choices sit inline on the
+  screen; a long form or a photo gets a screen. The sheet's new drawing waits on its design page
+  (`docs/ui/overlays/`).
 
 ### Sen's chat (D151–D153)
 

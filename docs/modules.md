@@ -74,7 +74,10 @@ phases are still the risks to retire, and the table at the end shows where each 
 - **The polish pass.** A Fable subagent at `xhigh` audits every screen and component and writes a
   polish plan for each; it never edits. The main session turns the plans into units for Haiku and
   Sonnet builders.
-- **Three design pages** (D154), each drawn before its slice by a Fable subagent at `xhigh`, briefed
+- **The overlays** (D155, D156): their design page first (three sheet anatomies, the owner picks,
+  then the full page with the menu and dialog), then the 51 overlays rebuilt to their verdicts
+  (`docs/ui/overlays/inventory.md`). And the ESS section of Claims, redrawn on a page of its own.
+- **Three design pages** (D154), each drawn before its slice by a Fable subagent at `high` (D156), briefed
   and reviewed by the main session from the spec and `docs/screens.md`, and approved by the owner:
   Sen's chat (before B27 · Sen's chat), Insights' cards and tabs (before B20), and admin's *Models*
   (before B10 · Models in admin). Each is at true size, every state, light and dark, in the looks, and
