@@ -117,8 +117,31 @@ display changes: the stored text is what the bank sent.
 
 ## 4. Charts
 
-Charts follow the `dataviz` skill. Each card in Insights is a question, a chart, a one-line takeaway
-computed by code and *Ask Sen about this* (D73).
+Charts follow the `dataviz` skill. **One component draws every chart,** on shadcn's Chart and
+Recharts (D151), from a description as data: its kind, title, series, points, unit, a note and
+options. The screens and Sen's answers use the same one. Its thirteen kinds are in spec §9.8.
+
+### Cards (D73, D152)
+
+A card on Insights and a chart, table or figures in Sen's answer share one anatomy:
+
+1. **The title row:** the question it answers, and on a wide card where its data comes from.
+2. **The figure, or a one-line takeaway** computed by code, exact to the sen (§3).
+3. **Its change,** coloured only where up or down means good or bad.
+4. **The view:** a trend, bars, rows, a ring or a meter.
+5. ***As of*,** always last and always in the same place; a mark joins it when a refresh failed.
+
+- **Two sizes:** small, two to a row, and wide. A hole left by a move is filled by the next small
+  card, so a tab never shows an empty half row.
+- **Arranged in place** (Insights): a long-press starts it; each card shows a handle, *Wide* or
+  *Small*, and *Remove*, with *Done* in thumb reach, and the cards sway slowly. Every move also has a
+  tap path. With reduced motion nothing sways.
+- **States:** a skeleton shaped like the card on first load; on a refresh the old values stay with
+  their time; a failed refresh keeps the last good values and marks *as of*; an empty card says so in
+  its own words; a card whose data is gone goes grey, shows no figures, and offers *Ask Sen*.
+- **Pinned** from an answer, a card arrives with a *New* mark and a toast with *Undo*.
+- **Opened,** it shows its view large, its source and time, its watch when it has one, and *Ask Sen
+  about this*.
 
 ### The two ways a chart uses colour
 
@@ -150,8 +173,11 @@ them in its *Charts* section.
   Copper's verdigris stay at least 12 away: the warning and `destructive` always come with an icon and
   words, and the verdigris never appears in a chart. Teal, green, orange and red were left out for
   this reason, and a fourth hue couldn't be found that passed every pair in every look.
-- **At most three series.** A fourth thing folds into *Other*, in `chart-context`. That covers every
-  chart in spec §9.3: the most it needs is *fixed costs · spent · left*.
+- **At most three series, until B08 · Charts widens it to six (D152).** A fourth thing folds into
+  *Other*, in `chart-context`. Sen's answers and stacked charts need more, so B08 · Charts extends the
+  palette to six slots and re-runs every check above in all twelve. A fourth hue didn't pass every
+  pair in every look when three were chosen; if six can't, the slice reports what passes and the
+  owner decides.
 - **Categories have no colour of their own.** A chart names categories in words; a chart of
   categories is one series, in the accent and the grey (*Where did it go?*). A category's colour would
   have to come from three hues across eighteen categories, so two would always share.
@@ -171,12 +197,16 @@ them in its *Charts* section.
   colour between neighbouring fills; markers at least 8 px with a 2 px ring of the card's colour. A
   tick or marker over a bar (*typical*, *the cycle so far*) is `foreground` with a ring of the card's
   colour, so it shows on any bar.
-- Grid lines and axes in `border` and `muted-foreground`, recessive. One axis, never two.
+- Grid lines and axes in `border` and `muted-foreground`, recessive. One axis; a second only on bars
+  with a line whose units differ (spec §9.8).
 - Two or more series always have a legend, and direct labels where there's room. Text is never in a
   series colour: it stays in `foreground` or `muted-foreground`.
 - **Bars over time and goal meters.** One bar for each cycle, week or month (`ColumnBars`): the latest in the accent, the rest in the grey, with a dashed `muted-foreground` line for a median or a limit, named on the line. A goal's meter (`GoalMeter`) fills in the accent with no cycle tick and never takes the warning colour: a goal that's behind isn't an alarm.
-- **Touch, not hover:** a tap or drag on a chart shows its values in a tooltip; the takeaway line
-  under it says the answer in words, so the chart is never the only way to get it.
+- **Touch, not hover (D152):** a tap or drag on a chart shows the exact amount and holds it; a second
+  tap opens the payments behind it; a tap on the legend hides a series; a switch changes the range.
+  The takeaway line says the answer in words and the chart's table sits behind it, so the chart is
+  never the only way to get it.
+- **An estimate is dashed,** apart from the fact it continues: a prediction is never drawn as one.
 - The context grey sits below 3:1 against the card on purpose. It's recessive, so it never carries
   meaning alone: the legend or a direct label names it.
 
@@ -331,6 +361,24 @@ still has *Undo*. `screens/more/txn.tsx` is the reference.
   avatar and *Looking at: Home*.
 - **Dialogs** only for something destructive that can't be undone. Everything else acts at once and
   offers *Undo*.
+- **A floating menu** (D153) is for a message in Sen's chat only: a long-press lifts the message, dims
+  the rest, and opens the menu beside it, above or below as room allows; a tap outside or back closes
+  it. It's never a bottom sheet, and TalkBack offers its items as actions.
+
+### Sen's chat (D151–D153)
+
+Built from shadcn's AI Elements, each customised in place like any shadcn component (`docs/screens.md`,
+`sen`).
+
+- **Your turn is a bubble on the right; Sen's is full width with no bubble.** Each part of an answer
+  is its own card, in the card anatomy of §4.
+- **The steps line** is one line per step while Sen works, then folds by itself into one line that
+  names what was read.
+- **The proposal is the only raised, outlined card in the chat,** with its buttons in thumb reach.
+- **Chips wrap, never scroll sideways:** a sideways swipe belongs to back and to reply.
+- **Sen's avatar travels with the answer:** one glide to where the work is, calm, and a cut with
+  reduced motion (§8). Only one avatar ever moves.
+- **A figure Sen couldn't trace** takes a dotted underline in the warning colour.
 
 ### Toasts and undo
 
@@ -452,8 +500,9 @@ Sen is a web app, but it must never feel like a website, in the shell or in a br
 - **No browser pull-to-refresh or bounce.** `html, body { overscroll-behavior: none }`; the page
   stays fixed and each screen scrolls inside it (`overscroll-behavior-y: contain`), so lists keep
   Android's stretch.
-- **No long-press menus or link previews.** `-webkit-touch-callout: none`, and `contextmenu` is
-  cancelled everywhere except text. Scan's own long-press (§6) stays.
+- **No browser long-press menus or link previews.** `-webkit-touch-callout: none`, and `contextmenu`
+  is cancelled everywhere except text. Sen's own long-presses stay: Scan's (§6), a message's floating
+  menu in Sen's chat, and arranging Insights' cards (§4, §7).
 - **Text is selectable only where it's text:** fields, Sen's messages, notes, notification text and
   sources (`user-select: text`); everything else is `user-select: none`. Amounts get a *Copy* button
   instead.
