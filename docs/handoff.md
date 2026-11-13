@@ -2,48 +2,53 @@
 
 ## Where things stand (13 Nov)
 
-B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. The re-spec carries on
-with the owner on branch `ccr-55173031-oa1xly` (no PR yet).
+B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Branch
+`ccr-55173031-oa1xly` (no PR yet) holds D153, D154 and the re-spec folded into the contract.
 
-- **D152** (12 Nov), **D153** and **D154** (13 Nov): Sen's agent, chat and Insights, re-specified. **The detail
-  is in `docs/respec.md`, not yet in the spec.**
-- **D153:** every job's provider, model, effort and fallback is set on an admin *Models* screen, with
-  a *Test* against the current model; providers stay a fixed list in code and keys in Vercel.
-  Insights keeps its tabs, editable. The chat's avatar travels with the answer, on the eight states
-  already drawn. A long-press on a message opens a floating menu, never a sheet.
-- **D154:** what Sen carries (`docs/respec.md` §3): topic pages with entries added and never
-  rewritten, written by our own code, no amounts, nothing already sent ever edited. A new area's
-  design page is drawn by a Fable subagent at `xhigh`, then Sonnet builds; polish needs no design.
-- `docs/respec.md` §12 and §13 hold the chat's and the cards' design, so the spec revision has it.
-- **The polish audit is done:** seven plans in `docs/polish/` (187 findings), and the owner's 15 calls
-  with recommendations in `docs/polish/decisions.md`, unanswered.
+- **The re-spec of Sen's agent, chat and Insights is in the spec** (2.12: §9.3, §9.8, §12, §15, §16),
+  `docs/screens.md`, `docs/flows.md`, `docs/ui/patterns.md` (§4, §7, §10) and `docs/modules.md`.
+  `docs/respec.md` is gone.
+- **The slice map gained five slices:** B10 · Models in admin, B20 · Insights, arranged, B27 · Sen's
+  chat, B27 · What Sen carries, B29 · Watches and scheduled reports. B08 · Charts widened to the one
+  chart component with thirteen kinds. Every brief it touches is revised or written.
+- **The polish audit is done:** seven plans in `docs/polish/` (187 findings). Of the owner's 15 calls
+  in `docs/polish/decisions.md`, the re-spec answered three (6, 7, 12); twelve wait.
 
 ## What to do next
 
-1. **Ask the owner whether the re-spec is complete.** `docs/respec.md` §1–13 are decided; §14 is what
-   the spec revision settles. It's a design conversation: short messages, multiple choice, a
-   recommendation each time.
-2. **Then fold it into the contract:** `spec_v2.md` (§9.3, §12, §15, §16, and the admin's routes and
-   screen), `docs/screens.md`, `docs/ui/patterns.md` (§4, and §8's long-press line), `docs/modules.md`
-   and the briefs it touches (B08 · Charts' first), and delete `docs/respec.md`.
-3. If the owner asks: a PR for this branch, and one for `workflow/plan-then-delegate` (plugin 1.3.0,
+1. If the owner asks: a PR for this branch, and one for `workflow/plan-then-delegate` (plugin 1.3.0,
    on `ztsia/workflow`).
-4. **B08 · Charts** (`docs/briefs/B08-charts.md`), branch `B08/charts` from `main`, once its brief
-   matches `docs/respec.md` §5: write `docs/plans/B08-charts.md`, build the seam, brief the rest.
-5. Then **B09 · Template engine** (`docs/briefs/B09-template-engine.md`): it maps `{account}` names
+2. **B08 · Charts** (`docs/briefs/B08-charts.md`), branch `B08/charts` from `main` once this branch
+   is merged: write `docs/plans/B08-charts.md`, build the seam, brief the rest.
+3. **The three design pages** (D154, `docs/modules.md`), each before its slice: admin's *Models*
+   (before B10 · Models in admin), Insights' cards and tabs (before B20), Sen's chat (before B27 ·
+   Sen's chat). A Fable subagent at `xhigh` draws each from the spec and `docs/screens.md`; the main
+   session briefs and reviews it; the owner approves; its source goes in `docs/ui/`.
+4. Then **B09 · Template engine** (`docs/briefs/B09-template-engine.md`): it maps `{account}` names
    (all to the app's one account, D145) and decides what happens to an un-chosen app's account.
+
+## Settled by the session while folding (the owner may change any)
+
+- A watch you set yourself doesn't use Sen's one push a day.
+- A long chat closes early at about 20,000 tokens; the topic list holds 60, and a topic untouched for
+  six months is archived. Insights holds at most eight tabs, twelve cards a tab.
+- `model_settings` and `skill_lessons` are rows owned by the admin, read through one narrow function,
+  so every table still has `user_id` and RLS. The rate card moved from code to those rows.
+- *Test* runs on the server's job runner. The prompt and tools target is about 12k, not 9k.
+- The avatar's eight states mapped to chat events (`docs/screens.md`, `sen`).
 
 ## Waiting on the owner (don't build)
 
-- **The polish pass:** the 15 calls. The re-spec overtakes a few (amount styling, the goal ring,
-  Insights' cards), so answer them after it. Then `docs/plans/polish.md`: shared units first, then
+- **The polish pass:** the twelve calls. Then `docs/plans/polish.md`: shared units first, then
   screens, built by Haiku and Sonnet builders on the owner's go.
-- **Nothing from D152 is built** until the spec carries it and its slices are mapped.
+- **Six series colours** (D152) may not exist: when three were chosen, a fourth hue didn't pass every
+  pair in every look (patterns §4). B08 · Charts tries, and reports back if six can't pass.
 
 ## Open with the owner
 
 - Phone steps for B08 (`docs/local.md` steps 1–9); plugin 1.3.0 to merge and move to (`docs/local.md`).
 - B06's F1 and F2 (the owner's call); the B08 lessons for `ztsia/workflow` (`docs/local.md`).
+- Spec Q31: do OpenAI's data terms pass the bar? Until checked, OpenAI stays off in *Models*.
 
 ## Follow-ups, not yet in a slice
 
@@ -52,8 +57,6 @@ with the owner on branch `ccr-55173031-oa1xly` (no PR yet).
 - Names accept zero-width characters (QA B08 run 4, note 9).
 - QA tooling: ignore Chromium's *cross-world service worker* console warning; record which signal set
   each step's settle time; the core journey's scan-after step races; `mutants.mjs` has no e2e suite.
-- Shared transitions (eyes, B08 run 4): skeletons over data already shown, sheets that cut out, first
-  run's *Suggested* card jumping; Members → *Remove*'s toast over its dialog. The polish pass covers these.
 - Earlier: B07 QA 14 and notes 7–9 (`qa/B07/ledger.md`); no Kotlin breakage checks.
 
 ## Environment notes
@@ -68,5 +71,5 @@ with the owner on branch `ccr-55173031-oa1xly` (no PR yet).
 
 - D129–D154. Radix stays; charts in D151's order; no advisor. Sen's chat starts on Haiku, one
   conversation, no RAG; Sen reads data through its tools, never SQL of its own, and no Python.
-  Models change in admin, providers only in code. Notes are topic pages, by our own
-  code, never a provider's compaction. Deploys happen only by merge (D122).
+  Models change in admin, providers only in code. Notes are topic pages, by our own code, never a
+  provider's compaction. Deploys happen only by merge (D122).
