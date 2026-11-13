@@ -62,8 +62,9 @@ Any payment can be fixed, noted, marked, deleted or undone, and a missed one can
     under the thumb. If the model answers late, its guesses replace history's in that payment's
     *Review* row.
   - Each call is recorded in `ai_usage` (purpose `category`) and checked against the daily ceiling.
-  - Pick the model with a small benchmark on made-up Malaysian merchant names, and record it in
-    `ai/models.ts`.
+  - Pick the model with a small benchmark on made-up Malaysian merchant names, and record it as
+    the `category` job's default in `ai/models.ts`; the call goes through the resolver, so admin's
+    *Models* can change it (D153, B10 · Models in admin).
   - **A guess is only a button.** The tap makes the rule; the model never sets a category.
 - **Answering from the notification** works with the app closed. The category and the new rule go
   into the outbox.
