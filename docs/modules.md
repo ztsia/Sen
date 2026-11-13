@@ -1,6 +1,6 @@
 # Modules: the slice map
 
-**Status: agreed with the owner on 8 Oct 2026 in `S3` (D111).** It's the contract once its PR is
+**Status: agreed with the owner on 8 Oct 2026 in `S3` (D111); re-cut for the re-spec on 13 Nov (D152–D154).** It's the contract once its PR is
 merged. Each slice has a brief in `docs/briefs/`, which is what its session starts from.
 
 This file cuts `spec_v2.md` into **build slices**, built **one at a time, in this order**. Each slice
@@ -28,6 +28,7 @@ phases are still the risks to retire, and the table at the end shows where each 
 | B08 | Charts on shadcn's Chart (D151) | [B08](briefs/B08-charts.md) |
 | B09 | The template engine | [B09](briefs/B09-template-engine.md) |
 | B10 | New wording: drafting and booking | [B10](briefs/B10-drafting.md) |
+| B10 | Models in admin (D153) | [B10](briefs/B10-models-admin.md) |
 | B11 | One payment, one transaction | [B11](briefs/B11-pairs-transfers.md) |
 | B12 | Categories that stick | [B12](briefs/B12-categories.md) |
 | B13 | Home, pay cycles and balance checks (daily use starts) | [B13](briefs/B13-home-cycles-balances.md) |
@@ -39,7 +40,8 @@ phases are still the risks to retire, and the table at the end shows where each 
 | B18 | Split links and paying friends | [B18](briefs/B18-split-links.md) |
 | B19 | Receipts by email | [B19](briefs/B19-email-receipts.md) |
 | | **5 · Insights and plans** | |
-| B20 | Insights | [B20](briefs/B20-insights.md) |
+| B20 | Insights: its data and cards | [B20](briefs/B20-insights.md) |
+| B20 | Insights, arranged (D153) | [B20](briefs/B20-insights-arranged.md) |
 | B21 | Budgets, goals and buckets | [B21](briefs/B21-budgets-goals.md) |
 | B22 | Subscriptions and exchange rates | [B22](briefs/B22-subscriptions.md) |
 | B23 | Widgets | [B23](briefs/B23-widgets.md) |
@@ -48,13 +50,16 @@ phases are still the risks to retire, and the table at the end shows where each 
 | B25 | Claims | [B25](briefs/B25-claims.md) |
 | B26 | The claim pack and reliefs | [B26](briefs/B26-claim-pack-reliefs.md) |
 | | **7 · Sen** | |
-| B27 | Sen's harness and answers | [B27](briefs/B27-sen-harness.md) |
+| B27 | Sen's harness and reading | [B27](briefs/B27-sen-harness.md) |
+| B27 | Sen's chat | [B27](briefs/B27-sen-chat.md) |
+| B27 | What Sen carries (D154) | [B27](briefs/B27-sen-carries.md) |
 | B28 | Proposals and chores | [B28](briefs/B28-proposals-chores.md) |
-| B29 | Check-ins, experiments and closing the gap | [B29](briefs/B29-checkins.md) |
+| B29 | Check-ins, limits and closing the gap | [B29](briefs/B29-checkins.md) |
+| B29 | Watches and scheduled reports (D152) | [B29](briefs/B29-watches-reports.md) |
 | B30 | Payday plan, look-back and projection | [B30](briefs/B30-payday-plan.md) |
 | B31 | Files in the chat | [B31](briefs/B31-files-in-chat.md) |
 | B32 | Research | [B32](briefs/B32-research.md) |
-| B33 | Sen's advice (P6b) | [B33](briefs/B33-advice.md) |
+| B33 | Sen's advice and lessons (P6b) | [B33](briefs/B33-advice.md) |
 | | **8 · ESS on the phone** | |
 | B34 | The ESS engine and filing | [B34](briefs/B34-ess-engine.md) |
 | B35 | The payslip on payday | [B35](briefs/B35-payslip.md) |
@@ -69,8 +74,15 @@ phases are still the risks to retire, and the table at the end shows where each 
 - **The polish pass.** A Fable subagent at `xhigh` audits every screen and component and writes a
   polish plan for each; it never edits. The main session turns the plans into units for Haiku and
   Sonnet builders.
-- **Sen's agent, chat and Insights, re-specified** (D152). Decided in `docs/respec.md`; folding it
-  into the spec, the screens and this map comes next, and its slices are cut then.
+- **Three design pages** (D154), each drawn before its slice by a Fable subagent at `xhigh`, briefed
+  and reviewed by the main session from the spec and `docs/screens.md`, and approved by the owner:
+  Sen's chat (before B27 · Sen's chat), Insights' cards and tabs (before B20), and admin's *Models*
+  (before B10 · Models in admin). Each is at true size, every state, light and dark, in the looks, and
+  its source lives in `docs/ui/` like every published page. Sonnet builds from the approved page;
+  builders never design as they build.
+
+The re-spec of Sen's agent, chat and Insights (D152–D154) is in the spec (2.12), and its slices are
+cut below: B08 · Charts, B10 · Models in admin, both B20s, the three B27s, B28, both B29s and B30–B33.
 
 ## How the cut was made
 
@@ -272,12 +284,17 @@ Notifications become categorised transactions. **Daily use starts at the end of 
   - `accounts` and `account` made real, plus Settings → *Categories* and → *You*.
 - **Done when:** you finish first run on the phone, and each account shows its opening balance.
 
-### B08 · Charts on shadcn's Chart (D151)
-- **Builds:** every chart in `blocks/charts.tsx`, and the goal ring, moved onto shadcn's Chart and
-  Recharts; the meters onto `Progress`; the spending calendar stays hand-drawn. Recharts in its own
-  chunk. The first slice built as a plan in units.
-- **Done when:** every screen reads as before in all twelve look-and-mode pairs, the first screen's
-  code didn't grow, and QA's full run says ship.
+### B08 · Charts on shadcn's Chart (D151, D152)
+- **Builds:**
+  - The one chart component of spec §9.8 on shadcn's Chart and Recharts: a chart described as data,
+    its thirteen kinds, each in the gallery; the spending calendar stays hand-drawn inside it.
+  - Its interactions: a tap holds the exact amount, a second tap opens what's behind it, the legend
+    hides a series, a switch changes the range, and its table sits behind it.
+  - The palette widened from three series colours to six, checked in all twelve (patterns §4).
+  - Every chart in `blocks/charts.tsx`, and the goal ring, moved onto it; the meters onto `Progress`.
+    Recharts in its own chunk. The first slice built as a plan in units.
+- **Done when:** every screen reads as before in all twelve look-and-mode pairs, every kind draws
+  from data alone in the gallery, the first screen's code didn't grow, and QA's full run says ship.
 
 ### B09 · The template engine
 - **Builds:**
@@ -305,6 +322,19 @@ Notifications become categorised transactions. **Daily use starts at the end of 
   - on the phone, a real payment with new wording books within a minute of sync
   - *Yes* and *No* both work
 - **Real transactions start here.**
+
+### B10 · Models in admin (D153)
+- **Builds:**
+  - `model_settings`, and the one resolver every model call goes through: the live row for its job,
+    else `ai/models.ts`' default. B10's drafting call moves onto it.
+  - Admin → *Models* (`settings/models`): each job's provider, model, effort, fallback and price; the
+    provider's own list of models, or one typed; the log of changes; one-tap revert.
+  - *Test*: the job's golden set run on a candidate by the job runner, in batches, shown beside the
+    current model's score, cost and speed.
+  - The fixed list of providers, each off until its key is set and its data terms pass (Q31).
+- **Done when:** the owner changes the drafting model from the phone with no release, a test shows
+  both models side by side, a revert restores the last one, and nobody but the admin can read or
+  write a setting.
 
 ### B11 · One payment, one transaction
 - **Builds:**
@@ -419,13 +449,23 @@ What the money bought, and who it was for. It comes before Insights because both
 
 Where the money went, on a month of real data.
 
-### B20 · Insights
+### B20 · Insights: its data and cards
 - **Builds:**
+  - The described data model and the code that builds every query from it, run as the person,
+    read-only, with periods as tokens (§12.3): the datasets Insights needs. `saved_queries`, and
+    `/queries/:id/run`. B27 widens it to every dataset.
   - The cycle views, 12-month medians and the takeaways code writes.
-  - The cards: on track, where it went, when the money leaks, the small things, meals, eating out,
-    saving more than before, trusting the numbers, top merchants, and `insights/year` (§9.3).
+  - `insight_tabs` and `insight_cards`, seeded with the four tabs and their cards (§9.3), each a
+    card definition; the card's anatomy, sizes and states (patterns §4); `insights/card`.
   - `payments` filtered from a category. Q15 (a meal and a drink in one item).
-- **Done when:** one month's figures match a hand check (P5's bar).
+- **Done when:** one month's figures match a hand check (P5's bar), and every seeded card is drawn
+  from its definition alone.
+
+### B20 · Insights, arranged (D153)
+- **Builds:** arranging in place (move, *Wide* or *Small*, *Remove*), with a tap path for each;
+  adding, renaming, moving and removing a tab; the limits (eight tabs, twelve cards); *Reset*; a card
+  added by definition, which Sen and *Pin to Insights* use from B27.
+- **Done when:** the owner rearranges Insights on the phone, and *Reset* brings the first four back.
 
 ### B21 · Budgets, goals and buckets
 - **Builds:**
@@ -481,59 +521,106 @@ built once with claims and correct income already there; the ESS adapter waits u
 The agent, built once, on data and views that already exist. Its model is chosen on 20 real
 questions over at least a month of your data (§12.6).
 
-### B27 · Sen's harness and answers
+### B27 · Sen's harness and reading
 - **Builds:**
-  - The loop (`ToolLoopAgent`), the main prompt, skills with `activeTools`, and the always-on tools,
-    `calc` included (D108).
-  - Messages as parts, runs and steps, streaming, and continuations.
-  - The figure check, with *not checked* in the chat.
-  - The rolling summary through the `summariser` subagent, and `search_messages`.
+  - The loop (`ToolLoopAgent`), the main prompt in §12.5's order, every tool declared on every call,
+    and skills that add instructions only.
+  - The reading tools over the whole data model (`totals`, `rows`, `record`), results kept on the
+    server by id, `calc` grown (D108, D152), and the unanswered questions' shapes (`agent_gaps`).
+  - Answers as typed parts, stored as sent; runs and steps, streaming, continuations, one run at a
+    time per person.
+  - The figure check: figures by reference, traced and *not checked*.
   - The AI credit check before every call.
-  - The `sen` sheet made real, with UI tools and avatar states. The `answers` and `memory` skills,
-    *Ask Sen about this*, and the island's *Sen working*.
-  - Suggestions when Sen opens that fit the screen it was opened from (D135).
-- **Done when:** 20 real questions are answered correctly against SQL truth, and the main model is
-  chosen (decision recorded).
+  - The `answers` skill with its worked examples.
+- **Done when:** the table of questions, the exact call expected and the result passes on made-up
+  data with traps (transfers, refunds, splits); 20 real questions are answered correctly against SQL
+  truth; the rules hold however they're pushed; and the chat job's default model is chosen (decision
+  recorded).
+
+### B27 · Sen's chat
+- **Builds:**
+  - The `sen` sheet made real from shadcn's AI Elements, to its approved design page: a turn's shape,
+    the steps line, each part's card (text, chart, table, figures, question, button, follow-ups,
+    saved, notice), a figure's tap, the composer with *Stop*, reply and versions, starters.
+  - Sen's avatar travelling with the answer, on the eight states, with their spoken lines.
+  - A message's floating menu, with *Pin to Insights*.
+  - *Ask Sen about this*, starters that fit the screen it was opened from (D135), and the island's
+    *Sen working*.
+- **Done when:** the owner asks five real questions on the phone and every part reads and acts as
+  drawn, in all six looks.
+
+### B27 · What Sen carries (D154)
+- **Builds:**
+  - Chats that close after an hour's quiet or at their size limit, and the one-off job that runs the
+    `topic-writer`; topic pages with entries added and never rewritten; open threads; the timeline.
+  - What each call holds, in §12.8's order, with nothing already sent ever edited; code loading a
+    topic's page; `recall`.
+  - Memory, told and learned, and the weekly tidy; `agent/memory`; deleting a message; *Clear
+    everything*; what was deleted never learned again.
+- **Done when:** the made-up year of chat with its trap questions passes, each call's size and cache
+  use is measured against §12.8's targets (Q32), and the owner reads and deletes what Sen keeps.
 
 ### B28 · Proposals and chores
 - **Builds:**
-  - `agent_proposals`, with `/proposals/:id` applying and undoing through code.
+  - A tool per thing Sen can change, each carrying the app's own command (§12.3); `agent_proposals`
+    with its dedupe key and its effect worked out by code; `/proposals/:id` applying and undoing
+    through the app's write interface; *Change…*; many payments changed as one card.
+  - Sen's own things, set at once with a *Saved* line and *Undo*: `set_card` here; the rest with
+    their slices.
   - Skills: `merchant-rules`, `budgets`, `goals-buckets`, `subscriptions`, `promises` (with their
     morning chase), `owed`, `claims`, and *Describe it to Sen* for schemes.
   - `review-sorter` runs nightly; Review's *Apply all*.
-- **Done when:** each kind of proposal applies and undoes, logged as Sen's, and a night's sorting
-  clears a real backlog.
+- **Done when:** each kind of proposal shows its effect, applies and undoes, logged as Sen's; nothing
+  on the *never by Sen* list can be proposed; and a night's sorting clears a real backlog.
 
-### B29 · Check-ins, experiments and closing the gap
+### B29 · Check-ins, limits and closing the gap
 - **Builds:**
   - `get_checkin_signals`, the 21:00 job (no signals, no call), and `post_checkin`'s one-push rule.
   - Home's note, and the Sunday summary.
-  - `hold-to-word` experiments, counted by code.
+  - `hold-to-word` limits, counted by code, and the line on a payment's notification saying where
+    you stand (§12.4).
   - `close-the-gap`, opening `manual` filled in.
 - **Done when:** a week of check-ins you didn't mute (P6's bar).
+
+### B29 · Watches and scheduled reports (D152)
+- **Builds:** `watches`, checked by code at capture and each morning, with a test run when made and
+  one push when fired; `reports`, each run a fresh Sen run that posts; `set_watch` and `set_report`
+  with the `watches-reports` skill; `agent/watches`; the native *A watch fired* notification.
+- **Done when:** a watch the owner sets in their own words fires once on a real payment, and a
+  Sunday report arrives by itself.
 
 ### B30 · Payday plan, look-back and projection
 - **Builds:**
   - `get_payday_plan` in SQL; plan items ticked by matching; plan progress on Home.
-  - The look-back with one experiment, and `afford-it`.
+  - The look-back with one experiment, and `afford-it` with its playground; the plan as a checklist
+    part (§12.3).
   - The *Payday* card's steps 3 and 4, and the island's *Payday moves*.
 - **Done when:** a real payday runs the whole card, and the plan ticks itself as its transfers land.
 
 ### B31 · Files in the chat
-- **Builds:** the clip button and *Ask Sen* in the share sheet, `agent_files` and `read_file`, and
-  figures marked *from your file* (D109). `add_to_calendar` and the `calendar` skill.
-- **Done when:** Sen answers from a sent PDF, with its figures traced to the file.
+- **Builds:** the composer's plus and *Ask Sen* in the share sheet, `agent_files` and `read_file`, and
+  figures marked *from your file* (D109). Files Sen makes: Excel with real formulas, and CSV, built
+  by code from a result (§12.3). `add_to_calendar` and the `calendar` skill.
+- **Done when:** Sen answers from a sent PDF, with its figures traced to the file, and a table
+  downloads as a spreadsheet whose formulas add up.
 
 ### B32 · Research
-- **Builds:** the `researcher` subagent with grounding, a question code has checked for amounts,
-  sources stored by their final address, shown unedited and opened in the browser, `research_briefs`,
-  confirming figures into `products`, and `agent/research`. Q24.
-- **Done when:** a researched question shows dated sources, and only confirmed figures reach code.
+- **Builds:** the one `research(goal)` tool and the `researcher` subagent with grounding; ledger
+  figures rounded by code, with account numbers and names stripped, before a search (D152); a long
+  question running in the background and posting a brief; sources stored by their final address,
+  shown unedited and opened in the browser; `research_briefs`; confirming figures into `products`;
+  and `agent/research`. Q24.
+- **Done when:** a researched question shows dated sources, no search carries an exact ledger figure,
+  an account number or a name, and only confirmed figures reach code.
 
-### B33 · Sen's advice (P6b)
-- **Builds:** `rate-watcher` with its monthly re-check, `product-advisor` with `compare_products`, and
-  `left-on-table`.
-- **Done when:** each answers from confirmed products and real spending, with code's figures only.
+### B33 · Sen's advice and lessons (P6b)
+- **Builds:**
+  - `rate-watcher` with its monthly re-check and `product-advisor` with `compare_products`, each a
+    goal for `research`; `left-on-table`; the comparison part.
+  - Shared lessons (§12.9): `note_lesson`, the `lesson-folder`, `skill_lessons` behind the eval gate,
+    and admin's list of lessons with *Undo* and of gaps.
+- **Done when:** each answers from confirmed products and real spending, with code's figures only;
+  and a folded lesson that lowers the test score doesn't go live.
 
 ## Stage 8 · ESS on the phone
 
@@ -579,7 +666,8 @@ The adapter, once Q29 is answered by the laptop capture (D110).
 - **Builds:**
   - Inviting, accepting (the `invited` journey) and the short first run.
   - Switches, enforced in the API.
-  - The `ai_credit_entries` ledger and the versioned rate card (D98), plus `agent/usage`.
+  - The `ai_credit_entries` ledger, charging by `model_settings`' prices (D98, D153), plus
+    `agent/usage`.
   - `Members`: credit, shell seats, *Suspend*, and *Remove* after offering their export.
 - **Done when:** a test friend, invited, sees only their own data and spends their own credit, and
   the admin can't read their money.
@@ -602,7 +690,7 @@ The adapter, once Q29 is answered by the laptop capture (D110).
 |---|---|
 | P1 listener spike | B02 (kept, not thrown away) |
 | P2 foundations | B01, B05, B06, B07 |
-| P3 core tracking | B08–B13 |
+| P3 core tracking | B08–B13 (with B10 · Models in admin) |
 | P4 receipts | B15–B18 |
 | P5 insights | B19–B23 |
 | P6 agent, P6b | B27–B32, B33 |
@@ -623,7 +711,7 @@ slice uses are added by that slice.
 | B07 | `bank_events`, `capture_apps`, `device_heartbeats` |
 | B08 | `accounts`, `account_names`, `categories`, `transactions` (core columns) |
 | B09 | `parse_templates` |
-| B10 | `channel_rules`, `ai_usage` |
+| B10 | `channel_rules`, `ai_usage`; `model_settings` (B10 · Models in admin) |
 | B11 | `pair_rules`, `transfer_rules` |
 | B12 | `merchant_rules`, `merchant_aliases` |
 | B13 | `balance_checks` |
@@ -632,15 +720,18 @@ slice uses are added by that slice.
 | B17 | `splits`, `split_members`, `split_picks`, `payer_names` |
 | B18 | `split_guests` |
 | B19 | `email_messages` |
+| B20 | `saved_queries`, `insight_tabs`, `insight_cards` |
 | B21 | `budgets`, `goals`, `goal_contributions` |
 | B22 | `subscriptions`, `subscription_charges` |
 | B24 | `integrations`, `calendar_events` |
 | B25 | `claim_schemes`, `claims`, `claim_items`, `claim_evidence` |
-| B27 | `agent_messages`, `agent_summaries`, `agent_runs`, `agent_steps`, `agent_memory` |
+| B27 | `agent_messages`, `agent_runs`, `agent_steps`, `agent_results`, `agent_gaps` (harness); `agent_chats`, `agent_topics`, `agent_topic_entries`, `agent_threads`, `agent_forgotten`, `agent_memory` (what Sen carries) |
 | B28 | `agent_proposals`, `promises` |
+| B29 | `watches`, `reports` |
 | B30 | `payday_plans`, `payday_plan_items` |
 | B31 | `agent_files` |
 | B32 | `products`, `research_briefs` |
+| B33 | `agent_lessons`, `skill_lessons` |
 | B34 | `ess_recipes` |
 | B35 | `payslips`, `payslip_lines` |
 | B37 | `exports` |
@@ -669,4 +760,4 @@ what's built in the spec. The owner settled two on 8 Oct.
 | B14 | **Settled (D113):** one roster for everyone, computed from the year |
 | B22 | *Fixed costs* on *How much is spoken for* are declared subscriptions due this cycle, plus the payday plan's *due* items from B30 |
 | B25 | A claim's `approved_amount` is its amount unless the owner changes it, or the approval email states an amount the parser can read |
-| B27 | The 20-question model eval runs inside the app, on an admin-only screen, because no cloud session may see real data |
+| B27 | The 20-question model eval runs inside the app, through admin's *Models* → *Test* (B10 · Models in admin), because no cloud session may see real data |
