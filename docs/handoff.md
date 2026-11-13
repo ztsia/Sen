@@ -16,15 +16,18 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 
 ## This session (13 Nov, branch `claude/bottom-sheet-redesign-9uv3is`): the overlays and the design pages
 
-- **Every overlay is inventoried and shot** (51: 45 sheets, 3 menus, 2 dialogs, Sen's full sheet):
-  `docs/ui/overlays/` and its page (`docs/ui/README.md`). The page carries a proposed verdict on each:
-  31 stay sheets (redrawn), 4 become menu items, 1 inline, 1 a dialog, 6 screens, 3 stand-ins left.
-  **The owner hasn't approved the verdicts.** Widening the anchored menu beyond chat messages amends
-  patterns §7 and needs a decision.
-- **Proposed, not yet recorded as a decision:** the design pages run on Fable at `high`, not `xhigh`
-  (the owner's idea; amends D154), each brief with a render, look and fix loop; and a fourth page,
-  the overlays (sheet anatomy, menu, dialog), drawn first, then Sen's chat, Insights, *Models*.
-- Polish findings the overlay redesign absorbs: components 8, 15, 21; home 17 (call 8).
+- **D155:** which overlay holds what, menus widened (patterns §7 amended). The 51 overlays are
+  inventoried, shot and sorted: `docs/ui/overlays/` (`inventory.md`, its page in `docs/ui/README.md`).
+  The owner approved the split: 31 stay sheets, 4 fold into menus, 1 inline, 1 dialog, 6 screens.
+- **D156:** design pages run on Fable at `high`, each brief with a render, look and fix loop. Order:
+  overlays, Sen's chat, Insights, *Models*; the ESS section of Claims alongside.
+- **Being drawn (not yet reviewed or published):** `docs/ui/overlays/design.html` (three sheet
+  anatomies, the menu, the dialog; the owner picks one, then it's drawn in full) and
+  `docs/ui/claims-ess/design.html` (two redesigns of the ESS section). When each is back: review it
+  against its brief, publish it, add it to `docs/ui/README.md`, ask the owner to choose.
+- **Then:** brief Sen's chat page on the chosen sheet; then Insights; then *Models*. Nothing is built
+  from a page until the owner approves it. The overlay rebuild is a unit plan after approval
+  (`docs/modules.md`, *Waiting on the owner's go*); it absorbs polish components 8, 15, 21 and home 17.
 
 ## What to do next
 
@@ -34,7 +37,7 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
    is merged: write `docs/plans/B08-charts.md`, build the seam, brief the rest.
 3. **The three design pages** (D154, `docs/modules.md`), each before its slice: admin's *Models*
    (before B10 · Models in admin), Insights' cards and tabs (before B20), Sen's chat (before B27 ·
-   Sen's chat). A Fable subagent at `xhigh` draws each from the spec and `docs/screens.md`; the main
+   Sen's chat). A Fable subagent at `high` (D156) draws each from the spec and `docs/screens.md`; the main
    session briefs and reviews it; the owner approves; its source goes in `docs/ui/`.
 4. Then **B09 · Template engine** (`docs/briefs/B09-template-engine.md`): it maps `{account}` names
    (all to the app's one account, D145) and decides what happens to an un-chosen app's account.
@@ -81,7 +84,7 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 
 ## Don't argue again
 
-- D129–D154. Radix stays; charts in D151's order; no advisor. Sen's chat starts on Haiku, one
+- D129–D156. Radix stays; charts in D151's order; no advisor. Sen's chat starts on Haiku, one
   conversation, no RAG; Sen reads data through its tools, never SQL of its own, and no Python.
   Models change in admin, providers only in code. Notes are topic pages, by our own code, never a
   provider's compaction. Deploys happen only by merge (D122).
