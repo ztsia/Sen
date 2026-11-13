@@ -1,14 +1,14 @@
 # Sen's agent, chat and Insights: the re-spec (D152)
 
-Decided with the owner on 12 Nov. **Not yet folded into the spec.** This file holds the detail until
+Decided with the owner on 12 and 13 Nov (D152, D153). **Not yet folded into the spec.** This file holds the detail until
 `spec_v2.md` (§9.3, §12, §15, §16), `docs/screens.md`, `docs/ui/patterns.md` (§4) and
 `docs/modules.md` carry it; then it's deleted. The agent isn't built yet, so nothing here changes code
-that exists. §12 lists what the spec revision still has to settle.
+that exists. §14 lists what the spec revision still has to settle.
 
 ## 1. Models
 
-- **Sen's chat runs on Claude Haiku**, through Anthropic's API. D127's check of Anthropic's data terms
-  still comes first. **No model picker** in the app.
+- **Sen's chat starts on Claude Haiku**, through Anthropic's API. D127's check of Anthropic's data
+  terms still comes first. **No model picker for members**; the admin chooses every job's model (§1.1).
 - What Haiku changes in §12.5:
   - **Every tool is declared on every call; a skill adds only instructions.** Claude caches tools,
     then the system prompt, then messages, so switching tools on per skill (`activeTools`) would throw
@@ -17,6 +17,34 @@ that exists. §12 lists what the spec revision still has to settle.
   - **The rules say they hold however the person asks,** and a test checks it: Haiku can drop a rule
     under pressure.
 - The researcher stays on Gemini with Google Search (§2). Readers and other tiers stay as §12.6 says.
+- These are the defaults Sen ships with. The context targets in §3 hold whichever model is chosen.
+
+### 1.1 Models are chosen in admin (D153)
+
+The owner changes a model, its effort or its provider from the admin account, with no release and no
+change to Vercel's environment. This replaces *code names models only in `ai/models.ts`* (D94, D107,
+D120): that file becomes the defaults, the list of jobs and the list of providers.
+
+- **An admin *Models* screen lists each job:** Sen's chat, the researcher, each reader (receipts,
+  templates, email, chat files), the diary writer, the review sorter, background runs, the pass that
+  folds lessons. Each has a provider, a model, an effort, a fallback model, and the model's price per
+  million tokens (input, cached input, output), which AI credit charges by (D98). A known model's price
+  is filled in; a new one's is typed.
+- **It takes effect on the next call.** The settings are one table for the whole app, not per person,
+  written only through the admin's functions and read by the API at each call.
+- **The model comes from the provider's own list, or is typed,** so a new generation can be chosen the
+  day it's out. **Effort is one scale** that code maps to each provider's own setting, offering only
+  the levels that model has.
+- **Providers are a fixed list in code:** Anthropic, Google and OpenAI. Each is offered only once its
+  data terms pass D34's bar and its key is in Vercel's environment, set once. A fourth provider is a
+  code change on purpose: an address typed in admin could send every member's money data to any
+  server, which the admin must never be able to do (D52).
+- ***Test* before the switch:** it runs that job's golden set (D120) on the candidate and shows its
+  score, cost and speed beside the current model's. The owner may switch whatever the score. One tap
+  reverts, and every change is logged with who and when.
+- **The researcher changes only within Google:** search with sources is a Vertex feature.
+- **A conversation survives a switch:** messages are stored in no provider's own format, and the
+  switch costs one uncached call.
 
 ## 2. Research
 
@@ -208,7 +236,10 @@ thing's own typed fields. There is no general write tool.
 ## 8. Insights as cards
 
 Insights becomes cards the person and Sen add, change, arrange and remove. It starts seeded with
-today's cards, written as the same card definitions, so nothing is lost and a reset is possible. A
+today's cards, written as the same card definitions, so nothing is lost and a reset is possible.
+**The tabs stay, and are editable too** (13 Nov): it starts with today's four (*This cycle*, *Food*,
+*Commitments*, *Over time*); the person and Sen add, rename, reorder and remove a tab and move a card
+between tabs; a reset brings back the four with their cards. A
 card is a saved query and a part (a number, numbers, a chart, a top list, a target, what needs you,
 what's coming up, the latest report, a quick question). Code refreshes it with no model, with periods
 as tokens (*this cycle*). A long-press on an answer's part pins it. Home stays as designed.
@@ -247,18 +278,65 @@ as tokens (*this cycle*). A long-press on an answer's part pins it. Home stays a
   statement check, cash shorthand, a pay-later tracker, the wait list, a payday sweep, trip mode, the
   annual-fee waiver, a split from a photo, acting on selected payments, a claim pack and tax folder.
 
-## 12. Still to settle while revising the spec
+## 12. The chat's design
 
-- **The chat's design,** from shadcn's AI Elements (D151), the owner leaving it to the session:
-  proposed are an answer shaped as verdict, evidence, then what you can do; starters taken from code's
-  signals; web answers that look different from ledger answers; *Stop*, a swipe to reply, edit with
-  versions, a long-press menu; the avatar's fixed list of states across the six looks, each with a
-  still and a spoken line.
+From shadcn's AI Elements (D151), restyled to `patterns.md`. The owner's calls on 13 Nov are the
+avatar and the long-press menu; the rest is the session's, which the owner left to it:
+
+- **Sen's avatar travels with the answer.** One avatar goes to the head of the new answer, leads its
+  steps, rides down with the text, and rests on a proposal while it waits. Earlier answers keep none.
+  When the person has scrolled away, the jump-to-latest button carries it in its current state. With
+  reduced motion it cuts instead of gliding.
+- **It uses the eight states every look already draws** (D76: resting, a new note, listening, working,
+  with helpers, answering, paused, done). Nothing is redrawn. The spec revision maps each chat event
+  to one of them and gives each a spoken line.
+- **A long-press on a message opens a floating menu beside it,** the message lifted and the rest
+  dimmed, never a bottom sheet: *Copy*, *Select text*, *Reply*, *Pin to Insights*, thumbs, *Try again*.
+  It's the chat's own menu, so §8's rule against the browser's long-press menus stands. Every item is
+  also reachable without a long-press (TalkBack's actions). Answers carry no row of buttons beneath.
+- **The shape of a turn:** the person's turns are bubbles on the right; Sen's are full width with no
+  bubble, under a head row. The steps line is open while Sen works and folds into one line that is the
+  answer's source (§4). Each part sits in its own card.
+- **The proposal is the one raised, outlined card in the chat:** what will change, field by field,
+  then *Dismiss*, *Change…* and *Apply* in thumb reach, with every state drawn (waiting, applying,
+  applied, failed, expired) before it folds to one line (§4, §7).
+- **Starters** are rows in the empty chat, taken from code's signals. **Follow-ups** are chips under
+  the answer they belong to, wrapping onto a second line, never scrolling sideways.
+- **The composer** is one row: a plus for a photo, the camera or a PDF (D109), the field, and *Send*,
+  which becomes *Stop* while Sen answers. A swipe on a message replies to it, shown as a chip above
+  the field. An edited question makes a new version and keeps the old one.
+- **A figure Sen couldn't trace** has a dotted underline, and a tap says so; a tap on a traced figure
+  shows its source (§4).
+- **An answer from the web looks different** from one from the ledger (§2, §4).
+
+## 13. Cards, on Insights and in an answer
+
+The session's design (13 Nov), for Insights' cards (§8) and the same parts in the chat:
+
+- **One anatomy:** a title row, the figure, its change, the view (a trend, bars, rows or a meter),
+  then *as of*, always last. Up and down are coloured only where the direction means good or bad.
+- **Two sizes:** small, two to a row, and wide. A hole left by a move is filled by the next small card.
+- **Arranged in place:** a long-press starts it; each card shows a handle, *Wide* and *Remove*, with
+  *Done* in thumb reach. Every move also has a tap path. (In the chat a long-press opens the
+  message's menu instead, which holds *Pin to Insights*.)
+- **States:** a skeleton shaped like the card on first load; on a refresh the old values stay with
+  their time; a failed refresh keeps the last good values and marks *as of*; an empty card says so in
+  its own words; a card whose data is gone goes grey with no figures and offers *Ask Sen*.
+- **Pinning** from an answer adds the card with a *New* mark and a toast with *Undo* (§5, §8).
+- **A card opened** shows its view large, its source and time, its watch when it has one, and
+  *Ask Sen about this*.
+- Amounts stay exact, to the sen (patterns §3); no shortened figures.
+
+## 14. Still to settle while revising the spec
+
 - Whether a person's own watches count against Sen's one push a day (recommended: they don't).
-- A fallback model for a turn Haiku refuses; the effort level for chat and for background runs.
-- The tables this adds (the diary, saved queries, watches, reports, Insights' cards, lessons), and
-  `agent_summaries` going.
+- Each job's default model, effort and fallback (§1.1), picked on its golden set; where *Test* runs
+  (recommended: the server's job runner, in batches, on the anonymised golden set shipped with the
+  API); whether OpenAI's data terms pass D34's bar.
+- The tables this adds (the diary, saved queries, watches, reports, Insights' cards and tabs, lessons,
+  the model settings and their log), and `agent_summaries` going.
+- How many cards a tab holds, and how many tabs.
 - The slices it touches in `docs/modules.md`: B08 · Charts' brief (written before this), Insights,
-  and the agent's.
+  the agent's, and the admin's *Models* screen.
 - Which of the polish pass's 15 calls this overtakes (`docs/polish/decisions.md`: amount styling, the
   goal ring, Insights' card order).
