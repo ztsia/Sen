@@ -1,6 +1,6 @@
 # B10 · New wording: drafting and booking
 
-**Stage 3 · Capture to ledger** · after: B09 · next: B11
+**Stage 3 · Capture to ledger** · after: B09 · next: B10 · Models in admin
 
 ## Goal
 
@@ -96,6 +96,8 @@ model writes is ever stored.**
   classifying, Jev. Name the winner only in `ai/models.ts`, and record a decision.
 - **The live drafter test needs a key, so it runs in the benchmark session only.** CI replays
   recorded model responses to test the checks.
+- **Until B10 · Models in admin, this call reads `ai/models.ts`.** That slice moves it onto the one
+  resolver, and the model is then set from admin.
 
 ### Screens made real
 - **`review`'s *New wording* rows.**

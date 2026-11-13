@@ -84,7 +84,8 @@ once, at print quality, privately, and is read by the model into an itemised dra
 - **They're shared with the benchmark session only, never committed.** The session scores the
   candidates (first Gemini 3.8 Flash and 3.5 Flash-Lite, D55) on item text, prices and totals, at
   each `media_resolution`.
-- **The winner is named only in `ai/models.ts`, with a recorded decision.**
+- **The winner is the `receipt` job's default in `ai/models.ts`, with a recorded decision;** the
+  call goes through the resolver, so admin's *Models* can change it (D153).
 - **Tests use made-up receipts,** re-typed into fixtures (D11).
 
 ## Leaves for later

@@ -18,10 +18,12 @@ The tables were designed in at B05; this slice builds the flows.
   - §9.6, all of it
   - §5: *Requests with no signed-in person* (accepting an invitation)
   - §11: *AI costs* (the ledger)
-  - §15: `user_access`, `invitations` and `ai_credit_entries`
+  - §12.6: the model's price per million tokens, which AI credit charges by
+  - §15: `user_access`, `invitations`, `ai_credit_entries` and `model_settings` (its `price`), and
+    *Key decisions*
   - §16: `/admin/*`, and `/auth/*` (accepting)
   - §17: *The admin*
-- Decisions: D52, D79, D98.
+- Decisions: D52, D79, D98, D153.
 - `docs/screens.md`: Settings → *Members*, `agent/usage`, `sign-in` (from an invitation), and
   `first-run` (the short one).
 - `docs/flows.md`: `invite` and `invited`.
@@ -60,8 +62,10 @@ The tables were designed in at B05; this slice builds the flows.
   - `welcome`, `grant`, `usage`, `refund` and `reversal`
   - in the buckets `free`, `balance` and `covered`
 - **The monthly free allowance,** by Kuala Lumpur calendar month, is spent before the balance.
-- **Each call's charge** is its token counts × the rate card's version at that moment, in integer sen,
-  rounded once. Failed calls aren't charged. *Unlimited* people's usage is recorded as covered.
+- **Each call's charge** is its token counts × that model's price at that moment, in integer sen,
+  rounded once. The price is the job's live `model_settings` row (D153), over code's defaults, and
+  the entry's `rate_card_version` names the row. Failed calls aren't charged. *Unlimited* people's
+  usage is recorded as covered.
 - **The balance and the allowance left are computed, never stored.** The owner has no ledger.
 - **Before every model call, jobs included:** the switch, plus allowance left or a positive balance,
   plus the daily ceiling. At zero, AI features pause and everything else works.
@@ -89,7 +93,8 @@ The tables were designed in at B05; this slice builds the flows.
    - the monthly reset in Kuala Lumpur time
    - an *Unlimited* person's usage is covered
    - a failed call isn't charged
-   - a price change applies only to later calls
+   - a price change in `model_settings` applies only to later calls, and a job with no row is
+     charged by code's defaults
 3. An invited test friend, in a browser, completes the `invited` journey, sees only their own
    features and data, and pauses at zero credit.
 4. Every route refuses a feature that's switched off (test).

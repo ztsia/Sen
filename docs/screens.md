@@ -31,21 +31,21 @@ Home ───── home ── cycle (sheet) · payday · payments (this cycle
 Review ─── review ── skipped · manual
 Scan ───── scan ── reading ── confirm ── split
            (long-press: scan-more · Scan, From gallery, Add manually)
-Insights ─ insights ── budgets · subscriptions · goals ── goal · insights/year
+Insights ─ insights ── insights/card · budgets · subscriptions · goals ── goal · insights/year
 More ───── more ── payments ── txn ── receipt
                    shared ── split
                    accounts ── account · balance-check
                    claims ── claim
                    settings ── settings/*
 
-Sen, floating on the tab screens ── sen (sheet) ── agent/memory · agent/research · agent/usage
+Sen, floating on the tab screens ── sen (sheet) ── agent/memory · agent/watches · agent/research · agent/usage
 
 Outside the tabs ─────────────────────────────────────────────────────────
 sign-in · first-run · new-look · split-public (a friend's browser, no login)
 
 Native (Android, outside the web app) ────────────────────────────────────
 category prompt · paying-back prompt · quiet scan prompt · owe reminder · health alerts
-Sen's push · claim reminders · widgets S/M/L · launcher shortcuts · share target
+Sen's push · a watch fired · where you stand · claim reminders · widgets S/M/L · launcher shortcuts · share target
 ```
 
 ## Rules every screen follows
@@ -266,15 +266,35 @@ newest first: *You paid · 1 of 2 paid you back*, or *Mei paid · you owe RM24.4
 
 ### `insights`
 
-**Answers:** where is my money going, and am I on track? (D62, D73)
+**Answers:** where is my money going, and am I on track? (D62, D73, D152, D153)
 
-**Shows:** the cycle picker, then question cards. Each card is a question, a chart, a one-line
-takeaway computed by code, and *Ask Sen about this*, which opens `sen` with that question ready. The
-cards and their charts are in spec §9.3. A card with no data isn't shown; *The year* is a row at the
-foot.
+**Shows:** the cycle picker; the tabs, starting with *This cycle*, *Food*, *Commitments* and *Over
+time*; then the tab's cards, small ones two to a row and wide ones across (spec §9.3). A card is its
+title (the question), the figure or a one-line takeaway computed by code, its change, the view, and
+*as of* (patterns §4). *The year* is a row at the foot of *Over time*.
 
-**To:** `budgets`, `subscriptions` and `goals` from their cards, where they're also edited;
-`insights/year`; `payments`, filtered, from a category.
+**Does:**
+- **Arrange.** A long-press on a card starts arranging in place: each card shows a handle, *Wide* or
+  *Small*, and *Remove*, with *Done* in thumb reach. The tab row gains *Add tab*, and a tab's own menu
+  has *Rename*, *Move* and *Remove*. Removing a tab removes its cards with it, at once, with *Undo*.
+  Every move also has a tap path. At most eight tabs, and twelve cards in a tab.
+- **Add.** A card arrives from Sen's chat (*Pin to Insights* on an answer's part, or by asking Sen),
+  with a *New* mark until it's opened and a toast with *Undo*. A new card goes to the tab you're on.
+- **Reset** (the screen's menu) brings back the first four tabs and their cards, after a dialog.
+
+**Varies:** a skeleton shaped like each card on first load; on a refresh the old values stay with
+their time; a failed refresh keeps the last good values and marks *as of*; an empty card says so in
+its own words; a card whose data is gone goes grey with no figures and offers *Ask Sen*. A seeded
+card with nothing to show yet is hidden.
+
+**To:** `insights/card`; `budgets`, `subscriptions` and `goals` from their cards, where they're also
+edited; `insights/year`; `payments`, filtered, from a category.
+
+### `insights/card`
+
+A card opened: its view large, its source and time, its watch when it has one, and *Ask Sen about
+this*, which opens `sen` with that card's data as the first result. A tap on a point shows its exact
+figure, and a second tap opens the payments behind it. To change what it shows, ask Sen.
 
 ### `budgets`, `subscriptions`, `goals`, `goal`, `insights/year`
 
@@ -289,22 +309,78 @@ year by month.
 
 ### `sen`
 
-A full-height sheet over the tab screen it was opened from (D68).
+A full-height sheet over the tab screen it was opened from (D68). Designed from shadcn's AI Elements
+(D151), restyled to `patterns.md`.
 
 **Answers:** what should I know or do about my money?
 
 **Shows:** a header with *Looking at: Insights* (the screen it was opened from), ⋯ and ×; the one
-conversation (§12.5): Sen's notes, its answers, proposals (*Apply*, *Dismiss*), and research drafts with
-each source and date, unconfirmed until you confirm the figures (§12.2 rule 6). If Google's terms
-require them (§21 Q24), search suggestions sit at the foot of a research draft. Then the composer,
-with a clip button for a photo, screenshot or PDF (D109), and suggested questions that fit the screen. A
-figure Sen couldn't trace shows marked *not checked* (D108).
+conversation, whole (spec §12.8); then the composer.
 
-**Header menu:** *What Sen remembers* (`agent/memory`), *Research* (`agent/research`), *Usage*
-(`agent/usage`, the AI cap, D52).
+- **A turn.** Yours is a bubble on the right. Sen's is full width with no bubble, under a head row.
+  Its steps line is open while Sen works (*Reading payments…*) and folds into one line that is the
+  answer's source (*Read payments and receipts · 2 steps*). Then its parts, each in its own card
+  (spec §12.3): text, a chart, a table, figures, a question, a proposal, a button, a file, a
+  playground, a checklist, what's coming up, a comparison, findings from the web. An answer leads with
+  the verdict, then the evidence, then what you can do.
+- **A proposal is the one raised, outlined card in the chat:** what will change, field by field, each
+  amount saying where it came from, and its effect (*applies to 14 past payments*); then *Dismiss*,
+  *Change…* (the real form, filled in) and *Apply* in thumb reach. Its states: waiting, applying,
+  applied, failed, expired. Once decided it folds to one line.
+- **Findings from the web look different** from an answer from your ledger: the research text
+  unedited, numbered sources with their site and date, and *Confirm* on a figure (spec §12.2 rule 6).
+  If Google's terms require them (§21 Q24), search suggestions sit at its foot.
+- **A figure.** A tap shows its source and opens the records behind it. One Sen couldn't trace has a
+  dotted underline, and a tap says *not checked* (D108).
+- **Saved and notice lines** are code's: *Watching: GrabFood over RM200*, with *Open* and *Undo*; or
+  a muted line that capture was off, Sen was stopped, or you're offline.
+- **Follow-ups** are one to three chips under the answer they belong to, wrapping onto a second
+  line, never scrolling sideways. **Starters** are rows in the empty chat, taken from code's signals
+  and the screen Sen was opened from.
+- **The composer** is one row: a plus for a photo, the camera or a PDF (D109), the field, and *Send*,
+  which becomes *Stop* while Sen answers; *Stop* keeps what was shown. A swipe on a message replies
+  to it, shown as a chip above the field. An edited question makes a new version and keeps the old
+  one, with ‹ 1/2 › to move between them.
+- **A long-press on a message opens a floating menu beside it,** the message lifted and the rest
+  dimmed, never a bottom sheet: *Copy*, *Select text*, *Reply*, *Pin to Insights* (on a chart, table
+  or figures), thumbs up and down, *Try again*, *Delete*. TalkBack offers the same as actions.
+- **A jump-to-latest button** appears when you've scrolled away, carrying the avatar's state.
 
-**Varies:** streaming while Sen answers; offline: *Sen needs a connection*; at the cap: *Sen is paused
-until 1 Nov; everything else works* (§9.6).
+**Sen's avatar travels with the answer.** One avatar goes to the head of the new answer, leads its
+steps, rides down with the text, and rests on a proposal while it waits. Earlier answers keep none.
+With reduced motion it cuts instead of gliding. It uses the eight states every look already draws
+(D76), each with a line TalkBack speaks:
+
+| State | When | TalkBack hears |
+|---|---|---|
+| Resting | Nothing running | *Sen is ready.* |
+| A new note | Sen posted while you were away: a check-in, a report, a watch | *Sen has a note for you.* |
+| Listening | You're typing | *You're typing. Sen is ready.* |
+| Working | From *Send* until the text starts, between steps, and while a proposal is applied | *Sen is reading your payments…* (what the step names) |
+| With helpers | A subagent is running: research, sorting Review | *Sen is researching…* |
+| Answering | Text and parts are streaming | *Sen is answering…* |
+| Paused | Waiting on you (a question, a proposal); stopped; offline; out of credit; a step failed. Each with its own line in the chat | *Sen needs your answer.* · *Stopped.* · *You're offline.* · *Sen is paused until 1 Dec.* · *Sen couldn't read that.* |
+| Done | The answer settled; about 1.5 s, then resting | *Sen has answered.* |
+
+**Header menu:** *What Sen remembers* (`agent/memory`), *Watches and reports* (`agent/watches`),
+*Research* (`agent/research`), *Usage* (`agent/usage`, your AI credit, D98).
+
+**Varies:** offline: *Sen needs a connection*, and the composer is off; out of credit: *Sen is paused
+until 1 Dec; everything else works* (§9.6); a question sent while Sen works joins that answer or waits,
+marked *Waiting*.
+
+### `agent/memory`
+
+*What Sen remembers* (spec §12.8, §12.9). Three lists: **About you** (memory, each marked *you told
+me* or *learned*), **Topics** (a page per subject: its title, the records it's tied to with their
+state now, and its dated entries) and **Open** (what was left open). Any item, entry or page can be
+deleted, and a deleted one is never learned again. Nothing here holds an amount.
+
+### `agent/watches`
+
+Every watch, scheduled report, merchant rule and limit, each with what it does in your words, its
+last run or where it stands now, *Pause* and *Delete* (spec §12.4). A tap opens it; a watch or report
+is changed by asking Sen.
 
 ---
 
@@ -367,8 +443,9 @@ approved amount.
 | Categories and rules | Categories, and merchant rules, hawkers included (D70) | Everyone |
 | Receipts by email | Your forwarding address with *Copy*, how to set the Gmail filter, Gmail's confirmation code once it arrives (D56) | Everyone |
 | Claims | Schemes (§13), each with *Describe it to Sen* (D95); the ESS sender address (D96); in the shell, **ESS**: sign in once (a native screen; *Forget ESS password*, D103), what the adapter can do (*Fetch payslip*, *Submit claims*), each with *Teach Sen* to record it or *Import recipe* (D105, D106), and the last payslip fetched (D104) | Claims switch |
-| Sen | Google Calendar (D41), what Sen remembers, your AI credit: balance and this month's free allowance (D98) | Agent switch |
+| Sen | Google Calendar (D41), *What Sen remembers* (`agent/memory`), *Watches and reports* (`agent/watches`), *Clear everything Sen keeps*, your AI credit: balance and this month's free allowance (D98) | Agent switch |
 | Members | *Invite*; each person's switches, credit (*Grant*, *Refund*, allowance, *Unlimited*, daily ceiling), shell version and *Capture connected*; shell seats; *Suspend* and *Remove* (D52, D98) | Admin only |
+| Models (`settings/models`) | Each job (Sen's chat, the researcher, each reader, the topic writer, the review sorter, background runs, the lesson folder): its provider, model, effort, fallback and price; *Test* beside the current model (score, cost, speed), *Use it*, *Revert*, and the log of changes. Below: each skill's folded lessons with *Undo*, and the shapes of questions Sen couldn't answer (D153, spec §12.6, §12.9) | Admin only |
 | Data | *Export everything* (D49), the last backup | Everyone; backups: admin |
 | Account | Your email, *Sign out*, *Sign out everywhere* (§17) | Everyone |
 
@@ -426,7 +503,9 @@ Android draws these, outside the web app. The browser shows a stand-in in the de
 | **Quiet scan prompt** (a known merchant, §6.3) | *RM58.30 · NASI KANDAR ABC · Meals*, one button, *Scan receipt*. Clears itself after 10 minutes; off in Settings → Capture | Opens `scan` for that payment |
 | **Owe reminder** (D65) | An hour after a split you owe, if unpaid: *You owe Mei RM24.40*, with *I've paid* and *Open the split*. Once, written by code | Opens `split` |
 | **Health alerts** (§18) | *Capture may be off*, *Daily jobs have stopped* | Opens `home`, with the fix |
-| **Sen's push** (§12.4) | At most one a day: the 9pm note, budget warnings, payday | Opens `sen` or `home` |
+| **Sen's push** (§12.4) | At most one a day: the 9pm note, budget warnings, payday, a scheduled report | Opens `sen` or `home` |
+| **A watch fired** (§12.4, D152) | *GrabFood has passed RM200 this cycle.* Once, written by code, then not again until it clears; it doesn't use Sen's one push | Opens `sen` at its line |
+| **Where you stand** (§12.1, D152) | A line code adds to a payment's own prompt once it's booked, when the payment touches a limit you set with Sen: *3rd Tealive this week, limit 2 · RM41.00 left for drinks*. A payment with no prompt gets a quiet notification of its own | Opens `agent/watches` at that limit |
 | **Claim reminders** (§13) | 3 days before, and on the day | Opens `claim` |
 | **Export ready** (D49) | The link, ready for 24 hours | Opens the download |
 | **Widgets** (D32, D74) | Small: *left until payday*, a spent-against-elapsed meter, *Scan*. Medium adds the pace line and *Review N*. Large adds the top categories, the budget most at risk, and Sen's note. Every size goes dark with *Capture is off* and *Fix* | Buttons open `scan` or `review`; the rest opens `home` |

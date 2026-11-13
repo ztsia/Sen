@@ -15,7 +15,7 @@ It's called **Sen** (D48). It's for the owner, and by invitation a few friends a
 | `spec_v2.md` | The system | The contract, **under review** in the design track below. If code disagrees with it, the code is wrong |
 | `docs/decisions.md` | Decisions made with the owner, numbered | Settled. Don't reopen one unless the owner does |
 | `docs/flows.md`, `docs/screens.md`, `docs/ui/patterns.md` | Journeys, screen map, shared UI patterns, written by `S2` | The UX contract. Journeys and screens are approved (6 Oct), with a clickable wireframe in `docs/ui/wireframe.html`. Patterns are written for six looks (6 Oct), and their defaults confirmed (D83, 7 Oct) |
-| `docs/modules.md`, `docs/briefs/` | The slice map: forty slices in nine stages, built one at a time, and one brief per slice. Written by `S3` (D111) | Your branch's boundary. A build session starts from its brief |
+| `docs/modules.md`, `docs/briefs/` | The slice map: the slices in nine stages, built one at a time, and one brief per slice. Written by `S3` (D111), re-cut for the re-spec (D152–D154) | Your branch's boundary. A build session starts from its brief |
 | `docs/notifications.md` | What each bank app's notifications look like, anonymised | The parsers' source. Add to it whenever a new format turns up |
 | `docs/cloud.md` | What a cloud session has, can reach, and must never hold | Measured facts. Update it when you measure something new |
 | `qa/escapes.md` | Every bug the owner found by hand that QA had passed, why it was missed, its pin and the question it added (D137) | Add an entry before fixing one |
@@ -27,16 +27,16 @@ It's called **Sen** (D48). It's for the owner, and by invitation a few friends a
 
 **Design came first, deliberately** (D7: the owner's previous app worked feature by feature but
 didn't hang together). The design track is done: the spec grilled and decided (`S1`), journeys,
-screens, patterns and six looks (`S2`, D75–D84), and the slice map, forty slices in nine stages with
-a brief each (`S3`, D111). The spec's later revisions are D85–D110.
+screens, patterns and six looks (`S2`, D75–D84), and the slice map, slices in nine stages with
+a brief each (`S3`, D111). The spec's later revisions are D85–D110, and the re-spec of Sen, D151–D154.
 
 **Built:** B01 (design system and the six looks), B02 (the shell and the listener; its week on the
 owner's phone is still to run), B03 and B04 (the walking skeleton, its review and the redesign,
 D130), B05 (the server, database and sign-in; then QA tooling and Feel, D139, D140), B06 (jobs, realtime
 and backups), B07 (sync and the outbox), B08 (first run, accounts and categories; one account per app, D145).
-**Next:** the re-spec of Sen's agent, chat and Insights (D152) is decided in `docs/respec.md` and
-still to be folded into the spec; then B08 · Charts (`docs/briefs/B08-charts.md`, D151), then B09. A
-polish pass waits for the owner's go (`docs/modules.md`).
+**Next:** B08 · Charts (`docs/briefs/B08-charts.md`, D151), then B09. The re-spec of Sen's agent,
+chat and Insights (D152–D154) is in the spec (2.12) and the slice map; three design pages are drawn
+before their slices, and a polish pass waits for the owner's go (`docs/modules.md`).
 Each slice waits only for the owner's merge; `docs/handoff.md` says where things stand now.
 
 
@@ -82,7 +82,7 @@ Each slice waits only for the owner's merge; `docs/handoff.md` says where things
 | Backend | One Hono API on Vercel Functions, Neon Postgres (Drizzle), Better Auth with emailed codes (D54) |
 | Schedules and realtime | One small Cloudflare Worker: cron triggers that call `/jobs/tick`, and a relay that pushes "something changed" hints, never data (D99, D100) |
 | Storage | Cloudflare R2 for receipt images |
-| AI | Claude through Anthropic's own API and Gemini through Vertex AI (D55, D120), both called through the Vercel AI SDK. Models are provisional until each phase tests them on its golden set in `evals/`, named only in `ai/models.ts` (D94) |
+| AI | Claude through Anthropic's own API and Gemini through Vertex AI (D55, D120), both called through the Vercel AI SDK. Each job's model and effort are set in admin, tested on its golden set in `evals/`; `ai/models.ts` holds only the defaults (D94, D153) |
 | Agent | Our own small loop in Claude Code's shape: main prompt, skills, tools, subagents (D53), engineered in `spec_v2.md` §12.5 (D94) |
 
 The full table is in `spec_v2.md` §5.1.

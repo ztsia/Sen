@@ -311,10 +311,13 @@ bank app shows, or *Matches*. *Save* books each difference as *Unaccounted*; the
 
 ### Insights (`insights`)
 
-1. Each card asks a question and answers it with a chart and one line (D73).
-2. *Ask Sen about this* opens `sen` with the question ready; every figure in the answer comes from a
-   tool (§12.2).
+1. Each tab holds cards; a card asks a question and answers it with a figure or one line, and a
+   chart (D73, D152).
+2. A card opens (`insights/card`); *Ask Sen about this* opens `sen` with that card's data; every
+   figure in the answer comes from a tool (§12.2).
 3. A category opens `payments`, filtered.
+4. A long-press arranges: move a card, make it wide, remove it; add, rename or remove a tab. *Reset*
+   brings the first four tabs back (D153).
 
 ### Budgets (`budget`), goals (`goal`), subscriptions (`subscription`)
 
@@ -339,13 +342,30 @@ bank app shows, or *Matches*. *Save* books each difference as *Unaccounted*; the
 
 ### Asking (`ask`)
 
-The Sen button on any tab opens `sen` over that screen, which Sen knows (D68). Suggested questions fit
-the screen. Every figure in an answer comes from a tool (§12.2).
+The Sen button on any tab opens `sen` over that screen, which Sen knows (D68). Starters fit the
+screen. Sen's avatar goes to the new answer and shows its steps as it reads; the answer arrives as
+text, a chart, a table or figures, and a tap on a figure shows where it came from (§12.2, §12.3).
+A long-press on a chart, table or figures pins it to Insights.
+
+### A watch or a report (`watch`)
+
+*Tell me when GrabFood passes RM200* or *every Sunday, last week by category*. Sen sets it at once,
+with a *Saved* line, where it stands now and *Undo*. Code checks a watch with no model and pushes
+once when it fires; a report posts into the conversation on its day. Both are listed in
+`agent/watches` (§12.4).
+
+### What Sen remembers (`remembers`)
+
+The header menu opens `agent/memory`: what Sen knows about you, its topic pages and what's open. Any
+of it can be deleted, as can one message from its long-press menu, and *Clear everything* is in
+Settings (§12.8).
 
 ### A proposal (`proposal`)
 
-A card in `sen`, also in Review: a budget, a rule, a subscription, a goal or bucket, a promise to
-watch, or answers for the Review backlog (§12.1). *Apply* changes it, recorded as Sen's, with *Undo*.
+A card in `sen`, also in Review: a budget, a rule, a subscription, a goal or bucket, a limit, a
+promise to watch, answers for the Review backlog, or a change to one or many payments' category,
+note, kind, share or claim tag (§12.3). It shows what will change and its effect. *Apply* changes it,
+recorded as Sen's, with *Undo*; *Change…* opens the real form filled in.
 
 ### Research (`research`)
 
