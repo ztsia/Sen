@@ -5,13 +5,16 @@
 B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. The re-spec carries on
 with the owner on branch `ccr-55173031-oa1xly` (no PR yet).
 
-- **D152** (12 Nov) and **D153** (13 Nov): Sen's agent, chat and Insights, re-specified. **The detail
+- **D152** (12 Nov), **D153** and **D154** (13 Nov): Sen's agent, chat and Insights, re-specified. **The detail
   is in `docs/respec.md`, not yet in the spec.**
 - **D153:** every job's provider, model, effort and fallback is set on an admin *Models* screen, with
   a *Test* against the current model; providers stay a fixed list in code and keys in Vercel.
   Insights keeps its tabs, editable. The chat's avatar travels with the answer, on the eight states
   already drawn. A long-press on a message opens a floating menu, never a sheet.
-- `docs/respec.md` §12 and §13 now hold the chat's and the cards' design, so the spec revision has it.
+- **D154:** what Sen carries (`docs/respec.md` §3): topic pages with entries added and never
+  rewritten, written by our own code, no amounts, nothing already sent ever edited. A new area's
+  design page is drawn by a Fable subagent at `xhigh`, then Sonnet builds; polish needs no design.
+- `docs/respec.md` §12 and §13 hold the chat's and the cards' design, so the spec revision has it.
 - **The polish audit is done:** seven plans in `docs/polish/` (187 findings), and the owner's 15 calls
   with recommendations in `docs/polish/decisions.md`, unanswered.
 
@@ -63,6 +66,7 @@ with the owner on branch `ccr-55173031-oa1xly` (no PR yet).
 
 ## Don't argue again
 
-- D129–D153. Radix stays; charts in D151's order; no advisor. Sen's chat starts on Haiku, one
+- D129–D154. Radix stays; charts in D151's order; no advisor. Sen's chat starts on Haiku, one
   conversation, no RAG; Sen reads data through its tools, never SQL of its own, and no Python.
-  Models change in admin, providers only in code. Deploys happen only by merge (D122).
+  Models change in admin, providers only in code. Notes are topic pages, by our own
+  code, never a provider's compaction. Deploys happen only by merge (D122).

@@ -1,6 +1,6 @@
 # Sen's agent, chat and Insights: the re-spec (D152)
 
-Decided with the owner on 12 and 13 Nov (D152, D153). **Not yet folded into the spec.** This file holds the detail until
+Decided with the owner on 12 and 13 Nov (D152–D154). **Not yet folded into the spec.** This file holds the detail until
 `spec_v2.md` (§9.3, §12, §15, §16), `docs/screens.md`, `docs/ui/patterns.md` (§4) and
 `docs/modules.md` carry it; then it's deleted. The agent isn't built yet, so nothing here changes code
 that exists. §14 lists what the spec revision still has to settle.
@@ -26,7 +26,7 @@ change to Vercel's environment. This replaces *code names models only in `ai/mod
 D120): that file becomes the defaults, the list of jobs and the list of providers.
 
 - **An admin *Models* screen lists each job:** Sen's chat, the researcher, each reader (receipts,
-  templates, email, chat files), the diary writer, the review sorter, background runs, the pass that
+  templates, email, chat files), the topic writer, the review sorter, background runs, the pass that
   folds lessons. Each has a provider, a model, an effort, a fallback model, and the model's price per
   million tokens (input, cached input, output), which AI credit charges by (D98). A known model's price
   is filled in; a new one's is typed.
@@ -58,25 +58,92 @@ D120): that file becomes the defaults, the list of jobs and the list of provider
   into a search when the question needs it (*where should I keep RM23,000 of savings*). Code rounds
   any ledger figure first and strips account numbers and names. Nothing is refused.
 
-## 3. One conversation, and what each call holds
+## 3. One conversation, and what Sen carries (D154)
 
 One conversation for good: the person shouldn't have to remember which chat to continue. No RAG.
-What must survive is what was decided, and that already lives as rows (goals, budgets, rules, watches,
-memory) that tools read fresh; a year of chat is a few thousand messages, which plain search handles.
+The person's own history is kept whole and scrolls back in full; this section is only what the model
+is sent.
 
-| In every call | Target size | Why it works |
+**Our own code shortens old chat, not a provider's built-in compaction** (D154). A built-in one is a
+rolling summary that fades, exists on one provider only (models change in admin, D153), and can't be
+read, deleted or checked.
+
+### 3.1 What's kept, and where
+
+| Kept as | What | Written by |
 |---|---|---|
-| The prompt, every tool, the skill list | About 9k, cached | Changes only with a release |
-| Memory, and the names of what's active (goals, budgets, watches, open proposals) | About 3k, cached | Amounts always come fresh from tools |
-| The diary: one dated note per past stretch of chat (asked, concluded, decided, open), the last ten, and a line per older month | About 2k | A note is written once, in the background, and never re-summarised, so it doesn't blur |
-| The last few turns, word for word | Up to 10k | An old tool result shrinks to a one-line stub |
-| This question's tool results | Up to 8k | A big result stays on the server; Sen sees a preview, and parts read the full rows |
+| Rows | What was decided: goals, budgets, rules, watches, limits. Tools read them fresh | The app's commands |
+| Memory | Lasting things about the person, no amounts (§10) | Sen, and the weekly tidy |
+| **Topic pages** | One page per subject (*GrabFood limit*, *car loan*, *Japan trip*): a title, the records it's tied to, and dated entries | One background call when a chat goes quiet |
+| Open threads | What was left open, each closed when answered, dismissed or 30 days old | The same call; closed by code or Sen |
+| The timeline | One line per chat: its date and the topics it touched | Code, no model |
 
-A typical call is about 25k; the oldest turns move into the diary at 50k. These are design targets,
-not measurements. `recall(words, when)` searches the diary and every old message with Postgres text
-search, and replaces `search_messages`; a swipe to reply brings an old message back with its data.
-The diary replaces `agent_summaries`' one rolling summary. Meaning-based search is added only if tests
-show plain search missing things.
+- **Notes are by topic, not by period.** A subject discussed over months sits on one page.
+- **An entry is added, never rewritten,** so nothing fades. The weekly tidy merges duplicate topics
+  by moving entries. An entry is rewritten only when the person deletes a message it came from.
+- **Nothing is written for a one-off question** the ledger can answer again. A chat leaves an entry
+  only when it left something that lasts: a conclusion the person cared about, a plan, a decision,
+  something open.
+- **No amounts in an entry.** It says what was asked, concluded and decided in words and points at
+  the records and the saved query; Sen reads every figure fresh.
+- **A decision is a pointer, not a sentence.** When Sen is shown a page, code adds each tied record's
+  state now (*still on*, *changed 9 Nov*, *removed*), so a note can't outlive what it describes.
+- **Entries are always in English** and tagged with the merchants, categories and records they
+  touched, whatever language the chat was in, so they're found by record and date as well as by word.
+- **The writer sees only the person's words and Sen's,** never tool results, files or web text, so
+  nothing read from outside can plant an instruction. Code checks each entry as it checks memory
+  (short, no amounts, nothing that changes a rule), and pages reach Sen marked as history, not
+  instructions.
+- **Code writes one timeline line, with no model,** for a report posted, a watch fired or a check-in.
+- **If the writer can't run** (no credit, the model down), code writes a plain entry from the
+  questions asked and what was applied.
+- **The person sees and deletes all of it:** one screen, *What Sen remembers*, lists memory, the topic
+  pages and the open threads, each deletable. A message's menu has *Delete* (§12), and Settings has
+  *Clear everything*. A deleted item is never learned again.
+
+### 3.2 When a chat closes
+
+- **A chat closes after an hour's quiet,** or when it passes a size limit. The background call then
+  files what mattered. Sen never waits for it: until it's done, the chat stays as it was.
+- **On coming back,** Sen has the pages, the person's last exchange word for word, and whatever is
+  still open.
+
+### 3.3 What each call holds, in this order
+
+Ordered by how rarely each part changes, because a change anywhere discards the cache for everything
+after it.
+
+| Part | Target size | Changes |
+|---|---|---|
+| The prompt, every tool, the skill list, the data model | About 9k | With a release |
+| Memory | About 2k | When the person tells Sen something, and weekly |
+| The topic list (a line each), and the pages touched most recently | About 3k | When a chat closes |
+| This chat's turns, word for word | Up to 10k | Grows only; closes as in §3.2 |
+| With each new question: the date and time, the cycle's day, the screen Sen was opened from, open threads and proposals, and any page code loaded for this question | About 1k | Every question |
+| This question's tool results | Up to 8k | A big result stays on the server; Sen sees a preview and an id, and parts read the full rows |
+
+- **Nothing already sent is ever edited.** On Claude Haiku 5.5 a changed earlier message discards
+  the cache from that point and invalidates Sen's later reasoning. So a tool result goes in small
+  from the start and is never shrunk afterwards (this replaces *an old result shrinks to a stub*),
+  and what came with a question stays with it.
+- **A skill's text arrives in the chat,** as a tool result, never in the prompt.
+- **Code loads a topic's page** when the question names it or one of its records, so Sen needn't
+  remember to look. `recall(words, when)` searches pages, the timeline and every old message with
+  Postgres text search, and replaces `search_messages`; a swipe to reply brings an old message back
+  with its data. Meaning-based search is added only if tests show plain search missing things.
+- **A background run** (a report, a check-in) gets memory, the open threads and its instruction, not
+  the recent chat.
+- A typical call is about 25k, far under the 100,000 where Haiku's price is five times higher. A
+  cache lasts five minutes, so the first question after a break is sent in full, about 1 sen on
+  Haiku 5.5. These are design targets, not measurements.
+- Topic pages and the timeline replace `agent_summaries`' one rolling summary.
+
+### 3.4 The test before release
+
+A made-up year of chat with trap questions: a decision later undone on its screen; an instruction
+planted in a receipt; a question in Malay or Chinese about a chat held in English; something from
+month 2 asked in month 11; a deleted message asked about. Each call's size and cache use is
+measured. The design is as good as this test shows, and no better.
 
 ## 4. What Sen answers with
 
@@ -291,7 +358,8 @@ avatar and the long-press menu; the rest is the session's, which the owner left 
   with helpers, answering, paused, done). Nothing is redrawn. The spec revision maps each chat event
   to one of them and gives each a spoken line.
 - **A long-press on a message opens a floating menu beside it,** the message lifted and the rest
-  dimmed, never a bottom sheet: *Copy*, *Select text*, *Reply*, *Pin to Insights*, thumbs, *Try again*.
+  dimmed, never a bottom sheet: *Copy*, *Select text*, *Reply*, *Pin to Insights*, thumbs, *Try again*,
+  *Delete* (§3.1).
   It's the chat's own menu, so §8's rule against the browser's long-press menus stands. Every item is
   also reachable without a long-press (TalkBack's actions). Answers carry no row of buttons beneath.
 - **The shape of a turn:** the person's turns are bubbles on the right; Sen's are full width with no
@@ -333,8 +401,10 @@ The session's design (13 Nov), for Insights' cards (§8) and the same parts in t
 - Each job's default model, effort and fallback (§1.1), picked on its golden set; where *Test* runs
   (recommended: the server's job runner, in batches, on the anonymised golden set shipped with the
   API); whether OpenAI's data terms pass D34's bar.
-- The tables this adds (the diary, saved queries, watches, reports, Insights' cards and tabs, lessons,
-  the model settings and their log), and `agent_summaries` going.
+- The tables this adds (topic pages and their entries, open threads, the timeline, saved queries,
+  watches, reports, Insights' cards and tabs, lessons, the model settings and their log), and
+  `agent_summaries` going.
+- The size limit that closes a chat, and how many topics the list holds before old ones are archived.
 - How many cards a tab holds, and how many tabs.
 - The slices it touches in `docs/modules.md`: B08 · Charts' brief (written before this), Insights,
   the agent's, and the admin's *Models* screen.
