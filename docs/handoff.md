@@ -21,15 +21,19 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
   The owner approved the split: 31 stay sheets, 4 fold into menus, 1 inline, 1 dialog, 6 screens.
 - **D156:** design pages run on Fable at `high`, each brief with a render, look and fix loop. Order:
   overlays, Sen's chat, Insights, *Models*; the ESS section of Claims alongside.
-- **Drawn and published (14 Nov), waiting for the owner to choose** (links in `docs/ui/README.md`):
-  the overlays' three sheet anatomies (A Quiet, B Floating card, C Action bar) with the menu and
-  dialog, `docs/ui/overlays/design.html`; and the ESS section's two redesigns (A one card, B status
-  first), `docs/ui/claims-ess/design.html`. Recommended: sheet A; ESS B with A's *Set up* button.
-  After the choice: the chosen sheet drawn in full (a rows pick with search, a sheet at its cap, the
-  fade, 1.5× text, 360×640, the other looks), and ESS's missing states.
-- **Then:** brief Sen's chat page on the chosen sheet; then Insights; then *Models*. Nothing is built
-  from a page until the owner approves it. The overlay rebuild is a unit plan after approval
-  (`docs/modules.md`, *Waiting on the owner's go*); it absorbs polish components 8, 15, 21 and home 17.
+- **D157 (14 Nov):** the owner chose sheet **A · Quiet** and ESS **B, status first, with *Set up*
+  buttons**, and accepted ESS's new words. Both pages are published (`docs/ui/README.md`) but show
+  options, not the final: **a new Opus agent draws each in full later** (the owner's call; not the
+  Fable agents resumed). Still to draw for the sheet: a rows pick with search, a sheet at its cap
+  with the fade, 1.5× text, 360×640, the other looks. For ESS: redoing a ready job, an unset address,
+  *ESS needs you to sign in again*.
+- **One design agent at a time** (the owner; two at once hit the usage limit twice).
+- **Being drawn now:** Sen's chat, `docs/ui/sen-chat/design.html`, by a Fable agent at `high`. When it
+  reports: review, publish, list in `docs/ui/README.md`, ask the owner.
+- **Then, in order:** Insights (tabs, cards, arranging, a card opened), admin's *Models*; then the two
+  full drawings on Opus. `agent/memory` and `agent/watches` are plain lists from patterns §7 and need
+  no page unless the owner asks. Nothing is built from a page until the owner approves it; the
+  overlay rebuild absorbs polish components 8, 15, 21 and home 17.
 
 ## What to do next
 
@@ -86,7 +90,7 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 
 ## Don't argue again
 
-- D129–D156. Radix stays; charts in D151's order; no advisor. Sen's chat starts on Haiku, one
+- D129–D157. Radix stays; charts in D151's order; no advisor. Sen's chat starts on Haiku, one
   conversation, no RAG; Sen reads data through its tools, never SQL of its own, and no Python.
   Models change in admin, providers only in code. Notes are topic pages, by our own code, never a
   provider's compaction. Deploys happen only by merge (D122).
