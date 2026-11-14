@@ -28,8 +28,13 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
   with the fade, 1.5× text, 360×640, the other looks. For ESS: redoing a ready job, an unset address,
   *ESS needs you to sign in again*.
 - **One design agent at a time** (the owner; two at once hit the usage limit twice).
-- **Being drawn now:** Sen's chat, `docs/ui/sen-chat/design.html`, by a Fable agent at `high`. When it
-  reports: review, publish, list in `docs/ui/README.md`, ask the owner.
+- **Sen's chat is drawn and published** (`docs/ui/sen-chat/design.html`, link in `docs/ui/README.md`),
+  by Fable at `high`. **The owner is looking at it; the session stopped there at their word.** Not
+  yet reviewed in detail by the main session. Open on it: three either-ors (the head row in one line
+  or two; a question's answers as rows or chips; the avatar resting in the header or with the newest
+  answer; the agent picked the first of each) and what it bends: text has no card, *Edit* added to
+  your own message's menu, the message menu has six rows against D155's five, wrapped chips 16 px
+  apart, the playground's *Apply* small and outlined. Its AI Elements names are from memory.
 - **Then, in order:** Insights (tabs, cards, arranging, a card opened), admin's *Models*; then the two
   full drawings on Opus. `agent/memory` and `agent/watches` are plain lists from patterns §7 and need
   no page unless the owner asks. Nothing is built from a page until the owner approves it; the
