@@ -1,0 +1,96 @@
+/* The phone and Sen's building blocks, drawn at their real sizes (patterns.md §2 and §7, and the
+   components in apps/web/src/blocks and components/ui as of 13 Nov). The look's tokens come from
+   docs/ui/directions/assets/minted/theme.css, scoped to .ph.light and .ph.dark by build.mjs. */
+.ph { --radius-card: 14px; --font-ui: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.ph.light { --warn-bg: #f7e2df; --warn-fg: #8a1c13; --sen-ink: #1d3553; --sen-fill: #d3dfed; --sen-lace: #ffffff; color-scheme: light; }
+.ph.dark { --warn-bg: #3b1916; --warn-fg: #ffb4ab; --sen-ink: #c3d3e6; --sen-fill: #31476a; --sen-lace: #0f1b2c; color-scheme: dark; }
+
+.ph { width: 406px; height: 860px; padding: 8px; border-radius: 40px; background: #0c0c0d; box-shadow: 0 0 0 1px rgba(255,255,255,.16) inset, 0 0 0 1px rgba(0,0,0,.3), 0 24px 48px -24px rgba(0,0,0,.4); }
+.scr { position: relative; isolation: isolate; width: 390px; height: 844px; border-radius: 32px; overflow: hidden; display: flex; flex-direction: column; background: var(--background); color: var(--foreground); font: 400 15px/1.45 var(--font-ui); -webkit-font-smoothing: antialiased; text-align: left; }
+.scr * { box-sizing: border-box; }
+.scr p, .scr h1, .scr h2 { margin: 0; padding: 0; }
+.scr svg { display: block; flex: none; }
+.scr svg.lu { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: var(--icon-stroke); stroke-linecap: var(--icon-cap); stroke-linejoin: var(--icon-join); }
+.scr svg.lu.s20 { width: 20px; height: 20px; }
+.scr svg.sen { width: 20px; height: 20px; }
+
+/* app bar: back, the title, one action */
+.bar { position: relative; z-index: 3; flex: none; height: 56px; display: flex; align-items: center; gap: 4px; padding: 0 8px; background: var(--background); }
+.bar h1 { flex: 1; min-width: 0; font-size: 22px; line-height: 1.25; font-weight: 600; }
+
+/* the screen's content, scrolled to its end when it's taller than the screen */
+.body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+.flow { flex: none; min-height: 100%; display: flex; flex-direction: column; gap: 16px; padding: 8px 0 32px; }
+.grp { display: flex; flex-direction: column; gap: 8px; padding: 0 16px; }
+.grp.context { opacity: .5; }
+.lbl { min-height: 24px; display: flex; align-items: flex-end; padding: 0 4px; font-size: 13px; line-height: 1.4; font-weight: 500; color: var(--muted-foreground); }
+.note { padding: 0 4px; font-size: 13px; line-height: 1.4; color: var(--muted-foreground); text-wrap: pretty; }
+.card { position: relative; display: flex; flex-direction: column; background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: 0 1px 0 rgba(15,34,56,.03); }
+
+/* NavRow: tile, title, a line, then the state or one control */
+.row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 16px; }
+.row .txt { flex: 1 1 96px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.row .t { font-size: 15px; line-height: 1.375; display: flex; align-items: center; gap: 8px; }
+.row .d { font-size: 13px; line-height: 1.5; color: var(--muted-foreground); text-wrap: balance; }
+.row .end { position: relative; margin-left: auto; flex: none; max-width: 52%; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted-foreground); }
+.row .chev { color: var(--icon); }
+.row.off .tile, .row.off .t { opacity: .6; }
+.row.danger .t { color: var(--destructive); }
+.tile { flex: none; width: 32px; height: 32px; border-radius: 8.4px; display: inline-flex; align-items: center; justify-content: center; background: var(--muted); color: var(--icon); }
+.tile.accent { background: color-mix(in oklab, var(--primary) 12%, transparent); color: var(--primary); }
+.tile.warn { background: var(--warn-bg); color: var(--warn-fg); }
+
+/* buttons, by level: 48 for the main one, 40 for the rest; every one a pill in Minted */
+.btn { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 6px 16px; border-radius: 999px; font-size: 14px; line-height: 1.3; font-weight: 500; white-space: nowrap; background: var(--primary); color: var(--primary-foreground); border: 1px solid transparent; }
+.btn.lg { min-height: 48px; padding: 8px 20px; }
+.btn.wide { width: 100%; }
+.btn.secondary { background: var(--secondary); color: var(--secondary-foreground); }
+.btn.outline { background: var(--background); color: var(--foreground); border-color: var(--border); }
+.btn.ghost { background: none; color: var(--foreground); }
+.btn.destructive { background: var(--destructive); color: var(--background); }
+.btn.icon { width: 40px; padding: 0; background: none; color: var(--icon); }
+.badge { flex: none; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 12px; line-height: 1.35; font-weight: 500; white-space: nowrap; background: var(--muted); color: var(--muted-foreground); }
+.badge.accent { background: color-mix(in oklab, var(--primary) 12%, transparent); color: var(--primary); }
+
+/* StatusCard: the state in words with an icon, then what it means */
+.status { padding: 16px; gap: 6px; }
+.status .st { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.4; font-weight: 600; }
+.status .st.idle { color: var(--icon); }
+.status .ti { font-weight: 500; text-wrap: pretty; }
+.status .btn { margin-top: 10px; }
+
+/* a menu beside what was tapped (D155) */
+.menu { position: absolute; z-index: 6; top: calc(100% + 4px); right: 0; min-width: 192px; padding: 4px; border-radius: 12px; border: 1px solid var(--border); background: var(--popover); color: var(--popover-foreground); box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1); text-align: left; }
+.menu .mi { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 12px; border-radius: 10px; font-size: 15px; line-height: 1.45; white-space: nowrap; color: var(--popover-foreground); }
+.menu .mi svg.lu { color: var(--muted-foreground); margin: 0 2px; }
+.menu .mi.danger, .menu .mi.danger svg.lu { color: var(--destructive); }
+.menu hr { height: 1px; border: 0; margin: 4px -4px; background: var(--border); }
+.pressed { background: var(--accent) !important; }
+.btn.secondary.pressed { background: color-mix(in oklab, var(--secondary) 82%, var(--foreground)) !important; }
+
+/* what sits over the screen: the scrim, a bottom sheet, the one dialog */
+.scrim { position: absolute; z-index: 8; inset: 0; background: rgba(0,0,0,.5); }
+.sheet { position: absolute; z-index: 9; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; border-radius: 20px 20px 0 0; border: 1px solid var(--border); border-bottom: 0; background: var(--popover); color: var(--popover-foreground); }
+.sheet .grab { width: 100px; height: 8px; margin: 16px auto 0; border-radius: 999px; background: var(--muted); }
+.sheet .head { display: flex; align-items: center; gap: 12px; padding: 4px 16px 8px; border-bottom: 1px solid var(--border); }
+.sheet .head h2 { flex: 1; min-width: 0; font-size: 20px; line-height: 1.3; font-weight: 600; }
+.sheet .about { padding: 12px 16px 0; font-size: 13px; line-height: 1.4; color: var(--muted-foreground); }
+.sheet .in { padding: 12px 16px 20px; }
+.dialog { position: absolute; z-index: 9; left: 16px; right: 16px; top: 50%; transform: translateY(-50%); display: grid; gap: 16px; padding: 24px; border-radius: 14px; border: 1px solid var(--border); background: var(--background); color: var(--foreground); box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1); }
+.dialog h2 { font-size: 17px; line-height: 1.35; font-weight: 600; }
+.dialog p { margin-top: 6px; font-size: 13px; line-height: 1.4; color: var(--muted-foreground); }
+.dialog .acts { display: flex; flex-direction: column; gap: 8px; }
+
+/* the tab bar, as Minted draws it: microprint along the top, a bead on the tab that's showing */
+.tabbar { position: relative; z-index: 3; flex: none; display: grid; grid-template-columns: repeat(5, 1fr); padding: 10px 6px 12px; background: var(--background); }
+.tabbar .micro { position: absolute; left: 0; top: 0; width: 100%; height: 5px; opacity: .7; }
+.tabbar .micro svg { width: 100%; height: 5px; }
+.tabbar .bead { position: absolute; z-index: 2; top: -2.5px; left: calc(6px + (100% - 12px) * 4.5 / 5); transform: translateX(-50%); filter: drop-shadow(0 1px 1px rgba(10,25,44,.35)); }
+.tab { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 56px; font-size: 12px; line-height: 1.25; color: var(--muted-foreground); }
+.tab.on { font-weight: 600; color: var(--primary); }
+.tab .ti { width: 30px; height: 26px; display: grid; place-items: center; }
+.tab .ti svg { overflow: visible; }
+.tab .scanbtn { width: 52px; height: 52px; margin-top: -12px; border-radius: 50%; box-shadow: 0 0 0 4px var(--background), 0 0 0 5px var(--border), 0 8px 16px -8px rgba(10,25,44,.6); }
+.tab .scanbtn svg { width: 100%; height: 100%; overflow: visible; }
+.tab .bdg { position: absolute; top: -6px; left: calc(50% + 4px); }
+.tab .bdg svg { overflow: visible; }
