@@ -21,10 +21,12 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
   The owner approved the split: 31 stay sheets, 4 fold into menus, 1 inline, 1 dialog, 6 screens.
 - **D156:** design pages run on Fable at `high`, each brief with a render, look and fix loop. Order:
   overlays, Sen's chat, Insights, *Models*; the ESS section of Claims alongside.
-- **Being drawn (not yet reviewed or published):** `docs/ui/overlays/design.html` (three sheet
-  anatomies, the menu, the dialog; the owner picks one, then it's drawn in full) and
-  `docs/ui/claims-ess/design.html` (two redesigns of the ESS section). When each is back: review it
-  against its brief, publish it, add it to `docs/ui/README.md`, ask the owner to choose.
+- **Drawn and published (14 Nov), waiting for the owner to choose** (links in `docs/ui/README.md`):
+  the overlays' three sheet anatomies (A Quiet, B Floating card, C Action bar) with the menu and
+  dialog, `docs/ui/overlays/design.html`; and the ESS section's two redesigns (A one card, B status
+  first), `docs/ui/claims-ess/design.html`. Recommended: sheet A; ESS B with A's *Set up* button.
+  After the choice: the chosen sheet drawn in full (a rows pick with search, a sheet at its cap, the
+  fade, 1.5× text, 360×640, the other looks), and ESS's missing states.
 - **Then:** brief Sen's chat page on the chosen sheet; then Insights; then *Models*. Nothing is built
   from a page until the owner approves it. The overlay rebuild is a unit plan after approval
   (`docs/modules.md`, *Waiting on the owner's go*); it absorbs polish components 8, 15, 21 and home 17.
