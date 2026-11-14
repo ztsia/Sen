@@ -15,6 +15,7 @@ Artifact tool's `url`). A page whose source isn't here doesn't count as saved.
 | Mercury | https://claude.ai/artifact/QMZtw9imqk8Jw6f44yxBGA | `directions/mercury.html` |
 | Copper | https://claude.ai/artifact/PMtA2qnvKY3BwgFom611YM | `directions/copper.html` |
 | Sen's overlays today: every sheet, menu and dialog shot open on 13 Nov, with a proposed verdict on each (not yet approved) | https://claude.ai/artifact/5CNH4qcaY7GDRhnfKCemmF | `overlays/inventory.html`, its pictures in `overlays/shots/`, the table in `overlays/inventory.md` |
+| Claims, the ESS section: two redesigns in every state (14 Nov, the owner to choose) | https://claude.ai/artifact/GuRP1HCBxZm8fwA8N1DDsR | `claims-ess/design.html`, built by `claims-ess/design-src/build.mjs` |
 
 The six looks' pages are built by `directions/build.mjs` from `directions/src/`: edit the source,
 rebuild, then publish. The chart palette is written by `directions/palette.mjs` into
