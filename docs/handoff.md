@@ -39,11 +39,15 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 
 ## What to do next
 
-1. **Insights' design page is being drawn** (23 Nov) by an Opus subagent at `high`, into
-   `docs/ui/insights/`, from a brief written on Opus (copy in the session's scratchpad; it follows
-   the chat page's brief). When it reports: review its screenshots, publish, add its row to
-   `docs/ui/README.md`, ask the owner. If the session was lost, re-brief from `docs/screens.md`
-   `insights`, spec §9.3 and §9.8, patterns §4 and the chat page's method.
+1. **Insights' design page is drawn and published** (23 Nov, Opus at `high`; `docs/ui/insights/`,
+   link in `docs/ui/README.md`). **The owner is looking at it.** Either-ors (agent's pick first):
+   tab row as chips or underlined tabs; a card's first line the question or the answer; the cycle
+   picker a list or arrows. Bends: an odd small card is drawn wide; the tabs are chips in the screen,
+   not a second tab row; the screen menu adds *Arrange cards*, *Add a tab*, *Ask Sen for a card*;
+   `insights/card` drops Sen's button for a full-width *Ask Sen about this*; 1.5× text stacks cards
+   one to a row; source shows only on the opened card. Main-session nit: *Wide/Small* drawn as a
+   checkbox labelled *Small*. Still to fix: the treemap's narrow cells, no table view drawn, the
+   made-up pay drifts by 10 sen.
 2. Then briefs, on Opus, for admin's *Models* page and the full drawings of sheet A and ESS B, each
    drawn by Sonnet at `high`, one at a time. Nothing is built from a page until the owner approves it;
    the overlay rebuild absorbs polish components 8, 15, 21 and home 17. `agent/memory` and
