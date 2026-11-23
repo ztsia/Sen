@@ -39,9 +39,11 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 
 ## What to do next
 
-1. **On Opus (`/model opus`): brief Insights' design page** (tabs, cards, arranging, a card opened;
-   spec §16, `docs/screens.md` `insights`, D152's thirteen chart kinds, patterns §4 and §7, the chat
-   and overlay pages as the bar), send one Opus subagent at `high`, review, publish, ask the owner.
+1. **Insights' design page is being drawn** (23 Nov) by an Opus subagent at `high`, into
+   `docs/ui/insights/`, from a brief written on Opus (copy in the session's scratchpad; it follows
+   the chat page's brief). When it reports: review its screenshots, publish, add its row to
+   `docs/ui/README.md`, ask the owner. If the session was lost, re-brief from `docs/screens.md`
+   `insights`, spec §9.3 and §9.8, patterns §4 and the chat page's method.
 2. Then briefs, on Opus, for admin's *Models* page and the full drawings of sheet A and ESS B, each
    drawn by Sonnet at `high`, one at a time. Nothing is built from a page until the owner approves it;
    the overlay rebuild absorbs polish components 8, 15, 21 and home 17. `agent/memory` and
