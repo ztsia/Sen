@@ -253,14 +253,18 @@ const TAB_CARDS = {
 // ---------- the screen ----------
 const TABS4 = ['This cycle', 'Food', 'Commitments', 'Over time'];
 const TABS8 = [...TABS4, 'Savings', 'Car', 'Japan', 'Work claims'];
-const CYC_NOW = `<div class="cyc"><span class="pick">October <span class="d">30 Sep – 29 Oct</span>${I('chevron-down', 's16')}</span><span class="rt">Day 19 of 30</span></div>`;
-const CYC_SEP = `<div class="cyc"><span class="pick">September <span class="d">31 Aug – 29 Sep</span>${I('chevron-down', 's16')}</span><span class="rt lnk">Back to October</span></div>`;
+// the cycle row: ‹ [the cycle, its dates ▾ / its day or when it closed] ›  (the owner chose arrows and the list together)
+const cycRow = ({ name, dates, line2, prev = true, next = true, open = false }) => `<div class="cyc"><span class="ar${prev ? '' : ' off'}" aria-label="Previous cycle">${I('chevron-left')}</span><span class="pick${open ? ' open' : ''}"><span class="l1">${name} <span class="d">· ${dates}${I('chevron-down', 's16')}</span></span><span class="l2">${line2}</span></span><span class="ar${next ? '' : ' off'}" aria-label="Next cycle">${I('chevron-right')}</span></div>`;
+const CYC_NOW = cycRow({ name: 'October', dates: '30 Sep – 29 Oct', line2: 'Day 19 of 30, 12 days to payday', next: false });
+const CYC_SEP = cycRow({ name: 'September', dates: '31 Aug – 29 Sep', line2: 'Closed 29 Sep' });
+const CYC_FIRST = cycRow({ name: 'May 2025', dates: '30 Apr – 29 May', line2: 'Closed 29 May · the first cycle Sen has', prev: false });
 function tabRow(tabs, on, o = {}) {
   if (o.under) return `<div class="tabs u${o.fade ? ' fade' : ''}">${tabs.map((n) => `<span class="tc${n === on ? ' on' : ''}">${n}</span>`).join('')}</div>`;
   if (o.arr) return `<div class="tabs" style="flex-wrap:wrap;row-gap:8px">${tabs.map((n) => `<span class="tc mn${n === on ? ' on' : ''}${n === o.menuOn ? ' open' : ''}">${n}${I('chevron-down', 's16')}</span>`).join('')}<span class="tc add dash${o.addOff ? ' off' : ''}">${I('plus', 's16')}Add tab</span></div>`;
   return `<div class="tabs${o.scroll ? ' fadel' : ' fade'}">${tabs.map((n, i) => `<span class="tc${n === on ? ' on' : ''}"${i === 0 && o.scroll ? ` style="margin-left:-${o.scroll}px"` : ''}>${n}</span>`).join('')}</div>`;
 }
-const APPBAR = (open = false) => `<div class="appbar"><h1>Insights</h1><span class="ic${open ? ' open' : ''}">${I('ellipsis')}</span></div>`;
+const APPBAR = (open = false, back = '') => `<div class="appbar"><h1>Insights</h1>${back ? `<span class="btn xs sec back2">${I('undo-2', 's16')}${back}</span>` : ''}<span class="ic${open ? ' open' : ''}">${I('ellipsis')}</span></div>`;
+const APPBAR_PAST = APPBAR(false, 'Back to October');
 function screen(o = {}) {
   const tab = o.tab || 'This cycle', tabs = o.tabs || TABS4;
   const cards = o.cards || TAB_CARDS[tab](o.cardOpt || {});
@@ -424,11 +428,53 @@ S.push(section('tabs', '2 · Food, Commitments, Over time', 'The other three see
   phone({ tall: true, inner: screen({ tab: 'Commitments', tabOpt: { scroll: 40 } }), cap: capT('Commitments', 'Two wide cards. The parts of the pay are different things, so they take series colours, with a legend.') }),
   phone({ tall: true, inner: screen({ tab: 'Over time', tabOpt: { scroll: 80 } }), cap: capT('Over time', 'Saving and goals wide, two small cards, then <i>The year</i> as a row.') }),
 ])));
-const pickSheet = sheet({ title: 'Which cycle?', list: true, body: [['October', '30 Sep – 29 Oct · 12 days to go', true], ...[['September', '31 Aug – 29 Sep', 137920], ['August', '31 Jul – 30 Aug', 108800], ['July', '30 Jun – 30 Jul', 109670], ['June', '29 May – 29 Jun', 88120], ['May', '30 Apr – 28 May', 189140]]].map(([n, d, v]) => nrow('', n, v === true ? d : `${d} · ${rm(v)} left`, v === true ? I('check', 's24').replace('class="lu', 'class="lu ck') : '')).join('') + `<div class="nrow"><span class="g" style="color:var(--primary);font-weight:500">Earlier cycles</span>${I('chevron-down')}</div>` });
-S.push(section('picker', '3 · Changing cycle', 'One button under the title says which cycle and opens a list of cycles, each with what was left at its payday. Every tab follows it.', row('', [
-  phone({ inner: `${screen({ cyc: CYC_NOW.replace('class="pick"', 'class="pick open"') })}<div class="scrim"></div>${pickSheet}`, cap: capT('The cycle picker open', 'A Quiet sheet of cycles. Picking one closes it; there’s nothing to confirm.') }),
-  phone({ tall: true, inner: screen({ cyc: CYC_SEP, cards: pastCards }), cap: capT('September, a past cycle', 'The picker says which, with a way back. No estimate, no pace tick and no today; <i>as of</i> becomes <i>Final</i>.') }),
-])));
+// the cycle sheet: every cycle since Sen's first, newest first, grouped by year; what was left at each payday on one scale
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dmy = (iso) => { const [, m, d] = iso.split('-').map(Number); return `${d} ${MON[m - 1]}`; };
+// a cycle's year is the year of its payday, the day after it ends
+const cycYear = (c) => { const d = new Date(c.end + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 1); return d.getUTCFullYear(); };
+const CYCS = D.cycles.map((c) => ({ ...c, year: cycYear(c), dates: `${dmy(c.start)} – ${dmy(c.end)}` })).reverse();
+// the checks: the last six agree with Saving more?, the year's months and the median; exactly one short cycle; October is now, its bar the estimate
+CYCS.slice(1, 7).reverse().forEach((c, i) => eq(c.left, savings[i], `${c.label} left (saving)`));
+yearM.slice(0, 9).forEach((m, i) => eq(m.income - m.spent, CYCS.find((c) => c.year === 2026 && c.label.startsWith(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September'][i])).left, `${m.label} left (year)`));
+eq(CYCS.filter((c) => c.left < 0).length, 1, 'one short cycle');
+if (!CYCS[0].now || CYCS[0].label !== 'October' || CYCS[0].year !== 2026) throw new Error('first row is now');
+const USUAL = median(CYCS.slice(1, 7).map((c) => c.left)); eq(USUAL, 123795, 'usual');
+const LO = -30000, HI = 200000, bx = (v) => (100 * (v - LO)) / (HI - LO); const Z = bx(0);
+if (Math.max(...CYCS.slice(1).map((c) => c.left)) > HI || Math.min(...CYCS.slice(1).map((c) => c.left)) < LO) throw new Error('cycle scale');
+const cycBar = (c, viewing) => {
+  const v = c.now ? INCOME - EST : c.left, col = c.left < 0 ? 'var(--money-warning)' : viewing ? 'var(--chart-accent)' : 'var(--chart-context)';
+  const l = v < 0 ? bx(v) : Z, w = Math.abs(bx(v) - Z);
+  return `<span class="cb"><i class="z" style="left:${x(Z)}%"></i><i class="u" style="left:${x(bx(USUAL))}%"></i><i class="v${v < 0 ? ' neg' : ''}${c.now ? ' est' : ''}" style="left:${x(l)}%;width:${x(w)}%;--c:${col}"></i></span>`;
+};
+const cycRowHtml = (c, viewing) => {
+  const right = c.now ? `<span class="r"><b>Now</b><small>12 days to go</small></span>` : c.left < 0 ? `<span class="r short"><b class="num">${rm(-c.left)}</b><small>${I('circle-alert', 's14')}short</small></span>` : `<span class="r"><b class="num">${rm(c.left)}</b><small>&nbsp;</small></span>`;
+  return `<div class="cr${viewing ? ' on' : ''}"><span class="n">${c.label}<small>${c.dates}</small></span>${cycBar(c, viewing)}${right}<span class="k">${viewing ? I('check', 's20') : ''}</span></div>`;
+};
+const ROW_H = 56, YH_H = 32, LIST_H = 400;
+function cycSheet({ viewing = 'October-2026', y = 0 } = {}) {
+  let html = '', at = 0, yrAt = {}; const years = [...new Set(CYCS.map((c) => c.year))];
+  years.forEach((yr) => { yrAt[yr] = at; html += `<p class="yh">${yr}</p>`; at += YH_H; CYCS.filter((c) => c.year === yr).forEach((c) => { html += cycRowHtml(c, `${c.label}-${c.year}` === viewing); at += ROW_H; }); });
+  if (y > at - LIST_H) throw new Error(`cycle sheet can only scroll ${at - LIST_H}, asked ${y}`);
+  const stuck = years.filter((yr) => yrAt[yr] <= y).pop();
+  const body = `<div class="cyl" style="height:${LIST_H}px"><div style="margin-top:-${y}px">${html}</div>${y > 0 ? `<p class="yh stuck">${stuck}</p>` : ''}</div>`;
+  return { html: sheet({ title: 'Which cycle?', ctx: `What was left at each payday. <span class="ut"><i></i>Usual: ${rm(USUAL)}, the median of the last 6</span>`, body, list: true }), at, yrAt };
+}
+const CYC_TOP = cycSheet();
+const Y2025 = CYC_TOP.yrAt[2025] + 20; // scrolled until 2025's heading has stuck, with December sliding under it
+const CYC_SCROLLED = cycSheet({ y: Y2025 });
+const CYC_DARK = cycSheet({ viewing: 'September-2026' });
+S.push(section('picker', '3 · Changing cycle', 'Arrows step to the cycle next door; the button between them opens every cycle, each with what was left at its payday. Every tab follows it.', `${row('', [
+  strip(`${APPBAR()}${CYC_NOW}`, capT('On the current cycle', 'The button’s second line is the day and the days to payday. › is dimmed: there’s no next cycle yet.'), 'top'),
+  strip(`${APPBAR_PAST}${CYC_SEP}`, capT('On a past cycle', 'Both arrows work and the second line says when it closed. <i>Back to October</i> sits in the app bar, out of the row.'), 'top'),
+  strip(`${APPBAR_PAST.replace('Back to October', 'Back to October')}${CYC_FIRST}`, capT('On the first cycle Sen has', '‹ is dimmed: nothing before it. The year shows because it isn’t this one.'), 'top'),
+])}
+${row('', [
+  phone({ inner: `${screen({ cyc: CYC_NOW.replace('class="pick"', 'class="pick open"') })}<div class="scrim"></div>${CYC_TOP.html}`, cap: capT('The sheet, at the top', 'Newest first under 2026. Bars share one scale: the accent is the cycle you’re viewing, October’s is dashed because it’s an estimate until payday.') }),
+  phone({ inner: `${screen({ cyc: CYC_NOW.replace('class="pick"', 'class="pick open"') })}<div class="scrim"></div>${CYC_SCROLLED.html}`, cap: capT('Scrolled to 2025', 'The year heading sticks while its cycles slide under it. The one short cycle says so in words, with its bar drawn the other way.') }),
+  phone({ mode: 'dark', inner: `${screen({ appbar: APPBAR_PAST, cyc: CYC_SEP.replace('class="pick"', 'class="pick open"'), cards: pastCards })}<div class="scrim"></div>${CYC_DARK.html}`, cap: capT('Dark, viewing September', 'The check and the accent follow the cycle you’re on; October stays dashed, in grey.') }),
+  phone({ tall: true, inner: screen({ appbar: APPBAR_PAST, cyc: CYC_SEP, cards: pastCards }), cap: capT('September, a past cycle', 'No estimate, no pace tick and no today; <i>as of</i> becomes <i>Final</i>. The way back is in the app bar.') }),
+])}`));
 const failAsof = { asof: 'Couldn’t update · as of 18:02', asofIcon: 'circle-alert', asofCls: 'fail', asofR: '<span style="color:var(--primary);font-weight:600">Try again</span>' };
 S.push(section('states', '4 · States', 'What a card does when it’s loading, out of date, empty or broken. The screen around it doesn’t change.', row('', [
   phone({ inner: screen({ cards: SKELS }), cap: capT('First load', 'A skeleton shaped like each card, in its place and size, so nothing jumps when it fills.') }),
@@ -443,9 +489,9 @@ const arrCnt = (n = 5, tab = 'This cycle') => `${I('grip-vertical', 's14').repla
 const arrCards = (o = {}) => TAB_CARDS['This cycle']({ arr: true, ...o });
 const arrScreen = (o = {}) => screen({ arr: true, done: true, ...o, tabOpt: { arr: true, ...(o.tabOpt || {}) }, appbar: o.appbar ?? `<div class="appbar"><h1>Insights</h1></div>`, cnt: o.cnt ?? `Drag a card, or tap ${I('grip-vertical', 's14')} to move it · 5 of 12 cards`, cards: o.cards || arrCards() });
 const dragCards = () => { const c = TAB_CARDS['This cycle']({ arr: true }); const lifted = C.leak({ arr: true, cls: 'lifted', style: 'left:22px;top:-26px;width:100%' }); return [c[0], `<div class="hole" style="position:relative">${lifted}<span class="finger" style="left:12px;top:-12px"></span></div>`, c[3], c[1], c[4]]; };
-const hdlMenu = menu([['arrow-up', 'Move up', 'off', 'It’s first'], ['arrow-down', 'Move down'], ['arrow-up-to-line', 'Move to the top', 'off'], ['folder-input', 'Move to another tab…']], 'left:16px;top:318px;width:290px');
+const hdlMenu = menu([['arrow-up', 'Move up', 'off', 'It’s first'], ['arrow-down', 'Move down'], ['arrow-up-to-line', 'Move to the top', 'off'], ['folder-input', 'Move to another tab…']], 'left:16px;top:330px;width:290px');
 const moveSheet = (full = false) => sheet({ title: 'Move to which tab?', ctx: 'Am I on track?', list: true, body: [['This cycle', 'Here now', 'off', true], ['Food', '3 cards'], ['Commitments', '2 cards'], ['Over time', '4 cards and The year'], ...(full ? [['Savings', '12 of 12 cards: full', 'off'], ['Car', '3 cards'], ['Japan', '2 cards'], ['Work claims', '1 card']] : [])].map(([n, d, cls, here]) => nrow('', n, d, here ? I('check', 's24').replace('class="lu', 'class="lu ck') : I('chevron-right'), cls || '')).join('') + (full ? '' : `<div class="nrow">${I('plus').replace('class="lu', 'class="lu ck')}<span class="g" style="color:var(--primary);font-weight:500">A new tab…</span></div>`) });
-const tabMenu = menu([['pencil', 'Rename'], ['move', 'Move'], '-', ['trash-2', 'Remove', 'del', '3 cards']], 'left:124px;top:186px');
+const tabMenu = menu([['pencil', 'Rename'], ['move', 'Move'], '-', ['trash-2', 'Remove', 'del', '3 cards']], 'left:124px;top:198px');
 const tabMoveSheet = sheet({ title: 'Where should Food go?', list: true, body: [['First', ''], ['After This cycle', 'Where it is now', true], ['After Commitments', ''], ['Last, after Over time', '']].map(([n, d, here]) => nrow('', n, d, here ? I('check', 's24').replace('class="lu', 'class="lu ck') : '')).join('') });
 const nameSheet = sheet({ title: 'New tab', body: `<div class="fld"><label>Name</label><span class="inp focus">Trips</span><span class="hint">5 of 8 tabs. Cards you add later go to the tab you’re on.</span></div>`, btn: 'Add tab' });
 const SAVQ = [['How much is in Ryt Bank?', 1465087, 'today'], ['How much went to savings?', 61000, 'this cycle'], ['What’s in the Japan pocket?', 295000, 'of RM6,000.00'], ['What did ASB pay out?', 18450, 'this year'], ['How much is in Public Bank?', 412650, 'today'], ['What’s set aside for road tax?', 70000, 'of RM1,400.00']];
@@ -492,7 +538,7 @@ S.push(section('fit', '10 · Smaller phone, bigger text', 'What wraps and what g
 
 // either-ors
 const eoTop = (o) => `${APPBAR()}${CYC_NOW}${o}`;
-S.push(section('either', 'Either-or', 'The three places I hesitated, each drawn both ways. My pick is first.', `${row('1 · The tab row', [
+S.push(section('either', 'Either-or', 'The places I hesitated, each drawn both ways. My pick is first; the third was settled by the owner.', `${row('1 · The tab row', [
   strip(eoTop(tabRow(TABS4, 'This cycle')) + `<div class="grid">${C.leak()}${C.small()}</div>`, '<b>A · Chips (my pick)</b> · Reads as views of this one screen, not a second navigation; with eight it scrolls.', 'top'),
   strip(eoTop(tabRow(TABS4, 'This cycle', { under: true })) + `<div class="grid">${C.leak()}${C.small()}</div>`, '<b>B · Underlined tabs</b> · The four fit without scrolling, but it looks like a second tab row (patterns 6).', 'top'),
 ])}
@@ -500,14 +546,11 @@ ${row('2 · A card’s first line', [
   strip(`<div class="grid">${C.leak()}${C.small()}</div>`, '<b>A · The question as the heading (my pick)</b> · You find the card by what you’d ask; the answer sits under it.', 'top'),
   strip(`<div class="grid">${card({ q: '', fig: '66% at weekends', take: 'When does the money leak?', view: calendar(N.leak.spent, 2, { today: 18 }) }).replace('<h3 class="q"></h3>', '')}${card({ q: '', fig: rm(17710), take: 'Do the small things add up?', view: `<div class="dots">${'<i></i>'.repeat(22)}</div>` }).replace('<h3 class="q"></h3>', '')}</div>`, '<b>B · The answer as the heading</b> · Faster to scan once you know the cards, but the question becomes a caption and the tab reads as a wall of numbers.', 'top'),
 ])}
-${row('3 · The cycle picker', [
-  strip(`${APPBAR()}${CYC_NOW}`, '<b>A · One button and a list (my pick)</b> · One control, and the list shows what each cycle left.', 'top'),
-  strip(`${APPBAR()}<div class="cyc"><span class="ic" style="margin-left:-12px">${I('chevron-left')}</span><span class="pick" style="background:none;padding:0">October <span class="d">30 Sep – 29 Oct</span></span><span class="ic" style="margin-left:auto;opacity:.4">${I('chevron-right')}</span></div>`, '<b>B · Arrows either side</b> · One tap to last cycle, but two 48 px arrows on a row that’s only for this, and a long way back to April.', 'top'),
-])}`));
+${notes(['<b>3 · The cycle picker</b> · The owner chose both: arrows for the cycle next door and the button for the rest, drawn in section 3.'])}`));
 
 const MAP = [
   ['The app bar and its ⋯ menu', 'Patterns 7 <code>AppBar</code> with one action; shadcn <code>DropdownMenu</code>', 'Menu of D155'],
-  ['The cycle picker', 'shadcn <code>Button</code> (secondary) opening the Quiet sheet: <code>Drawer</code> with a list of <code>NavRow</code>s', 'D157 A'],
+  ['The cycle picker', 'Two shadcn <code>Button</code>s (ghost, icon, 48 px; <code>disabled</code> at either end) around a secondary <code>Button</code> with two lines, opening the Quiet sheet: <code>Drawer</code> with a <code>ScrollArea</code>, sticky year headings and a row per cycle (a <code>NavRow</code> with a thin bar)', 'D157 A; the bars are a 9.8 ranked bar laid out down the list, one scale, the estimate dashed'],
   ['The tab row', 'shadcn <code>Tabs</code> (<code>TabsList</code> restyled as chips, scrolling) ; in arranging, each trigger with a <code>DropdownMenu</code>', 'Not a second navigation: one screen’s views'],
   ['A card', 'Patterns 4 <code>InsightCard</code> on shadcn <code>Card</code>: title, figure or takeaway, change, view, <i>as of</i>', 'Two sizes, one grid; <code>grid-auto-flow: dense</code>'],
   ['Am I on track?', '9.8 <b>Line</b>, against last cycle, a limit line, a dashed estimate', 'shadcn <code>Chart</code> on Recharts <code>LineChart</code>/<code>Area</code>'],
@@ -542,6 +585,7 @@ S.push(section('build', '11 · What each piece is built from', 'For the builder.
 <li><b>The meal average is “labelled an estimate”</b> (spec 9.3). It has a badge, and its spark is dashed, as every estimate is.</li>
 <li><b>A tab’s <i>Move</i></b> has no stated form. It opens a short list of places; dragging the chip in arranging does the same.</li>
 <li><b>At 1.5× text</b> two small cards no longer fit side by side, so they stack one to a row. No half row is left, because every card is then full width.</li>
+<li><b>Patterns 7’s app bar has one action.</b> On a past cycle it gains a second, <i>Back to October</i>, because the cycle row has no room once the arrows are in it. On the current cycle the app bar is as before.</li>
 </ol></div>`));
 
 const NAV = [['cycle', 'This cycle'], ['tabs', 'Other tabs'], ['picker', 'Changing cycle'], ['states', 'States'], ['arrange', 'Arranging'], ['pin', 'Pinned'], ['menu', 'Menu and Reset'], ['open', 'A card opened'], ['kinds', 'Other cards'], ['fit', 'Small and big'], ['either', 'Either-or'], ['build', 'Built from']];

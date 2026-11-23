@@ -98,13 +98,41 @@ svg.lu.s14 { width: 14px; height: 14px; } svg.lu.s16 { width: 16px; height: 16px
 .ic.open svg { box-shadow: 0 0 0 8px var(--secondary); background: var(--secondary); border-radius: 50%; }
 
 /* the cycle picker: one button that says which cycle, and how far through it */
-.cyc { display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; padding: 0 16px; min-height: 48px; }
-.pick { height: 40px; padding: 0 10px 0 12px; border-radius: var(--radius-btn, 999px); background: var(--secondary); color: var(--secondary-foreground); display: inline-flex; align-items: center; gap: 8px; font: 600 var(--f15)/1 var(--font-ui); white-space: nowrap; }
+.cyc { display: flex; align-items: center; gap: 0; padding: 2px 4px; min-height: 60px; }
+.cyc .ar { width: 48px; height: 48px; flex: none; display: grid; place-items: center; color: var(--icon); }
+.cyc .ar.off { opacity: .35; }
+.pick { flex: 1; min-width: 0; min-height: 52px; padding: 6px 12px; border-radius: var(--radius-btn, 999px); background: var(--secondary); color: var(--secondary-foreground); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; }
+.pick .l1 { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 5px; font: 600 var(--f15)/1.3 var(--font-ui); }
+.pick .l1 .d { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font: 400 var(--f13)/1.3 var(--font-ui); color: var(--muted-foreground); }
+.pick .l2 { font: 400 var(--f13)/1.3 var(--font-ui); color: var(--muted-foreground); }
 .pick svg { color: var(--icon); }
-.pick .d { font: 400 var(--f13)/1 var(--font-ui); color: var(--muted-foreground); }
 .pick.open { box-shadow: inset 0 0 0 1.5px var(--ring); }
-.cyc .rt { margin-left: auto; font-size: var(--f13); color: var(--muted-foreground); white-space: nowrap; }
-.cyc .rt.lnk { color: var(--primary); font-weight: 500; }
+.appbar .back2 { margin-right: 2px; }
+/* the cycle sheet */
+.sheet .ctx .ut { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.sheet .ctx .ut i { width: 2px; height: 12px; background: var(--muted-foreground); border-radius: 1px; }
+.cyl { position: relative; overflow: hidden; margin-top: 4px; }
+.cyl::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: linear-gradient(to bottom, transparent, var(--popover)); pointer-events: none; }
+.yh { height: 32px; display: flex; align-items: flex-end; padding: 0 16px 6px; font: 600 var(--f13)/1 var(--font-ui); color: var(--muted-foreground); background: var(--popover); }
+.yh.stuck { position: absolute; z-index: 2; top: 0; left: 0; right: 0; margin: 0; box-shadow: 0 1px 0 var(--border); }
+.cr { height: 56px; display: grid; grid-template-columns: 102px 1fr 84px 20px; align-items: center; column-gap: 8px; padding: 0 12px 0 16px; border-top: 1px solid var(--border); }
+.yh + .cr { border-top: 0; }
+.cr .n { display: grid; font: 500 var(--f15)/1.3 var(--font-ui); white-space: nowrap; }
+.cr .n small { font: 400 var(--f13)/1.35 var(--font-ui); color: var(--muted-foreground); }
+.cr .r { display: grid; justify-items: end; text-align: right; white-space: nowrap; }
+.cr .r b { font: 500 var(--f15)/1.3 var(--font-ui); }
+.cr .r small { display: inline-flex; align-items: center; gap: 3px; font: 400 var(--f13)/1.35 var(--font-ui); color: var(--muted-foreground); }
+.cr .r.short b, .cr .r.short small { color: var(--money-warning); }
+.cr .r.short svg { color: var(--money-warning); }
+.cr .k { color: var(--primary); display: grid; place-items: center; }
+.cr.on .n { font-weight: 600; }
+.cb { position: relative; height: 18px; }
+.cb i { position: absolute; display: block; }
+.cb .z { top: 1px; bottom: 1px; width: 1px; background: var(--border); }
+.cb .u { top: 2px; bottom: 2px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--muted-foreground); opacity: .7; }
+.cb .v { top: 6px; height: 6px; background: var(--c); border-radius: 0 3px 3px 0; }
+.cb .v.neg { border-radius: 3px 0 0 3px; }
+.cb .v.est { background: repeating-linear-gradient(90deg, var(--c) 0 5px, transparent 5px 8px); border-radius: 0; }
 
 /* the tab row: chips, one row, scrolls sideways; the tab you're on is filled */
 .tabs { position: relative; display: flex; gap: 8px; padding: 8px 16px 12px; white-space: nowrap; overflow: hidden; }

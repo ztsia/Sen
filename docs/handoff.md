@@ -41,8 +41,10 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 
 1. **Insights' design page is drawn and published** (23 Nov, Opus at `high`; `docs/ui/insights/`,
    link in `docs/ui/README.md`). **The owner is looking at it.** Either-ors (agent's pick first):
-   tab row as chips or underlined tabs; a card's first line the question or the answer; the cycle
-   picker a list or arrows. Bends: an odd small card is drawn wide; the tabs are chips in the screen,
+   tab row as chips or underlined tabs; a card's first line the question or the answer. **Cycle picker
+   decided by the owner (23 Nov): both** — ‹ › for the next-door cycle, the button opens a sheet of
+   every cycle by year with a bar of what was left, the short one in words; *Back to October* went
+   to the app bar (a second action there, against patterns §7). Bends: an odd small card is drawn wide; the tabs are chips in the screen,
    not a second tab row; the screen menu adds *Arrange cards*, *Add a tab*, *Ask Sen for a card*;
    `insights/card` drops Sen's button for a full-width *Ask Sen about this*; 1.5× text stacks cards
    one to a row; source shows only on the opened card. Main-session nit: *Wide/Small* drawn as a
