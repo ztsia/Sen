@@ -115,13 +115,12 @@ follow on a phone, and commit.
       plugin, `claude-security` and `security-guidance` (24 Oct). On any other machine, once:
       `claude plugin install claude-security@claude-plugins-official` and
       `claude plugin install security-guidance@claude-plugins-official`.
-- [ ] **Plugin 1.3.0 (D151), branch `workflow/plan-then-delegate` on `ztsia/workflow`:** a slice
-      opens with a plan in units, the main session builds only the seams, builders do the rest (a Haiku
-      unit under about 100k tokens of context); no advisor; `uiux` gains the base library, the chart
-      order and AI Elements. Ask a session for its PR, merge it, then move to 1.3.0: on the laptop,
-      `claude plugin update workflow@ztsia`; in the cloud, edit any line of the environment's setup
-      script (a comment will do) and start a new session. Until then Sen's `docs/workflow/` says the
-      same. (#12, plugin 1.2.0, is merged.)
+- [ ] **Move the cloud to workflow plugin 2.0.1** (D158; it replaces the 1.3.0 branch). Sessions here
+      still load 1.2.0. On the phone: claude.ai/code → the environment selector → edit the environment →
+      *Setup script* → add or change any line (a comment such as `# 2.0.1` will do) → *Save*, then start a
+      new session. Its opening rules should mention *Shape versus fill*. Check there that the app's model
+      pick doesn't override the repo's Sonnet setting (the session's model should read Sonnet). On the
+      laptop: `claude plugin update workflow@ztsia`.
 - [ ] **Lessons from B08 for `ztsia/workflow`** (a session with that repository attached, as a PR to the
       plugin; `qa/B08/ledger.md` § *Retro*): (1) the `brief` or `qa` skill: a decision made mid-slice adds its
       states to the brief's *Done when* the same day, so the next QA run's criteria cover them; (2) the `qa`

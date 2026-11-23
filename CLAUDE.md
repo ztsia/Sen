@@ -184,3 +184,10 @@ a skill says to ask.
 ## Overrides
 
 - **The shadcn note** is `// Sen:`.
+- **Which sessions run on Opus** (D158). The default is the settings' Sonnet at `high` with an Opus
+  advisor. Switch the main session with `/model opus` for: the slices that write model prompts,
+  skills and evals (B10 · Models in admin, B27 · Sen's chat, B27 · What Sen carries, B29 · Watches and
+  scheduled reports); B09 · Template engine (its parsing feeds money); and writing a design page's brief.
+- **Who draws a design page** (D158, amends D156): Insights' on an Opus subagent at `high`; every other
+  page (admin's *Models*, the full drawings of sheet A and ESS B) on Sonnet at `high`. The brief is
+  written on Opus, carefully: every state, the words, the look tokens and the render-look-fix loop.
