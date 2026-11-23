@@ -49,7 +49,9 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 3. If the owner asks: a PR for this branch.
 4. **B08 · Charts** (`docs/briefs/B08-charts.md`), branch `B08/charts` from `main` once this branch is
    merged, on Sonnet: the unit table in `docs/plans/B08-charts.md` (2.0.1's `| unit | what | who |
-   model | after |`), build the shape, Haiku fills. **Before its QA: move Sen to 2.0.1's QA engine**
+   model | after |`), build the shape, Haiku fills. Its brief names Sonnet `medium` for
+   three chart units (4, 6, 7): 2.0.1's hook refuses that without a `Sonnet because:` line, so the
+   unit table moves them to Haiku or gives each a clause. **Before its QA: move Sen to 2.0.1's QA engine**
    (`qa verify`, `qa.json`, the screen map; the plugin's `skills/qa/setup.md`), folding Sen's
    `docs/workflow/qa.md` and its `qa-diff`, `mutants` and `lived` scripts into it, in a Sonnet session.
 5. Then **B09 · Template engine** on Opus (`docs/briefs/B09-template-engine.md`).
@@ -67,7 +69,7 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 ## Waiting on the owner (don't build)
 
 - **The polish pass:** the twelve calls. Then `docs/plans/polish.md`: shared units first, then
-  screens, built by Haiku and Sonnet builders on the owner's go.
+  screens, built by Haiku builders on the owner's go.
 - **Six series colours** (D152) may not exist: when three were chosen, a fourth hue didn't pass every
   pair in every look (patterns §4). B08 · Charts tries, and reports back if six can't pass.
 

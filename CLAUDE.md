@@ -191,3 +191,4 @@ a skill says to ask.
 - **Who draws a design page** (D158, amends D156): Insights' on an Opus subagent at `high`; every other
   page (admin's *Models*, the full drawings of sheet A and ESS B) on Sonnet at `high`. The brief is
   written on Opus, carefully: every state, the words, the look tokens and the render-look-fix loop.
+  A drawer is dispatched as `general-purpose` with `model` set, never `workflow:implementer`.
