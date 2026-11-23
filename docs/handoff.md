@@ -40,14 +40,15 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 ## What to do next
 
 1. **Insights is approved (D159):** the owner took every pick and bend on the page.
-2. **Admin's *Models* page is being drawn** (23 Nov) by a Sonnet subagent at `high` into
-   `docs/ui/models/`, from an Opus brief that fixes its whole structure and content (copy in the
-   session's scratchpad): the jobs list, a job's page (*Now*, *Trying*, *Changes*), the *Change…*
-   sheet, *Test*'s states, *Use it*/*Revert* toasts, and B33's lessons and gaps. When it reports:
-   review, publish, add its row to `docs/ui/README.md`, ask the owner. Then, one at a time, an Opus
-   brief and a Sonnet drawer each for the full drawings of sheet A and ESS B. Nothing is built from a
-   page until the owner approves it; the overlay rebuild absorbs polish components 8, 15, 21 and
-   home 17. `agent/memory` and `agent/watches` need no page unless the owner asks. Sen's chat's
+2. **Admin's *Models* page is drawn and published** (23 Nov, Sonnet at `high` from an Opus brief;
+   `docs/ui/models/`, link in `docs/ui/README.md`). **The owner is looking at it.** The drawer's
+   departures, accepted by the main session: provider-off words per job (only a job whose fallback is
+   on another provider keeps working); a better score in `primary` with arrow and words, not green;
+   a typed model offers all four efforts with a note; *Trying* above *Now* while a candidate exists;
+   *Change…* outlined. Dark and Copper drawn for the list, the sheet and one job page only.
+   **Next, one at a time:** an Opus brief and a Sonnet drawer each for the full drawings of sheet A
+   and ESS B (D157's lists of what's still to draw). Nothing is built from a page until the owner
+   approves it; the overlay rebuild absorbs polish components 8, 15, 21 and home 17. Sen's chat's
    either-ors and bends are still open with the owner.
 3. If the owner asks: a PR for this branch.
 4. **B08 · Charts** (`docs/briefs/B08-charts.md`), branch `B08/charts` from `main` once this branch is
