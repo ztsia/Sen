@@ -1,0 +1,97 @@
+{
+  "area": "sen",
+  "screens": [
+    {
+      "name": "sen",
+      "steps": [
+        {
+          "goto": "/"
+        },
+        {
+          "click": "role=button[name=\"Ask Sen\"]"
+        },
+        {
+          "waitFor": "role=dialog[name=\"Sen\"]"
+        },
+        {
+          "wait": 600
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/sen/conversation.tsx",
+        "apps/web/src/screens/sen/parts.tsx"
+      ]
+    },
+    {
+      "name": "agent-memory",
+      "steps": [
+        {
+          "goto": "/s/agent/memory"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/sen/memory.tsx"
+      ]
+    },
+    {
+      "name": "agent-research",
+      "steps": [
+        {
+          "goto": "/s/agent/research"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/sen/research.tsx"
+      ]
+    },
+    {
+      "name": "agent-usage",
+      "steps": [
+        {
+          "goto": "/s/agent/usage"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/sen/usage.tsx"
+      ]
+    },
+    {
+      "name": "agent-usage--cap",
+      "steps": [
+        {
+          "goto": "/s/agent/usage?scenario=cap"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "cap"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/sen/usage.tsx"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "area": "outside",
+  "screens": [
+    {
+      "name": "sign-in",
+      "steps": [
+        {
+          "goto": "/s/sign-in"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/outside/sign-in.tsx",
+        "apps/web/src/screens/outside/logic.ts"
+      ]
+    },
+    {
+      "name": "first-run",
+      "steps": [
+        {
+          "goto": "/s/first-run"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/outside/first-run.tsx",
+        "apps/web/src/screens/outside/logic.ts"
+      ]
+    },
+    {
+      "name": "new-look",
+      "steps": [
+        {
+          "goto": "/s/new-look"
+        },
+        {
+          "waitFor": "role=button[name=\"Keep it\"]"
+        },
+        {
+          "wait": 800
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/outside/new-look.tsx"
+      ]
+    },
+    {
+      "name": "sign-in--invited",
+      "steps": [
+        {
+          "goto": "/s/sign-in?email=hui.min@example.com"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "invited"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/outside/sign-in.tsx",
+        "apps/web/src/screens/outside/logic.ts"
+      ]
+    },
+    {
+      "name": "first-run--without-capture",
+      "steps": [
+        {
+          "goto": "/s/first-run?scenario=month"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "without-capture"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/outside/first-run.tsx",
+        "apps/web/src/screens/outside/logic.ts"
+      ]
+    }
+  ]
+}

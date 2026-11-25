@@ -1,0 +1,254 @@
+{
+  "area": "money",
+  "screens": [
+    {
+      "name": "payments",
+      "steps": [
+        {
+          "goto": "/s/payments"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/more/payments.tsx",
+        "apps/web/src/screens/more/filter-sheet.tsx"
+      ]
+    },
+    {
+      "name": "txn",
+      "steps": [
+        {
+          "goto": "/s/txn?id=7c998971-aa9f-4280-9dbc-3a806417bd21"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/more/txn.tsx"
+      ]
+    },
+    {
+      "name": "receipt",
+      "steps": [
+        {
+          "goto": "/s/receipt?id=e01032a7-c1ee-442e-8e74-76f2ac463a61"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/more/receipt.tsx"
+      ]
+    },
+    {
+      "name": "accounts",
+      "steps": [
+        {
+          "goto": "/s/accounts"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/accounts.tsx"
+      ]
+    },
+    {
+      "name": "account",
+      "steps": [
+        {
+          "goto": "/s/account?id=141bd99d-75aa-4f7b-a846-8d0de63580ef"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/account.tsx",
+        "apps/web/src/screens/account.tsx"
+      ]
+    },
+    {
+      "name": "balance-check",
+      "steps": [
+        {
+          "goto": "/s/balance-check"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/balance-check.tsx",
+        "apps/web/src/screens/money/balance-form.tsx"
+      ]
+    },
+    {
+      "name": "claims",
+      "steps": [
+        {
+          "goto": "/s/claims"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/claims.tsx",
+        "apps/web/src/screens/money/claim-status.ts"
+      ]
+    },
+    {
+      "name": "claim",
+      "steps": [
+        {
+          "goto": "/s/claim?id=39b8682d-7bde-4f27-845f-e966673c9678"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/claim.tsx",
+        "apps/web/src/screens/money/claim-status.ts"
+      ]
+    },
+    {
+      "name": "payments--empty",
+      "steps": [
+        {
+          "goto": "/s/payments?state=empty"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "empty"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/more/payments.tsx",
+        "apps/web/src/screens/more/filter-sheet.tsx"
+      ],
+      "emptyOk": true
+    },
+    {
+      "name": "payments--offline",
+      "steps": [
+        {
+          "goto": "/s/payments?state=offline"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "offline"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/more/payments.tsx",
+        "apps/web/src/screens/more/filter-sheet.tsx"
+      ],
+      "emptyOk": true
+    },
+    {
+      "name": "claim--evidence-missing",
+      "steps": [
+        {
+          "goto": "/s/claim?id=35bed63d-801c-416a-94c4-1537dd59b34d"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "evidence-missing"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/claim.tsx",
+        "apps/web/src/screens/money/claim-status.ts"
+      ]
+    },
+    {
+      "name": "accounts--month",
+      "steps": [
+        {
+          "goto": "/s/accounts?scenario=month"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "month"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/accounts.tsx"
+      ]
+    },
+    {
+      "name": "accounts--capture-off",
+      "steps": [
+        {
+          "goto": "/s/accounts?scenario=capture-off"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "capture-off"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/accounts.tsx"
+      ]
+    },
+    {
+      "name": "claims--month",
+      "steps": [
+        {
+          "goto": "/s/claims?scenario=month"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "month"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/claims.tsx",
+        "apps/web/src/screens/money/claim-status.ts"
+      ]
+    }
+  ]
+}

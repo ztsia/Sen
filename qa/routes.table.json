@@ -1,0 +1,146 @@
+{
+  "routes": [],
+  "pages": [
+    {
+      "path": "/"
+    },
+    {
+      "path": "/review"
+    },
+    {
+      "path": "/insights"
+    },
+    {
+      "path": "/more"
+    },
+    {
+      "path": "/scan"
+    },
+    {
+      "path": "/s/payday"
+    },
+    {
+      "path": "/s/skipped"
+    },
+    {
+      "path": "/s/manual"
+    },
+    {
+      "path": "/s/crop"
+    },
+    {
+      "path": "/s/shared"
+    },
+    {
+      "path": "/s/split"
+    },
+    {
+      "path": "/s/split-public"
+    },
+    {
+      "path": "/s/budgets"
+    },
+    {
+      "path": "/s/subscriptions"
+    },
+    {
+      "path": "/s/goals"
+    },
+    {
+      "path": "/s/goal"
+    },
+    {
+      "path": "/s/insights/year"
+    },
+    {
+      "path": "/s/agent/memory"
+    },
+    {
+      "path": "/s/agent/research"
+    },
+    {
+      "path": "/s/agent/usage"
+    },
+    {
+      "path": "/s/payments"
+    },
+    {
+      "path": "/s/txn"
+    },
+    {
+      "path": "/s/receipt"
+    },
+    {
+      "path": "/s/accounts"
+    },
+    {
+      "path": "/s/account"
+    },
+    {
+      "path": "/s/balance-check"
+    },
+    {
+      "path": "/s/claims"
+    },
+    {
+      "path": "/s/claim"
+    },
+    {
+      "path": "/s/settings"
+    },
+    {
+      "path": "/s/settings/appearance"
+    },
+    {
+      "path": "/s/settings/capture"
+    },
+    {
+      "path": "/s/settings/capture/apps"
+    },
+    {
+      "path": "/s/settings/capture/access"
+    },
+    {
+      "path": "/s/settings/capture/running"
+    },
+    {
+      "path": "/s/settings/capture/captured"
+    },
+    {
+      "path": "/s/settings/you"
+    },
+    {
+      "path": "/s/settings/categories"
+    },
+    {
+      "path": "/s/settings/email"
+    },
+    {
+      "path": "/s/settings/claims"
+    },
+    {
+      "path": "/s/settings/sen"
+    },
+    {
+      "path": "/s/settings/members"
+    },
+    {
+      "path": "/s/settings/member"
+    },
+    {
+      "path": "/s/settings/data"
+    },
+    {
+      "path": "/s/settings/account"
+    },
+    {
+      "path": "/s/sign-in"
+    },
+    {
+      "path": "/s/first-run"
+    },
+    {
+      "path": "/s/new-look"
+    }
+  ]
+}

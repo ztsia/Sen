@@ -1,0 +1,22 @@
+{
+  "area": "more",
+  "screens": [
+    {
+      "name": "more",
+      "steps": [
+        {
+          "goto": "/more"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/more/more.tsx"
+      ]
+    }
+  ]
+}

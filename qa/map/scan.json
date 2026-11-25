@@ -1,0 +1,57 @@
+{
+  "area": "scan",
+  "screens": [
+    {
+      "name": "scan",
+      "steps": [
+        {
+          "goto": "/scan"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/scan/scan.tsx"
+      ]
+    },
+    {
+      "name": "manual",
+      "steps": [
+        {
+          "goto": "/s/manual"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/scan/manual.tsx",
+        "apps/web/src/screens/scan/item-sheet.tsx"
+      ]
+    },
+    {
+      "name": "crop",
+      "steps": [
+        {
+          "goto": "/s/crop?id=7c998971-aa9f-4280-9dbc-3a806417bd21"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/scan/crop.tsx"
+      ]
+    }
+  ]
+}

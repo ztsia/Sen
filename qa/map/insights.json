@@ -1,0 +1,143 @@
+{
+  "area": "insights",
+  "screens": [
+    {
+      "name": "insights",
+      "steps": [
+        {
+          "goto": "/insights"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/insights/insights.tsx"
+      ]
+    },
+    {
+      "name": "budgets",
+      "steps": [
+        {
+          "goto": "/s/budgets"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/insights/budgets.tsx"
+      ]
+    },
+    {
+      "name": "subscriptions",
+      "steps": [
+        {
+          "goto": "/s/subscriptions"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/insights/subscriptions.tsx"
+      ]
+    },
+    {
+      "name": "goals",
+      "steps": [
+        {
+          "goto": "/s/goals"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/insights/goals.tsx"
+      ]
+    },
+    {
+      "name": "goal",
+      "steps": [
+        {
+          "goto": "/s/goal?id=736bb6a0-6b61-4e42-a0dc-9452495c1b2e"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/insights/goal.tsx"
+      ]
+    },
+    {
+      "name": "insights-year",
+      "steps": [
+        {
+          "goto": "/s/insights/year"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/insights/year.tsx"
+      ]
+    },
+    {
+      "name": "insights--empty",
+      "steps": [
+        {
+          "goto": "/insights?state=empty"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "empty"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/insights/insights.tsx"
+      ],
+      "emptyOk": true
+    },
+    {
+      "name": "insights--error",
+      "steps": [
+        {
+          "goto": "/insights?state=error"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "error"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/insights/insights.tsx"
+      ],
+      "emptyOk": true
+    }
+  ]
+}

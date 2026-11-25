@@ -1,0 +1,34 @@
+{
+  "map": "qa/map",
+  "stack": {
+    "setup": "pnpm install --frozen-lockfile",
+    "up": "echo 'skip: the preview build runs on its fake backend, with no server or database'",
+    "seed": "echo 'skip: the preview build reads the made-up scenario in apps/web/src/data/fake'",
+    "build": "cd apps/web && SEN_ENV=preview pnpm exec vite build --outDir dist-qa",
+    "serve": "cd apps/web && exec pnpm exec vite preview --outDir dist-qa --host 127.0.0.1 --port \"$QA_PORT\" --strictPort",
+    "test": "pnpm test"
+  },
+  "login": {},
+  "base": "sandbox",
+  "viewports": {
+    "phone": [
+      390,
+      844
+    ]
+  },
+  "sensitive": [
+    "packages/db/**",
+    "apps/api/src/**/auth*",
+    "apps/web/src/data/auth.ts",
+    "packages/core/src/money*",
+    "packages/core/src/cycles*",
+    "apps/shell/android/**",
+    "apps/shell/core/**"
+  ],
+  "routes": {
+    "enabled": false
+  },
+  "mutants": {
+    "file": "qa/mutants.ts"
+  }
+}
