@@ -103,11 +103,16 @@ also the first slice built as a plan in units: Opus builds the seams, builders d
 2. **Haiku:** the spark kind (`PaceSpark`, `Sparkline`), and the calendar kind wrapping
    `SpendCalendar`.
 3. **Haiku:** the bar and stacked bar kinds (`ColumnBars`, `PartsBar`).
-4. **Sonnet `medium`:** the ranked bar kind (`CategoryBars`: its tick's custom shape takes judgment).
+4. **Haiku, on the main session's shape:** the ranked bar kind (`CategoryBars`). The main session draws
+   its tick's custom shape first; Haiku fills the kind around it.
 5. **Haiku:** the ring kind (`GoalRing`) and the `Progress` meters (`BudgetMeter`, `GoalMeter`,
    `RankedBars`).
-6. **Sonnet `medium`:** the area, donut and bars-with-a-line kinds.
-7. **Sonnet `medium`:** the treemap, waterfall and flow kinds.
+6. **Haiku, on the main session's shape:** the area, donut and bars-with-a-line kinds. The main session
+   sets each one's geometry first (the donut's arcs, the line over bars and its two scales).
+7. **Haiku, on the main session's shape:** the treemap, waterfall and flow kinds. The main session sets
+   each one's layout first (the treemap's cells, the waterfall's steps, the flow's links).
+
+A Haiku unit that misses twice on the same point goes to Sonnet with a `Sonnet because:` line (D158).
 8. **Main session:** review, re-record trees, QA.
 
 Units 2–7 own separate files once unit 1 splits `blocks/charts.tsx`, and run in parallel.

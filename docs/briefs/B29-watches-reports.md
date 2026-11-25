@@ -2,6 +2,8 @@
 
 **Stage 7 · Sen** · after: B29 · Check-ins, limits and closing the gap · next: B30
 
+**Model:** run this session on Opus (`/model opus`, D158): it writes what models read, or parsing that feeds money.
+
 ## Goal
 
 Sen watches for what the owner says, and reports when asked.

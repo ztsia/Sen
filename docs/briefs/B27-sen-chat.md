@@ -2,6 +2,8 @@
 
 **Stage 7 · Sen** · after: B27 · Sen's harness and reading · next: B27 · What Sen carries
 
+**Model:** run this session on Opus (`/model opus`, D158): it writes what models read, or parsing that feeds money.
+
 ## Goal
 
 Sen's conversation looks and acts as it was drawn.
