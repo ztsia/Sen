@@ -1,0 +1,1138 @@
+{
+ "now": {
+  "cycle": {
+   "id": "2026-09-30",
+   "label": "October",
+   "start": "2026-09-30",
+   "end": "2026-10-29",
+   "basis": "pay",
+   "expectedPayday": "2026-10-30",
+   "current": true
+  },
+  "onTrack": {
+   "thisCycle": [
+    1880,
+    186520,
+    189780,
+    221770,
+    233550,
+    253740,
+    265570,
+    282710,
+    286820,
+    286820,
+    306160,
+    317000,
+    322570,
+    336040,
+    338810,
+    347160,
+    354050,
+    367590,
+    387353
+   ],
+   "lastCycle": [
+    1700,
+    178170,
+    183110,
+    197370,
+    202260,
+    227190,
+    246850,
+    246850,
+    253380,
+    260040,
+    264250,
+    269870,
+    296730,
+    339400,
+    346110,
+    352170,
+    356180,
+    356180,
+    360000,
+    383670,
+    402060,
+    404430,
+    416120,
+    418840,
+    426080,
+    428010,
+    432140,
+    438370,
+    440730,
+    442570
+   ],
+   "days": 30,
+   "income": 580480,
+   "estimate": 506427
+  },
+  "budgets": {
+   "cycleShare": 0.6333333333333333,
+   "rows": [
+    {
+     "id": "f8c9d2f0-a1d4-441b-96db-cb5d0866424f",
+     "label": "Meals",
+     "sen": 93293,
+     "cap": 120000
+    },
+    {
+     "id": "de9ad0aa-4fba-4c58-9ca1-e7ba7bb9878d",
+     "label": "Drinks & desserts",
+     "sen": 7350,
+     "cap": 15000
+    },
+    {
+     "id": "9529232b-f4ec-4ebe-964c-9795fff530d1",
+     "label": "Shopping",
+     "sen": 32030,
+     "cap": 30000
+    },
+    {
+     "id": "0c4f597e-41b1-4f2c-bdfb-e713059869f9",
+     "label": "Entertainment",
+     "sen": 0,
+     "cap": 15000
+    }
+   ]
+  },
+  "whereWent": [
+   {
+    "id": "c78ec2bf-012d-449c-9fc1-1e36aaa6cfb3",
+    "label": "Home & bills",
+    "sen": 120000,
+    "typical": 120000
+   },
+   {
+    "id": "27a1472e-fd95-488e-b338-03dcc23b012b",
+    "label": "Meals",
+    "sen": 93293,
+    "typical": 71070
+   },
+   {
+    "id": "f8fbc58e-aadf-4523-9f5e-589908da5601",
+    "label": "Family",
+    "sen": 50000,
+    "typical": 50000
+   },
+   {
+    "id": "d3cfe202-2cae-4a3c-a5aa-35ce5f618bb1",
+    "label": "Shopping",
+    "sen": 32030,
+    "typical": 17060
+   },
+   {
+    "id": "a7ba8339-270d-426f-9ac5-7420ea0253f2",
+    "label": "Groceries",
+    "sen": 24330,
+    "typical": 36860
+   },
+   {
+    "id": "a1d5b478-29fa-413e-8429-3f4cc2fb5dc3",
+    "label": "Car",
+    "sen": 18050,
+    "typical": 17110
+   },
+   {
+    "id": "3789fbd4-0ec5-4f59-b58f-6040e911a116",
+    "label": "Cash",
+    "sen": 10000,
+    "typical": 10000
+   },
+   {
+    "id": "7b0c264e-4259-4258-b045-f3908072a517",
+    "label": "Phone & internet",
+    "sen": 8800,
+    "typical": 8800
+   }
+  ],
+  "leak": {
+   "spent": [
+    0,
+    1580,
+    1120,
+    17130,
+    9000,
+    0,
+    1590,
+    5900,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1490,
+    1570,
+    0,
+    0,
+    0,
+    0,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "days": 30
+  },
+  "smallThings": {
+   "count": 22,
+   "total": 17710,
+   "under": 1500
+  },
+  "meal": {
+   "average": 3009,
+   "meals": 31,
+   "history": [
+    {
+     "label": "May",
+     "sen": 1984
+    },
+    {
+     "label": "June",
+     "sen": 2438
+    },
+    {
+     "label": "July",
+     "sen": 2268
+    },
+    {
+     "label": "August",
+     "sen": 2164
+    },
+    {
+     "label": "September",
+     "sen": 2111
+    },
+    {
+     "label": "October",
+     "sen": 3009
+    }
+   ]
+  },
+  "experiment": {
+   "label": "GrabFood at most 3 times a week",
+   "limit": 3,
+   "weeks": [
+    {
+     "label": "Week 1",
+     "count": 5
+    },
+    {
+     "label": "Week 2",
+     "count": 3
+    },
+    {
+     "label": "Week 3",
+     "count": 1
+    }
+   ]
+  },
+  "eatOut": {
+   "eatingOut": 93293,
+   "groceries": 24330
+  },
+  "spokenFor": {
+   "fixed": 192990,
+   "spent": 205673,
+   "left": 181817
+  },
+  "renews": {
+   "monthly": 14190,
+   "next": [
+    {
+     "id": "7aae2728-320f-465b-8f3f-5083f9238c8b",
+     "name": "Claude Pro",
+     "on": "2026-10-20",
+     "sen": 8510
+    },
+    {
+     "id": "3bb6397f-0b45-4924-852f-c0bb96919256",
+     "name": "Netflix Basic",
+     "on": "2026-10-22",
+     "sen": 2800
+    },
+    {
+     "id": "2c5c152c-94ea-41c1-b755-eb0f3671bd08",
+     "name": "iCloud+ 200 GB",
+     "on": "2026-11-03",
+     "sen": 490
+    }
+   ]
+  },
+  "saving": {
+   "cycles": [
+    {
+     "label": "April",
+     "sen": 150100
+    },
+    {
+     "label": "May",
+     "sen": 189140
+    },
+    {
+     "label": "June",
+     "sen": 88120
+    },
+    {
+     "label": "July",
+     "sen": 109670
+    },
+    {
+     "label": "August",
+     "sen": 108800
+    },
+    {
+     "label": "September",
+     "sen": 137920
+    }
+   ],
+   "median": 123795
+  },
+  "goals": [
+   {
+    "id": "736bb6a0-6b61-4e42-a0dc-9452495c1b2e",
+    "name": "Japan in spring",
+    "saved": 295000,
+    "target": 600000
+   },
+   {
+    "id": "08b743ba-d4c0-43c5-b91f-c885f80a2ef8",
+    "name": "Road tax and insurance",
+    "saved": 70000,
+    "target": 140000
+   },
+   {
+    "id": "088d0a9f-932e-4019-a894-71ae16e7f468",
+    "name": "Emergency fund",
+    "saved": 500000,
+    "target": 1500000
+   }
+  ],
+  "trust": {
+   "cycles": [
+    {
+     "label": "April",
+     "sen": 5740
+    },
+    {
+     "label": "May",
+     "sen": 5180
+    },
+    {
+     "label": "June",
+     "sen": 4100
+    },
+    {
+     "label": "July",
+     "sen": 3880
+    },
+    {
+     "label": "August",
+     "sen": 2040
+    },
+    {
+     "label": "September",
+     "sen": 610
+    },
+    {
+     "label": "October",
+     "sen": 5340
+    }
+   ]
+  },
+  "topMerchants": [
+   {
+    "label": "GRABFOOD",
+    "count": 9,
+    "sen": 24480
+   },
+   {
+    "label": "PLUS MALAYSIA",
+    "count": 7,
+    "sen": 3070
+   },
+   {
+    "label": "CHICKEN RICE SHOP",
+    "count": 6,
+    "sen": 7400
+   },
+   {
+    "label": "ZUS COFFEE",
+    "count": 4,
+    "sen": 5770
+   },
+   {
+    "label": "Nando's",
+    "count": 3,
+    "sen": 20680
+   }
+  ]
+ },
+ "sep": {
+  "cycle": {
+   "id": "2026-08-31",
+   "label": "September",
+   "start": "2026-08-31",
+   "end": "2026-09-29",
+   "basis": "pay",
+   "expectedPayday": "2026-09-30",
+   "current": false
+  },
+  "onTrack": {
+   "thisCycle": [
+    1700,
+    178170,
+    183110,
+    197370,
+    202260,
+    227190,
+    246850,
+    246850,
+    253380,
+    260040,
+    264250,
+    269870,
+    296730,
+    339400,
+    346110,
+    352170,
+    356180,
+    356180,
+    360000,
+    383670,
+    402060,
+    404430,
+    416120,
+    418840,
+    426080,
+    428010,
+    432140,
+    438370,
+    440730,
+    442570
+   ],
+   "lastCycle": [
+    6190,
+    199480,
+    215930,
+    220090,
+    229380,
+    246300,
+    248900,
+    254260,
+    286710,
+    294640,
+    297090,
+    303220,
+    308970,
+    323580,
+    335030,
+    348510,
+    358820,
+    361040,
+    364760,
+    368990,
+    389760,
+    393560,
+    416750,
+    428330,
+    434940,
+    438450,
+    440460,
+    442570,
+    448030,
+    465640,
+    471610
+   ],
+   "days": 30,
+   "income": 580490,
+   "estimate": null
+  },
+  "budgets": {
+   "cycleShare": 1,
+   "rows": [
+    {
+     "id": "f8c9d2f0-a1d4-441b-96db-cb5d0866424f",
+     "label": "Meals",
+     "sen": 102840,
+     "cap": 120000
+    },
+    {
+     "id": "de9ad0aa-4fba-4c58-9ca1-e7ba7bb9878d",
+     "label": "Drinks & desserts",
+     "sen": 7790,
+     "cap": 15000
+    },
+    {
+     "id": "9529232b-f4ec-4ebe-964c-9795fff530d1",
+     "label": "Shopping",
+     "sen": 25990,
+     "cap": 30000
+    },
+    {
+     "id": "0c4f597e-41b1-4f2c-bdfb-e713059869f9",
+     "label": "Entertainment",
+     "sen": 8510,
+     "cap": 15000
+    }
+   ]
+  },
+  "whereWent": [
+   {
+    "id": "c78ec2bf-012d-449c-9fc1-1e36aaa6cfb3",
+    "label": "Home & bills",
+    "sen": 120000,
+    "typical": 120000
+   },
+   {
+    "id": "27a1472e-fd95-488e-b338-03dcc23b012b",
+    "label": "Meals",
+    "sen": 102840,
+    "typical": 99310
+   },
+   {
+    "id": "f8fbc58e-aadf-4523-9f5e-589908da5601",
+    "label": "Family",
+    "sen": 50000,
+    "typical": 50000
+   },
+   {
+    "id": "a7ba8339-270d-426f-9ac5-7420ea0253f2",
+    "label": "Groceries",
+    "sen": 47850,
+    "typical": 49335
+   },
+   {
+    "id": "d3cfe202-2cae-4a3c-a5aa-35ce5f618bb1",
+    "label": "Shopping",
+    "sen": 25990,
+    "typical": 19190
+   },
+   {
+    "id": "a1d5b478-29fa-413e-8429-3f4cc2fb5dc3",
+    "label": "Car",
+    "sen": 25640,
+    "typical": 25980
+   },
+   {
+    "id": "8255393b-45b7-4589-81cd-510cc1004d0a",
+    "label": "Subscriptions",
+    "sen": 14190,
+    "typical": 14190
+   },
+   {
+    "id": "3789fbd4-0ec5-4f59-b58f-6040e911a116",
+    "label": "Cash",
+    "sen": 10000,
+    "typical": 10000
+   }
+  ],
+  "leak": {
+   "spent": [
+    1120,
+    990,
+    1500,
+    0,
+    0,
+    0,
+    10960,
+    0,
+    0,
+    950,
+    0,
+    0,
+    0,
+    15930,
+    0,
+    1340,
+    0,
+    0,
+    920,
+    7610,
+    0,
+    0,
+    0,
+    970,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "days": 30
+  },
+  "smallThings": {
+   "count": 38,
+   "total": 31560,
+   "under": 1500
+  },
+  "meal": {
+   "average": 2111,
+   "meals": 44,
+   "history": [
+    {
+     "label": "April",
+     "sen": 1764
+    },
+    {
+     "label": "May",
+     "sen": 1984
+    },
+    {
+     "label": "June",
+     "sen": 2438
+    },
+    {
+     "label": "July",
+     "sen": 2268
+    },
+    {
+     "label": "August",
+     "sen": 2164
+    },
+    {
+     "label": "September",
+     "sen": 2111
+    }
+   ]
+  },
+  "experiment": {
+   "label": "GrabFood at most 3 times a week",
+   "limit": 3,
+   "weeks": [
+    {
+     "label": "Week 1",
+     "count": 3
+    },
+    {
+     "label": "Week 2",
+     "count": 3
+    },
+    {
+     "label": "Week 3",
+     "count": 3
+    },
+    {
+     "label": "Week 4",
+     "count": 1
+    },
+    {
+     "label": "Week 5",
+     "count": 0
+    }
+   ]
+  },
+  "eatOut": {
+   "eatingOut": 102840,
+   "groceries": 47850
+  },
+  "spokenFor": {
+   "fixed": 192990,
+   "spent": 249580,
+   "left": 137920
+  },
+  "renews": {
+   "monthly": 14190,
+   "next": [
+    {
+     "id": "7aae2728-320f-465b-8f3f-5083f9238c8b",
+     "name": "Claude Pro",
+     "on": "2026-10-20",
+     "sen": 8510
+    },
+    {
+     "id": "3bb6397f-0b45-4924-852f-c0bb96919256",
+     "name": "Netflix Basic",
+     "on": "2026-10-22",
+     "sen": 2800
+    },
+    {
+     "id": "2c5c152c-94ea-41c1-b755-eb0f3671bd08",
+     "name": "iCloud+ 200 GB",
+     "on": "2026-11-03",
+     "sen": 490
+    }
+   ]
+  },
+  "saving": {
+   "cycles": [
+    {
+     "label": "March",
+     "sen": 92080
+    },
+    {
+     "label": "April",
+     "sen": 150100
+    },
+    {
+     "label": "May",
+     "sen": 189140
+    },
+    {
+     "label": "June",
+     "sen": 88120
+    },
+    {
+     "label": "July",
+     "sen": 109670
+    },
+    {
+     "label": "August",
+     "sen": 108800
+    }
+   ],
+   "median": 109235
+  },
+  "goals": [
+   {
+    "id": "736bb6a0-6b61-4e42-a0dc-9452495c1b2e",
+    "name": "Japan in spring",
+    "saved": 295000,
+    "target": 600000
+   },
+   {
+    "id": "08b743ba-d4c0-43c5-b91f-c885f80a2ef8",
+    "name": "Road tax and insurance",
+    "saved": 70000,
+    "target": 140000
+   },
+   {
+    "id": "088d0a9f-932e-4019-a894-71ae16e7f468",
+    "name": "Emergency fund",
+    "saved": 500000,
+    "target": 1500000
+   }
+  ],
+  "trust": {
+   "cycles": [
+    {
+     "label": "March",
+     "sen": 6100
+    },
+    {
+     "label": "April",
+     "sen": 5740
+    },
+    {
+     "label": "May",
+     "sen": 5180
+    },
+    {
+     "label": "June",
+     "sen": 4100
+    },
+    {
+     "label": "July",
+     "sen": 3880
+    },
+    {
+     "label": "August",
+     "sen": 2040
+    },
+    {
+     "label": "September",
+     "sen": 610
+    }
+   ]
+  },
+  "topMerchants": [
+   {
+    "label": "GRABFOOD",
+    "count": 10,
+    "sen": 27650
+   },
+   {
+    "label": "PLUS MALAYSIA",
+    "count": 10,
+    "sen": 4340
+   },
+   {
+    "label": "MEE KARI LAKSA 333",
+    "count": 8,
+    "sen": 12020
+   },
+   {
+    "label": "CHICKEN RICE SHOP",
+    "count": 6,
+    "sen": 9370
+   },
+   {
+    "label": "ZUS COFFEE",
+    "count": 5,
+    "sen": 5530
+   }
+  ]
+ },
+ "cycles": [
+  {
+   "label": "May",
+   "start": "2025-04-30",
+   "end": "2025-05-29",
+   "left": 84260
+  },
+  {
+   "label": "June",
+   "start": "2025-05-30",
+   "end": "2025-06-29",
+   "left": 131540
+  },
+  {
+   "label": "July",
+   "start": "2025-06-30",
+   "end": "2025-07-29",
+   "left": 69830
+  },
+  {
+   "label": "August",
+   "start": "2025-07-30",
+   "end": "2025-08-28",
+   "left": 102470
+  },
+  {
+   "label": "September",
+   "start": "2025-08-29",
+   "end": "2025-09-29",
+   "left": 118920
+  },
+  {
+   "label": "October",
+   "start": "2025-09-30",
+   "end": "2025-10-30",
+   "left": -12000
+  },
+  {
+   "label": "November",
+   "start": "2025-10-31",
+   "end": "2025-11-27",
+   "left": 98430
+  },
+  {
+   "label": "December",
+   "start": "2025-11-28",
+   "end": "2025-12-30",
+   "left": 41870
+  },
+  {
+   "label": "January",
+   "start": "2025-12-31",
+   "end": "2026-01-29",
+   "left": 52610
+  },
+  {
+   "label": "February",
+   "start": "2026-01-30",
+   "end": "2026-02-26",
+   "left": 142350
+  },
+  {
+   "label": "March",
+   "start": "2026-02-27",
+   "end": "2026-03-30",
+   "left": 179250
+  },
+  {
+   "label": "April",
+   "start": "2026-03-31",
+   "end": "2026-04-29",
+   "left": 150100
+  },
+  {
+   "label": "May",
+   "start": "2026-04-30",
+   "end": "2026-05-28",
+   "left": 189140
+  },
+  {
+   "label": "June",
+   "start": "2026-05-29",
+   "end": "2026-06-29",
+   "left": 88120
+  },
+  {
+   "label": "July",
+   "start": "2026-06-30",
+   "end": "2026-07-30",
+   "left": 109670
+  },
+  {
+   "label": "August",
+   "start": "2026-07-31",
+   "end": "2026-08-30",
+   "left": 108800
+  },
+  {
+   "label": "September",
+   "start": "2026-08-31",
+   "end": "2026-09-29",
+   "left": 137920
+  },
+  {
+   "label": "October",
+   "start": "2026-09-30",
+   "end": "2026-10-29",
+   "now": true
+  }
+ ],
+ "subs": {
+  "monthly": 14190,
+  "rows": [
+   {
+    "id": "7aae2728-320f-465b-8f3f-5083f9238c8b",
+    "name": "Claude Pro",
+    "cadence": "monthly",
+    "amount": 2000,
+    "currency": "USD",
+    "approx": 8510,
+    "rate": "4.2550",
+    "rateFrom": {
+     "source": "charge",
+     "on": "2026-09-20"
+    },
+    "next": "2026-10-20",
+    "history": [
+     {
+      "on": "2026-10-20",
+      "expected": 8510,
+      "actual": null,
+      "status": "expected"
+     },
+     {
+      "on": "2026-09-20",
+      "expected": 8510,
+      "actual": 8510,
+      "status": "matched"
+     },
+     {
+      "on": "2026-08-20",
+      "expected": 8510,
+      "actual": 8510,
+      "status": "matched"
+     },
+     {
+      "on": "2026-07-20",
+      "expected": 8510,
+      "actual": 8510,
+      "status": "matched"
+     }
+    ]
+   },
+   {
+    "id": "3bb6397f-0b45-4924-852f-c0bb96919256",
+    "name": "Netflix Basic",
+    "cadence": "monthly",
+    "amount": 2800,
+    "currency": "MYR",
+    "approx": 2800,
+    "rate": null,
+    "rateFrom": null,
+    "next": "2026-10-22",
+    "history": [
+     {
+      "on": "2026-10-22",
+      "expected": 2800,
+      "actual": null,
+      "status": "expected"
+     },
+     {
+      "on": "2026-09-22",
+      "expected": 2800,
+      "actual": 2800,
+      "status": "matched"
+     },
+     {
+      "on": "2026-08-22",
+      "expected": 2800,
+      "actual": 2800,
+      "status": "matched"
+     },
+     {
+      "on": "2026-07-22",
+      "expected": 2800,
+      "actual": 2800,
+      "status": "matched"
+     }
+    ]
+   },
+   {
+    "id": "2c5c152c-94ea-41c1-b755-eb0f3671bd08",
+    "name": "iCloud+ 200 GB",
+    "cadence": "monthly",
+    "amount": 490,
+    "currency": "MYR",
+    "approx": 490,
+    "rate": null,
+    "rateFrom": null,
+    "next": "2026-11-03",
+    "history": [
+     {
+      "on": "2026-10-03",
+      "expected": 490,
+      "actual": 490,
+      "status": "matched"
+     },
+     {
+      "on": "2026-09-03",
+      "expected": 490,
+      "actual": 490,
+      "status": "matched"
+     },
+     {
+      "on": "2026-08-03",
+      "expected": 490,
+      "actual": 490,
+      "status": "matched"
+     },
+     {
+      "on": "2026-07-03",
+      "expected": 490,
+      "actual": 490,
+      "status": "matched"
+     }
+    ]
+   },
+   {
+    "id": "fa0fa0ca-7549-4949-8538-4d55f12cc000",
+    "name": "Spotify Premium",
+    "cadence": "monthly",
+    "amount": 2390,
+    "currency": "MYR",
+    "approx": 2390,
+    "rate": null,
+    "rateFrom": null,
+    "next": "2026-11-12",
+    "history": [
+     {
+      "on": "2026-10-12",
+      "expected": 2390,
+      "actual": 2390,
+      "status": "matched"
+     },
+     {
+      "on": "2026-09-12",
+      "expected": 2390,
+      "actual": 2390,
+      "status": "matched"
+     },
+     {
+      "on": "2026-08-12",
+      "expected": 2390,
+      "actual": 2390,
+      "status": "matched"
+     },
+     {
+      "on": "2026-07-12",
+      "expected": 2390,
+      "actual": 2390,
+      "status": "matched"
+     }
+    ]
+   }
+  ]
+ },
+ "goals": {
+  "goals": [
+   {
+    "id": "736bb6a0-6b61-4e42-a0dc-9452495c1b2e",
+    "name": "Japan in spring",
+    "kind": "goal",
+    "saved": 295000,
+    "target": 600000,
+    "targetDate": "2027-03-15",
+    "perCycle": 61000,
+    "keptIn": "Ryt Bank"
+   },
+   {
+    "id": "08b743ba-d4c0-43c5-b91f-c885f80a2ef8",
+    "name": "Road tax and insurance",
+    "kind": "bucket",
+    "saved": 70000,
+    "target": 140000,
+    "targetDate": "2027-02-01",
+    "perCycle": 17500,
+    "keptIn": "Ryt Bank"
+   },
+   {
+    "id": "088d0a9f-932e-4019-a894-71ae16e7f468",
+    "name": "Emergency fund",
+    "kind": "goal",
+    "saved": 500000,
+    "target": 1500000,
+    "targetDate": null,
+    "perCycle": 83333,
+    "keptIn": "Ryt Bank"
+   }
+  ],
+  "medianSurplus": 123795,
+  "sample": 6
+ },
+ "year": {
+  "year": 2026,
+  "months": [
+   {
+    "label": "Jan",
+    "spent": 527740,
+    "income": 580350
+   },
+   {
+    "label": "Feb",
+    "spent": 438100,
+    "income": 580450
+   },
+   {
+    "label": "Mar",
+    "spent": 401230,
+    "income": 580480
+   },
+   {
+    "label": "Apr",
+    "spent": 430280,
+    "income": 580380
+   },
+   {
+    "label": "May",
+    "spent": 391400,
+    "income": 580540
+   },
+   {
+    "label": "Jun",
+    "spent": 492220,
+    "income": 580340
+   },
+   {
+    "label": "Jul",
+    "spent": 470800,
+    "income": 580470
+   },
+   {
+    "label": "Aug",
+    "spent": 471610,
+    "income": 580410
+   },
+   {
+    "label": "Sep",
+    "spent": 442570,
+    "income": 580490
+   },
+   {
+    "label": "Oct",
+    "spent": 385473,
+    "income": 480
+   }
+  ],
+  "savingsRate": 0.1470022337536057,
+  "reliefs": [
+   {
+    "label": "Lifestyle",
+    "sen": 9000
+   }
+  ]
+ }
+}

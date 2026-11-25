@@ -2,6 +2,8 @@
 
 **Stage 3 · Capture to ledger** · after: B08 · next: B10
 
+**Model:** run this session on Opus (`/model opus`, D158): it writes what models read, or parsing that feeds money.
+
 ## Goal
 
 A template, the bank's wording with typed blanks, reads a notification into a payment, in exactly the

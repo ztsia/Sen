@@ -14,18 +14,40 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 - **The polish audit is done:** seven plans in `docs/polish/` (187 findings). Of the owner's 15 calls
   in `docs/polish/decisions.md`, the re-spec answered three (6, 7, 12); twelve wait.
 
+## This session (13 Nov, branch `claude/bottom-sheet-redesign-9uv3is`): the overlays and the design pages
+
+- **D155:** which overlay holds what, menus widened (patterns §7 amended). The 51 overlays are
+  inventoried, shot and sorted: `docs/ui/overlays/` (`inventory.md`, its page in `docs/ui/README.md`).
+  The owner approved the split: 31 stay sheets, 4 fold into menus, 1 inline, 1 dialog, 6 screens.
+- **D156:** design pages briefed with a render, look and fix loop; overlays and Sen's chat drawn by Fable.
+- **D157 (14 Nov):** the owner chose sheet **A · Quiet** and ESS **B, status first, with *Set up*
+  buttons**, and accepted ESS's new words. Both pages are published (`docs/ui/README.md`) but show
+  options, not the final; each is drawn in full later. Still to draw for the sheet: a rows pick with
+  search, a sheet at its cap with the fade, 1.5× text, 360×640, the other looks. For ESS: redoing a
+  ready job, an unset address, *ESS needs you to sign in again*.
+- **Sen's chat is approved (D160, 25 Nov):** one-line head row, answers as rows, the avatar at home in
+  the header, and every bend on the page. Its AI Elements names are from memory: B27 checks them.
+- **D158 (23 Nov), on workflow plugin 2.0.1:** sessions run on **Sonnet at `high` with an Opus advisor**
+  (`.claude/settings.json`); Opus only for the slices `CLAUDE.md` *Overrides* lists and for writing a
+  design brief. **Insights' page is drawn by an Opus subagent; *Models* and the two full drawings by
+  Sonnet**, all at `high`, one at a time, each brief written on Opus with care. The cloud still loads
+  plugin 1.2.0 until the owner edits the setup script (`docs/local.md`).
+
 ## What to do next
 
-1. If the owner asks: a PR for this branch, and one for `workflow/plan-then-delegate` (plugin 1.3.0,
-   on `ztsia/workflow`).
-2. **B08 · Charts** (`docs/briefs/B08-charts.md`), branch `B08/charts` from `main` once this branch
-   is merged: write `docs/plans/B08-charts.md`, build the seam, brief the rest.
-3. **The three design pages** (D154, `docs/modules.md`), each before its slice: admin's *Models*
-   (before B10 · Models in admin), Insights' cards and tabs (before B20), Sen's chat (before B27 ·
-   Sen's chat). A Fable subagent at `xhigh` draws each from the spec and `docs/screens.md`; the main
-   session briefs and reviews it; the owner approves; its source goes in `docs/ui/`.
-4. Then **B09 · Template engine** (`docs/briefs/B09-template-engine.md`): it maps `{account}` names
-   (all to the app's one account, D145) and decides what happens to an un-chosen app's account.
+1. **Insights is approved (D159):** the owner took every pick and bend on the page.
+2. **Admin's *Models* page is approved (D160)** with the drawer's departures.
+   **No more design pages are waiting (D161):** sheet A and ESS B are built from their approved pages,
+   their missing states written into patterns §7 and `docs/screens.md`. Nothing is built from a page
+   until the owner approves it; the overlay rebuild absorbs polish components 8, 15, 21 and home 17.
+3. If the owner asks: a PR for this branch.
+4. **B08 · Charts** (`docs/briefs/B08-charts.md`), branch `B08/charts` from `main` once this branch is
+   merged, on Sonnet: the unit table in `docs/plans/B08-charts.md` (2.0.1's `| unit | what | who |
+   model | after |`), build the shape, Haiku fills. Its units 4, 6 and 7 are Haiku on a shape the main session draws
+   first (fixed 25 Nov for 2.0.1's hook). **Before its QA: move Sen to 2.0.1's QA engine**
+   (`qa verify`, `qa.json`, the screen map; the plugin's `skills/qa/setup.md`), folding Sen's
+   `docs/workflow/qa.md` and its `qa-diff`, `mutants` and `lived` scripts into it, in a Sonnet session.
+5. Then **B09 · Template engine** on Opus (each Opus brief now says so under its stage line) (`docs/briefs/B09-template-engine.md`).
 
 ## Settled by the session while folding (the owner may change any)
 
@@ -40,13 +62,13 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 ## Waiting on the owner (don't build)
 
 - **The polish pass:** the twelve calls. Then `docs/plans/polish.md`: shared units first, then
-  screens, built by Haiku and Sonnet builders on the owner's go.
+  screens, built by Haiku builders on the owner's go.
 - **Six series colours** (D152) may not exist: when three were chosen, a fourth hue didn't pass every
   pair in every look (patterns §4). B08 · Charts tries, and reports back if six can't pass.
 
 ## Open with the owner
 
-- Phone steps for B08 (`docs/local.md` steps 1–9); plugin 1.3.0 to merge and move to (`docs/local.md`).
+- Phone steps for B08 (`docs/local.md` steps 1–9); the cloud's move to plugin 2.0.1 (`docs/local.md`).
 - B06's F1 and F2 (the owner's call); the B08 lessons for `ztsia/workflow` (`docs/local.md`).
 - Spec Q31: do OpenAI's data terms pass the bar? Until checked, OpenAI stays off in *Models*.
 
@@ -69,7 +91,7 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 
 ## Don't argue again
 
-- D129–D154. Radix stays; charts in D151's order; no advisor. Sen's chat starts on Haiku, one
+- D129–D161. Radix stays; charts in D151's order; no advisor. Sen's chat starts on Haiku, one
   conversation, no RAG; Sen reads data through its tools, never SQL of its own, and no Python.
   Models change in admin, providers only in code. Notes are topic pages, by our own code, never a
   provider's compaction. Deploys happen only by merge (D122).

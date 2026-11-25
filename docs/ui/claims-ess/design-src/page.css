@@ -1,0 +1,53 @@
+/* The page around the phones: plain, in the viewer's light or dark theme. The phones keep their own
+   mode, whatever the page's. */
+:root { --pg-bg: #f6f7f8; --pg-fg: #18212d; --pg-muted: #586474; --pg-line: #dde1e6; --pg-card: #ffffff; --pg-mark: #1f3d63; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pg-bg: #101419; --pg-fg: #e7eaee; --pg-muted: #a2acb9; --pg-line: #2a323d; --pg-card: #171c23; --pg-mark: #b9cde6; color-scheme: dark; } }
+:root[data-theme="dark"] { --pg-bg: #101419; --pg-fg: #e7eaee; --pg-muted: #a2acb9; --pg-line: #2a323d; --pg-card: #171c23; --pg-mark: #b9cde6; color-scheme: dark; }
+
+body { margin: 0; background: var(--pg-bg); color: var(--pg-fg); }
+.pg, .pg * { box-sizing: border-box; }
+.pg { max-width: 1120px; margin: 0 auto; padding: 28px 16px 72px; font: 400 16px/1.55 "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--pg-fg); -webkit-text-size-adjust: 100%; overflow-wrap: break-word; }
+:where(.pg) :where(h1, h2, h3, p, ul, ol, figure, dl, dt, dd) { margin: 0; padding: 0; }
+.pg-eyebrow { font-size: 13px; color: var(--pg-muted); }
+.pg > h1 { margin-top: 6px; font-size: clamp(28px, 6vw, 40px); line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+.pg-lede { margin-top: 14px; max-width: 64ch; color: var(--pg-fg); text-wrap: pretty; }
+.pg-asks { margin-top: 18px; max-width: 64ch; list-style: none; counter-reset: q; display: grid; gap: 6px; }
+.pg-asks li { counter-increment: q; display: grid; grid-template-columns: 24px 1fr; gap: 8px; color: var(--pg-muted); }
+.pg-asks li::before { content: counter(q); width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; border: 1px solid var(--pg-line); display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--pg-fg); }
+.pg-asks b { font-weight: 600; color: var(--pg-fg); }
+
+.opt { margin-top: 56px; }
+.opt-key { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--pg-mark); color: var(--pg-bg); font-size: 15px; font-weight: 700; }
+.opt > h2 { margin-top: 10px; font-size: 24px; line-height: 1.25; font-weight: 600; text-wrap: balance; }
+.opt-idea { margin-top: 8px; max-width: 64ch; color: var(--pg-muted); text-wrap: pretty; }
+.hint { margin-top: 14px; font-size: 13px; color: var(--pg-muted); }
+
+/* a row of phones that scrolls sideways inside itself; each phone is 390 by 844, scaled down only when the page is narrower than one */
+.rail { --z: 1; margin: 12px -16px 0; padding: 6px 16px 14px; display: flex; gap: 20px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scroll-padding-inline: 16px; scrollbar-width: thin; }
+@media (max-width: 437px) { .rail { --z: .9; } }
+@media (max-width: 400px) { .rail { --z: .86; } }
+@media (max-width: 380px) { .rail { --z: .8; } }
+@media (max-width: 350px) { .rail { --z: .72; } }
+.pw { flex: none; width: calc(406px * var(--z)); scroll-snap-align: start; }
+.pw .box { width: calc(406px * var(--z)); height: calc(860px * var(--z)); }
+.pw .ph { transform: scale(var(--z)); transform-origin: 0 0; }
+.pw figcaption { margin-top: 10px; display: grid; grid-template-columns: auto 1fr; gap: 0 8px; font-size: 14px; line-height: 1.4; }
+.pw figcaption b { font-weight: 600; }
+.pw figcaption span { grid-column: 2; font-size: 13px; color: var(--pg-muted); text-wrap: pretty; }
+.pw figcaption i { grid-row: 1; font-style: normal; font-weight: 600; color: var(--pg-muted); font-variant-numeric: tabular-nums; }
+
+.verdict { margin-top: 22px; max-width: 72ch; display: grid; gap: 10px; }
+.verdict div { display: grid; grid-template-columns: 96px 1fr; gap: 12px; padding-top: 10px; border-top: 1px solid var(--pg-line); }
+.verdict dt { font-size: 13px; font-weight: 600; padding-top: 2px; }
+.verdict dd { text-wrap: pretty; }
+@media (max-width: 480px) { .verdict div { grid-template-columns: 1fr; gap: 2px; } }
+
+.words { margin-top: 56px; }
+.words > h2, .pick > h2 { font-size: 20px; line-height: 1.3; font-weight: 600; }
+.words p { margin-top: 6px; max-width: 64ch; font-size: 14px; color: var(--pg-muted); }
+.words ul { margin-top: 14px; max-width: 72ch; list-style: none; display: grid; gap: 0; }
+.words li { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px 0; border-top: 1px solid var(--pg-line); font-size: 14.5px; }
+.words li s { color: var(--pg-muted); text-decoration-thickness: 1px; }
+.pick { margin-top: 56px; max-width: 72ch; padding: 20px; border: 1px solid var(--pg-line); border-radius: 14px; background: var(--pg-card); }
+.pick p { margin-top: 8px; text-wrap: pretty; }
+.pg-foot { margin-top: 28px; font-size: 13px; color: var(--pg-muted); max-width: 72ch; }

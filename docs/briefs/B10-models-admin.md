@@ -2,6 +2,8 @@
 
 **Stage 3 · Capture to ledger** · after: B10 · next: B11
 
+**Model:** run this session on Opus (`/model opus`, D158): it writes what models read, or parsing that feeds money.
+
 ## Goal
 
 The owner chooses every job's model from the phone, and nothing else has to ship.

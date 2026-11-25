@@ -72,13 +72,16 @@ phases are still the risks to retire, and the table at the end shows where each 
 
 **Waiting on the owner's go** (D151), not slices yet: no session starts one alone.
 - **The polish pass.** A Fable subagent at `xhigh` audits every screen and component and writes a
-  polish plan for each; it never edits. The main session turns the plans into units for Haiku and
-  Sonnet builders.
-- **Three design pages** (D154), each drawn before its slice by a Fable subagent at `xhigh`, briefed
+  polish plan for each; it never edits. The main session turns the plans into units for Haiku
+  builders (Sonnet only with a `Sonnet because:` line, workflow 2.0.1).
+- **The overlays** (D155, D156): their design page first (three sheet anatomies, the owner picks,
+  then the full page with the menu and dialog), then the 51 overlays rebuilt to their verdicts
+  (`docs/ui/overlays/inventory.md`). And the ESS section of Claims, redrawn on a page of its own.
+- **Three design pages** (D154), each drawn before its slice (Insights' by an Opus subagent, *Models* by Sonnet, both at `high`, D158), briefed
   and reviewed by the main session from the spec and `docs/screens.md`, and approved by the owner:
   Sen's chat (before B27 · Sen's chat), Insights' cards and tabs (before B20), and admin's *Models*
   (before B10 · Models in admin). Each is at true size, every state, light and dark, in the looks, and
-  its source lives in `docs/ui/` like every published page. Sonnet builds from the approved page;
+  its source lives in `docs/ui/` like every published page. Haiku builds from the approved page;
   builders never design as they build.
 
 The re-spec of Sen's agent, chat and Insights (D152–D154) is in the spec (2.12), and its slices are

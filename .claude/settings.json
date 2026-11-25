@@ -1,10 +1,16 @@
 {
+  "model": "sonnet",
+  "effortLevel": "high",
+  "advisorModel": "opus",
   "env": {
     "ENABLE_STOP_REVIEW": "0"
   },
   "extraKnownMarketplaces": {
     "ztsia": {
-      "source": { "source": "github", "repo": "ztsia/workflow" }
+      "source": {
+        "source": "github",
+        "repo": "ztsia/workflow"
+      }
     }
   },
   "enabledPlugins": {
