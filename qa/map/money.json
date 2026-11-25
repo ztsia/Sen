@@ -17,7 +17,8 @@
       "sources": [
         "apps/web/src/screens/more/payments.tsx",
         "apps/web/src/screens/more/filter-sheet.tsx"
-      ]
+      ],
+      "expectData": "TNG eWallet"
     },
     {
       "name": "txn",
@@ -86,7 +87,8 @@
       "sources": [
         "apps/web/src/screens/money/account.tsx",
         "apps/web/src/screens/account.tsx"
-      ]
+      ],
+      "expectData": "$seed.account.ryt.name"
     },
     {
       "name": "balance-check",
