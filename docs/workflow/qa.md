@@ -11,7 +11,9 @@ when Sen took up the plugin.
   `apps/web/e2e/catalogue.ts`: a screen added to the catalogue gets an entry there too), the suites in
   `qa/suites.json` and the breakage checks in `qa/mutants.ts`. The API's route sweep stays in the `db`
   suite (`pnpm test:db`), so `qa.json` turns the engine's own sweep off. Scan's long-press sheet,
-  Confirm and first run's steps are reached only by the `looks` suite.
+  Confirm and first run's steps are reached only by the `looks` suite, which walks the catalogue in
+  Minted and Copper, light and dark; `qa-diff` walks all six looks after it, so they aren't walked twice
+  (25 Nov).
 - **The looks:** pixels in all twelve look-and-mode pairs (six looks, light and dark); behaviour once,
   in Minted light (D137). `qa verify` sees one look, so after it, one at a time:
   `node scripts/qa-diff.mjs --out qa-artifacts/<branch>/diff` (the other pairs and the metrics),

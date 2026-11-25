@@ -129,8 +129,9 @@ jobs:
       # GitHub's runners have no browser for this Playwright version. Cloud sessions use the preinstalled
       # Chromium and never run this (docs/cloud.md §1).
       - run: pnpm --filter @sen/web exec playwright install --with-deps chromium
-      # two looks on PRs and pushes; all six on the nightly run and by hand
-      - run: pnpm e2e
+      # two looks on PRs and pushes; all six on the nightly run and by hand. The trees are re-recorded in
+      # the same pass (see the tree step below), so the catalogue isn't walked a second time to record them.
+      - run: pnpm e2e --update-snapshots=all
         env:
           E2E_LOOKS: "${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'all' || 'minted,copper' }}"
       # time and real conditions the journeys above never span: a deploy under an open app, the background,
@@ -138,13 +139,16 @@ jobs:
       # into the same folder, as playwright-report/lived.
       - run: pnpm --filter @sen/web e2e:lived
       # Playwright's tree match is loose (a /…/ matches part of the text; a /placeholder isn't compared), so
-      # a stale tree passes above. Re-recorded in full, the trees must come out as committed (QA B08 run 4, 5).
+      # a stale tree would pass. The e2e step above re-recorded every tree in full; they must come out as
+      # committed (QA B08 run 4, 5). It used to be a second catalogue pass of its own (25 Nov).
       - name: The accessibility trees are as committed
         run: |
-          pnpm --filter @sen/web e2e:trees
           # Payments is virtualised: how many rows fit depends on the runner's fonts, one row more here than in a
-          # cloud session, so its two trees keep only Playwright's own match above (B08's PR)
+          # cloud session, so its two trees keep only Playwright's own match (B08's PR): put back as committed,
+          # then matched on their own
           git diff --exit-code -- apps/web/e2e/trees ':!apps/web/e2e/trees/payments.aria.yml' ':!apps/web/e2e/trees/payments-offline.aria.yml' || { echo "::error::A screen changed and its tree wasn't re-recorded: pnpm --filter @sen/web e2e:trees, then commit apps/web/e2e/trees"; exit 1; }
+          git checkout -- apps/web/e2e/trees/payments.aria.yml apps/web/e2e/trees/payments-offline.aria.yml
+          pnpm --filter @sen/web exec playwright test e2e/catalogue.spec.ts --project preview -g 'payments(@offline)? in minted, light'
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

@@ -71,18 +71,8 @@
       "timeoutMs": 1200000
     },
     "looks": {
-      "cmd": [
-        "pnpm",
-        "--filter",
-        "@sen/web",
-        "exec",
-        "playwright",
-        "test",
-        "e2e/catalogue.spec.ts",
-        "--project",
-        "preview"
-      ],
-      "timeoutMs": 2400000
+      "cmd": "E2E_LOOKS=minted,copper pnpm --filter @sen/web exec playwright test e2e/catalogue.spec.ts --project preview",
+      "timeoutMs": 1200000
     }
   }
 }

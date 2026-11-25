@@ -18,9 +18,15 @@ export default defineConfig({
   testDir: 'e2e',
   timeout: 60_000,
   fullyParallel: true,
+  // One worker per core: Playwright's default is half, and on a 4-core cloud session or CI runner the
+  // catalogue ran 1.7x faster on four, with the journeys stable at four (25 Nov)
+  workers: '100%',
   forbidOnly: !!process.env.CI,
   retries: 0,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  // e2e/slowest.ts prints the ten slowest tests at the end, so the next slow one shows itself
+  reporter: process.env.CI
+    ? [['list'], ['html', { open: 'never' }], ['./e2e/slowest.ts']]
+    : [['list'], ['./e2e/slowest.ts']],
   // A tree that is missing or has changed fails CI; the commit must carry the new one (pnpm e2e:trees)
   updateSnapshots: process.env.CI ? 'none' : 'missing',
   expect: { toMatchAriaSnapshot: { pathTemplate: '{testDir}/trees/{arg}{ext}' } },
