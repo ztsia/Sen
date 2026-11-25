@@ -222,9 +222,17 @@ test('review: one tap answers one question, even when a second tap lands on the 
   const box = (await chip.boundingBox())!;
   const x = box.x + box.width / 2;
   const y = box.y + box.height / 2;
-  await page.mouse.click(x, y);
-  await page.waitForTimeout(150);
-  await page.mouse.click(x, y);
+  // two taps 150 ms apart by their own timestamps, as a touch screen stamps them. mouse.click waits for
+  // the page to handle each tap, so on a busy machine (CI, four workers) the second came 600 ms or more
+  // after the first: two separate taps, not a double tap (25 Nov)
+  const cdp = await page.context().newCDPSession(page);
+  const t0 = Date.now() / 1000;
+  const tap = (type: 'mousePressed' | 'mouseReleased', at: number) =>
+    cdp.send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1, timestamp: t0 + at });
+  await tap('mousePressed', 0);
+  await tap('mouseReleased', 0.05);
+  await tap('mousePressed', 0.15);
+  await tap('mouseReleased', 0.2);
   await page.waitForTimeout(800);
 
   expect(await readCount(), 'one answer, not two').toBe(before - 1);
