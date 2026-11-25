@@ -32,9 +32,13 @@
   - region "Who has paid you back":
     - heading "Who has paid you back" [level=2]
     - 'checkbox /Ali matched: TNG eWallet, Sun, \d+ Oct, \d+:\d+ RM \d+\.\d+/ [checked] [disabled]'
+    - text: Ali
     - paragraph: "/matched: TNG eWallet, Sun, \\d+ Oct, \\d+:\\d+/"
+    - text: /RM \d+\.\d+/
     - checkbox /Kah Hoe Not paid yet RM \d+\.\d+/
+    - text: Kah Hoe
     - paragraph: Not paid yet
+    - text: /RM \d+\.\d+/
   - button "Write off"
   - paragraph: /Stop waiting for RM \d+\.\d+ \. It counts as your spending\./
   - term: Your share

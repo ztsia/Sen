@@ -9,13 +9,21 @@
   - region "Tracked":
     - heading "Tracked" [level=2]
     - button /Ryt Bank Checked 1 Oct From Ryt Bank · Main account and pockets together RM \d+,\d+\.\d+/:
+      - text: ""
       - paragraph: Checked 1 Oct From Ryt Bank · Main account and pockets together
+      - text: ""
     - button /Public Bank Checked \d+ Oct From MyPB RM \d+,\d+\.\d+/:
+      - text: ""
       - paragraph: /Checked \d+ Oct From MyPB/
+      - text: ""
     - button /TNG eWallet Checked \d+ Oct From TNG eWallet · eWallet and GO\+ together RM \d+,\d+\.\d+/:
+      - text: ""
       - paragraph: /Checked \d+ Oct From TNG eWallet · eWallet and GO\+ together/
+      - text: ""
     - button /GrabPay Wallet Checked \d+ Oct From Grab RM \d+\.\d+/:
+      - text: ""
       - paragraph: /Checked \d+ Oct From Grab/
+      - text: ""
   - region "Elsewhere":
     - heading "Elsewhere" [level=2]
     - paragraph: Kept elsewhere, so Sen shows no balance for them.

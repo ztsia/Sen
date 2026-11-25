@@ -13,6 +13,7 @@
     - text: Capture
     - paragraph: Reads the payment notifications of the apps they choose.
     - switch "Capture" [checked]
+    - text: Sen
     - paragraph: The assistant, with AI credit.
     - switch "Sen" [checked]
     - text: Shared bills
@@ -24,6 +25,7 @@
     - text: Calendar
     - paragraph: Google Calendar reminders.
     - switch "Calendar"
+    - text: Claims
     - paragraph: Work claims and the ESS adapter.
     - switch "Claims"
   - region "Phone":
@@ -37,6 +39,7 @@
     - definition: /RM1\.\d+ of RM2\.\d+/
   - region "Credit settings":
     - heading "Credit settings" [level=2]
+    - text: Unlimited
     - paragraph: No ceiling on their credit.
     - switch "Unlimited"
     - group:
@@ -50,11 +53,13 @@
       - text: Monthly allowance
       - textbox "Monthly allowance":
         - /placeholder: "0.00"
+        - text: /\d+\.\d+/
     - button "Save allowance"
     - group:
       - text: Daily ceiling
       - textbox "Daily ceiling":
         - /placeholder: "0.00"
+        - text: /\d+\.\d+/
       - paragraph: The most Sen spends for them in a day.
     - button "Save ceiling"
   - button "Suspend"

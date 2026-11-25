@@ -13,35 +13,61 @@
   - heading /Sun, \d+ Oct/ [level=3]
   - text: /Spent RM \d+\.\d+/
   - button /Kuih Meals · TNG eWallet Not synced yet RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · TNG eWallet Not synced yet
+    - text: ""
   - button /Teh tarik Meals · TNG eWallet Not synced yet RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · TNG eWallet Not synced yet
+    - text: ""
   - button /Sate Kajang Hj Samuri Meals · Ryt Bank RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · Ryt Bank
+    - text: ""
   - button /Grabfood Meals · GrabPay Wallet RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · GrabPay Wallet
+    - text: ""
   - button /Nando's Meals · Ryt Bank RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · Ryt Bank
+    - text: ""
   - button /Siti Aminah Bt Yusof No category yet · TNG eWallet In Review RM \d+\.\d+/:
+    - text: ""
     - paragraph: No category yet · TNG eWallet In Review
+    - text: ""
   - button /Roti Bakar \d+ No category yet · Ryt Bank In Review RM \d+\.\d+/:
+    - text: ""
     - paragraph: No category yet · Ryt Bank In Review
+    - text: ""
   - heading /Sat, \d+ Oct/ [level=3]
   - text: /Spent RM \d+\.\d+/
   - button /Lim K H Money in · Ryt Bank In Review plus RM \d+\.\d+/:
+    - text: ""
     - paragraph: Money in · Ryt Bank In Review
+    - text: ""
   - button /Nando's Meals · Ryt Bank Receipt RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · Ryt Bank Receipt
+    - text: ""
   - button /Kedai Maju Meals · Ryt Bank In Review RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · Ryt Bank In Review
+    - text: ""
   - button /Jaya Grocer Groceries · Ryt Bank Receipt RM \d+\.\d+/:
+    - text: ""
     - paragraph: Groceries · Ryt Bank Receipt
+    - text: ""
   - heading /Fri, \d+ Oct/ [level=3]
   - text: /Spent RM \d+\.\d+/
   - button /Nasi Kandar Abc Meals · Ryt Bank Receipt Split RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · Ryt Bank Receipt Split
+    - text: ""
   - button /Chicken Rice Shop Meals · TNG eWallet RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · TNG eWallet
+    - text: ""
   - heading /Thu, \d+ Oct/ [level=3]
   - text: /Spent RM \d+\.\d+/
 - navigation "Tabs":

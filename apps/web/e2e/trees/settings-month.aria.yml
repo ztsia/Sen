@@ -2,7 +2,7 @@
   - button "Back"
   - heading "Settings" [level=1]
 - main:
-  - button "Account, huimin@example.com"
+  - button "Account, huimin@example.com": huimin huimin@example.com
   - button "Appearance Minted"
   - region "Setup":
     - heading "Setup" [level=2]

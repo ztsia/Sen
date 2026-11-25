@@ -8,7 +8,9 @@
   - list:
     - listitem:
       - button /Haidilao \d+ Oct RM \d+\.\d+ Mei paid · you owe RM24\.\d+ Open/:
+        - text: ""
         - paragraph: /Mei paid · you owe RM24\.\d+/
+        - text: ""
 - navigation "Tabs":
   - link "Home":
     - /url: /

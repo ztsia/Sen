@@ -11,10 +11,13 @@
     - heading "Banks and e-wallets" [level=2]
     - text: Touch 'n Go eWallet
     - switch "Touch 'n Go eWallet"
+    - text: Ryt Bank
     - switch "Ryt Bank"
     - text: MyPB by Public Bank
     - switch "MyPB by Public Bank"
+    - text: Grab
     - switch "Grab"
+    - text: Google Wallet
     - switch "Google Wallet"
   - group:
     - text: Search every app

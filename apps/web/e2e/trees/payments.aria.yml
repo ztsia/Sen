@@ -12,39 +12,67 @@
   - heading /Sun, \d+ Oct/ [level=3]
   - text: /Spent RM \d+\.\d+/
   - button /Sate Kajang Hj Samuri Meals · Ryt Bank RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · Ryt Bank
+    - text: ""
   - button /Grabfood Meals · GrabPay Wallet RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · GrabPay Wallet
+    - text: ""
   - button /Nando's Meals · Ryt Bank RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · Ryt Bank
+    - text: ""
   - button /Siti Aminah Bt Yusof No category yet · TNG eWallet In Review RM \d+\.\d+/:
+    - text: ""
     - paragraph: No category yet · TNG eWallet In Review
+    - text: ""
   - button /Roti Bakar \d+ No category yet · Ryt Bank In Review RM \d+\.\d+/:
+    - text: ""
     - paragraph: No category yet · Ryt Bank In Review
+    - text: ""
   - heading /Sat, \d+ Oct/ [level=3]
   - text: /Spent RM \d+\.\d+/
   - button /Lim K H Money in · Ryt Bank In Review plus RM \d+\.\d+/:
+    - text: ""
     - paragraph: Money in · Ryt Bank In Review
+    - text: ""
   - button /Nando's Meals · Ryt Bank Receipt RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · Ryt Bank Receipt
+    - text: ""
   - button /Kedai Maju Meals · Ryt Bank In Review RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · Ryt Bank In Review
+    - text: ""
   - button /Jaya Grocer Groceries · Ryt Bank Receipt RM \d+\.\d+/:
+    - text: ""
     - paragraph: Groceries · Ryt Bank Receipt
+    - text: ""
   - heading /Fri, \d+ Oct/ [level=3]
   - text: /Spent RM \d+\.\d+/
   - button /Nasi Kandar Abc Meals · Ryt Bank Receipt Split RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · Ryt Bank Receipt Split
+    - text: ""
   - button /Chicken Rice Shop Meals · TNG eWallet RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · TNG eWallet
+    - text: ""
   - heading /Thu, \d+ Oct/ [level=3]
   - text: /Spent RM \d+\.\d+/
   - button /TAN WEI MING → Ryt Bank Transfer · Ryt Bank In Review plus RM \d+,\d+\.\d+/:
+    - text: ""
     - paragraph: Transfer · Ryt Bank In Review
+    - text: ""
   - button /Chicken Rice Shop Meals · TNG eWallet RM \d+\.\d+/:
+    - text: ""
     - paragraph: Meals · TNG eWallet
+    - text: ""
   - button /Petron Car · Ryt Bank RM \d+\.\d+/:
+    - text: ""
     - paragraph: Car · Ryt Bank
+    - text: ""
 - navigation "Tabs":
   - link "Home":
     - /url: /

@@ -19,17 +19,29 @@
   - region "Recent payments":
     - heading "Recent payments" [level=2]
     - button /Sate Kajang Hj Samuri Meals RM \d+\.\d+/:
+      - text: ""
       - paragraph: Meals
+      - text: ""
     - button /Nando's Meals RM \d+\.\d+/:
+      - text: ""
       - paragraph: Meals
+      - text: ""
     - button /Roti Bakar \d+ No category yet In Review RM \d+\.\d+/:
+      - text: ""
       - paragraph: No category yet In Review
+      - text: ""
     - button /Lim K H Money in In Review plus RM \d+\.\d+/:
+      - text: ""
       - paragraph: Money in In Review
+      - text: ""
     - button /Nando's Meals Receipt RM \d+\.\d+/:
+      - text: ""
       - paragraph: Meals Receipt
+      - text: ""
     - button /Kedai Maju Meals In Review RM \d+\.\d+/:
+      - text: ""
       - paragraph: Meals In Review
+      - text: ""
   - region "Checks":
     - heading "Checks" [level=2]
     - text: "/1 Oct: bank showed RM4,\\d+\\.\\d+ RM42\\.\\d+ less/"

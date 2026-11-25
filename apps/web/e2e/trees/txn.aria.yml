@@ -21,6 +21,7 @@
     - button "Add a note"
   - button "Receipt 4 items"
   - button /Split · Still changing 0 of 2 paid you back · RM0\.\d+ of RM28\.\d+/:
+    - text: ""
     - paragraph: /0 of 2 paid you back · RM0\.\d+ of RM28\.\d+/
   - region "What the bank said":
     - heading "What the bank said" [level=2]

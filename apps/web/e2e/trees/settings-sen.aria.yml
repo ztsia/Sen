@@ -11,7 +11,9 @@
   - region "AI credit":
     - heading "AI credit" [level=2]
     - button /This month's cost An estimate from the tokens used About RM3\.\d+/:
+      - text: ""
       - paragraph: An estimate from the tokens used
+      - text: ""
 - navigation "Tabs":
   - link "Home":
     - /url: /

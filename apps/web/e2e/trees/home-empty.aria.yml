@@ -9,6 +9,7 @@
     - paragraph: "Your first cycle: nothing to compare with yet"
   - button /Total balance RM \d+,\d+\.\d+/:
     - paragraph: Total balance
+    - text: ""
 - button "Ask Sen"
 - navigation "Tabs":
   - link "Home":
