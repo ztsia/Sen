@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "ready": true,
+  "plugin": "2.0.2",
+  "commit": "7c60b93007ef69dd4e5c941919af1c6b2bc727a1",
+  "ref": "HEAD",
+  "at": "2026-11-25T06:51:02.952Z",
+  "inputs": {
+    "profile": "0d898eeecf8af76a",
+    "map": "007b71ada691b12d",
+    "seed": "c7f7efacc8a084cf",
+    "suites": "c664dbbe1127fd84",
+    "routes": "5980eefe3d7b8466"
+  },
+  "checks": [
+    {
+      "id": "verbs",
+      "title": "stack verbs",
+      "status": "PASS",
+      "summary": "6 of 6 served",
+      "items": [
+        {
+          "id": "verb:setup",
+          "status": "PASS",
+          "reason": "qa.json: pnpm install --frozen-lockfile",
+          "fix": null
+        },
+        {
+          "id": "verb:up",
+          "status": "PASS",
+          "reason": "qa.json: echo 'skip: the preview build runs on its fake backend, with no server or database'",
+          "fix": null
+        },
+        {
+          "id": "verb:seed",
+          "status": "PASS",
+          "reason": "qa.json: echo 'skip: the preview build reads the made-up scenario in apps/web/src/data/fake'",
+          "fix": null
+        },
+        {
+          "id": "verb:build",
+          "status": "PASS",
+          "reason": "qa.json: cd apps/web && SEN_ENV=preview pnpm exec vite build --outDir dist-qa",
+          "fix": null
+        },
+        {
+          "id": "verb:serve",
+          "status": "PASS",
+          "reason": "qa.json: cd apps/web && exec pnpm exec vite preview --outDir dist-qa --host 127.0.0.1 --port \"$QA_PORT\" --strictPort",
+          "fix": null
+        },
+        {
+          "id": "verb:test",
+          "status": "PASS",
+          "reason": "qa.json: pnpm test",
+          "fix": null
+        }
+      ]
+    },
+    {
+      "id": "exec",
+      "title": "executables",
+      "status": "PASS",
+      "summary": "0 executable",
+      "items": [
+        {
+          "id": "exec:none",
+          "status": "PASS",
+          "reason": "no project adapter or qa/ script to run",
+          "fix": null
+        }
+      ]
+    },
+    {
+      "id": "map",
+      "title": "map coverage",
+      "status": "PASS",
+      "summary": "47 of 47 page(s) mapped · 79 screen(s)",
+      "items": []
+    },
+    {
+      "id": "seed",
+      "title": "seed",
+      "status": "PASS",
+      "summary": "the seed runs",
+      "items": [
+        {
+          "id": "seed:run",
+          "status": "PASS",
+          "reason": "seeded in 0 s",
+          "fix": null
+        }
+      ]
+    },
+    {
+      "id": "walk",
+      "title": "full walk on the seed",
+      "status": "PASS",
+      "summary": "158 capture(s) · 0 problem(s)",
+      "items": [
+        {
+          "id": "walk:all",
+          "status": "PASS",
+          "reason": "158 capture(s), no failure, no empty-data screen",
+          "fix": null
+        }
+      ]
+    },
+    {
+      "id": "determinism",
+      "title": "seed determinism",
+      "status": "PASS",
+      "summary": "3 of 3 sample capture(s) identical",
+      "items": [
+        {
+          "id": "det:sample",
+          "status": "PASS",
+          "reason": "3 screen(s) identical on two fresh seeds: account__screen, insights--empty__empty, settings-capture-captured__screen",
+          "fix": null
+        }
+      ]
+    },
+    {
+      "id": "suites",
+      "title": "test suites",
+      "status": "PASS",
+      "summary": "8 of 8 suite(s) name their tests and pass",
+      "items": [
+        {
+          "id": "suite:db",
+          "status": "PASS",
+          "reason": "216 named test(s) passed (junit xml)",
+          "fix": null
+        },
+        {
+          "id": "suite:web",
+          "status": "PASS",
+          "reason": "215 named test(s) passed (jest json)",
+          "fix": null
+        },
+        {
+          "id": "suite:deploy",
+          "status": "PASS",
+          "reason": "3 named test(s) passed (playwright json)",
+          "fix": null
+        },
+        {
+          "id": "suite:feel",
+          "status": "PASS",
+          "reason": "33 named test(s) passed (jest json)",
+          "fix": null
+        },
+        {
+          "id": "suite:motion",
+          "status": "PASS",
+          "reason": "9 named test(s) passed (playwright json)",
+          "fix": null
+        },
+        {
+          "id": "suite:unit",
+          "status": "PASS",
+          "reason": "104 named test(s) passed (jest json)",
+          "fix": null
+        },
+        {
+          "id": "suite:journeys",
+          "status": "PASS",
+          "reason": "46 named test(s) passed (playwright json)",
+          "fix": null
+        },
+        {
+          "id": "suite:looks",
+          "status": "PASS",
+          "reason": "1057 named test(s) passed (playwright json)",
+          "fix": null
+        }
+      ]
+    },
+    {
+      "id": "upgrade",
+      "title": "upgrade gaps",
+      "status": "PASS",
+      "summary": "nothing an older qa left behind",
+      "items": [
+        {
+          "id": "sources:all",
+          "status": "PASS",
+          "reason": "79 screen(s) name their sources",
+          "fix": null
+        }
+      ]
+    }
+  ],
+  "open": [],
+  "concerns": [],
+  "work": "/home/user/Sen/qa-artifacts/ready"
+}
