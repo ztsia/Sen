@@ -368,8 +368,19 @@ still has *Undo*. `screens/more/txn.tsx` is the reference.
   TalkBack offers its items as actions.
 - **Which one** (D155): a long list of choices, a short form or a read-only detail is a sheet, and its
   steps stay inside it, never a sheet over a sheet; two or three fixed choices sit inline on the
-  screen; a long form or a photo gets a screen. The sheet's new drawing waits on its design page
-  (`docs/ui/overlays/`).
+  screen; a long form or a photo gets a screen.
+- **The sheet is *Quiet*** (D157, drawn as A in `docs/ui/overlays/design.html`). What that page
+  doesn't draw is built from these lines, with no further drawing (D161):
+  - **A pick with search:** the search field sits under the title and stays put while the rows
+    scroll; the chosen row is ticked. Nothing matching shows *Nothing matches "…"*, and an *Add "…"*
+    row where the list can grow (categories, merchants).
+  - **At its cap:** a sheet grows with its content until its top is 48 px below the status bar, then
+    its body scrolls under a header that never moves. A form's pinned button keeps its fade over what
+    scrolls under it, and stays above the keyboard.
+  - **At 1.5× text and on a 360×640 phone:** a title wraps to two lines rather than truncating; a
+    row's end text drops under its label rather than squeezing it; the pinned button stays in view.
+  - **In every look:** tokens only, as for any block; QA's shots in all twelve look-and-mode pairs
+    are its check.
 
 ### Sen's chat (D151–D153)
 

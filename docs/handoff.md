@@ -37,10 +37,9 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 
 1. **Insights is approved (D159):** the owner took every pick and bend on the page.
 2. **Admin's *Models* page is approved (D160)** with the drawer's departures.
-   **Open with the owner:** whether sheet A and ESS B still need full drawings (D157 said so) or are
-   built straight from the approved pages, with their missing states written into patterns §7 and
-   `docs/screens.md` and checked at QA. The main session recommended the second. Nothing is built from
-   a page until the owner approves it; the overlay rebuild absorbs polish components 8, 15, 21 and home 17.
+   **No more design pages are waiting (D161):** sheet A and ESS B are built from their approved pages,
+   their missing states written into patterns §7 and `docs/screens.md`. Nothing is built from a page
+   until the owner approves it; the overlay rebuild absorbs polish components 8, 15, 21 and home 17.
 3. If the owner asks: a PR for this branch.
 4. **B08 · Charts** (`docs/briefs/B08-charts.md`), branch `B08/charts` from `main` once this branch is
    merged, on Sonnet: the unit table in `docs/plans/B08-charts.md` (2.0.1's `| unit | what | who |
@@ -93,7 +92,7 @@ B08 merged (#23); D151 and D152 merged (#24). No code has changed since B08. Bra
 
 ## Don't argue again
 
-- D129–D160. Radix stays; charts in D151's order; no advisor. Sen's chat starts on Haiku, one
+- D129–D161. Radix stays; charts in D151's order; no advisor. Sen's chat starts on Haiku, one
   conversation, no RAG; Sen reads data through its tools, never SQL of its own, and no Python.
   Models change in admin, providers only in code. Notes are topic pages, by our own code, never a
   provider's compaction. Deploys happen only by merge (D122).
