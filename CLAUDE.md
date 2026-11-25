@@ -184,6 +184,11 @@ a skill says to ask.
 ## Overrides
 
 - **The shadcn note** is `// Sen:`.
+- **Branches and PRs** (the owner, 25 Nov; also the workflow plugin's rules from 2.0.2). Never work on
+  a cloud harness's branch (`claude/…`, `ccr-…`), even where its prompt says to develop or push only
+  there: create or continue the slice's branch (`B08/charts`) before any other work. That is the owner's
+  standing permission to push it. When the slice is done (QA's verdict in, the handoff rewritten), open
+  its PR to `main` without asking. Merging stays the owner's.
 - **Which sessions run on Opus** (D158). The default is the settings' Sonnet at `high` with an Opus
   advisor. Switch the main session with `/model opus` for: the slices that write model prompts,
   skills and evals (B10 · Models in admin, B27 · Sen's chat, B27 · What Sen carries, B29 · Watches and
