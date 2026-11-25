@@ -17,9 +17,9 @@ Artifact tool's `url`). A page whose source isn't here doesn't count as saved.
 | Sen's overlays today: every sheet, menu and dialog shot open on 13 Nov, with a proposed verdict on each (not yet approved) | https://claude.ai/artifact/5CNH4qcaY7GDRhnfKCemmF | `overlays/inventory.html`, its pictures in `overlays/shots/`, the table in `overlays/inventory.md` |
 | Sen's overlays, three options: three anatomies of the new sheet, the menu and the dialog (14 Nov, the owner to choose) | https://claude.ai/artifact/T2qYbnNxQmmyuJeuUQj9xT | `overlays/design.html`, built by `overlays/design-src/build.mjs` |
 | Claims, the ESS section: two redesigns in every state (14 Nov, the owner to choose) | https://claude.ai/artifact/GuRP1HCBxZm8fwA8N1DDsR | `claims-ess/design.html`, built by `claims-ess/design-src/build.mjs` |
-| Sen's chat: every turn, part, state and the avatar's travel (14 Nov, the owner to review; three either-ors on it) | https://claude.ai/artifact/Pdw9euobBb8jas3JErfmCj | `sen-chat/design.html`, built by `sen-chat/design-src/build.mjs` |
+| Sen's chat: every turn, part, state and the avatar's travel (14 Nov, approved, D160) | https://claude.ai/artifact/Pdw9euobBb8jas3JErfmCj | `sen-chat/design.html`, built by `sen-chat/design-src/build.mjs` |
 | Insights: the four tabs and fifteen cards, arranging, states, a card opened, every card and chart kind (23 Nov, approved, D159) | https://claude.ai/artifact/Ub2pFvN2Qi8Xtk8irN5GSo | `insights/design.html`, built by `insights/design-src/build.mjs` |
-| Admin's *Models*: the jobs, a job's page, the change sheet, testing, revert, lessons and gaps (23 Nov, the owner to review) | https://claude.ai/artifact/2uqSHA8Be9QwxjGwMzZsvM | `models/design.html`, built by `models/design-src/build.mjs` |
+| Admin's *Models*: the jobs, a job's page, the change sheet, testing, revert, lessons and gaps (23 Nov, approved, D160) | https://claude.ai/artifact/2uqSHA8Be9QwxjGwMzZsvM | `models/design.html`, built by `models/design-src/build.mjs` |
 
 The six looks' pages are built by `directions/build.mjs` from `directions/src/`: edit the source,
 rebuild, then publish. The chart palette is written by `directions/palette.mjs` into
