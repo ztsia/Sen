@@ -30,5 +30,11 @@
   },
   "mutants": {
     "file": "qa/mutants.ts"
+  },
+  "eyes": {
+    "questions": [
+      "Would I trust this with my money? Are the figures right and consistent, with signs and currency written as everywhere else (patterns \u00a73)?",
+      "Is the motion the one the change calls for (patterns \u00a78, D140): a screen opened from a row slides in from the right and back slides it out; a tab crossfades; about 200 ms, with no blank or see-through frame, and no amount counting up or down?"
+    ]
   }
 }
