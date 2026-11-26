@@ -6,7 +6,7 @@
     - heading "Names" [level=2]
     - group:
       - text: Your names as banks print them
-      - textbox "Your names as banks print them"
+      - textbox "Your names as banks print them": TAN WEI MING WEI MING TAN
       - paragraph: One to a line. Sen matches a notification’s name against these.
   - region "Payday":
     - heading "Payday" [level=2]

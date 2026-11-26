@@ -115,10 +115,10 @@ follow on a phone, and commit.
       plugin, `claude-security` and `security-guidance` (24 Oct). On any other machine, once:
       `claude plugin install claude-security@claude-plugins-official` and
       `claude plugin install security-guidance@claude-plugins-official`.
-- [ ] **Move the cloud to workflow plugin 2.0.1** (D158; it replaces the 1.3.0 branch). Sessions here
-      still load 1.2.0. On the phone: claude.ai/code → the environment selector → edit the environment →
-      *Setup script* → add or change any line (a comment such as `# 2.0.1` will do) → *Save*, then start a
-      new session. Its opening rules should mention *Shape versus fill*. Check there that the app's model
+- [ ] **Move the cloud to workflow plugin 2.0.2** (D158, D162; 2.0.2 adds the branch and PR rules). A
+      session that still loads 1.2.0 or 2.0.1 needs this once more. On the phone: claude.ai/code → the environment selector → edit the environment →
+      *Setup script* → add or change any line (a comment such as `# 2.0.2` will do) → *Save*, then start a
+      new session. Its opening rules should mention *Shape versus fill* and *Never work on a cloud harness's branch*. Check there that the app's model
       pick doesn't override the repo's Sonnet setting (the session's model should read Sonnet). On the
       laptop: `claude plugin update workflow@ztsia`.
 - [ ] **Lessons from B08 for `ztsia/workflow`** (a session with that repository attached, as a PR to the

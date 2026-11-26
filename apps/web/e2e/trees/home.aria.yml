@@ -11,9 +11,12 @@
   - button /Sen · Yesterday, \d+:\d+ Saturday came to RM135\.\d+\. Drinks are at RM73\.\d+ of RM150 with \d+ days to go, so there's room for a ZUS or two\. More/:
     - paragraph: /Sen · Yesterday, \d+:\d+/
     - paragraph: /Saturday came to RM135\.\d+\. Drinks are at RM73\.\d+ of RM150 with \d+ days to go, so there's room for a ZUS or two\./
+    - text: ""
   - button /Total balance RM \d+,\d+\.\d+ Gap at 1 Oct's check RM \d+\.\d+/:
     - paragraph: Total balance
+    - text: ""
     - paragraph: Gap at 1 Oct's check
+    - text: ""
 - button "Ask Sen"
 - navigation "Tabs":
   - link "Home":

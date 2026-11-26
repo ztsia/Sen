@@ -39,6 +39,7 @@
     - paragraph: /Pay RM \d+\.\d+/
     - figure "Stand-in · Wei Ming's DuitNow QR":
       - img "Wei Ming's DuitNow QR"
+      - text: ""
     - group "Pay from this phone":
       - button "Pay with an app"
       - button "Save QR"

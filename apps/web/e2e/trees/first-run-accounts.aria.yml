@@ -8,6 +8,7 @@
     - text: TNG eWallet
     - textbox "TNG eWallet":
       - /placeholder: ""
+      - text: /\d+\.\d+/
     - paragraph: From Touch 'n Go eWallet · eWallet and GO+ together
   - group:
     - text: Ryt Bank
@@ -19,11 +20,13 @@
     - text: Public Bank
     - textbox "Public Bank":
       - /placeholder: ""
+      - text: /\d+,\d+\.\d+/
     - paragraph: From MyPB by Public Bank
   - group:
     - text: GrabPay Wallet
     - textbox "GrabPay Wallet":
       - /placeholder: ""
+      - text: /\d+\.\d+/
     - paragraph: From Grab
   - button "Next"
 - region "Notifications alt+T"

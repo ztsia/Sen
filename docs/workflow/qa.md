@@ -6,15 +6,19 @@ when Sen took up the plugin.
 
 ## The skill (main session)
 
-- **The looks:** pixels are compared in all twelve look-and-mode pairs (six looks, light and dark).
-  Behaviour runs once, in Minted light (D137).
+- **`qa verify`** (the plugin's `qa` CLI, set up by `qa.json`, D162) runs on the preview build with its
+  fake backend, at 390×844, in Minted light: the screen map in `qa/map/` (made from
+  `apps/web/e2e/catalogue.ts`: a screen added to the catalogue gets an entry there too), the suites in
+  `qa/suites.json` and the breakage checks in `qa/mutants.ts`. The API's route sweep stays in the `db`
+  suite (`pnpm test:db`), so `qa.json` turns the engine's own sweep off. Scan's long-press sheet,
+  Confirm and first run's steps are reached only by the `looks` suite, which walks the catalogue in
+  Minted and Copper, light and dark; `qa-diff` walks all six looks after it, so they aren't walked twice
+  (25 Nov).
+- **The looks:** pixels in all twelve look-and-mode pairs (six looks, light and dark); behaviour once,
+  in Minted light (D137). `qa verify` sees one look, so after it, one at a time:
+  `node scripts/qa-diff.mjs --out qa-artifacts/<branch>/diff` (the other pairs and the metrics),
+  `pnpm --filter @sen/web e2e:lived`, then `pnpm test:db` and `pnpm --filter @sen/web e2e:server`.
 - **The trees** are `apps/web/e2e/trees/*.aria.yml`, re-recorded by `pnpm --filter @sen/web e2e:trees`.
-- **The sweep's commands**, from the checkout (`/home/user/Sen` in a cloud session), one at a time,
-  never two at once (they share ports and `sen_test`):
-  `pnpm typecheck; pnpm lint; pnpm test`, then `pnpm test:db`, then
-  `E2E_SHOTS=$PWD/qa-artifacts/<branch>/sweep/screens pnpm e2e`, `pnpm --filter @sen/web e2e:lived`,
-  `pnpm --filter @sen/web e2e:server`, `node scripts/mutants.mjs`,
-  `node scripts/qa-diff.mjs --out qa-artifacts/<branch>/diff`.
 - **Security checks:** the sweep runs `pnpm security` (the dependency audit, the gitleaks scan of the
   whole history, and the security lint rules) and `pnpm hygiene`. A missing `gitleaks` binary is a
   failure to report, not a skip.

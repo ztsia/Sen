@@ -8,17 +8,25 @@
     - paragraph: /2 to submit · RM \d+\.\d+ of RM \d+\.\d+/
     - 'progressbar /September \d+: claimed against caps/'
     - button /Phone bill To submit · evidence complete Submit by \d+ Oct RM \d+\.\d+/:
+      - text: ""
       - paragraph: /To submit · evidence complete Submit by \d+ Oct/
+      - text: ""
     - button /Parking To submit · evidence missing Submit by \d+ Oct Receipt for \d+ Sep not added yet RM \d+\.\d+/:
+      - text: ""
       - paragraph: /To submit · evidence missing Submit by \d+ Oct Receipt for \d+ Sep not added yet/
+      - text: ""
   - button "Send to ESS"
   - paragraph: A claim with evidence missing waits until you've added it.
   - region "Earlier":
     - heading "Earlier" [level=2]
     - button /Phone bill · August \d+ Paid in your salary plus RM \d+\.\d+/:
+      - text: ""
       - paragraph: Paid in your salary
+      - text: ""
     - button /Parking · August \d+ Approved plus RM \d+\.\d+/:
+      - text: ""
       - paragraph: Approved
+      - text: ""
 - navigation "Tabs":
   - link "Home":
     - /url: /

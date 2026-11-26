@@ -1,0 +1,172 @@
+{
+  "area": "home",
+  "screens": [
+    {
+      "name": "home",
+      "steps": [
+        {
+          "goto": "/"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/home/home.tsx",
+        "apps/web/src/screens/home/material.tsx"
+      ]
+    },
+    {
+      "name": "cycle",
+      "steps": [
+        {
+          "goto": "/"
+        },
+        {
+          "click": "[data-testid=hero]"
+        },
+        {
+          "waitFor": "role=dialog[name=\"This cycle\"]"
+        },
+        {
+          "wait": 600
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/home/cycle-sheet.tsx"
+      ]
+    },
+    {
+      "name": "payday",
+      "steps": [
+        {
+          "goto": "/s/payday?scenario=payday"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/payday.tsx"
+      ]
+    },
+    {
+      "name": "home--empty",
+      "steps": [
+        {
+          "goto": "/?state=empty"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "empty"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/home/home.tsx",
+        "apps/web/src/screens/home/material.tsx"
+      ],
+      "emptyOk": true
+    },
+    {
+      "name": "home--error",
+      "steps": [
+        {
+          "goto": "/?state=error"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "error"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/home/home.tsx",
+        "apps/web/src/screens/home/material.tsx"
+      ],
+      "emptyOk": true
+    },
+    {
+      "name": "home--offline",
+      "steps": [
+        {
+          "goto": "/?state=offline"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "offline"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/home/home.tsx",
+        "apps/web/src/screens/home/material.tsx"
+      ],
+      "emptyOk": true
+    },
+    {
+      "name": "home--capture-off",
+      "steps": [
+        {
+          "goto": "/?scenario=capture-off"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "capture-off"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/home/home.tsx",
+        "apps/web/src/screens/home/material.tsx"
+      ]
+    },
+    {
+      "name": "payday--before-salary",
+      "steps": [
+        {
+          "goto": "/s/payday?scenario=before-salary"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "before-salary"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/payday.tsx"
+      ]
+    },
+    {
+      "name": "payday--month",
+      "steps": [
+        {
+          "goto": "/s/payday?scenario=month"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "month"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/money/payday.tsx"
+      ]
+    }
+  ]
+}

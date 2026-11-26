@@ -91,6 +91,8 @@ export default tseslint.config(
       '**/dist-server/**',
       'apps/web/dist-*/**',
       'docs/ui/directions/**',
+      // Each design page's own build scripts, like directions/: local tooling that never ships
+      'docs/ui/*/design-src/**',
       '.claude/**',
       'coverage/**',
       '**/playwright-report/**',

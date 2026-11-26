@@ -118,6 +118,7 @@ From the repo root (Node 22, pnpm 10; `scripts/session-setup.sh` installs packag
 | `pnpm typecheck`, `pnpm lint`, `pnpm format` | TypeScript strict, ESLint (with the no-float rule), Prettier |
 | `pnpm looks` | Regenerates `apps/web/src/styles/looks.gen.css` from `docs/ui/directions/assets/`; CI fails if it's stale |
 | `pnpm --filter @sen/web e2e:trees` | Re-records each screen's accessibility tree in `apps/web/e2e/trees/` after a screen changes; CI fails on a stale one |
+| `qa verify` | QA of a slice branch before its PR (the workflow's `qa` skill, D162): `qa.json`, the screen map in `qa/map/`, the suites in `qa/suites.json`, the verdict in `qa/<slug>/verdict.md`. `qa` is `"<workflow plugin>/qa/bin/qa"`; `docs/workflow/qa.md` says what runs after it |
 | `node scripts/qa-diff.mjs` | QA's diff against `main` (D137): trees, pixels in all twelve look-and-mode pairs, and the scripted checks, into `qa-artifacts/<branch>/diff/index.md`; then the metrics (D139): each screen, journey tap, API route and the build, on the branch and on `main`, judged by `qa/limits.ts` (`--metrics-only` for just those) |
 | `node scripts/mutants.mjs` | The breakage checks in `qa/mutants.ts`, each made in a worktree of HEAD; a mutant its suite doesn't catch is a finding (D139) |
 | `pnpm --filter @sen/web e2e:lived` | The lived-in journeys: across a deploy, resume, offline, a slow network, 200% text, 360×640, a year of data (`?scenario=year`) |
@@ -184,6 +185,11 @@ a skill says to ask.
 ## Overrides
 
 - **The shadcn note** is `// Sen:`.
+- **Branches and PRs** (the owner, 25 Nov; also the workflow plugin's rules from 2.0.2). Never work on
+  a cloud harness's branch (`claude/…`, `ccr-…`), even where its prompt says to develop or push only
+  there: create or continue the slice's branch (`B08/charts`) before any other work. That is the owner's
+  standing permission to push it. When the slice is done (QA's verdict in, the handoff rewritten), open
+  its PR to `main` without asking. Merging stays the owner's.
 - **Which sessions run on Opus** (D158). The default is the settings' Sonnet at `high` with an Opus
   advisor. Switch the main session with `/model opus` for: the slices that write model prompts,
   skills and evals (B10 · Models in admin, B27 · Sen's chat, B27 · What Sen carries, B29 · Watches and

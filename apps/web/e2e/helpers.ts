@@ -4,7 +4,8 @@ export const ALL_LOOKS = ['minted', 'instrument', 'firefly', 'line', 'mercury', 
 export type LookId = (typeof ALL_LOOKS)[number];
 /**
  * The looks a run covers: all six, or those named in E2E_LOOKS (`minted,copper`). CI runs two on each
- * PR push and all six nightly; the session runs all six before a PR (owner, 12 Oct).
+ * PR push and all six nightly. Before a PR, QA's `looks` suite runs two and qa-diff.mjs covers all six
+ * (owner, 12 Oct; one walk of the six, not two, 25 Nov).
  */
 const want = process.env.E2E_LOOKS;
 const only = want && want !== 'all' ? want.split(',').map((s) => s.trim()) : undefined;

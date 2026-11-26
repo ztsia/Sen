@@ -9,11 +9,16 @@
   - region "People":
     - heading "People" [level=2]
     - button "Wei Ming (you) Active weiming@example.com · Android shell":
+      - text: ""
       - paragraph: weiming@example.com · Android shell
     - button /Hui Min Active huimin@example\.com · Android shell RM3\.\d+/:
+      - text: ""
       - paragraph: huimin@example.com · Android shell
+      - text: ""
     - button /Farid Invited farid@example\.com · Browser RM5\.\d+/:
+      - text: ""
       - paragraph: farid@example.com · Browser
+      - text: ""
 - navigation "Tabs":
   - link "Home":
     - /url: /

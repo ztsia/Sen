@@ -13,7 +13,9 @@
     - paragraph: /RM273\.\d+ more than last cycle by this day/
   - button /Total balance RM \d+,\d+\.\d+ Gap at 1 Oct's check RM \d+\.\d+/:
     - paragraph: Total balance
+    - text: ""
     - paragraph: Gap at 1 Oct's check
+    - text: ""
 - button "Ask Sen"
 - navigation "Tabs":
   - link "Home":

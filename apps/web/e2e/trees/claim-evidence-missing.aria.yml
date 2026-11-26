@@ -26,11 +26,13 @@
   - region "Copy into ESS":
     - heading "Copy into ESS" [level=2]
     - paragraph: Claim type
+    - text: Parking
     - button "Copy Claim type"
     - paragraph: Claim month
     - text: /September \d+/
     - button "Copy Claim month"
     - paragraph: Amount (RM)
+    - text: /\d+\.\d+/
     - button "Copy Amount (RM)"
     - paragraph: Remarks
     - text: /Parking, September \d+/

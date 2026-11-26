@@ -8,13 +8,19 @@
   - list:
     - listitem:
       - button /Nasi Kandar Abc \d+ Oct RM \d+\.\d+ You paid · still changing Open/:
+        - text: ""
         - paragraph: You paid · still changing
+        - text: ""
     - listitem:
       - button /Haidilao \d+ Oct RM \d+\.\d+ Mei paid · you owe RM24\.\d+ Open/:
+        - text: ""
         - paragraph: /Mei paid · you owe RM24\.\d+/
+        - text: ""
     - listitem:
       - button /Bbq Place \d+ Oct RM \d+\.\d+ You paid · 1 of 2 paid you back Open/:
+        - text: ""
         - paragraph: You paid · 1 of 2 paid you back
+        - text: ""
 - navigation "Tabs":
   - link "Home":
     - /url: /

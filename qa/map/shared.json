@@ -1,0 +1,186 @@
+{
+  "area": "shared",
+  "screens": [
+    {
+      "name": "shared",
+      "steps": [
+        {
+          "goto": "/s/shared"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/shared/shared.tsx",
+        "apps/web/src/screens/shared/parts.tsx"
+      ]
+    },
+    {
+      "name": "split",
+      "steps": [
+        {
+          "goto": "/s/split?id=eb9ebb1f-b041-4f7a-8f61-7f84bf03095c"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/shared/split.tsx",
+        "apps/web/src/screens/shared/parts.tsx"
+      ]
+    },
+    {
+      "name": "split-public",
+      "steps": [
+        {
+          "goto": "/s/split-public?id=demo"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/shared/split-public.tsx",
+        "apps/web/src/screens/shared/parts.tsx"
+      ]
+    },
+    {
+      "name": "split--final",
+      "steps": [
+        {
+          "goto": "/s/split?id=55a7bef8-9f6a-4906-8f05-09f8091154cb"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "final"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/shared/split.tsx",
+        "apps/web/src/screens/shared/parts.tsx"
+      ]
+    },
+    {
+      "name": "split--friend-paid",
+      "steps": [
+        {
+          "goto": "/s/split?id=7bf19f14-4bec-4f4d-a7f9-26eee94d6995"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "friend-paid"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/shared/split.tsx",
+        "apps/web/src/screens/shared/parts.tsx"
+      ]
+    },
+    {
+      "name": "split--gone",
+      "steps": [
+        {
+          "goto": "/s/split?id=nothing"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "gone"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/shared/split.tsx",
+        "apps/web/src/screens/shared/parts.tsx"
+      ],
+      "emptyOk": true
+    },
+    {
+      "name": "split-public--new",
+      "steps": [
+        {
+          "goto": "/s/split-public?id=demo-new"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "new"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/shared/split-public.tsx",
+        "apps/web/src/screens/shared/parts.tsx"
+      ]
+    },
+    {
+      "name": "split-public--final",
+      "steps": [
+        {
+          "goto": "/s/split-public?id=demo-final"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "final"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/shared/split-public.tsx",
+        "apps/web/src/screens/shared/parts.tsx"
+      ]
+    },
+    {
+      "name": "split-public--closed",
+      "steps": [
+        {
+          "goto": "/s/split-public?id=demo-closed"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "closed"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/shared/split-public.tsx",
+        "apps/web/src/screens/shared/parts.tsx"
+      ]
+    },
+    {
+      "name": "shared--month",
+      "steps": [
+        {
+          "goto": "/s/shared?scenario=month"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "month"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/shared/shared.tsx",
+        "apps/web/src/screens/shared/parts.tsx"
+      ]
+    }
+  ]
+}

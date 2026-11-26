@@ -29,8 +29,10 @@
     - button "Open the split"
     - heading "Checks · 7" [level=3]
     - button "A balance check is due The last one was Thu, 1 Oct":
+      - text: ""
       - paragraph: The last one was Thu, 1 Oct
     - button /A receipt Sen couldn't read Enter it by hand; the photo is kept · Yesterday, \d+:\d+/:
+      - text: ""
       - paragraph: /Enter it by hand; the photo is kept · Yesterday, \d+:\d+/
     - paragraph: /plus RM \d+,\d+\.\d+ into Ryt Bank from your own name/
     - paragraph: Where did it come from? Sen will remember next time
@@ -47,8 +49,10 @@
     - button "Apply"
     - button "Dismiss"
     - button /Phone bill claim · RM \d+\.\d+ Due Sun, \d+ Oct/:
+      - text: ""
       - paragraph: /Due Sun, \d+ Oct/
     - button "A payday step you skipped September's look-back, skipped on payday":
+      - text: ""
       - paragraph: September's look-back, skipped on payday
     - heading "New wording · 1" [level=3]
     - paragraph: /Paid RM6\.\d+ to KEDAI MAJU\. Right\?/
@@ -58,10 +62,16 @@
   - region "Waiting on others":
     - heading "Waiting on others" [level=2]
     - button /Bbq Place 1 of 2 paid you back RM \d+\.\d+/:
+      - text: ""
       - paragraph: 1 of 2 paid you back
+      - text: ""
     - button /Nasi Kandar Abc 0 of 2 paid you back RM \d+\.\d+/:
+      - text: ""
       - paragraph: 0 of 2 paid you back
+      - text: ""
+    - text: Shopee refund
     - paragraph: /Sen is watching for it, by Sun, \d+ Oct/
+    - text: /plus RM \d+\.\d+/
     - paragraph: /RM \d+\.\d+ · Mr Diy receipt/
     - paragraph: /Waiting for its payment · Today, \d+:\d+/
     - button "Attach to a payment…"

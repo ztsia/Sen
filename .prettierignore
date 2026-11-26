@@ -24,3 +24,10 @@ apps/shell/data/keep-running.json
 # Playwright writes the accessibility trees (e2e/trees/); they are compared, not styled
 apps/web/e2e/trees/
 packages/db/migrations/meta/
+# The workflow plugin's QA engine writes these (qa setup, qa ready); Prettier would fight its output
+qa.json
+qa/map/
+qa/suites.json
+qa/ready.json
+qa/routes.table.json
+qa/seed.json

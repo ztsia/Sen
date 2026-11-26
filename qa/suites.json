@@ -1,0 +1,78 @@
+{
+  "suites": {
+    "db": [
+      "pnpm",
+      "test:db"
+    ],
+    "web": [
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--project",
+      "web",
+      "apps/web/src/data",
+      "apps/web/src/screens/outside"
+    ],
+    "deploy": [
+      "pnpm",
+      "--filter",
+      "@sen/web",
+      "exec",
+      "playwright",
+      "test",
+      "-c",
+      "e2e/lived.config.ts",
+      "-g",
+      "deploy"
+    ],
+    "feel": [
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "--project",
+      "web",
+      "apps/web/src/frame",
+      "apps/web/src/lib",
+      "apps/web/src/components"
+    ],
+    "motion": [
+      "pnpm",
+      "--filter",
+      "@sen/web",
+      "exec",
+      "playwright",
+      "test",
+      "e2e/motion.spec.ts",
+      "--project",
+      "preview"
+    ],
+    "unit": [
+      "pnpm",
+      "exec",
+      "vitest",
+      "run",
+      "packages/core",
+      "apps/worker"
+    ],
+    "journeys": {
+      "cmd": [
+        "pnpm",
+        "--filter",
+        "@sen/web",
+        "exec",
+        "playwright",
+        "test",
+        "e2e/journeys.spec.ts",
+        "--project",
+        "preview"
+      ],
+      "timeoutMs": 1200000
+    },
+    "looks": {
+      "cmd": "E2E_LOOKS=minted,copper pnpm --filter @sen/web exec playwright test e2e/catalogue.spec.ts --project preview",
+      "timeoutMs": 1200000
+    }
+  }
+}

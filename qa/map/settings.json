@@ -1,0 +1,355 @@
+{
+  "area": "settings",
+  "screens": [
+    {
+      "name": "settings",
+      "steps": [
+        {
+          "goto": "/s/settings"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/settings.tsx",
+        "apps/web/src/screens/settings/parts.tsx"
+      ]
+    },
+    {
+      "name": "settings-appearance",
+      "steps": [
+        {
+          "goto": "/s/settings/appearance"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/appearance.tsx",
+        "apps/web/src/screens/settings/look-preview.tsx"
+      ]
+    },
+    {
+      "name": "settings-capture",
+      "steps": [
+        {
+          "goto": "/s/settings/capture"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/capture/capture.tsx",
+        "apps/web/src/screens/capture/common.tsx"
+      ]
+    },
+    {
+      "name": "settings-capture-apps",
+      "steps": [
+        {
+          "goto": "/s/settings/capture/apps"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/capture/apps.tsx",
+        "apps/web/src/screens/capture/common.tsx"
+      ]
+    },
+    {
+      "name": "settings-capture-access",
+      "steps": [
+        {
+          "goto": "/s/settings/capture/access"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/capture/access.tsx",
+        "apps/web/src/screens/capture/common.tsx"
+      ]
+    },
+    {
+      "name": "settings-capture-running",
+      "steps": [
+        {
+          "goto": "/s/settings/capture/running"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/capture/running.tsx",
+        "apps/web/src/screens/capture/common.tsx"
+      ]
+    },
+    {
+      "name": "settings-capture-captured",
+      "steps": [
+        {
+          "goto": "/s/settings/capture/captured"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/capture/captured.tsx",
+        "apps/web/src/screens/capture/common.tsx"
+      ]
+    },
+    {
+      "name": "settings-you",
+      "steps": [
+        {
+          "goto": "/s/settings/you"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/you.tsx"
+      ]
+    },
+    {
+      "name": "settings-categories",
+      "steps": [
+        {
+          "goto": "/s/settings/categories"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/categories.tsx"
+      ]
+    },
+    {
+      "name": "settings-email",
+      "steps": [
+        {
+          "goto": "/s/settings/email"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/email.tsx"
+      ]
+    },
+    {
+      "name": "settings-claims",
+      "steps": [
+        {
+          "goto": "/s/settings/claims"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/claims.tsx",
+        "apps/web/src/screens/money/ess.tsx"
+      ]
+    },
+    {
+      "name": "settings-sen",
+      "steps": [
+        {
+          "goto": "/s/settings/sen"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/sen.tsx"
+      ]
+    },
+    {
+      "name": "settings-members",
+      "steps": [
+        {
+          "goto": "/s/settings/members"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/members.tsx"
+      ]
+    },
+    {
+      "name": "settings-member",
+      "steps": [
+        {
+          "goto": "/s/settings/member?id=37108eaf-2e4d-4335-96ff-e498aa6ed0fc"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/member.tsx"
+      ]
+    },
+    {
+      "name": "settings-data",
+      "steps": [
+        {
+          "goto": "/s/settings/data"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/data.tsx"
+      ]
+    },
+    {
+      "name": "settings-account",
+      "steps": [
+        {
+          "goto": "/s/settings/account"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/account.tsx"
+      ]
+    },
+    {
+      "name": "settings--month",
+      "steps": [
+        {
+          "goto": "/s/settings?scenario=month"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "month"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/settings.tsx",
+        "apps/web/src/screens/settings/parts.tsx"
+      ]
+    },
+    {
+      "name": "settings-sen--cap",
+      "steps": [
+        {
+          "goto": "/s/settings/sen?scenario=cap"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "cap"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/sen.tsx"
+      ]
+    },
+    {
+      "name": "settings-members--month",
+      "steps": [
+        {
+          "goto": "/s/settings/members?scenario=month"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "month"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/settings/members.tsx"
+      ]
+    },
+    {
+      "name": "settings-capture-access--capture-off",
+      "steps": [
+        {
+          "goto": "/s/settings/capture/access?scenario=capture-off"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "capture-off"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/capture/access.tsx",
+        "apps/web/src/screens/capture/common.tsx"
+      ]
+    }
+  ]
+}

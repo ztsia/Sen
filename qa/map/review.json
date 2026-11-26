@@ -1,0 +1,75 @@
+{
+  "area": "review",
+  "screens": [
+    {
+      "name": "review",
+      "steps": [
+        {
+          "goto": "/review"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/review/review.tsx"
+      ]
+    },
+    {
+      "name": "skipped",
+      "steps": [
+        {
+          "goto": "/s/skipped"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "screen"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/review/skipped.tsx"
+      ]
+    },
+    {
+      "name": "review--empty",
+      "steps": [
+        {
+          "goto": "/review?state=empty"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "empty"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/review/review.tsx"
+      ],
+      "emptyOk": true
+    },
+    {
+      "name": "review--error",
+      "steps": [
+        {
+          "goto": "/review?state=error"
+        },
+        {
+          "waitFor": "main"
+        },
+        {
+          "capture": "error"
+        }
+      ],
+      "sources": [
+        "apps/web/src/screens/review/review.tsx"
+      ],
+      "emptyOk": true
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "person": {
+    "weiming": {
+      "name": "Wei Ming",
+      "email": "weiming@example.com"
+    }
+  },
+  "account": {
+    "ryt": {
+      "name": "Ryt Bank"
+    }
+  },
+  "merchant": {
+    "sate": {
+      "name": "Sate Kajang Hj Samuri"
+    }
+  }
+}

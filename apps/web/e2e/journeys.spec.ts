@@ -285,8 +285,11 @@ export const JOURNEYS: Record<string, Journey> = {
     await expect(page.getByRole('button', { name: 'Use this' })).toBeVisible();
     await shot('crop');
     await page.getByRole('button', { name: 'Use this' }).click();
-    await expect(page.getByText('Reading receipt…')).toBeVisible();
-    await shot('reading');
+    // the made-up reader is done 1.8 s after Use this; on a busy machine Confirm can come before
+    // Reading is ever seen, so either is the next step (qa ready, 25 Nov)
+    const reading = page.getByText('Reading receipt…');
+    await expect(reading.or(page.getByText('SATE KAJANG HJ SAMURI'))).toBeVisible();
+    if (await reading.isVisible()) await shot('reading');
     await expect(page).toHaveURL(/\/s\/confirm/, { timeout: 10_000 });
     await expect(page.getByText('SATE KAJANG HJ SAMURI')).toBeVisible();
     await expect(page.getByText('Check this price')).toBeVisible();

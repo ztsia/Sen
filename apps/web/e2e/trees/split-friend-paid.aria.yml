@@ -39,15 +39,20 @@
   - button "I've paid"
   - figure "Stand-in · Mei's DuitNow QR":
     - img "Mei's DuitNow QR"
+    - text: ""
   - group "Pay from this phone":
     - button "Pay with TNG"
     - button "Other app…"
     - button "Save QR"
   - region "Mei's tick list":
     - heading "Mei's tick list" [level=2]
+    - text: You
     - paragraph: Not paid yet
+    - text: /RM \d+\.\d+ Mei/
     - paragraph: Paid the bill
+    - text: /RM \d+\.\d+ Ali/
     - paragraph: Not paid yet
+    - text: /RM \d+\.\d+/
   - term: Your share
   - definition: /RM \d+\.\d+/
   - term: Your spending

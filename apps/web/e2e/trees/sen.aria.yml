@@ -44,9 +44,9 @@
         - listitem: /Pelita Everyday waives its annual fee with \d+ purchases in a year\. Source \[1\]/
       - list "Sources":
         - listitem:
-          - 'button /Source 1: Pelita Everyday card: rates and fees, pelita\.example, checked \d+ Oct \d+\. Opens in your browser/'
+          - 'button /Source 1: Pelita Everyday card: rates and fees, pelita\.example, checked \d+ Oct \d+\. Opens in your browser/': "/\\[1\\] Pelita Everyday card: rates and fees pelita\\.example · checked \\d+ Oct \\d+/"
         - listitem:
-          - 'button /Source 2: Setia Plus cashback card, setia\.example, checked \d+ Oct \d+\. Opens in your browser/'
+          - 'button /Source 2: Setia Plus cashback card, setia\.example, checked \d+ Oct \d+\. Opens in your browser/': /\[2\] Setia Plus cashback card setia\.example · checked \d+ Oct \d+/
       - button "Confirm these figures"
       - paragraph: /Today, \d+:\d+/
     - listitem "Sen":

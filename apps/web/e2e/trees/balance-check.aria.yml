@@ -11,7 +11,7 @@
           - text: What the bank app shows
           - textbox "What the bank app shows":
             - /placeholder: "0.00"
-        - button "Ryt Bank matches"
+        - button "Ryt Bank matches": Matches
     - listitem:
       - group "Public Bank":
         - paragraph: /Public Bank Sen has RM \d+,\d+\.\d+/
@@ -19,7 +19,7 @@
           - text: What the bank app shows
           - textbox "What the bank app shows":
             - /placeholder: "0.00"
-        - button "Public Bank matches"
+        - button "Public Bank matches": Matches
     - listitem:
       - group "TNG eWallet":
         - paragraph: /TNG eWallet Sen has RM \d+,\d+\.\d+ eWallet and GO\+ together/
@@ -27,7 +27,7 @@
           - text: What the bank app shows
           - textbox "What the bank app shows":
             - /placeholder: "0.00"
-        - button "TNG eWallet matches"
+        - button "TNG eWallet matches": Matches
     - listitem:
       - group "GrabPay Wallet":
         - paragraph: /GrabPay Wallet Sen has RM \d+\.\d+/
@@ -35,7 +35,7 @@
           - text: What the bank app shows
           - textbox "What the bank app shows":
             - /placeholder: "0.00"
-        - button "GrabPay Wallet matches"
+        - button "GrabPay Wallet matches": Matches
   - button "Save"
 - region "Notifications alt+T"
 - button "Dev panel"
